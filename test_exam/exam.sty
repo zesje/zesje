@@ -13,8 +13,10 @@
 \RequirePackage{forloop}
 \RequirePackage{fancyhdr}
 \RequirePackage{calc}
+\RequirePackage{placeins}
+\RequirePackage{graphicx}
 
-\setlength{\headheight}{60pt}
+\setlength{\headheight}{120pt}
 \renewcommand{\headrulewidth}{0pt}
 \pagestyle{fancy}
 \usepackage{environ}
@@ -29,7 +31,7 @@
 \openout\problems=\jobname.yml\relax
 
 \newcommand{\examformatversion}{0}
-\newcommand{\examname}{}
+% \newcommand{\examname}{}
 
 \newcommand{\measured}[1]{\ifthenelse{\equal{\value{copynumber}}{2}}{#1}{}}
 
@@ -48,9 +50,17 @@
 \stepcounter{widgetnr}
 }
 
-\newcommand{\answerbox}[3]{\widgetbox{#1}{\fbox{\parbox[c][#2]{\textwidth}{#3\hfill}}}}
-\lhead{\examname;\thepage;\arabic{copynumber}}
-\rhead{\widgetbox{qrcode\thepage}{\qrcode{v\examformatversion;\examname;\thepage;\arabic{copynumber}}}}
+\newcommand{\answerbox}[3]{%
+\FloatBarrier
+  \begin{figure*}[!h]
+\widgetbox{#1}{\fbox{\parbox[c][#2]{\textwidth}{#3\hfill}}}
+  \end{figure*}
+\FloatBarrier
+}
+
+\lhead{%\examname;\thepage;\arabic{copynumber}
+\ifthenelse{\equal{\thepage}{1}}{\widgetbox{studentnr}{\includegraphics[height=120pt]{number_widget}}}{}}
+\rhead{\widgetbox{qrcode\thepage}{\raisebox{60pt}{\qrcode[height=90pt]{v\examformatversion;\examname;\thepage;\arabic{copynumber}}}}}
 
 \newcounter{copynumber}
 \newcounter{widgetnr}
@@ -59,14 +69,14 @@
 \ifthenelse{\equal{#2}{1}}{
 \PackageError{exam}{Must make at least two exam copies}{Probably will fix someday}
 }{}
-\renewcommand{\examname}{#1}
+\newcommand{\examname}{#1}
 \write\problems{protocol_version: \examformatversion}
 \write\problems{name: \examname}
 \write\problems{widgets:}
 \forLoop{1}{#2}{copynumber}{
 \setcounter{page}{1}
-\newpage
 \BODY
+\newpage
 }
 }
 

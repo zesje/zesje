@@ -1,8 +1,8 @@
 \documentclass[11pt]{article}
+\usepackage[margin=1.5cm]{geometry}
 \usepackage{exam}
-\usepackage[margin=2cm]{geometry}
 \usepackage{amsmath}
-% \usepackage{framed}
+\usepackage{framed}
 \newcommand{\ben}{\begin{enumerate}}
 \newcommand{\een}{\end{enumerate}}
 \newcommand{\ra}{\rangle}
@@ -16,10 +16,10 @@
 \newcommand{\bea}{\begin{eqnarray}}
 \newcommand{\eea}{\end{eqnarray}}
 \newcommand{\nn}{\nonumber}
+\usepackage{changepage}
 
 \begin{document}
-\begin{exam}{min6}{4}
-
+\begin{exam}{minitest6}{4}
 \begin{center}
 \huge
 Solid State Physics, Minitest 6\\
@@ -35,21 +35,33 @@ Good luck! \\[8mm]
 \item Conductivity of holes is opposite to the conductivity of electrons. \emph{(10 pt)}
 \een
 \vspace {5mm}
+\answerbox{q1}{1cm}{}
 
 \item {\bf Fermi level of a doped semiconductor}\\
 Consider a semiconductor with all parameters known, so $m_e, m_h, E_G, E_A, E_D, N_A, N_D$ are all given.
 \ben
 \item Draw schematically the density of states $G(E)$ for such a semiconductor, denote all  material parameters on the plot. \emph{(10 pt)}
 
-{\centering\fbox{
-	\begin{minipage}{\textwidth}
-		\hfill\vspace{3in}
-	\end{minipage}
-	}}
+\answerbox{q2}{8cm}{}
+
+\newpage
 
 \item Compute the value of $E_F$ in the high temperature limit, such that the semiconductor behaves intrinsically (but still $kT\ll E_G$). \emph{(15 pt)}
+
+\answerbox{q3}{3cm}{}
+
 \item Compute the value of $E_F$ at $T=0$. \emph{(20 pt)} Justify your answer. \emph{(15 pt)}
+
+\answerbox{q4}{3cm}{}
+
 \item Compute the value of $E_F$ when $N_A = 0$ and $T=0$ (while $N_D \neq 0$). \emph{(10 pt)} Justify your answer. \emph{(10 pt)} \emph{Hint: in this limit the donor band plays a role similar to the valence band.}
+
+\answerbox{q5}{3cm}{}
+
+\begin{picture}(3,3)
+
+\end{picture}
+
 \een
 In the questions (b), (c), and (d) use the charge conservation to derive the answers. Reminder: the concentration of conduction electrons in the Boltzmann limit is $n_e = N_C \exp[-(E_G-E_F)/kT]$, where $N_C \sim (m_e T)^{3/2}$ (and a similar expression holds for holes).
 

@@ -1,0 +1,64 @@
+\documentclass[11pt]{article}
+\usepackage{exam}
+\usepackage[margin=2cm]{geometry}
+\usepackage{amsmath}
+% \usepackage{framed}
+\newcommand{\ben}{\begin{enumerate}}
+\newcommand{\een}{\end{enumerate}}
+\newcommand{\ra}{\rangle}
+\newcommand{\la}{\langle}
+\newcommand{\bd}{\begin{displaymath}}
+\newcommand{\ed}{\end{displaymath}}
+\newcommand{\be}{\begin{equation}}
+\newcommand{\ee}{\end{equation}}
+\newcommand{\ba}{\begin{array}}
+\newcommand{\ea}{\end{array}}
+\newcommand{\bea}{\begin{eqnarray}}
+\newcommand{\eea}{\end{eqnarray}}
+\newcommand{\nn}{\nonumber}
+
+\begin{document}
+\begin{exam}{min6}{4}
+
+\begin{center}
+\huge
+Solid State Physics, Minitest 6\\
+\Large
+March 31st 2016 \\ 
+Good luck! \\[8mm]
+\end{center}
+
+\ben
+\item {\bf True or false?}
+\ben
+\item Bands with a higher curvature have a higher effective mass. \emph{(10 pt)}
+\item Conductivity of holes is opposite to the conductivity of electrons. \emph{(10 pt)}
+\een
+\vspace {5mm}
+
+\item {\bf Fermi level of a doped semiconductor}\\
+Consider a semiconductor with all parameters known, so $m_e, m_h, E_G, E_A, E_D, N_A, N_D$ are all given.
+\ben
+\item Draw schematically the density of states $G(E)$ for such a semiconductor, denote all  material parameters on the plot. \emph{(10 pt)}
+
+{\centering\fbox{
+	\begin{minipage}{\textwidth}
+		\hfill\vspace{3in}
+	\end{minipage}
+	}}
+
+\item Compute the value of $E_F$ in the high temperature limit, such that the semiconductor behaves intrinsically (but still $kT\ll E_G$). \emph{(15 pt)}
+\item Compute the value of $E_F$ at $T=0$. \emph{(20 pt)} Justify your answer. \emph{(15 pt)}
+\item Compute the value of $E_F$ when $N_A = 0$ and $T=0$ (while $N_D \neq 0$). \emph{(10 pt)} Justify your answer. \emph{(10 pt)} \emph{Hint: in this limit the donor band plays a role similar to the valence band.}
+\een
+In the questions (b), (c), and (d) use the charge conservation to derive the answers. Reminder: the concentration of conduction electrons in the Boltzmann limit is $n_e = N_C \exp[-(E_G-E_F)/kT]$, where $N_C \sim (m_e T)^{3/2}$ (and a similar expression holds for holes).
+
+\een
+\end{exam}
+\end{document}
+
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: t
+%%% End:

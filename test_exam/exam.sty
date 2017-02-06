@@ -15,40 +15,74 @@
 \RequirePackage{calc}
 \RequirePackage{placeins}
 \RequirePackage{graphicx}
+\RequirePackage{fp}
 
 \setlength{\headheight}{120pt}
 \renewcommand{\headrulewidth}{0pt}
 \pagestyle{fancy}
 \usepackage{environ}
 
+% \makeatletter
+% \newcommand\dimtomm[1]{%
+%     \strip@pt\dimexpr 0.351459804\dimexpr#1\relax\relax%
+% }
+% \newlength\len
+% \makeatother
+% \newcommand\dimtomm[1]{%
+% \setlength{\len}{#1}
+% }
+
 \makeatletter
-\newcommand\dimtomm[1]{%
-    \strip@pt\dimexpr 0.351459804\dimexpr#1\relax\relax%
-}
-\makeatother
+
 
 \newwrite\problems
 \openout\problems=\jobname.yml\relax
 
 \newcommand{\examformatversion}{0}
-% \newcommand{\examname}{}
+
+
+% adapted from http://tex.stackexchange.com/a/267589/51635
+\def\bbox#1#2{#2\def\bboxid{#1}%
+   \ifmmode \mathpalette\bboxM{#2}\else \bboxA{#2}\fi
+}
+\def\bboxA#1{\setbox0=\hbox{#1}\pdfsavepos\bboxB}
+\def\bboxM#1#2{\setbox0=\hbox{$#1#2$}\pdfsavepos\bboxB}
+\def\bboxB{\edef\tmp{%
+\write\problems{\space\space \bboxid:}%
+\write\problems{\space\space\space\space page: \thepage}%
+% \write\problems{\space\space\space\space- left: \dimtomm{\noexpand\the\pdflastxpos sp - \number\wd0 sp}}%
+\write\problems{\space\space\space\space left: \noexpand\the\pdflastxpos - \number\wd0}%
+\write\problems{\space\space\space\space bottom: \noexpand\the\pdflastypos - \number\dp0}%
+\write\problems{\space\space\space\space right: \noexpand\the\pdflastxpos + 0}%
+\write\problems{\space\space\space\space top: \noexpand\the\pdflastypos + \number\ht0}%
+}\tmp}
+% \write\problems
+%       {\bboxid: (\noexpand\the\pdflastxpos, \noexpand\the\pdflastypos)
+%       [\number\wd0, \number\ht0, \number\dp0]}
+
 
 \newcommand{\measured}[1]{\ifthenelse{\equal{\value{copynumber}}{2}}{#1}{}}
 
 \newcommand{\widgetbox}[2]{%
 \measured{\expandafter\newcommand\csname widget#1\endcsname{}}%
-\leavevmode%
-\mbox{\measured{\zsavepos{ll\arabic{widgetnr}}}\mbox{#2}\measured{\zsavepos{rr\arabic{widgetnr}}}}
-\measured{%
-\immediate\write\problems{\space\space #1:}%
-\immediate\write\problems{\space\space\space\space- page: \thepage}%
-\immediate\write\problems{\space\space\space\space- \dimtomm{\zposx{ll\arabic{widgetnr}}sp}}%
-\immediate\write\problems{\space\space\space\space- \dimtomm{\zposy{ll\arabic{widgetnr}}sp}}%
-\immediate\write\problems{\space\space\space\space- \dimtomm{\zposx{rr\arabic{widgetnr}}sp}}%
-\immediate\write\problems{\space\space\space\space- \dimtomm{\zposy{rr\arabic{widgetnr}}sp}}%
-}%
-\stepcounter{widgetnr}
+\ifthenelse{\equal{\value{copynumber}}{2}}{\bbox{#1}{#2}}{#2}%
 }
+
+
+% \newcommand{\widgetbox}[2]{%
+% \measured{\expandafter\newcommand\csname widget#1\endcsname{}}%
+% \leavevmode%
+% \measured{\zsavepos{ll\arabic{widgetnr}}}\fbox{#2}\measured{\zsavepos{rr\arabic{widgetnr}}}%
+% \measured{%
+% \immediate\write\problems{\space\space #1:}%
+% \immediate\write\problems{\space\space\space\space- page: \thepage}%
+% \immediate\write\problems{\space\space\space\space- \dimtomm{\zposx{ll\arabic{widgetnr}}sp}}%
+% \immediate\write\problems{\space\space\space\space- \dimtomm{\zposy{ll\arabic{widgetnr}}sp}}%
+% \immediate\write\problems{\space\space\space\space- \dimtomm{\zposx{rr\arabic{widgetnr}}sp}}%
+% \immediate\write\problems{\space\space\space\space- \dimtomm{\zposy{rr\arabic{widgetnr}}sp}}%
+% }%
+% \stepcounter{widgetnr}
+% }
 
 \newcommand{\answerbox}[3]{%
 \FloatBarrier
@@ -60,7 +94,7 @@
 
 \lhead{%\examname;\thepage;\arabic{copynumber}
 \ifthenelse{\equal{\thepage}{1}}{\widgetbox{studentnr}{\includegraphics[height=120pt]{number_widget}}}{}}
-\rhead{\widgetbox{qrcode\thepage}{\raisebox{60pt}{\qrcode[height=90pt]{v\examformatversion;\examname;\thepage;\arabic{copynumber}}}}}
+\rhead{\raisebox{60pt}{\widgetbox{qrcode\thepage}{\qrcode[height=90pt]{v\examformatversion;\examname;\thepage;\arabic{copynumber}}}}}
 
 \newcounter{copynumber}
 \newcounter{widgetnr}

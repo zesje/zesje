@@ -34,6 +34,7 @@ class Grader(db.Entity):
 
 # this will be initialized @ app initialization and immutable from then on
 class Problem(db.Entity):
+    name = Required(str)
     feedback_options = Set('FeedbackOption')
     solutions = Set('Solution')
 
@@ -111,10 +112,9 @@ def main():
 
 
     with db_session:
-
         # problems and default feedback options
-        for i in range(5):
-            Problem()
+        for name in ['1', '2a', '2b', '2c', '2d']:
+            Problem(name=name)
         problems = Problem.select() ;
         for fb in feedback_options:
             FeedbackOption(text=fb, problems=problems)

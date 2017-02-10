@@ -39,7 +39,10 @@ class Problem(db.Entity):
     solutions = Set('Solution')
 
 
-# feedback option for a single problem
+# feedback option -- can be shared by multiple problems.
+# this means non-duplicate rows for things like 'all correct',
+# but means that care must be taken when "updating" and "deleting"
+# options from the UI (not yet supported)
 class FeedbackOption(db.Entity):
     problems = Set(Problem)
     text = Required(str, unique=True)
@@ -49,9 +52,11 @@ class FeedbackOption(db.Entity):
 # solution to a single problem
 class Solution(db.Entity):
     submission = Required(Submission)
+    problem = Required(Problem)
+    PrimaryKey(submission, problem)  # enforce uniqueness on this pair
+
     graded_by = Optional(Grader)  # if null, this has not yet been graded
     graded_at = Optional(datetime)
-    problem = Required(Problem)
     image_path = Required(str)
     feedback = Set(FeedbackOption)
     remarks = Optional(str)

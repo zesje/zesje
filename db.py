@@ -40,8 +40,8 @@ class Problem(db.Entity):
 
 # feedback option for a single problem
 class FeedbackOption(db.Entity):
-    problem = Required(Problem)
-    text = Required(str)
+    problems = Set(Problem)
+    text = Required(str, unique=True)
     solutions = Set('Solution')
 
 
@@ -65,10 +65,16 @@ def main():
     db.bind('sqlite', db_file, create_db=True)
     db.generate_mapping(create_tables=True)
 
-    names = """    Reggie Miron
+
+
+    grader_names = """\
         Wanetta Sporer
         Anthony Olden
         Saran Larusso
+    """.split('\n')[:-1]
+
+    names = """\
+        Reggie Miron
         Allyn Whitis
         Davida Buda
         Kristie Stubblefield
@@ -97,16 +103,37 @@ def main():
         Stefan Joesph
     """.split('\n')[:-1]  # remove last newline
 
-    names = [name.strip().split() for name in names]
-
-    numbers = [random.randint(10**6, 10**7 - 1) for name in names]  # number with 7 digits
+    grader_names = [name.strip().split() for name in grader_names]
+    student_names = [name.strip().split() for name in names]
+    # numbers with 7 digits
+    student_ids = [random.randint(10**6, 10**7 - 1) for name in names]
+    feedback_options = ['Everything correct', 'No solution provided']
 
 
     with db_session:
-        for (first_name, last_name), student_id in zip(names, numbers):
+
+        # problems and default feedback options
+        for i in range(5):
+            Problem()
+        problems = Problem.select() ;
+        for fb in feedback_options:
+            FeedbackOption(text=fb, problems=problems)
+
+
+        # students and submissions
+        for (first_name, last_name), student_id in zip(student_names, student_ids):
             Student(first_name=first_name, last_name=last_name, id=student_id)
+            sub = Submission()
+            for p in problems:
+                Solution(problem=p, image_path='/', submission=sub)
+
+        # graders
+        for first_name, last_name in grader_names:
+            Grader(first_name=first_name, last_name=last_name)
+
 
     with db_session:
+        Grader.select().show()
         Student.select().show()
 
 
@@ -114,5 +141,3 @@ if __name__ == '__main__':
     main()
 else:
     db.generate_mapping(create_tables=True)
-
-

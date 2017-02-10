@@ -84,29 +84,6 @@ def main():
         Allyn Whitis
         Davida Buda
         Kristie Stubblefield
-        Zoraida Loudon
-        Madge Rogge
-        Marylyn Folkes
-        Sindy Judy
-        Therese Jourdan
-        Kassie Pinion
-        Angella Rudloff
-        Trudie Freas
-        Tayna Mule
-        Tami Hippert
-        Blanche Alvidrez
-        Rupert Wolken
-        Madalyn Watkins
-        Reita Lubinsky
-        Johnny Paules
-        Lenita Weddell
-        Lieselotte Scarpa
-        Eda Koelling
-        Cary Gallaher
-        Ebonie Brathwaite
-        Shane Pugsley
-        Velva Cranston
-        Stefan Joesph
     """.split('\n')[:-1]  # remove last newline
 
     grader_names = [name.strip().split() for name in grader_names]
@@ -129,8 +106,10 @@ def main():
         for (first_name, last_name), student_id in zip(student_names, student_ids):
             Student(first_name=first_name, last_name=last_name, id=student_id)
             sub = Submission()
-            for p in problems:
-                Solution(problem=p, image_path='/', submission=sub)
+            for prob in problems:
+                Solution(problem=prob,
+                         image_path='submissions/{}/{}.png'.format(sub.id, prob.id),
+                         submission=sub)
 
         # graders
         for first_name, last_name in grader_names:
@@ -138,7 +117,10 @@ def main():
 
 
     with db_session:
+        print('Graders\n' + '-' * 7)
         Grader.select().show()
+        print()
+        print('Students\n' + '-' * 8)
         Student.select().show()
 
 

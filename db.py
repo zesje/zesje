@@ -1,11 +1,12 @@
 import os
-import random
 from datetime import datetime
+import pandas  # Maybe an overkill for a simple read_csv
 
 from pony.orm import Database, Required, Optional, PrimaryKey, Set, db_session
 
 
 db = Database()
+
 if __name__ != '__main__':
     db.bind('sqlite', os.getcwd() + '/database.sqlite')
 
@@ -71,27 +72,14 @@ def main():
     db.bind('sqlite', db_file, create_db=True)
     db.generate_mapping(create_tables=True)
 
-
-
     grader_names = """\
         Wanetta Sporer
         Anthony Olden
         Saran Larusso
     """.split('\n')[:-1]
 
-    names = """\
-        Reggie Miron
-        Allyn Whitis
-        Davida Buda
-        Kristie Stubblefield
-    """.split('\n')[:-1]  # remove last newline
-
     grader_names = [name.strip().split() for name in grader_names]
-    student_names = [name.strip().split() for name in names]
-    # numbers with 7 digits
-    student_ids = [random.randint(10**6, 10**7 - 1) for name in names]
     feedback_options = ['Everything correct', 'No solution provided']
-
 
     with db_session:
         # problems and default feedback options
@@ -101,10 +89,12 @@ def main():
         for fb in feedback_options:
             FeedbackOption(text=fb, problems=problems)
 
-
         # students and submissions
-        for (first_name, last_name), student_id in zip(student_names, student_ids):
-            Student(first_name=first_name, last_name=last_name, id=student_id)
+        students = pandas.read_csv('students.csv', skipinitialspace=True,
+                                   header=None)
+        for student_id, first_name, last_name, email in students.values:
+            Student(first_name=first_name, last_name=last_name, id=student_id,
+                    email=(email if not pandas.isnull(email) else None))
             sub = Submission()
             for prob in problems:
                 Solution(problem=prob,

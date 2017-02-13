@@ -30,6 +30,7 @@ class Student(db.Entity):
 
 # this will be initialized @ app initialization and immutable from then on
 class Submission(db.Entity):
+    id = PrimaryKey(int)
     solutions = Set('Solution')
     student = Optional(Student)
 
@@ -216,7 +217,10 @@ def init_db(students='students.csv', graders='graders.csv',
                 cv2.imwrite(filename, widget_data)
                 if widget.Index == 'studentnr':
                     # TODO: Hook up the student number to the database.
-                    print(extract_number(widget_data, dpi))
+                    possible_student_nr = extract_number(widget_data, dpi)
+                    with db_session:
+                        sub = Submission.get(id=copy) or Submission(id=copy)
+                        sub.student = Student.get(id=possible_student_nr)
                 else:
                     with db_session:
                         sub = Submission.get(id=copy) or Submission(id=copy)

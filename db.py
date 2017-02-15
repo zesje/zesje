@@ -33,6 +33,7 @@ class Submission(db.Entity):
     id = PrimaryKey(int)
     solutions = Set('Solution')
     student = Optional(Student)
+    signature_image_path = Optional(str)
 
 
 # this will be initialized @ app initialization and immutable from then on
@@ -221,6 +222,7 @@ def init_db(students='students.csv', graders='graders.csv',
                     with db_session:
                         sub = Submission.get(id=copy) or Submission(id=copy)
                         sub.student = Student.get(id=possible_student_nr)
+                        sub.signature_image_path = filename
                 else:
                     with db_session:
                         sub = Submission.get(id=copy) or Submission(id=copy)

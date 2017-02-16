@@ -16,29 +16,28 @@
 \RequirePackage{placeins}
 \RequirePackage{graphicx}
 \RequirePackage{fp}
+\RequirePackage{environ}
+\RequirePackage{kvoptions}
 
-\setlength{\headheight}{120pt}
+\DeclareStringOption[exam]{name}
+\DeclareStringOption[1]{copies}[1]
+\ProcessKeyvalOptions*
+
+\setlength{\headheight}{90pt}
 \renewcommand{\headrulewidth}{0pt}
 \pagestyle{fancy}
-\usepackage{environ}
-
-% \makeatletter
-% \newcommand\dimtomm[1]{%
-%     \strip@pt\dimexpr 0.351459804\dimexpr#1\relax\relax%
-% }
-% \newlength\len
-% \makeatother
-% \newcommand\dimtomm[1]{%
-% \setlength{\len}{#1}
-% }
 
 \makeatletter
 
-
-\newwrite\problems
-\openout\problems=\jobname.yml\relax
-
 \newcommand{\examformatversion}{0}
+
+\immediate\newwrite\problems
+\immediate\openout\problems=\jobname.yml\relax
+
+\immediate\write\problems{protocol_version: \examformatversion}
+\immediate\write\problems{name: \exam@name}
+\immediate\write\problems{widgets:}
+
 
 
 % adapted from http://tex.stackexchange.com/a/267589/51635
@@ -50,70 +49,48 @@
 \def\bboxB{\edef\tmp{%
 \write\problems{\space\space \bboxid:}%
 \write\problems{\space\space\space\space page: \thepage}%
-% \write\problems{\space\space\space\space- left: \dimtomm{\noexpand\the\pdflastxpos sp - \number\wd0 sp}}%
 \write\problems{\space\space\space\space left: \noexpand\the\pdflastxpos - \number\wd0}%
 \write\problems{\space\space\space\space bottom: \noexpand\the\pdflastypos - \number\dp0}%
 \write\problems{\space\space\space\space right: \noexpand\the\pdflastxpos + 0}%
 \write\problems{\space\space\space\space top: \noexpand\the\pdflastypos + \number\ht0}%
 }\tmp}
-% \write\problems
-%       {\bboxid: (\noexpand\the\pdflastxpos, \noexpand\the\pdflastypos)
-%       [\number\wd0, \number\ht0, \number\dp0]}
 
-
-\newcommand{\measured}[1]{\ifthenelse{\equal{\value{copynumber}}{2}}{#1}{}}
 
 \newcommand{\widgetbox}[2]{%
-\measured{\expandafter\newcommand\csname widget#1\endcsname{}}%
-\ifthenelse{\equal{\value{copynumber}}{2}}{\bbox{#1}{#2}}{#2}%
+\ifthenelse{\equal{\value{copynumber}}{1}}{\bbox{#1}{#2}}{#2}%
 }
 
-
-% \newcommand{\widgetbox}[2]{%
-% \measured{\expandafter\newcommand\csname widget#1\endcsname{}}%
-% \leavevmode%
-% \measured{\zsavepos{ll\arabic{widgetnr}}}\fbox{#2}\measured{\zsavepos{rr\arabic{widgetnr}}}%
-% \measured{%
-% \immediate\write\problems{\space\space #1:}%
-% \immediate\write\problems{\space\space\space\space- page: \thepage}%
-% \immediate\write\problems{\space\space\space\space- \dimtomm{\zposx{ll\arabic{widgetnr}}sp}}%
-% \immediate\write\problems{\space\space\space\space- \dimtomm{\zposy{ll\arabic{widgetnr}}sp}}%
-% \immediate\write\problems{\space\space\space\space- \dimtomm{\zposx{rr\arabic{widgetnr}}sp}}%
-% \immediate\write\problems{\space\space\space\space- \dimtomm{\zposy{rr\arabic{widgetnr}}sp}}%
-% }%
-% \stepcounter{widgetnr}
-% }
-
-\newcommand{\answerbox}[3]{%
+\newcommand{\answerbox}[2]{%
+\stepcounter{problemnr}%
 \FloatBarrier
   \begin{figure*}[!h]
-\widgetbox{#1}{\fbox{\parbox[c][#2]{\textwidth}{#3\hfill}}}
+\widgetbox{question_\arabic{problemnr}}{\fbox{\parbox[c][#1]{\textwidth}{#2\hfill}}}
   \end{figure*}
 \FloatBarrier
 }
 
-\lhead{%\examname;\thepage;\arabic{copynumber}
-\ifthenelse{\equal{\thepage}{1}}{\widgetbox{studentnr}{\includegraphics[height=120pt]{number_widget}}}{}}
-\rhead{\raisebox{60pt}{\widgetbox{qrcode\thepage}{\qrcode[height=90pt]{v\examformatversion;\examname;\thepage;\arabic{copynumber}}}}}
+\lhead{}
+\rhead{\raisebox{10pt}{\widgetbox{qrcode\thepage}{\qrcode[height=60pt]{v\examformatversion;\exam@name;\thepage;\arabic{copynumber}}}}}
 
-\newcounter{copynumber}
-\newcounter{widgetnr}
+\immediate\newcounter{copynumber}
+\newcounter{problemnr}
 
-\NewEnviron{exam}[2]{
-\ifthenelse{\equal{#2}{1}}{
-\PackageError{exam}{Must make at least two exam copies}{Probably will fix someday}
-}{}
-\newcommand{\examname}{#1}
-\write\problems{protocol_version: \examformatversion}
-\write\problems{name: \examname}
-\write\problems{widgets:}
-\forLoop{1}{#2}{copynumber}{
+\newcommand{\header}{%
+\noindent\textbf{Fill out your student number, your name, and your family name below. Only provide answers inside the answer boxes.}\\
+\vspace{.1cm}\\
+\ifthenelse{\equal{\thepage}{1}}{\widgetbox{studentnr}{\includegraphics[height=100pt]{number_widget}}}{}
+}
+
+\NewEnviron{exam}{
+\forLoop{1}{\exam@copies}{copynumber}{
 \setcounter{page}{1}
 \BODY
-\newpage
+
+\cleardoublepage
 }
 }
 
 \endinput
 %%
 %% End of file `exam.sty'.
+

@@ -1,23 +1,25 @@
 import os
 from datetime import datetime
+from collections import namedtuple
+import itertools
 import subprocess
 import shutil
-from tempfile import mkdtemp
-from xml.dom import minidom
-from functools import lru_cache
+import argparse
 
 import cv2
-import zbarlight
+import zbar
 import numpy as np
 import pandas
 import yaml
-from PIL import Image
 
 from pony.orm import Database, Required, Optional, PrimaryKey, Set, db_session
 
+YAML_VERSION = 0
+
+
+### Database definition.
 
 db = Database()
-
 
 # this will be initialized @ app initialization and immutable from then on
 class Student(db.Entity):
@@ -73,69 +75,203 @@ class Solution(db.Entity):
     remarks = Optional(str)
 
 
-@lru_cache()
-def studentnr_data(dpi):
-    """Prepare data for extracting the student number.
+### Auxiliary functions dealing with files and images
 
-    Returns
-    =======
-    template : array
-        A properly scaled image of the widget with source drawing.
-    centers : array of int
-        Sorted coordinates of the centers of all circles from the matrix.
-    r : int
-        Radius of the circles.
-
-    """
-    doc = minidom.parse('number_widget.svg')
-    centers = np.array([(float(path.getAttribute('cx')),
-                         float(path.getAttribute('cy')))
-                        for path in doc.getElementsByTagName('ellipse')])
-    centers = centers[np.lexsort(centers.T)]
-    centers = np.rint((dpi * 4/3 / 90) * centers).astype(int)
-    r = next(iter(doc.getElementsByTagName('ellipse'))).getAttribute('rx')
-    r = int(float(r) * (dpi * 4/3 / 90))
-
-    subprocess.run(['convert', '-density', '400', 'number_widget.svg',
-                    'number_widget.png'])
-    template = cv2.imread('number_widget.png')
-    os.remove('number_widget.png')
-    return template, centers, r
+ExtractedQR = namedtuple('ExtractedQR', ['name', 'page', 'sub_nr', 'coords'])
 
 
-def extract_number(image, dpi):
-    template, centers, r = studentnr_data(dpi)
-    w, h = template.shape[:2][::-1]
-    res = cv2.matchTemplate(image, template, cv2.TM_CCOEFF)
-    *_, top_left = cv2.minMaxLoc(res)
-    bottom_right = (top_left[0] + w, top_left[1] + h)
-    img = image[top_left[1] : bottom_right[1],
-              top_left[0] : bottom_right[0]]
-    results = []
-    for center in centers:
-        results.append(np.sum(255 - img[max(center[1] - r, 0)
-                                        : center[1] + r,
-                                        max(center[0] - r, 0)
-                                        : center[0] + r]))
-    results = np.array(results)
-    digits = (np.argmax(results.reshape(7, 10), axis=1) + 1) % 10
-    return int(''.join(map(str, digits)))
+def pdf_to_images(filename):
+    """Extract all images out of a pdf file."""
+    subprocess.run(['pdfimages', '-all', filename, filename[:-len('.pdf')]])
 
 
-def init_db(students='students.csv', graders='graders.csv',
-         meta_yaml='test_exam/tussentoets2016-6.yml',
-         scanned_pdf='test_exam/sample_data.pdf', overwrite=False):
-    YAML_VERSION = 0
-    with open(meta_yaml) as f:
+def read_yaml(filename):
+    with open(filename) as f:
         exam_data = yaml.load(f)
 
     if exam_data['protocol_version'] != YAML_VERSION:
-        raise RuntimeError('Only v0 supported')
-    db_file = exam_data['name'] + '.sqlite'
+        raise RuntimeError('Only v{} supported'.format(YAML_VERSION))
     widgets = pandas.DataFrame(exam_data['widgets']).T
     widgets.index.name = 'name'
+    qr = widgets[widgets.index.str.contains('qrcode')]
     widgets = widgets[~widgets.index.str.contains('qrcode')]
+    return exam_data['name'], qr, widgets
 
+
+def guess_dpi(image_array):
+    h, w, *_ = image_array.shape
+    dpi = np.round(np.array([h, w]) / (297, 210) * 25.4, -1)
+    if dpi[0] != dpi[1]:
+        raise ValueError("The image doesn't appear to be A4.")
+    return dpi[0]
+
+
+def get_box(image_array, box, padding):
+    """Extract a subblock from an array corresponding to a scanned A4 page.
+
+    Parameters:
+    -----------
+    image_array : 2D or 3D array
+        The image source.
+    box : 4 floats (top, bottom, left, right)
+        Coordinates of the bounding box in inches. By due to differing
+        traditions, box coordinates are counted from the bottom left of the
+        image, while image array coordinates are from the top left.
+    padding : float
+        Padding around box borders in inches.
+    """
+    h, w, *_ = image_array.shape
+    dpi = guess_dpi(image_array)
+    box = np.array(box)
+    box += (padding, -padding, -padding, padding)
+    box = (np.array(box) * dpi).astype(int)
+    top, bottom = min(h, box[0]), max(0, box[1])
+    left, right = max(0, box[2]), min(w, box[3])
+    return image_array[-top:-bottom, left:right]
+
+
+def extract_qr(image_path, scale_factor=4):
+    image = cv2.imread(image_path,
+                       cv2.IMREAD_GRAYSCALE)[::scale_factor, ::scale_factor]
+    if image.shape[0] < image.shape[1]:
+        image = image.T
+    # Varied thresholds because zbar is picky about contrast.
+    for threshold in (200, 150, 220):
+        thresholded = 255 * (image > threshold)
+        # zbar also cares about orientation.
+        for direction in itertools.product([1, -1], [1, -1]):
+            flipped = thresholded[::direction[0], ::direction[1]]
+            scanner = zbar.Scanner()
+            results = scanner.scan(flipped.astype(np.uint8))
+            if results:
+                version, name, page, copy = results[0].data.decode().split(';')
+                if version != 'v{}'.format(YAML_VERSION):
+                    raise RuntimeError('Yaml format mismatch')
+                coords = np.array(results[0].position)
+                # zbar doesn't respect array ordering!
+                if not np.isfortran(flipped):
+                    coords = coords[:, ::-1]
+                coords *= direction
+                coords %= image.shape
+                coords *= scale_factor
+                return ExtractedQR(name, int(page), int(copy), coords)
+    else:
+        raise RuntimeError("Couldn't extract qr code from " + image_path)
+
+
+def rotate_and_get_offset(image_path, extracted_qr, qr_coords):
+    _, page, _, position = extracted_qr
+    image = cv2.imread(image_path)
+
+    if image.shape[0] < image.shape[1]:
+        image = np.transpose(image, (1, 0, 2))
+
+    dpi = guess_dpi(image)
+    h, w, *_ = image.shape
+    qr_widget = qr_coords[qr_coords.page == page]
+    box = dpi * qr_widget[['top', 'bottom', 'left', 'right']].values[0]
+    y0, x0 = h - np.mean(box[:2]), np.mean(box[2:])
+    y, x = np.mean(position, axis=0)
+    changed = False
+    if (x > w / 2) != (x0 > w / 2):
+        image = image[:, ::-1]
+        x = w - x
+        changed = True
+    if (y > h / 2) != (y0 > h / 2):
+        image = image[::-1]
+        y = h - y
+        changed = True
+
+    if changed:
+        cv2.imwrite(image_path, image)
+    return y-y0, x-x0
+
+
+def mv_and_get_widgets(image_path, qr, offset, widgets_coords, padding=0.3):
+    image = cv2.imread(image_path)
+    offset = np.array(offset)
+    extension = image_path[image_path.rfind('.'):]
+    dpi = guess_dpi(image)
+    offset /= dpi
+    name, page, submission, _ = qr
+    base = os.path.split(image_path)[0]
+    target = os.path.join(base, name + '_{}'.format(submission))
+    os.makedirs(target, exist_ok=True)
+    os.rename(image_path, os.path.join(target, 'page' + str(page) + extension))
+    page_widgets = widgets_coords[widgets_coords.page == page].copy()
+    page_widgets[['top', 'bottom']] -= offset[1]
+    page_widgets[['left', 'right']] -= offset[0]
+    for widget in page_widgets.itertuples():
+        box = widget.top, widget.bottom, widget.left, widget.right
+        filename = os.path.join(target, widget.Index + extension)
+        cv2.imwrite(filename, get_box(image, box, padding))
+        yield widget.Index, filename
+
+
+def get_student_number(image_path):
+    """Extract the student number from the image path with the scanned number.
+
+    TODO: all the numerical parameters are guessed and work well on the first
+    exam.  Yet, they should be inferred from the scans.
+    """
+    image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
+    _, thresholded = cv2.threshold(image, 150, 255, cv2.THRESH_BINARY)
+    thresholded = cv2.bitwise_not(thresholded)
+
+    # Copy the thresholded image.
+    im_floodfill = thresholded.copy()
+
+    # Mask used to flood filling.
+    # Notice the size needs to be 2 pixels than the image.
+    h, w, *_ = thresholded.shape
+    mask = np.zeros((h+2, w+2), np.uint8)
+
+    # Floodfill from point (0, 0)
+    cv2.floodFill(im_floodfill, mask, (0,0), 255);
+
+    # Invert floodfilled image
+    im_floodfill_inv = cv2.bitwise_not(im_floodfill)
+
+    # Combine the two images to get the foreground.
+    im_out = ~(thresholded | im_floodfill_inv)
+
+    params = cv2.SimpleBlobDetector_Params()
+    params.filterByArea = True
+    params.minArea = 500
+    params.maxArea = 1500
+    params.filterByCircularity = True
+    params.minCircularity = 0.01
+    params.filterByConvexity = True
+    params.minConvexity = 0.87
+    params.filterByInertia = True
+    params.minInertiaRatio = 0.7
+
+    detector = cv2.SimpleBlobDetector_create(params)
+
+    keypoints = detector.detect(im_out)
+    centers = np.array(sorted([kp.pt for kp in keypoints])).astype(int)
+    right, bottom = np.max(centers, axis=0)
+    left, top = np.min(centers, axis=0)
+    centers = np.mgrid[left:right:10j, top:bottom:7j].astype(int)
+    weights = []
+    for center in centers.reshape(2, -1).T:
+        x, y = center
+        r = 12
+        weights.append(np.sum(255 - image[y-r:y+r, x-r:x+r]))
+    weights = np.array(weights).reshape(10, 7)
+    return sum(((np.argmax(weights, axis=0) + 1) % 10)[::-1] * 10**np.arange(7))
+
+### Combining everything: build the database.
+
+def init_db(scanned_pdf, meta_yaml, students='students.csv',
+            graders='graders.csv', overwrite=False):
+    # Copy the pdf, create the database file.
+    exam_name, qr_coords, widget_data = read_yaml(meta_yaml)
+    data_dir = exam_name + '_data'
+    os.makedirs(data_dir, exist_ok=True)
+    pdf_filename = os.path.split(scanned_pdf)[1]
+    shutil.copy(scanned_pdf, data_dir)
+    db_file = os.path.join(data_dir, exam_name + '.sqlite')
     if not os.path.exists(db_file) or overwrite:
         try:
             os.remove(db_file)
@@ -146,6 +282,7 @@ def init_db(students='students.csv', graders='graders.csv',
         db.bind('sqlite', db_file)
     db.generate_mapping(create_tables=True)
 
+    # Create students, graders, problems, and default feedback.
     with db_session:
         students = pandas.read_csv(students, skipinitialspace=True,
                                    header=None)
@@ -158,7 +295,7 @@ def init_db(students='students.csv', graders='graders.csv',
         for first_name, last_name in graders.values:
             Grader(first_name=first_name, last_name=last_name)
 
-        for name in widgets.index:
+        for name in widget_data.index:
             if name == 'studentnr':
                 continue
             Problem(name=name)
@@ -170,70 +307,41 @@ def init_db(students='students.csv', graders='graders.csv',
         for fb in feedback_options:
             FeedbackOption(text=fb, problems=problems)
 
-    # Heavy lifting: read the pdf and save all the images
+    # Process the scanned data
+    pdf_to_images(os.path.join(data_dir, pdf_filename))
+    images = filter((lambda name: name.endswith('.jpg')),
+                    os.listdir(data_dir))
+    images = [os.path.join(data_dir, image) for image in images]
 
-    # Measured offset of coordinates between original and scanned for 300 dpi.
-    # Should eventually avoid, and use e.g. cv2.matchTemplate
-    delta = np.array([200, 175, -40, 10])
-    result_version = 'v' + str(YAML_VERSION)
-    tmp = mkdtemp()
-    try:
-        subprocess.run(['pdfimages', scanned_pdf, tmp + '/'])
-        images = os.listdir(tmp)
-        for image_path in images:
-            image_path = os.path.join(tmp, image_path)
-            image = cv2.imread(image_path)
-            dpi = int(round(image.shape[0] / 11.6929, -1))
-            # zbar is picky about contrast, so we threshold the image.
-            # To go sure we try several values of the threshold.
-            # Can we do anything better?
-            # TODO: don't be lazy and only feed the correct corner to zbar
-            for threshold in (200, 150, 220):
-                _, thresholded = cv2.threshold(image, threshold, 255,
-                                               cv2.THRESH_BINARY)
-                code = zbarlight.scan_codes('qrcode',
-                                            Image.fromarray(thresholded))
-                if code is not None:
-                    break
-            else:
-                raise RuntimeError("Couldn't extract qr code from "
-                                   + image_path)
-            version, name, page, copy = code[0].decode().split(';')
-            if version != result_version:
-                raise RuntimeError('Unknown test version,'
-                                   ' only {} supported'.format(result_version))
-            if name != exam_data['name']:
-                raise RuntimeError('yaml and pdf are from different exams')
-            target = name + '_data'
-            os.makedirs(target, exist_ok=True)
+    extracted_qrs = [extract_qr(image) for image in images]
+    if any(qr[0] != exam_name for qr in extracted_qrs):
+        raise RuntimeError('yaml and pdf are from different exams')
 
-            coords =  (dpi * widgets[widgets.page == int(page)]).astype(int)
-            delta_dpi = (delta * dpi / 300).astype(int)
-            for widget in coords.itertuples():
-                widget_data = image[-widget.top - delta_dpi[0]
-                                    : -widget.bottom - delta_dpi[1],
-                                    widget.left + delta_dpi[2]
-                                    : widget.right + delta_dpi[3]]
-                filename = os.path.join(target, widget.Index + copy + '.png')
-                cv2.imwrite(filename, widget_data)
-                if widget.Index == 'studentnr':
-                    # TODO: Hook up the student number to the database.
-                    possible_student_nr = extract_number(widget_data, dpi)
-                    with db_session:
-                        sub = Submission.get(id=copy) or Submission(id=copy)
-                        sub.student = Student.get(id=possible_student_nr)
-                        sub.signature_image_path = filename
+    offsets = [rotate_and_get_offset(image, qr, qr_coords)
+               for image, qr in zip(images, extracted_qrs)]
+
+    for image, qr_data, offset in zip(images, extracted_qrs, offsets):
+        sub_nr = qr_data.sub_nr
+        with db_session:
+            sub = Submission.get(id=sub_nr) or Submission(id=sub_nr)
+            for problem, fname in mv_and_get_widgets(image, qr_data, offset,
+                                                     widget_data):
+                if problem == 'studentnr':
+                    number = get_student_number(fname)
+                    sub.student = Student.get(id=int(number))
+                    sub.signature_image_path = fname
                 else:
-                    with db_session:
-                        sub = Submission.get(id=copy) or Submission(id=copy)
-                        Solution(problem=Problem.get(name=widget.Index),
-                                 image_path=filename, submission=sub)
+                    Solution(problem=Problem.get(name=problem),
+                             image_path=fname, submission=sub)
 
-    finally:
-        shutil.rmtree(tmp, ignore_errors=True)
 
 def main():
-    init_db(overwrite=True)
+    parser = argparse.ArgumentParser(description='Create a new exam '
+                                     'for grading.')
+    parser.add_argument('pdf', help='Scanned exam pdf')
+    parser.add_argument('yaml', help='Meta-information about the exam')
+    args = parser.parse_args()
+    init_db(args.pdf, args.yaml, overwrite=True)
 
     with db_session:
         print('Graders\n' + '-' * 7)

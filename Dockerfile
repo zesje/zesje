@@ -4,7 +4,7 @@ RUN apt-get update && apt-get install -y curl libzbar-dev imagemagick poppler-ut
 RUN /root/miniconda3/bin/conda config --system --add channels conda-forge && /root/miniconda3/bin/conda install -y pony opencv pillow ipywidgets notebook jupyter_kernel_gateway pyyaml pandas -c conda-forge
 RUN npm install jupyter-dashboards-server
 RUN apt-get -y --quiet install supervisor
-RUN /root/miniconda3/bin/pip install zbarlight
+RUN /root/miniconda3/bin/pip install zbar-py
 
 COPY grade.ipynb validate_nr.ipynb /dashboards/
 COPY db.py number_widget.svg /grader_app/

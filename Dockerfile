@@ -5,6 +5,7 @@ RUN /root/miniconda3/bin/conda config --system --add channels conda-forge && /ro
 RUN npm install jupyter-dashboards-server
 RUN apt-get -y --quiet install supervisor
 RUN /root/miniconda3/bin/pip install zbar-py
+RUN sed -i'' "s/body {/body { min-height: 100vh;/" /node_modules/jupyter-dashboards-server/public/css/style.css
 
 COPY grade.ipynb validate_nr.ipynb /dashboards/
 COPY db.py number_widget.svg /grader_app/

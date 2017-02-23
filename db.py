@@ -32,7 +32,7 @@ class Student(db.Entity):
 
 # this will be initialized @ app initialization and immutable from then on
 class Submission(db.Entity):
-    id = PrimaryKey(int)
+    copy_number = Required(int, unique=True)
     solutions = Set('Solution')
     student = Optional(Student)
     signature_image_path = Optional(str)
@@ -323,7 +323,7 @@ def init_db(scanned_pdf, meta_yaml, students='students.csv',
     for image, qr_data, offset in zip(images, extracted_qrs, offsets):
         sub_nr = qr_data.sub_nr
         with db_session:
-            sub = Submission.get(id=sub_nr) or Submission(id=sub_nr)
+            sub = Submission.get(copy_number=sub_nr) or Submission(copy_number=sub_nr)
             for problem, fname in mv_and_get_widgets(image, qr_data, offset,
                                                      widget_data):
                 if problem == 'studentnr':

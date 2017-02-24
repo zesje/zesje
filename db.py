@@ -21,7 +21,8 @@ YAML_VERSION = 0
 
 db = Database()
 
-# this will be initialized @ app initialization and immutable from then on
+
+# New students may be added throughout the course.
 class Student(db.Entity):
     id = PrimaryKey(int)
     first_name = Required(str)
@@ -30,19 +31,28 @@ class Student(db.Entity):
     submission = Optional('Submission')
 
 
-# this will be initialized @ app initialization and immutable from then on
-class Submission(db.Entity):
-    copy_number = Required(int, unique=True)
-    solutions = Set('Solution')
-    student = Optional(Student)
-    signature_image_path = Optional(str)
-
-
-# this will be initialized @ app initialization and immutable from then on
+# This will be initialized @ app initialization and immutable from then on.
 class Grader(db.Entity):
     first_name = Required(str)
     last_name = Required(str)
     graded_solutions = Set('Solution')
+
+
+# New instances are created when providing a new exam.
+class Exam(db.Entity):
+    yaml_path = Required(str)
+    submissions = Set('Submission')
+    problems = Set('Problem')
+
+
+# Typically created when adding a new exam.
+class Submission(db.Entity):
+    copy_number = Required(int)
+    exam = Required(Exam)
+    solutions = Set('Solution')
+    source_paths = Set(str)
+    student = Optional(Student)
+    signature_image_path = Optional(str)
 
 
 # this will be initialized @ app initialization and immutable from then on
@@ -57,8 +67,10 @@ class Problem(db.Entity):
 # but means that care must be taken when "updating" and "deleting"
 # options from the UI (not yet supported)
 class FeedbackOption(db.Entity):
-    problems = Set(Problem)
-    text = Required(str, unique=True)
+    problem = Required(Problem)
+    text = Required(str)
+    description = Optional(str)
+    score = Optional(int)
     solutions = Set('Solution')
 
 
@@ -67,7 +79,6 @@ class Solution(db.Entity):
     submission = Required(Submission)
     problem = Required(Problem)
     PrimaryKey(submission, problem)  # enforce uniqueness on this pair
-
     graded_by = Optional(Grader)  # if null, this has not yet been graded
     graded_at = Optional(datetime)
     image_path = Required(str)

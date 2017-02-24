@@ -40,6 +40,7 @@ class Grader(db.Entity):
 
 # New instances are created when providing a new exam.
 class Exam(db.Entity):
+    name = Required(str)
     yaml_path = Required(str)
     submissions = Set('Submission')
     problems = Set('Problem')
@@ -50,9 +51,14 @@ class Submission(db.Entity):
     copy_number = Required(int)
     exam = Required(Exam)
     solutions = Set('Solution')
-    source_paths = Set(str)
+    pages = Set('Page')
     student = Optional(Student)
     signature_image_path = Optional(str)
+
+
+class Page(db.Entity):
+    path = Required(str)
+    submission = Required(Submission)
 
 
 # this will be initialized @ app initialization and immutable from then on
@@ -283,7 +289,7 @@ def init_db(scanned_pdf, meta_yaml, students='students.csv',
     os.makedirs(data_dir, exist_ok=True)
     pdf_filename = os.path.split(scanned_pdf)[1]
     shutil.copy(scanned_pdf, data_dir)
-    db_file = os.path.join(data_dir, exam_name + '.sqlite')
+    db_file = 'course.sqlite'
     if not os.path.exists(db_file) or overwrite:
         try:
             os.remove(db_file)
@@ -307,17 +313,19 @@ def init_db(scanned_pdf, meta_yaml, students='students.csv',
         for first_name, last_name in graders.values:
             Grader(first_name=first_name, last_name=last_name)
 
-        for name in widget_data.index:
-            if name == 'studentnr':
-                continue
-            Problem(name=name)
+        # init exam
+        exam = Exam.get(name=exam_name) or Exam(name=exam_name, yaml_path=meta_yaml)
 
         # Default feedback (maybe factor out eventually).
         feedback_options = ['Everything correct',
                             'No solution provided']
-        problems = Problem.select() ;
-        for fb in feedback_options:
-            FeedbackOption(text=fb, problems=problems)
+
+        for name in widget_data.index:
+            if name == 'studentnr':
+                continue
+            p = Problem(name=name, exam=exam)
+            for fb in feedback_options:
+                FeedbackOption(text=fb, problem=p)
 
     # Process the scanned data
     pdf_to_images(os.path.join(data_dir, pdf_filename))
@@ -335,7 +343,9 @@ def init_db(scanned_pdf, meta_yaml, students='students.csv',
     for image, qr_data, offset in zip(images, extracted_qrs, offsets):
         sub_nr = qr_data.sub_nr
         with db_session:
-            sub = Submission.get(copy_number=sub_nr) or Submission(copy_number=sub_nr)
+            exam = Exam.get(name=exam_name)
+            sub = Submission.get(copy_number=sub_nr, exam=exam) or Submission(copy_number=sub_nr, exam=exam)
+            Page(path=image, submission=sub)
             for problem, fname in mv_and_get_widgets(image, qr_data, offset,
                                                      widget_data):
                 if problem == 'studentnr':
@@ -343,7 +353,7 @@ def init_db(scanned_pdf, meta_yaml, students='students.csv',
                     sub.student = Student.get(id=int(number))
                     sub.signature_image_path = fname
                 else:
-                    Solution(problem=Problem.get(name=problem),
+                    Solution(problem=Problem.get(name=problem, exam=exam),
                              image_path=fname, submission=sub)
 
 
@@ -363,7 +373,7 @@ def main():
         Student.select().show()
 
 
-def use_db(filename='minitest6.sqlite'):
+def use_db(filename='course.sqlite'):
     db.bind('sqlite', filename)
     db.generate_mapping(create_tables=True)
 

@@ -28,7 +28,7 @@ class Student(db.Entity):
     first_name = Required(str)
     last_name = Required(str)
     email = Optional(str, unique=True)
-    submission = Optional('Submission')
+    submission = Set('Submission')
 
 
 # This will be initialized @ app initialization and immutable from then on.
@@ -58,6 +58,7 @@ class Submission(db.Entity):
 # this will be initialized @ app initialization and immutable from then on
 class Problem(db.Entity):
     name = Required(str)
+    exam = Required(Exam)
     feedback_options = Set('FeedbackOption')
     solutions = Set('Solution')
 

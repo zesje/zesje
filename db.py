@@ -28,7 +28,7 @@ class Student(db.Entity):
     first_name = Required(str)
     last_name = Required(str)
     email = Optional(str, unique=True)
-    submission = Set('Submission')
+    submissions = Set('Submission')
 
 
 # This will be initialized @ app initialization and immutable from then on.

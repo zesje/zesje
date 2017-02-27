@@ -12,10 +12,10 @@ import numpy as np
 import pandas
 import yaml
 
+from pony import orm
 from pony.orm import Database, Required, Optional, PrimaryKey, Set, db_session
 
 YAML_VERSION = 0
-
 
 ### Database definition.
 
@@ -281,14 +281,7 @@ def get_student_number(image_path):
 
 ### Combining everything: build the database.
 
-def init_db(scanned_pdf, meta_yaml, students='students.csv',
-            graders='graders.csv', overwrite=False):
-    # Copy the pdf, create the database file.
-    exam_name, qr_coords, widget_data = read_yaml(meta_yaml)
-    data_dir = exam_name + '_data'
-    os.makedirs(data_dir, exist_ok=True)
-    pdf_filename = os.path.split(scanned_pdf)[1]
-    shutil.copy(scanned_pdf, data_dir)
+def init_db(db_file='course.sqlite', overwrite=False):
     db_file = 'course.sqlite'
     if not os.path.exists(db_file) or overwrite:
         try:
@@ -300,21 +293,37 @@ def init_db(scanned_pdf, meta_yaml, students='students.csv',
         db.bind('sqlite', db_file)
     db.generate_mapping(create_tables=True)
 
-    # Create students, graders, problems, and default feedback.
+
+def add_participants(students='students.csv', graders='graders.csv'):
+    init_db()
     with db_session:
         students = pandas.read_csv(students, skipinitialspace=True,
                                    header=None)
         for student_id, first_name, last_name, email in students.values:
-            Student(first_name=first_name, last_name=last_name, id=student_id,
-                    email=(email if not pandas.isnull(email) else None))
+            try:
+                Student(first_name=first_name, last_name=last_name,
+                        id=student_id, email=(email if not pandas.isnull(email)
+                                              else None))
+            except orm.CacheIndexError:
+                pass
 
-        graders = pandas.read_csv(graders, skipinitialspace=True,
-                                  header=None)
+        graders = pandas.read_csv(graders, skipinitialspace=True, header=None)
         for first_name, last_name in graders.values:
-            Grader(first_name=first_name, last_name=last_name)
+            try:
+                Grader(first_name=first_name, last_name=last_name)
+            except orm.CacheIndexError:
+                pass
 
+
+def add_exam(yaml):
+    init_db()
+    exam_name, qr_coords, widget_data = read_yaml(yaml)
+    data_dir = exam_name + '_data'
+    os.makedirs(data_dir, exist_ok=True)
+    with orm.db_session:
         # init exam
-        exam = Exam.get(name=exam_name) or Exam(name=exam_name, yaml_path=meta_yaml)
+        exam = Exam.get(name=exam_name) or Exam(name=exam_name,
+                                                yaml_path=meta_yaml)
 
         # Default feedback (maybe factor out eventually).
         feedback_options = ['Everything correct',
@@ -327,11 +336,29 @@ def init_db(scanned_pdf, meta_yaml, students='students.csv',
             for fb in feedback_options:
                 FeedbackOption(text=fb, problem=p)
 
-    # Process the scanned data
-    pdf_to_images(os.path.join(data_dir, pdf_filename))
+
+def process_pdf(filename):
+    source_dir = 'source'
+    pdf_filename = os.path.split(filename)[1]
+    shutil.copy(filename, source_dir)
+    pdf_to_images(os.path.join(source_dir, pdf_filename))
     images = filter((lambda name: name.endswith('.jpg')),
-                    os.listdir(data_dir))
+                    os.listdir(source_dir))
     images = [os.path.join(data_dir, image) for image in images]
+    
+
+
+def do_everything(scanned_pdf, meta_yaml, students='students.csv',
+                  graders='graders.csv', overwrite=False):
+    init_db(overwrite)
+    add_participants(students, graders)
+    add_exam(meta_yaml)
+    # Copy the pdf, create the database file.
+    exam_name, qr_coords, widget_data = read_yaml(meta_yaml)
+
+
+
+    # Process the scanned data
 
     extracted_qrs = [extract_qr(image) for image in images]
     if any(qr[0] != exam_name for qr in extracted_qrs):

@@ -26,10 +26,10 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="2.8"
-     inkscape:cx="39.094513"
+     inkscape:cx="32.844513"
      inkscape:cy="38.587309"
      inkscape:document-units="pt"
-     inkscape:current-layer="svg2"
+     inkscape:current-layer="layer1"
      showgrid="false"
      fit-margin-top="0"
      fit-margin-left="0"
@@ -49,7 +49,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -84,32 +84,32 @@
        xml:space="preserve"
        style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10px;line-height:125%;font-family:'Times New Roman';-inkscape-font-specification:'Sans Italic';text-align:start;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
        x="1.190135"
-       y="7.1279287"
+       y="7.4850717"
        id="text4815"
        sodipodi:linespacing="125%"><tspan
          sodipodi:role="line"
          id="tspan4817"
          x="1.190135"
-         y="7.1279287"
+         y="7.4850717"
          style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:cmr10;-inkscape-font-specification:cmr10">Student number:</tspan></text>
     <text
        xml:space="preserve"
        style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10px;line-height:125%;font-family:cmr10;-inkscape-font-specification:cmr10;text-align:start;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
        x="158.77098"
-       y="7.1279287"
+       y="7.4850726"
        id="text4819"
        sodipodi:linespacing="125%"><tspan
          sodipodi:role="line"
          id="tspan4821"
          x="158.77098"
-         y="7.1279287">First &amp; last name:</tspan></text>
+         y="7.4850726">First name:</tspan></text>
     <rect
        style="color:#000000;display:inline;overflow:visible;visibility:visible;fill:none;fill-opacity:0.48913048;fill-rule:nonzero;stroke:#000000;stroke-width:1.34297907;stroke-linecap:butt;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker:none;enable-background:accumulate"
        id="rect4825"
        width="156.62244"
        height="23.914053"
        x="160.03955"
-       y="35.476543" />
+       y="15.833686" />
     <rect
        style="color:#000000;display:inline;overflow:visible;visibility:visible;fill:none;fill-opacity:0.48913048;fill-rule:nonzero;stroke:#000000;stroke-width:1.34297907;stroke-linecap:butt;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker:none;enable-background:accumulate"
        id="rect4840"
@@ -618,5 +618,16 @@
        cy="31.585474"
        rx="3.6664424"
        ry="3.6817222" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10px;line-height:125%;font-family:cmr10;-inkscape-font-specification:cmr10;text-align:start;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       x="158.77098"
+       y="75.049255"
+       id="text4819-3"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan4821-6"
+         x="158.77098"
+         y="75.049255">Last name:</tspan></text>
   </g>
 </svg>

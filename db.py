@@ -40,7 +40,7 @@ class Grader(db.Entity):
 
 # New instances are created when providing a new exam.
 class Exam(db.Entity):
-    name = Required(str)
+    name = Required(str, unique=True)
     yaml_path = Required(str)
     submissions = Set('Submission')
     problems = Set('Problem')

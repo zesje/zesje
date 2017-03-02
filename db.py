@@ -40,7 +40,7 @@ class Grader(db.Entity):
 
 # New instances are created when providing a new exam.
 class Exam(db.Entity):
-    name = Required(str)
+    name = Required(str, unique=True)
     yaml_path = Required(str)
     submissions = Set('Submission')
     problems = Set('Problem')
@@ -360,10 +360,19 @@ def init_db(scanned_pdf, meta_yaml, students='students.csv',
 def main():
     parser = argparse.ArgumentParser(description='Create a new exam '
                                      'for grading.')
+    parser.add_argument('--overwrite', action='store_true',
+                        help='destroy the existing database')
     parser.add_argument('pdf', help='Scanned exam pdf')
     parser.add_argument('yaml', help='Meta-information about the exam')
     args = parser.parse_args()
-    init_db(args.pdf, args.yaml, overwrite=True)
+    if args.overwrite:
+        rsp = input('WARNING: we are going to wipe the database, is this ok? ')
+        if not rsp.lower().startswith('y'):
+            print('Quitting without overwriting the database')
+            exit(0)
+        else:
+            print('Carrying on...')
+    init_db(args.pdf, args.yaml, overwrite=args.overwrite)
 
     with db_session:
         print('Graders\n' + '-' * 7)

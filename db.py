@@ -1,6 +1,6 @@
 import os
 from datetime import datetime
-from collections import namedtuple
+from collections import namedtuple, defaultdict
 import itertools
 import subprocess
 import shutil
@@ -12,10 +12,10 @@ import numpy as np
 import pandas
 import yaml
 
+from pony import orm
 from pony.orm import Database, Required, Optional, PrimaryKey, Set, db_session
 
 YAML_VERSION = 0
-
 
 ### Database definition.
 
@@ -281,40 +281,54 @@ def get_student_number(image_path):
 
 ### Combining everything: build the database.
 
-def init_db(scanned_pdf, meta_yaml, students='students.csv',
-            graders='graders.csv', overwrite=False):
-    # Copy the pdf, create the database file.
-    exam_name, qr_coords, widget_data = read_yaml(meta_yaml)
-    data_dir = exam_name + '_data'
-    os.makedirs(data_dir, exist_ok=True)
-    pdf_filename = os.path.split(scanned_pdf)[1]
-    shutil.copy(scanned_pdf, data_dir)
+def init_db(db_file='course.sqlite', overwrite=False):
     db_file = 'course.sqlite'
+    create_db = False
     if not os.path.exists(db_file) or overwrite:
         try:
             os.remove(db_file)
         except OSError:
             pass
-        db.bind('sqlite', db_file, create_db=True)
-    else:
-        db.bind('sqlite', db_file)
-    db.generate_mapping(create_tables=True)
+        create_db = True
 
-    # Create students, graders, problems, and default feedback.
+    try:
+        db.bind('sqlite', db_file, create_db=create_db)
+        db.generate_mapping(create_tables=True)
+    except TypeError as exc:  # can raise if db is already bound
+        if 'already bound' not in str(exc):
+            raise
+
+
+def add_participants(students='students.csv', graders='graders.csv'):
+    init_db()
     with db_session:
         students = pandas.read_csv(students, skipinitialspace=True,
                                    header=None)
         for student_id, first_name, last_name, email in students.values:
-            Student(first_name=first_name, last_name=last_name, id=student_id,
-                    email=(email if not pandas.isnull(email) else None))
+            try:
+                Student(first_name=first_name, last_name=last_name,
+                        id=student_id, email=(email if not pandas.isnull(email)
+                                              else None))
+            except orm.CacheIndexError:
+                pass
 
-        graders = pandas.read_csv(graders, skipinitialspace=True,
-                                  header=None)
+        graders = pandas.read_csv(graders, skipinitialspace=True, header=None)
         for first_name, last_name in graders.values:
-            Grader(first_name=first_name, last_name=last_name)
+            try:
+                Grader(first_name=first_name, last_name=last_name)
+            except orm.CacheIndexError:
+                pass
 
+
+def add_exam(yaml_path):
+    init_db()
+    exam_name, qr_coords, widget_data = read_yaml(yaml_path)
+    data_dir = exam_name + '_data'
+    os.makedirs(data_dir, exist_ok=True)
+    with orm.db_session:
         # init exam
-        exam = Exam.get(name=exam_name) or Exam(name=exam_name, yaml_path=meta_yaml)
+        exam = Exam.get(name=exam_name) or Exam(name=exam_name,
+                                                yaml_path=yaml_path)
 
         # Default feedback (maybe factor out eventually).
         feedback_options = ['Everything correct',
@@ -327,19 +341,36 @@ def init_db(scanned_pdf, meta_yaml, students='students.csv',
             for fb in feedback_options:
                 FeedbackOption(text=fb, problem=p)
 
-    # Process the scanned data
-    pdf_to_images(os.path.join(data_dir, pdf_filename))
-    images = filter((lambda name: name.endswith('.jpg')),
-                    os.listdir(data_dir))
-    images = [os.path.join(data_dir, image) for image in images]
 
+def process_pdf(pdf_path, meta_yaml):
+    init_db()
+    # read in metadata
+    exam_name, qr_coords, widget_data = read_yaml(meta_yaml)
+    with db_session:
+        exam = Exam.get(name=exam_name)
+        if not exam:
+            raise RuntimeError('Exam {} does not exist in the database'
+                               .format(exam_name))
+    # create images
+    source_dir, pdf_filename = os.path.split(pdf_path)
+    ## shutil.copy(pdf_path, source_dir)
+    pdf_to_images(os.path.join(source_dir, pdf_filename))
+    images = filter((lambda name: name.endswith('.jpg')),
+                    os.listdir(source_dir))
+    images =  [os.path.join(source_dir, image) for image in images]
+    # verify that copies are from the same exam
     extracted_qrs = [extract_qr(image) for image in images]
     if any(qr[0] != exam_name for qr in extracted_qrs):
+        for image in images:
+            os.remove(image)
         raise RuntimeError('yaml and pdf are from different exams')
 
     offsets = [rotate_and_get_offset(image, qr, qr_coords)
                for image, qr in zip(images, extracted_qrs)]
 
+
+    # XXX: refactor this to do one db transaction at the end
+    # XXX: fix this so that it does not just fail if there are problems writing to the DB
     for image, qr_data, offset in zip(images, extracted_qrs, offsets):
         sub_nr = qr_data.sub_nr
         with db_session:
@@ -357,6 +388,14 @@ def init_db(scanned_pdf, meta_yaml, students='students.csv',
                              image_path=fname, submission=sub)
 
 
+def do_everything(scanned_pdf, meta_yaml, students='students.csv',
+                  graders='graders.csv', overwrite=False):
+    init_db(overwrite)
+    add_participants(students, graders)
+    add_exam(meta_yaml)
+    process_pdf(scanned_pdf, meta_yaml)
+
+
 def main():
     parser = argparse.ArgumentParser(description='Create a new exam '
                                      'for grading.')
@@ -372,7 +411,7 @@ def main():
             exit(0)
         else:
             print('Carrying on...')
-    init_db(args.pdf, args.yaml, overwrite=args.overwrite)
+    do_everything(args.pdf, args.yaml, overwrite=args.overwrite)
 
     with db_session:
         print('Graders\n' + '-' * 7)

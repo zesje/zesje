@@ -9,12 +9,13 @@ db.use_db('course.sqlite')
 
 
 class AppModel(traitlets.HasTraits):
+    # Immutable
     students = traitlets.List(traitlets.Unicode(), read_only=True)
     graders = traitlets.List(traitlets.Unicode(), read_only=True)
-    problems = traitlets.List(traitlets.Unicode(), read_only=True)
     exams = traitlets.List(traitlets.Unicode(), read_only=True)
 
     exam_id = traitlets.Integer()
+    problems = traitlets.List(traitlets.Unicode())
 
     submission_id = traitlets.Integer()
     student = traitlets.Unicode()
@@ -30,6 +31,12 @@ class AppModel(traitlets.HasTraits):
 
     selected_feedback = traitlets.List(trait=traitlets.Unicode())
     remarks = traitlets.Unicode()
+
+    edited_feedback_option = traitlets.Unicode()
+    edited_feedback_name = traitlets.Unicode()
+    edited_score = traitlets.Integer()
+    edited_description = traitlets.Unicode()
+
     # --- Defaults and validation ---
     ## students
     @traitlets.default('students')
@@ -52,7 +59,8 @@ class AppModel(traitlets.HasTraits):
     @traitlets.default('problems')
     def _default_problems(self):
         with orm.db_session:
-            problems = (orm.select(p for p in db.Problem if p.exam.id == self.exam_id)
+            problems = (orm.select(p for p in db.Problem
+                                   if p.exam.id == self.exam_id)
                            .order_by(lambda p: p.id))
             return list(p.name for p in problems)
 
@@ -181,23 +189,39 @@ class AppModel(traitlets.HasTraits):
             if student is None:
                 return "MISSING"
             else:
-                return "{} ({}, {})".format(student.id, student.first_name, student.last_name)
+                return "{} ({}, {})".format(student.id, student.first_name,
+                                            student.last_name)
 
     # --- Relations between traits ---
     @traitlets.observe('exam_id')
     def _change_exam(self, change):
         self.submission_id = self._default_submission_id()
+        self.problems = self._default_problems()
         self.problem_id = self._default_problem_id()
 
     @traitlets.observe('problem_id', 'submission_id')
     def _change_solution(self, change):
         self.commit_grading(**{change['name']: change['old']})
         self.student = self._default_student()
-
-    @traitlets.observe('problem_id')
-    def _change_problem(self, change):
+        self.remarks = self._default_remarks()
         self.feedback_options = self._default_feedback_options()
+
+    @traitlets.observe('feedback_options')
+    def _update_feedback_options(self, change):
         self.selected_feedback = self._default_selected_feedback()
+
+    @traitlets.observe('edited_feedback_option')
+    def _update_edited_option(self, change):
+        if self.edited_feedback_option == 'ADD NEW':
+            self.edited_feedback_name = ''
+            self.edited_score = 0
+            self.edited_description = ''
+        else:
+            with orm.db_session:
+                fo = db.FeedbackOption.get(text=self.edited_feedback_option,
+                                           problem=db.Problem[self.problem_id])
+                self.edited_description = fo.description or ''
+                self.edited_score = fo.score or 0
 
     # --- Writing into database ---
     def commit_grading(self, submission_id=None, problem_id=None):
@@ -212,17 +236,20 @@ class AppModel(traitlets.HasTraits):
             return
 
         with orm.db_session:
-            solution = db.Solution.get(submission=submission_id, problem=problem_id)
+            solution = db.Solution.get(submission=submission_id,
+                                       problem=problem_id)
             old_feedback = set(fb.text for fb in solution.feedback)
             old_remarks = solution.remarks
             # Check if anything changed -- if not don't save anything
-            if set(self.selected_feedback) == old_feedback and self.remarks == old_remarks:
+            if (set(self.selected_feedback) == old_feedback
+                    and self.remarks == old_remarks):
                 return
 
             # Otherwise, save everything
-            solution.feedback = list(orm.select(fb for fb in db.FeedbackOption
-                                                if fb.text in self.selected_feedback
-                                                and fb.problem.id == problem_id))
+            solution.feedback = orm.select(fb for fb in db.FeedbackOption if
+                                           fb.text in self.selected_feedback
+                                           and fb.problem.id == problem_id)[:]
+            assert len(solution.feedback) == len(self.selected_feedback)
             solution.remarks = self.remarks
             if len(solution.feedback):
                 solution.graded_by = db.Grader[self.grader_id]
@@ -230,7 +257,50 @@ class AppModel(traitlets.HasTraits):
             else:  # if no feedback, then the problem is not graded
                 solution.graded_by = None
                 solution.graded_at = None
-                solution.remarks = ''  # this is ungraded: also remove remarks
+
+    def commit_feedback_edit(self, *_):
+        self.edited_feedback_name = self.edited_feedback_name.strip()
+        if not self.edited_feedback_name:
+            return
+        if self.edited_feedback_name != self.edited_feedback_option:
+            # Check if we might create a collision.
+            # TODO: reflect a noop in UI via a Valid widget
+            with orm.db_session:
+                if db.FeedbackOption.get(text=self.edited_feedback_name,
+                                         problem=self.problem_id) is not None:
+                    self.edited_feedback_option = "ADD NEW"
+                    self.edited_feedback_name = ''
+                    return
+
+        if self.edited_feedback_option == "ADD NEW":
+            with orm.db_session:
+                db.FeedbackOption(text=self.edited_feedback_name,
+                                  problem=db.Problem[self.problem_id])
+            self.feedback_options = self._default_feedback_options()
+            self.edited_feedback_option = self.edited_feedback_name
+
+        # Set the details in the database.
+        with orm.db_session:
+            fo = db.FeedbackOption.get(text=self.edited_feedback_option,
+                                       problem=db.Problem[self.problem_id])
+            fo.text = self.edited_feedback_name.strip()
+            fo.description = self.edited_description.strip()
+            fo.score = self.edited_score
+
+        new_name = self.edited_feedback_name
+        self.feedback_options = self._default_feedback_options()
+        self.edited_feedback_option = new_name
+
+    def delete_feedback_option(self, *_):
+        value = self.edited_feedback_option
+        if value == "ADD NEW":
+            return
+
+        with orm.db_session:
+            db.FeedbackOption.get(text=value,
+                                  problem=db.Problem[self.problem_id]).delete()
+
+        self.feedback_options = self._default_feedback_options()
 
     # --- Navigation
     def next_submission(self):
@@ -252,17 +322,18 @@ class AppModel(traitlets.HasTraits):
 
             result = subs.order_by(lambda x: -x).first()
             if result is None:
-                subs = orm.select(s.id for s in db.Submission if s.exam.id == self.exam_id)
+                subs = orm.select(s.id for s in db.Submission
+                                  if s.exam.id == self.exam_id)
                 result = subs.order_by(lambda x: -x).first()
 
             self.submission_id = result
 
     def next_ungraded(self):
         with orm.db_session:
-            all_ungraded = list(orm.select(s.submission.id for s in db.Solution
-                                           if s.submission.exam.id == self.exam_id
-                                           and s.problem.id == self.problem_id
-                                           and s.graded_at is None).order_by(lambda x: x))
+            all_ungraded = orm.select(s.submission.id for s in db.Solution
+                                      if s.submission.exam.id == self.exam_id
+                                      and s.problem.id == self.problem_id
+                                      and s.graded_at is None).order_by(lambda x: x)[:]
 
             for filt in (lambda s: s > self.submission_id, lambda s: True):
                 try:
@@ -280,27 +351,27 @@ class AppModel(traitlets.HasTraits):
 
         self.submission_id = sub_id
 
-    def jump_to_problem(self, problem_name):
+    def problem_to_id(self, problem_name):
         with orm.db_session:
             problem = db.Problem.get(exam=self.exam_id, name=problem_name)
             problem_id = problem.id if problem else None
         if problem_id is None:
-            return
+            problem_id = self.problem_id
 
-        self.problem_id = problem_id
+        return problem_id
 
-    def jump_to_exam(self, exam_name):
+    def exam_to_id(self, exam_name):
         with orm.db_session:
-            exam = db.Exam.get(name=exam_name.exam_id)
+            exam = db.Exam.get(name=exam_name)
             if not exam:
                 raise ValueError('No exam {}'.format(exam_name))
+            return exam.id
 
-        self.exam_id = exam_id
 
     # --- Other methods
-    def num_submissions(self):
+    def num_submissions(self, exam_id):
         with orm.db_session:
-            return orm.count(s for s in db.Submission if s.exam.id == self.exam_id)
+            return orm.count(s for s in db.Submission if s.exam.id == exam_id)
 
     def num_graded(self):
         with orm.db_session:
@@ -310,13 +381,15 @@ class AppModel(traitlets.HasTraits):
     def get_solution(self):
         with orm.db_session:
             p = db.Problem[self.problem_id]
-            s = db.Solution.get(submission=self.submission_id, problem=self.problem_id)
+            s = db.Solution.get(submission=self.submission_id,
+                                problem=self.problem_id)
             with open(s.image_path, 'rb') as f:
                 image = f.read()
 
             grader_name = None
             if s.graded_by:
-                grader_name =  '{0.first_name} {0.last_name}'.format(s.graded_by)
+                grader_name =  ('{0.first_name} '
+                                '{0.last_name}').format(s.graded_by)
             return (
                 image,
                 (list(fb.text for fb in p.feedback_options),

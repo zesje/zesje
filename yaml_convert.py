@@ -1,3 +1,4 @@
+import sys
 import argparse
 import yaml
 
@@ -25,4 +26,6 @@ def main():
         yaml.dump(exam_data, f)
 
 if __name__ == '__main__':
+    if sys.version_info < (3,):
+        raise RuntimeError('This module relies on Python 3')
     main()

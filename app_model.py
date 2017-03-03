@@ -390,19 +390,26 @@ class AppModel(traitlets.HasTraits):
             p = db.Problem[self.problem_id]
             s = db.Solution.get(submission=self.submission_id,
                                 problem=self.problem_id)
-            with open(s.image_path, 'rb') as f:
-                image = f.read()
 
-            grader_name = None
-            if s.graded_by:
-                grader_name =  ('{0.first_name} '
-                                '{0.last_name}').format(s.graded_by)
+            graded_at = grader_name = None
+            image = b''
+            remarks = ''
+            feedback = []
+            if s:
+                with open(s.image_path, 'rb') as f:
+                    image = f.read()
+
+                graded_at = s.graded_at
+                remarks = s.remarks
+                feedback = list(fb.text for fb in s.feedback)
+
+                if s.graded_by:
+                    grader_name =  ('{0.first_name} '
+                                    '{0.last_name}').format(s.graded_by)
             return (
                 image,
-                (list(fb.text for fb in p.feedback_options),
-                 list(fb.text for fb in s.feedback),
-                 s.remarks),
-                (grader_name, s.graded_at)
+                (list(fb.text for fb in p.feedback_options), feedback, remarks),
+                (grader_name, graded_at)
             )
 
     def set_grader(self, name):

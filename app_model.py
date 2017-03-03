@@ -195,9 +195,10 @@ class AppModel(traitlets.HasTraits):
     # --- Relations between traits ---
     @traitlets.observe('exam_id')
     def _change_exam(self, change):
-        self.submission_id = self._default_submission_id()
-        self.problems = self._default_problems()
-        self.problem_id = self._default_problem_id()
+        with self.hold_trait_notifications():
+            self.submission_id = self._default_submission_id()
+            self.problems = self._default_problems()
+            self.problem_id = self._default_problem_id()
 
     @traitlets.observe('problem_id', 'submission_id')
     def _change_solution(self, change):

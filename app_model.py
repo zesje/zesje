@@ -195,10 +195,9 @@ class AppModel(traitlets.HasTraits):
     # --- Relations between traits ---
     @traitlets.observe('exam_id')
     def _change_exam(self, change):
-        with self.hold_trait_notifications():
-            self.submission_id = self._default_submission_id()
-            self.problems = self._default_problems()
-            self.problem_id = self._default_problem_id()
+        self.submission_id = self._default_submission_id()
+        self.problems = self._default_problems()
+        self.problem_id = self._default_problem_id()
 
     @traitlets.observe('problem_id', 'submission_id')
     def _change_solution(self, change):
@@ -206,9 +205,6 @@ class AppModel(traitlets.HasTraits):
         self.student = self._default_student()
         self.remarks = self._default_remarks()
         self.feedback_options = self._default_feedback_options()
-
-    @traitlets.observe('feedback_options')
-    def _update_feedback_options(self, change):
         self.selected_feedback = self._default_selected_feedback()
 
     @traitlets.observe('edited_feedback_option')
@@ -231,6 +227,11 @@ class AppModel(traitlets.HasTraits):
             submission_id = self.submission_id
         if problem_id is None:
             problem_id = self.problem_id
+
+        # Sometimes we transition from a nonexistent solution and end up here.
+        if db.Solution.get(submission=submission_id,
+                           problem=problem_id) is None:
+            return
 
         # Should do nothing when the grader is missing.
         if not self.grader_id:
@@ -272,24 +273,30 @@ class AppModel(traitlets.HasTraits):
                     self.edited_feedback_option = "ADD NEW"
                     self.edited_feedback_name = ''
                     return
+        description = self.edited_description.strip()
+        score = self.edited_score
 
         if self.edited_feedback_option == "ADD NEW":
             with orm.db_session:
                 db.FeedbackOption(text=self.edited_feedback_name,
                                   problem=db.Problem[self.problem_id])
             self.feedback_options = self._default_feedback_options()
-            self.edited_feedback_option = self.edited_feedback_name
+            self.selected_feedback = self._default_selected_feedback()
+            option = self.edited_feedback_name
+        else:
+            option = self.edited_feedback_option
 
         # Set the details in the database.
         with orm.db_session:
-            fo = db.FeedbackOption.get(text=self.edited_feedback_option,
+            fo = db.FeedbackOption.get(text=option,
                                        problem=db.Problem[self.problem_id])
             fo.text = self.edited_feedback_name.strip()
-            fo.description = self.edited_description.strip()
-            fo.score = self.edited_score
+            fo.description = description
+            fo.score = score
 
         new_name = self.edited_feedback_name
         self.feedback_options = self._default_feedback_options()
+        self.selected_feedback = self._default_selected_feedback()
         self.edited_feedback_option = new_name
 
     def delete_feedback_option(self, *_):
@@ -300,8 +307,14 @@ class AppModel(traitlets.HasTraits):
         with orm.db_session:
             db.FeedbackOption.get(text=value,
                                   problem=db.Problem[self.problem_id]).delete()
+            # Some solutions may become ungraded. We should reflect that in the UI
+            for solution in db.Solution.select(lambda s:
+                                               s.problem.id == self.problem_id
+                                               and not s.feedback):
+                solution.graded_by = solution.graded_at = None
 
         self.feedback_options = self._default_feedback_options()
+        self.selected_feedback = self._default_selected_feedback()
 
     # --- Navigation
     def next_submission(self):

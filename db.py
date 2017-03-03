@@ -1,6 +1,6 @@
 import os
 from datetime import datetime
-from collections import namedtuple
+from collections import namedtuple, defaultdict
 import itertools
 import subprocess
 import shutil
@@ -342,36 +342,35 @@ def add_exam(yaml_path):
                 FeedbackOption(text=fb, problem=p)
 
 
-def process_pdf(filename):
-    source_dir = 'source'
-    pdf_filename = os.path.split(filename)[1]
-    shutil.copy(filename, source_dir)
+def process_pdf(pdf_path, meta_yaml):
+    init_db()
+    # read in metadata
+    exam_name, qr_coords, widget_data = read_yaml(meta_yaml)
+    with db_session:
+        exam = Exam.get(name=exam_name)
+        if not exam:
+            raise RuntimeError('Exam {} does not exist in the database'
+                               .format(exam_name))
+    # create images
+    source_dir, pdf_filename = os.path.split(pdf_path)
+    ## shutil.copy(pdf_path, source_dir)
     pdf_to_images(os.path.join(source_dir, pdf_filename))
     images = filter((lambda name: name.endswith('.jpg')),
                     os.listdir(source_dir))
-    images = [os.path.join(data_dir, image) for image in images]
-
-
-
-def do_everything(scanned_pdf, meta_yaml, students='students.csv',
-                  graders='graders.csv', overwrite=False):
-    init_db(overwrite)
-    add_participants(students, graders)
-    add_exam(meta_yaml)
-    # Copy the pdf, create the database file.
-    exam_name, qr_coords, widget_data = read_yaml(meta_yaml)
-
-
-
-    # Process the scanned data
-
+    images =  [os.path.join(source_dir, image) for image in images]
+    # verify that copies are from the same exam
     extracted_qrs = [extract_qr(image) for image in images]
     if any(qr[0] != exam_name for qr in extracted_qrs):
+        for image in images:
+            os.remove(image)
         raise RuntimeError('yaml and pdf are from different exams')
 
     offsets = [rotate_and_get_offset(image, qr, qr_coords)
                for image, qr in zip(images, extracted_qrs)]
 
+
+    # XXX: refactor this to do one db transaction at the end
+    # XXX: fix this so that it does not just fail if there are problems writing to the DB
     for image, qr_data, offset in zip(images, extracted_qrs, offsets):
         sub_nr = qr_data.sub_nr
         with db_session:
@@ -389,6 +388,14 @@ def do_everything(scanned_pdf, meta_yaml, students='students.csv',
                              image_path=fname, submission=sub)
 
 
+def do_everything(scanned_pdf, meta_yaml, students='students.csv',
+                  graders='graders.csv', overwrite=False):
+    init_db(overwrite)
+    add_participants(students, graders)
+    add_exam(meta_yaml)
+    process_pdf(scanned_pdf, meta_yaml)
+
+
 def main():
     parser = argparse.ArgumentParser(description='Create a new exam '
                                      'for grading.')
@@ -404,7 +411,7 @@ def main():
             exit(0)
         else:
             print('Carrying on...')
-    init_db(args.pdf, args.yaml, overwrite=args.overwrite)
+    do_everything(args.pdf, args.yaml, overwrite=args.overwrite)
 
     with db_session:
         print('Graders\n' + '-' * 7)

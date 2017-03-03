@@ -282,7 +282,6 @@ def get_student_number(image_path):
 ### Combining everything: build the database.
 
 def init_db(db_file='course.sqlite', overwrite=False):
-    db_file = 'course.sqlite'
     create_db = False
     if not os.path.exists(db_file) or overwrite:
         try:
@@ -394,7 +393,7 @@ def process_pdf(pdf_path, meta_yaml):
 
 def do_everything(scanned_pdf, meta_yaml, students='students.csv',
                   graders='graders.csv', overwrite=False):
-    init_db(overwrite)
+    init_db(overwrite=overwrite)
     add_participants(students, graders)
     add_exam(meta_yaml)
     process_pdf(scanned_pdf, meta_yaml)

@@ -283,15 +283,20 @@ def get_student_number(image_path):
 
 def init_db(db_file='course.sqlite', overwrite=False):
     db_file = 'course.sqlite'
+    create_db = False
     if not os.path.exists(db_file) or overwrite:
         try:
             os.remove(db_file)
         except OSError:
             pass
-        db.bind('sqlite', db_file, create_db=True)
-    else:
-        db.bind('sqlite', db_file)
-    db.generate_mapping(create_tables=True)
+        create_db = True
+
+    try:
+        db.bind('sqlite', db_file, create_db=create_db)
+        db.generate_mapping(create_tables=True)
+    except TypeError as exc:  # can raise if db is already bound
+        if 'already bound' not in str(exc):
+            raise
 
 
 def add_participants(students='students.csv', graders='graders.csv'):
@@ -315,15 +320,15 @@ def add_participants(students='students.csv', graders='graders.csv'):
                 pass
 
 
-def add_exam(yaml):
+def add_exam(yaml_path):
     init_db()
-    exam_name, qr_coords, widget_data = read_yaml(yaml)
+    exam_name, qr_coords, widget_data = read_yaml(yaml_path)
     data_dir = exam_name + '_data'
     os.makedirs(data_dir, exist_ok=True)
     with orm.db_session:
         # init exam
         exam = Exam.get(name=exam_name) or Exam(name=exam_name,
-                                                yaml_path=meta_yaml)
+                                                yaml_path=yaml_path)
 
         # Default feedback (maybe factor out eventually).
         feedback_options = ['Everything correct',
@@ -345,7 +350,7 @@ def process_pdf(filename):
     images = filter((lambda name: name.endswith('.jpg')),
                     os.listdir(source_dir))
     images = [os.path.join(data_dir, image) for image in images]
-    
+
 
 
 def do_everything(scanned_pdf, meta_yaml, students='students.csv',

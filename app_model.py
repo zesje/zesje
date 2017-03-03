@@ -361,6 +361,12 @@ class AppModel(traitlets.HasTraits):
 
         return problem_id
 
+    def problem(self):
+        with orm.db_session:
+            problem = db.Problem[self.problem_id]
+            return problem.name
+
+
     def exam_to_id(self, exam_name):
         with orm.db_session:
             exam = db.Exam.get(name=exam_name)

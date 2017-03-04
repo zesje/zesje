@@ -208,20 +208,17 @@ def rotate_and_get_offset(image_path, extracted_qr, qr_coords):
 def mv_and_get_widgets(image_path, qr, offset, widgets_coords, padding=0.3):
     image = cv2.imread(image_path)
     offset = np.array(offset)
-    extension = image_path[image_path.rfind('.'):]
     dpi = guess_dpi(image)
     offset /= dpi
     name, page, submission, _ = qr
+    extension = image_path[image_path.rfind('.'):]
     base = os.path.split(image_path)[0]
-    target = os.path.join(base, name + '_{}'.format(submission))
-    os.makedirs(target, exist_ok=True)
-    os.rename(image_path, os.path.join(target, 'page' + str(page) + extension))
     page_widgets = widgets_coords[widgets_coords.page == page].copy()
     page_widgets[['top', 'bottom']] -= offset[1]
     page_widgets[['left', 'right']] -= offset[0]
     for widget in page_widgets.itertuples():
         box = widget.top, widget.bottom, widget.left, widget.right
-        filename = os.path.join(target, widget.Index + extension)
+        filename = os.path.join(base, widget.Index + extension)
         cv2.imwrite(filename, get_box(image, box, padding))
         yield widget.Index, filename
 
@@ -374,10 +371,18 @@ def process_pdf(pdf_path, meta_yaml):
         sub_nr = qr_data.sub_nr
         with db_session:
             exam = Exam.get(name=exam_name)
-            sub = Submission.get(copy_number=sub_nr, exam=exam) or Submission(copy_number=sub_nr, exam=exam)
-            Page(path=image, submission=sub)
-            for problem, fname in mv_and_get_widgets(image, qr_data, offset,
-                                                     widget_data):
+            sub = Submission.get(copy_number=sub_nr, exam=exam) \
+                  or Submission(copy_number=sub_nr, exam=exam)
+            extension = image[image.rfind('.'):]
+            base = os.path.split(image)[0]
+            target = os.path.join(base, qr_data.name + '_{}'.format(sub_nr))
+            os.makedirs(target, exist_ok=True)
+            target_image = os.path.join(target, 'page' + str(qr_data.page)
+                                                + extension)
+            os.rename(image, target_image)
+            Page(path=target_image, submission=sub)
+            for problem, fname in mv_and_get_widgets(target_image, qr_data,
+                                                     offset, widget_data):
                 if problem == 'studentnr':
                     sub.signature_image_path = fname
                     try:

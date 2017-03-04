@@ -4,6 +4,7 @@ import datetime
 
 import traitlets
 from pony import orm
+import yaml
 
 import db
 db.use_db('course.sqlite')
@@ -32,6 +33,8 @@ class AppModel(traitlets.HasTraits):
 
     selected_feedback = traitlets.List(trait=traitlets.Unicode())
     remarks = traitlets.Unicode()
+
+    show_full_page = traitlets.Bool(default_value=False)
 
     edited_feedback_option = traitlets.Unicode()
     edited_feedback_name = traitlets.Unicode()
@@ -76,9 +79,9 @@ class AppModel(traitlets.HasTraits):
     @traitlets.default('exam_id')
     def _default_exam_id(self):
         with orm.db_session:
-            return sorted(db.Exam.select(),
+            # Nonempty exam with the most recent yaml
+            return sorted(db.Exam.select(lambda e: len(e.submissions)),
                           key=lambda e: os.path.getmtime(e.yaml_path))[-1].id
-
 
     @traitlets.validate('exam_id')
     def _valid_exam(self, proposal):
@@ -390,6 +393,11 @@ class AppModel(traitlets.HasTraits):
                 raise ValueError('No exam {}'.format(exam_name))
             return exam.id
 
+    def id_to_exam(self, exam_id=None):
+        if exam_id is None:
+            exam_id = self.exam_id
+        with orm.db_session:
+            return db.Exam[exam_id].name
 
     # --- Other methods
     def num_submissions(self, exam_id):
@@ -412,7 +420,19 @@ class AppModel(traitlets.HasTraits):
             remarks = ''
             feedback = []
             if s:
-                with open(s.image_path, 'rb') as f:
+                if self.show_full_page:
+                    page = self.exam_metadata()['widgets'][p.name]['page']
+                    # Here we use the specific page naming scheme because the
+                    # database does not store the page order.
+                    # Eventually the database should be restructured to make
+                    # this easier.
+                    image_path = (s.submission.pages
+                                  .select(lambda p: 'page{}'.format(page)
+                                          in p.path)
+                                  .first().path)
+                else:
+                    image_path = s.image_path
+                with open(image_path, 'rb') as f:
                     image = f.read()
 
                 graded_at = s.graded_at
@@ -438,3 +458,9 @@ class AppModel(traitlets.HasTraits):
                 grader = db.Grader.get(first_name=first, last_name=last)
                 grader_id = grader.id if grader else 0
             self.grader_id = grader_id
+
+    def exam_metadata(self):
+        with orm.db_session:
+            fname = db.Exam[self.exam_id].yaml_path
+        with open(fname) as f:
+            return yaml.load(f.read())

@@ -379,13 +379,13 @@ def process_pdf(pdf_path, meta_yaml):
             for problem, fname in mv_and_get_widgets(image, qr_data, offset,
                                                      widget_data):
                 if problem == 'studentnr':
+                    sub.signature_image_path = fname
                     try:
                         number = get_student_number(fname)
                     except Exception:
                         pass  # could not extract student name
                     else:
                         sub.student = Student.get(id=int(number))
-                        sub.signature_image_path = fname
                 else:
                     Solution(problem=Problem.get(name=problem, exam=exam),
                              image_path=fname, submission=sub)

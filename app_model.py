@@ -1,4 +1,5 @@
 from itertools import starmap
+import os
 import datetime
 
 import traitlets
@@ -75,7 +76,9 @@ class AppModel(traitlets.HasTraits):
     @traitlets.default('exam_id')
     def _default_exam_id(self):
         with orm.db_session:
-            return db.Exam.select().first().id
+            return sorted(db.Exam.select(),
+                          key=lambda e: os.path.getmtime(e.yaml_path))[-1].id
+
 
     @traitlets.validate('exam_id')
     def _valid_exam(self, proposal):

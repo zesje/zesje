@@ -1,9 +1,8 @@
 import os
 from datetime import datetime
-from collections import namedtuple, defaultdict
+from collections import namedtuple
 import itertools
 import subprocess
-import shutil
 import argparse
 
 import cv2

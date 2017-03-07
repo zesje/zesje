@@ -210,6 +210,7 @@ class AppModel(traitlets.HasTraits):
         self.commit_grading(**{change['name']: change['old']})
         self.student = self._default_student()
         self.remarks = self._default_remarks()
+        self.feedback_options = []  # hack to fix bug in ipywidgets
         self.feedback_options = self._default_feedback_options()
         self.selected_feedback = self._default_selected_feedback()
 
@@ -286,6 +287,7 @@ class AppModel(traitlets.HasTraits):
             with orm.db_session:
                 db.FeedbackOption(text=self.edited_feedback_name,
                                   problem=db.Problem[self.problem_id])
+            self.feedback_options = []  # hack to fix bug in ipywidgets
             self.feedback_options = self._default_feedback_options()
             self.selected_feedback = self._default_selected_feedback()
             option = self.edited_feedback_name
@@ -301,6 +303,7 @@ class AppModel(traitlets.HasTraits):
             fo.score = score
 
         new_name = self.edited_feedback_name
+        self.feedback_options = []  # hack to fix bug in ipywidgets
         self.feedback_options = self._default_feedback_options()
         self.selected_feedback = self._default_selected_feedback()
         self.edited_feedback_option = new_name
@@ -319,6 +322,7 @@ class AppModel(traitlets.HasTraits):
                                                and not s.feedback):
                 solution.graded_by = solution.graded_at = None
 
+        self.feedback_options = []  # hack to fix bug in ipywidgets
         self.feedback_options = self._default_feedback_options()
         self.selected_feedback = self._default_selected_feedback()
 

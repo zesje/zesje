@@ -421,8 +421,6 @@ class AppModel(traitlets.HasTraits):
 
             graded_at = grader_name = None
             image = b''
-            remarks = ''
-            feedback = []
             if s:
                 if self.show_full_page:
                     page = self.exam_metadata()['widgets'][p.name]['page']
@@ -440,17 +438,11 @@ class AppModel(traitlets.HasTraits):
                     image = f.read()
 
                 graded_at = s.graded_at
-                remarks = s.remarks
-                feedback = list(fb.text for fb in s.feedback)
 
                 if s.graded_by:
                     grader_name =  ('{0.first_name} '
                                     '{0.last_name}').format(s.graded_by)
-            return (
-                image,
-                (list(fb.text for fb in p.feedback_options), feedback, remarks),
-                (grader_name, graded_at)
-            )
+            return image, (grader_name, graded_at)
 
     def set_grader(self, name):
         if not name:

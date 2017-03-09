@@ -29,7 +29,7 @@
 
 \makeatletter
 
-\newcommand{\examformatversion}{0}
+\newcommand{\examformatversion}{1}
 
 \immediate\newwrite\problems
 \immediate\openout\problems=\jobname.yml\relax
@@ -47,12 +47,13 @@
 \def\bboxA#1{\setbox0=\hbox{#1}\pdfsavepos\bboxB}
 \def\bboxM#1#2{\setbox0=\hbox{$#1#2$}\pdfsavepos\bboxB}
 \def\bboxB{\edef\tmp{%
-\write\problems{\space\space \bboxid:}%
-\write\problems{\space\space\space\space page: \thepage}%
-\write\problems{\space\space\space\space left: \noexpand\the\pdflastxpos - \number\wd0}%
-\write\problems{\space\space\space\space bottom: \noexpand\the\pdflastypos - \number\dp0}%
-\write\problems{\space\space\space\space right: \noexpand\the\pdflastxpos + 0}%
-\write\problems{\space\space\space\space top: \noexpand\the\pdflastypos + \number\ht0}%
+\write\problems{\space\space - name: \bboxid}%
+\write\problems{\space\space\space\space data:}%
+\write\problems{\space\space\space\space\space\space page: \thepage}%
+\write\problems{\space\space\space\space\space\space left: \noexpand\the\pdflastxpos - \number\wd0}%
+\write\problems{\space\space\space\space\space\space bottom: \noexpand\the\pdflastypos - \number\dp0}%
+\write\problems{\space\space\space\space\space\space right: \noexpand\the\pdflastxpos + 0}%
+\write\problems{\space\space\space\space\space\space top: \noexpand\the\pdflastypos + \number\ht0}%
 }\tmp}
 
 

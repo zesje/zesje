@@ -364,8 +364,6 @@ def process_pdf(pdf_path, meta_yaml):
                for image, qr in zip(images, extracted_qrs)]
 
 
-    # XXX: refactor this to do one db transaction at the end
-    # XXX: fix this so that it does not just fail if there are problems writing to the DB
     for image, qr_data, offset in zip(images, extracted_qrs, offsets):
         sub_nr = qr_data.sub_nr
         with db_session:
@@ -386,13 +384,16 @@ def process_pdf(pdf_path, meta_yaml):
                     sub.signature_image_path = fname
                     try:
                         number = get_student_number(fname)
+                        sub.student = Student.get(id=int(number))
                     except Exception:
                         pass  # could not extract student name
-                    else:
-                        sub.student = Student.get(id=int(number))
                 else:
-                    Solution(problem=Problem.get(name=problem, exam=exam),
-                             image_path=fname, submission=sub)
+                    prob = Problem.get(name=problem, exam=exam)
+                    sol = Solution.get(problem=prob, submission=sub)
+                    if sol:
+                        sol.image_path = fname
+                    else:
+                        Solution(problem=prob, submission=sub, image_path=fname)
 
 
 def do_everything(scanned_pdf, meta_yaml, students='students.csv',

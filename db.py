@@ -102,17 +102,20 @@ def pdf_to_images(filename):
     subprocess.run(['pdfimages', '-all', filename, filename[:-len('.pdf')]])
 
 
-def read_yaml(filename):
-    with open(filename) as f:
-        exam_data = yaml.load(f)
-
-    if exam_data['protocol_version'] != YAML_VERSION:
+def parse_yaml(yml):
+    version = yml['protocol_version']
+    if version != YAML_VERSION:
         raise RuntimeError('Only v{} supported'.format(YAML_VERSION))
-    widgets = pandas.DataFrame(exam_data['widgets']).T
+    widgets = pandas.DataFrame(yml['widgets']).T
     widgets.index.name = 'name'
     qr = widgets[widgets.index.str.contains('qrcode')]
     widgets = widgets[~widgets.index.str.contains('qrcode')]
-    return exam_data['name'], qr, widgets
+    return yml['name'], qr, widgets
+
+
+def read_yaml(filename):
+    with open(filename) as f:
+        return parse_yaml(yaml.load(f))
 
 
 def guess_dpi(image_array):

@@ -165,8 +165,8 @@ def parse_yaml(yml):
 
         exam_name = yml['name']
         widget_data = yml['widgets']
-        qr = normalize_widgets(filter(lambda d: 'qrcode' in d['name'], widget_data))
-        widgets = normalize_widgets(filter(lambda d: 'qrcode' not in d['name'], widget_data))
+        qr = normalize_widgets(filter(lambda d: 'qrcode' in str(d['name']), widget_data))
+        widgets = normalize_widgets(filter(lambda d: 'qrcode' not in str(d['name']), widget_data))
         return exam_name, qr, widgets
     else:
         raise RuntimeError('Version {} not supported'.format(version))

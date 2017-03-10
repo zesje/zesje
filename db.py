@@ -1,6 +1,6 @@
 import os
 from datetime import datetime
-from collections import namedtuple
+from collections import namedtuple, OrderedDict
 import itertools
 import subprocess
 import argparse
@@ -112,11 +112,24 @@ def clean_yaml(yml):
     def sp_to_points(value):
         return round(value/2**16/72, 5)
 
+    version = yml['protocol_version']
+    if version == 0:
     # Eval is here because we cannot do automatic addition in latex.
-    clean_widgets = {name: {key: (sp_to_points(eval(value))
-                                  if key != 'page' else value)
-                            for key, value in entries.items()}
-                     for name, entries in yml['widgets'].items()}
+        clean_widgets = {name: {key: (sp_to_points(eval(value))
+                                      if key != 'page' else value)
+                                for key, value in entries.items()}
+                         for name, entries in yml['widgets'].items()}
+    elif version == 1:
+        clean_widgets = [
+            {'name': entries['name'],
+             'data': {key: (sp_to_points(eval(value))
+                            if key not in  ('page', 'name') else value)
+                      for key, value in entries['data'].items()}
+            }
+            for entries in yml['widgets']
+        ]
+    else:
+        raise RuntimeError('YAML version {} is not supported'.format(version))
 
     return dict(
         name=yml['name'],
@@ -127,16 +140,36 @@ def clean_yaml(yml):
 
 def parse_yaml(yml):
     version = yml['protocol_version']
-    if version != YAML_VERSION:
-        raise RuntimeError('Only v{} supported'.format(YAML_VERSION))
-    widgets = pandas.DataFrame(yml['widgets']).T
-    widgets.index.name = 'name'
-    if widgets.values.dtype == object:
-        # probably the yaml has not been processed
-        raise RuntimeError('Widget data must be numerical')
-    qr = widgets[widgets.index.str.contains('qrcode')]
-    widgets = widgets[~widgets.index.str.contains('qrcode')]
-    return yml['name'], qr, widgets
+
+    if version == 0:
+        widgets = pandas.DataFrame(yml['widgets']).T
+        widgets.index.name = 'name'
+        if widgets.values.dtype == object:
+            # probably the yaml has not been processed
+            raise RuntimeError('Widget data must be numerical')
+        qr = widgets[widgets.index.str.contains('qrcode')]
+        widgets = widgets[~widgets.index.str.contains('qrcode')]
+        return yml['name'], qr, widgets
+    elif version == 1:
+
+        def normalize_widgets(wid):
+            # widgets are a *list* with fields 'name' and 'data.
+            # In version 0 this was a dictionary (i.e. unordered), now it is a
+            # list so we can construct an OrderedDict and preserves the ordering.
+            # This is important if we want to re-upload and diff the yaml
+            # and there are changes to widget names/data.
+            wid = OrderedDict((w['name'], w['data']) for w in wid)
+            df = pandas.DataFrame(wid).T
+            df.index.name = 'name'
+            return df
+
+        exam_name = yml['name']
+        widget_data = yml['widgets']
+        qr = normalize_widgets(filter(lambda d: 'qrcode' in d['name'], widget_data))
+        widgets = normalize_widgets(filter(lambda d: 'qrcode' not in d['name'], widget_data))
+        return exam_name, qr, widgets
+    else:
+        raise RuntimeError('Version {} not supported'.format(version))
 
 
 def read_yaml(filename):

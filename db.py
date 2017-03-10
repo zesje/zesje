@@ -102,12 +102,38 @@ def pdf_to_images(filename):
     subprocess.run(['pdfimages', '-all', filename, filename[:-len('.pdf')]])
 
 
+def clean_yaml(yml):
+    """Clean up the widgets in the raw yaml from the exam latex compilation.
+
+    We must both perform an arithmetic operation, and convert the units to
+    points.
+    """
+
+    def sp_to_points(value):
+        return round(value/2**16/72, 5)
+
+    # Eval is here because we cannot do automatic addition in latex.
+    clean_widgets = {name: {key: (sp_to_points(eval(value))
+                                  if key != 'page' else value)
+                            for key, value in entries.items()}
+                     for name, entries in yml['widgets'].items()}
+
+    return dict(
+        name=yml['name'],
+        protocol_version=yml['protocol_version'],
+        widgets=clean_widgets,
+    )
+
+
 def parse_yaml(yml):
     version = yml['protocol_version']
     if version != YAML_VERSION:
         raise RuntimeError('Only v{} supported'.format(YAML_VERSION))
     widgets = pandas.DataFrame(yml['widgets']).T
     widgets.index.name = 'name'
+    if widgets.values.dtype == object:
+        # probably the yaml has not been processed
+        raise RuntimeError('Widget data must be numerical')
     qr = widgets[widgets.index.str.contains('qrcode')]
     widgets = widgets[~widgets.index.str.contains('qrcode')]
     return yml['name'], qr, widgets

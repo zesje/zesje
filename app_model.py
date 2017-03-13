@@ -423,7 +423,8 @@ class AppModel(traitlets.HasTraits):
             image = b''
             if s:
                 if self.show_full_page:
-                    page = self.exam_metadata()['widgets'][p.name]['page']
+                    _, _, widgets = self.exam_metadata()
+                    page = int(widgets[widgets.index == p.name].page)
                     # Here we use the specific page naming scheme because the
                     # database does not store the page order.
                     # Eventually the database should be restructured to make
@@ -458,5 +459,4 @@ class AppModel(traitlets.HasTraits):
     def exam_metadata(self):
         with orm.db_session:
             fname = db.Exam[self.exam_id].yaml_path
-        with open(fname) as f:
-            return yaml.load(f.read())
+        return db.read_yaml(fname)

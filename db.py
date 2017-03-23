@@ -399,6 +399,17 @@ def add_exam(yaml_path):
                 FeedbackOption(text=fb, problem=p)
 
 
+def update_problem_names(exam_name, new_problem_names):
+    with orm.db_session:
+        exam = Exam.get(name=exam_name)
+        problems = list(db.Problem.select(exam=exam).order_by('id'))
+        if len(new_problem_names) != len(problems):
+            raise ValueError('Number of existing problems and new problem '
+                             'names differ.')
+        for problem, name in zip(problems, new_problem_names):
+            problem.name = name
+
+
 def process_pdf(pdf_path, meta_yaml):
     init_db()
     # read in metadata

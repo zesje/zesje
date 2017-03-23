@@ -238,7 +238,7 @@ def extract_qr(image_path, scale_factor=4):
         raise RuntimeError("Couldn't extract qr code from " + image_path)
 
 
-def rotate_and_get_offset(image_path, extracted_qr, qr_coords):
+def rotate_and_shift(image_path, extracted_qr, qr_coords):
     _, page, _, position = extracted_qr
     image = cv2.imread(image_path)
 
@@ -251,19 +251,17 @@ def rotate_and_get_offset(image_path, extracted_qr, qr_coords):
     box = dpi * qr_widget[['top', 'bottom', 'left', 'right']].values[0]
     y0, x0 = h - np.mean(box[:2]), np.mean(box[2:])
     y, x = np.mean(position, axis=0)
-    changed = False
     if (x > w / 2) != (x0 > w / 2):
         image = image[:, ::-1]
         x = w - x
-        changed = True
     if (y > h / 2) != (y0 > h / 2):
         image = image[::-1]
         y = h - y
-        changed = True
 
-    if changed:
-        cv2.imwrite(image_path, image)
-    return y-y0, x-x0
+    shift = np.round((y0-y, x0-x)).astype(int)
+    shifted_image = np.roll(image, shift, axis=(0, 1))
+
+    cv2.imwrite(image_path, shifted_image)
 
 
 def mv_and_get_widgets(image_path, qr, offset, widgets_coords, padding=0.3):
@@ -434,8 +432,8 @@ def process_pdf(pdf_path, meta_yaml):
             os.remove(image)
         raise RuntimeError('yaml and pdf are from different exams')
 
-    offsets = [rotate_and_get_offset(image, qr, qr_coords)
-               for image, qr in zip(images, extracted_qrs)]
+    for image, qr in zip(images, extracted_qrs):
+        rotate_and_shift(image, qr, qr_coords)
 
 
     for image, qr_data, offset in zip(images, extracted_qrs, offsets):

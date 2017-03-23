@@ -412,7 +412,7 @@ def update_problem_names(exam_name, new_problem_names):
 def process_pdf(pdf_path, meta_yaml):
     init_db()
     # read in metadata
-    exam_name, qr_coords, widget_data = read_yaml(meta_yaml)
+    version, exam_name, qr_coords, widget_data = read_yaml(meta_yaml)
     with db_session:
         exam = Exam.get(name=exam_name)
         if not exam:

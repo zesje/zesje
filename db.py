@@ -149,7 +149,7 @@ def parse_yaml(yml):
             raise RuntimeError('Widget data must be numerical')
         qr = widgets[widgets.index.str.contains('qrcode')]
         widgets = widgets[~widgets.index.str.contains('qrcode')]
-        return yml['name'], qr, widgets
+        return version, yml['name'], qr, widgets
     elif version == 1:
 
         def normalize_widgets(wid):
@@ -167,7 +167,7 @@ def parse_yaml(yml):
         widget_data = yml['widgets']
         qr = normalize_widgets(filter(lambda d: 'qrcode' in str(d['name']), widget_data))
         widgets = normalize_widgets(filter(lambda d: 'qrcode' not in str(d['name']), widget_data))
-        return exam_name, qr, widgets
+        return version, exam_name, qr, widgets
     else:
         raise RuntimeError('Version {} not supported'.format(version))
 
@@ -379,7 +379,7 @@ def add_participants(students='students.csv', graders='graders.csv'):
 
 def add_exam(yaml_path):
     init_db()
-    exam_name, qr_coords, widget_data = read_yaml(yaml_path)
+    _, exam_name, qr_coords, widget_data = read_yaml(yaml_path)
     data_dir = exam_name + '_data'
     os.makedirs(data_dir, exist_ok=True)
     with orm.db_session:
@@ -402,12 +402,13 @@ def add_exam(yaml_path):
 def update_problem_names(exam_name, new_problem_names):
     with orm.db_session:
         exam = Exam.get(name=exam_name)
-        problems = list(db.Problem.select(exam=exam).order_by('id'))
+        problems = list(Problem.select(lambda p: p.exam == exam)
+                               .order_by(lambda p: p.id))
         if len(new_problem_names) != len(problems):
             raise ValueError('Number of existing problems and new problem '
                              'names differ.')
         for problem, name in zip(problems, new_problem_names):
-            problem.name = name
+            problem.name = str(name)
 
 
 def process_pdf(pdf_path, meta_yaml):

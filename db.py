@@ -436,7 +436,7 @@ def process_pdf(pdf_path, meta_yaml):
         rotate_and_shift(image, qr, qr_coords)
 
 
-    for image, qr_data, offset in zip(images, extracted_qrs, offsets):
+    for image, qr_data in zip(images, extracted_qrs):
         sub_nr = qr_data.sub_nr
         with db_session:
             exam = Exam.get(name=exam_name)
@@ -450,10 +450,9 @@ def process_pdf(pdf_path, meta_yaml):
                                                 + extension)
             os.rename(image, target_image)
             Page(path=target_image, submission=sub)
-            for problem, fname in mv_and_get_widgets(target_image, qr_data,
-                                                     offset, widget_data):
+            for problem in widget_data[widget_data.page == qr_data.page].index:
                 if problem == 'studentnr':
-                    sub.signature_image_path = fname
+                    sub.signature_image_path = 'None'
                     try:
                         number = get_student_number(fname)
                         sub.student = Student.get(id=int(number))
@@ -463,9 +462,9 @@ def process_pdf(pdf_path, meta_yaml):
                     prob = Problem.get(name=problem, exam=exam)
                     sol = Solution.get(problem=prob, submission=sub)
                     if sol:
-                        sol.image_path = fname
+                        sol.image_path = 'None'
                     else:
-                        Solution(problem=prob, submission=sub, image_path=fname)
+                        Solution(problem=prob, submission=sub, image_path='None')
 
 
 def do_everything(scanned_pdf, meta_yaml, students='students.csv',

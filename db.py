@@ -158,7 +158,7 @@ def parse_yaml(yml):
             # list so we can construct an OrderedDict and preserves the ordering.
             # This is important if we want to re-upload and diff the yaml
             # and there are changes to widget names/data.
-            wid = OrderedDict((w['name'], w['data']) for w in wid)
+            wid = OrderedDict((str(w['name']), w['data']) for w in wid)
             df = pandas.DataFrame(wid).T
             df.index.name = 'name'
             return df

@@ -422,20 +422,25 @@ class AppModel(traitlets.HasTraits):
             graded_at = grader_name = None
             image = b''
             if s:
+                *_, widgets = self.exam_metadata()
+                problem_metadata = widgets.loc[p.name]
+                page = int(problem_metadata.page)
+                # Here we use the specific page naming scheme because the
+                # database does not store the page order.
+                # Eventually the database should be restructured to make
+                # this easier.
+                page_image_path = (s.submission.pages
+                                    .select(lambda p: 'page{}'.format(page)
+                                            in p.path)
+                                    .first().path)
                 if self.show_full_page:
-                    page = self.exam_metadata()['widgets'][p.name]['page']
-                    # Here we use the specific page naming scheme because the
-                    # database does not store the page order.
-                    # Eventually the database should be restructured to make
-                    # this easier.
-                    image_path = (s.submission.pages
-                                  .select(lambda p: 'page{}'.format(page)
-                                          in p.path)
-                                  .first().path)
+                    with open(page_image_path, 'rb') as f:
+                        image = f.read()
+                elif s.image_path != 'None':
+                    with open(s.image_path, 'rb') as f:
+                        image = f.read()
                 else:
-                    image_path = s.image_path
-                with open(image_path, 'rb') as f:
-                    image = f.read()
+                    image = db.get_widget_image(page_image_path, problem_metadata)
 
                 graded_at = s.graded_at
 
@@ -458,5 +463,4 @@ class AppModel(traitlets.HasTraits):
     def exam_metadata(self):
         with orm.db_session:
             fname = db.Exam[self.exam_id].yaml_path
-        with open(fname) as f:
-            return yaml.load(f.read())
+        return db.read_yaml(fname)

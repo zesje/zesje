@@ -282,6 +282,12 @@ def mv_and_get_widgets(image_path, qr, offset, widgets_coords, padding=0.3):
         yield widget.Index, filename
 
 
+def get_widget_image(image_path, widget):
+    box = (widget.top, widget.bottom, widget.left, widget.right)
+    raw_image = get_box(cv2.imread(image_path), box, padding=0.3)
+    return cv2.imencode(".jpg", raw_image)[1].tostring()
+
+
 def get_student_number(image_path):
     """Extract the student number from the image path with the scanned number.
 
@@ -395,6 +401,20 @@ def add_exam(yaml_path):
             p = Problem(name=name, exam=exam)
             for fb in feedback_options:
                 FeedbackOption(text=fb, problem=p)
+
+
+def update_exam(exam_name, yaml_path):
+    _, exam_name, _, widgets = read_yaml(yaml_path)
+    new_problem_names = list(name for name in widgets.index
+                             if name != 'studentnr')
+
+    with orm.db_session:
+        exam = Exam.get(name=exam_name)
+        exam.yaml_path = yaml_path
+        problems = list(Problem.select(lambda p: p.exam == exam)
+                               .order_by(lambda p: p.id))
+        for problem, name in zip(problems, new_problem_names):
+            problem.name = name
 
 
 def update_problem_names(exam_name, new_problem_names):

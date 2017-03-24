@@ -257,7 +257,8 @@ def rotate_and_shift(image_path, extracted_qr, qr_coords):
         y = h - y
 
     shift = np.round((y0-y, x0-x)).astype(int)
-    shifted_image = np.roll(image, shift, axis=(0, 1))
+    shifted_image = np.roll(image, shift[0], axis=0)
+    shifted_image = np.roll(shifted_image, shift[1], axis=1)
 
     cv2.imwrite(image_path, shifted_image)
 

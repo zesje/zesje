@@ -264,24 +264,6 @@ def rotate_and_shift(image_path, extracted_qr, qr_coords):
     cv2.imwrite(image_path, shifted_image)
 
 
-def mv_and_get_widgets(image_path, qr, offset, widgets_coords, padding=0.3):
-    image = cv2.imread(image_path)
-    offset = np.array(offset)
-    dpi = guess_dpi(image)
-    offset /= dpi
-    name, page, submission, _ = qr
-    extension = image_path[image_path.rfind('.'):]
-    base = os.path.split(image_path)[0]
-    page_widgets = widgets_coords[widgets_coords.page == page].copy()
-    page_widgets[['top', 'bottom']] -= offset[1]
-    page_widgets[['left', 'right']] -= offset[0]
-    for widget in page_widgets.itertuples():
-        box = widget.top, widget.bottom, widget.left, widget.right
-        filename = os.path.join(base, widget.Index + extension)
-        cv2.imwrite(filename, get_box(image, box, padding))
-        yield widget.Index, filename
-
-
 def get_widget_image(image_path, widget):
     box = (widget.top, widget.bottom, widget.left, widget.right)
     raw_image = get_box(cv2.imread(image_path), box, padding=0.3)

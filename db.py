@@ -14,8 +14,6 @@ import yaml
 from pony import orm
 from pony.orm import Database, Required, Optional, PrimaryKey, Set, db_session
 
-YAML_VERSION = 0
-
 ### Database definition.
 
 db = Database()
@@ -149,7 +147,7 @@ def parse_yaml(yml):
             raise RuntimeError('Widget data must be numerical')
         qr = widgets[widgets.index.str.contains('qrcode')]
         widgets = widgets[~widgets.index.str.contains('qrcode')]
-        return yml['name'], qr, widgets
+        return version, yml['name'], qr, widgets
     elif version == 1:
 
         def normalize_widgets(wid):
@@ -158,16 +156,16 @@ def parse_yaml(yml):
             # list so we can construct an OrderedDict and preserves the ordering.
             # This is important if we want to re-upload and diff the yaml
             # and there are changes to widget names/data.
-            wid = OrderedDict((w['name'], w['data']) for w in wid)
+            wid = OrderedDict((str(w['name']), w['data']) for w in wid)
             df = pandas.DataFrame(wid).T
             df.index.name = 'name'
             return df
 
         exam_name = yml['name']
         widget_data = yml['widgets']
-        qr = normalize_widgets(filter(lambda d: 'qrcode' in d['name'], widget_data))
-        widgets = normalize_widgets(filter(lambda d: 'qrcode' not in d['name'], widget_data))
-        return exam_name, qr, widgets
+        qr = normalize_widgets(filter(lambda d: 'qrcode' in str(d['name']), widget_data))
+        widgets = normalize_widgets(filter(lambda d: 'qrcode' not in str(d['name']), widget_data))
+        return version, exam_name, qr, widgets
     else:
         raise RuntimeError('Version {} not supported'.format(version))
 
@@ -209,7 +207,7 @@ def get_box(image_array, box, padding):
     return image_array[-top:-bottom, left:right]
 
 
-def extract_qr(image_path, scale_factor=4):
+def extract_qr(image_path, yaml_version, scale_factor=4):
     image = cv2.imread(image_path,
                        cv2.IMREAD_GRAYSCALE)[::scale_factor, ::scale_factor]
     if image.shape[0] < image.shape[1]:
@@ -224,7 +222,7 @@ def extract_qr(image_path, scale_factor=4):
             results = scanner.scan(flipped.astype(np.uint8))
             if results:
                 version, name, page, copy = results[0].data.decode().split(';')
-                if version != 'v{}'.format(YAML_VERSION):
+                if version != 'v{}'.format(yaml_version):
                     raise RuntimeError('Yaml format mismatch')
                 coords = np.array(results[0].position)
                 # zbar doesn't respect array ordering!
@@ -238,7 +236,7 @@ def extract_qr(image_path, scale_factor=4):
         raise RuntimeError("Couldn't extract qr code from " + image_path)
 
 
-def rotate_and_get_offset(image_path, extracted_qr, qr_coords):
+def rotate_and_shift(image_path, extracted_qr, qr_coords):
     _, page, _, position = extracted_qr
     image = cv2.imread(image_path)
 
@@ -251,37 +249,23 @@ def rotate_and_get_offset(image_path, extracted_qr, qr_coords):
     box = dpi * qr_widget[['top', 'bottom', 'left', 'right']].values[0]
     y0, x0 = h - np.mean(box[:2]), np.mean(box[2:])
     y, x = np.mean(position, axis=0)
-    changed = False
     if (x > w / 2) != (x0 > w / 2):
         image = image[:, ::-1]
         x = w - x
-        changed = True
     if (y > h / 2) != (y0 > h / 2):
         image = image[::-1]
         y = h - y
-        changed = True
 
-    if changed:
-        cv2.imwrite(image_path, image)
-    return y-y0, x-x0
+    shift = np.round((y0-y, x0-x)).astype(int)
+    shifted_image = np.roll(image, shift, axis=(0, 1))
+
+    cv2.imwrite(image_path, shifted_image)
 
 
-def mv_and_get_widgets(image_path, qr, offset, widgets_coords, padding=0.3):
-    image = cv2.imread(image_path)
-    offset = np.array(offset)
-    dpi = guess_dpi(image)
-    offset /= dpi
-    name, page, submission, _ = qr
-    extension = image_path[image_path.rfind('.'):]
-    base = os.path.split(image_path)[0]
-    page_widgets = widgets_coords[widgets_coords.page == page].copy()
-    page_widgets[['top', 'bottom']] -= offset[1]
-    page_widgets[['left', 'right']] -= offset[0]
-    for widget in page_widgets.itertuples():
-        box = widget.top, widget.bottom, widget.left, widget.right
-        filename = os.path.join(base, widget.Index + extension)
-        cv2.imwrite(filename, get_box(image, box, padding))
-        yield widget.Index, filename
+def get_widget_image(image_path, widget):
+    box = (widget.top, widget.bottom, widget.left, widget.right)
+    raw_image = get_box(cv2.imread(image_path), box, padding=0.3)
+    return cv2.imencode(".jpg", raw_image)[1].tostring()
 
 
 def get_student_number(image_path):
@@ -379,7 +363,7 @@ def add_participants(students='students.csv', graders='graders.csv'):
 
 def add_exam(yaml_path):
     init_db()
-    exam_name, qr_coords, widget_data = read_yaml(yaml_path)
+    _, exam_name, qr_coords, widget_data = read_yaml(yaml_path)
     data_dir = exam_name + '_data'
     os.makedirs(data_dir, exist_ok=True)
     with orm.db_session:
@@ -399,10 +383,36 @@ def add_exam(yaml_path):
                 FeedbackOption(text=fb, problem=p)
 
 
+def update_exam(exam_name, yaml_path):
+    _, exam_name, _, widgets = read_yaml(yaml_path)
+    new_problem_names = list(name for name in widgets.index
+                             if name != 'studentnr')
+
+    with orm.db_session:
+        exam = Exam.get(name=exam_name)
+        exam.yaml_path = yaml_path
+        problems = list(Problem.select(lambda p: p.exam == exam)
+                               .order_by(lambda p: p.id))
+        for problem, name in zip(problems, new_problem_names):
+            problem.name = name
+
+
+def update_problem_names(exam_name, new_problem_names):
+    with orm.db_session:
+        exam = Exam.get(name=exam_name)
+        problems = list(Problem.select(lambda p: p.exam == exam)
+                               .order_by(lambda p: p.id))
+        if len(new_problem_names) != len(problems):
+            raise ValueError('Number of existing problems and new problem '
+                             'names differ.')
+        for problem, name in zip(problems, new_problem_names):
+            problem.name = str(name)
+
+
 def process_pdf(pdf_path, meta_yaml):
     init_db()
     # read in metadata
-    exam_name, qr_coords, widget_data = read_yaml(meta_yaml)
+    version, exam_name, qr_coords, widget_data = read_yaml(meta_yaml)
     with db_session:
         exam = Exam.get(name=exam_name)
         if not exam:
@@ -416,17 +426,17 @@ def process_pdf(pdf_path, meta_yaml):
                     os.listdir(source_dir))
     images =  [os.path.join(source_dir, image) for image in images]
     # verify that copies are from the same exam
-    extracted_qrs = [extract_qr(image) for image in images]
+    extracted_qrs = [extract_qr(image, version) for image in images]
     if any(qr[0] != exam_name for qr in extracted_qrs):
         for image in images:
             os.remove(image)
         raise RuntimeError('yaml and pdf are from different exams')
 
-    offsets = [rotate_and_get_offset(image, qr, qr_coords)
-               for image, qr in zip(images, extracted_qrs)]
+    for image, qr in zip(images, extracted_qrs):
+        rotate_and_shift(image, qr, qr_coords)
 
 
-    for image, qr_data, offset in zip(images, extracted_qrs, offsets):
+    for image, qr_data in zip(images, extracted_qrs):
         sub_nr = qr_data.sub_nr
         with db_session:
             exam = Exam.get(name=exam_name)
@@ -440,10 +450,9 @@ def process_pdf(pdf_path, meta_yaml):
                                                 + extension)
             os.rename(image, target_image)
             Page(path=target_image, submission=sub)
-            for problem, fname in mv_and_get_widgets(target_image, qr_data,
-                                                     offset, widget_data):
+            for problem in widget_data[widget_data.page == qr_data.page].index:
                 if problem == 'studentnr':
-                    sub.signature_image_path = fname
+                    sub.signature_image_path = 'None'
                     try:
                         number = get_student_number(fname)
                         sub.student = Student.get(id=int(number))
@@ -453,9 +462,9 @@ def process_pdf(pdf_path, meta_yaml):
                     prob = Problem.get(name=problem, exam=exam)
                     sol = Solution.get(problem=prob, submission=sub)
                     if sol:
-                        sol.image_path = fname
+                        sol.image_path = 'None'
                     else:
-                        Solution(problem=prob, submission=sub, image_path=fname)
+                        Solution(problem=prob, submission=sub, image_path='None')
 
 
 def do_everything(scanned_pdf, meta_yaml, students='students.csv',

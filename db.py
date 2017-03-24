@@ -14,8 +14,6 @@ import yaml
 from pony import orm
 from pony.orm import Database, Required, Optional, PrimaryKey, Set, db_session
 
-YAML_VERSION = 0
-
 ### Database definition.
 
 db = Database()
@@ -209,7 +207,7 @@ def get_box(image_array, box, padding):
     return image_array[-top:-bottom, left:right]
 
 
-def extract_qr(image_path, scale_factor=4):
+def extract_qr(image_path, yaml_version, scale_factor=4):
     image = cv2.imread(image_path,
                        cv2.IMREAD_GRAYSCALE)[::scale_factor, ::scale_factor]
     if image.shape[0] < image.shape[1]:
@@ -224,7 +222,7 @@ def extract_qr(image_path, scale_factor=4):
             results = scanner.scan(flipped.astype(np.uint8))
             if results:
                 version, name, page, copy = results[0].data.decode().split(';')
-                if version != 'v{}'.format(YAML_VERSION):
+                if version != 'v{}'.format(yaml_version):
                     raise RuntimeError('Yaml format mismatch')
                 coords = np.array(results[0].position)
                 # zbar doesn't respect array ordering!
@@ -428,7 +426,7 @@ def process_pdf(pdf_path, meta_yaml):
                     os.listdir(source_dir))
     images =  [os.path.join(source_dir, image) for image in images]
     # verify that copies are from the same exam
-    extracted_qrs = [extract_qr(image) for image in images]
+    extracted_qrs = [extract_qr(image, version) for image in images]
     if any(qr[0] != exam_name for qr in extracted_qrs):
         for image in images:
             os.remove(image)

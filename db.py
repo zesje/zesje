@@ -32,6 +32,7 @@ class Student(db.Entity):
 class Grader(db.Entity):
     first_name = Required(str)
     last_name = Required(str)
+    # email = Optional(str)
     graded_solutions = Set('Solution')
 
 

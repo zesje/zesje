@@ -14,10 +14,10 @@ class AppModel(traitlets.HasTraits):
     # Immutable
     students = traitlets.List(traitlets.Unicode(), read_only=True)
     graders = traitlets.List(traitlets.Unicode(), read_only=True)
-    exams = traitlets.List(traitlets.Unicode(), read_only=True)
+    exams = traitlets.List(read_only=True)
 
     exam_id = traitlets.Integer()
-    problems = traitlets.List(traitlets.Unicode())
+    problems = traitlets.List()
 
     submission_id = traitlets.Integer()
     student = traitlets.Unicode()
@@ -66,14 +66,14 @@ class AppModel(traitlets.HasTraits):
             problems = (orm.select(p for p in db.Problem
                                    if p.exam.id == self.exam_id)
                            .order_by(lambda p: p.id))
-            return list(p.name for p in problems)
+            return list((p.name, p.id) for p in problems)
 
     ## exams
     @traitlets.default('exams')
     def _default_exams(self):
         with orm.db_session:
             exams = orm.select(e for e in db.Exam).order_by(lambda e: e.id)
-            return list(e.name for e in exams)
+            return [(e.name, e.id) for e in exams]
 
     ## exam_id
     @traitlets.default('exam_id')
@@ -374,34 +374,6 @@ class AppModel(traitlets.HasTraits):
             return
 
         self.submission_id = sub_id
-
-    def problem_to_id(self, problem_name):
-        with orm.db_session:
-            problem = db.Problem.get(exam=self.exam_id, name=problem_name)
-            problem_id = problem.id if problem else None
-        if problem_id is None:
-            problem_id = self.problem_id
-
-        return problem_id
-
-    def problem(self):
-        with orm.db_session:
-            problem = db.Problem[self.problem_id]
-            return problem.name
-
-
-    def exam_to_id(self, exam_name):
-        with orm.db_session:
-            exam = db.Exam.get(name=exam_name)
-            if not exam:
-                raise ValueError('No exam {}'.format(exam_name))
-            return exam.id
-
-    def id_to_exam(self, exam_id=None):
-        if exam_id is None:
-            exam_id = self.exam_id
-        with orm.db_session:
-            return db.Exam[exam_id].name
 
     # --- Other methods
     def num_submissions(self, exam_id):

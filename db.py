@@ -177,11 +177,9 @@ def read_yaml(filename):
 
 
 def guess_dpi(image_array):
-    h, w, *_ = image_array.shape
-    dpi = np.round(np.array([h, w]) / (297, 210) * 25.4, -1)
-    if dpi[0] != dpi[1]:
-        raise ValueError("The image doesn't appear to be A4.")
-    return dpi[0]
+    h, *_ = image_array.shape
+    resolutions = np.array(1200, 600, 300, 200, 150, 120, 100, 75, 60, 50, 40)
+    return resolutions[np.argmin(abs(resolutions - 25.4 * h / 297))]
 
 
 def get_box(image_array, box, padding):

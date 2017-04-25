@@ -232,7 +232,7 @@ def extract_qr(image_path, yaml_version, scale_factor=4):
                 coords *= scale_factor
                 return ExtractedQR(name, int(page), int(copy), coords)
     else:
-        raise RuntimeError("Couldn't extract qr code from " + image_path)
+        return None
 
 
 def rotate_and_shift(image_path, extracted_qr, qr_coords):
@@ -410,6 +410,10 @@ def update_problem_names(exam_name, new_problem_names):
 
 
 def process_pdf(pdf_path, meta_yaml):
+    """Add all information from a pdf to the app (database + file storage).
+
+    Returns the indices of pages that couldn't be processed.
+    """
     init_db()
     # read in metadata
     version, exam_name, qr_coords, widget_data = read_yaml(meta_yaml)
@@ -422,21 +426,28 @@ def process_pdf(pdf_path, meta_yaml):
     source_dir, pdf_filename = os.path.split(pdf_path)
     ## shutil.copy(pdf_path, source_dir)
     pdf_to_images(os.path.join(source_dir, pdf_filename))
-    images = filter((lambda name: name.endswith('.jpg')),
+    images = filter((lambda name: name.endswith('.jpg')
+                                  and name.startswith(pdf_filename[:-4])),
                     os.listdir(source_dir))
-    images =  [os.path.join(source_dir, image) for image in images]
+    images =  sorted(os.path.join(source_dir, image) for image in images)
     # verify that copies are from the same exam
     extracted_qrs = [extract_qr(image, version) for image in images]
-    if any(qr[0] != exam_name for qr in extracted_qrs):
+    if any(qr[0] != exam_name for qr in extracted_qrs if qr is not None):
         for image in images:
             os.remove(image)
         raise RuntimeError('yaml and pdf are from different exams')
 
+    no_qrs = []
     for image, qr in zip(images, extracted_qrs):
-        rotate_and_shift(image, qr, qr_coords)
-
+        if qr is None:
+            # Extract the page number using the naming scheme of pdfimages.
+            no_qrs.append(int(image[image.rfind('-') + 1 : -len('.jpg')]) + 1)
+        else:
+            rotate_and_shift(image, qr, qr_coords)
 
     for image, qr_data in zip(images, extracted_qrs):
+        if qr_data is None:
+            continue
         sub_nr = qr_data.sub_nr
         with db_session:
             exam = Exam.get(name=exam_name)
@@ -464,7 +475,10 @@ def process_pdf(pdf_path, meta_yaml):
                     if sol:
                         sol.image_path = 'None'
                     else:
-                        Solution(problem=prob, submission=sub, image_path='None')
+                        Solution(problem=prob, submission=sub,
+                                 image_path='None')
+
+    return no_qrs
 
 
 def do_everything(scanned_pdf, meta_yaml, students='students.csv',

@@ -268,13 +268,15 @@ def get_widget_image(image_path, widget):
     return cv2.imencode(".jpg", raw_image)[1].tostring()
 
 
-def get_student_number(image_path):
+def get_student_number(image_path, widget):
     """Extract the student number from the image path with the scanned number.
 
     TODO: all the numerical parameters are guessed and work well on the first
     exam.  Yet, they should be inferred from the scans.
     """
     image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
+    box = (widget.top, widget.bottom, widget.left, widget.right)
+    image = get_box(image, box, padding=0.3)
     _, thresholded = cv2.threshold(image, 150, 255, cv2.THRESH_BINARY)
     thresholded = cv2.bitwise_not(thresholded)
 
@@ -461,11 +463,13 @@ def process_pdf(pdf_path, meta_yaml):
                                                 + extension)
             os.rename(image, target_image)
             Page(path=target_image, submission=sub)
-            for problem in widget_data[widget_data.page == qr_data.page].index:
+            widgets_on_page = widget_data[widget_data.page == qr_data.page]
+            for problem in widgets_on_page.index:
                 if problem == 'studentnr':
                     sub.signature_image_path = 'None'
                     try:
-                        number = get_student_number(fname)
+                        number_widget = widgets_on_page.loc['studentnr']
+                        number = get_student_number(target_image, number_widget)
                         sub.student = Student.get(id=int(number))
                     except Exception:
                         pass  # could not extract student name

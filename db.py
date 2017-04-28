@@ -462,7 +462,11 @@ def process_pdf(pdf_path, meta_yaml):
             target_image = os.path.join(target, 'page' + str(qr_data.page)
                                                 + extension)
             os.rename(image, target_image)
-            Page(path=target_image, submission=sub)
+            # We may have added this page in previous uploads; the above
+            # 'rename' then overwrites the previosly uploaded page, but
+            # we only want a single 'Page' entry.
+            if Page.get(path=target_image, submission=sub) is None:
+                Page(path=target_image, submission=sub)
             widgets_on_page = widget_data[widget_data.page == qr_data.page]
             for problem in widgets_on_page.index:
                 if problem == 'studentnr':

@@ -51,7 +51,7 @@ default_template.trim_blocks = default_template.lstrip_blocks = True
 messages = []
 def form_email(submission_id, template=None, attach=True,
                text_only=True, subject='Your results',
-               email_from='no-reply@solidstate.tudelft.nl'):
+               email_from='no-reply@tudelft.nl'):
     if template is None:
         template = default_template
     else:

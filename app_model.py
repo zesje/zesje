@@ -332,7 +332,7 @@ class AppModel(traitlets.HasTraits):
             subs = orm.select(s.id for s in db.Submission
                               if s.exam.id == self.exam_id
                                  and s.id > self.submission_id)
-            result = subs.order_by(lambda x: x).first()
+            result = subs.order_by(lambda x: (x.student, x)).first()
             if result is None:
                 self.submission_id = self._default_submission_id()
             else:
@@ -344,11 +344,13 @@ class AppModel(traitlets.HasTraits):
                               if s.exam.id == self.exam_id
                                  and s.id < self.submission_id)
 
-            result = subs.order_by(lambda x: -x).first()
+            result = subs.order_by(lambda x: (orm.desc(x.student),
+                                              orm.desc(x))).first()
             if result is None:
                 subs = orm.select(s.id for s in db.Submission
                                   if s.exam.id == self.exam_id)
-                result = subs.order_by(lambda x: -x).first()
+                result = subs.order_by(lambda x: (orm.desc(x.student),
+                                                  orm.desc(x))).first()
 
             self.submission_id = result
 
@@ -357,7 +359,8 @@ class AppModel(traitlets.HasTraits):
             all_ungraded = orm.select(s.submission.id for s in db.Solution
                                       if s.submission.exam.id == self.exam_id
                                       and s.problem.id == self.problem_id
-                                      and s.graded_at is None).order_by(lambda x: x)[:]
+                                      and s.graded_at is None).order_by(lambda
+                                                                        x: x)[:]
 
             for filt in (lambda s: s > self.submission_id, lambda s: True):
                 try:
@@ -368,7 +371,8 @@ class AppModel(traitlets.HasTraits):
 
     def jump_to_student(self, nr):
         with orm.db_session:
-            sub = db.Submission.get(exam=self.exam_id, student=nr)
+            sub = db.Submission.select(lambda s: s.exam.id==self.exam_id
+                                               and s.student.id==nr).first()
             sub_id = sub.id if sub else None
         if sub_id is None:
             return

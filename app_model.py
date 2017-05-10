@@ -333,30 +333,44 @@ class AppModel(traitlets.HasTraits):
     # --- Navigation
     def next_submission(self):
         with orm.db_session:
-            own_key = submission_to_key(db.Submission[self.submission_id])
-            subs = orm.select(s for s in db.Submission
-                              if s.exam.id == self.exam_id
-                                 and submission_to_key(s) > own_key)
-            result = subs.order_by(submission_to_key).first()
+            own_sub = db.Submission[self.submission_id]
+            own_key = (own_sub, own_sub.student)
+            # Note the "wrong" ordering in the second filter.
+            # It appears, there's a bug in pony that translates tuple
+            # comparison incorrectly
+            subs = (db.Submission.select()
+                      .filter(lambda s: s.exam.id == self.exam_id)
+                      .filter(lambda s: (s, s.student) > own_key)
+                      .order_by(lambda s: (s.student, s)))
+            result = subs.first()
             if result is None:
-                self.submission_id = self._default_submission_id()
-            else:
-                self.submission_id = result.id
+                subs = (db.Submission.select()
+                          .filter(lambda s: s.exam.id == self.exam_id)
+                          .order_by(lambda s: (s.student, s)))
+                result = subs.first()
+
+            self.submission_id = result.id
 
     def previous_submission(self):
         with orm.db_session:
-            own_key = submission_to_key(db.Submission[self.submission_id])
-            subs = orm.select(s for s in db.Submission
-                              if s.exam.id == self.exam_id
-                                 and submission_to_key(s) < own_key)
-
-            result = subs.order_by(lambda x: (orm.desc(x.student),
-                                              orm.desc(x))).first()
+            own_sub = db.Submission[self.submission_id]
+            own_key = (own_sub, own_sub.student)
+            # Note the "wrong" ordering in the second filter.
+            # It appears, there's a bug in pony that translates tuple
+            # comparison incorrectly
+            subs = (db.Submission
+                      .select()
+                      .filter(lambda s: s.exam.id == self.exam_id)
+                      .filter(lambda s: (s, s.student) < own_key)
+                      .order_by(lambda s: (orm.desc(s.student), orm.desc(s))))
+            result = subs.first()
             if result is None:
-                subs = orm.select(s for s in db.Submission
-                                  if s.exam.id == self.exam_id)
-                result = subs.order_by(lambda x: (orm.desc(x.student),
-                                                  orm.desc(x))).first()
+                subs = (db.Submission
+                          .select()
+                          .filter(lambda s: s.exam.id == self.exam_id)
+                          .order_by(lambda s: (orm.desc(s.student),
+                                               orm.desc(s))))
+                result = subs.first()
 
             self.submission_id = result.id
 

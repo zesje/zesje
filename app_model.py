@@ -4,10 +4,14 @@ import datetime
 
 import traitlets
 from pony import orm
-import yaml
 
 import db
 db.use_db('course.sqlite')
+
+
+def submission_to_key(sub):
+    stud = None if sub.student is None else sub.student.id
+    return (stud, sub.id)
 
 
 class AppModel(traitlets.HasTraits):
@@ -329,30 +333,32 @@ class AppModel(traitlets.HasTraits):
     # --- Navigation
     def next_submission(self):
         with orm.db_session:
-            subs = orm.select(s.id for s in db.Submission
+            own_key = submission_to_key(db.Submission[self.submission_id])
+            subs = orm.select(s for s in db.Submission
                               if s.exam.id == self.exam_id
-                                 and s.id > self.submission_id)
-            result = subs.order_by(lambda x: (x.student, x)).first()
+                                 and submission_to_key(s) > own_key)
+            result = subs.order_by(submission_to_key).first()
             if result is None:
                 self.submission_id = self._default_submission_id()
             else:
-                self.submission_id = result
+                self.submission_id = result.id
 
     def previous_submission(self):
         with orm.db_session:
-            subs = orm.select(s.id for s in db.Submission
+            own_key = submission_to_key(db.Submission[self.submission_id])
+            subs = orm.select(s for s in db.Submission
                               if s.exam.id == self.exam_id
-                                 and s.id < self.submission_id)
+                                 and submission_to_key(s) < own_key)
 
             result = subs.order_by(lambda x: (orm.desc(x.student),
                                               orm.desc(x))).first()
             if result is None:
-                subs = orm.select(s.id for s in db.Submission
+                subs = orm.select(s for s in db.Submission
                                   if s.exam.id == self.exam_id)
                 result = subs.order_by(lambda x: (orm.desc(x.student),
                                                   orm.desc(x))).first()
 
-            self.submission_id = result
+            self.submission_id = result.id
 
     def next_ungraded(self):
         with orm.db_session:

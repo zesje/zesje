@@ -187,10 +187,6 @@ class AppModel(traitlets.HasTraits):
                 return ''
             return sol.remarks or ''
 
-    @traitlets.validate('remarks')
-    def _validate_remarks(self, proposal):
-        return proposal['value'].strip()
-
     ## student
     @traitlets.default('student')
     def _default_student(self):
@@ -252,7 +248,7 @@ class AppModel(traitlets.HasTraits):
             solution = db.Solution.get(submission=submission_id,
                                        problem=problem_id)
             old_feedback = set(fb.text for fb in solution.feedback)
-            old_remarks = solution.remarks
+            old_remarks = solution.remarks.strip()
             # Check if anything changed -- if not don't save anything
             if (set(self.selected_feedback) == old_feedback
                     and self.remarks == old_remarks):

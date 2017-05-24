@@ -98,8 +98,8 @@ def send(messages, recipients=None):
     with smtplib.SMTP('dutmail.tudelft.nl', 25) as s:
         for number, msg in enumerate(messages):
             to = recipients or [msg['To']]
-            if to is None:
-                failed.append(number)
-            else:
+            try:
                 s.sendmail('noreply@tudelft.nl', to, msg.as_string())
+            except smtplib.SMTPException:
+                failed.append(number)
     return failed

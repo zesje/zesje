@@ -268,6 +268,47 @@ def get_widget_image(image_path, widget):
     return cv2.imencode(".jpg", raw_image)[1].tostring()
 
 
+def solution_data(exam_id, student_id):
+    """Return Python datastructures corresponding to the student submission."""
+    with orm.db_session:
+        exam = Exam[exam_id]
+        student = Student[student_id]
+        if any(i is None for i in (exam, student)):
+            raise RuntimeError('Student did not make a '
+                               'submission for this exam')
+
+        results = []
+        for problem in exam.problems:
+            problem_data = {
+                'name': problem.name,
+                'max_score': orm.max(problem.feedback_options.score, default=0)
+            }
+            solutions = Solution.select(lambda s: s.problem == problem
+                                        and s.submission.student == student)
+            problem_data['feedback'] = [
+                {'short': fo.text,
+                 'score': fo.score,
+                 'description': fo.description}
+                for solution in solutions for fo in solution.feedback
+            ]
+            problem_data['score'] = sum(i['score'] or 0
+                                        for i in problem_data['feedback'])
+            problem_data['remarks'] = '\n\n'.join(sol.remarks
+                                                  for sol in solutions
+                                                  if sol.remarks)
+            results.append(problem_data)
+
+        pages = Page.select(lambda p: p.submission.exam == exam
+                            and p.submission.student == student)
+        # 'set' invokation is a hotfix for issue #50
+        paths = sorted(set(page.path for page in pages))
+
+        student = student.to_dict()
+
+    student['total'] = sum(i['score'] for i in results)
+    return student, results, paths
+
+
 def get_student_number(image_path, widget):
     """Extract the student number from the image path with the scanned number.
 

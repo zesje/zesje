@@ -49,32 +49,15 @@ Solid state course team.
 default_template.trim_blocks = default_template.lstrip_blocks = True
 
 messages = []
-def form_email(submission_id, template=None, attach=True,
+def form_email(exam_id, student_id, template=None, attach=True,
                text_only=True, subject='Your results',
                email_from='no-reply@tudelft.nl'):
     if template is None:
         template = default_template
     else:
         template = jinja2.Template(template)
-    with orm.db_session:
-        sub = db.Submission[submission_id]
-        filename = '{}.pdf'.format(sub.student.id)
-        pages = sorted(set(sub.pages.path))  # Hotfix for issue 50.
-        results = [
-         {'name': i.problem.name,
-          'score': orm.sum(i.feedback.score),
-          'max_score' : orm.max(i.problem.feedback_options.score, default=0),
-          'feedback': [{'short': fo.text,
-                        'score': fo.score,
-                        'description': fo.description} for fo in i.feedback],
-          'remarks': i.remarks,
-         } for i in sub.solutions]
 
-        student = sub.student.to_dict()
-        email = sub.student.email
-
-    student['total'] = sum(i['score'] for i in results)
-
+    student, results, pages = db.solution_data(exam_id, student_id)
     text = template.render(student=student, results=results)
     if text_only:
         return text
@@ -82,11 +65,12 @@ def form_email(submission_id, template=None, attach=True,
     msg = MIMEMultipart()
     msg['Subject'] = subject
     msg['From'] = email_from
-    msg['To'] = email
+    msg['To'] = student['email']
     msg['Reply-to'] = email_from
     msg.attach(MIMEText(text, 'plain'))
 
     if attach:
+        filename = str(student_id) + '.pdf'
         subprocess.call(['convert', *pages, filename])
         ctype, encoding = mimetypes.guess_type(filename)
         if ctype is None or encoding is not None:
@@ -105,7 +89,17 @@ def form_email(submission_id, template=None, attach=True,
 
 
 def send(messages, recipients=None):
+    """Send a list of messages.
+
+    returns the sequential numbers of messages that were not sent due to
+    missing recipient email.
+    """
+    failed = []
     with smtplib.SMTP('dutmail.tudelft.nl', 25) as s:
         for number, msg in enumerate(messages):
             to = recipients or [msg['To']]
-            s.sendmail('noreply@tudelft.nl', to, msg.as_string())
+            if to is None:
+                failed.append(number)
+            else:
+                s.sendmail('noreply@tudelft.nl', to, msg.as_string())
+    return failed

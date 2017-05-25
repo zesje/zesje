@@ -15,7 +15,7 @@ RUN /root/miniconda3/bin/conda config --system --add channels conda-forge && \
     # our widgets depend on this
     ipywidgets==5.2.2 \
     widgetsnbextension==1.2.6\
-    pony opencv pillow notebook jupyter_kernel_gateway pyyaml pandas
+    pony opencv pillow notebook jupyter_kernel_gateway pyyaml pandas openpyxl
 RUN /root/miniconda3/bin/pip install zbar-py
 RUN npm install jupyter-dashboards-server
 RUN sed -i'' "s/body {/body { min-height: 100vh;/" /node_modules/jupyter-dashboards-server/public/css/style.css

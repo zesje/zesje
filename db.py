@@ -1,6 +1,6 @@
 import os
 from datetime import datetime
-from collections import namedtuple, OrderedDict
+from collections import namedtuple, OrderedDict, ChainMap
 import itertools
 import subprocess
 import argparse
@@ -278,7 +278,10 @@ def solution_data(exam_id, student_id):
                                'submission for this exam')
 
         results = []
-        for problem in exam.problems:
+        for problem in exam.problems.order_by(Problem.id):
+            if not orm.count(problem.solutions.feedback):
+                # Nobody received any grade for this problem
+                continue
             problem_data = {
                 'name': problem.name,
                 'max_score': orm.max(problem.feedback_options.score, default=0)
@@ -307,6 +310,33 @@ def solution_data(exam_id, student_id):
 
     student['total'] = sum(i['score'] for i in results)
     return student, results, paths
+
+
+def full_exam_data(exam_id):
+    """Export all grades of an exam as a pandas DataFrame."""
+    with orm.db_session:
+        students = sorted(Exam[exam_id].submissions.student.id)
+
+        data = [solution_data(exam_id, student_id)
+                for student_id in students]
+
+    students = pandas.DataFrame({i[0]['id']: i[0] for i in data}).T
+    del students['id']
+
+    results = {}
+    for result in data:
+        for problem in result[1]:
+            name = problem.pop('name')
+            problem[(name, 'remarks')] = problem.pop('remarks')
+            for fo in problem.pop('feedback'):
+                problem[(name, fo['short'])] = fo['score']
+            problem[(name, 'total')] = problem.pop('score')
+            problem.pop('max_score')
+        results[result[0]['id']] = dict(ChainMap({('total', 'total'):
+                                                  result[0]['total']},
+                                                 *result[1]))
+
+    return pandas.DataFrame(results).T
 
 
 def get_student_number(image_path, widget):

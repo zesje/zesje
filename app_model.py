@@ -33,14 +33,14 @@ class AppModel(traitlets.HasTraits):
     problem_id = traitlets.Integer()
     n_solutions = traitlets.Integer()
     n_graded = traitlets.Integer()
-    feedback_options = traitlets.List(trait=traitlets.Unicode())
+    feedback_options = traitlets.List()
 
-    selected_feedback = traitlets.List(trait=traitlets.Unicode())
+    selected_feedback = traitlets.List(trait=traitlets.Integer())
     remarks = traitlets.Unicode()
 
     show_full_page = traitlets.Bool(default_value=False)
 
-    edited_feedback_option = traitlets.Unicode()
+    edited_feedback_option = traitlets.Integer()
     edited_feedback_name = traitlets.Unicode()
     edited_score = traitlets.Integer()
     edited_description = traitlets.Unicode()
@@ -134,14 +134,14 @@ class AppModel(traitlets.HasTraits):
     @traitlets.default('n_solutions')
     def _default_n_solutions(self):
         with orm.db_session:
-            return orm.count(s for s in db.Solution if s.problem.id == self.problem_id)
+            return orm.count(s for s in db.Problem[self.problem_id].solutions)
 
     ## n_graded
     @traitlets.default('n_solutions')
     def _default_n_graded(self):
         with orm.db_session:
-            return orm.count(s for s in db.Solution if s.problem.id == self.problem_id
-                                                       and s.graded_at is not None)
+            return orm.count(s for s in db.Problem[self.problem_id].solutions
+                             if s.graded_at is not None)
 
     ## grader_id
     @traitlets.validate('grader_id')
@@ -158,31 +158,32 @@ class AppModel(traitlets.HasTraits):
     ## feedback_options
     @traitlets.default('feedback_options')
     def _default_feedback_options(self):
+        def formatted(fo):
+            text = fo.text + ' ({})'.format(fo.score) * (fo.score is not None)
+            return text, fo.id
+
         with orm.db_session:
-            return list(orm.select(f.text for f in db.FeedbackOption
-                                   if f.problem.id == self.problem_id).order_by('f.id'))
+            fo = (db.Problem[self.problem_id]
+                    .feedback_options
+                    .order_by(lambda f: f.id))
+            return list(formatted(f) for f in fo)
 
     ## selected_feedback
     @traitlets.default('selected_feedback')
     def _default_selected_feedback(self):
         with orm.db_session:
-            sol = db.Solution.get(submission=self.submission_id, problem=self.problem_id)
+            sol = db.Solution.get(submission=self.submission_id,
+                                  problem=self.problem_id)
             if sol is None:
                 return []
-            return [f.text for f in sol.feedback]
-
-    @traitlets.validate('selected_feedback')
-    def _validate_selected_feedback(self, proposal):
-        for fb in proposal['value']:
-            if fb not in self.feedback_options:
-                raise traitlets.TraitError('Selected feedback not in feedback options')
-        return proposal['value']
+            return [f.id for f in sol.feedback]
 
     ## remarks
     @traitlets.default('remarks')
     def _default_remarks(self):
         with orm.db_session:
-            sol = db.Solution.get(submission=self.submission_id, problem=self.problem_id)
+            sol = db.Solution.get(submission=self.submission_id,
+                                  problem=self.problem_id)
             if sol is None:
                 return ''
             return sol.remarks or ''
@@ -216,16 +217,17 @@ class AppModel(traitlets.HasTraits):
 
     @traitlets.observe('edited_feedback_option')
     def _update_edited_option(self, change):
-        if self.edited_feedback_option == 'ADD NEW':
+        if self.edited_feedback_option:
+            with orm.db_session:
+                fo = db.FeedbackOption[self.edited_feedback_option]
+                assert fo.problem.id == self.problem_id
+                self.edited_feedback_name = fo.text or ''
+                self.edited_description = fo.description or ''
+                self.edited_score = fo.score or 0
+        else:
             self.edited_feedback_name = ''
             self.edited_score = 0
             self.edited_description = ''
-        else:
-            with orm.db_session:
-                fo = db.FeedbackOption.get(text=self.edited_feedback_option,
-                                           problem=db.Problem[self.problem_id])
-                self.edited_description = fo.description or ''
-                self.edited_score = fo.score or 0
 
     # --- Writing into database ---
     def commit_grading(self, submission_id=None, problem_id=None):
@@ -247,18 +249,16 @@ class AppModel(traitlets.HasTraits):
         with orm.db_session:
             solution = db.Solution.get(submission=submission_id,
                                        problem=problem_id)
-            old_feedback = set(fb.text for fb in solution.feedback)
-            old_remarks = solution.remarks.strip()
+            old_feedback = set(fb.id for fb in solution.feedback)
+            old_remarks = solution.remarks
             # Check if anything changed -- if not don't save anything
             if (set(self.selected_feedback) == old_feedback
-                    and self.remarks == old_remarks):
+                    and self.remarks.strip() == old_remarks):
                 return
 
             # Otherwise, save everything
-            solution.feedback = orm.select(fb for fb in db.FeedbackOption if
-                                           fb.text in self.selected_feedback
-                                           and fb.problem.id == problem_id)[:]
-            assert len(solution.feedback) == len(self.selected_feedback)
+            solution.feedback = [db.FeedbackOption[i] for i
+                                 in self.selected_feedback]
             solution.remarks = self.remarks
             if len(solution.feedback):
                 solution.graded_by = db.Grader[self.grader_id]
@@ -271,52 +271,51 @@ class AppModel(traitlets.HasTraits):
         self.edited_feedback_name = self.edited_feedback_name.strip()
         if not self.edited_feedback_name:
             return
-        if self.edited_feedback_name != self.edited_feedback_option:
-            # Check if we might create a collision.
+        with orm.db_session:
+            # Check if we create a collision.
             # TODO: reflect a noop in UI via a Valid widget
-            with orm.db_session:
-                if db.FeedbackOption.get(text=self.edited_feedback_name,
-                                         problem=self.problem_id) is not None:
-                    self.edited_feedback_option = "ADD NEW"
-                    self.edited_feedback_name = ''
-                    return
+            if self.edited_feedback_option:
+                orig_text = db.FeedbackOption[self.edited_feedback_option].text
+            else:
+                orig_text = None
+            if (self.edited_feedback_name != orig_text
+                    and db.FeedbackOption.get(text=self.edited_feedback_name,
+                                              problem=self.problem_id)
+                        is not None):
+                self.edited_feedback_option = 0
+                return
         description = self.edited_description.strip()
         score = self.edited_score
 
-        if self.edited_feedback_option == "ADD NEW":
+        if not self.edited_feedback_option:
             with orm.db_session:
-                db.FeedbackOption(text=self.edited_feedback_name,
-                                  problem=db.Problem[self.problem_id])
-            self.feedback_options = []  # hack to fix bug in ipywidgets
-            self.feedback_options = self._default_feedback_options()
-            self.selected_feedback = self._default_selected_feedback()
-            option = self.edited_feedback_name
+                fo = db.FeedbackOption(text=self.edited_feedback_name,
+                                       problem=db.Problem[self.problem_id])
+            option = fo.id
         else:
             option = self.edited_feedback_option
 
         # Set the details in the database.
         with orm.db_session:
-            fo = db.FeedbackOption.get(text=option,
-                                       problem=db.Problem[self.problem_id])
+            fo = db.FeedbackOption[option]
             fo.text = self.edited_feedback_name.strip()
             fo.description = description
             fo.score = score
 
-        new_name = self.edited_feedback_name
         self.feedback_options = []  # hack to fix bug in ipywidgets
         self.feedback_options = self._default_feedback_options()
         self.selected_feedback = self._default_selected_feedback()
-        self.edited_feedback_option = new_name
+        self.edited_feedback_option = option
 
     def delete_feedback_option(self, *_):
         value = self.edited_feedback_option
-        if value == "ADD NEW":
+        if not value:
             return
 
         with orm.db_session:
-            db.FeedbackOption.get(text=value,
-                                  problem=db.Problem[self.problem_id]).delete()
-            # Some solutions may become ungraded. We should reflect that in the UI
+            db.FeedbackOption[value].delete()
+            # Some solutions may become ungraded.
+            # We should reflect that in the UI
             for solution in db.Solution.select(lambda s:
                                                s.problem.id == self.problem_id
                                                and not s.feedback):

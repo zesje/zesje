@@ -17,7 +17,7 @@ def submission_to_key(sub):
 class AppModel(traitlets.HasTraits):
     # Immutable
     students = traitlets.List(traitlets.Unicode(), read_only=True)
-    graders = traitlets.List(traitlets.Unicode(), read_only=True)
+    graders = traitlets.List(read_only=True)
     exams = traitlets.List(read_only=True)
 
     exam_id = traitlets.Integer()
@@ -58,10 +58,10 @@ class AppModel(traitlets.HasTraits):
     @traitlets.default('graders')
     def _default_graders(self):
         with orm.db_session:
-            graders = list(map('{0.first_name} {0.last_name}'.format,
-                               orm.select(g for g in db.Grader)
-                                  .order_by(lambda g: g.id)))
-        return ["None"] + graders
+            graders = [(f'{g.first_name} {g.last_name}', g.id)
+                       for g in orm.select(g for g in db.Grader)
+                                   .order_by(lambda g: g.id)]
+        return [("None", 0)] + graders
 
     ## problems
     @traitlets.default('problems')
@@ -117,8 +117,9 @@ class AppModel(traitlets.HasTraits):
     @traitlets.default('problem_id')
     def _default_problem_id(self):
         with orm.db_session:
-            return orm.select(p.id for p in db.Problem
-                              if p.exam == db.Exam[self.exam_id]).order_by(lambda x:x).first()
+            return (orm.select(p.id for p in db.Problem
+                               if p.exam == db.Exam[self.exam_id])
+                    .order_by(lambda x:x).first())
 
     @traitlets.validate('problem_id')
     def _valid_problem_id(self, proposal):
@@ -159,7 +160,7 @@ class AppModel(traitlets.HasTraits):
     @traitlets.default('feedback_options')
     def _default_feedback_options(self):
         def formatted(fo):
-            text = fo.text + ' ({})'.format(fo.score) * (fo.score is not None)
+            text = fo.text + f' ({fo.score})' * (fo.score is not None)
             return text, fo.id
 
         with orm.db_session:
@@ -196,8 +197,7 @@ class AppModel(traitlets.HasTraits):
             if student is None:
                 return "MISSING"
             else:
-                return "{} ({}, {})".format(student.id, student.first_name,
-                                            student.last_name)
+                return f"{student.id} ({student.first_name} {student.last_name})"
 
     # --- Relations between traits ---
     @traitlets.observe('exam_id')
@@ -421,7 +421,7 @@ class AppModel(traitlets.HasTraits):
                 # Eventually the database should be restructured to make
                 # this easier.
                 page_image_path = (s.submission.pages
-                                    .select(lambda p: 'page{}'.format(page)
+                                    .select(lambda p: f'page{page}'
                                             in p.path)
                                     .first().path)
                 if self.show_full_page:
@@ -431,25 +431,15 @@ class AppModel(traitlets.HasTraits):
                     with open(s.image_path, 'rb') as f:
                         image = f.read()
                 else:
-                    image = db.get_widget_image(page_image_path, problem_metadata)
+                    image = db.get_widget_image(page_image_path,
+                                                problem_metadata)
 
                 graded_at = s.graded_at
 
                 if s.graded_by:
-                    grader_name =  ('{0.first_name} '
-                                    '{0.last_name}').format(s.graded_by)
+                    grader_name =  (f'{s.graded_by.first_name} '
+                                    f'{s.graded_by.last_name}')
             return image, (grader_name, graded_at)
-
-    def set_grader(self, name):
-        if not name:
-            self.grader_id = 0
-        else:
-            first, *last = name.split()
-            last = ' '.join(last)
-            with orm.db_session:
-                grader = db.Grader.get(first_name=first, last_name=last)
-                grader_id = grader.id if grader else 0
-            self.grader_id = grader_id
 
     def exam_metadata(self):
         with orm.db_session:

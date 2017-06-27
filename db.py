@@ -501,7 +501,7 @@ def process_pdf(pdf_path, meta_yaml):
     source_dir, pdf_filename = os.path.split(pdf_path)
     ## shutil.copy(pdf_path, source_dir)
     pdf_to_images(os.path.join(source_dir, pdf_filename))
-    images = filter((lambda name: name.endswith('.jpg')
+    images = filter((lambda name: (not name.endswith('.pdf'))
                                   and name.startswith(pdf_filename[:-4])),
                     os.listdir(source_dir))
     images =  sorted(os.path.join(source_dir, image) for image in images)
@@ -516,7 +516,8 @@ def process_pdf(pdf_path, meta_yaml):
     for image, qr in zip(images, extracted_qrs):
         if qr is None:
             # Extract the page number using the naming scheme of pdfimages.
-            no_qrs.append(int(image[image.rfind('-') + 1 : -len('.jpg')]) + 1)
+            no_qrs.append(int(image[image.rfind('-') + 1 : image.rfind('.')]) +
+                          1)
         else:
             rotate_and_shift(image, qr, qr_coords)
 

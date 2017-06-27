@@ -222,7 +222,11 @@ def extract_qr(image_path, yaml_version, scale_factor=4):
             scanner = zbar.Scanner()
             results = scanner.scan(flipped.astype(np.uint8))
             if results:
-                version, name, page, copy = results[0].data.decode().split(';')
+                try:
+                    version, name, page, copy = \
+                                results[0].data.decode().split(';')
+                except ValueError:
+                    return
                 if version != 'v{}'.format(yaml_version):
                     raise RuntimeError('Yaml format mismatch')
                 coords = np.array(results[0].position)
@@ -234,7 +238,7 @@ def extract_qr(image_path, yaml_version, scale_factor=4):
                 coords *= scale_factor
                 return ExtractedQR(name, int(page), int(copy), coords)
     else:
-        return None
+        return
 
 
 def rotate_and_shift(image_path, extracted_qr, qr_coords):

@@ -415,14 +415,13 @@ class AppModel(traitlets.HasTraits):
             if s:
                 *_, widgets = self.exam_metadata()
                 problem_metadata = widgets.loc[p.name]
-                page = int(problem_metadata.page)
+                page = f'page{int(problem_metadata.page)}'
                 # Here we use the specific page naming scheme because the
                 # database does not store the page order.
                 # Eventually the database should be restructured to make
                 # this easier.
                 page_image_path = (s.submission.pages
-                                    .select(lambda p: f'page{page}'
-                                            in p.path)
+                                    .select(lambda p: page in p.path)
                                     .first().path)
                 if self.show_full_page:
                     with open(page_image_path, 'rb') as f:

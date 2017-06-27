@@ -15,7 +15,7 @@ RUN /root/miniconda3/bin/conda config --system --add channels conda-forge && \
     # our widgets depend on this
     ipywidgets==5.2.2 \
     widgetsnbextension==1.2.6\
-    pony opencv pillow notebook jupyter_kernel_gateway pyyaml pandas openpyxl seaborn
+    pony opencv pillow notebook jupyter_kernel_gateway pyyaml pandas openpyxl seaborn openblas
 RUN /root/miniconda3/bin/pip install zbar-py && \
     /root/miniconda3/bin/pip install "nbconvert>=5.2" # (not yet on conda)
 RUN npm install jupyter-dashboards-server

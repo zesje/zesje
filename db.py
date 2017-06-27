@@ -98,7 +98,9 @@ ExtractedQR = namedtuple('ExtractedQR', ['name', 'page', 'sub_nr', 'coords'])
 
 def pdf_to_images(filename):
     """Extract all images out of a pdf file."""
-    subprocess.run(['pdfimages', '-all', filename, filename[:-len('.pdf')]])
+    # We convert everything to jpeg, which may be suboptimal, however some
+    # formats recognized by pdfimages aren't understood by opencv.
+    subprocess.run(['pdfimages', '-j', filename, filename[:-len('.pdf')]])
 
 
 def clean_yaml(yml):

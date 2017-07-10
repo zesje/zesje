@@ -415,7 +415,9 @@ class AppModel(traitlets.HasTraits):
             if s:
                 *_, widgets = self.exam_metadata()
                 problem_metadata = widgets.loc[p.name]
-                page = f'page{int(problem_metadata.page)}'
+                # the '.' at the end is important, otherwise this would
+                # match 'page12' when we were meant to be looking for 'page1'
+                page = f'page{int(problem_metadata.page)}.'
                 # Here we use the specific page naming scheme because the
                 # database does not store the page order.
                 # Eventually the database should be restructured to make

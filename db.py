@@ -175,7 +175,7 @@ def parse_yaml(yml):
 
 def read_yaml(filename):
     with open(filename) as f:
-        return parse_yaml(yaml.load(f))
+        return parse_yaml(yaml.safe_load(f))
 
 
 def guess_dpi(image_array):

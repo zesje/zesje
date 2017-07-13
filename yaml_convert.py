@@ -9,7 +9,7 @@ def main():
                         help='file to cleanup')
     filename = parser.parse_args().filename
     with open(filename) as f:
-        exam_data = yaml.load(f)
+        exam_data = yaml.safe_load(f)
 
     widgets = exam_data['widgets']
 
@@ -23,7 +23,7 @@ def main():
                for name, entries in widgets.items()}
     exam_data['widgets'] = widgets
     with open(filename, 'w') as f:
-        yaml.dump(exam_data, f)
+        yaml.safe_dump(exam_data, f, default_flow_style=False)
 
 if __name__ == '__main__':
     if sys.version_info < (3,):

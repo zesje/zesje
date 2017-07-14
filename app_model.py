@@ -26,6 +26,10 @@ class AppModel(traitlets.HasTraits):
     submission_id = traitlets.Integer()
     student = traitlets.Unicode()
 
+    # Stack storing which submissions we have seen, used for working
+    # the "prev" button.
+    seen_submissions = []
+
     # Default grader_id = 0 is definitely not in the database.
     # Here we are abusing 1-based indexing and the internal db structure.
     grader_id = traitlets.Integer()
@@ -344,30 +348,14 @@ class AppModel(traitlets.HasTraits):
                           .order_by(lambda s: (s.student, s)))
                 result = subs.first()
 
+            self.seen_submissions.append(self.submission_id)
             self.submission_id = result.id
 
     def previous_submission(self):
-        with orm.db_session:
-            own_sub = db.Submission[self.submission_id]
-            own_key = (own_sub, own_sub.student)
-            # Note the "wrong" ordering in the second filter.
-            # It appears, there's a bug in pony that translates tuple
-            # comparison incorrectly
-            subs = (db.Submission
-                      .select()
-                      .filter(lambda s: s.exam.id == self.exam_id)
-                      .filter(lambda s: (s, s.student) < own_key)
-                      .order_by(lambda s: (orm.desc(s.student), orm.desc(s))))
-            result = subs.first()
-            if result is None:
-                subs = (db.Submission
-                          .select()
-                          .filter(lambda s: s.exam.id == self.exam_id)
-                          .order_by(lambda s: (orm.desc(s.student),
-                                               orm.desc(s))))
-                result = subs.first()
-
-            self.submission_id = result.id
+        try:
+            self.submission_id = self.seen_submissions.pop()
+        except IndexError:
+            pass  # don't move if we have not seen any submissions yet
 
     def next_ungraded(self):
         with orm.db_session:
@@ -379,7 +367,9 @@ class AppModel(traitlets.HasTraits):
 
             for filt in (lambda s: s > self.submission_id, lambda s: True):
                 try:
-                    self.submission_id = next(filter(filt, all_ungraded))
+                    next_sub_id = next(filter(filt, all_ungraded))
+                    self.seen_submissions.append(self.submission_id)
+                    self.submission_id = next_sub_id
                     return
                 except StopIteration:
                     continue
@@ -392,6 +382,7 @@ class AppModel(traitlets.HasTraits):
         if sub_id is None:
             return
 
+        self.seen_submissions.append(self.submission_id)
         self.submission_id = sub_id
 
     # --- Other methods

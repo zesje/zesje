@@ -138,7 +138,7 @@ class AppModel(traitlets.HasTraits):
             return orm.count(s for s in db.Problem[self.problem_id].solutions)
 
     ## n_graded
-    @traitlets.default('n_solutions')
+    @traitlets.default('n_graded')
     def _default_n_graded(self):
         with orm.db_session:
             return orm.count(s for s in db.Problem[self.problem_id].solutions

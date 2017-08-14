@@ -2,3 +2,5 @@
 .ropeproject
 *.db
 *.xlsx
+data
+__pycache__

@@ -6,7 +6,6 @@ import traitlets
 from pony import orm
 
 import db
-db.use_db('course.sqlite')
 
 
 def submission_to_key(sub):

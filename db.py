@@ -32,7 +32,6 @@ class Student(db.Entity):
 class Grader(db.Entity):
     first_name = Required(str)
     last_name = Required(str)
-    # email = Optional(str)
     graded_solutions = Set('Solution')
 
 
@@ -52,6 +51,7 @@ class Submission(db.Entity):
     pages = Set('Page')
     student = Optional(Student)
     signature_image_path = Optional(str)
+    signature_validated = Required(bool, default=False)
 
 
 class Page(db.Entity):

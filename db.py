@@ -488,10 +488,15 @@ def update_problem_names(exam_name, new_problem_names):
             problem.name = str(name)
 
 
-def process_pdf(pdf_path, meta_yaml):
+def process_pdf(pdf_path, meta_yaml, verify_name=True):
     """Add all information from a pdf to the app (database + file storage).
 
     Returns the indices of pages that couldn't be processed.
+    Parameters:
+    -----------
+    verify_name : Bool
+        Whether to check that the uploaded pdf belongs to the correct exam.
+        Useful to accommodate a common user error.
     """
     init_db()
     # read in metadata
@@ -511,10 +516,11 @@ def process_pdf(pdf_path, meta_yaml):
     images =  sorted(os.path.join(source_dir, image) for image in images)
     # verify that copies are from the same exam
     extracted_qrs = [extract_qr(image, version) for image in images]
-    if any(qr[0] != exam_name for qr in extracted_qrs if qr is not None):
+    if not verify_name and any(qr[0] != exam_name for qr in extracted_qrs
+                               if qr is not None):
         for image in images:
             os.remove(image)
-        raise RuntimeError('yaml and pdf are from different exams')
+        raise RuntimeError('metadata and pdf are from different exams')
 
     no_qrs = []
     for image, qr in zip(images, extracted_qrs):

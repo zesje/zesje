@@ -1,4 +1,9 @@
 % Commands for exam creation
+%
+% Copyright 2017 zesje developers
+%
+%% Available under BSD-simplified license.
+%
 \NeedsTeXFormat{LaTeX2e}[1994/06/01]
 \ProvidesPackage{exam}
   [2017/02/10 v0.01 LaTeX package for exam creation]
@@ -12,15 +17,34 @@
 \RequirePackage{fp}
 \RequirePackage{environ}
 \RequirePackage{kvoptions}
+\RequirePackage{tikz}
+\RequirePackage{everypage}
 
 \DeclareStringOption[exam]{name}
 \DeclareStringOption[1]{copies}[1]
 \ProcessKeyvalOptions*
 
+\usetikzlibrary{calc}
+
 \setlength{\headheight}{90pt}
 \pagestyle{fancy}
 
 \makeatletter
+
+\newcommand*\cropmarks{%
+  \begin{tikzpicture}[remember picture,overlay]
+    \draw ($(current page.north east)+(-5mm,-10mm)$) -- ($(current page.north east)+(-10mm,-10mm)$);
+    \draw ($(current page.north east)+(-10mm,-5mm)$) -- ($(current page.north east)+(-10mm,-10mm)$);
+    \draw ($(current page.south east)+(-5mm,10mm)$) -- ($(current page.south east)+(-10mm,10mm)$);
+    \draw ($(current page.south east)+(-10mm,5mm)$) -- ($(current page.south east)+(-10mm,10mm)$);
+    \draw ($(current page.north west)+(5mm,-10mm)$) -- ($(current page.north west)+(10mm,-10mm)$);
+    \draw ($(current page.north west)+(10mm,-5mm)$) -- ($(current page.north west)+(10mm,-10mm)$);
+    \draw ($(current page.south west)+(5mm,10mm)$) -- ($(current page.south west)+(10mm,10mm)$);
+    \draw ($(current page.south west)+(10mm,5mm)$) -- ($(current page.south west)+(10mm,10mm)$);
+  \end{tikzpicture}%
+}
+
+\AddEverypageHook{\cropmarks}
 
 \newcommand{\examformatversion}{1}
 
@@ -87,4 +111,3 @@
 \endinput
 %%
 %% End of file `exam.sty'.
-

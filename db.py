@@ -203,7 +203,9 @@ def get_box(image_array, box, padding):
     box = np.array(box)
     box += (padding, -padding, -padding, padding)
     box = (np.array(box) * dpi).astype(int)
-    top, bottom = min(h, box[0]), max(0, box[1])
+    # Here we are not returning the lowest pixel of the image because otherwise
+    # the numpy slicing is not correct.
+    top, bottom = min(h, box[0]), max(1, box[1])
     left, right = max(0, box[2]), min(w, box[3])
     return image_array[-top:-bottom, left:right]
 

@@ -20,23 +20,24 @@ const Reset = () => {
             
             <hr />
 
-            <div class="field is-grouped">
-              <div class="control">
-                <button class="button is-danger">Everything</button>
-              </div>
-              <div class="control">
-                <button class="button is-warning">People</button>
-              </div>
-              <div class="control">
-                <button class="button is-warning">Exam</button>
-              </div>
-              <div class="control">
-                <button class="button is-warning">Student validation</button>
-              </div>
-              <div class="control">
-                <button class="button is-warning">Gradeing</button>
-              </div>
-            </div>
+            <nav className="level">
+
+                <div class="level-item control">
+                  <button class="button is-danger">Everything</button>
+                </div>
+                <div class="level-item control">
+                  <button class="button is-warning">People</button>
+                </div>
+                <div class="level-item control">
+                  <button class="button is-warning">Exam</button>
+                </div>
+                <div class="level-item control">
+                  <button class="button is-warning">Student validation</button>
+                </div>
+                <div class="level-item control">
+                  <button class="button is-warning">Gradeing</button>
+                </div>
+            </nav>
           </div>
 
 

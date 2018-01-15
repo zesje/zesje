@@ -26,16 +26,16 @@ const Reset = () => {
                   <button class="button is-danger">Everything</button>
                 </div>
                 <div class="level-item control">
-                  <button class="button is-warning">People</button>
+                  <button class="button is-warning">Exams</button>
                 </div>
                 <div class="level-item control">
-                  <button class="button is-warning">Exam</button>
+                  <button class="button is-warning">Students</button>
                 </div>
                 <div class="level-item control">
-                  <button class="button is-warning">Student validation</button>
+                  <button class="button is-warning">Grading</button>
                 </div>
                 <div class="level-item control">
-                  <button class="button is-warning">Gradeing</button>
+                  <button class="button is-warning">Graders</button>
                 </div>
             </nav>
           </div>

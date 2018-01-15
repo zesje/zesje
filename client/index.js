@@ -18,20 +18,20 @@ const Home = Loadable({
   loader: () => import('./views/Home'),
   loading: Loading,
 });
+const Exams = Loadable({
+  loader: () => import('./views/Exams'),
+  loading: Loading,
+});
+const Students = Loadable({
+  loader: () => import('./views/Students'),
+  loading: Loading,
+});
 const Grade = Loadable({
   loader: () => import('./views/Grade'),
   loading: Loading,
 });
-const Upload = Loadable({
-  loader: () => import('./views/Upload'),
-  loading: Loading,
-});
-const CheckStudents = Loadable({
-  loader: () => import('./views/CheckStudents'),
-  loading: Loading,
-});
-const ManageGraders = Loadable({
-  loader: () => import('./views/ManageGraders'),
+const Graders = Loadable({
+  loader: () => import('./views/Graders'),
   loading: Loading,
 });
 const Reset = Loadable({
@@ -44,10 +44,10 @@ ReactDOM.render((
   <Router>
     <Switch>
      	<Route exact path="/" component={Home} />
+      <Route path="/exams" component={Exams} />
+      <Route path="/students" component={Students} />
       <Route path="/grade" component={Grade} />
-     	<Route path="/upload" component={Upload} />
-      <Route path="/students" component={CheckStudents} />
-      <Route path="/graders" component={ManageGraders} />
+      <Route path="/graders" component={Graders} />
       <Route path="/reset" component={Reset} />
     </Switch>
   </Router>

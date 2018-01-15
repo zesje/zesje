@@ -9,7 +9,7 @@ const Upload = () => {
 
         <NavBar />
         
-        <Hero title='Upload' subtitle='Omnomnomnom data!' />
+        <Hero title='Exams' subtitle="Omnomnomnom PDF's!" />
 
         <section className="section">
 
@@ -34,6 +34,22 @@ const Upload = () => {
                       </span>
                       <span className="file-name">
                         scanned_exams.pdf
+                      </span>
+                    </label>
+                  </div>
+                  <div className="file">
+                    <label className="file-label">
+                      <input className="file-input" type="file" name="resume" />
+                      <span className="file-cta">
+                        <span className="file-icon">
+                          <i className="fa fa-upload"></i>
+                        </span>
+                        <span className="file-label">
+                          Choose a file…
+                        </span>
+                      </span>
+                      <span className="file-name">
+                        exam_metadata.csv
                       </span>
                     </label>
                   </div>

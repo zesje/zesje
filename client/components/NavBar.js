@@ -28,8 +28,8 @@ const NavBar = () => {
           <div className="navbar-menu">
             <div className="navbar-start">
               <Link className="navbar-item" to='/'>Home</Link>
-              <Link className="navbar-item" to='/upload'>Upload</Link>
-              <Link className="navbar-item" to='/students'>Check Students</Link>
+              <Link className="navbar-item" to='/exams'>Exams</Link>
+              <Link className="navbar-item" to='/students'>Students</Link>
               <Link className="navbar-item" to='/grade'><strong><i>Grade</i></strong></Link>  
             </div>
 

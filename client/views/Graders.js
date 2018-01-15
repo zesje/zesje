@@ -3,13 +3,13 @@ import NavBar from '../components/NavBar';
 import Hero from '../components/Hero';
 import Footer from '../components/Footer';
 
-const AddGraders = () => {
+const Graders = () => {
   return (
       <div>
 
         <NavBar />
 
-        <Hero title='Add Graders' subtitle='Many hands make light work' />
+        <Hero title='Manage Graders' subtitle='Many hands make light work' />
         
         <section className="section">
 
@@ -19,19 +19,6 @@ const AddGraders = () => {
             <h5 className='subtitle'>to add them to the system</h5>
             
             <hr />
-
-              
-            <div class="field has-addons">
-              <div class="select">
-                <select>
-                  <option>Henk de Vries</option>
-                  <option>Jan Janssen</option>
-                </select>
-              </div>
-              <div class="control">
-                <a class="button is-danger">Delete</a>
-              </div>
-            </div>
 
             <div class="field has-addons">
               <div class="control">
@@ -44,12 +31,19 @@ const AddGraders = () => {
               </div>
             </div>
 
-
+            <div class="field has-addons">
+              <div class="select">
+                <select>
+                  <option>Henk de Vries</option>
+                  <option>Jan Janssen</option>
+                </select>
+              </div>
+              <div class="control">
+                <a class="button is-danger">Delete</a>
+              </div>
+            </div>
             
-
-
           </div>
-
         </section>
 
         <Footer />
@@ -58,4 +52,4 @@ const AddGraders = () => {
   )
 }
 
-export default AddGraders;
+export default Graders;

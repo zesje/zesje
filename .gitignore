@@ -60,6 +60,9 @@ typings/
 # next.js build output
 .next
 
+# webpack output
+dist/
+
 # IPython temporary files
 .ipynb_checkpoints/
 

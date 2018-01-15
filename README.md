@@ -17,6 +17,14 @@ We will keep the Python dependencies in a virtual environment:
     source venv/bin/activate
     pip install -r requirements.txt
     
+### Adding dependencies
+
+#### Server-side
+If you start using a new Python library, be sure to add it to `requirements.txt`
+
+#### Client side
+
+    
 ### Running a development server
 First build all the client-side assets:
 

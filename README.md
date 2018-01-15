@@ -5,11 +5,11 @@ Zesje is an online grading system for written exams.
 ## Development
 
 ### Setting up a development environment
-Make sure you have `npm`, `webpack` (installed via `npm`), and Python 3.5 installed.
+Make sure you have `yarn` (installable via your local package manager), and Python 3.5 installed.
 
-Install the necessary `npm` dependencies:
+Install the necessary `yarn` dependencies:
 
-    npm install
+    yarn install
 
 We will keep the Python dependencies in a virtual environment:
 
@@ -23,7 +23,7 @@ We will keep the Python dependencies in a virtual environment:
 If you start using a new Python library, be sure to add it to `requirements.txt`
 
 #### Client side
-
+Yarn keeps track of all the client-side dependancies in `config.json` when you install new packages with `yarn add ...`
     
 ### Running a development server
 First build all the client-side assets:

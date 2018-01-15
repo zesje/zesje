@@ -1,5 +1,6 @@
 import React from 'react';
 import NavBar from '../components/NavBar';
+import Hero from '../components/Hero';
 
 const Home = () => {
   return (
@@ -7,16 +8,8 @@ const Home = () => {
 
         <NavBar />
 
-        <section className="hero is-primary">
-          <div className="hero-body">
-            <p className="title">
-              Documentation
-            </p>
-            <p className="subtitle">
-              Everything you need to <strong>create a website</strong> with Bulma
-            </p>
-          </div>
-        </section>
+        <Hero title='Home' subtitle='Zesje - open source exam grading software' />
+
         
         <h1>React Router demo</h1>
         Hoi dit de homepagina

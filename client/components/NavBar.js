@@ -15,7 +15,7 @@ const NavBar = () => {
               <b>Zesje</b>
             </div>
 
-            <button class="button navbar-burger" onClick={() => { 
+            <button className="button navbar-burger" onClick={() => { 
                 let menu = document.querySelector(".navbar-menu");
                 menu.classList.toggle("is-active"); 
               }}>

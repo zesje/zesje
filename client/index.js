@@ -5,6 +5,7 @@
 // @flow
 import 'bulma/css/bulma.css';
 import 'font-awesome/css/font-awesome.css';
+import 'react-table/react-table.css';
 import React from 'react';
 import ReactDOM from 'react-dom';
 import Loadable from 'react-loadable';

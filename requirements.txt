@@ -1,0 +1,9 @@
+flask
+pony
+
+opencv-python
+zbar-py
+numpy
+scipy
+pandas
+pyyaml

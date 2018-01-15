@@ -3,6 +3,9 @@ import NavBar from '../components/NavBar';
 import Hero from '../components/Hero';
 import Footer from '../components/Footer';
 
+
+var shortButton = {width: '336px'};
+
 const Upload = () => {
   return (
       <div>
@@ -15,72 +18,67 @@ const Upload = () => {
 
 
           <div className="container">
+            <div className="columns">
+              <div className="column">
+                <h3 className='title'>Upload new exam</h3>
+                <h5 className='subtitle'>and we will work some PDF magic!</h5>
 
-            <nav className="level">
-              <div className="level-item has-text-centered">
-                <div>
-                  <p><h3 className='title'>Select an exam</h3></p>
-                  <h5 className='subtitle'>and we will work some PDF magic!</h5>
-                  <div className="file">
-                    <label className="file-label">
-                      <input className="file-input" type="file" name="resume" />
-                      <span className="file-cta">
-                        <span className="file-icon">
-                          <i className="fa fa-upload"></i>
-                        </span>
-                        <span className="file-label">
-                          Choose a file…
-                        </span>
+                <input class="input" type="text" style={shortButton} placeholder="Name" />
+
+                <div className="file">
+                  <label className="file-label">
+                    <input className="file-input" type="file" name="resume" />
+                    <span className="file-cta">
+                      <span className="file-icon">
+                        <i className="fa fa-upload"></i>
                       </span>
-                      <span className="file-name">
-                        scanned_exams.pdf
+                      <span className="file-label">
+                        Choose a file…
                       </span>
-                    </label>
-                  </div>
-                  <div className="file">
-                    <label className="file-label">
-                      <input className="file-input" type="file" name="resume" />
-                      <span className="file-cta">
-                        <span className="file-icon">
-                          <i className="fa fa-upload"></i>
-                        </span>
-                        <span className="file-label">
-                          Choose a file…
-                        </span>
-                      </span>
-                      <span className="file-name">
-                        exam_metadata.csv
-                      </span>
-                    </label>
-                  </div>
+                    </span>
+                    <span className="file-name">
+                      scanned_exams.pdf
+                    </span>
+                  </label>
                 </div>
-              </div>
-              <div className="level-item has-text-centered">
-                <div>
-                  <p><h3 className='title'>And the student list</h3></p>
-                  <h5 className='subtitle'>Don't worry if it isn't complete</h5>
-                  <div className="file">
-                    <label className="file-label">
-                      <input className="file-input" type="file" name="resume" />
-                      <span className="file-cta">
-                        <span className="file-icon">
-                          <i className="fa fa-upload"></i>
-                        </span>
-                        <span className="file-label">
-                          Choose a file…
-                        </span>
+                <div className="file">
+                  <label className="file-label">
+                    <input className="file-input" type="file" name="resume" />
+                    <span className="file-cta">
+                      <span className="file-icon">
+                        <i className="fa fa-upload"></i>
                       </span>
-                      <span className="file-name">
-                        enrolled_students.csv
+                      <span className="file-label">
+                        Choose a file…
                       </span>
-                    </label>
-                  </div>
+                    </span>
+                    <span className="file-name">
+                      exam_metadata.csv
+                    </span>
+                  </label>
                 </div>
+                <br />
+                <button className='button is-info'>Upload</button>
               </div>
-            </nav>
+              <div className="column">
+                <h3 className='title'>Or edit an existing</h3>
+                <h5 className='subtitle'>to make some minor adjustments or start over</h5>
+
+                <div class="select">
+                  <select>
+                    <option>Midterm 5-12</option>
+                    <option>Final 30-1</option>
+                  </select>
+                </div>
+                <textarea class="textarea" placeholder="Config will appearr here..."></textarea>
+                <button className='button is-success'>Save</button>
+                <button className='button is-danger'>Delete</button>
+
+
+              </div>
+            </div>
 
           </div>
-
         </section>
 
         <Footer />

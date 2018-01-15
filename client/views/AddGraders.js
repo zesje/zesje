@@ -1,6 +1,7 @@
 import React from 'react';
 import NavBar from '../components/NavBar';
 import Hero from '../components/Hero';
+import Footer from '../components/Footer';
 
 const AddGraders = () => {
   return (
@@ -12,6 +13,8 @@ const AddGraders = () => {
         
         <h1>React Router demo</h1>
         Hoi dit de AddGraders
+        <Footer />
+        
       </div>
   )
 }

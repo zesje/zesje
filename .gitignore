@@ -69,3 +69,6 @@ zesje/static/
 # IPython temporary files
 .ipynb_checkpoints/
 
+# Python temporary files
+__pycache__/
+

@@ -72,3 +72,5 @@ zesje/static/
 # Python temporary files
 __pycache__/
 
+# (test)database
+zesje/course.sqlite

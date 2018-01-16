@@ -8,24 +8,18 @@ class GraderList extends React.Component {
   constructor(props) {
     super(props);
     this.state = {graders: [
-      {id: '1', name: 'John Doe'},
-      {id: '2', name: 'Jan Janssen'}
+      {id: '1', first_name: 'John', last_name: 'Doe'},
+      {id: '2', first_name: 'Jan', last_name: 'Janssen'}
     ]};
   }
 
   componentDidMount() {
 
     fetch('/api/graders')
-    .then(function(response) {
-      return response.json()
-    })
-    .then(function(json) {
-      console.log(category, json)
-      this.setState(json);
-    })
-    .catch(function(error) {
-      console.log('error', error)
-    })
+        .then((response) => response.json())
+        .then((graders) =>{
+          this.setState({graders: graders})
+        })
    
   }
 
@@ -42,7 +36,7 @@ class GraderList extends React.Component {
           </p>
           <ul className="menu-list">
             {this.state.graders.map(function(grader) {
-              return <li key={grader.id.toString()}>{grader.name}</li>
+              return <li key={grader.id.toString()}>{grader.first_name + ' ' + grader.last_name}</li>
             })}
           </ul>
         </aside>

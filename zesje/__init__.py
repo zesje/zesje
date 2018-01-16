@@ -15,7 +15,6 @@ app.register_blueprint(api.app, url_prefix='/api')
 @app.route('/')
 @app.route('/<file>')
 def index(file=''):
-    if (isfile(path.join(static_folder_path, file))):
-        return app.send_static_file(file)
-    else:
-        return app.send_static_file('index.html')
+    if not isfile(path.join(static_folder_path, file)):
+        file = 'index.html'
+    return app.send_static_file(file)

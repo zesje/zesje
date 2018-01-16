@@ -1,14 +1,37 @@
-from flask import Blueprint, jsonify, request, redirect
+import json
+
+from flask import Blueprint, Response, jsonify, request, abort
 
 from . import db
 
 app = Blueprint(__name__, __name__)
 
-@app.route('/students', methods=['GET'])
+# TODO: when making new database structure, have only a single
+#       'name' field: it is just an identifier
+
+@app.route('/graders', methods=['GET'])
 @db.session
-def get_students():
+def get_graders():
+
     return jsonify([
-        dict(id=s.id, first_name=s.first_name,
-             last_name=s.last_name, email=s.email)
-        for s in db.Student.select()
+        dict(id=g.id, first_name=g.first_name, last_name=g.last_name)
+        for g in db.Grader.select()
     ])
+
+
+@app.route('/graders', methods=['POST'])
+@db.session
+def post_graders():
+    grader_spec = request.get_json(silent=False, force=True)
+    try:
+        new_grader = db.Grader(first_name=grader_spec['first_name'],
+                               last_name=grader_spec['last_name'])
+        db.orm.commit()
+    except KeyError:
+        abort(400)
+
+    return jsonify({
+        'id': new_grader.id,
+        'first_name': grader_spec['first_name'],
+        'last_name': grader_spec['last_name'],
+    })

@@ -64,7 +64,7 @@ yarn.lock
 .next
 
 # webpack output
-dist/
+server/static/
 
 # IPython temporary files
 .ipynb_checkpoints/

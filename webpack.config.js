@@ -13,7 +13,7 @@ const HtmlWebpackPluginConfig = new HtmlWebpackPlugin({
 module.exports = {
   entry: './client/index.js',
   output: {
-    path: path.resolve('dist'),
+    path: path.resolve('zesje/static'),
     filename: 'index_bundle.js'
   },
   module: {

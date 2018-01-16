@@ -20,12 +20,10 @@ const Upload = () => {
           <div className="container">
             <div className="columns">
               <div className="column">
-                <h3 className='title'>Upload new exam</h3>
-                <h5 className='subtitle'>and we will work some PDF magic!</h5>
+                <h3 className='title'>Upload new exam config</h3>
+                <h5 className='subtitle'>then we know that to do with PDF's</h5>
 
-                <input class="input" type="text" style={shortButton} placeholder="Name" />
-
-                <div className="file">
+                <div className="file has-name is-boxed">
                   <label className="file-label">
                     <input className="file-input" type="file" name="resume" />
                     <span className="file-cta">
@@ -37,42 +35,60 @@ const Upload = () => {
                       </span>
                     </span>
                     <span className="file-name">
-                      scanned_exams.pdf
-                    </span>
-                  </label>
-                </div>
-                <div className="file">
-                  <label className="file-label">
-                    <input className="file-input" type="file" name="resume" />
-                    <span className="file-cta">
-                      <span className="file-icon">
-                        <i className="fa fa-upload"></i>
-                      </span>
-                      <span className="file-label">
-                        Choose a file…
-                      </span>
-                    </span>
-                    <span className="file-name">
-                      exam_metadata.csv
+                      exams_configs.yaml
                     </span>
                   </label>
                 </div>
                 <br />
                 <button className='button is-info'>Upload</button>
               </div>
-              <div className="column">
-                <h3 className='title'>Or edit an existing</h3>
-                <h5 className='subtitle'>to make some minor adjustments or start over</h5>
 
+              <div className="column">
+                <h3 className='title'>And tweak the config</h3>
+                <h5 className='subtitle'>Fix misalignments</h5>
                 <div class="select">
                   <select>
                     <option>Midterm 5-12</option>
                     <option>Final 30-1</option>
                   </select>
                 </div>
-                <textarea class="textarea" placeholder="Config will appearr here..."></textarea>
+                <textarea class="textarea" placeholder="YAML config will appear here..."></textarea>
                 <button className='button is-success'>Save</button>
-                <button className='button is-danger'>Delete</button>
+              </div>
+
+
+              <div className="column">
+                <h3 className='title'>And upload PDF's</h3>
+                <h5 className='subtitle'>we will work some magic!</h5>
+
+                <div class="file has-name is-boxed">
+                  <label class="file-label">
+                    <input class="file-input" type="file" name="resume" />
+                    <span class="file-cta">
+                      <span class="file-icon">
+                        <i class="fa fa-upload"></i>
+                      </span>
+                      <span class="file-label">
+                        Choose a file…
+                      </span>
+                    </span>
+                    <span class="file-name">
+                      Exams.pdf
+                    </span>
+                  </label>
+                </div>
+
+                <br />
+
+                <aside class="menu">
+                <p class="menu-label">
+                  Previously uploaded
+                </p>
+                  <ul class="menu-list">
+                    <li>midterm.pdf</li>
+                    <li>final_exam.pdf</li>
+                  </ul>
+                </aside>
 
 
               </div>

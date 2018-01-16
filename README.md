@@ -35,6 +35,6 @@ whenever files in `client/` change.
 
 Then, in a separate terminal, run the development server:
  
-    python server
+    python zesje
 
-This will also re-load the code when you make modifications in `server/`.
+This will also re-load the code when you make modifications in `zesje/`.

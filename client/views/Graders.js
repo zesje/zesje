@@ -3,6 +3,43 @@ import NavBar from '../components/NavBar';
 import Hero from '../components/Hero';
 import Footer from '../components/Footer';
 
+
+class GraderList extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {graders: [
+      {id: '1', name: 'John Doe'},
+      {id: '2', name: 'Jan Janssen'}
+    ]};
+  }
+
+  componentDidMount() {
+   
+  }
+
+  componentWillUnmount() {
+    
+  }
+
+
+  render() {
+    return (
+      <div className="select">
+        <aside className="menu">
+          <p className="menu-label">
+            Added graders
+          </p>
+          <ul className="menu-list">
+            {this.state.graders.map(function(grader) {
+              <li>{grader.name}</li>
+            })}
+          </ul>
+        </aside>
+      </div>
+    );
+  }
+}
+
 const Graders = () => {
   return (
       <div>
@@ -20,29 +57,20 @@ const Graders = () => {
             
             <hr />
 
-            <div class="field has-addons">
-              <div class="control">
-                <input class="input" type="text" placeholder="Add someone" />
+            <div className="field has-addons">
+              <div className="control">
+                <input className="input" type="text" placeholder="Add someone" />
               </div>
-              <div class="control">
-                <a class="button is-info">
+              <div className="control">
+                <a className="button is-info">
                   Add
                 </a>
               </div>
             </div>
-
-            <div class="field has-addons">
-              <div class="select">
-                <select>
-                  <option>Henk de Vries</option>
-                  <option>Jan Janssen</option>
-                </select>
-              </div>
-              <div class="control">
-                <a class="button is-danger">Delete</a>
-              </div>
-            </div>
             
+            <GraderList />
+
+
           </div>
         </section>
 

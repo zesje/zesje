@@ -46,13 +46,13 @@ const Upload = () => {
               <div className="column">
                 <h3 className='title'>And tweak the config</h3>
                 <h5 className='subtitle'>Fix misalignments</h5>
-                <div class="select">
+                <div className="select">
                   <select>
                     <option>Midterm 5-12</option>
                     <option>Final 30-1</option>
                   </select>
                 </div>
-                <textarea class="textarea" placeholder="YAML config will appear here..."></textarea>
+                <textarea className="textarea" placeholder="YAML config will appear here..."></textarea>
                 <button className='button is-success'>Save</button>
               </div>
 
@@ -61,18 +61,18 @@ const Upload = () => {
                 <h3 className='title'>And upload PDF's</h3>
                 <h5 className='subtitle'>we will work some magic!</h5>
 
-                <div class="file has-name is-boxed">
-                  <label class="file-label">
-                    <input class="file-input" type="file" name="resume" />
-                    <span class="file-cta">
-                      <span class="file-icon">
-                        <i class="fa fa-upload"></i>
+                <div className="file has-name is-boxed">
+                  <label className="file-label">
+                    <input className="file-input" type="file" name="resume" />
+                    <span className="file-cta">
+                      <span className="file-icon">
+                        <i className="fa fa-upload"></i>
                       </span>
-                      <span class="file-label">
+                      <span className="file-label">
                         Choose a file…
                       </span>
                     </span>
-                    <span class="file-name">
+                    <span className="file-name">
                       Exams.pdf
                     </span>
                   </label>
@@ -80,11 +80,11 @@ const Upload = () => {
 
                 <br />
 
-                <aside class="menu">
-                <p class="menu-label">
+                <aside className="menu">
+                <p className="menu-label">
                   Previously uploaded
                 </p>
-                  <ul class="menu-list">
+                  <ul className="menu-list">
                     <li>midterm.pdf</li>
                     <li>final_exam.pdf</li>
                   </ul>

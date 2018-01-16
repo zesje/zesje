@@ -1,16 +1,21 @@
 from os import path
-from os.path import abspath, dirname
+from os.path import abspath, dirname, isfile
 from flask import Flask
 
 from . import db, api
 
+static_folder_path = path.join(abspath(dirname(__file__)), 'static')
+
 app = Flask(__name__,
-            static_folder=path.join(abspath(dirname(__file__)), 'static'))
+            static_folder= static_folder_path)
 db.use_db()
 
 app.register_blueprint(api.app, url_prefix='/api')
 
 @app.route('/')
 @app.route('/<file>')
-def index(file=None):
-    return app.send_static_file(file or 'index.html')
+def index(file=''):
+    if (isfile(path.join(static_folder_path, file))):
+        return app.send_static_file(file)
+    else:
+        return app.send_static_file('index.html')

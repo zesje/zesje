@@ -12,6 +12,16 @@ app = Blueprint(__name__, __name__)
 @app.route('/graders', methods=['GET'])
 @db.session
 def get_graders():
+    """get all graders.
+
+
+    Returns
+    -------
+    list of:
+        id: int
+        first_name: str
+        last_name: str
+    """
 
     return jsonify([
         dict(id=g.id, first_name=g.first_name, last_name=g.last_name)
@@ -22,6 +32,19 @@ def get_graders():
 @app.route('/graders', methods=['POST'])
 @db.session
 def post_graders():
+    """add a grader.
+
+    Parameters
+    ----------
+    first_name: str
+    last_name: str
+
+    Returns
+    -------
+    id: int
+    first_name: str
+    last_name: str
+    """
     grader_spec = request.get_json(silent=False, force=True)
     try:
         new_grader = db.Grader(first_name=grader_spec['first_name'],

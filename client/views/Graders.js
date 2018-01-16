@@ -14,6 +14,18 @@ class GraderList extends React.Component {
   }
 
   componentDidMount() {
+
+    fetch('/api/graders')
+    .then(function(response) {
+      return response.json()
+    })
+    .then(function(json) {
+      console.log(category, json)
+      this.setState(json);
+    })
+    .catch(function(error) {
+      console.log('error', error)
+    })
    
   }
 
@@ -24,18 +36,16 @@ class GraderList extends React.Component {
 
   render() {
     return (
-      <div className="select">
         <aside className="menu">
           <p className="menu-label">
             Added graders
           </p>
           <ul className="menu-list">
             {this.state.graders.map(function(grader) {
-              <li>{grader.name}</li>
+              return <li key={grader.id.toString()}>{grader.name}</li>
             })}
           </ul>
         </aside>
-      </div>
     );
   }
 }

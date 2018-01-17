@@ -26,15 +26,10 @@ If you start using a new Python library, be sure to add it to `requirements.txt`
 Yarn keeps track of all the client-side dependancies in `config.json` when you install new packages with `yarn add ...`
     
 ### Running a development server
-First build all the client-side assets:
+run
 
-    webpack --watch
-    
-the `--watch` flag tells webpack to rebuild the frontend code
-whenever files in `client/` change.
+    `yarn start`
 
-Then, in a separate terminal, run the development server:
- 
-    python zesje
-
-This will also re-load the code when you make modifications in `zesje/`.
+to start the development server, which you can access on http://127.0.0.1:5000.
+It will automatically reload whenever you change any source files in `client/`
+or `zesje/`.

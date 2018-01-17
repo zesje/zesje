@@ -1,4 +1,5 @@
 flask
+Flask-BasicAuth
 pony
 
 opencv-python

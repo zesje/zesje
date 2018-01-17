@@ -53,8 +53,8 @@ def post_graders():
     except KeyError:
         abort(400)
 
-    return jsonify({
-        'id': new_grader.id,
-        'first_name': grader_spec['first_name'],
-        'last_name': grader_spec['last_name'],
-    })
+    return jsonify(
+        id=new_grader.id,
+        first_name=new_grader.first_name,
+        last_name=new_grader.last_name,
+    )

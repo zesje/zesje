@@ -15,7 +15,7 @@ class GraderList extends React.Component {
 
   componentDidMount() {
 
-    fetch('/api/graders')
+    fetch('/api/graders', {credentials: 'same-origin'})
         .then((response) => response.json())
         .then((graders) =>{
           this.setState({graders: graders})

@@ -31,6 +31,7 @@ module.exports = {
 
   devServer: {
     hot: true,
+    inline: true,
     proxy: {
       '/api': {
         target: 'http://localhost:5000'

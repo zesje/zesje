@@ -12,6 +12,7 @@
     "css-loader": "^0.28.8",
     "file-loader": "^1.1.6",
     "font-awesome": "^4.7.0",
+    "formik": "^0.10.5",
     "html-webpack-plugin": "^2.30.1",
     "path": "^0.12.7",
     "react": "^16.2.0",

@@ -39,15 +39,20 @@ const Reset = Loadable({
 });
 
 
-ReactDOM.render((
-  <Router>
-    <Switch>
-     	<Route exact path="/" component={Home} />
-      <Route path="/exams" component={Exams} />
-      <Route path="/students" component={Students} />
-      <Route path="/grade" component={Grade} />
-      <Route path="/graders" component={Graders} />
-      <Route path="/reset" component={Reset} />
-    </Switch>
-  </Router>
-), document.getElementById('root'));
+var root = document.getElementById('root');
+if (root == null) {
+  throw new Error("no pad element");
+} else {
+  ReactDOM.render((
+    <Router>
+      <Switch>
+        <Route exact path="/" component={Home} />
+        <Route path="/exams" component={Exams} />
+        <Route path="/students" component={Students} />
+        <Route path="/grade" component={Grade} />
+        <Route path="/graders" component={Graders} />
+        <Route path="/reset" component={Reset} />
+      </Switch>
+    </Router>
+  ), root);
+}

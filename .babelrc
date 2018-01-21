@@ -1,12 +1,10 @@
-/* 
-    ./.babelrc
-*/  
 {
     "presets":[
         "react",
         "flow"
     ],
     "plugins": [
-    	"syntax-dynamic-import"
+        "syntax-dynamic-import",
+        "transform-class-properties"
     ]
 }

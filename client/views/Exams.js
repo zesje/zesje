@@ -19,11 +19,11 @@ const Upload = () => {
 
           <div className="container">
             <div className="columns">
-              <div className="column">
+              <div className="column has-text-centered">
                 <h3 className='title'>Upload new exam config</h3>
                 <h5 className='subtitle'>then we know that to do with PDF's</h5>
 
-                <div className="file has-name is-boxed">
+                <div className="file has-name is-boxed is-centered">
                   <label className="file-label">
                     <input className="file-input" type="file" name="resume" />
                     <span className="file-cta">
@@ -39,11 +39,9 @@ const Upload = () => {
                     </span>
                   </label>
                 </div>
-                <br />
-                <button className='button is-info'>Upload</button>
               </div>
 
-              <div className="column">
+              <div className="column has-text-centered">
                 <h3 className='title'>And tweak the config</h3>
                 <h5 className='subtitle'>Fix misalignments</h5>
                 <div className="select">
@@ -57,11 +55,11 @@ const Upload = () => {
               </div>
 
 
-              <div className="column">
+              <div className="column has-text-centered">
                 <h3 className='title'>And upload PDF's</h3>
                 <h5 className='subtitle'>we will work some magic!</h5>
 
-                <div className="file has-name is-boxed">
+                <div className="file has-name is-boxed is-centered">
                   <label className="file-label">
                     <input className="file-input" type="file" name="resume" />
                     <span className="file-cta">

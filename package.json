@@ -4,7 +4,8 @@
   "main": "index.js",
   "license": "MIT",
   "scripts": {
-    "start": "webpack-dev-server --hot --inline & python3 zesje"
+    "start": "webpack-dev-server --hot --inline --config webpack.dev.js & python3 zesje",
+    "build": "webpack --config webpack.prod.js"
   },
   "dependencies": {
     "babel-plugin-syntax-dynamic-import": "^6.18.0",
@@ -23,8 +24,10 @@
     "react-router-dom": "^4.2.2",
     "react-table": "^6.7.6",
     "style-loader": "^0.19.1",
+    "uglifyjs-webpack-plugin": "^1.1.6",
     "url-loader": "^0.6.2",
-    "webpack": "^3.10.0"
+    "webpack": "^3.10.0",
+    "webpack-merge": "^4.1.1"
   },
   "devDependencies": {
     "babel-core": "^6.26.0",

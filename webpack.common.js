@@ -22,8 +22,7 @@ module.exports = {
       { test: /\.(jsx|js)$/, loader: 'babel-loader', exclude: /node_modules/ },
       { test: /\.css$/, use: [{ loader: "style-loader" }, { loader: "css-loader" }] },
       { test: /\.(png|jpg|gif)$/, loader: "file-loader" },
-      { test: /\.woff2?(\?v=[0-9]\.[0-9]\.[0-9])?$/, loader: "url-loader" },
-      { test: /\.(ttf|eot|svg)(\?[\s\S]+)?$/, loader: "file-loader" },
+      { test: /\.(woff(2)?|ttf|eot|svg|otf)(\?v=\d+\.\d+\.\d+)?$/, loader: "file-loader" },
     ]
   },
 

@@ -8,12 +8,41 @@ import Dropzone from 'react-dropzone'
 
 class Exams extends React.Component {
 
-  onDrop(files) {
-    console.log(files);
+  constructor(props) {
+    super(props);
+    this.state = {configSelected: [''],
+                  uploadedPDFs: ['']};
+
+    this.onDropYAML = this.onDropYAML.bind(this);
+    this.onDropPDF = this.onDropPDF.bind(this);
+  }
+
+  onDropYAML(accepted, rejected) {
+    if (rejected.length > 0) {
+      alert('Please upload a YAML..')
+    } else {
+      console.log(accepted);
+      this.setState({configSelected: [accepted[0].name]})
+    }
+  }
+  
+  onDropPDF(accepted, rejected) {
+    if (rejected.length > 0) {
+      alert('Please upload a PDF..')
+    } else {
+      console.log(accepted);
+      this.setState({uploadedPDFs: [accepted[0].name]})
+    }
   }
 
 
   render () {
+
+    var isDisabled = this.state.configSelected[0].length == 0;
+    var textStyle = {
+      color: isDisabled ? 'grey' : 'black'
+    };
+
     return <div>
 
       <NavBar />
@@ -28,7 +57,8 @@ class Exams extends React.Component {
               <h3 className='title'>Upload new exam config</h3>
               <h5 className='subtitle'>then we know that to do with PDF's</h5>
 
-              <Dropzone style={{}} activeStyle={{borderStyle: 'dashed', width: 'fit-content', margin: 'auto'}} onDrop={this.onDrop.bind(this)}>
+              <Dropzone accept=".yaml, text/yaml, text/x-yaml, application/yaml, application/x-yaml"
+                style={{}} activeStyle={{borderStyle: 'dashed', width: 'fit-content', margin: 'auto'}} onDrop={this.onDropYAML}>
                 <div className="file has-name is-boxed is-centered">
                   <label className="file-label"> 
                     <span className="file-cta">
@@ -39,8 +69,8 @@ class Exams extends React.Component {
                         Choose a file…
                       </span>
                     </span>
-                    <span className="file-name">
-                      exams_configs.yaml
+                    <span className="file-name has-text-centered">
+                      <i>midterm_config</i>.YAML
                     </span>
                   </label>
                 </div>
@@ -49,28 +79,30 @@ class Exams extends React.Component {
               
             </div>
 
-            <div className="column has-text-centered">
-              <h3 className='title'>And tweak the config</h3>
-              <h5 className='subtitle'>Fix misalignments</h5>
+            <div className="column has-text-centered" style={textStyle}>
+              <h3 className='title' style={textStyle}>And tweak the config</h3>
+              <h5 className='subtitle' style={textStyle}>Fix misalignments</h5>
               <div className="select">
-                <select>
-                  <option>Midterm 5-12</option>
-                  <option>Final 30-1</option>
+                <select disabled={isDisabled}>
+                  {this.state.configSelected.map((config) => {
+                      return <option key={config}>{config}</option>
+                  })}
                 </select>
               </div>
-              <textarea className="textarea" placeholder="YAML config will appear here..."></textarea>
-              <button className='button is-success'>Save</button>
+              <textarea className="textarea" placeholder="YAML config will appear here..." disabled={isDisabled}></textarea>
+              <button className='button is-success' disabled={isDisabled}>Save</button>
             </div>
 
 
             <div className="column has-text-centered">
-              <h3 className='title'>And upload PDF's</h3>
-              <h5 className='subtitle'>we will work some magic!</h5>
+              <h3 className='title' style={textStyle}>And upload PDF's</h3>
+              <h5 className='subtitle' style={textStyle}>we will work some magic!</h5>
 
-              <Dropzone style={{}} activeStyle={{borderStyle: 'dashed', width: 'fit-content', margin: 'auto'}} onDrop={this.onDrop.bind(this)}>
+              <Dropzone accept={"application/pdf"} style={{}}
+                activeStyle={{borderStyle: 'dashed', width: 'fit-content', margin: 'auto'}} onDrop={this.onDropPDF.bind(this)} disabled={isDisabled}>
                 <div className="file has-name is-boxed is-centered">
                   <label className="file-label">
-                    <span className="file-cta">
+                    <span className="file-cta" disabled={isDisabled}>
                       <span className="file-icon">
                         <i className="fa fa-upload"></i>
                       </span>
@@ -78,8 +110,8 @@ class Exams extends React.Component {
                         Choose a file…
                       </span>
                     </span>
-                    <span className="file-name">
-                      Exams.pdf
+                    <span className="file-name has-text-centered" disabled={isDisabled}>
+                      <i>scanned_exam</i>.PDF
                     </span>
                   </label>
                 </div>
@@ -88,13 +120,14 @@ class Exams extends React.Component {
 
               <br />
 
-              <aside className="menu">
+              <aside className="menu" style={textStyle}>
               <p className="menu-label">
                 Previously uploaded
               </p>
                 <ul className="menu-list">
-                  <li>midterm.pdf</li>
-                  <li>final_exam.pdf</li>
+                {this.state.uploadedPDFs.map((PDF) => {
+                      return <li key={PDF}>{PDF}</li>
+                  })}
                 </ul>
               </aside>
 

@@ -72,6 +72,10 @@ zesje/static/
 
 # Python temporary files
 __pycache__/
+*.pyc
+
+# vscode folder
+.vscode
 
 # (test)database
 zesje/course.sqlite

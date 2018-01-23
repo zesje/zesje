@@ -23,6 +23,14 @@ class Exams extends React.Component {
     } else {
       console.log(accepted);
       this.setState({configSelected: [accepted[0].name]})
+
+      var data = new FormData()
+      data.append('file', accepted[0])
+
+      fetch('/api/exams', {
+        method: 'POST',
+        body: data
+      })
     }
   }
   
@@ -57,7 +65,7 @@ class Exams extends React.Component {
               <h3 className='title'>Upload new exam config</h3>
               <h5 className='subtitle'>then we know that to do with PDF's</h5>
 
-              <Dropzone accept=".yaml, text/yaml, text/x-yaml, application/yaml, application/x-yaml"
+              <Dropzone accept=".yml, text/yaml, text/x-yaml, application/yaml, application/x-yaml"
                 style={{}} activeStyle={{borderStyle: 'dashed', width: 'fit-content', margin: 'auto'}} onDrop={this.onDropYAML}>
                 <div className="file has-name is-boxed is-centered">
                   <label className="file-label"> 

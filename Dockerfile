@@ -2,7 +2,7 @@ FROM debian:jessie
 
 RUN apt-get update && \
     apt-get install -y \
-    curl libzbar-dev imagemagick poppler-utils build-essential && \
+    curl libzbar-dev imagemagick poppler-utils build-essential libgl1-mesa-glx && \
     apt-get -y --quiet install supervisor && \
     curl https://deb.nodesource.com/setup_6.x | bash && \
     apt-get install nodejs && \

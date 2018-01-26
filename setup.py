@@ -5,8 +5,8 @@ from setuptools.command.sdist import sdist
 
 def webpack():
     import subprocess
-    subprocess.check_call(['npm', 'install'])
-    subprocess.check_call(['./node_modules/.bin/webpack'])
+    subprocess.check_call(['yarn', 'install'])
+    subprocess.check_call(['yarn', 'build'])
 
 
 class Build(build):

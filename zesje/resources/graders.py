@@ -1,3 +1,4 @@
+from flask import abort
 from flask_restful import Resource, reqparse
 
 from .. import db
@@ -50,10 +51,13 @@ class Graders(Resource):
         first_name: str
         last_name: str
         """
-
-        db.Grader(first_name= args['first_name'],
-                    last_name=args['last_name'])
-        db.orm.commit()
+        
+        try:
+            db.Grader(first_name= args['first_name'],
+                        last_name=args['last_name'])
+            db.orm.commit()
+        except Exception as e:
+            abort(400, e)
 
         return {
         }

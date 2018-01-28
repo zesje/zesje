@@ -1,3 +1,5 @@
+""" REST api for graders page """
+
 from flask import abort
 from flask_restful import Resource, reqparse
 
@@ -5,12 +7,14 @@ from .. import db
 
 parser = reqparse.RequestParser()
 parser.add_argument('first_name', type=str, required=True)
-parser.add_argument('last_name',  type=str, required=True)
+parser.add_argument('last_name', type=str, required=True)
 # TODO: when making new database structure, have only a single
 #       'name' field: it is just an identifier
 
 
 class Graders(Resource):
+    """ Graders that are able to use the software, also logged during grading """
+
     @db.session
     def get(self):
         """get all graders.
@@ -36,8 +40,6 @@ class Graders(Resource):
     @db.session
     def post(self):
 
-        args = parser.parse_args()
-
         """add a grader.
 
         Parameters
@@ -51,13 +53,16 @@ class Graders(Resource):
         first_name: str
         last_name: str
         """
+
+        args = parser.parse_args()
+
         
         try:
             db.Grader(first_name= args['first_name'],
                         last_name=args['last_name'])
             db.orm.commit()
-        except Exception as e:
-            abort(400, e)
+        except KeyError as _e:
+            abort(400, _e)
 
         return {
         }

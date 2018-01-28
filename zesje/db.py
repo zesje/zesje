@@ -1,7 +1,7 @@
 """ Helper function for getting things in and out of the database """
 
 import os
-from collections import namedtuple, OrderedDict, ChainMap
+from collections import namedtuple, ChainMap
 import itertools
 import subprocess
 import argparse
@@ -10,7 +10,6 @@ import cv2
 import zbar
 import numpy as np
 import pandas
-import yaml
 
 from pony import orm
 from pony.orm import Database
@@ -34,81 +33,6 @@ def pdf_to_images(filename):
     # We convert everything to jpeg, which may be suboptimal, however some
     # formats recognized by pdfimages aren't understood by opencv.
     subprocess.run(['pdfimages', '-j', filename, filename[:-len('.pdf')]])
-
-
-def clean_yaml(yml):
-    """Clean up the widgets in the raw yaml from the exam latex compilation.
-
-    We must both perform an arithmetic operation, and convert the units to
-    points.
-    """
-
-    def sp_to_points(value):
-        return round(value/2**16/72, 5)
-
-    version = yml['protocol_version']
-    if version == 0:
-    # Eval is here because we cannot do automatic addition in latex.
-        clean_widgets = {name: {key: (sp_to_points(eval(value))
-                                      if key != 'page' else value)
-                                for key, value in entries.items()}
-                         for name, entries in yml['widgets'].items()}
-    elif version == 1:
-        clean_widgets = [
-            {'name': entries['name'],
-             'data': {key: (sp_to_points(eval(value))
-                            if key not in  ('page', 'name') else value)
-                      for key, value in entries['data'].items()}
-            }
-            for entries in yml['widgets']
-        ]
-    else:
-        raise RuntimeError('YAML version {} is not supported'.format(version))
-
-    return dict(
-        name=yml['name'],
-        protocol_version=yml['protocol_version'],
-        widgets=clean_widgets,
-    )
-
-
-def parse_yaml(yml):
-    version = yml['protocol_version']
-
-    if version == 0:
-        widgets = pandas.DataFrame(yml['widgets']).T
-        widgets.index.name = 'name'
-        if widgets.values.dtype == object:
-            # probably the yaml has not been processed
-            raise RuntimeError('Widget data must be numerical')
-        qr = widgets[widgets.index.str.contains('qrcode')]
-        widgets = widgets[~widgets.index.str.contains('qrcode')]
-        return version, yml['name'], qr, widgets
-    elif version == 1:
-
-        def normalize_widgets(wid):
-            # widgets are a *list* with fields 'name' and 'data.
-            # In version 0 this was a dictionary (i.e. unordered), now it is a
-            # list so we can construct an OrderedDict and preserves the ordering.
-            # This is important if we want to re-upload and diff the yaml
-            # and there are changes to widget names/data.
-            wid = OrderedDict((str(w['name']), w['data']) for w in wid)
-            df = pandas.DataFrame(wid).T
-            df.index.name = 'name'
-            return df
-
-        exam_name = yml['name']
-        widget_data = yml['widgets']
-        qr = normalize_widgets(filter(lambda d: 'qrcode' in str(d['name']), widget_data))
-        widgets = normalize_widgets(filter(lambda d: 'qrcode' not in str(d['name']), widget_data))
-        return version, exam_name, qr, widgets
-    else:
-        raise RuntimeError('Version {} not supported'.format(version))
-
-
-def read_yaml(filename):
-    with open(filename) as f:
-        return parse_yaml(yaml.safe_load(f))
 
 
 def guess_dpi(image_array):

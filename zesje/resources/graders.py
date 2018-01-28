@@ -52,9 +52,7 @@ class Graders(Resource):
 
         Returns
         -------
-        id: int
-        first_name: str
-        last_name: str
+        [200] if okay
         """
 
         args = parser.parse_args()

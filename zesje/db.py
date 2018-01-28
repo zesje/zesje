@@ -1,5 +1,6 @@
+""" Helper function for getting things in and out of the database """
+
 import os
-from datetime import datetime
 from collections import namedtuple, OrderedDict, ChainMap
 import itertools
 import subprocess
@@ -12,84 +13,15 @@ import pandas
 import yaml
 
 from pony import orm
-from pony.orm import Database, Required, Optional, PrimaryKey, Set
+from pony.orm import Database
+
+from .models import Student, Grader, Exam, Submission, \
+    Page, Problem, FeedbackOption, Solution
 
 ### Database definition.
 
 db = Database()
 session = orm.db_session
-
-
-# New students may be added throughout the course.
-class Student(db.Entity):
-    id = PrimaryKey(int)
-    first_name = Required(str)
-    last_name = Required(str)
-    email = Optional(str, unique=True)
-    submissions = Set('Submission')
-
-
-# This will be initialized @ app initialization and immutable from then on.
-class Grader(db.Entity):
-    first_name = Required(str)
-    last_name = Required(str)
-    graded_solutions = Set('Solution')
-
-
-# New instances are created when providing a new exam.
-class Exam(db.Entity):
-    name = Required(str, unique=True)
-    yaml_path = Required(str)
-    submissions = Set('Submission')
-    problems = Set('Problem')
-
-
-# Typically created when adding a new exam.
-class Submission(db.Entity):
-    copy_number = Required(int)
-    exam = Required(Exam)
-    solutions = Set('Solution')
-    pages = Set('Page')
-    student = Optional(Student)
-    signature_image_path = Optional(str)
-    signature_validated = Required(bool, default=False)
-
-
-class Page(db.Entity):
-    path = Required(str)
-    submission = Required(Submission)
-
-
-# this will be initialized @ app initialization and immutable from then on
-class Problem(db.Entity):
-    name = Required(str)
-    exam = Required(Exam)
-    feedback_options = Set('FeedbackOption')
-    solutions = Set('Solution')
-
-
-# feedback option -- can be shared by multiple problems.
-# this means non-duplicate rows for things like 'all correct',
-# but means that care must be taken when "updating" and "deleting"
-# options from the UI (not yet supported)
-class FeedbackOption(db.Entity):
-    problem = Required(Problem)
-    text = Required(str)
-    description = Optional(str)
-    score = Optional(int)
-    solutions = Set('Solution')
-
-
-# solution to a single problem
-class Solution(db.Entity):
-    submission = Required(Submission)
-    problem = Required(Problem)
-    PrimaryKey(submission, problem)  # enforce uniqueness on this pair
-    graded_by = Optional(Grader)  # if null, this has not yet been graded
-    graded_at = Optional(datetime)
-    image_path = Required(str)
-    feedback = Set(FeedbackOption)
-    remarks = Optional(str)
 
 
 ### Auxiliary functions dealing with files and images

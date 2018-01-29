@@ -8,6 +8,8 @@ import yaml
 
 
 def parse(yml):
+    """ Get the important parameters from a yaml """
+
     version = yml['protocol_version']
     exam_name = yml['name']
     widget_data = yml['widgets']
@@ -65,7 +67,7 @@ def load(yml):
         elif version == 1:
             clean_widgets = [
                 {'name': entries['name'],
-                'data': {key: (sp_to_points(eval(value))
+                'data': {key: (sp_to_points(value)
                                 if key not in  ('page', 'name') else value)
                         for key, value in entries['data'].items()}
                 }

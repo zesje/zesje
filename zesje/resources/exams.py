@@ -1,11 +1,12 @@
 """ REST api for exams page """
+import os
 
 from flask import abort
 from flask_restful import Resource, reqparse
 
 from pony import orm
 
-from models import db, Exam
+from models import db, Exam, Problem, FeedbackOption
 
 from helpers import yaml_helper
 
@@ -46,47 +47,43 @@ class Exams(Resource):
 
         args = parser.parse_args()
 
-
-        yaml_helper.load(args['yaml'])
+        yml = yaml_helper.load(args['yaml'])
 
         version, exam_name, qr, widgets = yaml_helper.parse(yml)
 
-        return {
-        }
+        
+        existing_exam = Exam.get(name=exam_name)
+        if existing_exam is None:
+            os.makedirs(exam_name + '_data', exist_ok=True)
 
+            exam = Exam(name=exam_name, yaml_path=exam_name + '.yml')
 
-""" 
-        # If there is already yaml for this exam, load it now so we can
-        # compute a diff later
-        existing_exam_data = get_exam_data(exam_name)
+            # Default feedback (maybe factor out eventually).
+            feedback_options = ['Everything correct',
+                                'No solution provided']
 
-        if existing_exam_data:
-            existing_yml_version, *_, existing_widgets = existing_exam_data
-            if not all(v == 1 for v in (version, existing_yml_version)):
+            for name in widgets.index:
+                if name == 'studentnr':
+                    continue
+                p = Problem(name=name, exam=exam)
+                for fb in feedback_options:
+                    FeedbackOption(text=fb, problem=p)
+
+            print("Added exam {} to database".format(exam_name))
+        else:
+            existing_version, *_, existing_widgets = yaml_helper.read(existing_exam.yaml_path)
+            if not all(v == 1 for v in (version, existing_version)):
                 raise ValueError('Exam data for {} already exists, and updating it requires both the old '
                                 'and new YAML to be version 1'.format(exam_name))
             if not existing_widgets.shape == widgets.shape:
                 raise ValueError('Exam data for {} already exists, and contains a different number of '
+                                 'exam problems than the old version'.format(exam_name))
+            
+            #db.update_exam(exam_name, yaml_filename)
 
+            print("Updated problem names for {}".format(exam_name))
 
-        
-        
-        print("Adding exam to database")
-        
-        try:
-            if existing_exam_data:
-                db.update_exam(exam_name, yaml_filename)
-                print("Updated problem names for {}".format(exam_name))
-            else:
-                db.add_exam(yaml_filename)
-                print("Added exam {} to database".format(exam_name))
-            os.makedirs(exam_name + '_data', exist_ok=True)
-        except Exception as exc:
-            print("Failed to add exam to database")
-            return
-        finally:
-            # XXX: use of global variables
-            # update list of exams
-            print("Metadata imported successfully")
+        os.makedirs(exam_name + '_data', exist_ok=True)
 
-"""
+        return {
+        }

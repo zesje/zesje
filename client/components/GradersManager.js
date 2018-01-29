@@ -42,6 +42,7 @@ class GraderManager extends React.Component {
   
       fetch('/api/graders', {
         method: 'POST', // or 'PUT'
+        credentials: 'same-origin',
         body: JSON.stringify(data), 
         headers: new Headers({
           'Content-Type': 'application/json'

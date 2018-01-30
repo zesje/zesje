@@ -29,13 +29,6 @@ class GraderManager extends React.Component {
       })
     }
 
-    clearNames() {
-        this.setState({
-            first_name: '',
-            last_name: '',
-        })
-    }
-  
     handleSubmit(event) {
       var data = {first_name: this.state.first_name,
                   last_name: this.state.last_name};
@@ -50,9 +43,12 @@ class GraderManager extends React.Component {
       })
       .then(res => res.json())
       .catch(error => console.error('Error:', error))
-      .then(response => {
-          this.clearNames()
-          this.fetchData()
+      .then(graders => {
+        this.setState({
+            first_name: '',
+            last_name: '',
+            graders: graders,
+        })
       })
   
       event.preventDefault();

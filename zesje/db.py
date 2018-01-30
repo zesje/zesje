@@ -15,7 +15,7 @@ from pony import orm
 from pony.orm import Database
 
 from .models import Student, Grader, Exam, Submission, \
-    Page, Problem, FeedbackOption, Solution
+                    Page, Problem, FeedbackOption, Solution
 
 ### Database definition.
 

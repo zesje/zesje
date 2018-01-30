@@ -22,7 +22,6 @@ class Graders(Resource):
     def get(self):
         """get all graders.
 
-
         Returns
         -------
         list of:
@@ -32,17 +31,16 @@ class Graders(Resource):
         """
 
         return [
-                {
-                    'id' : g.id,
-                    'first_name' : g.first_name,
-                    'last_name' : g.last_name
-                }
-                for g in Grader.select()
+            {
+                'id' : g.id,
+                'first_name' : g.first_name,
+                'last_name' : g.last_name
+            }
+            for g in Grader.select()
         ]
 
     @orm.db_session
     def post(self):
-
         """add a grader.
 
         Parameters

@@ -74,9 +74,6 @@ class Exams(Resource):
         else:
             existing_yml = yaml_helper.read(existing_exam.yaml_path)
             existing_version, *_, existing_widgets = yaml_helper.parse(existing_yml)
-            for v in (version, existing_version):
-                print(str(version) + ' : ' + str(existing_version))
-
             if not all(v == 1 for v in (version, existing_version)):
                 raise ValueError('Exam data for {} already exists, and updating it requires both the old '
                                 'and new YAML to be version 1'.format(exam_name))

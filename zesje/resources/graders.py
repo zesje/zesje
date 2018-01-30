@@ -5,7 +5,7 @@ from flask_restful import Resource, reqparse
 
 from pony import orm
 
-from models import db, Grader
+from ..models import db, Grader
 
 parser = reqparse.RequestParser()
 parser.add_argument('first_name', type=str, required=True)

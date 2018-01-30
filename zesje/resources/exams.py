@@ -6,9 +6,9 @@ from flask_restful import Resource, reqparse
 
 from pony import orm
 
-from models import db, Exam, Problem, FeedbackOption
+from ..helpers import yaml_helper
+from ..models import db, Exam, Problem, FeedbackOption
 
-from helpers import yaml_helper
 
 parser = reqparse.RequestParser()
 parser.add_argument('yaml', type=str, required=True)

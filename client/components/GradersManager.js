@@ -1,4 +1,5 @@
 import React from 'react';
+import * as api from "../api";
 
 class GraderManager extends React.Component {
     constructor(props) {
@@ -17,29 +18,12 @@ class GraderManager extends React.Component {
   
       this.setState({[name]: target.value});
     }
-  
-    fetchData() {
-      fetch('/api/graders', {credentials: 'same-origin'})
-      .then((response) => response.json())
-      .then((graders) =>{
-        this.setState({graders: graders})
-      })
-    }
 
     handleSubmit(event) {
       var data = {first_name: this.state.first_name,
                   last_name: this.state.last_name};
-  
-      fetch('/api/graders', {
-        method: 'POST', // or 'PUT'
-        credentials: 'same-origin',
-        body: JSON.stringify(data), 
-        headers: new Headers({
-          'Content-Type': 'application/json'
-        })
-      })
-      .then(res => res.json())
-      .catch(error => console.error('Error:', error))
+
+      api.post('graders', data)
       .then(graders => {
         this.setState({
             first_name: '',
@@ -47,12 +31,23 @@ class GraderManager extends React.Component {
             graders: graders,
         })
       })
+      .catch(resp => {
+          alert('could not save grader (see Javascript console for details)')
+          console.error('Error saving grader:', resp)
+      })
   
       event.preventDefault();
     }
   
     componentDidMount() {
-      this.fetchData();
+      api.get('graders')
+      .then(graders => {
+        this.setState({graders: graders})
+      })
+      .catch(resp => {
+          alert('could not fetch graders (see Javascript console for details)')
+          console.error('Error fetching graders:', resp)
+      })
     }
   
     render() {

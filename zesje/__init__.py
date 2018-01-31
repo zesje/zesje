@@ -1,30 +1,41 @@
 """ Init file that starts a Flask dev server and opens db """
 
-from os import path
+import os
 from os.path import abspath, dirname
 
 from flask import Flask
-from flask_basicauth import BasicAuth
 from werkzeug.exceptions import NotFound
+from flask_basicauth import BasicAuth
 
 from .api import api_bp
 from .models import db
 
 
-STATIC_FOLDER_PATH = path.join(abspath(dirname(__file__)), 'static')
+STATIC_FOLDER_PATH = os.path.join(abspath(dirname(__file__)), 'static')
 
 app = Flask(__name__, static_folder=STATIC_FOLDER_PATH)
 app.register_blueprint(api_bp, url_prefix='/api')
+auth = BasicAuth()  # don't pass 'app', as its not yet configured
+
+# Default settings
+app.config.update(
+    DATA_DIRECTORY=os.path.join(os.getcwd(), 'data')
+)
+if 'ZESJE_SETTINGS' in os.environ:
+    app.config.from_envvar('ZESJE_SETTINGS')
 
 
-####### Very Very VERY import to use this outsite dev/sandbox environment
-app.config['BASIC_AUTH_USERNAME'] = 'test'
-app.config['BASIC_AUTH_PASSWORD'] = 'zesje'
-app.config['BASIC_AUTH_FORCE'] = False # Don't forget to set this to 'True'
-basic_auth = BasicAuth(app)
+@app.before_first_request
+def setup():
+    auth.init_app(app)
 
-db.bind('sqlite', 'course.sqlite')
-db.generate_mapping(create_tables=True)
+    data_dir = app.config['DATA_DIRECTORY']
+    if not os.path.exists(data_dir):
+        os.makedirs(data_dir)
+
+    db.bind('sqlite', f"{app.config['DATA_DIRECTORY']}/course.sqlite", create_db=True)
+    db.generate_mapping(create_tables=True)
+
 
 @app.route('/')
 @app.route('/<file>')

@@ -12,9 +12,14 @@ class Exams extends React.Component {
 
   constructor(props) {
     super(props);
-    this.state = {configSelected: [''],
-                  uploadedPDFs: ['']};
-
+    this.state = {
+        exams: [],
+        selected_exam: {
+            id: "",
+            name: "",
+            yaml: "",
+        },
+    };
     this.onDropYAML = this.onDropYAML.bind(this);
     this.onDropPDF = this.onDropPDF.bind(this);
   }
@@ -24,17 +29,23 @@ class Exams extends React.Component {
       alert('Please upload a YAML..')
     } else {
       console.log(accepted);
-      this.setState({configSelected: [accepted[0].name]})
-
       var data = new FormData()
-      data.append('file', accepted[0])
+      data.append('yaml', accepted[0])
 
       api.post('exams', data)
-      .then(() =>
+      .then(new_exam => {
+        // if reall is new exam then add to list of exams
+        if (!this.state.exams.some(exam => new_exam.id == exam.id)) {
+            this.setState(prev => {
+                  exams: [...prev.exams, new_exam]
+            })
+        }
+
+        this.setState({
+            selected_exam: new_exam,
+        })
         alert('Thank you for your upload, it was delicious')
-        // TODO: update interface to reflect uploaded YAML
-        //       I reckon we will need a different format for this.state
-      )
+      })
       .catch(resp => {
         alert('failed to upload yaml (see javascript console for details)')
         console.error('failed to upload YAML:', resp)
@@ -48,14 +59,29 @@ class Exams extends React.Component {
     } else {
       // TODO: implement PDF upload
       console.log(accepted);
-      this.setState({uploadedPDFs: [accepted[0].name]})
     }
   }
 
+  componentDidMount() {
+    api.get('exams')
+    .then(exams => {
+        this.setState({exams: exams})
+        if (exams.length > 0) {
+            var first_exam = exams[0].id
+            api.get('exams/' + first_exam)
+            .then(exam => this.setState({selected_exam: exam}))
+        }
+    })
+    .catch(err => {
+        alert('failed to get exams (see javascript console for details)')
+        console.error('failed to get exams:', err)
+        throw err
+    })
+  }
 
   render () {
 
-    var isDisabled = this.state.configSelected[0].length == 0;
+    var isDisabled = this.state.exams.length == 0;
     var textStyle = {
       color: isDisabled ? 'grey' : 'black'
     };
@@ -101,12 +127,14 @@ class Exams extends React.Component {
               <h5 className='subtitle' style={textStyle}>Fix misalignments</h5>
               <div className="select">
                 <select disabled={isDisabled}>
-                  {this.state.configSelected.map((config) => {
-                      return <option key={config}>{config}</option>
+                  {this.state.exams.map((exam) => {
+                      return <option key={exam.id}>{exam.name}</option>
                   })}
                 </select>
               </div>
-              <textarea className="textarea" placeholder="YAML config will appear here..." disabled={isDisabled}></textarea>
+              <textarea className="textarea" placeholder="YAML config will appear here..." disabled={isDisabled}
+                        value={this.state.selected_exam.yaml}>
+              </textarea>
               <button className='button is-success' disabled={isDisabled}>Save</button>
             </div>
 
@@ -142,9 +170,6 @@ class Exams extends React.Component {
                 Previously uploaded
               </p>
                 <ul className="menu-list">
-                {this.state.uploadedPDFs.map((PDF) => {
-                      return <li key={PDF}>{PDF}</li>
-                  })}
                 </ul>
               </aside>
 

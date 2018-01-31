@@ -92,12 +92,11 @@ def read(filename):
     with open(filename) as f:
         return yaml.safe_load(f)
 
-def save(yml):
+def save(yml, path):
     """ save yaml to disk """
-    yaml_filename = yml['name'] + '.yml'
-    print("Saving " + yaml_filename)
+    print("Saving " + path)
     try:
-        with open(yaml_filename, 'w') as f:
+        with open(path, 'w') as f:
             f.write(yaml.safe_dump(yml, default_flow_style=False))
     except Exception:
-        print("Failed to save " + yaml_filename)
+        print("Failed to save " + path)

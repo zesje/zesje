@@ -5,6 +5,8 @@ import Footer from '../components/Footer';
 
 import Dropzone from 'react-dropzone'
 
+import * as api from '../api'
+
 
 class Exams extends React.Component {
 
@@ -27,9 +29,15 @@ class Exams extends React.Component {
       var data = new FormData()
       data.append('file', accepted[0])
 
-      fetch('/api/exams', {
-        method: 'POST',
-        body: data
+      api.post('exams', data)
+      .then(() =>
+        alert('Thank you for your upload, it was delicious')
+        // TODO: update interface to reflect uploaded YAML
+        //       I reckon we will need a different format for this.state
+      )
+      .catch(resp => {
+        alert('failed to upload yaml (see javascript console for details)')
+        console.error('failed to upload YAML:', resp)
       })
     }
   }
@@ -38,6 +46,7 @@ class Exams extends React.Component {
     if (rejected.length > 0) {
       alert('Please upload a PDF..')
     } else {
+      // TODO: implement PDF upload
       console.log(accepted);
       this.setState({uploadedPDFs: [accepted[0].name]})
     }
@@ -78,7 +87,7 @@ class Exams extends React.Component {
                       </span>
                     </span>
                     <span className="file-name has-text-centered">
-                      <i>midterm_config</i>.YAML
+                      <i>midterm_config</i>.yml
                     </span>
                   </label>
                 </div>

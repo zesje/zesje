@@ -22,6 +22,9 @@ class Exams extends React.Component {
     };
     this.onDropYAML = this.onDropYAML.bind(this);
     this.onDropPDF = this.onDropPDF.bind(this);
+    this.putYaml = this.putYaml.bind(this);
+    this.updateYaml = this.updateYaml.bind(this);
+
   }
 
   onDropYAML(accepted, rejected) {
@@ -51,6 +54,31 @@ class Exams extends React.Component {
         console.error('failed to upload YAML:', resp)
       })
     }
+  }
+
+  putYaml() {
+    console.log(this.state.selected_exam)
+    const exam_id = this.state.selected_exam.id
+    api.put('exams/' + exam_id, {yaml: this.state.selected_exam.yaml})
+    .then(() => alert('thank you for the update; it was delicious'))
+    .catch(resp => {
+        alert('failed to update the YAML (see javascript console)')
+        console.error('failed to update YAML', resp)
+    })
+  }
+
+  updateYaml(event) {
+    console.log(event)
+    const yaml = event.target.value
+    this.setState(prev => {
+        return {
+          selected_exam: {
+            id: prev.selected_exam.id,
+            name: prev.selected_exam.name,
+            yaml: yaml,
+          }
+        }
+    })
   }
   
   onDropPDF(accepted, rejected) {
@@ -133,9 +161,12 @@ class Exams extends React.Component {
                 </select>
               </div>
               <textarea className="textarea" placeholder="YAML config will appear here..." disabled={isDisabled}
-                        value={this.state.selected_exam.yaml}>
+                        value={this.state.selected_exam.yaml} onChange={this.updateYaml}>
               </textarea>
-              <button className='button is-success' disabled={isDisabled}>Save</button>
+              <button className='button is-success' disabled={isDisabled}
+                      onClick={this.putYaml}>
+              Save
+              </button>
             </div>
 
 

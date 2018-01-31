@@ -12,6 +12,45 @@ from ..models import db, Exam, Problem, FeedbackOption
 from ..helpers import db_helper
 
 
+class ExamConfig(Resource):
+    """Get detailed information about a single exam."""
+
+    @orm.db_session
+    def get(self, id):
+        exam = Exam.get(id=id)
+        if not exam:
+            return {}, 404
+
+        data_dir = app.config['DATA_DIRECTORY']
+        with open(os.path.join(data_dir, exam.yaml_path)) as f:
+            yml = f.read()
+
+        return {
+            'id': id,
+            'name': exam.name,
+            'yaml': yml
+        }
+
+    @orm.db_session
+    def put(self, id):
+        parser = reqparse.RequestParser()
+        parser.add_argument('yaml', type=str, required=True)
+        args = parser.parse_args()
+
+        exam = Exam[id]
+
+        data_dir = app.config['DATA_DIRECTORY']
+        yaml_filename = exam.name + '.yml'
+        yaml_abspath = os.path.join(data_dir, yaml_filename)
+        existing_yml = yaml_helper.read(yaml_abspath)
+        new_yml = yaml_helper.load(args['yaml'])
+
+        db_helper.update_exam(exam, existing_yml, new_yml)
+
+        yaml_helper.save(new_yml, yaml_abspath)
+
+        print("Updated problem names for {}".format(exam.name))
+
 
 class Exams(Resource):
     """ Exam storage and processing, including the YAML that stores the metadata """

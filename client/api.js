@@ -36,5 +36,6 @@ function _fetch(method) {
 
 const get = _fetch('GET')
 const post = _fetch('POST')
+const put = _fetch('PUT')
 
-export {get, post}
+export {get, post, put}

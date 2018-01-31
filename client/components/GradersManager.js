@@ -3,10 +3,7 @@ import React from 'react';
 class GraderManager extends React.Component {
     constructor(props) {
       super(props);
-      this.state = {graders: [
-                              {id: '1', first_name: 'John', last_name: 'Doe'},
-                              {id: '2', first_name: 'Jan', last_name: 'Janssen'}
-                            ],
+      this.state = {graders: [],
                     first_name: '',
                     last_name: '' };
       

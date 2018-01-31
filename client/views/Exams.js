@@ -175,7 +175,9 @@ class Exams extends React.Component {
               <h5 className='subtitle' style={textStyle}>we will work some magic!</h5>
 
               <Dropzone accept={"application/pdf"} style={{}}
-                activeStyle={{borderStyle: 'dashed', width: 'fit-content', margin: 'auto'}} onDrop={this.onDropPDF.bind(this)} disabled={isDisabled}>
+                activeStyle={{borderStyle: 'dashed', width: 'fit-content', margin: 'auto'}}
+                onDrop={this.onDropPDF.bind(this)}
+                disabled={isDisabled}>
                 <div className="file has-name is-boxed is-centered">
                   <label className="file-label">
                     <span className="file-cta" disabled={isDisabled}>

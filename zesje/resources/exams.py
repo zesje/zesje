@@ -7,9 +7,9 @@ from werkzeug.datastructures import FileStorage
 
 from pony import orm
 
-from ..helpers import yaml_helper
+from ..helpers import yaml_helper, db_helper
 from ..models import db, Exam, Problem, FeedbackOption
-from ..helpers import db_helper
+from ._helpers import required_string
 
 
 class ExamConfig(Resource):
@@ -31,11 +31,12 @@ class ExamConfig(Resource):
             'yaml': yml
         }
 
+    patch_parser = reqparse.RequestParser()
+    required_string(patch_parser, 'yaml')
+
     @orm.db_session
     def patch(self, id):
-        parser = reqparse.RequestParser()
-        parser.add_argument('yaml', type=str, required=True)
-        args = parser.parse_args()
+        args = patch_parser.parse_args()
 
         exam = Exam[id]
 

@@ -6,14 +6,11 @@ from flask_restful import Resource, reqparse
 from pony import orm
 
 from ..models import db, Grader
+from ._helpers import required_string
 
-parser = reqparse.RequestParser()
-parser.add_argument('first_name', type=str, required=True)
-parser.add_argument('last_name', type=str, required=True)
+
 # TODO: when making new database structure, have only a single
 #       'name' field: it is just an identifier
-
-
 
 class Graders(Resource):
     """ Graders that are able to use the software, also logged during grading """
@@ -42,6 +39,10 @@ class Graders(Resource):
             for g in Grader.select()
         ]
 
+    post_parser = reqparse.RequestParser()
+    required_string(post_parser, 'first_name')
+    required_string(post_parser, 'last_name')
+
     @orm.db_session
     def post(self):
         """add a grader.
@@ -58,15 +59,13 @@ class Graders(Resource):
             first_name: str
             last_name: str
         """
-
-        args = parser.parse_args()
-
+        args = post_parser.parse_args()
         
         try:
             Grader(first_name= args['first_name'],
-                        last_name=args['last_name'])
+                   last_name=args['last_name'])
             orm.commit()
-        except KeyError as _e:
-            abort(400, _e)
+        except KeyError as error:
+            abort(400, error)
 
         return self._get()

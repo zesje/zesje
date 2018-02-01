@@ -39,9 +39,9 @@ class Exams extends React.Component {
       .then(new_exam => {
         // if reall is new exam then add to list of exams
         if (!this.state.exams.some(exam => new_exam.id == exam.id)) {
-            this.setState(prev => {
-                  exams: [...prev.exams, new_exam]
-            })
+            this.setState(prev => ({
+              exams: [...prev.exams, new_exam],
+            }))
         }
 
         this.setState({

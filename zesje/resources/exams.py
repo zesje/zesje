@@ -1,4 +1,3 @@
-""" REST api for exams page """
 import os
 
 from flask import abort, current_app as app
@@ -13,11 +12,26 @@ from ._helpers import required_string
 
 
 class ExamConfig(Resource):
-    """Get detailed information about a single exam."""
 
     @orm.db_session
-    def get(self, id):
-        exam = Exam.get(id=id)
+    def get(self, exam_id):
+        """Get detailed information about a single exam
+
+        URL Parameters
+        --------------
+        exam_id : int
+            exam ID
+
+        Returns
+        -------
+        id : int
+            exam ID
+        name : str
+            exam name
+        yaml : str
+            YAML config
+        """
+        exam = Exam.get(id=exam_id)
         if not exam:
             return {}, 404
 
@@ -26,7 +40,7 @@ class ExamConfig(Resource):
             yml = f.read()
 
         return {
-            'id': id,
+            'id': exam_id,
             'name': exam.name,
             'yaml': yml
         }
@@ -35,10 +49,22 @@ class ExamConfig(Resource):
     required_string(patch_parser, 'yaml')
 
     @orm.db_session
-    def patch(self, id):
+    def patch(self, exam_id):
+        """Update a single exam's config
+
+        URL Parameters
+        --------------
+        exam_id : int
+            exam ID
+
+        Parameters
+        ----------
+        yaml : str
+            processed YAML config
+        """
         args = patch_parser.parse_args()
 
-        exam = Exam[id]
+        exam = Exam[exam_id]
 
         data_dir = app.config['DATA_DIRECTORY']
         yaml_filename = exam.name + '.yml'
@@ -54,7 +80,6 @@ class ExamConfig(Resource):
 
 
 class Exams(Resource):
-    """ Exam storage and processing, including the YAML that stores the metadata """
 
     @orm.db_session
     def get(self):
@@ -63,8 +88,10 @@ class Exams(Resource):
         Returns
         -------
         list of:
-            id: int
-            name: str
+            id : int
+                exam name
+            name : str
+                exam ID
         """
         return [
             {
@@ -74,21 +101,32 @@ class Exams(Resource):
             for ex in Exam.select().order_by(Exam.id)
         ]
 
+    post_parser = reqparse.RequestParser()
+    post_parser.add_argument('yaml', type=FileStorage, required=True,
+                             location='files')
+
     @orm.db_session
     def post(self):
-        """ Post a new yaml config
-        Will overwrite existing yaml if the name is the same
+        """Add a new exam.
+
+        Will overwrite an existing exam if the name is the same.
+
+        Parameters
+        ----------
+        yaml : file
+            potentially unprocessed exam config.
 
         Returns
         -------
-        id: int
-        name: str
-        yaml: str
+        id : int
+            exam ID
+        name : str
+            exam name
+        yaml : str
+            processed config
         """
-        parser = reqparse.RequestParser()
-        parser.add_argument('yaml', type=FileStorage, required=True,
-                            location='files')
-        args = parser.parse_args()
+
+        args = post_parser.parse_args()
 
         yml = yaml_helper.load(args['yaml'])
 

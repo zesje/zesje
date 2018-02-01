@@ -9,4 +9,4 @@ api = Api(api_bp)
 
 api.add_resource(Graders, '/graders')
 api.add_resource(Exams, '/exams')
-api.add_resource(ExamConfig, '/exams/<int:id>')
+api.add_resource(ExamConfig, '/exams/<int:exam_id>')

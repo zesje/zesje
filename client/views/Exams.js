@@ -24,6 +24,7 @@ class Exams extends React.Component {
     this.onDropPDF = this.onDropPDF.bind(this);
     this.putYaml = this.putYaml.bind(this);
     this.updateYaml = this.updateYaml.bind(this);
+    this.selectExam = this.selectExam.bind(this);
 
   }
 
@@ -80,6 +81,17 @@ class Exams extends React.Component {
         }
     })
   }
+
+  selectExam(event) {
+    const new_exam_id = event.target.value
+    api.get('exams/' + new_exam_id)
+    .then(exam =>
+        this.setState(prev => {
+            return {selected_exam: exam}
+        })
+    )
+  }
+
   
   onDropPDF(accepted, rejected) {
     if (rejected.length > 0) {
@@ -154,9 +166,11 @@ class Exams extends React.Component {
               <h3 className='title' style={textStyle}>And tweak the config</h3>
               <h5 className='subtitle' style={textStyle}>Fix misalignments</h5>
               <div className="select">
-                <select disabled={isDisabled}>
+                <select disabled={isDisabled}
+                        value={this.state.selected_exam.id}
+                        onChange={this.selectExam}>
                   {this.state.exams.map((exam) => {
-                      return <option key={exam.id}>{exam.name}</option>
+                      return <option value={exam.id}>{exam.name}</option>
                   })}
                 </select>
               </div>

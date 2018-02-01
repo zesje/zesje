@@ -56,7 +56,7 @@ class Exams extends React.Component {
 
   putYaml() {
     const exam_id = this.state.selected_exam.id
-    api.put('exams/' + exam_id, {yaml: this.state.selected_exam.yaml})
+    api.patch('exams/' + exam_id, {yaml: this.state.selected_exam.yaml})
     .then(() => alert('thank you for the update; it was delicious'))
     .catch(resp => {
         alert('failed to update the YAML (see javascript console)')

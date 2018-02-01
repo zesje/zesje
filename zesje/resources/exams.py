@@ -32,7 +32,7 @@ class ExamConfig(Resource):
         }
 
     @orm.db_session
-    def put(self, id):
+    def patch(self, id):
         parser = reqparse.RequestParser()
         parser.add_argument('yaml', type=str, required=True)
         args = parser.parse_args()

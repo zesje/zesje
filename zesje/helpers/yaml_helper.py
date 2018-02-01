@@ -67,7 +67,7 @@ def load(yml):
         elif version == 1:
             clean_widgets = [
                 {'name': entries['name'],
-                'data': {key: (sp_to_points(value)
+                'data': {key: (sp_to_points(eval(value))
                                 if key not in  ('page', 'name') else value)
                         for key, value in entries['data'].items()}
                 }

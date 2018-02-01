@@ -31,29 +31,27 @@ class Exams extends React.Component {
   onDropYAML(accepted, rejected) {
     if (rejected.length > 0) {
       alert('Please upload a YAML..')
-    } else {
-      var data = new FormData()
-      data.append('yaml', accepted[0])
-
-      api.post('exams', data)
-      .then(new_exam => {
-        // if reall is new exam then add to list of exams
-        if (!this.state.exams.some(exam => new_exam.id == exam.id)) {
-            this.setState(prev => ({
-              exams: [...prev.exams, new_exam],
-            }))
-        }
-
-        this.setState({
-            selected_exam: new_exam,
-        })
-        alert('Thank you for your upload, it was delicious')
-      })
-      .catch(resp => {
-        alert('failed to upload yaml (see javascript console for details)')
-        console.error('failed to upload YAML:', resp)
-      })
+      return
     }
+    var data = new FormData()
+    data.append('yaml', accepted[0])
+    api.post('exams', data)
+    .then(new_exam => {
+      // if reall is new exam then add to list of exams
+      if (!this.state.exams.some(exam => new_exam.id == exam.id)) {
+          this.setState(prev => ({
+            exams: [...prev.exams, new_exam],
+          }))
+      }
+      this.setState({
+          selected_exam: new_exam,
+      })
+      alert('Thank you for your upload, it was delicious')
+    })
+    .catch(resp => {
+      alert('failed to upload yaml (see javascript console for details)')
+      console.error('failed to upload YAML:', resp)
+    })
   }
 
   putYaml() {

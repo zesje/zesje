@@ -1,5 +1,6 @@
 """ Module that contains helpers for yaml operations """
 
+import re
 from collections import OrderedDict
 
 import pandas
@@ -35,7 +36,7 @@ def parse(yml):
             df = pandas.DataFrame(wid).T
             df.index.name = 'name'
             return df
-        
+
         qr = normalize_widgets(filter(lambda d: 'qrcode' in str(d['name']), widget_data))
         widgets = normalize_widgets(filter(lambda d: 'qrcode' not in str(d['name']), widget_data))
     else:
@@ -44,47 +45,54 @@ def parse(yml):
     return version, exam_name, qr, widgets
 
 
+def normalize_coords(value):
+    """Convert latex-generated coordinates into inches.
+
+    Assumes that latex produces output of form "1234567+ 7654321".
+    """
+    if not isinstance(value, str):
+        return value
+
+    a, sign, b = re.match(r'(\d+) *([-+]) *(\d+)', value).groups()
+    value = int(a) + int(b) * (-1 if sign=='-' else 1)
+    return round(value/2**16/72, 5)
+
+
 def load(yml):
     """ Read yaml from string and cleans it """
 
-    def clean(yml):
-        """Clean up the widgets in the raw yaml from the exam latex compilation.
 
-        We must both perform an arithmetic operation, and convert the units to
-        points.
-        """
+    """Clean up the widgets in the raw yaml from the exam latex compilation.
 
-        def sp_to_points(value):
-            return round(value/2**16/72, 5)
-
-        version = yml['protocol_version']
-        if version == 0:
-        # Eval is here because we cannot do automatic addition in latex.
-            clean_widgets = {name: {key: (sp_to_points(eval(value))
-                                        if key != 'page' else value)
-                                    for key, value in entries.items()}
-                            for name, entries in yml['widgets'].items()}
-        elif version == 1:
-            clean_widgets = [
-                {'name': entries['name'],
-                'data': {key: (sp_to_points(eval(value))
-                                if key not in  ('page', 'name') else value)
-                        for key, value in entries['data'].items()}
-                }
-                for entries in yml['widgets']
-            ]
-        else:
-            raise RuntimeError('YAML version {} is not supported'.format(version))
-
-        return dict(
-            name=yml['name'],
-            protocol_version=yml['protocol_version'],
-            widgets=clean_widgets,
-        )
-
+    We must both perform an arithmetic operation, and convert the units to
+    points.
+    """
     yml = yaml.safe_load(yml)
-    yml = clean(yml)
-    return yml
+
+    version = yml['protocol_version']
+    if version == 0:
+    # Eval is here because we cannot do automatic addition in latex.
+        clean_widgets = {name: {key: (normalize_coords(value)
+                                    if key != 'page' else value)
+                                for key, value in entries.items()}
+                        for name, entries in yml['widgets'].items()}
+    elif version == 1:
+        clean_widgets = [
+            {'name': entries['name'],
+            'data': {key: (normalize_coords(value)
+                            if key not in  ('page', 'name') else value)
+                    for key, value in entries['data'].items()}
+            }
+            for entries in yml['widgets']
+        ]
+    else:
+        raise RuntimeError('YAML version {} is not supported'.format(version))
+
+    return dict(
+        name=yml['name'],
+        protocol_version=yml['protocol_version'],
+        widgets=clean_widgets,
+    )
 
 
 def read(filename):

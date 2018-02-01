@@ -32,7 +32,6 @@ class Exams extends React.Component {
     if (rejected.length > 0) {
       alert('Please upload a YAML..')
     } else {
-      console.log(accepted);
       var data = new FormData()
       data.append('yaml', accepted[0])
 
@@ -58,7 +57,6 @@ class Exams extends React.Component {
   }
 
   putYaml() {
-    console.log(this.state.selected_exam)
     const exam_id = this.state.selected_exam.id
     api.put('exams/' + exam_id, {yaml: this.state.selected_exam.yaml})
     .then(() => alert('thank you for the update; it was delicious'))
@@ -69,7 +67,6 @@ class Exams extends React.Component {
   }
 
   updateYaml(event) {
-    console.log(event)
     const yaml = event.target.value
     this.setState(prev => {
         return {
@@ -98,7 +95,7 @@ class Exams extends React.Component {
       alert('Please upload a PDF..')
     } else {
       // TODO: implement PDF upload
-      console.log(accepted);
+      console.log('would upload PDF here')
     }
   }
 

@@ -31,9 +31,7 @@ class ExamConfig(Resource):
         yaml : str
             YAML config
         """
-        exam = Exam.get(id=exam_id)
-        if not exam:
-            return {}, 404
+        exam = Exam[exam_id]
 
         data_dir = app.config['DATA_DIRECTORY']
         with open(os.path.join(data_dir, exam.yaml_path)) as f:
@@ -64,9 +62,7 @@ class ExamConfig(Resource):
         """
         args = self.patch_parser.parse_args()
 
-        exam = Exam.get(id=exam_id)
-        if not exam:
-            return {}, 404
+        exam = Exam[exam_id]
 
         data_dir = app.config['DATA_DIRECTORY']
         yaml_filename = exam.name + '.yml'
@@ -130,9 +126,11 @@ class Exams(Resource):
 
         args = self.post_parser.parse_args()
 
-        yml = yaml_helper.load(args['yaml'])
-
-        version, exam_name, qr, widgets = yaml_helper.parse(yml)
+        try:
+            yml = yaml_helper.load(args['yaml'])
+            version, exam_name, qr, widgets = yaml_helper.parse(yml)
+        except Exception:
+            return dict(message='Invalid config file'), 400
         
         data_dir = app.config['DATA_DIRECTORY']
         yaml_filename = exam_name + '.yml'

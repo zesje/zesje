@@ -18,6 +18,7 @@ class Exams extends React.Component {
             id: "",
             name: "",
             yaml: "",
+            pdfs: [],
         },
     };
     this.onDropYAML = this.onDropYAML.bind(this);
@@ -76,6 +77,13 @@ class Exams extends React.Component {
     .then(exam =>
         this.setState(prev => ({
             selected_exam: Object.assign(prev.selected_exam, exam)
+        }))
+    )
+
+    api.get('pdfs/' + exam_id)
+    .then(pdfs =>
+        this.setState(prev => ({
+            selected_exam: Object.assign(prev.selected_exam, {pdfs: pdfs})
         }))
     )
   }
@@ -204,6 +212,9 @@ class Exams extends React.Component {
                 Previously uploaded
               </p>
                 <ul className="menu-list">
+                {this.state.selected_exam.pdfs.map(pdf =>
+                    <li>{pdf.name}</li>
+                )}
                 </ul>
               </aside>
 

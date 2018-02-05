@@ -23,7 +23,7 @@ class Sdist(sdist):
 
 setup(
     name="zesje",
-    version="0.1",
+    version="0.1a",
     url="http://gitlab.kwant-project,org/zesje/zesje",
     description="",
     author="Zesje authors",

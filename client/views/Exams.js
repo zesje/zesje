@@ -71,9 +71,8 @@ class Exams extends React.Component {
     }))
   }
 
-  selectExam(event) {
-    const new_exam_id = event.target.value
-    api.get('exams/' + new_exam_id)
+  selectExam(exam_id) {
+    api.get('exams/' + exam_id)
     .then(exam =>
         this.setState(prev => ({
             selected_exam: Object.assign(prev.selected_exam, exam)
@@ -97,8 +96,7 @@ class Exams extends React.Component {
         this.setState({exams: exams})
         if (exams.length > 0) {
             var first_exam = exams[0].id
-            api.get('exams/' + first_exam)
-            .then(exam => this.setState({selected_exam: exam}))
+            this.selectExam(first_exam)
         }
     })
     .catch(err => {
@@ -157,7 +155,7 @@ class Exams extends React.Component {
               <div className="select">
                 <select disabled={isDisabled}
                         value={this.state.selected_exam.id}
-                        onChange={this.selectExam}>
+                        onChange={ev => this.selectExam(ev.target.value)}>
                   {this.state.exams.map((exam) => {
                       return <option value={exam.id}>{exam.name}</option>
                   })}

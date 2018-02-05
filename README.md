@@ -28,8 +28,8 @@ Yarn keeps track of all the client-side dependancies in `config.json` when you i
 ### Running a development server
 run
 
-    `yarn start`
+    `yarn dev`
 
-to start the development server, which you can access on http://127.0.0.1:5000.
+to start the development server, which you can access on http://127.0.0.1:8881.
 It will automatically reload whenever you change any source files in `client/`
 or `zesje/`.

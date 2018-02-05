@@ -3,4 +3,4 @@ import os
 sys.path.append(os.getcwd())
 
 from zesje import app
-app.run(debug=True)
+app.run()

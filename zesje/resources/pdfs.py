@@ -7,7 +7,6 @@ from werkzeug.datastructures import FileStorage
 from pony import orm
 
 from ..models import db, Exam
-from .sync
 
 
 class Pdfs(Resource):

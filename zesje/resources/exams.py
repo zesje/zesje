@@ -64,7 +64,9 @@ class ExamConfig(Resource):
         """
         args = patch_parser.parse_args()
 
-        exam = Exam[exam_id]
+        exam = Exam.get(id=exam_id)
+        if not exam:
+            return {}, 404
 
         data_dir = app.config['DATA_DIRECTORY']
         yaml_filename = exam.name + '.yml'

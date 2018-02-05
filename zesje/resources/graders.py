@@ -59,7 +59,7 @@ class Graders(Resource):
             first_name: str
             last_name: str
         """
-        args = post_parser.parse_args()
+        args = self.post_parser.parse_args()
         
         try:
             Grader(first_name= args['first_name'],

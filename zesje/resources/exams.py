@@ -62,7 +62,7 @@ class ExamConfig(Resource):
         yaml : str
             processed YAML config
         """
-        args = patch_parser.parse_args()
+        args = self.patch_parser.parse_args()
 
         exam = Exam.get(id=exam_id)
         if not exam:
@@ -128,7 +128,7 @@ class Exams(Resource):
             processed config
         """
 
-        args = post_parser.parse_args()
+        args = self.post_parser.parse_args()
 
         yml = yaml_helper.load(args['yaml'])
 

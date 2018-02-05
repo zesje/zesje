@@ -92,10 +92,18 @@ class Exams extends React.Component {
   onDropPDF(accepted, rejected) {
     if (rejected.length > 0) {
       alert('Please upload a PDF..')
-    } else {
-      // TODO: implement PDF upload
-      console.log('would upload PDF here')
+      return
     }
+    var data = new FormData()
+    data.append('pdf', accepted[0])
+    api.post('pdfs/' + this.state.selected_exam.id, data)
+    .then(() => {
+      alert('Thank you for your upload, it was delicious')
+    })
+    .catch(resp => {
+      alert('failed to upload pdf (see javascript console for details)')
+      console.error('failed to upload PDF:', resp)
+    })
   }
 
   componentDidMount() {

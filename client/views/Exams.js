@@ -43,9 +43,9 @@ class Exams extends React.Component {
             exams: [...prev.exams, new_exam],
           }))
       }
-      this.setState({
-          selected_exam: new_exam,
-      })
+      this.setState(prev => ({
+          selected_exam: Object.assign(prev.selected_exam, new_exam),
+      }))
       alert('Thank you for your upload, it was delicious')
     })
     .catch(resp => {
@@ -66,24 +66,18 @@ class Exams extends React.Component {
 
   updateYaml(event) {
     const yaml = event.target.value
-    this.setState(prev => {
-        return {
-          selected_exam: {
-            id: prev.selected_exam.id,
-            name: prev.selected_exam.name,
-            yaml: yaml,
-          }
-        }
-    })
+    this.setState(prev => ({
+        selected_exam: Object.assign(prev.selected_exam, {yaml: yaml})
+    }))
   }
 
   selectExam(event) {
     const new_exam_id = event.target.value
     api.get('exams/' + new_exam_id)
     .then(exam =>
-        this.setState(prev => {
-            return {selected_exam: exam}
-        })
+        this.setState(prev => ({
+            selected_exam: Object.assign(prev.selected_exam, exam)
+        }))
     )
   }
 

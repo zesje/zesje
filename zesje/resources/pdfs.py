@@ -1,4 +1,5 @@
 import os
+from multiprocessing import Process
 
 from flask import abort, current_app as app
 from flask_restful import Resource, reqparse
@@ -7,7 +8,7 @@ from werkzeug.datastructures import FileStorage
 from pony import orm
 
 from ..models import db, Exam, PDF
-
+from ..helpers import pdf_helper
 
 class Pdfs(Resource):
     """Getting a list of uploaded PDFs, and uploading new ones."""
@@ -63,7 +64,6 @@ class Pdfs(Resource):
             pdf = PDF(exam=Exam[exam_id], name=args['pdf'].filename,
                       status='processing', message='importing PDF')
 
-        # TODO fire off subprocess
         with orm.db_session:
             try:
                 path = os.path.join(app.config['PDF_DIRECTORY'], f'{pdf.id}.pdf')
@@ -71,6 +71,12 @@ class Pdfs(Resource):
             except Exception:
                 pdf.delete()
                 raise
+
+        # Fire off background process
+        # TODO: save these into a process-local datastructure, or save
+        # it into the DB as well so that we can cull 'processing' tasks
+        # that are actually dead.
+        Process(target=pdf_helper.process_pdf, args=(pdf.id,)).start()
 
         return {
             'id': pdf.id,

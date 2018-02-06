@@ -83,7 +83,7 @@ def process_pdf(pdf_id):
 
         if any(qr[0] != config.exam_name for qr in extracted_qrs if qr is not None):
             report_error('PDF is not from this exam')
-            raise
+            return
 
         # Process individual pages
         failures = []

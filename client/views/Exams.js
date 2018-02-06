@@ -16,9 +16,9 @@ class Exams extends React.Component {
     this.state = {
         exams: [],
         selected_exam: {
-            id: "",
-            name: "",
-            yaml: "",
+            id: null,
+            name: null,
+            yaml: null,
             pdfs: [],
         },
     };
@@ -29,7 +29,9 @@ class Exams extends React.Component {
     this.updateYaml = this.updateYaml.bind(this);
     this.selectExam = this.selectExam.bind(this);
     this.pdfStatus= this.pdfStatus.bind(this);
+    this.updatePDFList= this.updatePDFList.bind(this);
 
+    this._pdfUpdater = null;
   }
 
   onDropYAML(accepted, rejected) {
@@ -89,6 +91,18 @@ class Exams extends React.Component {
     )
   }
 
+  updatePDFList() {
+    if( this.state.selected_exam.id == null ) {
+        return
+    }
+    api.get('pdfs/' + this.state.selected_exam.id)
+    .then(pdfs =>
+        this.setState(prev => ({
+            selected_exam: Object.assign(prev.selected_exam, {pdfs: pdfs})
+        }))
+    )
+  }
+
   pdfStatus(pdf) {
     switch(pdf.status) {
       case "processing":
@@ -138,6 +152,15 @@ class Exams extends React.Component {
         console.error('failed to get exams:', err)
         throw err
     })
+
+    this._pdfUpdater = setInterval(this.updatePDFList, 1000)
+  }
+
+  componentWillUnmount() {
+      if( this._pdfUpdater ) {
+          clearInterval(this._pdfUpdater)
+          this._pdfUpdater = null
+      }
   }
 
   render () {

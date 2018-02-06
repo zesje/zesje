@@ -201,9 +201,6 @@ class Exams extends React.Component {
                         Choose a file…
                       </span>
                     </span>
-                    <span className="file-name has-text-centered">
-                      <i>midterm_config</i>.yml
-                    </span>
                   </label>
                 </div>
               </Dropzone>
@@ -253,9 +250,6 @@ class Exams extends React.Component {
                       <span className="file-label">
                         Choose a file…
                       </span>
-                    </span>
-                    <span className="file-name has-text-centered" disabled={isDisabled}>
-                      <i>scanned_exam</i>.PDF
                     </span>
                   </label>
                 </div>

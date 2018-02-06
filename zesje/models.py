@@ -28,6 +28,7 @@ class Exam(db.Entity):
     yaml_path = Required(str)
     submissions = Set('Submission')
     problems = Set('Problem')
+    pdfs = Set('PDF')
 
 
 class Submission(db.Entity):
@@ -79,3 +80,10 @@ class Solution(db.Entity):
     feedback = Set(FeedbackOption)
     remarks = Optional(str)
 
+
+class PDF(db.Entity):
+    """Metadata on uploaded PDFs"""
+    exam = Required(Exam)
+    name = Required(str)
+    status = Required(str)
+    message = Optional(str)

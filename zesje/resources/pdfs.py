@@ -6,7 +6,7 @@ from werkzeug.datastructures import FileStorage
 
 from pony import orm
 
-from ..models import db, Exam
+from ..models import db, Exam, PDF
 
 
 class Pdfs(Resource):
@@ -28,18 +28,18 @@ class Pdfs(Resource):
         """
         return [
             {
-                'id': 1,
-                'name': 'hello.pdf',
-                'status': 'processing',
-                'message': 'extracting images',
+                'id': pdf.id,
+                'name': pdf.name,
+                'status': pdf.status,
+                'message': pdf.message,
             }
+            for pdf in PDF.select(lambda pdf: pdf.exam.id == exam_id)
         ]
 
     post_parser = reqparse.RequestParser()
     post_parser.add_argument('pdf', type=FileStorage, required=True,
                              location='files')
 
-    @orm.db_session
     def post(self, exam_id):
         """Upload a PDF
 
@@ -56,9 +56,21 @@ class Pdfs(Resource):
         message : str
         """
         args = self.post_parser.parse_args()
+        if args['pdf'].mimetype != 'application/pdf':
+            return dict(message='Uploaded file is not a PDF'), 400
+
+        pdf_path = os.path.join(app.config['DATA_DIRECTORY'], 'pdfs', f'{pdf.id}.pdf')
+        with orm.db_session:
+            pdf = PDF(exam=Exam[exam_id], name=args['pdf'].filename,
+                      status='processing', message='importing PDF')
+            # if we fail to save the PDF then we rollback the DB transaction
+            args['pdf'].save(pdf_path)
+
+        # TODO fire off subprocess
+
         return {
-            'id': 1,
-            'name': 'hello.pdf',
-            'status': 'processing',
-            'message': 'going',
+            'id': pdf.id,
+            'name': pdf.name,
+            'status': pdf.status,
+            'message': pdf.message
         }

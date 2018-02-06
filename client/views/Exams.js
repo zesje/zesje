@@ -120,21 +120,22 @@ class Exams extends React.Component {
       alert('Please upload a PDF..')
       return
     }
-    var data = new FormData()
-    data.append('pdf', accepted[0])
-    api.post('pdfs/' + this.state.selected_exam.id, data)
-    .then(() => {
-       api.get('pdfs/' + this.state.selected_exam.id)
-      .then(pdfs =>
-          this.setState(prev => ({
-              selected_exam: Object.assign(prev.selected_exam, {pdfs: pdfs})
-          }))
-      )
-      alert('Thank you for your upload, it was delicious')
-    })
-    .catch(resp => {
-      alert('failed to upload pdf (see javascript console for details)')
-      console.error('failed to upload PDF:', resp)
+    accepted.map(file => {
+        var data = new FormData()
+        data.append('pdf', file)
+        api.post('pdfs/' + this.state.selected_exam.id, data)
+        .then(() => {
+           api.get('pdfs/' + this.state.selected_exam.id)
+          .then(pdfs =>
+              this.setState(prev => ({
+                  selected_exam: Object.assign(prev.selected_exam, {pdfs: pdfs})
+              }))
+          )
+        })
+        .catch(resp => {
+          alert('failed to upload pdf (see javascript console for details)')
+          console.error('failed to upload PDF:', resp)
+        })
     })
   }
 

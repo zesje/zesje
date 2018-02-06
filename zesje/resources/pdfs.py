@@ -59,14 +59,18 @@ class Pdfs(Resource):
         if args['pdf'].mimetype != 'application/pdf':
             return dict(message='Uploaded file is not a PDF'), 400
 
-        pdf_path = os.path.join(app.config['DATA_DIRECTORY'], 'pdfs', f'{pdf.id}.pdf')
         with orm.db_session:
             pdf = PDF(exam=Exam[exam_id], name=args['pdf'].filename,
                       status='processing', message='importing PDF')
-            # if we fail to save the PDF then we rollback the DB transaction
-            args['pdf'].save(pdf_path)
 
         # TODO fire off subprocess
+        with orm.db_session:
+            try:
+                path = os.path.join(app.config['PDF_DIRECTORY'], f'{pdf.id}.pdf')
+                args['pdf'].save(path)
+            except Exception:
+                pdf.delete()
+                raise
 
         return {
             'id': pdf.id,

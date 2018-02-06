@@ -30,10 +30,12 @@ def setup():
     auth.init_app(app)
 
     data_dir = app.config['DATA_DIRECTORY']
+    app.config['PDF_DIRECTORY'] = os.path.join(data_dir, 'pdfs')
+    app.config['DB_PATH'] = os.path.join(data_dir, 'course.sqlite')
     os.makedirs(data_dir, exist_ok=True)
-    os.makedirs(os.path.join(data_dir, 'pdfs'), exist_ok=True)
+    os.makedirs(app.config['PDF_DIRECTORY'], exist_ok=True)
 
-    db.bind('sqlite', f"{app.config['DATA_DIRECTORY']}/course.sqlite", create_db=True)
+    db.bind('sqlite', app.config['DB_PATH'], create_db=True)
     db.generate_mapping(create_tables=True)
 
 

@@ -4,6 +4,7 @@ import Hero from '../components/Hero';
 import Footer from '../components/Footer';
 
 import Dropzone from 'react-dropzone'
+import Spinner from 'react-spinkit'
 
 import * as api from '../api'
 
@@ -21,11 +22,13 @@ class Exams extends React.Component {
             pdfs: [],
         },
     };
+
     this.onDropYAML = this.onDropYAML.bind(this);
     this.onDropPDF = this.onDropPDF.bind(this);
     this.putYaml = this.putYaml.bind(this);
     this.updateYaml = this.updateYaml.bind(this);
     this.selectExam = this.selectExam.bind(this);
+    this.pdfStatus= this.pdfStatus.bind(this);
 
   }
 
@@ -44,9 +47,7 @@ class Exams extends React.Component {
             exams: [...prev.exams, new_exam],
           }))
       }
-      this.setState(prev => ({
-          selected_exam: Object.assign(prev.selected_exam, new_exam),
-      }))
+      this.selectExam(new_exam.id)
       alert('Thank you for your upload, it was delicious')
     })
     .catch(resp => {
@@ -88,7 +89,18 @@ class Exams extends React.Component {
     )
   }
 
-  
+  pdfStatus(pdf) {
+    switch(pdf.status) {
+      case "processing":
+        const style = {display: "inline-block", top: "6px"}
+        return <div>{pdf.name} <Spinner name="circle" style={style} fadeIn='none'/> <i>{pdf.message}</i></div>
+      case "success":
+        return <div>{pdf.name} <i className="fa fa-check"></i>{pdf.message}</div>
+      case "error":
+        return <div>{pdf.name} <i className="fa fa-times"></i><i>{pdf.message}</i></div>
+    }
+  }
+
   onDropPDF(accepted, rejected) {
     if (rejected.length > 0) {
       alert('Please upload a PDF..')
@@ -98,6 +110,12 @@ class Exams extends React.Component {
     data.append('pdf', accepted[0])
     api.post('pdfs/' + this.state.selected_exam.id, data)
     .then(() => {
+       api.get('pdfs/' + this.state.selected_exam.id)
+      .then(pdfs =>
+          this.setState(prev => ({
+              selected_exam: Object.assign(prev.selected_exam, {pdfs: pdfs})
+          }))
+      )
       alert('Thank you for your upload, it was delicious')
     })
     .catch(resp => {
@@ -221,7 +239,7 @@ class Exams extends React.Component {
               </p>
                 <ul className="menu-list">
                 {this.state.selected_exam.pdfs.map(pdf =>
-                    <li>{pdf.name}</li>
+                    <li>{this.pdfStatus(pdf)}</li>
                 )}
                 </ul>
               </aside>

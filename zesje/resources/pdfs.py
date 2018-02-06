@@ -26,18 +26,14 @@ class Pdfs(Resource):
             name: str
                 filename of the uploaded PDF
         """
-        return self._get(exam_id)
-
-    # Do not call this method without wrapping it in 'orm.db_session'
-    def _get(self, exam_id):
-        data_dir = app.config['DATA_DIRECTORY']
-        exam = Exam[exam_id]
-
-        exam_data_dir = os.path.join(data_dir, f'{exam.name}_data')
-        pdfs = [pdf for pdf in os.listdir(exam_data_dir) if pdf.endswith('.pdf')]
-
-        return [{'name': pdf} for pdf in pdfs]
-
+        return [
+            {
+                'id': 1,
+                'name': 'hello.pdf',
+                'status': 'processing',
+                'message': 'extracting images',
+            }
+        ]
 
     post_parser = reqparse.RequestParser()
     post_parser.add_argument('pdf', type=FileStorage, required=True,
@@ -51,6 +47,18 @@ class Pdfs(Resource):
         ----------
         exam_id : int
         pdf : FileStorage
+
+        Returns
+        -------
+        id : int
+        name : str
+        status : str
+        message : str
         """
         args = self.post_parser.parse_args()
-        # process PDF
+        return {
+            'id': 1,
+            'name': 'hello.pdf',
+            'status': 'processing',
+            'message': 'going',
+        }

@@ -186,7 +186,11 @@ class Exams extends React.Component {
               <h5 className='subtitle'>then we know that to do with PDF's</h5>
 
               <Dropzone accept=".yml, text/yaml, text/x-yaml, application/yaml, application/x-yaml"
-                style={{}} activeStyle={{borderStyle: 'dashed', width: 'fit-content', margin: 'auto'}} onDrop={this.onDropYAML}>
+                style={{}} activeStyle={{borderStyle: 'dashed', width: 'fit-content', margin: 'auto'}}
+                onDrop={this.onDropYAML}
+                disablePreview="true"
+                multiple="false"
+                >
                 <div className="file has-name is-boxed is-centered">
                   <label className="file-label"> 
                     <span className="file-cta">
@@ -235,8 +239,11 @@ class Exams extends React.Component {
 
               <Dropzone accept={"application/pdf"} style={{}}
                 activeStyle={{borderStyle: 'dashed', width: 'fit-content', margin: 'auto'}}
-                onDrop={this.onDropPDF.bind(this)}
-                disabled={isDisabled}>
+                onDrop={this.onDropPDF}
+                disabled={isDisabled}
+                disablePreview="true"
+                multiple="true"
+                >
                 <div className="file has-name is-boxed is-centered">
                   <label className="file-label">
                     <span className="file-cta" disabled={isDisabled}>

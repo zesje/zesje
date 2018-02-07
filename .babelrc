@@ -1,0 +1,10 @@
+{
+    "presets":[
+        "react",
+        "flow"
+    ],
+    "plugins": [
+        "syntax-dynamic-import",
+        "transform-class-properties"
+    ]
+}

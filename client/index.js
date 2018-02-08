@@ -33,6 +33,10 @@ const Graders = Loadable({
   loader: () => import('./views/Graders'),
   loading: Loading,
 });
+const Statistics = Loadable({
+  loader: () => import('./views/Statistics'),
+  loading: Loading,
+});
 const Reset = Loadable({
   loader: () => import('./views/Reset'),
   loading: Loading,
@@ -52,6 +56,7 @@ if (root == null) {
         <Route path="/grade" component={Grade} />
         <Route path="/graders" component={Graders} />
         <Route path="/reset" component={Reset} />
+        <Route path="/statistics" component={Statistics} />
       </Switch>
     </Router>
   ), root);

@@ -29,14 +29,13 @@ const NavBar = () => {
             <div className="navbar-start">
               <Link className="navbar-item" to='/'>Home</Link>
               <Link className="navbar-item" to='/exams'>Exams</Link>
-              <Link className="navbar-item" to='/students'>Students</Link>
-              <Link className="navbar-item" to='/grade'><strong><i>Grade</i></strong></Link>  
-              <Link className="navbar-item" to='/statistics'>Statistics</Link>  
+              <Link className="navbar-item" to='/dashboards/check_student_numbers'>Match Submissions</Link>
+              <Link className="navbar-item" to='/dashboards/grade'><strong><i>Grade</i></strong></Link>
             </div>
 
             <div className="navbar-end">
               <Link className="navbar-item" to='/graders'>Manage graders</Link>
-              <Link className="navbar-item has-text-info" to='/reset'>reset</Link>
+              <Link className="navbar-item" to='/dashboards/add-graders-and-students'>Manage Students</Link>
               <div className="navbar-item">
                 <i>Version 0.6.4</i>
               </div>

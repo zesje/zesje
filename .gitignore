@@ -84,5 +84,5 @@ __pycache__/
 # vscode folder
 .vscode
 
-# (test)database
-zesje/course.sqlite
+# development data
+data-dev

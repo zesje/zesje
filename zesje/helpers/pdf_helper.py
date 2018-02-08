@@ -126,7 +126,7 @@ def process_page(output_dir, image, qr_data, exam_config):
         target = os.path.join(output_dir, f'{qr_data.name}_{sub_nr}')
         os.makedirs(target, exist_ok=True)
         target_image = os.path.join(target, f'page{qr_data.page}{ext}')
-        os.rename(image, target_image)
+        shutil.move(image, target_image)
         # We may have added this page in previous uploads; the above
         # 'rename' then overwrites the previosly uploaded page, but
         # we only want a single 'Page' entry.

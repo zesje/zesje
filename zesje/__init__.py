@@ -17,22 +17,26 @@ app = Flask(__name__, static_folder=STATIC_FOLDER_PATH)
 app.register_blueprint(api_bp, url_prefix='/api')
 auth = BasicAuth()  # don't pass 'app', as its not yet configured
 
-# Default settings
-app.config.update(
-    DATA_DIRECTORY=os.path.join(os.getcwd(), 'data')
-)
 if 'ZESJE_SETTINGS' in os.environ:
     app.config.from_envvar('ZESJE_SETTINGS')
+
+# Default settings
+app.config.update(
+    DATA_DIRECTORY=abspath(app.config.get('DATA_DIRECTORY', 'data')),
+)
+
+# These reference DATA_DIRECTORY, so they need to be in a separate update
+app.config.update(
+    PDF_DIRECTORY=os.path.join(app.config['DATA_DIRECTORY'], 'pdfs'),
+    DB_PATH=os.path.join(app.config['DATA_DIRECTORY'], 'course.sqlite'),
+)
 
 
 @app.before_first_request
 def setup():
     auth.init_app(app)
 
-    data_dir = app.config['DATA_DIRECTORY']
-    app.config['PDF_DIRECTORY'] = os.path.join(data_dir, 'pdfs')
-    app.config['DB_PATH'] = os.path.join(data_dir, 'course.sqlite')
-    os.makedirs(data_dir, exist_ok=True)
+    os.makedirs(app.config['DATA_DIRECTORY'], exist_ok=True)
     os.makedirs(app.config['PDF_DIRECTORY'], exist_ok=True)
 
     db.bind('sqlite', app.config['DB_PATH'], create_db=True)

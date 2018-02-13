@@ -244,3 +244,85 @@ def rotate_and_shift(image_path, extracted_qr, qr_coords):
     shifted_image = np.roll(shifted_image, shift[1], axis=1)
 
     cv2.imwrite(image_path, shifted_image)
+
+
+def get_student_number(image_path, widget):
+    """Extract the student number from the image path with the scanned number.
+
+    TODO: all the numerical parameters are guessed and work well on the first
+    exam.  Yet, they should be inferred from the scans.
+    """
+    image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
+    box = (widget.top, widget.bottom, widget.left, widget.right)
+    image = get_box(image, box, padding=0.3)
+    _, thresholded = cv2.threshold(image, 150, 255, cv2.THRESH_BINARY)
+    thresholded = cv2.bitwise_not(thresholded)
+
+    # Copy the thresholded image.
+    im_floodfill = thresholded.copy()
+
+    # Mask used to flood filling.
+    # Notice the size needs to be 2 pixels than the image.
+    h, w, *_ = thresholded.shape
+    mask = np.zeros((h+2, w+2), np.uint8)
+
+    # Floodfill from point (0, 0)
+    cv2.floodFill(im_floodfill, mask, (0,0), 255);
+
+    # Invert floodfilled image
+    im_floodfill_inv = cv2.bitwise_not(im_floodfill)
+
+    # Combine the two images to get the foreground.
+    im_out = ~(thresholded | im_floodfill_inv)
+
+    params = cv2.SimpleBlobDetector_Params()
+    params.filterByArea = True
+    params.minArea = 500
+    params.maxArea = 1500
+    params.filterByCircularity = True
+    params.minCircularity = 0.01
+    params.filterByConvexity = True
+    params.minConvexity = 0.87
+    params.filterByInertia = True
+    params.minInertiaRatio = 0.7
+
+    detector = cv2.SimpleBlobDetector_create(params)
+
+    keypoints = detector.detect(im_out)
+    centers = np.array(sorted([kp.pt for kp in keypoints])).astype(int)
+    right, bottom = np.max(centers, axis=0)
+    left, top = np.min(centers, axis=0)
+    centers = np.mgrid[left:right:10j, top:bottom:7j].astype(int)
+    weights = []
+    for center in centers.reshape(2, -1).T:
+        x, y = center
+        r = 12
+        weights.append(np.sum(255 - image[y-r:y+r, x-r:x+r]))
+    weights = np.array(weights).reshape(10, 7)
+    return sum(((np.argmax(weights, axis=0) + 1) % 10)[::-1] * 10**np.arange(7))
+
+
+def get_box(image_array, box, padding):
+    """Extract a subblock from an array corresponding to a scanned A4 page.
+
+    Parameters:
+    -----------
+    image_array : 2D or 3D array
+        The image source.
+    box : 4 floats (top, bottom, left, right)
+        Coordinates of the bounding box in inches. By due to differing
+        traditions, box coordinates are counted from the bottom left of the
+        image, while image array coordinates are from the top left.
+    padding : float
+        Padding around box borders in inches.
+    """
+    h, w, *_ = image_array.shape
+    dpi = guess_dpi(image_array)
+    box = np.array(box)
+    box += (padding, -padding, -padding, padding)
+    box = (np.array(box) * dpi).astype(int)
+    # Here we are not returning the lowest pixel of the image because otherwise
+    # the numpy slicing is not correct.
+    top, bottom = min(h, box[0]), max(1, box[1])
+    left, right = max(0, box[2]), min(w, box[3])
+    return image_array[-top:-bottom, left:right]

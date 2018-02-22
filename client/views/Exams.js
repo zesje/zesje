@@ -16,9 +16,9 @@ class Exams extends React.Component {
     this.state = {
         exams: [],
         selected_exam: {
-            id: null,
-            name: null,
-            yaml: null,
+            id: undefined,
+            name: undefined,
+            yaml: undefined,
             pdfs: [],
         },
     };
@@ -188,8 +188,8 @@ class Exams extends React.Component {
               <Dropzone accept=".yml, text/yaml, text/x-yaml, application/yaml, application/x-yaml"
                 style={{}} activeStyle={{borderStyle: 'dashed', width: 'fit-content', margin: 'auto'}}
                 onDrop={this.onDropYAML}
-                disablePreview="true"
-                multiple="false"
+                disablePreview
+                multiple={false}
                 >
                 <div className="file has-name is-boxed is-centered">
                   <label className="file-label"> 
@@ -216,7 +216,7 @@ class Exams extends React.Component {
                         value={this.state.selected_exam.id}
                         onChange={ev => this.selectExam(ev.target.value)}>
                   {this.state.exams.map((exam) => {
-                      return <option value={exam.id}>{exam.name}</option>
+                      return <option key={exam.id} value={exam.id}>{exam.name}</option>
                   })}
                 </select>
               </div>
@@ -238,8 +238,8 @@ class Exams extends React.Component {
                 activeStyle={{borderStyle: 'dashed', width: 'fit-content', margin: 'auto'}}
                 onDrop={this.onDropPDF}
                 disabled={isDisabled}
-                disablePreview="true"
-                multiple="true"
+                disablePreview
+                multiple
                 >
                 <div className="file has-name is-boxed is-centered">
                   <label className="file-label">
@@ -264,7 +264,7 @@ class Exams extends React.Component {
               </p>
                 <ul className="menu-list">
                 {this.state.selected_exam.pdfs.map(pdf =>
-                    <li>{this.pdfStatus(pdf)}</li>
+                    <li key={pdf.id}>{this.pdfStatus(pdf)}</li>
                 )}
                 </ul>
               </aside>

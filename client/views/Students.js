@@ -7,14 +7,14 @@ import test_image from '../student.jpg';
 
 const CheckStudents = () => {
   return (
-      <div>
+    <div>
 
-        <NavBar />
-        
-        <Hero title='Match Students' subtitle='Who made what?' />
+      <NavBar />
 
-        <section className="section">
-          
+      <Hero title='Match Students' subtitle='Who made what?' />
+
+      <section className="section">
+
         <div className="container">
 
 
@@ -38,10 +38,10 @@ const CheckStudents = () => {
           </div>
 
 
-        <div class="columns">
+          <div class="columns">
 
-          <div class="column is-one-quarter">        
-            <nav class="panel">
+            <div class="column is-one-quarter">
+              <nav class="panel">
                 <p class="panel-heading">
                   Students
                 </p>
@@ -103,56 +103,45 @@ const CheckStudents = () => {
                   </button>
                 </div>
               </nav>
-          </div>
-
-
-          <div class="column">
-            
-            <div class="columns">
-              <div class="column">
-                <div class="buttons is-right">
-                  <a class="button is-info is-rounded">Previous</a>
-                </div>
-              </div>
-              <div class="column is-2">
-                <input class="input is-rounded has-text-centered" type="number"
-                   min="0" step="1" placeholder="Submission ID" value="1465"/>
-              </div>
-              <div class="column">
-                <div class="buttons is-left">
-                  <a class="button is-info is-rounded">Next</a>
-                </div>
-              </div>
             </div>
 
-            <p class="box">
-              <img src={test_image} />
-            </p>
+
+            <div class="column">
+
+              <div class="columns">
+                <div class="column">
+                  <div class="buttons is-right">
+                    <a class="button is-info is-rounded">Previous</a>
+                  </div>
+                </div>
+                <div class="column is-2">
+                  <input class="input is-rounded has-text-centered" type="number"
+                    min="0" step="1" placeholder="Submission ID" value="1465" />
+                </div>
+                <div class="column">
+                  <div class="buttons is-left">
+                    <a class="button is-info is-rounded">Next</a>
+                  </div>
+                </div>
+              </div>
+
+              <p class="box">
+                <img src={test_image} />
+              </p>
 
 
-          </div>
-
-        </div>
-
-        {/*
-          <div className="container">
-          <div className="columns">
-            <div className="column is-one-fifth">
-              <p className="bd-notification is-warning">students search and select</p>
             </div>
-            <div className="column">exams stuff</div>
+
           </div>
-        </div>
-        */}
 
         </div>
 
-        </section>
+      </section>
 
-        
-        <Footer />
 
-       </div>
+      <Footer />
+
+    </div>
   )
 }
 

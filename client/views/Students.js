@@ -5,7 +5,12 @@ import Footer from '../components/Footer';
 
 import test_image from '../student.jpg';
 
-const CheckStudents = () => {
+  const CheckStudents = () => {
+
+    var inputStyle = {
+      width:'6em'
+    };
+
   return (
     <div>
 
@@ -17,30 +22,23 @@ const CheckStudents = () => {
 
         <div className="container">
 
-
           <div className="columns">
-            <div className="column is-one-quarter">
-              <div class="control has-icons-left">
-                <div class="select is-info is-fullwidth">
-                  <select>
-                    <option>Select exams</option>
-                    <option>Not me! plEASE :(</option>
-                  </select>
+            <div className="column is-one-quarter-desktop is-one-third-tablet">
+
+              <div class="is-hidden-desktop">
+                <div class="control has-icons-left">
+                  <div class="select is-info is-fullwidth">
+                    <select>
+                      <option>Select exams</option>
+                      <option>Not me! plEASE :(</option>
+                    </select>
+                  </div>
+                  <span class="icon is-small is-left">
+                    <i class="fa fa-pencil"></i>
+                  </span>
                 </div>
-                <span class="icon is-small is-left">
-                  <i class="fa fa-pencil"></i>
-                </span>
               </div>
-            </div>
-            <div className="column">
-              <progress class="progress is-success is-large" value="64" max="100">64%</progress>
-            </div>
-          </div>
 
-
-          <div class="columns">
-
-            <div class="column is-one-quarter">
               <nav class="panel">
                 <p class="panel-heading">
                   Students
@@ -93,11 +91,17 @@ const CheckStudents = () => {
                   </span>
                   John Doe
                 </a>
+                <a class="panel-block">
+                  <span class="panel-icon">
+                    <i class="fa fa-user"></i>
+                  </span>
+                  Lala loepsie
+                </a>
                 <label class="panel-block">
                   <input type="checkbox" />
                   Random tick
                 </label>
-                <div class="panel-block">
+                <div class="panel-block is-hidden-mobile">
                   <button class="button is-link is-outlined is-fullwidth">
                     Batch upload
                   </button>
@@ -105,36 +109,70 @@ const CheckStudents = () => {
               </nav>
             </div>
 
+            <div className="column">
+              
+                <div class="level">
 
-            <div class="column">
+                  <div class="level-left is-hidden-touch">
+                    <div class="level-item">
+                      <div class="control has-icons-left">
+                        <div class="select is-info is-fullwidth">
+                          <select>
+                            <option>Select exams</option>
+                            <option>Not me! plEASEeeeeee :(</option>
+                          </select>
+                        </div>
+                        <span class="icon is-small is-left">
+                          <i class="fa fa-pencil"></i>
+                        </span>
+                      </div>
+                    </div>
+                  </div>
 
-              <div class="columns">
-                <div class="column">
-                  <div class="buttons is-right">
-                    <a class="button is-info is-rounded">Previous</a>
+                  <div class="level-right">
+                    <div class="level-item">
+                      <div class="field has-addons is-mobile">
+                        <div class="control">
+                          <button type="submit" class="button is-info is-rounded is-hidden-mobile">unchecked</button>
+                          <button type="submit" class="button">Previous</button>
+                        </div>
+                          <div class="control">
+                            <input class="input is-rounded has-text-centered" type="number"
+                              min="0" step="1" value="1465" maxLength="4" size="6" style={inputStyle} />
+                          </div>
+                        <div class="control">
+                          <button type="submit" class="button">Next</button>
+                          <button type="submit" class="button is-info is-rounded is-hidden-mobile">unchecked</button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+
+                <div class="level is-mobile">
+                  <div class="level-item is-hidden-mobile">
+                    <progress class="progress is-success" value="64" max="100">64%</progress>
+                  </div>
+                  <div class="level-right">
+                    <div class="level-item has-text-grey">
+                     <i>1465 / 2289</i>
+                    </div>
+                    <div class="level-item has-text-success">
+                     <b>64%</b>
+                    </div>
                   </div>
                 </div>
-                <div class="column is-2">
-                  <input class="input is-rounded has-text-centered" type="number"
-                    min="0" step="1" placeholder="Submission ID" value="1465" />
-                </div>
-                <div class="column">
-                  <div class="buttons is-left">
-                    <a class="button is-info is-rounded">Next</a>
-                  </div>
-                </div>
-              </div>
 
-              <p class="box">
-                <img src={test_image} />
-              </p>
-
+                <p class="box">
+                  <img src={test_image} />
+                </p>
 
             </div>
-
+      
+            </div>
           </div>
 
-        </div>
 
       </section>
 

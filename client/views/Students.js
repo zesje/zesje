@@ -25,84 +25,84 @@ import test_image from '../student.jpg';
           <div className="columns">
             <div className="column is-one-quarter-desktop is-one-third-tablet">
 
-              <div class="is-hidden-desktop">
-                <div class="control has-icons-left">
-                  <div class="select is-info is-fullwidth">
+              <div className="is-hidden-desktop">
+                <div className="control has-icons-left">
+                  <div className="select is-info is-fullwidth">
                     <select>
                       <option>Select exams</option>
                       <option>Not me! plEASE :(</option>
                     </select>
                   </div>
-                  <span class="icon is-small is-left">
-                    <i class="fa fa-pencil"></i>
+                  <span className="icon is-small is-left">
+                    <i className="fa fa-pencil"></i>
                   </span>
                 </div>
               </div>
 
-              <nav class="panel">
-                <p class="panel-heading">
+              <nav className="panel">
+                <p className="panel-heading">
                   Students
                 </p>
-                <p class="panel-tabs">
-                  <a class="is-active">Unassigned</a>
+                <p className="panel-tabs">
+                  <a className="is-active">Unassigned</a>
                   <a>all</a>
                 </p>
-                <div class="panel-block">
-                  <p class="control has-icons-left">
-                    <input class="input" type="text" placeholder="Search" />
-                    <span class="icon is-left">
-                      <i class="fa fa-search"></i>
+                <div className="panel-block">
+                  <p className="control has-icons-left">
+                    <input className="input" type="text" placeholder="Search" />
+                    <span className="icon is-left">
+                      <i className="fa fa-search"></i>
                     </span>
                   </p>
                 </div>
-                <a class="panel-block is-active">
-                  <span class="panel-icon">
-                    <i class="fa fa-user"></i>
+                <a className="panel-block is-active">
+                  <span className="panel-icon">
+                    <i className="fa fa-user"></i>
                   </span>
                   Thomas Roos
                 </a>
-                <a class="panel-block">
-                  <span class="panel-icon">
-                    <i class="fa fa-user"></i>
+                <a className="panel-block">
+                  <span className="panel-icon">
+                    <i className="fa fa-user"></i>
                   </span>
                   Henk de boer
                 </a>
-                <a class="panel-block">
-                  <span class="panel-icon">
-                    <i class="fa fa-user"></i>
+                <a className="panel-block">
+                  <span className="panel-icon">
+                    <i className="fa fa-user"></i>
                   </span>
                   Jan de Vries
                 </a>
-                <a class="panel-block">
-                  <span class="panel-icon">
-                    <i class="fa fa-user"></i>
+                <a className="panel-block">
+                  <span className="panel-icon">
+                    <i className="fa fa-user"></i>
                   </span>
                   Jaap Smit
                 </a>
-                <a class="panel-block">
-                  <span class="panel-icon">
-                    <i class="fa fa-user"></i>
+                <a className="panel-block">
+                  <span className="panel-icon">
+                    <i className="fa fa-user"></i>
                   </span>
                   Nana Batman
                 </a>
-                <a class="panel-block">
-                  <span class="panel-icon">
-                    <i class="fa fa-user"></i>
+                <a className="panel-block">
+                  <span className="panel-icon">
+                    <i className="fa fa-user"></i>
                   </span>
                   John Doe
                 </a>
-                <a class="panel-block">
-                  <span class="panel-icon">
-                    <i class="fa fa-user"></i>
+                <a className="panel-block">
+                  <span className="panel-icon">
+                    <i className="fa fa-user"></i>
                   </span>
                   Lala loepsie
                 </a>
-                <label class="panel-block">
+                <label className="panel-block">
                   <input type="checkbox" />
                   Random tick
                 </label>
-                <div class="panel-block is-hidden-mobile">
-                  <button class="button is-link is-outlined is-fullwidth">
+                <div className="panel-block is-hidden-mobile">
+                  <button className="button is-link is-outlined is-fullwidth">
                     Batch upload
                   </button>
                 </div>
@@ -111,38 +111,38 @@ import test_image from '../student.jpg';
 
             <div className="column">
               
-                <div class="level">
+                <div className="level">
 
-                  <div class="level-left is-hidden-touch">
-                    <div class="level-item">
-                      <div class="control has-icons-left">
-                        <div class="select is-info is-fullwidth">
+                  <div className="level-left is-hidden-touch">
+                    <div className="level-item">
+                      <div className="control has-icons-left">
+                        <div className="select is-info is-fullwidth">
                           <select>
                             <option>Select exams</option>
                             <option>Not me! plEASEeeeeee :(</option>
                           </select>
                         </div>
-                        <span class="icon is-small is-left">
-                          <i class="fa fa-pencil"></i>
+                        <span className="icon is-small is-left">
+                          <i className="fa fa-pencil"></i>
                         </span>
                       </div>
                     </div>
                   </div>
 
-                  <div class="level-right">
-                    <div class="level-item">
-                      <div class="field has-addons is-mobile">
-                        <div class="control">
-                          <button type="submit" class="button is-info is-rounded is-hidden-mobile">unchecked</button>
-                          <button type="submit" class="button">Previous</button>
+                  <div className="level-right">
+                    <div className="level-item">
+                      <div className="field has-addons is-mobile">
+                        <div className="control">
+                          <button type="submit" className="button is-info is-rounded is-hidden-mobile">unchecked</button>
+                          <button type="submit" className="button">Previous</button>
                         </div>
-                          <div class="control">
-                            <input class="input is-rounded has-text-centered" type="number"
+                          <div className="control">
+                            <input className="input is-rounded has-text-centered" type="number"
                               min="0" step="1" value="1465" maxLength="4" size="6" style={inputStyle} />
                           </div>
-                        <div class="control">
-                          <button type="submit" class="button">Next</button>
-                          <button type="submit" class="button is-info is-rounded is-hidden-mobile">unchecked</button>
+                        <div className="control">
+                          <button type="submit" className="button">Next</button>
+                          <button type="submit" className="button is-info is-rounded is-hidden-mobile">unchecked</button>
                         </div>
                       </div>
                     </div>
@@ -150,21 +150,21 @@ import test_image from '../student.jpg';
 
                 </div>
 
-                <div class="level is-mobile">
-                  <div class="level-item is-hidden-mobile">
-                    <progress class="progress is-success" value="64" max="100">64%</progress>
+                <div className="level is-mobile">
+                  <div className="level-item is-hidden-mobile">
+                    <progress className="progress is-success" value="64" max="100">64%</progress>
                   </div>
-                  <div class="level-right">
-                    <div class="level-item has-text-grey">
+                  <div className="level-right">
+                    <div className="level-item has-text-grey">
                      <i>1465 / 2289</i>
                     </div>
-                    <div class="level-item has-text-success">
+                    <div className="level-item has-text-success">
                      <b>64%</b>
                     </div>
                   </div>
                 </div>
 
-                <p class="box">
+                <p className="box">
                   <img src={test_image} />
                 </p>
 

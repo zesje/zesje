@@ -1,23 +1,20 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+import sys
 from setuptools import setup, find_packages
-from distutils.command.build import build
-from setuptools.command.sdist import sdist
+from setuptools.command.sdist import sdist as sdist_orig
+
+if sys.version_info < (3, 6):
+    print('zesje requires Python 3.6 or higher')
+    sys.exit(1)
 
 
-def webpack():
-    import subprocess
-    subprocess.check_call(['yarn', 'install'])
-    subprocess.check_call(['yarn', 'build'])
-
-
-class Build(build):
+class sdist(sdist_orig):
     def run(self):
-        webpack()
-        super().run()
-
-
-class Sdist(sdist):
-    def run(self):
-        webpack()
+        import subprocess
+        subprocess.check_call(['yarn', 'install'])
+        subprocess.check_call(['yarn', 'build'])
         super().run()
 
 
@@ -29,9 +26,7 @@ setup(
     author="Zesje authors",
     author_email="anton.akhmerov@tudelft.nl",
     packages=find_packages('.'),
-    cmdclass={'build': Build,
-              'sdist': Sdist,
-             },
+    cmdclass=dict(sdist=sdist),
     package_data={'zesje': ['static/*']},
     include_package_data=True,
 )

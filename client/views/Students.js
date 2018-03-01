@@ -6,6 +6,7 @@ import Footer from '../components/Footer';
 import test_image from '../student.jpg';
 
 import getClosest from 'get-closest';
+import Fuse from 'fuse.js';
 
 class CheckStudents extends React.Component {
 
@@ -16,7 +17,18 @@ class CheckStudents extends React.Component {
             search: {
                 input: 'Thomas',
                 result: [
-                    {}
+                    {
+                        id:4492242,
+                        first_name:'Thomas',
+                        last_name:'Roos',
+                        email:'mail@thomasroos.nl'
+                    },
+                    {
+                        id:1234567,
+                        first_name:'John',
+                        last_name:'Doe',
+                        email:'Jonnie@doe.com'
+                    }
                 ]
             },
             exam: {
@@ -161,14 +173,30 @@ class CheckStudents extends React.Component {
     }
 
     search(event) {
+
+        var options = {
+            shouldSort: true,
+            threshold: 0.6,
+            location: 0,
+            distance: 100,
+            maxPatternLength: 32,
+            minMatchCharLength: 1,
+            keys: [
+                "id",
+                "first_name",
+                "last_name"
+            ]
+        };
+        var fuse = new Fuse(this.state.students, options);
+        var result = fuse.search(event.target.value);
+        console.log(event.target.value);
+        console.log(fuse);
+
         this.setState({
-            search:
-                {
-                    input: event.target.value,
-                    result: [
-                        {}
-                    ]
-                }
+            search: {
+                input: event.target.value,
+                result: result
+            }
         })
     }
 
@@ -270,52 +298,15 @@ class CheckStudents extends React.Component {
                                             </span>
                                         </p>
                                     </div>
-                                    <a className="panel-block is-active">
+                                    {this.state.search.result.map(student => 
+                                        <a className="panel-block is-active">
                                         <span className="panel-icon">
                                             <i className="fa fa-user"></i>
                                         </span>
-                                        Thomas Roos
-                                    </a>
-                                    <a className="panel-block">
-                                        <span className="panel-icon">
-                                            <i className="fa fa-user"></i>
-                                        </span>
-                                        Henk de boer
-                                    </a>
-                                    <a className="panel-block">
-                                        <span className="panel-icon">
-                                            <i className="fa fa-user"></i>
-                                        </span>
-                                        Jan de Vries
-                                    </a>
-                                    <a className="panel-block">
-                                        <span className="panel-icon">
-                                            <i className="fa fa-user"></i>
-                                        </span>
-                                        Jaap Smit
-                                    </a>
-                                    <a className="panel-block">
-                                        <span className="panel-icon">
-                                            <i className="fa fa-user"></i>
-                                        </span>
-                                        Nana Batman
-                                    </a>
-                                    <a className="panel-block">
-                                        <span className="panel-icon">
-                                            <i className="fa fa-user"></i>
-                                        </span>
-                                        John Doe
-                                    </a>
-                                    <a className="panel-block">
-                                        <span className="panel-icon">
-                                            <i className="fa fa-user"></i>
-                                        </span>
-                                        Lala loepsie
-                                    </a>
-                                    <label className="panel-block">
-                                        <input type="checkbox" />
-                                        Random tick
-                                    </label>
+                                        {student.first_name + ' ' + student.last_name}
+                                        </a>
+                                    )}
+
                                     <div className="panel-block is-hidden-mobile">
                                         <button className="button is-link is-outlined is-fullwidth">
                                             Batch upload

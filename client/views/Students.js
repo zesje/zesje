@@ -189,8 +189,6 @@ class CheckStudents extends React.Component {
         };
         var fuse = new Fuse(this.state.students, options);
         var result = fuse.search(event.target.value);
-        console.log(event.target.value);
-        console.log(fuse);
 
         this.setState({
             search: {
@@ -271,8 +269,9 @@ class CheckStudents extends React.Component {
                                     <div className="control has-icons-left">
                                         <div className="select is-info is-fullwidth">
                                             <select>
-                                                <option>Select exams</option>
-                                                <option>Not me! plEASE :(</option>
+                                                {this.state.exam.available.map(exam => 
+                                                    <option key={exam.id}>{exam.name}</option>
+                                                )}
                                             </select>
                                         </div>
                                         <span className="icon is-small is-left">
@@ -299,7 +298,7 @@ class CheckStudents extends React.Component {
                                         </p>
                                     </div>
                                     {this.state.search.result.map(student => 
-                                        <a className="panel-block is-active">
+                                        <a className="panel-block is-active" key={student.id}>
                                         <span className="panel-icon">
                                             <i className="fa fa-user"></i>
                                         </span>
@@ -324,8 +323,9 @@ class CheckStudents extends React.Component {
                                             <div className="control has-icons-left">
                                                 <div className="select is-info is-fullwidth">
                                                     <select>
-                                                        <option>Select exams</option>
-                                                        <option>Not me! plEASEeeeeee :(</option>
+                                                        {this.state.exam.available.map(exam => 
+                                                            <option key={exam.id}>{exam.name}</option>
+                                                        )}
                                                     </select>
                                                 </div>
                                                 <span className="icon is-small is-left">

@@ -13,6 +13,59 @@ class CheckStudents extends React.Component {
     constructor(props) {
         super(props)
 
+        this.submissions = [
+            {
+                id: 0,
+                checked: true
+            },
+            {
+                id: 1,
+                checked:true
+            },
+            {
+                id: 50,
+                checked:false
+            },
+            {
+                id: 51,
+                checked:false
+            },
+            {
+                id: 64,
+                checked:false
+            },
+            {
+                id: 146,
+                checked:false
+            },
+            {
+                id: 1465,
+                checked:false
+            },
+            {
+                id: 1466,
+                checked:false
+            },
+            {
+                id: 1467,
+                checked:false
+            }
+        ]
+        this.students = [
+            {
+                id:4492242,
+                first_name:'Thomas',
+                last_name:'Roos',
+                email:'mail@thomasroos.nl'
+            },
+            {
+                id:1234567,
+                first_name:'John',
+                last_name:'Doe',
+                email:'Jonnie@doe.com'
+            }
+        ] 
+
         this.state = {
             search: {
                 input: 'Thomas',
@@ -34,7 +87,7 @@ class CheckStudents extends React.Component {
             exam: {
                 id: 0,
                 name: 'Midterm 1 5-12',
-                available: [
+                list: [
                     {
                         id:0,
                         name:'Midterm 1 5-12',
@@ -54,59 +107,7 @@ class CheckStudents extends React.Component {
                 index: 0,
                 input: 0,
                 imagePath: test_image,
-                available: [
-                    {
-                        id: 0,
-                        checked: true
-                    },
-                    {
-                        id: 1,
-                        checked:true
-                    },
-                    {
-                        id: 50,
-                        checked:false
-                    },
-                    {
-                        id: 51,
-                        checked:false
-                    },
-                    {
-                        id: 64,
-                        checked:false
-                    },
-                    {
-                        id: 146,
-                        checked:false
-                    },
-                    {
-                        id: 1465,
-                        checked:false
-                    },
-                    {
-                        id: 1466,
-                        checked:false
-                    },
-                    {
-                        id: 1467,
-                        checked:false
-                    }
-                ]
-            },
-            students: [
-                {
-                    id:4492242,
-                    first_name:'Thomas',
-                    last_name:'Roos',
-                    email:'mail@thomasroos.nl'
-                },
-                {
-                    id:1234567,
-                    first_name:'John',
-                    last_name:'Doe',
-                    email:'Jonnie@doe.com'
-                }
-            ]   
+            }  
         }
 
         this.search = this.search.bind(this);
@@ -122,11 +123,11 @@ class CheckStudents extends React.Component {
     prev() {
         var newIndex = this.state.submission.index - 1;
 
-        if (newIndex >= 0 && newIndex < this.state.submission.available.length) {
+        if (newIndex >= 0 && newIndex < this.submissions.length) {
             this.setState({
                 submission: {
                     ...this.state.submission,
-                    input: this.state.submission.available[newIndex].id
+                    input: this.submissions[newIndex].id
                 }
             },this.setSubmission)
         }
@@ -134,11 +135,11 @@ class CheckStudents extends React.Component {
     next() {
         var newIndex = this.state.submission.index + 1;
 
-        if (newIndex >= 0 && newIndex < this.state.submission.available.length) {
+        if (newIndex >= 0 && newIndex < this.submissions.length) {
             this.setState({
                 submission: {
                     ...this.state.submission,
-                    input: this.state.submission.available[newIndex].id
+                    input: this.submissions[newIndex].id
                 }
             },this.setSubmission)
         }
@@ -146,7 +147,7 @@ class CheckStudents extends React.Component {
     }
 
     prevUnchecked() {
-        var unchecked = this.state.submission.available.filter(sub => sub.checked === true).map(sub => sub.id);
+        var unchecked = this.submissions.filter(sub => sub.checked === true).map(sub => sub.id);
         var newInput = getClosest.lowerNumber(this.state.submission.id - 1, unchecked);
 
         if (typeof newInput !== 'undefined') {
@@ -159,7 +160,7 @@ class CheckStudents extends React.Component {
         }
     }
     nextUnchecked(){
-        var unchecked = this.state.submission.available.filter(sub => sub.checked === true).map(sub => sub.id);
+        var unchecked = this.submissions.filter(sub => sub.checked === true).map(sub => sub.id);
         var newInput = getClosest.greaterNumber(this.state.submission.id + 1, unchecked);
 
         if (typeof newInput !== 'undefined') {
@@ -187,7 +188,7 @@ class CheckStudents extends React.Component {
                 "last_name"
             ]
         };
-        var fuse = new Fuse(this.state.students, options);
+        var fuse = new Fuse(this.students, options);
         var result = fuse.search(event.target.value);
 
         this.setState({
@@ -201,7 +202,7 @@ class CheckStudents extends React.Component {
     setSubmission() {
 
         var input = this.state.submission.input;
-        var i = this.state.submission.available.findIndex(sub => sub.id === input);
+        var i = this.submissions.findIndex(sub => sub.id === input);
 
         if (i >= 0) {
             this.setState({
@@ -245,11 +246,11 @@ class CheckStudents extends React.Component {
             width: '5em'
         };
 
-        var total = this.state.submission.available.length;
-        var checked = this.state.submission.available.filter(sub => sub.checked).length;
+        var total = this.submissions.length;
+        var checked = this.submissions.filter(sub => sub.checked).length;
         var percentage = ((checked / total) * 100).toFixed(1);
 
-        var maxSubmission = Math.max(...this.state.submission.available.map(o => o.id));
+        var maxSubmission = Math.max(...this.submissions.map(o => o.id));
 
         return (
             <div>
@@ -269,7 +270,7 @@ class CheckStudents extends React.Component {
                                     <div className="control has-icons-left">
                                         <div className="select is-info is-fullwidth">
                                             <select>
-                                                {this.state.exam.available.map(exam => 
+                                                {this.state.exam.list.map(exam => 
                                                     <option key={exam.id}>{exam.name}</option>
                                                 )}
                                             </select>
@@ -323,7 +324,7 @@ class CheckStudents extends React.Component {
                                             <div className="control has-icons-left">
                                                 <div className="select is-info is-fullwidth">
                                                     <select>
-                                                        {this.state.exam.available.map(exam => 
+                                                        {this.state.exam.list.map(exam => 
                                                             <option key={exam.id}>{exam.name}</option>
                                                         )}
                                                     </select>

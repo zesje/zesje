@@ -5,182 +5,404 @@ import Footer from '../components/Footer';
 
 import test_image from '../student.jpg';
 
-  const CheckStudents = () => {
+import getClosest from 'get-closest';
 
-    var inputStyle = {
-      width:'6em'
-    };
+class CheckStudents extends React.Component {
 
-  return (
-    <div>
+    constructor(props) {
+        super(props)
 
-      <NavBar />
+        this.state = {
+            search: {
+                input: 'Thomas',
+                result: [
+                    {}
+                ]
+            },
+            exam: {
+                id: 0,
+                name: 'Midterm 1 5-12',
+                available: [
+                    {
+                        id:0,
+                        name:'Midterm 1 5-12',
+                    },
+                    {
+                        id:1,
+                        name:'Midterm 2 5-1'
+                    },
+                    {
+                        id:2,
+                        name:'Final exam 20-2'
+                    }
+                ]
+            },
+            submission: {
+                id: 0,
+                index: 0,
+                input: 0,
+                imagePath: test_image,
+                available: [
+                    {
+                        id: 0,
+                        checked: true
+                    },
+                    {
+                        id: 1,
+                        checked:true
+                    },
+                    {
+                        id: 50,
+                        checked:false
+                    },
+                    {
+                        id: 51,
+                        checked:false
+                    },
+                    {
+                        id: 64,
+                        checked:false
+                    },
+                    {
+                        id: 146,
+                        checked:false
+                    },
+                    {
+                        id: 1465,
+                        checked:false
+                    },
+                    {
+                        id: 1466,
+                        checked:false
+                    },
+                    {
+                        id: 1467,
+                        checked:false
+                    }
+                ]
+            },
+            students: [
+                {
+                    id:4492242,
+                    first_name:'Thomas',
+                    last_name:'Roos',
+                    email:'mail@thomasroos.nl'
+                },
+                {
+                    id:1234567,
+                    first_name:'John',
+                    last_name:'Doe',
+                    email:'Jonnie@doe.com'
+                }
+            ]   
+        }
 
-      <Hero title='Match Students' subtitle='Who made what?' />
+        this.search = this.search.bind(this);
+        this.setSubmission = this.setSubmission.bind(this);
+        this.prev = this.prev.bind(this);
+        this.prevUnchecked = this.prevUnchecked.bind(this);
+        this.next = this.next.bind(this);
+        this.nextUnchecked = this.nextUnchecked.bind(this);
+        this.setSubInput = this.setSubInput.bind(this);
 
-      <section className="section">
+    }
 
-        <div className="container">
+    prev() {
+        var newIndex = this.state.submission.index - 1;
 
-          <div className="columns">
-            <div className="column is-one-quarter-desktop is-one-third-tablet">
+        if (newIndex >= 0 && newIndex < this.state.submission.available.length) {
+            this.setState({
+                submission: {
+                    ...this.state.submission,
+                    input: this.state.submission.available[newIndex].id
+                }
+            },this.setSubmission)
+        }
+    }
+    next() {
+        var newIndex = this.state.submission.index + 1;
 
-              <div className="is-hidden-desktop">
-                <div className="control has-icons-left">
-                  <div className="select is-info is-fullwidth">
-                    <select>
-                      <option>Select exams</option>
-                      <option>Not me! plEASE :(</option>
-                    </select>
-                  </div>
-                  <span className="icon is-small is-left">
-                    <i className="fa fa-pencil"></i>
-                  </span>
-                </div>
-              </div>
+        if (newIndex >= 0 && newIndex < this.state.submission.available.length) {
+            this.setState({
+                submission: {
+                    ...this.state.submission,
+                    input: this.state.submission.available[newIndex].id
+                }
+            },this.setSubmission)
+        }
+        
+    }
 
-              <nav className="panel">
-                <p className="panel-heading">
-                  Students
-                </p>
-                <p className="panel-tabs">
-                  <a className="is-active">Unassigned</a>
-                  <a>all</a>
-                </p>
-                <div className="panel-block">
-                  <p className="control has-icons-left">
-                    <input className="input" type="text" placeholder="Search" />
-                    <span className="icon is-left">
-                      <i className="fa fa-search"></i>
-                    </span>
-                  </p>
-                </div>
-                <a className="panel-block is-active">
-                  <span className="panel-icon">
-                    <i className="fa fa-user"></i>
-                  </span>
-                  Thomas Roos
-                </a>
-                <a className="panel-block">
-                  <span className="panel-icon">
-                    <i className="fa fa-user"></i>
-                  </span>
-                  Henk de boer
-                </a>
-                <a className="panel-block">
-                  <span className="panel-icon">
-                    <i className="fa fa-user"></i>
-                  </span>
-                  Jan de Vries
-                </a>
-                <a className="panel-block">
-                  <span className="panel-icon">
-                    <i className="fa fa-user"></i>
-                  </span>
-                  Jaap Smit
-                </a>
-                <a className="panel-block">
-                  <span className="panel-icon">
-                    <i className="fa fa-user"></i>
-                  </span>
-                  Nana Batman
-                </a>
-                <a className="panel-block">
-                  <span className="panel-icon">
-                    <i className="fa fa-user"></i>
-                  </span>
-                  John Doe
-                </a>
-                <a className="panel-block">
-                  <span className="panel-icon">
-                    <i className="fa fa-user"></i>
-                  </span>
-                  Lala loepsie
-                </a>
-                <label className="panel-block">
-                  <input type="checkbox" />
-                  Random tick
-                </label>
-                <div className="panel-block is-hidden-mobile">
-                  <button className="button is-link is-outlined is-fullwidth">
-                    Batch upload
-                  </button>
-                </div>
-              </nav>
-            </div>
+    prevUnchecked() {
+        var unchecked = this.state.submission.available.filter(sub => sub.checked === true).map(sub => sub.id);
+        var newInput = getClosest.lowerNumber(this.state.submission.id - 1, unchecked);
 
-            <div className="column">
-              
-                <div className="level">
+        if (typeof newInput !== 'undefined') {
+            this.setState({
+                submission: {
+                    ...this.state.submission,
+                    input: newInput
+                }
+            }, this.setSubmission)
+        }
+    }
+    nextUnchecked(){
+        var unchecked = this.state.submission.available.filter(sub => sub.checked === true).map(sub => sub.id);
+        var newInput = getClosest.greaterNumber(this.state.submission.id + 1, unchecked);
 
-                  <div className="level-left is-hidden-touch">
-                    <div className="level-item">
-                      <div className="control has-icons-left">
-                        <div className="select is-info is-fullwidth">
-                          <select>
-                            <option>Select exams</option>
-                            <option>Not me! plEASEeeeeee :(</option>
-                          </select>
+        if (typeof newInput !== 'undefined') {
+            this.setState({
+                submission: {
+                    ...this.state.submission,
+                    input: newInput
+                }
+            }, this.setSubmission)
+        }
+    }
+
+    search(event) {
+        this.setState({
+            search:
+                {
+                    input: event.target.value,
+                    result: [
+                        {}
+                    ]
+                }
+        })
+    }
+
+    setSubmission() {
+
+        var input = this.state.submission.input;
+        var i = this.state.submission.available.findIndex(sub => sub.id === input);
+
+        if (i >= 0) {
+            this.setState({
+                submission:
+                    {
+                        ...this.state.submission,
+                        id: parseInt(input),
+                        index: i
+                    }
+            })
+        } else {
+            this.setState({
+                submission:
+                    {
+                        ...this.state.submission,
+                        input: this.state.submission.id
+                    }
+            })
+            alert('Could not find that submission number :(\nSorry!');
+        }
+    }
+
+    setSubInput(event) {
+        var patt = new RegExp(/^([1-9]\d*|0)?$/);
+
+        if (patt.test(event.target.value)) {
+            this.setState({
+                submission:
+                    {
+                        ...this.state.submission,
+                        input: parseInt(event.target.value)
+                    }
+            })
+        }
+        
+        
+    }
+
+    render() {
+        var inputStyle = {
+            width: '5em'
+        };
+
+        var total = this.state.submission.available.length;
+        var checked = this.state.submission.available.filter(sub => sub.checked).length;
+        var percentage = ((checked / total) * 100).toFixed(1);
+
+        var maxSubmission = Math.max(...this.state.submission.available.map(o => o.id));
+
+        return (
+            <div>
+
+                <NavBar />
+
+                <Hero title='Match Students' subtitle='Who made what?' />
+
+                <section className="section">
+
+                    <div className="container">
+
+                        <div className="columns">
+                            <div className="column is-one-quarter-desktop is-one-third-tablet">
+
+                                <div className="is-hidden-desktop">
+                                    <div className="control has-icons-left">
+                                        <div className="select is-info is-fullwidth">
+                                            <select>
+                                                <option>Select exams</option>
+                                                <option>Not me! plEASE :(</option>
+                                            </select>
+                                        </div>
+                                        <span className="icon is-small is-left">
+                                            <i className="fa fa-pencil"></i>
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <nav className="panel">
+                                    <p className="panel-heading">
+                                        Students
+                                    </p>
+                                    <p className="panel-tabs">
+                                        <a className="is-active">Unassigned</a>
+                                        <a>all</a>
+                                    </p>
+                                    <div className="panel-block">
+                                        <p className="control has-icons-left">
+                                            <input className="input" type="text" placeholder="Search"
+                                                value={this.state.search.input} onChange={this.search}/>
+                                            <span className="icon is-left">
+                                                <i className="fa fa-search"></i>
+                                            </span>
+                                        </p>
+                                    </div>
+                                    <a className="panel-block is-active">
+                                        <span className="panel-icon">
+                                            <i className="fa fa-user"></i>
+                                        </span>
+                                        Thomas Roos
+                                    </a>
+                                    <a className="panel-block">
+                                        <span className="panel-icon">
+                                            <i className="fa fa-user"></i>
+                                        </span>
+                                        Henk de boer
+                                    </a>
+                                    <a className="panel-block">
+                                        <span className="panel-icon">
+                                            <i className="fa fa-user"></i>
+                                        </span>
+                                        Jan de Vries
+                                    </a>
+                                    <a className="panel-block">
+                                        <span className="panel-icon">
+                                            <i className="fa fa-user"></i>
+                                        </span>
+                                        Jaap Smit
+                                    </a>
+                                    <a className="panel-block">
+                                        <span className="panel-icon">
+                                            <i className="fa fa-user"></i>
+                                        </span>
+                                        Nana Batman
+                                    </a>
+                                    <a className="panel-block">
+                                        <span className="panel-icon">
+                                            <i className="fa fa-user"></i>
+                                        </span>
+                                        John Doe
+                                    </a>
+                                    <a className="panel-block">
+                                        <span className="panel-icon">
+                                            <i className="fa fa-user"></i>
+                                        </span>
+                                        Lala loepsie
+                                    </a>
+                                    <label className="panel-block">
+                                        <input type="checkbox" />
+                                        Random tick
+                                    </label>
+                                    <div className="panel-block is-hidden-mobile">
+                                        <button className="button is-link is-outlined is-fullwidth">
+                                            Batch upload
+                                        </button>
+                                    </div>
+                                </nav>
+                            </div>
+
+                            <div className="column">
+
+                                <div className="level">
+
+                                    <div className="level-left is-hidden-touch">
+                                        <div className="level-item">
+                                            <div className="control has-icons-left">
+                                                <div className="select is-info is-fullwidth">
+                                                    <select>
+                                                        <option>Select exams</option>
+                                                        <option>Not me! plEASEeeeeee :(</option>
+                                                    </select>
+                                                </div>
+                                                <span className="icon is-small is-left">
+                                                    <i className="fa fa-pencil"></i>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="level-right">
+                                        <div className="level-item">
+                                            <div className="field has-addons is-mobile">
+                                                <div className="control">
+                                                    <button type="submit" className="button is-info is-rounded is-hidden-mobile"
+                                                        onClick={this.prevUnchecked}>unchecked</button>
+                                                    <button type="submit" className="button" onClick={this.prev} >Previous</button>
+                                                </div>
+                                                <div className="control">
+                                                    <input className="input is-rounded has-text-centered" type="text"
+                                                        pattern="/^([1-9]\d*|0)$/" value={this.state.submission.input}
+                                                        onChange={this.setSubInput} onSubmit={this.setSubmission}
+                                                        onBlur={this.setSubmission} maxLength="4" size="6" style={inputStyle} />
+                                                </div>
+                                                <div className="control">
+                                                    <button type="submit" className="button" onClick={this.next}>Next</button>
+                                                    <button type="submit" className="button is-info is-rounded is-hidden-mobile"
+                                                        onClick={this.nextUnchecked}>unchecked</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                </div>
+
+                                <div className="level is-mobile">
+                                    <div className="level-item is-hidden-mobile">
+                                        <progress className="progress is-success" value={checked}
+                                            max={total}>
+                                            {percentage}%</progress>
+                                    </div>
+                                    <div className="level-right">
+                                        <div className="level-item has-text-grey">
+                                            <i>{checked} / {total}</i>
+                                        </div>
+                                        <div className="level-item has-text-success">
+                                            <b>{percentage}%</b>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <p className="box">
+                                    <img src={test_image} />
+                                </p>
+
+                            </div>
+
                         </div>
-                        <span className="icon is-small is-left">
-                          <i className="fa fa-pencil"></i>
-                        </span>
-                      </div>
                     </div>
-                  </div>
 
-                  <div className="level-right">
-                    <div className="level-item">
-                      <div className="field has-addons is-mobile">
-                        <div className="control">
-                          <button type="submit" className="button is-info is-rounded is-hidden-mobile">unchecked</button>
-                          <button type="submit" className="button">Previous</button>
-                        </div>
-                          <div className="control">
-                            <input className="input is-rounded has-text-centered" type="number"
-                              min="0" step="1" value="1465" maxLength="4" size="6" style={inputStyle} />
-                          </div>
-                        <div className="control">
-                          <button type="submit" className="button">Next</button>
-                          <button type="submit" className="button is-info is-rounded is-hidden-mobile">unchecked</button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
 
-                </div>
+                </section>
 
-                <div className="level is-mobile">
-                  <div className="level-item is-hidden-mobile">
-                    <progress className="progress is-success" value="64" max="100">64%</progress>
-                  </div>
-                  <div className="level-right">
-                    <div className="level-item has-text-grey">
-                     <i>1465 / 2289</i>
-                    </div>
-                    <div className="level-item has-text-success">
-                     <b>64%</b>
-                    </div>
-                  </div>
-                </div>
 
-                <p className="box">
-                  <img src={test_image} />
-                </p>
+                <Footer />
 
             </div>
-      
-            </div>
-          </div>
-
-
-      </section>
-
-
-      <Footer />
-
-    </div>
-  )
+        )
+    }
 }
 
 export default CheckStudents;

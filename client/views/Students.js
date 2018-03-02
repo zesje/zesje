@@ -117,6 +117,7 @@ class CheckStudents extends React.Component {
         this.next = this.next.bind(this);
         this.nextUnchecked = this.nextUnchecked.bind(this);
         this.setSubInput = this.setSubInput.bind(this);
+        this.selectExam = this.selectExam.bind(this);
 
     }
 
@@ -201,7 +202,7 @@ class CheckStudents extends React.Component {
 
     setSubmission() {
 
-        var input = this.state.submission.input;
+        var input = parseInt(this.state.submission.input);
         var i = this.submissions.findIndex(sub => sub.id === input);
 
         if (i >= 0) {
@@ -209,7 +210,7 @@ class CheckStudents extends React.Component {
                 submission:
                     {
                         ...this.state.submission,
-                        id: parseInt(input),
+                        id: input,
                         index: i
                     }
             })
@@ -233,12 +234,20 @@ class CheckStudents extends React.Component {
                 submission:
                     {
                         ...this.state.submission,
-                        input: parseInt(event.target.value)
+                        input: event.target.value
                     }
             })
         }
-        
-        
+    }
+
+    selectExam(event) {
+        console.log(event.target);
+        this.setState({
+            exam: {
+                ...this.state.exam,
+                name: event.target.value,
+            }
+        })
     }
 
     render() {
@@ -269,7 +278,7 @@ class CheckStudents extends React.Component {
                                 <div className="is-hidden-desktop">
                                     <div className="control has-icons-left">
                                         <div className="select is-info is-fullwidth">
-                                            <select>
+                                            <select value={this.state.exam.name} onChange={this.selectExam}>
                                                 {this.state.exam.list.map(exam => 
                                                     <option key={exam.id}>{exam.name}</option>
                                                 )}
@@ -323,7 +332,7 @@ class CheckStudents extends React.Component {
                                         <div className="level-item">
                                             <div className="control has-icons-left">
                                                 <div className="select is-info is-fullwidth">
-                                                    <select>
+                                                    <select value={this.state.exam.name} onChange={this.selectExam}>
                                                         {this.state.exam.list.map(exam => 
                                                             <option key={exam.id}>{exam.name}</option>
                                                         )}

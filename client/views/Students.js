@@ -63,25 +63,81 @@ class CheckStudents extends React.Component {
                 first_name:'John',
                 last_name:'Doe',
                 email:'Jonnie@doe.com'
+            },
+            {
+                id: 44720570,
+                first_name: 'Martijn',
+                last_name: 'Noordhuis',
+                email: 'martijnnoordhuis@gmail.com'
+            },
+            {
+                id: 42049824,
+                first_name: 'Pieter',
+                last_name: 'Bas Veenhuis',
+                email: 'pietertje@tudelft.nl'
+            },
+            {
+                id: 44938843,
+                first_name: 'Jurrian',
+                last_name: 'Enzerink',
+                email: 'jurrie98@student.tudelft.nl'
+            },
+            {
+                id: 99998888,
+                first_name: 'Kobus',
+                last_name: 'Watering',
+                email: 'mail@kobuskuch.nl'
+            },
+            {
+                id: 42058115,
+                first_name: 'Gijsbert',
+                last_name: 'Reenkes',
+                email: 'gijsbert_reenkes@student.tudelft.nl'
+            },
+            {
+                id: 42229483,
+                first_name: 'Gust',
+                last_name: 'ter Morsche',
+                email: 'gust007@hotmail.com'
+            },
+            {
+                id: 1239053,
+                first_name: 'Ronald Christian',
+                last_name: 'Pepper',
+                email: 'r.c.pepper@sharklasers.com'
+            },
+            {
+                id: 1420532,
+                first_name: 'Louise',
+                last_name: 'Lindsey',
+                email: 'l.lindsey@sharklasers.com'
+            },
+            {
+                id: 2153467,
+                first_name: 'Allen Barnabus',
+                last_name: 'Couture',
+                email: 'a.b.couture@sharklasers.com'
+            },
+            {
+                id: 5673432,
+                first_name: 'Julio',
+                last_name: 'van Amersfoort',
+                email: 'j.vanamersfoort@sharklasers.com'
+            },
+            {
+                id: 8305256,
+                first_name: 'Dawn',
+                last_name: 'Griffin',
+                email: 'd.e.griffin@sharklasers.com'
             }
+
         ] 
 
         this.state = {
             search: {
-                input: 'Thomas',
+                input: '',
+                selected: 0,
                 result: [
-                    {
-                        id:4492242,
-                        first_name:'Thomas',
-                        last_name:'Roos',
-                        email:'mail@thomasroos.nl'
-                    },
-                    {
-                        id:1234567,
-                        first_name:'John',
-                        last_name:'Doe',
-                        email:'Jonnie@doe.com'
-                    }
                 ]
             },
             exam: {
@@ -118,6 +174,7 @@ class CheckStudents extends React.Component {
         this.nextUnchecked = this.nextUnchecked.bind(this);
         this.setSubInput = this.setSubInput.bind(this);
         this.selectExam = this.selectExam.bind(this);
+        this.moveSelection = this.moveSelection.bind(this);
 
     }
 
@@ -190,11 +247,12 @@ class CheckStudents extends React.Component {
             ]
         };
         var fuse = new Fuse(this.students, options);
-        var result = fuse.search(event.target.value);
+        var result = fuse.search(event.target.value).slice(0,10);
 
         this.setState({
             search: {
                 input: event.target.value,
+                selected: 0,
                 result: result
             }
         })
@@ -241,13 +299,29 @@ class CheckStudents extends React.Component {
     }
 
     selectExam(event) {
-        console.log(event.target);
         this.setState({
             exam: {
                 ...this.state.exam,
                 name: event.target.value,
             }
         })
+    }
+
+    moveSelection (event) {
+        if (event.keyCode == 38 || event.keyCode == 40) {
+            event.preventDefault();
+            var sel = this.state.search.selected;
+
+            if (event.keyCode == 38) sel--;
+            if (event.keyCode == 40) sel++;
+
+            this.setState({
+                search: {
+                    ...this.state.search,
+                    selected: sel
+                }
+            })
+        }
     }
 
     render() {
@@ -301,14 +375,15 @@ class CheckStudents extends React.Component {
                                     <div className="panel-block">
                                         <p className="control has-icons-left">
                                             <input className="input" type="text" placeholder="Search"
-                                                value={this.state.search.input} onChange={this.search}/>
+                                                value={this.state.search.input} onChange={this.search} onKeyDown={this.moveSelection}/>
                                             <span className="icon is-left">
                                                 <i className="fa fa-search"></i>
                                             </span>
                                         </p>
                                     </div>
-                                    {this.state.search.result.map(student => 
-                                        <a className="panel-block is-active" key={student.id}>
+                                    {this.state.search.result.map((student, index) => 
+                                        <a className={"panel-block" + ((index === this.state.search.selected) ? " button is-link" : " is-active")} 
+                                            key={student.id}>
                                         <span className="panel-icon">
                                             <i className="fa fa-user"></i>
                                         </span>

@@ -4,10 +4,27 @@ import Hero from '../components/Hero';
 import Footer from '../components/Footer';
 
 import Dropzone from 'react-dropzone'
-import Spinner from 'react-spinkit'
 
 import * as api from '../api'
 
+const StatusPDF = props => {
+    var iconClass = "fa fa-";
+    switch(props.pdf.status) {
+        case "processing":
+            iconClass += "refresh fa-spin";
+            break;
+        case "success":
+            iconClass += "check";
+            break;
+        case "error":
+            iconClass += "times";
+            break;
+    }
+    return <div>
+            {props.pdf.name}&emsp;<i className={iconClass}/>
+            <i>&nbsp;{props.pdf.message}</i>
+        </div>
+}
 
 class Exams extends React.Component {
 
@@ -28,7 +45,6 @@ class Exams extends React.Component {
     this.putYaml = this.putYaml.bind(this);
     this.updateYaml = this.updateYaml.bind(this);
     this.selectExam = this.selectExam.bind(this);
-    this.pdfStatus= this.pdfStatus.bind(this);
     this.updatePDFList= this.updatePDFList.bind(this);
 
     this._pdfUpdater = null;
@@ -101,18 +117,6 @@ class Exams extends React.Component {
             selected_exam: Object.assign(prev.selected_exam, {pdfs: pdfs})
         }))
     )
-  }
-
-  pdfStatus(pdf) {
-    switch(pdf.status) {
-      case "processing":
-        const style = {display: "inline-block", top: "6px"}
-        return <div>{pdf.name} <Spinner name="circle" style={style} fadeIn='none'/> <i>{pdf.message}</i></div>
-      case "success":
-        return <div>{pdf.name} <i className="fa fa-check"></i>{pdf.message}</div>
-      case "error":
-        return <div>{pdf.name} <i className="fa fa-times"></i><i>{pdf.message}</i></div>
-    }
   }
 
   onDropPDF(accepted, rejected) {
@@ -264,7 +268,7 @@ class Exams extends React.Component {
               </p>
                 <ul className="menu-list">
                 {this.state.selected_exam.pdfs.map(pdf =>
-                    <li key={pdf.id}>{this.pdfStatus(pdf)}</li>
+                    <li key={pdf.id}><StatusPDF pdf={pdf}/></li>
                 )}
                 </ul>
               </aside>

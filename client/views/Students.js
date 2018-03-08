@@ -424,7 +424,7 @@ class CheckStudents extends React.Component {
                                     </p>
                                     <div className="panel-block">
                                         <p className="control has-icons-left">
-                                            <input className="input" type="text" placeholder="Search"
+                                            <input className="input" type="text" autoFocus placeholder="Search"
                                                 value={this.state.search.input} onChange={this.search} onKeyDown={this.moveSelection} />
                                             <span className="icon is-left">
                                                 <i className="fa fa-search"></i>

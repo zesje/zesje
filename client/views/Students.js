@@ -81,94 +81,13 @@ const ExamSelector = (props) => (
 class CheckStudents extends React.Component {
 
 
-	students = [
-		{
-			id: 4492242,
-			first_name: 'Thomas',
-			last_name: 'Roos',
-			email: 'mail@thomasroos.nl'
-		},
-		{
-			id: 1234567,
-			first_name: 'John',
-			last_name: 'Doe',
-			email: 'Jonnie@doe.com'
-		},
-		{
-			id: 44720570,
-			first_name: 'Martijn',
-			last_name: 'Noordhuis',
-			email: 'martijnnoordhuis@gmail.com'
-		},
-		{
-			id: 42049824,
-			first_name: 'Pieter',
-			last_name: 'Bas Veenhuis',
-			email: 'pietertje@tudelft.nl'
-		},
-		{
-			id: 44938843,
-			first_name: 'Jurrian',
-			last_name: 'Enzerink',
-			email: 'jurrie98@student.tudelft.nl'
-		},
-		{
-			id: 99998888,
-			first_name: 'Kobus',
-			last_name: 'Watering',
-			email: 'mail@kobuskuch.nl'
-		},
-		{
-			id: 42058115,
-			first_name: 'Gijsbert',
-			last_name: 'Reenkes',
-			email: 'gijsbert_reenkes1337@student.tudelft.nl'
-		},
-		{
-			id: 42229483,
-			first_name: 'Gust',
-			last_name: 'ter Morsche',
-			email: 'gust007@hotmail.com'
-		},
-		{
-			id: 1239053,
-			first_name: 'Ronald Christian',
-			last_name: 'Pepper',
-			email: 'r.c.pepper@sharklasers.com'
-		},
-		{
-			id: 1420532,
-			first_name: 'Louise',
-			last_name: 'Lindsey',
-			email: 'l.lindsey@sharklasers.com'
-		},
-		{
-			id: 2153467,
-			first_name: 'Allen Barnabus',
-			last_name: 'Couture',
-			email: 'a.b.couture@sharklasers.com'
-		},
-		{
-			id: 5673432,
-			first_name: 'Julio',
-			last_name: 'van Amersfoort',
-			email: 'j.vanamersfoort@sharklasers.com'
-		},
-		{
-			id: 8305256,
-			first_name: 'Dawn',
-			last_name: 'Griffin',
-			email: 'd.e.griffin@sharklasers.com'
-		}
-
-	];
+	students = [];
 
 	state = {
 		search: {
 			input: '',
 			selected: 0,
-			result: [
-			]
+			result: []
 		},
 		exam: {
 			id: 0,
@@ -249,6 +168,17 @@ class CheckStudents extends React.Component {
 				console.error('failed to get exams:', err)
 				throw err
 			})
+
+		api.get('students')
+			.then(students => {
+				this.students = students;
+			})
+			.catch(err => {
+				alert('failed to get students (see javascript console for details)')
+				console.error('failed to get students:', err)
+				throw err
+			})
+
 	}
 
 
@@ -387,7 +317,7 @@ class CheckStudents extends React.Component {
 			var sel = this.state.search.selected;
 
 			if (event.keyCode == 38 && sel > 0) sel--;
-			if (event.keyCode == 40 && sel < 8) sel++;
+			if (event.keyCode == 40 && sel < this.state.search.result.length - 1) sel++;
 
 			this.setState({
 				search: {

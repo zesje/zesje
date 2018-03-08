@@ -81,7 +81,14 @@ const ExamSelector = (props) => (
 class CheckStudents extends React.Component {
 
 
-	students = [];
+	students = [
+		{
+			id: 0,
+			first_name: "",
+			last_name: "",
+			email: ""
+		}
+	];
 
 	state = {
 		search: {
@@ -92,7 +99,12 @@ class CheckStudents extends React.Component {
 		exam: {
 			id: 0,
 			name: "Loading...",
-			list: []
+			list: [
+				{
+					id: '0',
+					name: ""
+				}
+			]
 		},
 		submission: {
 			id: 0,
@@ -101,7 +113,13 @@ class CheckStudents extends React.Component {
 			studentID: null,
 			validated: false,
 			imagePath: test_image,
-			list: []
+			list: [
+				{
+					id: 0,
+					studentID: 0,
+					validated: false
+				}
+			]
 		}
 	};
 
@@ -187,7 +205,6 @@ class CheckStudents extends React.Component {
 			}, this.setSubmission)
 		}
 	}
-	// TODO: Let the submission picture be updated!
 
 	search = (event) => {
 
@@ -223,13 +240,23 @@ class CheckStudents extends React.Component {
 		var i = this.state.submission.list.findIndex(sub => sub.id === input);
 
 		if (i >= 0) {
+			var studIndex = this.students.findIndex(stud =>
+				stud.id === this.state.submission.list[i].studentID);
+			var stud = studIndex > -1 ? [this.students[studIndex]] : [];
+
 			this.setState({
 				submission: {
 					...this.state.submission,
 					id: input,
 					index: i
+				},
+				search: {
+					input: '',
+					selected: 0,
+					result: stud
 				}
 			})
+			// TODO: Let the submission picture be updated!
 		} else {
 			this.setState({
 				submission: {

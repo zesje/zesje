@@ -40,7 +40,7 @@ const StudentPanelBlock = (props) => {
 
 const ProgressBar = (props) => {
 	var total = props.submissions.length;
-	var checked = props.submissions.filter(sub => sub.checked).length;
+	var checked = props.submissions.filter(sub => sub.validated).length;
 	var percentage = ((checked / total) * 100).toFixed(1);
 
 	return (
@@ -96,47 +96,12 @@ class CheckStudents extends React.Component {
 		},
 		submission: {
 			id: 0,
-			index: 0,
 			input: 0,
+			index: 0,
+			studentID: null,
+			validated: false,
 			imagePath: test_image,
-			list: [
-				{
-					id: 0,
-					checked: true
-				},
-				{
-					id: 1,
-					checked: true
-				},
-				{
-					id: 50,
-					checked: false
-				},
-				{
-					id: 51,
-					checked: false
-				},
-				{
-					id: 64,
-					checked: false
-				},
-				{
-					id: 146,
-					checked: false
-				},
-				{
-					id: 1465,
-					checked: false
-				},
-				{
-					id: 1466,
-					checked: false
-				},
-				{
-					id: 1467,
-					checked: false
-				}
-			]
+			list: []
 		}
 	};
 
@@ -145,10 +110,32 @@ class CheckStudents extends React.Component {
 			.then(exams => {
 				this.setState({
 					exam: {
-						...this.state.exam,
+						id: exams[0].id,
+						name: exams[0].name,
 						list: exams
 					}
 				})
+
+				api.get('submissions/' + exams[0].id)
+					.then(submissions => {
+						this.setState({
+							submission: {
+								...this.state.submission,
+								id: submissions[0].id,
+								input: submissions[0].id,
+								studentID: submissions[0].studentID,
+								validated: submissions[0].validated,
+								list: submissions
+							}
+						})
+					})
+					.catch(err => {
+						alert('failed to get submissions (see javascript console for details)')
+						console.error('failed to get submissions:', err)
+						throw err
+					})
+
+
 			})
 			.catch(err => {
 				alert('failed to get exams (see javascript console for details)')
@@ -196,27 +183,27 @@ class CheckStudents extends React.Component {
 	}
 
 	prevUnchecked = () => {
-		var unchecked = this.state.submission.list.filter(sub => sub.checked === true).map(sub => sub.id);
+		var unchecked = this.state.submission.list.filter(sub => sub.validated === false).map(sub => sub.id);
 		var newInput = getClosest.lowerNumber(this.state.submission.id - 1, unchecked);
 
 		if (typeof newInput !== 'undefined') {
 			this.setState({
 				submission: {
 					...this.state.submission,
-					input: newInput
+					input: unchecked[newInput]
 				}
 			}, this.setSubmission)
 		}
 	}
 	nextUnchecked = () => {
-		var unchecked = this.state.submission.list.filter(sub => sub.checked === true).map(sub => sub.id);
+		var unchecked = this.state.submission.list.filter(sub => sub.validated === false).map(sub => sub.id);
 		var newInput = getClosest.greaterNumber(this.state.submission.id + 1, unchecked);
 
 		if (typeof newInput !== 'undefined') {
 			this.setState({
 				submission: {
 					...this.state.submission,
-					input: newInput
+					input: unchecked[newInput]
 				}
 			}, this.setSubmission)
 		}
@@ -253,6 +240,7 @@ class CheckStudents extends React.Component {
 	setSubmission = () => {
 
 		var input = parseInt(this.state.submission.input);
+		console.log(input);
 		var i = this.state.submission.list.findIndex(sub => sub.id === input);
 
 		if (i >= 0) {

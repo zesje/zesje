@@ -92,20 +92,7 @@ class CheckStudents extends React.Component {
 		exam: {
 			id: 0,
 			name: "Loading...",
-			list: [
-				{
-					id: 0,
-					name: 'Midterm 1 5-12',
-				},
-				{
-					id: 1,
-					name: 'Midterm 2 5-1'
-				},
-				{
-					id: 2,
-					name: 'Final exam 20-2'
-				}
-			]
+			list: []
 		},
 		submission: {
 			id: 0,

@@ -351,8 +351,8 @@ class CheckStudents extends React.Component {
             event.preventDefault();
             var sel = this.state.search.selected;
 
-            if (event.keyCode == 38) sel--;
-            if (event.keyCode == 40) sel++;
+            if (event.keyCode == 38 && sel > 0) sel--;
+            if (event.keyCode == 40 && sel < 8) sel++;
 
             this.setState({
                 search: {

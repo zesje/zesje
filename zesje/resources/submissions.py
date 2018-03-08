@@ -8,7 +8,7 @@ class Submissions(Resource):
 
     @orm.db_session
     def get(self, exam_id, copy_number=None):
-        """get submissions for the given exam
+        """get submissions for the given exam, ordered by copy number.
 
         Parameters
         ----------
@@ -44,4 +44,5 @@ class Submissions(Resource):
                 'validated': s.signature_validated,
             }
             for s in Submission.select(lambda s: s.exam == exam)
+                               .order_by(Submission.copy_number)
         ]

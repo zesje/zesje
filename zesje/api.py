@@ -25,6 +25,4 @@ api.add_resource(Pdfs, '/pdfs/<int:exam_id>')
 api.add_resource(Students, '/students')
 api.add_resource(Submissions,
                  '/submissions/<int:exam_id>',
-                 '/submissions/<int:exam_id>/<int:copy_number>')
-api.add_resource(Signature,
-                 '/images/signature/<int:exam_id>/<int:copy_number>')
+                 '/submissions/<int:exam_id>/<int:submission_id>')

@@ -5,6 +5,7 @@ from .resources.graders import Graders
 from .resources.exams import Exams, ExamConfig
 from .resources.pdfs import Pdfs
 from .resources.students import Students
+from .resources.submissions import Submissions
 
 api_bp = Blueprint(__name__, __name__)
 
@@ -22,3 +23,6 @@ api.add_resource(Exams, '/exams')
 api.add_resource(ExamConfig, '/exams/<int:exam_id>')
 api.add_resource(Pdfs, '/pdfs/<int:exam_id>')
 api.add_resource(Students, '/students')
+api.add_resource(Submissions,
+                 '/submissions/<int:exam_id>',
+                 '/submissions/<int:exam_id>/<int:copy_number>')

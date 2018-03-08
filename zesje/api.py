@@ -26,3 +26,5 @@ api.add_resource(Students, '/students')
 api.add_resource(Submissions,
                  '/submissions/<int:exam_id>',
                  '/submissions/<int:exam_id>/<int:copy_number>')
+api.add_resource(Signature,
+                 '/images/signature/<int:exam_id>/<int:copy_number>')

@@ -18,8 +18,8 @@ class Submissions(Resource):
         -------
         If 'copy_number' not provided provides a single instance of
         (otherwise a list of):
-            copy_number: int
-            student_id: int or null
+            copyID: int
+            studentID: int or null
                 Student that completed this submission, null if not assigned.
             validated: bool
                 True if the assigned student has been validated by a human.
@@ -32,15 +32,15 @@ class Submissions(Resource):
             if not s:
                 raise orm.core.ObjectNotFound(Submission)
             return {
-                'copy_number': s.copy_number,
-                'student_id':  s.student.id if s.student else None,
+                'copyID': s.copy_number,
+                'studentID':  s.student.id if s.student else None,
                 'validated': s.signature_validated,
             }
 
         return [
             {
-                'copy_number': s.copy_number,
-                'student': s.student.id if s.student else None,
+                'copyID': s.copy_number,
+                'studentID': s.student.id if s.student else None,
                 'validated': s.signature_validated,
             }
             for s in Submission.select(lambda s: s.exam == exam)

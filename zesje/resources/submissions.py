@@ -13,6 +13,9 @@ class Submissions(Resource):
         Parameters
         ----------
         exam_id : int
+        submission_id : int, optional
+            The copy number of the submission. This uniquely identifies
+            the submission *within a given exam*.
 
         Returns
         -------

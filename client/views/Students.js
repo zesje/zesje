@@ -114,28 +114,7 @@ class CheckStudents extends React.Component {
 						name: exams[0].name,
 						list: exams
 					}
-				})
-
-				api.get('submissions/' + exams[0].id)
-					.then(submissions => {
-						this.setState({
-							submission: {
-								...this.state.submission,
-								id: submissions[0].id,
-								input: submissions[0].id,
-								studentID: submissions[0].studentID,
-								validated: submissions[0].validated,
-								list: submissions
-							}
-						})
-					})
-					.catch(err => {
-						alert('failed to get submissions (see javascript console for details)')
-						console.error('failed to get submissions:', err)
-						throw err
-					})
-
-
+				}, this.getSubmissions)
 			})
 			.catch(err => {
 				alert('failed to get exams (see javascript console for details)')
@@ -283,7 +262,28 @@ class CheckStudents extends React.Component {
 				id: id,
 				name: event.target.value
 			}
-		})
+		}, this.getSubmissions)
+	}
+
+	getSubmissions() {
+		api.get('submissions/' + this.state.exam.id)
+			.then(submissions => {
+				this.setState({
+					submission: {
+						...this.state.submission,
+						id: submissions[0].id,
+						input: submissions[0].id,
+						studentID: submissions[0].studentID,
+						validated: submissions[0].validated,
+						list: submissions
+					}
+				})
+			})
+			.catch(err => {
+				alert('failed to get submissions (see javascript console for details)')
+				console.error('failed to get submissions:', err)
+				throw err
+			})
 	}
 
 	moveSelection = (event) => {

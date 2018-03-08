@@ -7,7 +7,7 @@ class Submissions(Resource):
     """Getting a list of submissions, and assigning students to them."""
 
     @orm.db_session
-    def get(self, exam_id, copy_number=None):
+    def get(self, exam_id, submission_id=None):
         """get submissions for the given exam, ordered by copy number.
 
         Parameters
@@ -16,7 +16,7 @@ class Submissions(Resource):
 
         Returns
         -------
-        If 'copy_number' not provided provides a single instance of
+        If 'submission_id' not provided provides a single instance of
         (otherwise a list of):
             copyID: int
             studentID: int or null
@@ -27,19 +27,19 @@ class Submissions(Resource):
         # This makes sure we raise ObjectNotFound if the exam does not exist
         exam = Exam[exam_id]
 
-        if copy_number is not None:
-            s = Submission.get(exam=exam, copy_number=copy_number)
+        if submission_id is not None:
+            s = Submission.get(exam=exam, copy_number=submission_id)
             if not s:
                 raise orm.core.ObjectNotFound(Submission)
             return {
-                'copyID': s.copy_number,
+                'id': s.copy_number,
                 'studentID':  s.student.id if s.student else None,
                 'validated': s.signature_validated,
             }
 
         return [
             {
-                'copyID': s.copy_number,
+                'id': s.copy_number,
                 'studentID': s.student.id if s.student else None,
                 'validated': s.signature_validated,
             }

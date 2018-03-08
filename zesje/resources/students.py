@@ -21,8 +21,8 @@ class Students(Resource):
         return [
             {
                 'id': s.id,
-                'first_name': s.first_name,
-                'last_name': s.last_name,
+                'firstName': s.first_name,
+                'lastName': s.last_name,
                 'email': s.email,
             }
             for s in Student.select()

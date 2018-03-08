@@ -17,7 +17,7 @@ const StudentPanelBlock = (props) => {
 				<span className={"panel-icon" + (props.selected ? " has-text-white" : "")}>
 					<i className="fa fa-user"></i>
 				</span>
-				{props.student.first_name + ' ' + props.student.last_name}
+				{props.student.firstName + ' ' + props.student.lastName}
 			</a>
 
 			<div className={"panel-block" + (props.selected ? " is-info" : " is-hidden")}
@@ -84,8 +84,8 @@ class CheckStudents extends React.Component {
 	students = [
 		{
 			id: 0,
-			first_name: "",
-			last_name: "",
+			firstName: "",
+			lastName: "",
 			email: ""
 		}
 	];
@@ -217,8 +217,8 @@ class CheckStudents extends React.Component {
 			minMatchCharLength: 1,
 			keys: [
 				"id",
-				"first_name",
-				"last_name"
+				"firstName",
+				"lastName"
 			]
 		};
 		var fuse = new Fuse(this.students, options);

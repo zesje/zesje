@@ -235,27 +235,20 @@ class CheckStudents extends React.Component {
 
 	setSubmission = () => {
 
-		var input = parseInt(this.state.submission.input);
-		console.log(input);
+        var input = parseInt(this.state.submission.input);
 		var i = this.state.submission.list.findIndex(sub => sub.id === input);
+		var sub = this.state.submission.list[i];
 
 		if (i >= 0) {
-			var studIndex = this.students.findIndex(stud =>
-				stud.id === this.state.submission.list[i].studentID);
-			var stud = studIndex > -1 ? [this.students[studIndex]] : [];
-
 			this.setState({
 				submission: {
 					...this.state.submission,
 					id: input,
+					studentID: sub.studentID,
+					validated: sub.validated,
 					index: i
-				},
-				search: {
-					input: '',
-					selected: 0,
-					result: stud
 				}
-			})
+			}, this.matchStudent)
 			// TODO: Let the submission picture be updated!
 		} else {
 			this.setState({
@@ -304,7 +297,7 @@ class CheckStudents extends React.Component {
 						validated: submissions[0].validated,
 						list: submissions
 					}
-				})
+				}, this.matchStudent)
 			})
 			.catch(err => {
 				alert('failed to get submissions (see javascript console for details)')
@@ -343,6 +336,20 @@ class CheckStudents extends React.Component {
 				}
 			})
 		}
+	}
+
+	matchStudent () {
+		var studIndex = this.students.findIndex(stud =>
+			stud.id === this.state.submission.studentID);
+		var stud = studIndex > -1 ? [this.students[studIndex]] : [];
+
+		this.setState({
+			search: {
+				input: '',
+				selected: 0,
+				result: stud
+			}
+		})
 	}
 
 	render() {

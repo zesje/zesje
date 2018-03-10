@@ -1,94 +1,20 @@
 import React from 'react';
-import NavBar from '../components/NavBar';
-import Hero from '../components/Hero';
-import Footer from '../components/Footer';
-import * as api from '../api';
-
 import getClosest from 'get-closest';
 import Fuse from 'fuse.js';
 import Mousetrap from 'mousetrap';
 
-const StudentPanelBlock = (props) => {
+import NavBar from '../components/NavBar';
+import Hero from '../components/Hero';
+import Footer from '../components/Footer';
 
-    let panelClass = "panel-block";
-    const button = props.selected || props.matched;
+import * as api from '../api';
 
-    if (button) {
-        panelClass += " button";
-        panelClass += (props.matched) ? " is-success" : " is-link";
-    } else panelClass += " is-active";
-
-    return (
-        <div key={props.student.id}>
-            <a className={panelClass}
-                key={props.student.id} id={props.student.id} selected={props.selected} onClick={props.selectStudent}>
-                <span className={"panel-icon" + (button ? " has-text-white" : "")}>
-                    <i className="fa fa-user"></i>
-                </span>
-                {props.student.firstName + ' ' + props.student.lastName}
-            </a>
-
-            <div className={"panel-block" + (props.selected ? " is-info" : " is-hidden")}
-                key="info" style={{ backgroundColor: '#dbdbdb' }}>
-
-                <span className="panel-icon">
-                    <i className="fa fa-database"></i>
-                </span>
-                {props.student.id}&emsp;
-            <span className="panel-icon">
-                    <i className="fa fa-check"></i>
-                    {/* TODO: Make icon respond to possible submissions of student */}
-                </span>
-                <i>assigned</i>
-            </div>
-
-        </div>
-    )
-}
-
-const ProgressBar = (props) => {
-    var total = props.submissions.length;
-    var checked = props.submissions.filter(sub => sub.validated).length;
-    var percentage = ((checked / total) * 100).toFixed(1);
-
-    return (
-        <div className="level is-mobile">
-            <div className="level-item is-hidden-mobile">
-                <progress className="progress is-success" value={checked}
-                    max={total}>
-                    {percentage}%</progress>
-            </div>
-            <div className="level-right">
-                <div className="level-item has-text-grey">
-                    <i>{checked} / {total}</i>
-                </div>
-                <div className="level-item has-text-success">
-                    <b>{percentage}%</b>
-                </div>
-            </div>
-        </div>
-    )
-}
-
-const ExamSelector = (props) => (
-    <div className="control has-icons-left">
-        <div className="select is-info is-fullwidth">
-            <select value={props.exam.name} onChange={props.selectExam}>
-                {props.exam.list.map(ex =>
-                    <option key={ex.id}>{ex.name}</option>
-                )}
-            </select>
-        </div>
-        <span className="icon is-small is-left">
-            <i className="fa fa-pencil"></i>
-        </span>
-    </div>
-)
-
+import StudentPanelBlock from './students/StudentPanelBlock.jsx';
+import ProgressBar from './students/ProgressBar.jsx';
+import ExamSelector from './students/ExamSelector.jsx';
 
 class CheckStudents extends React.Component {
-
-
+    
     students = [
         {
             id: 0,
@@ -492,14 +418,14 @@ class CheckStudents extends React.Component {
 
                                     <div className="panel-block is-hidden-mobile">
                                         <button className="button is-link is-outlined is-fullwidth">
-                                            <span class="icon is-small">
-                                                <i class="fa fa-user-plus"></i>
+                                            <span className="icon is-small">
+                                                <i className="fa fa-user-plus"></i>
                                             </span>
                                             <span>add</span>
                                         </button>
                                         <button className="button is-link is-outlined is-fullwidth">
-                                            <span class="icon is-small">
-                                                <i class="fa fa-upload"></i>
+                                            <span className="icon is-small">
+                                                <i className="fa fa-upload"></i>
                                             </span>
                                             <span>upload</span>
                                         </button>

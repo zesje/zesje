@@ -1,4 +1,5 @@
-from flask import abort, Response
+import os
+from flask import abort, Response, current_app as app
 from pony import orm
 
 from ..helpers import yaml_helper, image_helper
@@ -29,7 +30,9 @@ def get(exam_id, submission_id):
     if not sub:
         abort(404)
 
-    *_, widgets = yaml_helper.parse(yaml_helper.read(sub.exam.yaml_path))
+    data_dir = app.config['DATA_DIRECTORY']
+    yaml_abspath = os.path.join(data_dir, sub.exam.yaml_path)
+    *_, widgets = yaml_helper.parse(yaml_helper.read(yaml_abspath))
     first_page = next(p.path for p in sub.pages if 'page1' in p.path)
     image = image_helper.get_widget_image(first_page,
                                           widgets.loc['studentnr'])

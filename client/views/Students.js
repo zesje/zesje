@@ -408,10 +408,6 @@ class CheckStudents extends React.Component {
 									<p className="panel-heading">
 										Students
                                     </p>
-									<p className="panel-tabs">
-										<a className="is-active">Unassigned</a>
-										<a>all</a>
-									</p>
 									<div className="panel-block">
                                         <form onSubmit={this.matchStudent}>
                                             <p className="control has-icons-left">

@@ -6,6 +6,7 @@ import * as api from '../api';
 
 import getClosest from 'get-closest';
 import Fuse from 'fuse.js';
+import Mousetrap from 'mousetrap';
 
 const StudentPanelBlock = (props) => {
 
@@ -130,7 +131,26 @@ class CheckStudents extends React.Component {
         }
     };
 
-    componentDidMount() {
+    componentWillUnmount = () => {
+        Mousetrap.unbind(["left", "h"]);
+        Mousetrap.unbind(["right", "l"]);
+        Mousetrap.unbind(["up", "k"]);
+        Mousetrap.unbind(["down", "j"]);
+    }
+
+    componentDidMount = () => {
+
+        Mousetrap.bind(["left", "h"], this.prev);
+        Mousetrap.bind(["right", "l"], this.next);
+        Mousetrap.bind(["up", "k"], (event) => {
+            event.preventDefault();
+            this.nextUnchecked();
+        });
+        Mousetrap.bind(["down", "j"], (event) => {
+            event.preventDefault();
+            this.prevUnchecked();
+        });
+
         api.get('exams')
             .then(exams => {
                 if (exams.length) {
@@ -416,7 +436,9 @@ class CheckStudents extends React.Component {
             }
         })
 
-        this.searchInput.focus();
+        if (!this.state.submission.validated) {
+            this.searchInput.focus();
+        }
     }
 
     render() {
@@ -452,7 +474,7 @@ class CheckStudents extends React.Component {
                                         <form onSubmit={this.matchStudent}>
                                             <p className="control has-icons-left">
                                                 <input className="input" type="text"
-                                                    autoFocus ref={(input) => { this.searchInput = input; }}
+                                                    ref={(input) => { this.searchInput = input; }}
                                                     value={this.state.search.input} onChange={this.search} onKeyDown={this.moveSelection} />
 
                                                 <span className="icon is-left">

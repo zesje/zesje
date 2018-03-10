@@ -334,9 +334,16 @@ class CheckStudents extends React.Component {
 
 	selectStudent = (event) => {
 
-		if (event.target.selected) {
-			// TODO: Send student ID to server
-		} else {
+        if (event.target.selected) {
+            this.setState({
+                submission: {
+                    ...this.state.submission,
+                    studentID: parseInt(event.target.id),
+                    validated: true
+                }
+            })
+            // TODO: Send student ID to server (and update validated status in list??? But we might want to get the entire list...)
+        } else {
 			var index = this.state.search.result.findIndex(result => result.id == event.target.id);
 			this.setState({
 				search: {

@@ -257,7 +257,7 @@ class CheckStudents extends React.Component {
 					validated: sub.validated,
 					index: i
 				}
-			}, this.matchStudent)
+			}, this.listMatchedStudent)
 			// TODO: Let the submission picture be updated!
 		} else {
 			this.setState({
@@ -306,7 +306,7 @@ class CheckStudents extends React.Component {
 						validated: submissions[0].validated,
 						list: submissions
 					}
-				}, this.matchStudent)
+				}, this.listMatchedStudent)
 			})
 			.catch(err => {
 				alert('failed to get submissions (see javascript console for details)')
@@ -316,7 +316,7 @@ class CheckStudents extends React.Component {
 	}
 
 	moveSelection = (event) => {
-		if (event.keyCode == 38 || event.keyCode == 40) {
+		if (event.keyCode === 38 || event.keyCode === 40) {
 			event.preventDefault();
 			var sel = this.state.search.selected;
 
@@ -328,21 +328,14 @@ class CheckStudents extends React.Component {
 					...this.state.search,
 					selected: sel
 				}
-			})
-		}
+            })   
+        }     
 	}
 
 	selectStudent = (event) => {
 
         if (event.target.selected) {
-            this.setState({
-                submission: {
-                    ...this.state.submission,
-                    studentID: parseInt(event.target.id),
-                    validated: true
-                }
-            })
-            // TODO: Send student ID to server (and update validated status in list??? But we might want to get the entire list...)
+            this.matchStudent();
         } else {
 			var index = this.state.search.result.findIndex(result => result.id == event.target.id);
 			this.setState({
@@ -352,9 +345,25 @@ class CheckStudents extends React.Component {
 				}
 			})
 		}
-	}
+    }
+    
+    matchStudent = (event) => {
+        if (event) event.preventDefault();
 
-	matchStudent () {
+        const stud = this.state.search.result[this.state.search.selected];
+        if (!stud) return;
+
+        this.setState({
+            submission: {
+                ...this.state.submission,
+                studentID: stud.id,
+                validated: true
+            }
+        })
+        // TODO: Send student ID to server (and update validated status in list??? But we might want to get the entire list...)
+    }
+
+	listMatchedStudent = () => {
 		var studIndex = this.students.findIndex(stud =>
 			stud.id === this.state.submission.studentID);
 		var stud = studIndex > -1 ? [this.students[studIndex]] : [];
@@ -365,7 +374,9 @@ class CheckStudents extends React.Component {
 				selected: 0,
 				result: stud
 			}
-		})
+        })
+        
+        this.searchInput.focus();
 	}
 
 	render() {
@@ -402,13 +413,17 @@ class CheckStudents extends React.Component {
 										<a>all</a>
 									</p>
 									<div className="panel-block">
-										<p className="control has-icons-left">
-											<input className="input" type="text" autoFocus placeholder="Search"
-												value={this.state.search.input} onChange={this.search} onKeyDown={this.moveSelection} />
-											<span className="icon is-left">
-												<i className="fa fa-search"></i>
-											</span>
-										</p>
+                                        <form onSubmit={this.matchStudent}>
+                                            <p className="control has-icons-left">
+                                                <input className="input" type="text"
+                                                    autoFocus ref={(input) => { this.searchInput = input; }}
+                                                    value={this.state.search.input} onChange={this.search} onKeyDown={this.moveSelection} />
+                                                
+                                                <span className="icon is-left">
+                                                    <i className="fa fa-search"></i>
+                                                </span>
+                                            </p>
+                                        </form>
 									</div>
 									{this.state.search.result.map((student, index) =>
 										<StudentPanelBlock key={student.id} student={student}

@@ -10,11 +10,20 @@ import getClosest from 'get-closest';
 import Fuse from 'fuse.js';
 
 const StudentPanelBlock = (props) => {
+
+    let panelClass = "panel-block";
+    const button = props.selected || props.matched;
+
+    if (button) {
+        panelClass += " button";
+        panelClass += (props.matched) ? " is-success" : " is-link";
+    } else panelClass += " is-active";
+
 	return (
 		<div key={props.student.id}>
-			<a className={"panel-block" + (props.selected ? " button is-link" : " is-active")}
+			<a className={panelClass}
 				key={props.student.id} id={props.student.id} selected={props.selected} onClick={props.selectStudent}>
-				<span className={"panel-icon" + (props.selected ? " has-text-white" : "")}>
+				<span className={"panel-icon" + (button ? " has-text-white" : "")}>
 					<i className="fa fa-user"></i>
 				</span>
 				{props.student.firstName + ' ' + props.student.lastName}
@@ -396,7 +405,9 @@ class CheckStudents extends React.Component {
 									</div>
 									{this.state.search.result.map((student, index) =>
 										<StudentPanelBlock key={student.id} student={student}
-											selected={index === this.state.search.selected} selectStudent={this.selectStudent} />
+                                            selected={index === this.state.search.selected}
+                                            matched={student.id === this.state.submission.studentID && this.state.submission.validated}
+                                            selectStudent={this.selectStudent} />
 									)}
 
 									<div className="panel-block is-hidden-mobile">

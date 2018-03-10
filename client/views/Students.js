@@ -4,8 +4,6 @@ import Hero from '../components/Hero';
 import Footer from '../components/Footer';
 import * as api from '../api';
 
-import test_image from '../student.jpg';
-
 import getClosest from 'get-closest';
 import Fuse from 'fuse.js';
 
@@ -121,7 +119,7 @@ class CheckStudents extends React.Component {
             index: 0,
             studentID: null,
             validated: false,
-            imagePath: test_image,
+            imagePath: null,
             list: [
                 {
                     id: 0,
@@ -135,13 +133,15 @@ class CheckStudents extends React.Component {
     componentDidMount() {
         api.get('exams')
             .then(exams => {
-                this.setState({
-                    exam: {
-                        id: exams[0].id,
-                        name: exams[0].name,
-                        list: exams
-                    }
-                }, this.loadSubmissions)
+                if (exams.length) {
+                    this.setState({
+                        exam: {
+                            id: exams[0].id,
+                            name: exams[0].name,
+                            list: exams
+                        }
+                    }, this.loadSubmissions)
+                }
             })
             .catch(err => {
                 alert('failed to get exams (see javascript console for details)')
@@ -374,14 +374,32 @@ class CheckStudents extends React.Component {
         const stud = this.state.search.result[this.state.search.selected];
         if (!stud) return;
 
+        let newList = this.state.submission.list;
+        const index = this.state.submission.index;
+
         this.setState({
             submission: {
                 ...this.state.submission,
                 studentID: stud.id,
                 validated: true
             }
-        })
-        // TODO: Send student ID to server (and update validated status in list??? But we might want to get the entire list...)
+        }, this.nextUnchecked)
+
+        api.put('submissions/' + this.state.exam.id + '/' + this.state.submission.id, { studentID: stud.id })
+            .then(sub => {
+                newList[index] = sub;
+                this.setState({
+                    submission: {
+                        ...this.state.submission,
+                        list: newList
+                    }
+                })
+            })
+            .catch(err => {
+                alert('failed to put submission (see javascript console for details)')
+                console.error('failed to put submission:', err)
+                throw err
+            })
     }
 
     listMatchedStudent = () => {
@@ -493,7 +511,7 @@ class CheckStudents extends React.Component {
                                 <ProgressBar submissions={this.state.submission.list} />
 
                                 <p className="box">
-                                    <img src={this.state.submission.imagePath} />
+                                    <img src={this.state.submission.imagePath} alt="" />
                                 </p>
 
                             </div>

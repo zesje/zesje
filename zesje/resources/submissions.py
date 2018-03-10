@@ -93,5 +93,5 @@ class Submissions(Resource):
         return  {
                 'id': submission.copy_number,
                 'studentID': submission.student.id,
-                'validated': ssubmission.signature_validated,
+                'validated': submission.signature_validated,
             }

@@ -200,7 +200,7 @@ class Exams extends React.Component {
                 disablePreview
                 multiple={false}
               >
-                <DropzoneContent disabled={isDisabled} />
+                <DropzoneContent disabled={false} />
               </Dropzone>
             </div>
 

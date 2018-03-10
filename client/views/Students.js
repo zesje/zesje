@@ -317,15 +317,16 @@ class CheckStudents extends React.Component {
 
     loadSubmissions = () => {
         api.get('submissions/' + this.state.exam.id)
-            .then(submissions => {
+            .then(subs => {
                 this.setState({
                     submission: {
                         ...this.state.submission,
-                        id: submissions[0].id,
-                        input: submissions[0].id,
-                        studentID: submissions[0].studentID,
-                        validated: submissions[0].validated,
-                        list: submissions
+                        id: subs[0].id,
+                        input: subs[0].id,
+                        studentID: subs[0].studentID,
+                        validated: subs[0].validated,
+                        imagePath: 'api/images/signature/' + this.state.exam.id + '/' + subs[0].id,
+                        list: subs
                     }
                 }, this.listMatchedStudent)
             })

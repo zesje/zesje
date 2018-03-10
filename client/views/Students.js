@@ -492,7 +492,16 @@ class CheckStudents extends React.Component {
 
                                     <div className="panel-block is-hidden-mobile">
                                         <button className="button is-link is-outlined is-fullwidth">
-                                            Batch upload
+                                            <span class="icon is-small">
+                                                <i class="fa fa-user-plus"></i>
+                                            </span>
+                                            <span>add</span>
+                                        </button>
+                                        <button className="button is-link is-outlined is-fullwidth">
+                                            <span class="icon is-small">
+                                                <i class="fa fa-upload"></i>
+                                            </span>
+                                            <span>upload</span>
                                         </button>
                                     </div>
                                 </nav>

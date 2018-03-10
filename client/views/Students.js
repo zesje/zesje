@@ -141,7 +141,7 @@ class CheckStudents extends React.Component {
                         name: exams[0].name,
                         list: exams
                     }
-                }, this.getSubmissions)
+                }, this.loadSubmissions)
             })
             .catch(err => {
                 alert('failed to get exams (see javascript console for details)')
@@ -255,10 +255,10 @@ class CheckStudents extends React.Component {
                     id: input,
                     studentID: sub.studentID,
                     validated: sub.validated,
-                    index: i
+                    index: i,
+                    imagePath: 'api/images/signature/' + this.state.exam.id + '/' + input
                 }
-            }, this.listMatchedStudent)
-            // TODO: Let the submission picture be updated!
+            }, this.getSubmission)
         } else {
             this.setState({
                 submission: {
@@ -291,10 +291,31 @@ class CheckStudents extends React.Component {
                 id: id,
                 name: event.target.value
             }
-        }, this.getSubmissions)
+        }, this.loadSubmissions)
     }
 
-    getSubmissions() {
+    getSubmission = () => {
+        api.get('submissions/' + this.state.exam.id + '/' + this.state.submission.id)
+            .then(sub => {
+                let newList = this.state.submission.list;
+                newList[this.state.submission.index] = sub;
+                this.setState({
+                    submission: {
+                        ...this.state.submission,
+                        studentID: sub.studentID,
+                        validated: sub.validated,
+                        list: newList
+                    }
+                }, this.listMatchedStudent)
+            })
+            .catch(err => {
+                alert('failed to get submission (see javascript console for details)')
+                console.error('failed to get submission:', err)
+                throw err
+            })
+    }
+
+    loadSubmissions = () => {
         api.get('submissions/' + this.state.exam.id)
             .then(submissions => {
                 this.setState({
@@ -472,7 +493,7 @@ class CheckStudents extends React.Component {
                                 <ProgressBar submissions={this.state.submission.list} />
 
                                 <p className="box">
-                                    <img src={test_image} />
+                                    <img src={this.state.submission.imagePath} />
                                 </p>
 
                             </div>

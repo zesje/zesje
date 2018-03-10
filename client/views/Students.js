@@ -451,16 +451,16 @@ class CheckStudents extends React.Component {
                                                 <div className="control">
                                                     <button type="submit" className="button is-info is-rounded is-hidden-mobile"
                                                         onClick={this.prevUnchecked}>unchecked</button>
-                                                    <button type="submit" className="button" onClick={this.prev}>Previous</button>
+                                                    <button type="submit" className={"button" + (this.state.submission.validated ? " is-success" : " is-link")} onClick={this.prev}>Previous</button>
                                                 </div>
                                                 <div className="control">
-                                                    <input className="input is-rounded has-text-centered" type="text"
-                                                        pattern="/^([1-9]\d*|0)$/" value={this.state.submission.input}
+                                                    <input className={"input is-rounded has-text-centered" + (this.state.submission.validated ? " is-success" : " is-link")}
+                                                        value={this.state.submission.input} type="text"
                                                         onChange={this.setSubInput} onSubmit={this.setSubmission}
                                                         onBlur={this.setSubmission} maxLength="4" size="6" style={inputStyle} />
                                                 </div>
                                                 <div className="control">
-                                                    <button type="submit" className="button" onClick={this.next}>Next</button>
+                                                    <button type="submit" className={"button" + (this.state.submission.validated ? " is-success" : " is-link")} onClick={this.next}>Next</button>
                                                     <button type="submit" className="button is-info is-rounded is-hidden-mobile"
                                                         onClick={this.nextUnchecked}>unchecked</button>
                                                 </div>

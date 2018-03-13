@@ -76,7 +76,8 @@ class Pdfs(Resource):
         # TODO: save these into a process-local datastructure, or save
         # it into the DB as well so that we can cull 'processing' tasks
         # that are actually dead.
-        Process(target=pdf_helper.process_pdf, args=(pdf.id,)).start()
+        args = (pdf.id, app.config['DATA_DIRECTORY'])
+        Process(target=pdf_helper.process_pdf, args=args).start()
 
         return {
             'id': pdf.id,

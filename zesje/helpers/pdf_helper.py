@@ -13,7 +13,6 @@ import pandas
 import cv2
 import zbar
 
-from flask import current_app as app
 from pony import orm
 
 from . import yaml_helper
@@ -25,7 +24,7 @@ ExamMetadata = namedtuple('ExamMetadata',
                           ['version', 'exam_name', 'qr_coords', 'widget_data'])
 
 
-def process_pdf(pdf_id):
+def process_pdf(pdf_id, data_directory):
     """Process a PDF, recording progress to a database
 
     This *must* be called from a subprocess of the
@@ -36,9 +35,9 @@ def process_pdf(pdf_id):
     ----------
     pdf_id : int
         The ID in the database of the PDF to process
+    data_directory : str
+        The absolute path to the data directory on disk
     """
-    data_directory = app.config['DATA_DIRECTORY']
-
     report_error = functools.partial(write_pdf_status, pdf_id, 'error')
     report_progress = functools.partial(write_pdf_status, pdf_id, 'processing')
     report_success = functools.partial(write_pdf_status, pdf_id, 'success')

@@ -110,7 +110,7 @@ class CheckStudents extends React.Component {
 
 
     prev = () => {
-        var newIndex = this.state.submission.index - 1;
+        const newIndex = this.state.submission.index - 1;
 
         if (newIndex >= 0 && newIndex < this.state.submission.list.length) {
             this.setState({
@@ -122,7 +122,7 @@ class CheckStudents extends React.Component {
         }
     }
     next = () => {
-        var newIndex = this.state.submission.index + 1;
+        const newIndex = this.state.submission.index + 1;
 
         if (newIndex >= 0 && newIndex < this.state.submission.list.length) {
             this.setState({
@@ -136,8 +136,8 @@ class CheckStudents extends React.Component {
     }
 
     prevUnchecked = () => {
-        var unchecked = this.state.submission.list.filter(sub => sub.validated === false).map(sub => sub.id);
-        var newInput = getClosest.lowerNumber(this.state.submission.id - 1, unchecked);
+        const unchecked = this.state.submission.list.filter(sub => sub.validated === false).map(sub => sub.id);
+        const newInput = getClosest.lowerNumber(this.state.submission.id - 1, unchecked);
 
         if (typeof newInput !== 'undefined') {
             this.setState({
@@ -149,8 +149,8 @@ class CheckStudents extends React.Component {
         }
     }
     nextUnchecked = () => {
-        var unchecked = this.state.submission.list.filter(sub => sub.validated === false).map(sub => sub.id);
-        var newInput = getClosest.greaterNumber(this.state.submission.id + 1, unchecked);
+        const unchecked = this.state.submission.list.filter(sub => sub.validated === false).map(sub => sub.id);
+        const newInput = getClosest.greaterNumber(this.state.submission.id + 1, unchecked);
 
         if (typeof newInput !== 'undefined') {
             this.setState({
@@ -164,7 +164,7 @@ class CheckStudents extends React.Component {
 
     search = (event) => {
 
-        var options = {
+        const options = {
             shouldSort: true,
             threshold: 0.6,
             location: 0,
@@ -177,8 +177,8 @@ class CheckStudents extends React.Component {
                 "lastName"
             ]
         };
-        var fuse = new Fuse(this.students, options);
-        var result = fuse.search(event.target.value).slice(0, 10);
+        const fuse = new Fuse(this.students, options);
+        const result = fuse.search(event.target.value).slice(0, 10);
 
         this.setState({
             search: {
@@ -191,9 +191,9 @@ class CheckStudents extends React.Component {
 
     setSubmission = () => {
 
-        var input = parseInt(this.state.submission.input);
-        var i = this.state.submission.list.findIndex(sub => sub.id === input);
-        var sub = this.state.submission.list[i];
+        const input = parseInt(this.state.submission.input);
+        const i = this.state.submission.list.findIndex(sub => sub.id === input);
+        const sub = this.state.submission.list[i];
 
         if (i >= 0) {
             this.setState({
@@ -218,7 +218,7 @@ class CheckStudents extends React.Component {
     }
 
     setSubInput = (event) => {
-        var patt = new RegExp(/^([1-9]\d*|0)?$/);
+        const patt = new RegExp(/^([1-9]\d*|0)?$/);
 
         if (patt.test(event.target.value)) {
             this.setState({
@@ -288,7 +288,7 @@ class CheckStudents extends React.Component {
     moveSelection = (event) => {
         if (event.keyCode === 38 || event.keyCode === 40) {
             event.preventDefault();
-            var sel = this.state.search.selected;
+            let sel = this.state.search.selected;
 
             if (event.keyCode == 38 && sel > 0) sel--;
             if (event.keyCode == 40 && sel < this.state.search.result.length - 1) sel++;
@@ -307,7 +307,7 @@ class CheckStudents extends React.Component {
         if (event.target.selected) {
             this.matchStudent();
         } else {
-            var index = this.state.search.result.findIndex(result => result.id == event.target.id);
+            const index = this.state.search.result.findIndex(result => result.id == event.target.id);
             this.setState({
                 search: {
                     ...this.state.search,
@@ -352,9 +352,9 @@ class CheckStudents extends React.Component {
     }
 
     listMatchedStudent = () => {
-        var studIndex = this.students.findIndex(stud =>
+        const studIndex = this.students.findIndex(stud =>
             stud.id === this.state.submission.studentID);
-        var stud = studIndex > -1 ? [this.students[studIndex]] : [];
+        const stud = studIndex > -1 ? [this.students[studIndex]] : [];
 
         this.setState({
             search: {
@@ -370,11 +370,11 @@ class CheckStudents extends React.Component {
     }
 
     render() {
-        var inputStyle = {
+        const inputStyle = {
             width: '5em'
         };
 
-        var maxSubmission = Math.max(...this.state.submission.list.map(o => o.id));
+        const maxSubmission = Math.max(...this.state.submission.list.map(o => o.id));
 
         return (
             <div>

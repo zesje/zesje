@@ -1,9 +1,9 @@
 import React from 'react';
 
 const ProgressBar = (props) => {
-    var total = props.submissions.length;
-    var checked = props.submissions.filter(sub => sub.validated).length;
-    var percentage = ((checked / total) * 100).toFixed(1);
+    const total = props.submissions.length;
+    const checked = props.submissions.filter(sub => sub.validated).length;
+    const percentage = ((checked / total) * 100).toFixed(1);
 
     return (
         <div className="level is-mobile">

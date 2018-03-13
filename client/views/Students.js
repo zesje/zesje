@@ -12,9 +12,10 @@ import * as api from '../api';
 import StudentPanelBlock from './students/StudentPanelBlock.jsx';
 import ProgressBar from './students/ProgressBar.jsx';
 import ExamSelector from './students/ExamSelector.jsx';
+import AddModal from './students/AddModal.jsx';
 
 class CheckStudents extends React.Component {
-    
+
     students = [
         {
             id: 0,
@@ -415,21 +416,7 @@ class CheckStudents extends React.Component {
                                             matched={student.id === this.state.submission.studentID && this.state.submission.validated}
                                             selectStudent={this.selectStudent} />
                                     )}
-
-                                    <div className="panel-block is-hidden-mobile">
-                                        <button className="button is-link is-outlined is-fullwidth">
-                                            <span className="icon is-small">
-                                                <i className="fa fa-user-plus"></i>
-                                            </span>
-                                            <span>add</span>
-                                        </button>
-                                        <button className="button is-link is-outlined is-fullwidth">
-                                            <span className="icon is-small">
-                                                <i className="fa fa-upload"></i>
-                                            </span>
-                                            <span>upload</span>
-                                        </button>
-                                    </div>
+                                    <AddModal />
                                 </nav>
                             </div>
 

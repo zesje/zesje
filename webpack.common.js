@@ -22,6 +22,7 @@ module.exports = {
       { test: /\.(jsx|js)$/, loader: 'babel-loader', exclude: /node_modules/ },
       { test: /\.(png|jpg|gif)$/, loader: "file-loader" },
       { test: /\.(woff(2)?|ttf|eot|svg|otf)(\?v=\d+\.\d+\.\d+)?$/, loader: "file-loader" },
+      { test: /\.(md)$/, loader: "raw-loader" },
     ]
   },
 

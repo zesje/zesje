@@ -80,9 +80,9 @@ class GraderManager extends React.Component {
                 Added graders
               </p>
               <ul className="menu-list">
-                {this.state.graders.map((grader) => {
-                    return <li key={grader.id.toString()}>{grader.first_name + ' ' + grader.last_name}</li>
-                })}
+                {this.state.graders.map((grader) =>
+                    <li key={grader.id.toString()}>{grader.first_name + ' ' + grader.last_name}</li>
+                )}
               </ul>
             </aside>
           </div>

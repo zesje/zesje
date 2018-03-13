@@ -87,7 +87,7 @@ def process_pdf(pdf_id, data_directory):
         # Process individual pages, ensuring we report the page numbers
         # starting from 1.
         failures = []
-        for i, (image, qr) in enumerate(1, zip(images, extracted_qrs)):
+        for i, (image, qr) in enumerate(zip(images, extracted_qrs), 1):
             report_progress(f'Processing page {i} / {len(images)}')
             if qr is None:
                 failures.append(image)

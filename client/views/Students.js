@@ -245,7 +245,8 @@ class CheckStudents extends React.Component {
         api.get('submissions/' + this.state.exam.id + '/' + this.state.submission.id)
             .then(sub => {
                 let newList = this.state.submission.list;
-                newList[this.state.submission.index] = sub;
+                const index = newList.findIndex(localSub => localSub.id === sub.id)
+                newList[index] = sub;
                 this.setState({
                     submission: {
                         ...this.state.submission,

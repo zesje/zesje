@@ -231,11 +231,11 @@ class CheckStudents extends React.Component {
     }
 
     selectExam = (event) => {
-        var id = this.state.exam.list.findIndex(ex => ex.name === event.target.value);
+        const id = this.state.exam.list.findIndex(ex => ex.name === event.target.value);
         this.setState({
             exam: {
                 ...this.state.exam,
-                id: id,
+                id: id + 1,  // exam IDs are 1-based and the exam list is 0-based
                 name: event.target.value
             }
         }, this.loadSubmissions)

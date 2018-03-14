@@ -180,35 +180,35 @@ def make_temp_directory():
         shutil.rmtree(temp_dir)
 
 
-def extract_qr(image_path, yaml_version, scale_factor=4):
-    image = cv2.imread(image_path,
-                       cv2.IMREAD_GRAYSCALE)[::scale_factor, ::scale_factor]
+def extract_qr(image_path, yaml_version):
+    image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
     if image.shape[0] < image.shape[1]:
         image = image.T
-    # Varied thresholds because zbar is picky about contrast.
-    for threshold in (200, 150, 220):
-        thresholded = 255 * (image > threshold)
-        # zbar also cares about orientation.
-        for direction in itertools.product([1, -1], [1, -1]):
-            flipped = thresholded[::direction[0], ::direction[1]]
-            scanner = zbar.Scanner()
-            results = scanner.scan(flipped.astype(np.uint8))
-            if results:
-                try:
-                    version, name, page, copy = \
-                                results[0].data.decode().split(';')
-                except ValueError:
-                    return
-                if version != 'v{}'.format(yaml_version):
-                    raise RuntimeError('Yaml format mismatch')
-                coords = np.array(results[0].position)
-                # zbar doesn't respect array ordering!
-                if not np.isfortran(flipped):
-                    coords = coords[:, ::-1]
-                coords *= direction
-                coords %= image.shape
-                coords *= scale_factor
-                return ExtractedQR(name, int(page), int(copy), coords)
+
+    # Empirically we observed that the most important parameter
+    # for zbar to successfully read a qr code is the resolution
+    # controlled below by scaling the image by factor.
+    # zbar also seems to care about image orientation, hence
+    # the loop over dirx/diry.
+    for dirx, diry, factor in itertools.product([1, -1], [1, -1], [8, 5, 4, 3]):
+        flipped = image[::factor * dirx, ::factor * diry]
+        scanner = zbar.Scanner()
+        results = scanner.scan(flipped)
+        if results:
+            try:
+                version, name, page, copy = \
+                            results[0].data.decode().split(';')
+            except ValueError:
+                return
+            if version != 'v{}'.format(yaml_version):
+                raise RuntimeError('Yaml format mismatch')
+            coords = np.array(results[0].position)
+            # zbar doesn't respect array ordering!
+            if not np.isfortran(flipped):
+                coords = coords[:, ::-1]
+            coords *= [factor * dirx, factor * diry]
+            coords %= image.shape
+            return ExtractedQR(name, int(page), int(copy), coords)
     else:
         return
 

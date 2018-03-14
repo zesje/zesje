@@ -8,7 +8,7 @@ import Dropzone from 'react-dropzone'
 import * as api from '../api'
 
 const StatusPDF = props => {
-  var iconClass = "fa fa-";
+  let iconClass = "fa fa-";
   switch (props.pdf.status) {
     case "processing":
       iconClass += "refresh fa-spin";
@@ -58,7 +58,7 @@ class Exams extends React.Component {
       alert('Please upload a YAML..')
       return
     }
-    var data = new FormData()
+    const data = new FormData()
     data.append('yaml', accepted[0])
     api.post('exams', data)
       .then(new_exam => {
@@ -130,7 +130,7 @@ class Exams extends React.Component {
       return
     }
     accepted.map(file => {
-      var data = new FormData()
+      const data = new FormData()
       data.append('pdf', file)
       api.post('pdfs/' + this.state.selected_exam.id, data)
         .then(() => {
@@ -156,8 +156,7 @@ class Exams extends React.Component {
       .then(exams => {
         this.setState({ exams: exams })
         if (exams.length > 0) {
-          var first_exam = exams[0].id
-          this.selectExam(first_exam)
+          this.selectExam(exams[0].id)
         }
       })
       .catch(err => {
@@ -175,8 +174,8 @@ class Exams extends React.Component {
 
   render() {
 
-    var isDisabled = this.state.exams.length == 0;
-    var textStyle = {
+    const isDisabled = this.state.exams.length == 0;
+    const textStyle = {
       color: isDisabled ? 'grey' : 'black'
     };
 

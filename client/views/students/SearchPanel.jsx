@@ -4,8 +4,6 @@ import Fuse from 'fuse.js';
 import * as api from '../../api';
 
 import StudentPanelBlock from './StudentPanelBlock.jsx';
-import AddModal from './AddModal.jsx';
-
 
 class SearchPanel extends React.Component {
 
@@ -61,7 +59,7 @@ class SearchPanel extends React.Component {
         })
     }
 
-    moveSelection = (event) => {
+    specialKey = (event) => {
         if (event.keyCode === 38 || event.keyCode === 40) {
             event.preventDefault();
             let sel = this.state.selected;
@@ -75,12 +73,18 @@ class SearchPanel extends React.Component {
             })
         }
         if (event.keyCode === 27) this.searchInput.blur();
+        if (event.keyCode === 13) {
+            const stud = this.state.result[this.state.selected];
+            if (!stud) return;
+
+            this.props.matchStudent(stud.id);
+        }
     }
 
     selectStudent = (event) => {
 
         if (event.target.selected) {
-            this.formSubmit();
+            this.props.matchStudent(this.state.result[this.state.selected].id);
         } else {
             const index = this.state.result.findIndex(result => result.id == event.target.id);
             this.setState({
@@ -88,16 +92,6 @@ class SearchPanel extends React.Component {
                 selected: index
             })
         }
-    }
-
-    formSubmit = (event) => {
-        if (event) event.preventDefault();  
-        
-        const stud = this.state.result[this.state.selected];
-        if (!stud) return;
-
-        this.props.matchStudent(stud.id);
-
     }
 
     listMatchedStudent = () => {
@@ -119,23 +113,20 @@ class SearchPanel extends React.Component {
     render() {
 
         return (
-            
-            <nav className="panel">
+            <div>
                 <p className="panel-heading">
                     Students
                 </p>
                 <div className="panel-block">
-                    <form onSubmit={this.formSubmit}>
-                        <p className="control has-icons-left">
-                            <input className="input" type="text"
-                                ref={(input) => { this.searchInput = input; }}
-                                value={this.state.input} onChange={this.search} onKeyDown={this.moveSelection} />
+                    <p className="control has-icons-left">
+                        <input className="input" type="text"
+                            ref={(input) => { this.searchInput = input; }}
+                            value={this.state.input} onChange={this.search} onKeyDown={this.specialKey} />
 
-                            <span className="icon is-left">
-                                <i className="fa fa-search"></i>
-                            </span>
-                        </p>
-                    </form>
+                        <span className="icon is-left">
+                            <i className="fa fa-search"></i>
+                        </span>
+                    </p>
                 </div>
                 {this.state.result.map((student, index) =>
                     <StudentPanelBlock key={student.id} student={student}
@@ -143,9 +134,7 @@ class SearchPanel extends React.Component {
                         matched={student.id === this.props.studentID && this.props.validated}
                         selectStudent={this.selectStudent} />
                 )}
-                <AddModal />
-            </nav>
-
+            </div>
 
         )
     }

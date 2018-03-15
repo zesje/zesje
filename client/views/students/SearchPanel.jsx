@@ -74,6 +74,7 @@ class SearchPanel extends React.Component {
                 selected: sel
             })
         }
+        if (event.keyCode === 27) this.searchInput.blur();
     }
 
     selectStudent = (event) => {

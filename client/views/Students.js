@@ -1,6 +1,5 @@
 import React from 'react';
 import getClosest from 'get-closest';
-import Fuse from 'fuse.js';
 import Mousetrap from 'mousetrap';
 
 import NavBar from '../components/NavBar';
@@ -9,28 +8,13 @@ import Footer from '../components/Footer';
 
 import * as api from '../api';
 
-import StudentPanelBlock from './students/StudentPanelBlock.jsx';
 import ProgressBar from './students/ProgressBar.jsx';
+import SearchPanel from './students/SearchPanel.jsx';
 import ExamSelector from './students/ExamSelector.jsx';
-import AddModal from './students/AddModal.jsx';
 
 class CheckStudents extends React.Component {
 
-    students = [
-        {
-            id: 0,
-            firstName: "",
-            lastName: "",
-            email: ""
-        }
-    ];
-
     state = {
-        search: {
-            input: '',
-            selected: 0,
-            result: []
-        },
         exam: {
             id: 0,
             name: "Loading...",
@@ -96,16 +80,6 @@ class CheckStudents extends React.Component {
                 throw err
             })
 
-        api.get('students')
-            .then(students => {
-                this.students = students;
-            })
-            .catch(err => {
-                alert('failed to get students (see javascript console for details)')
-                console.error('failed to get students:', err)
-                throw err
-            })
-
     }
 
 
@@ -160,33 +134,6 @@ class CheckStudents extends React.Component {
                 }
             }, this.setSubmission)
         }
-    }
-
-    search = (event) => {
-
-        const options = {
-            shouldSort: true,
-            threshold: 0.6,
-            location: 0,
-            distance: 100,
-            maxPatternLength: 32,
-            minMatchCharLength: 1,
-            keys: [
-                "id",
-                "firstName",
-                "lastName"
-            ]
-        };
-        const fuse = new Fuse(this.students, options);
-        const result = fuse.search(event.target.value).slice(0, 10);
-
-        this.setState({
-            search: {
-                input: event.target.value,
-                selected: 0,
-                result: result
-            }
-        })
     }
 
     setSubmission = () => {
@@ -254,7 +201,7 @@ class CheckStudents extends React.Component {
                         validated: sub.validated,
                         list: newList
                     }
-                }, this.listMatchedStudent)
+                }, this.search.listMatchedStudent)
             })
             .catch(err => {
                 alert('failed to get submission (see javascript console for details)')
@@ -276,7 +223,7 @@ class CheckStudents extends React.Component {
                         imagePath: 'api/images/signature/' + this.state.exam.id + '/' + subs[0].id,
                         list: subs
                     }
-                }, this.listMatchedStudent)
+                }, this.search.listMatchedStudent)
             })
             .catch(err => {
                 alert('failed to get submissions (see javascript console for details)')
@@ -285,43 +232,7 @@ class CheckStudents extends React.Component {
             })
     }
 
-    moveSelection = (event) => {
-        if (event.keyCode === 38 || event.keyCode === 40) {
-            event.preventDefault();
-            let sel = this.state.search.selected;
-
-            if (event.keyCode == 38 && sel > 0) sel--;
-            if (event.keyCode == 40 && sel < this.state.search.result.length - 1) sel++;
-
-            this.setState({
-                search: {
-                    ...this.state.search,
-                    selected: sel
-                }
-            })
-        }
-    }
-
-    selectStudent = (event) => {
-
-        if (event.target.selected) {
-            this.matchStudent();
-        } else {
-            const index = this.state.search.result.findIndex(result => result.id == event.target.id);
-            this.setState({
-                search: {
-                    ...this.state.search,
-                    selected: index
-                }
-            })
-        }
-    }
-
-    matchStudent = (event) => {
-        if (event) event.preventDefault();
-
-        const stud = this.state.search.result[this.state.search.selected];
-        if (!stud) return;
+    matchStudent = (studID) => {
 
         let newList = this.state.submission.list;
         const index = this.state.submission.index;
@@ -329,12 +240,12 @@ class CheckStudents extends React.Component {
         this.setState({
             submission: {
                 ...this.state.submission,
-                studentID: stud.id,
+                studentID: studID,
                 validated: true
             }
         }, this.nextUnchecked)
 
-        api.put('submissions/' + this.state.exam.id + '/' + this.state.submission.id, { studentID: stud.id })
+        api.put('submissions/' + this.state.exam.id + '/' + this.state.submission.id, { studentID: studID })
             .then(sub => {
                 newList[index] = sub;
                 this.setState({
@@ -349,24 +260,6 @@ class CheckStudents extends React.Component {
                 console.error('failed to put submission:', err)
                 throw err
             })
-    }
-
-    listMatchedStudent = () => {
-        const studIndex = this.students.findIndex(stud =>
-            stud.id === this.state.submission.studentID);
-        const stud = studIndex > -1 ? [this.students[studIndex]] : [];
-
-        this.setState({
-            search: {
-                input: '',
-                selected: 0,
-                result: stud
-            }
-        })
-
-        if (!this.state.submission.validated) {
-            this.searchInput.focus();
-        }
     }
 
     render() {
@@ -394,31 +287,11 @@ class CheckStudents extends React.Component {
                                     <ExamSelector exam={this.state.exam} selectExam={this.selectExam} />
                                 </div>
 
-                                <nav className="panel">
-                                    <p className="panel-heading">
-                                        Students
-                                    </p>
-                                    <div className="panel-block">
-                                        <form onSubmit={this.matchStudent}>
-                                            <p className="control has-icons-left">
-                                                <input className="input" type="text"
-                                                    ref={(input) => { this.searchInput = input; }}
-                                                    value={this.state.search.input} onChange={this.search} onKeyDown={this.moveSelection} />
+                                <SearchPanel ref={(search) => { this.search = search; }}
+                                    matchStudent={this.matchStudent}
+                                    studentID={this.state.submission.studentID} validated={this.state.submission.validated} />
 
-                                                <span className="icon is-left">
-                                                    <i className="fa fa-search"></i>
-                                                </span>
-                                            </p>
-                                        </form>
-                                    </div>
-                                    {this.state.search.result.map((student, index) =>
-                                        <StudentPanelBlock key={student.id} student={student}
-                                            selected={index === this.state.search.selected}
-                                            matched={student.id === this.state.submission.studentID && this.state.submission.validated}
-                                            selectStudent={this.selectStudent} />
-                                    )}
-                                    <AddModal />
-                                </nav>
+
                             </div>
 
                             <div className="column">
@@ -436,7 +309,8 @@ class CheckStudents extends React.Component {
                                                 <div className="control">
                                                     <button type="submit" className="button is-info is-rounded is-hidden-mobile"
                                                         onClick={this.prevUnchecked}>unchecked</button>
-                                                    <button type="submit" className={"button" + (this.state.submission.validated ? " is-success" : " is-link")} onClick={this.prev}>Previous</button>
+                                                    <button type="submit" className={"button" + (this.state.submission.validated ? " is-success" : " is-link")}
+                                                        onClick={this.prev}>Previous</button>
                                                 </div>
                                                 <div className="control">
                                                     <input className={"input is-rounded has-text-centered" + (this.state.submission.validated ? " is-success" : " is-link")}
@@ -445,7 +319,8 @@ class CheckStudents extends React.Component {
                                                         onBlur={this.setSubmission} maxLength="4" size="6" style={inputStyle} />
                                                 </div>
                                                 <div className="control">
-                                                    <button type="submit" className={"button" + (this.state.submission.validated ? " is-success" : " is-link")} onClick={this.next}>Next</button>
+                                                    <button type="submit" className={"button" + (this.state.submission.validated ? " is-success" : " is-link")}
+                                                        onClick={this.next}>Next</button>
                                                     <button type="submit" className="button is-info is-rounded is-hidden-mobile"
                                                         onClick={this.nextUnchecked}>unchecked</button>
                                                 </div>

@@ -19,7 +19,8 @@ from . import yaml_helper
 from ..models import db, PDF, Exam, Problem, Page, Student, Submission, Solution
 
 
-ExtractedQR = namedtuple('ExtractedQR', ['name', 'page', 'sub_nr', 'coords'])
+ExtractedQR = namedtuple('ExtractedQR',
+                         ['version', 'name', 'page', 'sub_nr', 'coords'])
 ExamMetadata = namedtuple('ExamMetadata',
                           ['version', 'exam_name', 'qr_coords', 'widget_data'])
 
@@ -68,34 +69,35 @@ def process_pdf(pdf_id, data_directory):
             report_error(f'Error while extracting pages: {e}')
             raise
 
-        # Extract QR codes.
-        report_progress('Extracting page metadata')
-        try:
-            extracted_qrs = [extract_qr(image, config.version)
-                             for image in images]
-        except RuntimeError:
-            report_error('Zesje version mismatch between config file and PDF')
-            raise
-        except Exception as e:
-            report_error(f'Error while extracting QR codes: {e}')
-            raise
-
-        if any(qr[0] != config.exam_name for qr in extracted_qrs if qr is not None):
-            report_error('PDF is not from this exam')
-            return
-
         # Process individual pages, ensuring we report the page numbers
         # starting from 1.
         failures = []
-        for i, (image, qr) in enumerate(zip(images, extracted_qrs), 1):
+        for i, image in enumerate(images, 1):
             report_progress(f'Processing page {i} / {len(images)}')
+            try:
+                qr = extract_qr(image)
+            except Exception as e:
+                report_error(f'Error while extracting QR codes: {e}')
+                raise
+
             if qr is None:
                 failures.append(image)
                 continue
+            elif qr.version != f'v{config.version}':
+                report_error('Zesje version mismatch '
+                             'between config file and PDF')
+                return
+            elif qr.name != config.exam_name:
+                report_error('PDF is not from this exam')
+                # Here we stop even though some other pages might
+                # be from the correct exam because typically the cause
+                # is the user selecting a wrong one in the UI.
+                return
+
             try:
                 process_page(output_directory, image, qr, config)
             except Exception as e:
-                print(image, e)
+                print(e)
                 failures.append(image)
 
 
@@ -168,7 +170,7 @@ def write_pdf_status(pdf_id, status, message):
         pdf = PDF[pdf_id]
         pdf.status = status
         pdf.message = message
-        
+
 
 @contextlib.contextmanager
 def make_temp_directory():
@@ -181,7 +183,7 @@ def make_temp_directory():
         shutil.rmtree(temp_dir)
 
 
-def extract_qr(image_path, yaml_version):
+def extract_qr(image_path):
     image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
     if image.shape[0] < image.shape[1]:
         image = image.T
@@ -201,15 +203,13 @@ def extract_qr(image_path, yaml_version):
                             results[0].data.decode().split(';')
             except ValueError:
                 return
-            if version != 'v{}'.format(yaml_version):
-                raise RuntimeError('Yaml format mismatch')
             coords = np.array(results[0].position)
             # zbar doesn't respect array ordering!
             if not np.isfortran(flipped):
                 coords = coords[:, ::-1]
             coords *= [factor * dirx, factor * diry]
             coords %= image.shape
-            return ExtractedQR(name, int(page), int(copy), coords)
+            return ExtractedQR(version, name, int(page), int(copy), coords)
     else:
         return
 
@@ -221,7 +221,7 @@ def guess_dpi(image_array):
 
 
 def rotate_and_shift(image_path, extracted_qr, qr_coords):
-    _, page, _, position = extracted_qr
+    page, position = extracted_qr.page, extracted_qr.coords
     image = cv2.imread(image_path)
 
     if image.shape[0] < image.shape[1]:

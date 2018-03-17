@@ -75,31 +75,13 @@ def process_pdf(pdf_id, data_directory):
         for i, image in enumerate(images, 1):
             report_progress(f'Processing page {i} / {len(images)}')
             try:
-                qr = extract_qr(image)
+                success, reason = process_page(output_directory, image, config)
+                if not success:
+                    print(reason)
+                    failures.append(images)
             except Exception as e:
-                report_error(f'Error while extracting QR codes: {e}')
-                raise
-
-            if qr is None:
-                failures.append(image)
-                continue
-            elif qr.version != f'v{config.version}':
-                report_error('Zesje version mismatch '
-                             'between config file and PDF')
+                report_error(f'Error processing page {i}: {e}')
                 return
-            elif qr.name != config.exam_name:
-                report_error('PDF is not from this exam')
-                # Here we stop even though some other pages might
-                # be from the correct exam because typically the cause
-                # is the user selecting a wrong one in the UI.
-                return
-
-            try:
-                process_page(output_directory, image, qr, config)
-            except Exception as e:
-                print(e)
-                failures.append(image)
-
 
         if failures:
             processed = len(images) - len(failures)
@@ -114,8 +96,51 @@ def process_pdf(pdf_id, data_directory):
            report_success(f'processed {len(images)} pages')
 
 
-def process_page(output_dir, image, qr_data, exam_config):
-    assert qr_data is not None
+def process_page(output_dir, image, exam_config):
+    """Incorporate a scanned image in the data structure.
+
+    For each page perform the following steps:
+    1. Extract the page QR code
+    2. Verify it satisfies the format required by zesje
+    3. Verify it belongs to the correct exam
+    4. Correct the image so that the coordinates are best aligned with the
+       yaml (currently uses only QR code position)
+    5. Incorporate the page in the database
+    6. If the page contains student number, try to read it off the page
+
+    Parameters
+    ----------
+    output_dir : string
+        Path where the processed image must be stored.
+    image : string
+        Path to the original
+    exam_config : ExamMetadata instance
+        Information about the exam to which this page should belong
+
+    Returns
+    -------
+    success : bool
+    reason : string
+        Reason for failure
+
+    Raises
+    ------
+    RuntimeError if any of the steps 1-3 fail.
+
+    Notes
+    -----
+    Because the failure of steps 1-3 likely means we're reading a wrong pdf, we
+    should stop processing any other pages if this function raises.
+    """
+    qr_data = extract_qr(image)
+
+    if qr_data is None:
+        return False, "Reading QR code failed"
+    elif qr_data.version != f'v{exam_config.version}':
+        raise ValueError('Zesje version mismatch between config file and PDF')
+    elif qr_data.name != exam_config.exam_name:
+        raise ValueError('PDF is not from this exam')
+
     qr_coords, widget_data = exam_config.qr_coords, exam_config.widget_data
 
     rotate_and_shift(image, qr_data, qr_coords)
@@ -153,6 +178,8 @@ def process_page(output_dir, image, qr_data, exam_config):
                 else:
                     Solution(problem=prob, submission=sub,
                              image_path='None')
+
+    return True, ''
 
 
 def pdf_to_images(pdf_path, output_path):

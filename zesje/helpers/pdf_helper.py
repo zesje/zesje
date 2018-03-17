@@ -2,16 +2,15 @@ import os
 from collections import namedtuple, ChainMap
 import functools
 import itertools
-import subprocess
 import argparse
-import shutil
-import tempfile
-import contextlib
+from io import BytesIO
 
 import numpy as np
 import pandas
 import cv2
 import zbar
+from PIL import Image
+import PyPDF2
 
 from pony import orm
 
@@ -52,7 +51,6 @@ def process_pdf(pdf_id, data_directory):
         config_path = os.path.join(data_directory, pdf.exam.yaml_path)
         output_directory = os.path.join(data_directory, pdf.exam.name + '_data')
 
-
     try:
         # Read in exam metadata
         config = ExamMetadata(*yaml_helper.parse(yaml_helper.read(config_path)))
@@ -60,43 +58,77 @@ def process_pdf(pdf_id, data_directory):
         report_error(f'Error while reading Exam metadata: {e}')
         raise
 
-    with make_temp_directory() as tmpdir:
-        # Extract pages as images
-        report_progress('Extracting pages')
-        try:
-            images = pdf_to_images(pdf_path, tmpdir)
-        except Exception as e:
-            report_error(f'Error while extracting pages: {e}')
-            raise
-
-        # Process individual pages, ensuring we report the page numbers
-        # starting from 1.
-        failures = []
-        for i, image in enumerate(images, 1):
-            report_progress(f'Processing page {i} / {len(images)}')
+    total = PyPDF2.PdfFileReader(open(pdf_path, "rb")).getNumPages()
+    failures = []
+    try:
+        for image, page in extract_images(pdf_path):
+            report_progress(f'Processing page {page} / {total}')
             try:
                 success, reason = process_page(output_directory, image, config)
                 if not success:
                     print(reason)
-                    failures.append(images)
+                    failures.append(page)
             except Exception as e:
-                report_error(f'Error processing page {i}: {e}')
+                report_error(f'Error processing page {page}: {e}')
                 return
+    except Exception as e:
+        report_error(f"Failed to read pdf: {e}")
+        raise
 
-        if failures:
-            processed = len(images) - len(failures)
-            # images are named like '-nnnnn.jpg'
-            failures = [1 + int(os.path.basename(im)[1:-len('.jpg')])
-                        for im in failures]
-            report_error(
-                f'Processed {processed} / {len(images)} pages. '
-                f'Failed on pages: {failures}'
-            )
-        else:
-           report_success(f'processed {len(images)} pages')
+    if failures:
+        processed = total - len(failures)
+        report_error(
+            f'Processed {processed} / {total} pages. '
+            f'Failed on pages: {failures}'
+        )
+    else:
+        report_success(f'processed {total} pages')
 
 
-def process_page(output_dir, image, exam_config):
+def extract_images(filename):
+    """Yield all images from a PDF file.
+
+    Adapted from https://stackoverflow.com/a/34116472/2217463
+
+    We raise if there are > 1 images / page
+    """
+    reader = PyPDF2.PdfFileReader(open(filename, "rb"))
+    total = reader.getNumPages()
+    for pagenr in range(total):
+        page = reader.getPage(pagenr)
+        xObject = page['/Resources']['/XObject'].getObject()
+
+        if sum((xObject[obj]['/Subtype'] == '/Image')
+               for obj in xObject) > 1:
+            raise RuntimeError('Page {pagenr} contains more than 1 image,'
+                               'likely not a scan')
+
+        for obj in xObject:
+            if xObject[obj]['/Subtype'] == '/Image':
+                data = xObject[obj].getData()
+                filter = xObject[obj]['/Filter']
+
+                if filter == '/FlateDecode':
+                    size = (xObject[obj]['/Width'], xObject[obj]['/Height'])
+                    if xObject[obj]['/ColorSpace'] == '/DeviceRGB':
+                        mode = "RGB"
+                    else:
+                        mode = "P"
+                    img = Image.frombytes(mode, size, data)
+                else:
+                    img = Image.open(BytesIO(data))
+
+                yield img, pagenr+1
+
+
+def write_pdf_status(pdf_id, status, message):
+    with orm.db_session:
+        pdf = PDF[pdf_id]
+        pdf.status = status
+        pdf.message = message
+
+
+def process_page(output_dir, image_data, exam_config):
     """Incorporate a scanned image in the data structure.
 
     For each page perform the following steps:
@@ -112,8 +144,7 @@ def process_page(output_dir, image, exam_config):
     ----------
     output_dir : string
         Path where the processed image must be stored.
-    image : string
-        Path to the original
+    image_data : PIL Image
     exam_config : ExamMetadata instance
         Information about the exam to which this page should belong
 
@@ -132,7 +163,9 @@ def process_page(output_dir, image, exam_config):
     Because the failure of steps 1-3 likely means we're reading a wrong pdf, we
     should stop processing any other pages if this function raises.
     """
-    qr_data = extract_qr(image)
+    ext = image_data.format
+    image_data.load()
+    qr_data = extract_qr(image_data)
 
     if qr_data is None:
         return False, "Reading QR code failed"
@@ -143,18 +176,17 @@ def process_page(output_dir, image, exam_config):
 
     qr_coords, widget_data = exam_config.qr_coords, exam_config.widget_data
 
-    rotate_and_shift(image, qr_data, qr_coords)
+    image_data = rotate_and_shift(image_data, qr_data, qr_coords)
     sub_nr = qr_data.sub_nr
 
     with orm.db_session:
         exam = Exam.get(name=qr_data.name)
         sub = Submission.get(copy_number=sub_nr, exam=exam) \
               or Submission(copy_number=sub_nr, exam=exam)
-        _, ext = os.path.splitext(image)
         target = os.path.join(output_dir, f'{qr_data.name}_{sub_nr}')
         os.makedirs(target, exist_ok=True)
-        target_image = os.path.join(target, f'page{qr_data.page}{ext}')
-        shutil.move(image, target_image)
+        target_image = os.path.join(target, f'page{qr_data.page}.jpg')
+        image_data.save(target_image)
         # We may have added this page in previous uploads; the above
         # 'rename' then overwrites the previosly uploaded page, but
         # we only want a single 'Page' entry.
@@ -182,38 +214,12 @@ def process_page(output_dir, image, exam_config):
     return True, ''
 
 
-def pdf_to_images(pdf_path, output_path):
-    """Extract all images out of a pdf file."""
-    # We convert everything to jpeg, which may be suboptimal, however some
-    # formats recognized by pdfimages aren't understood by opencv.
-    subprocess.run(['pdfimages', '-j', pdf_path, output_path])
-    return sorted(os.path.join(output_path, f)
-                  for f in os.listdir(output_path)
-                  if f.endswith('.jpg'))
-
-
-def write_pdf_status(pdf_id, status, message):
-    with orm.db_session:
-        pdf = PDF[pdf_id]
-        pdf.status = status
-        pdf.message = message
-
-
-@contextlib.contextmanager
-def make_temp_directory():
-    temp_dir = tempfile.mkdtemp()
-    if not temp_dir.endswith('/'):
-        temp_dir += '/'
-    try:
-        yield temp_dir
-    finally:
-        shutil.rmtree(temp_dir)
-
-
-def extract_qr(image_path):
-    image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
-    if image.shape[0] < image.shape[1]:
-        image = image.T
+def extract_qr(image_data):
+    """Extract a QR code from a PIL Image."""
+    grayscale = np.asarray(image_data.convert(mode='L'))
+    # Apply portrait orientation.
+    if grayscale.shape[0] < grayscale.shape[1]:
+        grayscale = grayscale.T
 
     # Empirically we observed that the most important parameter
     # for zbar to successfully read a qr code is the resolution
@@ -221,9 +227,11 @@ def extract_qr(image_path):
     # zbar also seems to care about image orientation, hence
     # the loop over dirx/diry.
     for dirx, diry, factor in itertools.product([1, -1], [1, -1], [8, 5, 4, 3]):
-        flipped = image[::factor * dirx, ::factor * diry]
+        scaled = grayscale[::factor * dirx, ::factor * diry]
         scanner = zbar.Scanner()
-        results = scanner.scan(flipped)
+        results = scanner.scan(scaled)
+        if len(results) > 1:
+            raise RuntimeError("Found > 1 QR code on the page.")
         if results:
             try:
                 version, name, page, copy = \
@@ -232,10 +240,10 @@ def extract_qr(image_path):
                 return
             coords = np.array(results[0].position)
             # zbar doesn't respect array ordering!
-            if not np.isfortran(flipped):
+            if not np.isfortran(scaled):
                 coords = coords[:, ::-1]
             coords *= [factor * dirx, factor * diry]
-            coords %= image.shape
+            coords %= grayscale.shape
             return ExtractedQR(version, name, int(page), int(copy), coords)
     else:
         return
@@ -247,9 +255,10 @@ def guess_dpi(image_array):
     return resolutions[np.argmin(abs(resolutions - 25.4 * h / 297))]
 
 
-def rotate_and_shift(image_path, extracted_qr, qr_coords):
+def rotate_and_shift(image_data, extracted_qr, qr_coords):
+    """Roll the image such that QR occupies coords specified by the template."""
     page, position = extracted_qr.page, extracted_qr.coords
-    image = cv2.imread(image_path)
+    image = np.asarray(image_data)
 
     if image.shape[0] < image.shape[1]:
         image = np.transpose(image, (1, 0, 2))
@@ -271,7 +280,7 @@ def rotate_and_shift(image_path, extracted_qr, qr_coords):
     shifted_image = np.roll(image, shift[0], axis=0)
     shifted_image = np.roll(shifted_image, shift[1], axis=1)
 
-    cv2.imwrite(image_path, shifted_image)
+    return Image.fromarray(shifted_image)
 
 
 def get_student_number(image_path, widget):

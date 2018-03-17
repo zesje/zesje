@@ -102,7 +102,8 @@ def process_pdf(pdf_id, data_directory):
         if failures:
             processed = len(images) - len(failures)
             # images are named like '-nnnnn.jpg'
-            failures = [int(os.path.basename(im)[1:-4]) for im in failures]
+            failures = [1 + int(os.path.basename(im)[1:-len('.jpg')])
+                        for im in failures]
             report_error(
                 f'Processed {processed} / {len(images)} pages. '
                 f'Failed on pages: {failures}'

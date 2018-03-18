@@ -97,7 +97,11 @@ class EditPanel extends React.Component {
                     lastName: "",
                     email: ""
                 })
-                this.idblock.clear();
+                if (this.props.editStud) {
+                    this.props.toggleEdit();
+                } else {
+                    this.idblock.clear();
+                }
             })
 
     }

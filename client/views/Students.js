@@ -270,7 +270,7 @@ class CheckStudents extends React.Component {
     }
 
     toggleEdit = (student) => {
-        if (student.id) {
+        if (student && student.id) {
             this.setState({
                 editActive: true,
                 editStud: student

@@ -26,6 +26,7 @@ class SearchPanel extends React.Component {
         api.get('students')
             .then(students => {
                 this.students = students;
+                this.listMatchedStudent();
             })
             .catch(err => {
                 alert('failed to get students (see javascript console for details)')
@@ -113,9 +114,9 @@ class SearchPanel extends React.Component {
     render() {
 
         return (
-            <div>
+            <nav className="panel">            
                 <p className="panel-heading">
-                    Students
+                    Search students
                 </p>
                 <div className="panel-block">
                     <p className="control has-icons-left">
@@ -132,10 +133,17 @@ class SearchPanel extends React.Component {
                     <StudentPanelBlock key={student.id} student={student}
                         selected={index === this.state.selected}
                         matched={student.id === this.props.studentID && this.props.validated}
-                        selectStudent={this.selectStudent} />
+                        selectStudent={this.selectStudent} editStudent={this.props.toggleEdit}/>
                 )}
-            </div>
-
+                <div className="panel-block is-hidden-mobile">
+                    <button className="button is-link is-outlined is-fullwidth" onClick={this.props.toggleEdit}>
+                        <span className="icon is-small">
+                            <i className="fa fa-user-plus"></i>
+                        </span>
+                        <span>add students</span>
+                    </button>
+                </div>
+            </nav>
         )
     }
 

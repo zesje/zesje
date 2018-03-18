@@ -11,10 +11,13 @@ import * as api from '../api';
 import ProgressBar from './students/ProgressBar.jsx';
 import SearchPanel from './students/SearchPanel.jsx';
 import ExamSelector from './students/ExamSelector.jsx';
+import EditPanel from './students/EditPanel.jsx';
 
 class CheckStudents extends React.Component {
 
     state = {
+        editActive: false,
+        editStud: null,
         exam: {
             id: 0,
             name: "Loading...",
@@ -47,7 +50,7 @@ class CheckStudents extends React.Component {
         Mousetrap.unbind(["right", "l"]);
         Mousetrap.unbind(["up", "k"]);
         Mousetrap.unbind(["down", "j"]);
-    }
+    };
 
     componentDidMount = () => {
 
@@ -201,7 +204,7 @@ class CheckStudents extends React.Component {
                         validated: sub.validated,
                         list: newList
                     }
-                }, this.search.listMatchedStudent)
+                }, this.listMatchedStudent)
             })
             .catch(err => {
                 alert('failed to get submission (see javascript console for details)')
@@ -223,7 +226,7 @@ class CheckStudents extends React.Component {
                         imagePath: 'api/images/signature/' + this.state.exam.id + '/' + subs[0].id,
                         list: subs
                     }
-                }, this.search.listMatchedStudent)
+                }, this.listMatchedStudent)
             })
             .catch(err => {
                 alert('failed to get submissions (see javascript console for details)')
@@ -231,6 +234,10 @@ class CheckStudents extends React.Component {
                 throw err
             })
     }
+
+    listMatchedStudent = () => {
+        if (this.search) this.search.listMatchedStudent();
+    };
 
     matchStudent = (studID) => {
 
@@ -262,6 +269,20 @@ class CheckStudents extends React.Component {
             })
     }
 
+    toggleEdit = (student) => {
+        if (student.id) {
+            this.setState({
+                editActive: true,
+                editStud: student
+            })
+        } else {
+            this.setState({
+                editActive: !this.state.editActive,
+                editStud: null
+            })
+        }
+    }
+
     render() {
         const inputStyle = {
             width: '5em'
@@ -286,12 +307,13 @@ class CheckStudents extends React.Component {
                                 <div className="is-hidden-desktop">
                                     <ExamSelector exam={this.state.exam} selectExam={this.selectExam} />
                                 </div>
-
-                                <SearchPanel ref={(search) => { this.search = search; }}
-                                    matchStudent={this.matchStudent}
-                                    studentID={this.state.submission.studentID} validated={this.state.submission.validated} />
-
-
+                                    {this.state.editActive ? 
+                                        <EditPanel toggleEdit={this.toggleEdit} editStud={this.state.editStud} />
+                                    :
+                                        <SearchPanel ref={(search) => { this.search = search; }}
+                                            matchStudent={this.matchStudent} toggleEdit={this.toggleEdit}
+                                            studentID={this.state.submission.studentID} validated={this.state.submission.validated} />
+                                    }
                             </div>
 
                             <div className="column">

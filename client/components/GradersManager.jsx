@@ -1,5 +1,5 @@
 import React from 'react';
-import * as api from "../api";
+import * as api from "../api.jsx";
 
 class GraderManager extends React.Component {
     constructor(props) {

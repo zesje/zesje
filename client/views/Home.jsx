@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
 
-import Hero from '../components/Hero';
+import Hero from '../components/Hero.jsx';
 
 import homeMarkdown from './home.md'
 

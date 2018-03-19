@@ -1,9 +1,9 @@
 import React from 'react';
 import Dropzone from 'react-dropzone'
 
-import Hero from '../components/Hero';
+import Hero from '../components/Hero.jsx';
 
-import * as api from '../api'
+import * as api from '../api.jsx'
 
 const StatusPDF = props => {
   let iconClass = "fa fa-";

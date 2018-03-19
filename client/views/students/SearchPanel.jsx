@@ -1,7 +1,7 @@
 import React from 'react';
 import Fuse from 'fuse.js';
 
-import * as api from '../../api';
+import * as api from '../../api.jsx';
 
 import StudentPanelBlock from './StudentPanelBlock.jsx';
 

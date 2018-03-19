@@ -2,9 +2,9 @@ import React from 'react';
 import getClosest from 'get-closest';
 import Mousetrap from 'mousetrap';
 
-import Hero from '../components/Hero';
+import Hero from '../components/Hero.jsx';
 
-import * as api from '../api';
+import * as api from '../api.jsx';
 
 import ProgressBar from './students/ProgressBar.jsx';
 import SearchPanel from './students/SearchPanel.jsx';

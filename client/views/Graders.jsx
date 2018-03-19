@@ -1,7 +1,7 @@
 import React from 'react';
 
-import Hero from '../components/Hero';
-import GraderManager from '../components/GradersManager';
+import Hero from '../components/Hero.jsx';
+import GraderManager from '../components/GradersManager.jsx';
 
 const Graders = () => {
   return (

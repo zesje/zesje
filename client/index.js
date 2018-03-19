@@ -10,6 +10,8 @@ import ReactDOM from 'react-dom';
 import Loadable from 'react-loadable';
 import {BrowserRouter as Router, Route, Switch} from 'react-router-dom';
 
+import NavBar from './components/NavBar';
+import Footer from './components/Footer';
 
 const Loading = () => <div>Loading...</div>;
 
@@ -49,15 +51,19 @@ if (root == null) {
 } else {
   ReactDOM.render((
     <Router>
-      <Switch>
-        <Route exact path="/" component={Home} />
-        <Route path="/exams" component={Exams} />
-        <Route path="/students" component={Students} />
-        <Route path="/grade" component={Grade} />
-        <Route path="/graders" component={Graders} />
-        <Route path="/reset" component={Reset} />
-        <Route path="/statistics" component={Statistics} />
-      </Switch>
+        <div>
+            <NavBar />
+            <Switch>
+                <Route exact path="/" component={Home} />
+                <Route path="/exams" component={Exams} />
+                <Route path="/students" component={Students} />
+                <Route path="/grade" component={Grade} />
+                <Route path="/graders" component={Graders} />
+                <Route path="/reset" component={Reset} />
+                <Route path="/statistics" component={Statistics} />
+            </Switch>
+            <Footer />
+        </div>
     </Router>
   ), root);
 }

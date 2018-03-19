@@ -2,9 +2,7 @@ import React from 'react';
 import getClosest from 'get-closest';
 import Mousetrap from 'mousetrap';
 
-import NavBar from '../components/NavBar';
 import Hero from '../components/Hero';
-import Footer from '../components/Footer';
 
 import * as api from '../api';
 
@@ -293,8 +291,6 @@ class CheckStudents extends React.Component {
         return (
             <div>
 
-                <NavBar />
-
                 <Hero title='Match Students' subtitle='Who made what?' />
 
                 <section className="section">
@@ -361,8 +357,6 @@ class CheckStudents extends React.Component {
                         </div>
                     </div>
                 </section>
-
-                <Footer />
 
             </div>
         )

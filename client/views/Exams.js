@@ -1,9 +1,7 @@
 import React from 'react';
-import NavBar from '../components/NavBar';
-import Hero from '../components/Hero';
-import Footer from '../components/Footer';
-
 import Dropzone from 'react-dropzone'
+
+import Hero from '../components/Hero';
 
 import * as api from '../api'
 
@@ -181,8 +179,6 @@ class Exams extends React.Component {
 
     return <div>
 
-      <NavBar />
-
       <Hero title='Exams' subtitle="Omnomnomnom PDF's!" />
 
       <section className="section">
@@ -255,8 +251,6 @@ class Exams extends React.Component {
 
         </div>
       </section>
-
-      <Footer />
 
     </div>
   }

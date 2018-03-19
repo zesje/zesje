@@ -1,15 +1,11 @@
 import React from 'react';
-import NavBar from '../components/NavBar';
-import Hero from '../components/Hero';
-import Footer from '../components/Footer';
 
+import Hero from '../components/Hero';
 import GraderManager from '../components/GradersManager';
 
 const Graders = () => {
   return (
       <div>
-
-        <NavBar />
 
         <Hero title='Manage Graders' subtitle='Many hands make light work' />
         
@@ -22,8 +18,6 @@ const Graders = () => {
             <GraderManager />
           </div>
         </section>
-
-        <Footer />
 
       </div>
   )

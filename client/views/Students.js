@@ -311,7 +311,7 @@ class CheckStudents extends React.Component {
                                         <EditPanel toggleEdit={this.toggleEdit} editStud={this.state.editStud} />
                                     :
                                         <SearchPanel ref={(search) => { this.search = search; }}
-                                            matchStudent={this.matchStudent} toggleEdit={this.toggleEdit}
+                                            matchStudent={this.matchStudent} toggleEdit={this.toggleEdit} submissions={this.state.submission.list}
                                             studentID={this.state.submission.studentID} validated={this.state.submission.validated} />
                                     }
                             </div>

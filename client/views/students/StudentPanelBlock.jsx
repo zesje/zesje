@@ -10,6 +10,8 @@ const StudentPanelBlock = (props) => {
         panelClass += (props.matched) ? " is-success" : " is-link";
     } else panelClass += " is-active";
 
+    if (props.selected && props.submission > -1) console.log(props.submission)
+
     return (
         <div key={props.student.id}>
             <a className={panelClass}

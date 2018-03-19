@@ -132,7 +132,8 @@ class SearchPanel extends React.Component {
                 {this.state.result.map((student, index) =>
                     <StudentPanelBlock key={student.id} student={student}
                         selected={index === this.state.selected}
-                        matched={student.id === this.props.studentID && this.props.validated}
+                        submission={index === this.state.selected && this.props.submissions.findIndex(sub => sub.studentID === student.id)}
+                        matched={this.props.validated && student.id === this.props.studentID}
                         selectStudent={this.selectStudent} editStudent={this.props.toggleEdit}/>
                 )}
                 <div className="panel-block is-hidden-mobile">

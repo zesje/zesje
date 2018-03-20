@@ -15,7 +15,8 @@ module.exports = {
   entry: './client/index.jsx',
   output: {
     path: path.resolve('zesje/static'),
-    filename: 'index_bundle.js'
+    filename: 'index_bundle.js',
+    publicPath: '/'
   },
   module: {
     loaders: [

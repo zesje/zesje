@@ -33,7 +33,7 @@ def get(exam_id, submission_id):
     data_dir = app.config['DATA_DIRECTORY']
     yaml_abspath = os.path.join(data_dir, sub.exam.yaml_path)
     *_, widgets = yaml_helper.parse(yaml_helper.read(yaml_abspath))
-    first_page = next(p.path for p in sub.pages if 'page1' in p.path)
+    first_page = next(p.path for p in sub.pages if 'page1.jpg' in p.path)
     image = image_helper.get_widget_image(first_page,
                                           widgets.loc['studentnr'])
 

@@ -1,13 +1,10 @@
 import React from 'react';
-import NavBar from '../components/NavBar';
-import Hero from '../components/Hero';
-import Footer from '../components/Footer';
+
+import Hero from '../components/Hero.jsx';
 
 const Reset = () => {
   return (
       <div>
-
-        <NavBar />
 
         <Hero title='Reset' subtitle="Please don't hurt my database :(" />
         

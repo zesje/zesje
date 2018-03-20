@@ -1,6 +1,6 @@
 import React from 'react';
 
-import * as api from '../../api';
+import * as api from '../../api.jsx';
 
 import IDBlock from './IDBlock.jsx';
 
@@ -97,7 +97,11 @@ class EditPanel extends React.Component {
                     lastName: "",
                     email: ""
                 })
-                this.idblock.clear();
+                if (this.props.editStud) {
+                    this.props.toggleEdit();
+                } else {
+                    this.idblock.clear();
+                }
             })
 
     }

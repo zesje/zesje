@@ -2,11 +2,9 @@ import React from 'react';
 import getClosest from 'get-closest';
 import Mousetrap from 'mousetrap';
 
-import NavBar from '../components/NavBar';
-import Hero from '../components/Hero';
-import Footer from '../components/Footer';
+import Hero from '../components/Hero.jsx';
 
-import * as api from '../api';
+import * as api from '../api.jsx';
 
 import ProgressBar from './students/ProgressBar.jsx';
 import SearchPanel from './students/SearchPanel.jsx';
@@ -270,7 +268,7 @@ class CheckStudents extends React.Component {
     }
 
     toggleEdit = (student) => {
-        if (student.id) {
+        if (student && student.id) {
             this.setState({
                 editActive: true,
                 editStud: student
@@ -292,8 +290,6 @@ class CheckStudents extends React.Component {
 
         return (
             <div>
-
-                <NavBar />
 
                 <Hero title='Match Students' subtitle='Who made what?' />
 
@@ -361,8 +357,6 @@ class CheckStudents extends React.Component {
                         </div>
                     </div>
                 </section>
-
-                <Footer />
 
             </div>
         )

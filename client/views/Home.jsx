@@ -1,17 +1,13 @@
 import React from 'react';
-import NavBar from '../components/NavBar';
-import Hero from '../components/Hero';
-import Footer from '../components/Footer';
-
 import ReactMarkdown from 'react-markdown';
+
+import Hero from '../components/Hero.jsx';
 
 import homeMarkdown from './home.md'
 
 const Home = () => {
   return (
       <div>
-
-        <NavBar />
 
         <Hero title='Home' subtitle='Zesje - open source exam grading software' />
 
@@ -24,8 +20,6 @@ const Home = () => {
           </div>
 
         </section>
-        
-        <Footer />
         
       </div>
   )

@@ -1,11 +1,9 @@
 import React from 'react';
-import NavBar from '../components/NavBar';
-import Hero from '../components/Hero';
-import Footer from '../components/Footer';
-
 import Dropzone from 'react-dropzone'
 
-import * as api from '../api'
+import Hero from '../components/Hero.jsx';
+
+import * as api from '../api.jsx'
 
 const StatusPDF = props => {
   let iconClass = "fa fa-";
@@ -181,8 +179,6 @@ class Exams extends React.Component {
 
     return <div>
 
-      <NavBar />
-
       <Hero title='Exams' subtitle="Omnomnomnom PDF's!" />
 
       <section className="section">
@@ -255,8 +251,6 @@ class Exams extends React.Component {
 
         </div>
       </section>
-
-      <Footer />
 
     </div>
   }

@@ -9,3 +9,4 @@ numpy
 scipy
 pandas
 pyyaml
+PyPDF2

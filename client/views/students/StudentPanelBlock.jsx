@@ -23,9 +23,9 @@ const StudentPanelBlock = (props) => {
             <div className={"panel-block" + (props.selected ? " is-info" : " is-hidden")}
                 key="info" style={{ backgroundColor: '#dbdbdb' }}>
 
-                <span className="panel-icon">
+                <a className="panel-icon" onClick={() => props.editStudent(props.student)}>
                     <i className="fa fa-database"></i>
-                </span>
+                </a>
                 {props.student.id}&emsp;
             <span className="panel-icon">
                     <i className="fa fa-check"></i>

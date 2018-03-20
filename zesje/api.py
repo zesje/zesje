@@ -23,7 +23,7 @@ api.add_resource(Graders, '/graders')
 api.add_resource(Exams, '/exams')
 api.add_resource(ExamConfig, '/exams/<int:exam_id>')
 api.add_resource(Pdfs, '/pdfs/<int:exam_id>')
-api.add_resource(Students, '/students')
+api.add_resource(Students, '/students', '/students/<int:student_id>')
 api.add_resource(Submissions,
                  '/submissions/<int:exam_id>',
                  '/submissions/<int:exam_id>/<int:submission_id>')

@@ -9,4 +9,4 @@ numpy
 scipy
 pandas
 pyyaml
-PyPDF2
+git+https://github.com/mstamy2/PyPDF2

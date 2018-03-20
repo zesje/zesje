@@ -18,6 +18,7 @@ RUN /root/miniconda3/bin/conda config --system --add channels conda-forge && \
     # avoid openpyxl regression
     "openpyxl!=2.5.0b1"\
     pony opencv pillow notebook jupyter_kernel_gateway pyyaml pandas seaborn openblas
+RUN apt-get install -y git
 RUN /root/miniconda3/bin/pip install zbar-py && \
     /root/miniconda3/bin/pip install git+https://github.com/mstamy2/PyPDF2.git && \
     /root/miniconda3/bin/pip install "nbconvert>=5.2" && \

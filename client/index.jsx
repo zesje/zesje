@@ -98,10 +98,11 @@ class App extends React.Component {
                     <Switch>
                         <Route exact path="/" component={Home} />
                         <Route path="/exams/:examID" render={({match}) => 
-                            <Exam exam={exam} urlID={match.params.examID} changeExam={this.changeExam} />} />
+                            <Exam exam={exam} urlID={match.params.examID} changeExam={this.changeExam} /> }/>
                         <Route path="/exams" render={({history}) => 
-                            <AddExam updateExamList={this.updateExamList} changeURL={history.push} />} />
-                        <Route path="/students" component={Students} />
+                            <AddExam updateExamList={this.updateExamList} changeURL={history.push} /> }/>
+                        <Route path="/students" render={() => 
+                            <Students exam={exam} /> }/>
                         <Route path="/grade" component={exam ? Grade : NoExams} />
                         <Route path="/statistics" component={exam ? Statistics : NoExams} />
                         <Route path="/graders" component={Graders} />

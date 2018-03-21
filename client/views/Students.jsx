@@ -197,7 +197,7 @@ class CheckStudents extends React.Component {
 
     matchStudent = (studID) => {
 
-        if(!this.state.submission.length) return;
+        if(!this.state.submission.list.length) return;
 
         let newList = this.state.submission.list;
         const index = this.state.submission.index;

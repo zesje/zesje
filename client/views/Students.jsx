@@ -22,13 +22,7 @@ class CheckStudents extends React.Component {
             studentID: null,
             validated: false,
             imagePath: null,
-            list: [
-                {
-                    id: 0,
-                    studentID: 0,
-                    validated: false
-                }
-            ]
+            list: []
         }
     };
 
@@ -52,7 +46,7 @@ class CheckStudents extends React.Component {
             this.prevUnchecked();
         });
 
-        this.loadSubmissions();
+        if (this.props.exam) this.loadSubmissions();
 
     }
 
@@ -188,8 +182,6 @@ class CheckStudents extends React.Component {
                             list: subs
                         }
                     }, this.listMatchedStudent)
-                } else {
-                    alert('This exam has no submissions :(')
                 }
             })
             .catch(err => {
@@ -204,6 +196,8 @@ class CheckStudents extends React.Component {
     };
 
     matchStudent = (studID) => {
+
+        if(!this.state.submission.length) return;
 
         let newList = this.state.submission.list;
         const index = this.state.submission.index;
@@ -274,39 +268,41 @@ class CheckStudents extends React.Component {
                                 }
                             </div>
 
-                            <div className="column">
-                                <div className="level">
-                                    <div className="level-item">
-                                        <div className="field has-addons is-mobile">
-                                            <div className="control">
-                                                <button type="submit" className="button is-info is-rounded is-hidden-mobile"
-                                                    onClick={this.prevUnchecked}>unchecked</button>
-                                                <button type="submit" className={"button" + (this.state.submission.validated ? " is-success" : " is-link")}
-                                                    onClick={this.prev}>Previous</button>
-                                            </div>
-                                            <div className="control">
-                                                <input className={"input is-rounded has-text-centered" + (this.state.submission.validated ? " is-success" : " is-link")}
-                                                    value={this.state.submission.input} type="text"
-                                                    onChange={this.setSubInput} onSubmit={this.setSubmission}
-                                                    onBlur={this.setSubmission} maxLength="4" size="6" style={inputStyle} />
-                                            </div>
-                                            <div className="control">
-                                                <button type="submit" className={"button" + (this.state.submission.validated ? " is-success" : " is-link")}
-                                                    onClick={this.next}>Next</button>
-                                                <button type="submit" className="button is-info is-rounded is-hidden-mobile"
-                                                    onClick={this.nextUnchecked}>unchecked</button>
+                            {this.state.submission.list.length ?  
+                                <div className="column">
+                                    <div className="level">
+                                        <div className="level-item">
+                                            <div className="field has-addons is-mobile">
+                                                <div className="control">
+                                                    <button type="submit" className="button is-info is-rounded is-hidden-mobile"
+                                                        onClick={this.prevUnchecked}>unchecked</button>
+                                                    <button type="submit" className={"button" + (this.state.submission.validated ? " is-success" : " is-link")}
+                                                        onClick={this.prev}>Previous</button>
+                                                </div>
+                                                <div className="control">
+                                                    <input className={"input is-rounded has-text-centered" + (this.state.submission.validated ? " is-success" : " is-link")}
+                                                        value={this.state.submission.input} type="text"
+                                                        onChange={this.setSubInput} onSubmit={this.setSubmission}
+                                                        onBlur={this.setSubmission} maxLength="4" size="6" style={inputStyle} />
+                                                </div>
+                                                <div className="control">
+                                                    <button type="submit" className={"button" + (this.state.submission.validated ? " is-success" : " is-link")}
+                                                        onClick={this.next}>Next</button>
+                                                    <button type="submit" className="button is-info is-rounded is-hidden-mobile"
+                                                        onClick={this.nextUnchecked}>unchecked</button>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
+
+                                    <ProgressBar submissions={this.state.submission.list}/>
+
+                                    <p className="box">
+                                        <img src={this.state.submission.imagePath} alt="" />
+                                    </p>
+
                                 </div>
-
-                                <ProgressBar submissions={this.state.submission.list} />
-
-                                <p className="box">
-                                    <img src={this.state.submission.imagePath} alt="" />
-                                </p>
-
-                            </div>
+                            : null }
                         </div>
                     </div>
                 </section>

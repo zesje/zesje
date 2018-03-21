@@ -12,7 +12,9 @@ const BurgerButton = (props) => (
 
 const ExamDropdown = (props) => (
     <div className="navbar-item has-dropdown is-hoverable">
-        <Link className="navbar-link" to='/exams'>{props.exam ? <i>{props.exam.name}</i> : "Add exam"} </Link>
+        <Link className="navbar-link" to={'/exams/' + (props.exam ? props.exam.id : "")}>
+            {props.exam ? <i>{props.exam.name}</i> : "Add exam"}
+        </Link>
         <div className="navbar-dropdown">
             {props.list.map((exam) => (
                 <Link className={"navbar-item" + (props.exam.id === exam.id ? " is-active" : "")}

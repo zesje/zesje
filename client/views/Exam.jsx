@@ -103,7 +103,6 @@ class Exams extends React.Component {
 
     componentWillReceiveProps = (newProps) => {
         if (newProps.urlID !== this.props.urlID) {
-            console.log('received updated prop : ' + newProps.urlID)
             this.loadExam(newProps.urlID)    
         }
     }
@@ -152,7 +151,7 @@ class Exams extends React.Component {
                             <aside className="menu">
                                 <p className="menu-label">
                                     Previously uploaded
-              </p>
+                                </p>
                                 <ul className="menu-list">
                                     {this.state.pdfs.map(pdf =>
                                         <li key={pdf.id}><StatusPDF pdf={pdf} /></li>

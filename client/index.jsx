@@ -56,13 +56,17 @@ class App extends React.Component {
     }
 
     componentDidMount() {
+        this.updateExamList();
+    }
+
+    updateExamList = (callback) => {
         api.get('exams')
             .then(exams => {
                 if (exams.length) {
                     this.setState({
                         examIndex: exams.length - 1,
                         examList: exams
-                    })
+                    }, callback)
                 }
             })
             .catch(resp => {
@@ -95,7 +99,8 @@ class App extends React.Component {
                         <Route exact path="/" component={Home} />
                         <Route path="/exams/:examID" render={({match}) => 
                             <Exam exam={exam} urlID={match.params.examID} changeExam={this.changeExam} />} />
-                        <Route path="/exams" component={AddExam}  />
+                        <Route path="/exams" render={({history}) => 
+                            <AddExam updateExamList={this.updateExamList} changeURL={history.push} />} />
                         <Route path="/students" component={Students} />
                         <Route path="/grade" component={exam ? Grade : NoExams} />
                         <Route path="/statistics" component={exam ? Statistics : NoExams} />

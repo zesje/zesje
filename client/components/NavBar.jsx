@@ -62,7 +62,7 @@ class NavBar extends React.Component {
                     <BurgerButton foldOut={this.props.foldOut} burgerClick={this.burgerClick} />
                 </div>
 
-                <div className={"navbar-menu" + (this.state.foldOut ? " is-active" : "")} >
+                <div className={"navbar-menu" + (this.state.foldOut ? " is-active" : "")} onClick={this.burgerClick}>
                     <div className="navbar-start">
 
                         {this.props.exam ?

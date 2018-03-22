@@ -66,3 +66,36 @@ class Feedback(Resource):
                     'description': fb.description,
                     'score': fb.score
                 }
+
+    put_parser = reqparse.RequestParser()
+    put_parser.add_argument('id', type=int, required=True)
+    put_parser.add_argument('name', type=str, required=True)
+    put_parser.add_argument('description', type=str, required=True)
+    put_parser.add_argument('score', type=int, required=True)
+
+    @orm.db_session
+    def put(self, problem_id):
+        """Modify an existing feedback option
+
+        Parameters
+        ----------
+            id: int
+            name: str
+            description: str
+            score: int
+        """
+
+        problem = Problem[problem_id]
+
+        args = self.put_parser.parse_args()
+
+        fb = FeedbackOption.get(id = args.id)
+        if fb:
+            fb.set(text = args.name, description = args.description, score = args.score)
+
+        return  {
+                    'id': fb.id,
+                    'name': fb.text,
+                    'description': fb.description,
+                    'score': fb.score
+                }

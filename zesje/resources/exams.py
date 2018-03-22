@@ -95,6 +95,7 @@ class Exams(Resource):
             {
                 'id': ex.id,
                 'name' : ex.name,
+                'submissions': ex.submissions.count()
             }
             for ex in Exam.select().order_by(Exam.id)
         ]

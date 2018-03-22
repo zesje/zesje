@@ -8,6 +8,7 @@ from .resources.students import Students
 from .resources.submissions import Submissions
 from .resources import signature
 from .resources.problems import Problems
+from .resources.feedback import Feedback
 
 api_bp = Blueprint(__name__, __name__)
 
@@ -29,6 +30,8 @@ api.add_resource(Submissions,
                  '/submissions/<int:exam_id>',
                  '/submissions/<int:exam_id>/<int:submission_id>')
 api.add_resource(Problems, '/problems/<int:exam_id>')
+api.add_resource(Feedback, '/feedback/<int:problem_id>')
+
 
 # Other resources that don't return JSON
 # It is possible to get flask_restful to work with these, but not

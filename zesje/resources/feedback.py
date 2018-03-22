@@ -20,6 +20,7 @@ class Feedback(Resource):
             name: str
             description: str
             score: int
+            used: int
         """
 
         problem = Problem[problem_id]
@@ -29,7 +30,8 @@ class Feedback(Resource):
                 'id': fb.id,
                 'name': fb.text,
                 'description': fb.description,
-                'score': fb.score
+                'score': fb.score,
+                'used': fb.solutions.count()
             }
             for fb in FeedbackOption.select(lambda fb: fb.problem == problem)
         ]

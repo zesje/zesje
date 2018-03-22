@@ -44,7 +44,7 @@ class NavBar extends React.Component {
 
     render() {
 
-        const examStyle = this.props.exam !== null ? {} : { pointerEvents: 'none', opacity: .65 }
+        const examStyle = this.props.exam && this.props.exam.submissions ? {} : { pointerEvents: 'none', opacity: .65 }
 
         return (
             <nav className="navbar" role="navigation" aria-label="dropdown navigation">

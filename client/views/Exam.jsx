@@ -1,5 +1,5 @@
 import React from 'react';
-import Dropzone from 'react-dropzone'
+import Dropzone from 'react-dropzone';
 
 import Hero from '../components/Hero.jsx';
 import DropzoneContent from '../components/DropzoneContent.jsx';
@@ -36,7 +36,7 @@ class Exams extends React.Component {
 
     loadExam = (id) => {
         if (this.props.exam.id !== parseInt(id)) {
-            console.log('Changing exam id to ' + id)            
+            console.log('Changing exam id to ' + id)
             this.props.changeExam(parseInt(id));
         }
 
@@ -65,11 +65,14 @@ class Exams extends React.Component {
 
     updatePDFs = () => {
         api.get('pdfs/' + this.props.urlID)
-            .then(pdfs =>
-                this.setState({
+            .then(pdfs => {
+                if (JSON.stringify(pdfs) != JSON.stringify(this.state.pdfs)) {
+                    this.props.updateList(null, true)
+                    this.setState({
                         pdfs: pdfs
-                })
-            )
+                    })
+                }
+            })
     }
 
     onDropPDF = (accepted, rejected) => {
@@ -82,12 +85,7 @@ class Exams extends React.Component {
             data.append('pdf', file)
             api.post('pdfs/' + this.props.urlID, data)
                 .then(() => {
-                    api.get('pdfs/' + this.props.urlID)
-                        .then(pdfs =>
-                            this.setState({
-                                pdfs: pdfs
-                            })
-                        )
+                    this.updatePDFs();
                 })
                 .catch(resp => {
                     alert('failed to upload pdf (see javascript console for details)')
@@ -98,12 +96,12 @@ class Exams extends React.Component {
 
     componentDidMount = () => {
         this.loadExam(this.props.urlID);
-        this.pdfUpdater = setInterval(this.updatePDFs, 1000)        
+        this.pdfUpdater = setInterval(this.updatePDFs, 1000)
     }
 
     componentWillReceiveProps = (newProps) => {
         if (newProps.urlID !== this.props.urlID) {
-            this.loadExam(newProps.urlID)    
+            this.loadExam(newProps.urlID)
         }
     }
 
@@ -144,7 +142,7 @@ class Exams extends React.Component {
                                 disablePreview
                                 multiple
                             >
-                                <DropzoneContent/>
+                                <DropzoneContent />
                             </Dropzone>
 
                             <br />

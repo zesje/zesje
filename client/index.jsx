@@ -9,43 +9,44 @@ import * as api from './api.jsx'
 
 import NavBar from './components/NavBar.jsx';
 import Footer from './components/Footer.jsx';
-
-const Loading = () => <div>Loading...</div>;
-const NotFound = () => <div>404 OMG NO.</div>;
-const NoExams = () => <div>No exams found, please upload at least one and do not use this direct access :(</div>;
+import Loading from './views/Loading.jsx';
 
 const Home = Loadable({
   loader: () => import('./views/Home.jsx'),
-  loading: Loading,
+  loading: Loading
 });
 const AddExam = Loadable({
   loader: () => import('./views/AddExam.jsx'),
-  loading: Loading,
+  loading: Loading
 });
 const Exam = Loadable({
     loader: () => import('./views/Exam.jsx'),
-    loading: Loading,
+    loading: Loading
   });
 const Students = Loadable({
   loader: () => import('./views/Students.jsx'),
-  loading: Loading,
+  loading: Loading
 });
 const Grade = Loadable({
   loader: () => import('./views/Grade.jsx'),
-  loading: Loading,
+  loading: Loading
 });
 const Graders = Loadable({
   loader: () => import('./views/Graders.jsx'),
-  loading: Loading,
+  loading: Loading
 });
 const Statistics = Loadable({
   loader: () => import('./views/Statistics.jsx'),
-  loading: Loading,
+  loading: Loading
 });
 const Reset = Loadable({
   loader: () => import('./views/Reset.jsx'),
-  loading: Loading,
+  loading: Loading
 });
+const Fail = Loadable({
+    loader: () => import('./views/Fail.jsx'),
+    loading: Loading
+})
 
 
 class App extends React.Component {
@@ -59,14 +60,20 @@ class App extends React.Component {
         this.updateExamList();
     }
 
-    updateExamList = (callback) => {
+    updateExamList = (callback, onlyList) => {
         api.get('exams')
             .then(exams => {
                 if (exams.length) {
-                    this.setState({
-                        examIndex: exams.length - 1,
-                        examList: exams
-                    }, callback)
+                    if (onlyList) {
+                        this.setState({
+                            examList: exams
+                        })
+                    } else {
+                        this.setState({
+                            examIndex: exams.length - 1,
+                            examList: exams
+                        }, callback)
+                    }
                 }
             })
             .catch(resp => {
@@ -98,16 +105,21 @@ class App extends React.Component {
                     <Switch>
                         <Route exact path="/" component={Home} />
                         <Route path="/exams/:examID" render={({match}) => 
-                            <Exam exam={exam} urlID={match.params.examID} changeExam={this.changeExam} /> }/>
+                            <Exam exam={exam} urlID={match.params.examID} changeExam={this.changeExam} updateList={this.updateExamList}/> }/>
                         <Route path="/exams" render={({history}) => 
                             <AddExam updateExamList={this.updateExamList} changeURL={history.push} /> }/>
                         <Route path="/students" render={() => 
                             <Students exam={exam} /> }/>
-                        <Route path="/grade" component={exam ? Grade : NoExams} />
-                        <Route path="/statistics" component={exam ? Statistics : NoExams} />
+                        <Route path="/grade" render={() => (
+                            exam && exam.submissions ? <Grade /> : <Fail message="No exams uploaded. Please do not bookmark URLs" />
+                        )} />
+                        <Route path="/statistics" render={() => (
+                            exam && exam.submissions ? <Statistics /> : <Fail message="No exams uploaded. Please do not bookmark URLs" />
+                        )} />
                         <Route path="/graders" component={Graders} />
                         <Route path="/reset" component={Reset} />
-                        <Route component={NotFound} />
+                        <Route render={() => 
+                            <Fail message="404. Could not find that page :'(" /> }/>
                     </Switch>
                     <Footer />
                 </div>

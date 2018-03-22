@@ -28,6 +28,8 @@ class ExamConfig(Resource):
             exam ID
         name : str
             exam name
+        submissions: int
+            Number of submissions
         yaml : str
             YAML config
         """
@@ -40,6 +42,7 @@ class ExamConfig(Resource):
         return {
             'id': exam_id,
             'name': exam.name,
+            'submissions': exam.submissions.count(),
             'yaml': yml
         }
 
@@ -90,6 +93,8 @@ class Exams(Resource):
                 exam name
             name : str
                 exam ID
+            submissions : int
+                Number of submissions
         """
         return [
             {

@@ -21,14 +21,10 @@ module.exports = merge(common, {
         historyApiFallback: true,
         port: 8881,
         publicPath: '/',
-        host: '0.0.0.0',
+        host: 'localhost',
         overlay: {
             warnings: true,
             errors: true
-        },
-        watchContentBase: true,
-        watchOptions: {
-            poll: true
         }
     }
 })

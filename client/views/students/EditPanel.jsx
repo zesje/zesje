@@ -123,7 +123,7 @@ class EditPanel extends React.Component {
                     <div className="field">
                         <label className="label">Name</label>
                         <div className="control has-icons-left">
-                            <input className="input" type="email" placeholder="First name"
+                            <input className="input" placeholder="First name"
                                 value={this.state.firstName} onChange={this.changeFirstName} />
                             <span className="icon is-small is-left">
                                 <i className="fa fa-quote-left"></i>
@@ -135,7 +135,7 @@ class EditPanel extends React.Component {
                 <div className="panel-block">
                     <div className="field">
                         <div className="control has-icons-left">
-                            <input className="input" type="email" placeholder="Second name"
+                            <input className="input" placeholder="Second name"
                                 value={this.state.lastName} onChange={this.changeLastName} />
                             <span className="icon is-small is-left">
                                 <i className="fa fa-quote-right"></i>
@@ -149,7 +149,7 @@ class EditPanel extends React.Component {
                     <div className="field">
                         <label className="label">Email</label>
                         <div className="control has-icons-left has-icons-right">
-                            <input className="input" type="email" placeholder="Email input"
+                            <input className="input" placeholder="Email input"
                                 value={this.state.email} onChange={this.changeMail} />
                             <span className="icon is-small is-left">
                                 <i className="fa fa-envelope"></i>

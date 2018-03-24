@@ -39,8 +39,8 @@ class Feedback(Resource):
 
     post_parser = reqparse.RequestParser()
     post_parser.add_argument('name', type=str, required=True)
-    post_parser.add_argument('description', type=str, required=True)
-    post_parser.add_argument('score', type=int, required=True)
+    post_parser.add_argument('description', type=str, required=False)
+    post_parser.add_argument('score', type=int, required=False)
 
     @orm.db_session
     def post(self, problem_id):
@@ -70,8 +70,8 @@ class Feedback(Resource):
     put_parser = reqparse.RequestParser()
     put_parser.add_argument('id', type=int, required=True)
     put_parser.add_argument('name', type=str, required=True)
-    put_parser.add_argument('description', type=str, required=True)
-    put_parser.add_argument('score', type=int, required=True)
+    put_parser.add_argument('description', type=str, required=False)
+    put_parser.add_argument('score', type=int, required=False)
 
     @orm.db_session
     def put(self, problem_id):

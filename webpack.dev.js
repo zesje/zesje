@@ -1,3 +1,4 @@
+const webpack = require('webpack');
 const merge = require('webpack-merge');
 const common = require('./webpack.common.js');
 
@@ -7,9 +8,6 @@ module.exports = merge(common, {
           { test: /\.css$/, use: [ 'style-loader', 'css-loader' ]}
         ]
     },
-
-    devtool: 'eval-source-map',
-
     devServer: {
         hot: true,
         inline: true,
@@ -26,5 +24,10 @@ module.exports = merge(common, {
             warnings: true,
             errors: true
         }
-    }
+    },
+    plugins: [
+        new webpack.EvalSourceMapDevToolPlugin({
+            sourceURLTemplate: module => `/${module.identifier}`
+        })
+    ]
 })

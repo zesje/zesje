@@ -111,7 +111,7 @@ class App extends React.Component {
                         <Route path="/students" render={() => 
                             <Students exam={exam} /> }/>
                         <Route path="/grade" render={() => (
-                            exam && exam.submissions ? <Grade /> : <Fail message="No exams uploaded. Please do not bookmark URLs" />
+                            exam && exam.submissions ? <Grade exam={exam}/> : <Fail message="No exams uploaded. Please do not bookmark URLs" />
                         )} />
                         <Route path="/statistics" render={() => (
                             exam && exam.submissions ? <Statistics /> : <Fail message="No exams uploaded. Please do not bookmark URLs" />

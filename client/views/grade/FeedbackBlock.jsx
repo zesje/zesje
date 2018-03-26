@@ -2,17 +2,40 @@ import React from 'react';
 
 class FeedbackBlock extends React.Component {
 
+    state = {
+        hover: false
+    }
+    leave = () => {
+        this.setState({
+            hover: false
+        })
+    }
+    enter = () => {
+        this.setState({
+            hover: true
+        })
+    }
+
 
     render() {
+        const score = this.props.feedback.score;
+
         return (
-            <a className="panel-block is-active" onClick={this.props.onClick} >
+            <a className="panel-block is-active" onClick={() => !this.state.hover && console.log('a click')} >
                 <span className="panel-icon">
                     <i className={"fa fa-" + (this.props.checked ? "check-square-o" : "square-o")}></i>
                 </span>
-                <div style={{ width: '80%' }}>
+                <span style={{ width: '80%' }}>
                     {this.props.feedback.name}
+                </span>
+                <div className="field is-grouped">
+                    <div className="control" onMouseEnter={this.enter} onMouseLeave={this.leave} >
+                        <div className="tags has-addons">
+                            {score ? <span className="tag is-link">{this.props.feedback.score}</span> : null}
+                            <span className={"tag" + (this.state.hover ? " is-white" : "")} onClick={() => console.log('pencil click')}> <i className="fa fa-pencil"></i></span>
+                        </div>
+                    </div>
                 </div>
-                <i>{this.props.feedback.score}</i>
             </a>
         )
     }

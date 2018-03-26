@@ -21,7 +21,7 @@ class ProblemSelector extends React.Component {
     render() {
         return (
             <div className="field">
-                <label className="label">Problem:</label>
+                <label className="label">Problem</label>
                 <div className="control has-icons-left">
                     <div className="select is-fullwidth">
                         <select value={this.props.name}

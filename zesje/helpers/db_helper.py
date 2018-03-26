@@ -68,7 +68,10 @@ def solution_data(exam_id, student_id):
 def full_exam_data(exam_id):
     """Compute all grades of an exam as a pandas DataFrame."""
     with orm.db_session:
-        students = sorted(Exam[exam_id].submissions.student.id)
+        exam = Exam[exam_id]
+        if exam is None:
+            raise KeyError("No such exam.")
+        students = sorted(exam.submissions.student.id)
 
         data = [solution_data(exam_id, student_id)
                 for student_id in students]

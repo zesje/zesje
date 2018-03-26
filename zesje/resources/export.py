@@ -21,3 +21,26 @@ def full():
     resp.headers.set('Content-Disposition', 'attachment',
                      filename='course.sqlite')
     return resp
+
+
+def dataframe(exam_id):
+    """Export exam data as a pandas dataframe
+
+    Parameters
+    ----------
+    exam_id : int
+
+    Returns
+    -------
+    exam.pd : pickled pandas dataframe
+    """
+    try:
+        data = db_helper.full_exam_data(exam_id)
+    except KeyError:
+        abort(404)
+    serialized = BytesIO()
+    data.to_pickle(serialized)
+    resp = Response(serialized.getvalue(), 200)
+    resp.headers.set('Content-Disposition', 'attachment',
+                     filename='exam.pd')
+    return resp

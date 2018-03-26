@@ -39,6 +39,8 @@ api.add_resource(Feedback, '/feedback/<int:problem_id>')
 # Other resources that don't return JSON
 # It is possible to get flask_restful to work with these, but not
 # very idiomatic.
+
+# Images
 api_bp.add_url_rule(
     '/images/signature/<int:exam_id>/<int:submission_id>',
     'signature',
@@ -55,8 +57,14 @@ api_bp.add_url_rule(
     summary_plot.get,
 )
 
+# Exports
 api_bp.add_url_rule(
     '/export/full',
     'full_export',
     export.full,
+)
+api_bp.add_url_rule(
+    '/export/dataframe/<int:exam_id>',
+    'dataframe_export',
+    export.dataframe,
 )

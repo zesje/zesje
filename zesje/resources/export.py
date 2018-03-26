@@ -23,11 +23,13 @@ def full():
     return resp
 
 
-def dataframe(exam_id):
+def exam(file_format, exam_id):
     """Export exam data as a pandas dataframe
 
     Parameters
     ----------
+    file_format : string
+        One of "dataframe", "xlsx", "xlsx_detailed"
     exam_id : int
 
     Returns
@@ -39,8 +41,18 @@ def dataframe(exam_id):
     except KeyError:
         abort(404)
     serialized = BytesIO()
-    data.to_pickle(serialized)
+    extension = "pd" if file_format == 'dataframe' else "xlsx"
+    if file_format == 'dataframe':
+        data.to_pickle(serialized)
+    elif file_format == 'xlsx':
+        data = data.iloc[:, data.columns.get_level_values(1)=='total']
+        data.columns = data.columns.get_level_values(0)
+        data.to_excel(serialized)
+    elif file_format == 'xlsx_detailed':
+        data.to_excel(serialized)
+    else:
+        abort(404)
     resp = Response(serialized.getvalue(), 200)
     resp.headers.set('Content-Disposition', 'attachment',
-                     filename='exam.pd')
+                     filename=f'exam{exam_id}.{extension}')
     return resp

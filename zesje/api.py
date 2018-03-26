@@ -64,7 +64,7 @@ api_bp.add_url_rule(
     export.full,
 )
 api_bp.add_url_rule(
-    '/export/dataframe/<int:exam_id>',
+    '/export/<string:file_format>/<int:exam_id>',
     'dataframe_export',
-    export.dataframe,
+    export.exam,
 )

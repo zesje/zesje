@@ -129,11 +129,8 @@ class EditPanel extends React.Component {
                                 <i className="fa fa-quote-left"></i>
                             </span>
                         </div>
-                    </div>
-                </div>
 
-                <div className="panel-block">
-                    <div className="field">
+
                         <div className="control has-icons-left">
                             <input className="input" placeholder="Second name"
                                 value={this.state.lastName} onChange={this.changeLastName} />

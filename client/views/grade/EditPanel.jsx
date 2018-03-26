@@ -54,18 +54,32 @@ class EditPanel extends React.Component {
         })
     }
     changeScore = (event) => {
-        this.setState({
-            score: event.target.value
-        })
+        const patt = new RegExp(/^([1-9]\d*|0)?$/);
+
+        if (patt.test(event.target.value)) {
+            this.setState({
+                score: event.target.value
+            })
+        }
     }
 
+    key = (event) => {
+        if (event.keyCode === 13 && this.state.name.length) {
+            console.log(this.state)
+            this.saveFeedback();
+        }
+    }
 
     saveFeedback = () => {
 
         if (this.props.feedback) {
 
         } else {
-            api.post('feedback/' + this.props.problem, this.state)
+            api.post('feedback/' + this.props.problem, {
+                name: this.state.name,
+                description: this.state.description,
+                score: this.state.score ? parseInt(this.state.score) : null
+            })
                 .then(feedback => {
                     console.log(feedback)
                     this.props.toggleEdit();
@@ -87,7 +101,7 @@ class EditPanel extends React.Component {
                         <label className="label">Name</label>
                         <div className="control has-icons-left">
                             <input className="input" placeholder="Name"
-                                value={this.state.name} onChange={this.changeName} />
+                                value={this.state.name} onChange={this.changeName} onKeyDown={this.key} />
                             <span className="icon is-small is-left">
                                 <i className="fa fa-quote-left"></i>
                             </span>
@@ -100,9 +114,9 @@ class EditPanel extends React.Component {
                         <label className="label">Description</label>
                         <div className="control has-icons-left">
                             <input className="input" placeholder="Description"
-                                value={this.state.description} onChange={this.changeDesc} />
+                                value={this.state.description} onChange={this.changeDesc} onKeyDown={this.key} />
                             <span className="icon is-small is-left">
-                                <i className="fa fa-quote-right"></i>
+                                <i className="fa fa-comment-o"></i>
                             </span>
                         </div>
 
@@ -114,9 +128,9 @@ class EditPanel extends React.Component {
                         <label className="label">Score</label>
                         <div className="control has-icons-left has-icons-right">
                             <input className="input" placeholder="Score"
-                                value={this.state.score} onChange={this.changeScore} />
+                                value={this.state.score} onChange={this.changeScore} onKeyDown={this.key} />
                             <span className="icon is-small is-left">
-                                <i className="fa fa-envelope"></i>
+                                <i className="fa fa-star"></i>
                             </span>
                         </div>
                     </div>

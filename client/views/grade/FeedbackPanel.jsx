@@ -2,15 +2,7 @@ import React from 'react';
 
 import * as api from '../../api.jsx'
 
-const FeedbackBlock = (props) => (
-    <a className="panel-block is-active" onClick={props.onClick} >
-        <span className="panel-icon">
-            <i className={"fa fa-" + (props.checked ? "check-square-o" : "square-o")}></i>
-        </span>
-        {props.feedback.name}&nbsp;<i>- [{props.feedback.score}]</i>
-    </a>
-)
-
+import FeedbackBlock from './FeedbackBlock.jsx';
 
 class FeedbackPanel extends React.Component {
 

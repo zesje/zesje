@@ -8,6 +8,7 @@ from .resources.students import Students
 from .resources.submissions import Submissions
 from .resources import signature
 from .resources import images
+from .resources import summary_plot
 from .resources.problems import Problems
 from .resources.feedback import Feedback
 
@@ -46,4 +47,9 @@ api_bp.add_url_rule(
     '/images/solutions/<int:exam_id>/<int:problem_id>/<int:submission_id>',
     'solution',
     images.get,
+)
+api_bp.add_url_rule(
+    '/images/summary/<int:exam_id>',
+    'exam_summary',
+    summary_plot.get,
 )

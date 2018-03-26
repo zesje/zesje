@@ -9,6 +9,7 @@ from .resources.submissions import Submissions
 from .resources import signature
 from .resources import images
 from .resources import summary_plot
+from .resources import export
 from .resources.problems import Problems
 from .resources.feedback import Feedback
 
@@ -52,4 +53,10 @@ api_bp.add_url_rule(
     '/images/summary/<int:exam_id>',
     'exam_summary',
     summary_plot.get,
+)
+
+api_bp.add_url_rule(
+    '/export/full',
+    'full_export',
+    export.full,
 )

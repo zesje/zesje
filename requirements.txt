@@ -8,5 +8,8 @@ zbar-py
 numpy
 scipy
 pandas
+openpyxl
+matplotlib
+seaborn
 pyyaml
 git+https://github.com/mstamy2/PyPDF2

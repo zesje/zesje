@@ -32,6 +32,15 @@ class FeedbackPanel extends React.Component {
         }
     }
 
+    shouldComponentUpdate = (nextProps, nextState) => {
+        if (this.props.problem !== nextProps.problem || this.state.feedback != nextState.feedback) {
+            return true;            
+        } else {
+            console.log('halting re-render')
+            return false;
+        }
+    }
+
     render() {
 
         return (

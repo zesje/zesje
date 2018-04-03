@@ -77,5 +77,8 @@ __pycache__/
 # vscode folder
 .vscode
 
+# Fish Virtualenv
+.venv
+
 # development data
 data-dev

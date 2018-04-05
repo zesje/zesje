@@ -16,6 +16,10 @@ class FeedbackBlock extends React.Component {
         })
     }
 
+    componentDidMount = () => {
+        console.log('mounting! ' + this.props.feedback.id)        
+    }
+
 
     render() {
         const score = this.props.feedback.score;
@@ -29,10 +33,13 @@ class FeedbackBlock extends React.Component {
                     {this.props.feedback.name}
                 </span>
                 <div className="field is-grouped">
-                    <div className="control" onMouseEnter={this.enter} onMouseLeave={this.leave} >
+                    <div className="control">
                         <div className="tags has-addons">
                             {score ? <span className="tag is-link">{this.props.feedback.score}</span> : null}
-                            <span className={"tag" + (this.state.hover ? " is-white" : "")} onClick={() => console.log('pencil click')}> <i className="fa fa-pencil"></i></span>
+                            <span className={"tag" + (this.state.hover ? " is-white" : "")} 
+                                onMouseEnter={this.enter} onMouseLeave={this.leave} onClick={() => console.log('pencil click')}> 
+                                <i className="fa fa-pencil"></i>
+                            </span>
                         </div>
                     </div>
                 </div>

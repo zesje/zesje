@@ -12,6 +12,7 @@ from .resources import summary_plot
 from .resources import export
 from .resources.problems import Problems
 from .resources.feedback import Feedback
+from .resources.solutions import Solutions
 
 api_bp = Blueprint(__name__, __name__)
 
@@ -34,6 +35,7 @@ api.add_resource(Submissions,
                  '/submissions/<int:exam_id>/<int:submission_id>')
 api.add_resource(Problems, '/problems/<int:exam_id>')
 api.add_resource(Feedback, '/feedback/<int:problem_id>')
+api.add_resource(Solutions, '/solution/<int:exam_id>/<int:submission_id>/<int:problem_id>')
 
 
 # Other resources that don't return JSON
@@ -48,7 +50,7 @@ api_bp.add_url_rule(
 )
 api_bp.add_url_rule(
     '/images/solutions/<int:exam_id>/<int:problem_id>/<int:submission_id>',
-    'solution',
+    'solution_image',
     images.get,
 )
 api_bp.add_url_rule(

@@ -36,14 +36,26 @@ class Submissions(Resource):
                 raise orm.core.ObjectNotFound(Submission)
             return {
                 'id': s.copy_number,
-                'studentID':  s.student.id if s.student else None,
+                'student':
+                    {
+                        'id': s.student.id,
+                        'firstName': s.student.first_name,
+                        'lastName': s.student.last_name,
+                        'email': s.student.email
+                    } if s.student else None,
                 'validated': s.signature_validated,
             }
 
         return [
             {
                 'id': s.copy_number,
-                'studentID': s.student.id if s.student else None,
+                'student':
+                    {
+                        'id': s.student.id,
+                        'firstName': s.student.first_name,
+                        'lastName': s.student.last_name,
+                        'email': s.student.email
+                    } if s.student else None,
                 'validated': s.signature_validated,
             }
             for s in Submission.select(lambda s: s.exam == exam)

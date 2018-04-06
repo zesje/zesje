@@ -1,4 +1,5 @@
 import React from 'react';
+import getClosest from 'get-closest';
 
 import Hero from '../components/Hero.jsx';
 
@@ -6,6 +7,9 @@ import FeedbackPanel from './grade/FeedbackPanel.jsx';
 import ProblemSelector from './grade/ProblemSelector.jsx';
 import EditPanel from './grade/EditPanel.jsx';
 const ProgressBar = () => null;
+
+import * as api from '../api.jsx';
+
 
 class Grade extends React.Component {
 
@@ -15,16 +19,39 @@ class Grade extends React.Component {
         problem: null,
         submission: {
             input: "",
-            imagePath: ""
+            index: 0,
+            id: null,
+            student: null,
+            validated: false,
+            imagePath: null,
+            list: []
         },
         solution: null
     }
 
     prev = () => {
+        const newIndex = this.state.submission.index - 1;
 
+        if (newIndex >= 0 && newIndex < this.state.submission.list.length) {
+            this.setState({
+                submission: {
+                    ...this.state.submission,
+                    input: this.state.submission.list[newIndex].student.id
+                }
+            }, this.setSubmission)
+        }
     }
     next = () => {
+        const newIndex = this.state.submission.index + 1;
 
+        if (newIndex >= 0 && newIndex < this.state.submission.list.length) {
+            this.setState({
+                submission: {
+                    ...this.state.submission,
+                    input: this.state.submission.list[newIndex].student.id
+                }
+            }, this.setSubmission)
+        }
     }
 
     prevUngraded = () => {
@@ -56,13 +83,57 @@ class Grade extends React.Component {
         })
     }
     setSubmission = () => {
+        const input = parseInt(this.state.submission.input);
+        const i = this.state.submission.list.findIndex(sub => sub.student.id === input);
+        const sub = this.state.submission.list[i];
 
+        if (i >= 0) {
+            this.setState({
+                submission: {
+                    ...this.state.submission,
+                    input: sub.student.id + ' (' + sub.student.firstName + ')',
+                    id: sub.id,
+                    index: i,
+                    student: sub.student,
+                    validated: sub.validated,
+                    imagePath: 'api/images/solutions/' + this.props.exam.id + '/' + this.state.problem + '/' + sub.id                    
+                }
+            }, this.getSubmission)
+        } else {
+            this.setState({
+                submission: {
+                    ...this.state.submission,
+                    input: this.state.submission.student.id
+                }
+            })
+            alert('Could not find that submission number :(\nSorry!');
+        }
     }
     changeProblem = (id) => {
         console.log(id);
         this.setState({
-            problem: id
+            problem: id,
+            submission: {
+                ...this.state.submission,
+                imagePath: 'api/images/solutions/' + this.props.exam.id + '/' + id + '/' + this.state.submission.id
+            }
         })
+    }
+
+    componentDidMount = () => {
+        api.get('submissions/' + this.props.exam.id)
+            .then(subs => 
+            this.setState({
+                submission: {
+                    input: subs[0].student.id + ' (' + subs[0].student.firstName + ')',
+                    index: 0,
+                    id: subs[0].id,
+                    student: subs[0].student,
+                    validated: subs[0].validated,
+                    imagePath: 'api/images/solutions/' + this.props.exam.id + '/' + this.state.problem + '/' + subs[0].id,
+                    list: subs
+                }
+            }))
     }
 
 
@@ -102,7 +173,7 @@ class Grade extends React.Component {
                                             <div className="control">
                                                 <input className="input is-rounded has-text-centered is-link"
                                                     value={this.state.submission.input} type="text"
-                                                    onChange={this.setSubInput} onSubmit={this.setSubmission}/>
+                                                    onChange={this.setSubInput} onSubmit={this.setSubmission} onBlur={this.setSubmission} />
                                             </div>
                                             <div className="control">
                                                 <button type="submit" className="button is-link"

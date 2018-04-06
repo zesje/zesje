@@ -19,7 +19,7 @@ class CheckStudents extends React.Component {
             id: 0,
             input: 0,
             index: 0,
-            studentID: null,
+            student: null,
             validated: false,
             imagePath: null,
             list: []
@@ -115,7 +115,7 @@ class CheckStudents extends React.Component {
                 submission: {
                     ...this.state.submission,
                     id: input,
-                    studentID: sub.studentID,
+                    student: sub.student,
                     validated: sub.validated,
                     index: i,
                     imagePath: 'api/images/signature/' + this.props.exam.id + '/' + input
@@ -154,11 +154,11 @@ class CheckStudents extends React.Component {
                 this.setState({
                     submission: {
                         ...this.state.submission,
-                        studentID: sub.studentID,
+                        student: sub.student,
                         validated: sub.validated,
                         list: newList
                     }
-                }, this.listMatchedStudent)
+                })
             })
             .catch(err => {
                 alert('failed to get submission (see javascript console for details)')
@@ -176,12 +176,12 @@ class CheckStudents extends React.Component {
                             ...this.state.submission,
                             id: subs[0].id,
                             input: subs[0].id,
-                            studentID: subs[0].studentID,
+                            student: subs[0].student,
                             validated: subs[0].validated,
                             imagePath: 'api/images/signature/' + this.props.exam.id + '/' + subs[0].id,
                             list: subs
                         }
-                    }, this.listMatchedStudent)
+                    })
                 }
             })
             .catch(err => {
@@ -191,11 +191,7 @@ class CheckStudents extends React.Component {
             })
     }
 
-    listMatchedStudent = () => {
-        if (this.search) this.search.listMatchedStudent();
-    };
-
-    matchStudent = (studID) => {
+    matchStudent = (stud) => {
 
         if(!this.state.submission.list.length) return;
 
@@ -205,12 +201,12 @@ class CheckStudents extends React.Component {
         this.setState({
             submission: {
                 ...this.state.submission,
-                studentID: studID,
+                student: stud,
                 validated: true
             }
         }, this.nextUnchecked)
 
-        api.put('submissions/' + this.props.exam.id + '/' + this.state.submission.id, { studentID: studID })
+        api.put('submissions/' + this.props.exam.id + '/' + this.state.submission.id, { studentID: stud.id })
             .then(sub => {
                 newList[index] = sub;
                 this.setState({
@@ -262,9 +258,8 @@ class CheckStudents extends React.Component {
                                 {this.state.editActive ?
                                     <EditPanel toggleEdit={this.toggleEdit} editStud={this.state.editStud} />
                                     :
-                                    <SearchPanel ref={(search) => { this.search = search; }}
-                                        matchStudent={this.matchStudent} toggleEdit={this.toggleEdit}
-                                        studentID={this.state.submission.studentID} validated={this.state.submission.validated} />
+                                    <SearchPanel matchStudent={this.matchStudent} toggleEdit={this.toggleEdit}
+                                        student={this.state.submission.student} validated={this.state.submission.validated} />
                                 }
                             </div>
 

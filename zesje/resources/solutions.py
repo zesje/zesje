@@ -36,8 +36,7 @@ class Solutions(Resource):
         return {
                     'feedback': [fb.id for fb in solution.feedback],
                     'gradedBy': solution.graded_by,
-                    'gradedAt': solution.graded_at.isoformat(),
-                    'imagePath': solution.image_path,
+                    'gradedAt': solution.graded_at.isoformat() if solution.graded_at else None,
                     'remarks': solution.remarks
                 }
 

@@ -26,7 +26,6 @@ class SearchPanel extends React.Component {
         api.get('students')
             .then(students => {
                 this.students = students;
-                this.listMatchedStudent();
             })
             .catch(err => {
                 alert('failed to get students (see javascript console for details)')
@@ -78,14 +77,13 @@ class SearchPanel extends React.Component {
             const stud = this.state.result[this.state.selected];
             if (!stud) return;
 
-            this.props.matchStudent(stud.id);
+            this.props.matchStudent(stud);
         }
     }
 
     selectStudent = (event) => {
-
         if (event.target.selected) {
-            this.props.matchStudent(this.state.result[this.state.selected].id);
+            this.props.matchStudent(this.state.result[this.state.selected]);
         } else {
             const index = this.state.result.findIndex(result => result.id == event.target.id);
             this.setState({
@@ -95,19 +93,12 @@ class SearchPanel extends React.Component {
         }
     }
 
-    listMatchedStudent = () => {
-        const studIndex = this.students.findIndex(stud =>
-            stud.id === this.props.studentID);
-        const stud = studIndex > -1 ? [this.students[studIndex]] : [];
+    static getDerivedStateFromProps = (nextProps) => {
 
-        this.setState({
+        return {
             input: '',
             selected: 0,
-            result: stud
-        })
-
-        if (!this.props.validated) {
-            this.searchInput.focus();
+            result: nextProps.student ? [nextProps.student] : []
         }
     }
 
@@ -121,7 +112,6 @@ class SearchPanel extends React.Component {
                 <div className="panel-block">
                     <p className="control has-icons-left">
                         <input className="input" type="text"
-                            ref={(input) => { this.searchInput = input; }}
                             value={this.state.input} onChange={this.search} onKeyDown={this.specialKey} />
 
                         <span className="icon is-left">
@@ -132,7 +122,7 @@ class SearchPanel extends React.Component {
                 {this.state.result.map((student, index) =>
                     <StudentPanelBlock key={student.id} student={student}
                         selected={index === this.state.selected}
-                        matched={student.id === this.props.studentID && this.props.validated}
+                        matched={this.props.student && student.id === this.props.student.id && this.props.validated}
                         selectStudent={this.selectStudent} editStudent={this.props.toggleEdit}/>
                 )}
                 <div className="panel-block is-hidden-mobile">

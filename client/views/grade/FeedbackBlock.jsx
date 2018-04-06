@@ -3,7 +3,8 @@ import React from 'react';
 class FeedbackBlock extends React.Component {
 
     state = {
-        hover: false
+        hover: false,
+        checked: false
     }
     leave = () => {
         this.setState({
@@ -20,14 +21,22 @@ class FeedbackBlock extends React.Component {
         console.log('mounting! ' + this.props.feedback.id)        
     }
 
+    toggle = () => {
+        if (!this.state.hover) {
+            this.setState({
+                checked: !this.state.checked
+            })
+        }
+    }
+
 
     render() {
         const score = this.props.feedback.score;
 
         return (
-            <a className="panel-block is-active" onClick={() => !this.state.hover && console.log('a click')} >
+            <a className="panel-block is-active" onClick={this.toggle} >
                 <span className="panel-icon">
-                    <i className={"fa fa-" + (this.props.checked ? "check-square-o" : "square-o")}></i>
+                    <i className={"fa fa-" + (this.state.checked ? "check-square-o" : "square-o")}></i>
                 </span>
                 <span style={{ width: '80%' }}>
                     {this.props.feedback.name}

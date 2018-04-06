@@ -49,7 +49,7 @@ class FeedbackPanel extends React.Component {
                     Feedback
                 </p>
                 {this.state.feedback.map((feedback, i) =>
-                    <FeedbackBlock key={i} index={i} feedback={feedback} checked={true} onClick={this.props.editFeedback} />
+                    <FeedbackBlock key={i} index={i} feedback={feedback} checked={false} onClick={this.props.editFeedback} />
                 )}
                 <div className="panel-block is-hidden-mobile">
                     <button className="button is-link is-outlined is-fullwidth" onClick={this.props.toggleEdit}>

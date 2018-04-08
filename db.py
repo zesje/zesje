@@ -4,6 +4,7 @@ from collections import namedtuple, OrderedDict, ChainMap
 import itertools
 import subprocess
 import argparse
+import re
 
 import cv2
 import zbar
@@ -311,8 +312,13 @@ def solution_data(exam_id, student_id):
 
         pages = Page.select(lambda p: p.submission.exam == exam
                             and p.submission.student == student)
-        # 'set' invokation is a hotfix for issue #50
-        paths = sorted(set(page.path for page in pages))
+        # The pages paths are not alphabetically sorted if there are ≥10 pages
+        # (see https://gitlab.kwant-project.org/zesje/zesje/issues/87)
+        page_match = re.compile(r'.*page(\d+).jpg').match
+        paths = sorted(
+            page.path for page in pages,
+            key=(lambda p: int(page_match(p).group(1))),
+        )
 
         student = student.to_dict()
 

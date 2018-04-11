@@ -316,7 +316,7 @@ def solution_data(exam_id, student_id):
         # (see https://gitlab.kwant-project.org/zesje/zesje/issues/87)
         page_match = re.compile(r'.*page(\d+).jpg').match
         paths = sorted(
-            page.path for page in pages,
+            (page.path for page in pages),
             key=(lambda p: int(page_match(p).group(1))),
         )
 

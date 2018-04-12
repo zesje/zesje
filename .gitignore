@@ -82,3 +82,6 @@ __pycache__/
 
 # development data
 data-dev
+
+# webpack analyze data
+stats.json

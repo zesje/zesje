@@ -1,6 +1,8 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 
+import * as api from '../api.jsx'
+
 const BurgerButton = (props) => (
     <button className={"button navbar-burger" + (props.foldOut ? " is-active" : "")}
         onClick={props.burgerClick}>
@@ -12,8 +14,8 @@ const BurgerButton = (props) => (
 
 const ExamDropdown = (props) => (
     <div className="navbar-item has-dropdown is-hoverable">
-        <Link className="navbar-link" to={'/exams/' + (props.exam ? props.exam.id : "")}>
-            {props.exam ? <i>{props.exam.name}</i> : "Add exam"}
+        <Link className="navbar-link" to={'/exams/' + (props.exam.id ? props.exam.id : "")}>
+            {props.exam.id ? <i>{props.exam.name}</i> : "Add exam"}
         </Link>
         <div className="navbar-dropdown">
             {props.list.map((exam) => (
@@ -33,7 +35,22 @@ const ExamDropdown = (props) => (
 class NavBar extends React.Component {
 
     state = {
-        foldOut: false
+        foldOut: false,
+        examList: []
+    }
+
+    componentDidMount = () => {
+        this.updateExamList();
+    }
+
+    updateExamList = () => {
+        api.get('exams')
+            .then(exams => {
+                this.setState({
+                    examList: exams
+                })
+                if (this.props.exam.id == null && exams.length) this.props.updateExam(exams[exams.length - 1].id)
+            })
     }
 
     burgerClick = () => {
@@ -44,7 +61,7 @@ class NavBar extends React.Component {
 
     render() {
 
-        const examStyle = this.props.exam && this.props.exam.submissions ? {} : { pointerEvents: 'none', opacity: .65 }
+        const examStyle = this.props.exam.submissions.length ? {} : { pointerEvents: 'none', opacity: .65 }
 
         return (
             <nav className="navbar" role="navigation" aria-label="dropdown navigation">
@@ -65,8 +82,8 @@ class NavBar extends React.Component {
                 <div className={"navbar-menu" + (this.state.foldOut ? " is-active" : "")} onClick={this.burgerClick}>
                     <div className="navbar-start">
 
-                        {this.props.exam ?
-                            <ExamDropdown exam={this.props.exam} list={this.props.list} />
+                        {this.state.examList.length ?
+                            <ExamDropdown exam={this.props.exam} list={this.state.examList} />
                             :
                             <Link className="navbar-item" to='/exams'>Add exam</Link>
                         }

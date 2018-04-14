@@ -34,22 +34,8 @@ class Exams extends React.Component {
         pdfs: []
     };
 
-    loadExam = (id) => {
-        if (this.props.exam.id !== parseInt(id)) {
-            console.log('Changing exam id to ' + id)
-            this.props.changeExam(parseInt(id));
-        }
-
-        api.get('exams/' + id)
-            .then(exam => {
-                this.setState({
-                    yaml: exam.yaml
-                })
-            })
-    }
-
     putYaml = () => {
-        api.patch('exams/' + this.props.urlID, { yaml: this.state.yaml })
+        api.patch('exams/' + this.props.exam.id, { yaml: this.state.yaml })
             .then(() => alert('thank you for the update; it was delicious'))
             .catch(resp => {
                 alert('failed to update the YAML (see javascript console)')
@@ -64,13 +50,13 @@ class Exams extends React.Component {
     }
 
     updatePDFs = () => {
-        api.get('pdfs/' + this.props.urlID)
+        api.get('pdfs/' + this.props.exam.id)
             .then(pdfs => {
                 if (JSON.stringify(pdfs) != JSON.stringify(this.state.pdfs)) {
-                    this.props.updateList(null, true)
                     this.setState({
                         pdfs: pdfs
                     })
+                    this.props.updateSubmission()
                 }
             })
     }
@@ -83,7 +69,7 @@ class Exams extends React.Component {
         accepted.map(file => {
             const data = new FormData()
             data.append('pdf', file)
-            api.post('pdfs/' + this.props.urlID, data)
+            api.post('pdfs/' + this.props.exam.id, data)
                 .then(() => {
                     this.updatePDFs();
                 })
@@ -95,14 +81,22 @@ class Exams extends React.Component {
     }
 
     componentDidMount = () => {
-        this.loadExam(this.props.urlID);
         this.pdfUpdater = setInterval(this.updatePDFs, 1000)
+        if (this.props.exam.id) this.updatePDFs()
     }
 
-    componentWillReceiveProps = (newProps) => {
-        if (newProps.urlID !== this.props.urlID) {
-            this.loadExam(newProps.urlID)
+    static getDerivedStateFromProps = (newProps, prevState) => {
+        if (newProps.exam.id != prevState.examID) {
+            return {
+                yaml: newProps.exam.yaml,
+                pdfs: [],
+                examID: newProps.exam.id
+            }
         }
+        return null
+    }
+    componentDidUpdate = (prevProps) => {
+        if (prevProps.exam.id != this.props.exam.id) this.updatePDFs()
     }
 
     componentWillUnmount = () => {

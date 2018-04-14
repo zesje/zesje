@@ -42,7 +42,47 @@ class ExamConfig(Resource):
         return {
             'id': exam_id,
             'name': exam.name,
-            'submissions': exam.submissions.count(),
+            'submissions': 
+            [
+                {
+                    'id': sub.copy_number,
+                    'student':
+                        {
+                            'id': sub.student.id,
+                            'firstName': sub.student.first_name,
+                            'lastName': sub.student.last_name,
+                            'email': sub.student.email
+                        } if sub.student else None,
+                    'validated': sub.signature_validated,
+                    'solutions':
+                    [
+                        {
+                            'problem': sol.problem.id,
+                            'graded_by': sol.graded_by,
+                            'graded_at': sol.graded_at.isoformat() if sol.graded_at else None,
+                            'feedback': [
+                                fb.id for fb in sol.feedback
+                            ],
+                            'remarks': sol.remarks
+                        } for sol in sub.solutions.order_by(lambda s: s.problem.id)
+                    ]
+                } for sub in exam.submissions.order_by(lambda s: s.copy_number)
+            ],
+            'problems': [
+                {
+                    'id': prob.id,
+                    'name': prob.name,
+                    'feedback': [
+                        {
+                            'id': fb.id,
+                            'name': fb.text,
+                            'description': fb.description,
+                            'score': fb.score,
+                            'used': fb.solutions.count()
+                        } for fb in prob.feedback_options.order_by(lambda f: f.id)
+                    ]
+                } for prob in exam.problems.order_by(lambda p: p.id)
+            ],
             'yaml': yml
         }
 

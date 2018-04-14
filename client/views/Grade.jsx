@@ -156,7 +156,7 @@ class Grade extends React.Component {
                                     <EditPanel problem={this.state.problem} feedbackID={this.state.editFeedback} toggleEdit={this.toggleEdit}/>
                                     :
                                     <FeedbackPanel problem={this.state.problem} toggleEdit={this.toggleEdit} 
-                                        editFeedback={this.editFeedback}/>
+                                        editFeedback={this.editFeedback} />
                                 }
                             </div>
 

@@ -51,65 +51,63 @@ const Fail = Loadable({
 
 class App extends React.Component {
 
+    menu = React.createRef();
+
     state = {
-        examIndex: null,
-        examList: []
+        exam: {
+            id: null,
+            name: "",
+            submissions: [],
+            problems: [],
+            yaml: ""
+        }
     }
 
-    componentDidMount() {
-        this.updateExamList();
+    updateExam = (examID) => {
+        api.get('exams/' + examID)
+            .then(ex => this.setState({
+                    exam: ex
+                }))
     }
-
-    updateExamList = (callback, onlyList) => {
-        api.get('exams')
-            .then(exams => {
-                if (exams.length) {
-                    if (onlyList) {
-                        this.setState({
-                            examList: exams
-                        })
-                    } else {
-                        this.setState({
-                            examIndex: exams.length - 1,
-                            examList: exams
-                        }, callback)
+    updateSubmission = (index, sub) => {
+        if (index != undefined) {
+            if (sub) {
+                let newList = this.state.exam.submissions;
+                newList[index] = sub;
+                this.setState({
+                    exam: {
+                        ...this.state.exam,
+                        submissions: newList
                     }
-                }
-            })
-            .catch(resp => {
-                alert('failed to get exams (see javascript console for details)')
-                console.error('failed to get exams:', resp)
-            })
-    }
-
-    changeExam = (examID) => {
-        const index = this.state.examList.findIndex(exam => exam.id === examID)
-        if (index === -1) {
-            alert('Wrong exam url entered');
-            return;
+                })
+            }
         } else {
-            this.setState({
-                examIndex: index
-            })
+            api.get('submissions/' + this.state.exam.id)
+            .then(subs => this.setState({
+                exam: {
+                    ...this.state.exam,
+                    submissions: subs
+                }
+            }))
         }
     }
 
     render() {
 
-        const exam = this.state.examIndex === null ? null : this.state.examList[this.state.examIndex];
+        const exam = this.state.exam
 
         return (
             <Router>
                 <div>
-                    <NavBar exam={exam} list={this.state.examList} changeExam={this.changeExam} />
+                    <NavBar exam={exam} updateExam={this.updateExam} ref={this.menu} />
                     <Switch>
                         <Route exact path="/" component={Home} />
                         <Route path="/exams/:examID" render={({match}) => 
-                            <Exam exam={exam} urlID={match.params.examID} changeExam={this.changeExam} updateList={this.updateExamList}/> }/>
+                            <Exam exam={exam} urlID={match.params.examID} changeExam={this.changeExam} updateSubmission={this.updateSubmission}/> }/>
                         <Route path="/exams" render={({history}) => 
-                            <AddExam updateExamList={this.updateExamList} changeURL={history.push} /> }/>
+                            <AddExam updateExamList={() => this.menu.current.updateExamList()} changeURL={history.push} /> }/>
                         <Route path="/students" render={() => 
-                            <Students exam={exam} /> }/>
+                            <Students exam={exam} updateSubmission={this.updateSubmission}/> }/>
                         <Route path="/grade" render={() => (
                             exam && exam.submissions ? <Grade exam={exam}/> : <Fail message="No exams uploaded. Please do not bookmark URLs" />
                         )} />

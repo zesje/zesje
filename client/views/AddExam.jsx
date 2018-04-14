@@ -17,7 +17,8 @@ class Exams extends React.Component {
         data.append('yaml', accepted[0])
         api.post('exams', data)
             .then(exam => {
-                this.props.updateExamList(() => this.props.changeURL('/exams/' + exam.id));
+                this.props.updateExamList()
+                this.props.changeURL('/exams/' + exam.id);
             })
             .catch(resp => {
                 alert('failed to upload yaml (see javascript console for details)')

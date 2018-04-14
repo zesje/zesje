@@ -7,7 +7,15 @@ import FeedbackBlock from './FeedbackBlock.jsx';
 class FeedbackPanel extends React.Component {
 
     state = {
-        feedback: []
+        feedback: [],
+        remark: null,
+        remarkActive: false
+    }
+
+    addRemark = () => {
+        this.setState({
+            remarkActive: true
+        })
     }
 
     componentDidMount = () => {
@@ -33,11 +41,11 @@ class FeedbackPanel extends React.Component {
     }
 
     shouldComponentUpdate = (nextProps, nextState) => {
-        if (this.props.problem !== nextProps.problem || this.state.feedback != nextState.feedback) {
+        if (this.props.problem !== nextProps.problem || this.state.feedback != nextState.feedback || this.state.rem) {
             return true;            
         } else {
             console.log('halting re-render')
-            return false;
+            return true;
         }
     }
 
@@ -51,12 +59,24 @@ class FeedbackPanel extends React.Component {
                 {this.state.feedback.map((feedback, i) =>
                     <FeedbackBlock key={i} index={i} feedback={feedback} checked={false} onClick={this.props.editFeedback} />
                 )}
-                <div className="panel-block is-hidden-mobile">
+                {this.state.remarkActive ?
+                    <div className="panel-block">
+                        <textarea className="textarea" rows="2" placeholder="remark" />
+                    </div>
+                    : null
+                }
+                <div className="panel-block">
                     <button className="button is-link is-outlined is-fullwidth" onClick={this.props.toggleEdit}>
                         <span className="icon is-small">
                             <i className="fa fa-plus"></i>
                         </span>
-                        <span>add option</span>
+                        <span>option</span>
+                    </button>
+                    <button className="button is-link is-outlined is-fullwidth" onClick={this.addRemark}>
+                        <span className="icon is-small">
+                            <i className="fa fa-plus"></i>
+                        </span>
+                        <span>remark</span>
                     </button>
                 </div>
             </nav>

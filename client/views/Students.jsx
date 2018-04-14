@@ -15,15 +15,9 @@ class CheckStudents extends React.Component {
     state = {
         editActive: false,
         editStud: null,
-        submission: {
-            id: 0,
-            input: 0,
-            index: 0,
-            student: null,
-            validated: false,
-            imagePath: null,
-            list: []
-        }
+        input: "",
+        index: 0,
+        examID: null
     };
 
     componentWillUnmount = () => {
@@ -45,88 +39,73 @@ class CheckStudents extends React.Component {
             event.preventDefault();
             this.prevUnchecked();
         });
+    }
 
-        if (this.props.exam) this.loadSubmissions();
-
+    static getDerivedStateFromProps = (newProps, prevState) => {
+        if (newProps.exam.id != prevState.examID && newProps.exam.submissions.length) {
+            return {
+                input: newProps.exam.submissions[0].id,
+                index: 0,
+                examID: newProps.examID
+            }
+        }
+        return null
     }
 
 
     prev = () => {
-        const newIndex = this.state.submission.index - 1;
+        const newIndex = this.state.index - 1;
 
-        if (newIndex >= 0 && newIndex < this.state.submission.list.length) {
+        if (newIndex >= 0 && newIndex < this.props.exam.submissions.length) {
             this.setState({
-                submission: {
-                    ...this.state.submission,
-                    input: this.state.submission.list[newIndex].id
-                }
+                input: this.props.exam.submissions[newIndex].id
             }, this.setSubmission)
         }
     }
     next = () => {
-        const newIndex = this.state.submission.index + 1;
+        const newIndex = this.state.index + 1;
 
-        if (newIndex >= 0 && newIndex < this.state.submission.list.length) {
+        if (newIndex >= 0 && newIndex < this.props.exam.submissions.length) {
             this.setState({
-                submission: {
-                    ...this.state.submission,
-                    input: this.state.submission.list[newIndex].id
-                }
+                input: this.props.exam.submissions[newIndex].id
             }, this.setSubmission)
         }
 
     }
 
     prevUnchecked = () => {
-        const unchecked = this.state.submission.list.filter(sub => sub.validated === false).map(sub => sub.id);
-        const newInput = getClosest.lowerNumber(this.state.submission.id - 1, unchecked);
+        const unchecked = this.props.exam.submissions.filter(sub => sub.validated === false).map(sub => sub.id);
+        const newInput = getClosest.lowerNumber(this.props.exam.submissions[this.state.index].id - 1, unchecked);
 
         if (typeof newInput !== 'undefined') {
             this.setState({
-                submission: {
-                    ...this.state.submission,
-                    input: unchecked[newInput]
-                }
+                input: unchecked[newInput]
             }, this.setSubmission)
         }
     }
     nextUnchecked = () => {
-        const unchecked = this.state.submission.list.filter(sub => sub.validated === false).map(sub => sub.id);
-        const newInput = getClosest.greaterNumber(this.state.submission.id + 1, unchecked);
+        const unchecked = this.props.exam.submissions.filter(sub => sub.validated === false).map(sub => sub.id);
+        const newInput = getClosest.greaterNumber(this.props.exam.submissions[this.state.index].id + 1, unchecked);
 
         if (typeof newInput !== 'undefined') {
             this.setState({
-                submission: {
-                    ...this.state.submission,
-                    input: unchecked[newInput]
-                }
+                input: unchecked[newInput]
             }, this.setSubmission)
         }
     }
 
     setSubmission = () => {
 
-        const input = parseInt(this.state.submission.input);
-        const i = this.state.submission.list.findIndex(sub => sub.id === input);
-        const sub = this.state.submission.list[i];
+        const input = parseInt(this.state.input);
+        const i = this.props.exam.submissions.findIndex(sub => sub.id === input);
 
         if (i >= 0) {
             this.setState({
-                submission: {
-                    ...this.state.submission,
-                    id: input,
-                    student: sub.student,
-                    validated: sub.validated,
-                    index: i,
-                    imagePath: 'api/images/signature/' + this.props.exam.id + '/' + input
-                }
-            }, this.getSubmission)
+                index: i,
+            }, /* UPDATE SUBMISSION IN TOP COMPONENT */)
         } else {
             this.setState({
-                submission: {
-                    ...this.state.submission,
-                    input: this.state.submission.id
-                }
+                input: this.props.submissions[this.state.index].id
             })
             alert('Could not find that submission number :(\nSorry!');
         }
@@ -136,91 +115,24 @@ class CheckStudents extends React.Component {
         const patt = new RegExp(/^([1-9]\d*|0)?$/);
 
         if (patt.test(event.target.value)) {
-            this.setState({
-                submission: {
-                    ...this.state.submission,
-                    input: event.target.value
-                }
-            })
+            this.setState({ input: event.target.value })
         }
-    }
-
-    getSubmission = () => {
-        api.get('submissions/' + this.props.exam.id + '/' + this.state.submission.id)
-            .then(sub => {
-                let newList = this.state.submission.list;
-                const index = newList.findIndex(localSub => localSub.id === sub.id)
-                newList[index] = sub;
-                this.setState({
-                    submission: {
-                        ...this.state.submission,
-                        student: sub.student,
-                        validated: sub.validated,
-                        list: newList
-                    }
-                })
-            })
-            .catch(err => {
-                alert('failed to get submission (see javascript console for details)')
-                console.error('failed to get submission:', err)
-                throw err
-            })
-    }
-
-    loadSubmissions = () => {
-        api.get('submissions/' + this.props.exam.id)
-            .then(subs => {
-                if (subs.length) {
-                    this.setState({
-                        submission: {
-                            ...this.state.submission,
-                            id: subs[0].id,
-                            input: subs[0].id,
-                            student: subs[0].student,
-                            validated: subs[0].validated,
-                            imagePath: 'api/images/signature/' + this.props.exam.id + '/' + subs[0].id,
-                            list: subs
-                        }
-                    })
-                }
-            })
-            .catch(err => {
-                alert('failed to get submissions (see javascript console for details)')
-                console.error('failed to get submissions:', err)
-                throw err
-            })
     }
 
     matchStudent = (stud) => {
 
-        if(!this.state.submission.list.length) return;
+        if (!this.props.exam.submissions.length) return;
 
-        let newList = this.state.submission.list;
-        const index = this.state.submission.index;
-
-        this.setState({
-            submission: {
-                ...this.state.submission,
-                student: stud,
-                validated: true
-            }
-        }, this.nextUnchecked)
-
-        api.put('submissions/' + this.props.exam.id + '/' + this.state.submission.id, { studentID: stud.id })
+        api.put('submissions/' + this.props.exam.id + '/' + this.props.exam.submissions[this.state.index].id, { studentID: stud.id })
             .then(sub => {
-                newList[index] = sub;
-                this.setState({
-                    submission: {
-                        ...this.state.submission,
-                        list: newList
-                    }
-                })
+                this.props.updateSubmission(this.state.index, sub)
+                this.nextUnchecked()                
             })
             .catch(err => {
                 alert('failed to put submission (see javascript console for details)')
                 console.error('failed to put submission:', err)
                 throw err
-            })
+            })        
     }
 
     toggleEdit = (student) => {
@@ -242,7 +154,9 @@ class CheckStudents extends React.Component {
             width: '5em'
         };
 
-        const maxSubmission = Math.max(...this.state.submission.list.map(o => o.id));
+        const maxSubmission = Math.max(...this.props.exam.submissions.map(o => o.id));
+
+        const subm = this.props.exam.submissions[this.state.index];
 
         return (
             <div>
@@ -259,11 +173,11 @@ class CheckStudents extends React.Component {
                                     <EditPanel toggleEdit={this.toggleEdit} editStud={this.state.editStud} />
                                     :
                                     <SearchPanel matchStudent={this.matchStudent} toggleEdit={this.toggleEdit}
-                                        student={this.state.submission.student} validated={this.state.submission.validated} />
+                                        student={subm && subm.student} validated={subm && subm.validated} />
                                 }
                             </div>
 
-                            {this.state.submission.list.length ?  
+                            {this.props.exam.submissions.length ?
                                 <div className="column">
                                     <div className="level">
                                         <div className="level-item">
@@ -271,17 +185,17 @@ class CheckStudents extends React.Component {
                                                 <div className="control">
                                                     <button type="submit" className="button is-info is-rounded is-hidden-mobile"
                                                         onClick={this.prevUnchecked}>unchecked</button>
-                                                    <button type="submit" className={"button" + (this.state.submission.validated ? " is-success" : " is-link")}
+                                                    <button type="submit" className={"button" + (subm.validated ? " is-success" : " is-link")}
                                                         onClick={this.prev}>Previous</button>
                                                 </div>
                                                 <div className="control">
-                                                    <input className={"input is-rounded has-text-centered" + (this.state.submission.validated ? " is-success" : " is-link")}
-                                                        value={this.state.submission.input} type="text"
+                                                    <input className={"input is-rounded has-text-centered" + (subm.validated ? " is-success" : " is-link")}
+                                                        value={this.state.input} type="text"
                                                         onChange={this.setSubInput} onSubmit={this.setSubmission}
                                                         onBlur={this.setSubmission} maxLength="4" size="6" style={inputStyle} />
                                                 </div>
                                                 <div className="control">
-                                                    <button type="submit" className={"button" + (this.state.submission.validated ? " is-success" : " is-link")}
+                                                    <button type="submit" className={"button" + (subm.validated ? " is-success" : " is-link")}
                                                         onClick={this.next}>Next</button>
                                                     <button type="submit" className="button is-info is-rounded is-hidden-mobile"
                                                         onClick={this.nextUnchecked}>unchecked</button>
@@ -290,14 +204,14 @@ class CheckStudents extends React.Component {
                                         </div>
                                     </div>
 
-                                    <ProgressBar submissions={this.state.submission.list}/>
+                                    <ProgressBar submissions={this.props.exam.submissions} />
 
                                     <p className="box">
-                                        <img src={this.state.submission.imagePath} alt="" />
+                                        <img src={'api/images/signature/' + this.props.exam.id + '/' + subm.id} alt="" />
                                     </p>
 
                                 </div>
-                            : null }
+                                : null}
                         </div>
                     </div>
                 </section>

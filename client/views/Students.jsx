@@ -46,7 +46,7 @@ class CheckStudents extends React.Component {
             return {
                 input: newProps.exam.submissions[0].id,
                 index: 0,
-                examID: newProps.examID
+                examID: newProps.exam.id
             }
         }
         return null

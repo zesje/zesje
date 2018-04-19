@@ -70,18 +70,7 @@ class App extends React.Component {
                 }))
     }
     updateSubmission = (index, sub) => {
-        if (index != undefined) {
-            if (sub) {
-                let newList = this.state.exam.submissions;
-                newList[index] = sub;
-                this.setState({
-                    exam: {
-                        ...this.state.exam,
-                        submissions: newList
-                    }
-                })
-            }
-        } else {
+        if (index == undefined) {
             api.get('submissions/' + this.state.exam.id)
             .then(subs => this.setState({
                 exam: {
@@ -89,6 +78,33 @@ class App extends React.Component {
                     submissions: subs
                 }
             }))
+        } else {
+            if (sub) {
+                if (JSON.stringify(sub) != JSON.stringify(this.state.exam.submissions[index])) {
+                    let newList = this.state.exam.submissions;
+                    newList[index] = sub;
+                    this.setState({
+                        exam: {
+                            ...this.state.exam,
+                            submissions: newList
+                        }
+                    })
+                }
+            } else {
+                api.get('submissions/' + this.state.exam.id + '/' + this.state.exam.submissions[index].id)
+                    .then(sub => {
+                        if (JSON.stringify(sub) != JSON.stringify(this.state.exam.submissions[index])) {
+                            let newList = this.state.exam.submissions;
+                            newList[index] = sub;
+                            this.setState({
+                                exam: {
+                                    ...this.state.exam,
+                                    submissions: newList
+                                }
+                            })
+                        }
+                    })
+            }
         }
     }
 
@@ -109,10 +125,10 @@ class App extends React.Component {
                         <Route path="/students" render={() => 
                             <Students exam={exam} updateSubmission={this.updateSubmission}/> }/>
                         <Route path="/grade" render={() => (
-                            exam && exam.submissions ? <Grade exam={exam}/> : <Fail message="No exams uploaded. Please do not bookmark URLs" />
+                            exam.submissions.length ? <Grade exam={exam} updateSubmission={this.updateSubmission}/> : <Fail message="No exams uploaded. Please do not bookmark URLs" />
                         )} />
                         <Route path="/statistics" render={() => (
-                            exam && exam.submissions ? <Statistics /> : <Fail message="No exams uploaded. Please do not bookmark URLs" />
+                            exam.submissions.length ? <Statistics /> : <Fail message="No exams uploaded. Please do not bookmark URLs" />
                         )} />
                         <Route path="/graders" component={Graders} />
                         <Route path="/reset" component={Reset} />

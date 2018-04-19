@@ -54,16 +54,16 @@ class ExamConfig(Resource):
                             'email': sub.student.email
                         } if sub.student else None,
                     'validated': sub.signature_validated,
-                    'solutions':
+                    'problems':
                     [
                         {
-                            'problem': sol.problem.id,
+                            'id': sol.problem.id,
                             'graded_by': sol.graded_by,
                             'graded_at': sol.graded_at.isoformat() if sol.graded_at else None,
                             'feedback': [
                                 fb.id for fb in sol.feedback
                             ],
-                            'remarks': sol.remarks
+                            'remark': sol.remarks
                         } for sol in sub.solutions.order_by(lambda s: s.problem.id)
                     ]
                 } for sub in exam.submissions.order_by(lambda s: s.copy_number)

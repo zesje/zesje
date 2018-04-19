@@ -16,41 +16,34 @@ class Grade extends React.Component {
     state = {
         editActive: false,
         editFeedback: null,
-        problem: null,
-        submission: {
-            input: "",
-            index: 0,
-            id: null,
-            student: null,
-            validated: false,
-            imagePath: null,
-            list: []
-        },
-        solution: null
+        sIndex: 0,
+        pIndex: 0,
+        input: "",
+        examID: null
     }
 
     prev = () => {
-        const newIndex = this.state.submission.index - 1;
+        const newIndex = this.state.sIndex - 1;
 
-        if (newIndex >= 0 && newIndex < this.state.submission.list.length) {
+        if (newIndex >= 0 && newIndex < this.props.exam.submissions.length) {
             this.setState({
-                submission: {
-                    ...this.state.submission,
-                    input: this.state.submission.list[newIndex].student.id
-                }
-            }, this.setSubmission)
+                sIndex: newIndex,
+                input: this.props.exam.submissions[newIndex].student.id  + ' (' + 
+                    this.props.exam.submissions[newIndex].student.firstName + ' ' + this.props.exam.submissions[newIndex].student.lastName + ')'
+            })
+            this.props.updateSubmission(newIndex)
         }
     }
     next = () => {
-        const newIndex = this.state.submission.index + 1;
+        const newIndex = this.state.sIndex + 1;
 
-        if (newIndex >= 0 && newIndex < this.state.submission.list.length) {
+        if (newIndex >= 0 && newIndex < this.props.exam.submissions.length) {
             this.setState({
-                submission: {
-                    ...this.state.submission,
-                    input: this.state.submission.list[newIndex].student.id
-                }
-            }, this.setSubmission)
+                sIndex: newIndex,
+                input: this.props.exam.submissions[newIndex].student.id + ' (' + 
+                    this.props.exam.submissions[newIndex].student.firstName + ' ' + this.props.exam.submissions[newIndex].student.lastName + ')'
+            })
+            this.props.updateSubmission(newIndex)
         }
     }
 
@@ -67,75 +60,51 @@ class Grade extends React.Component {
             editFeedback: null
         })
     }
-    editFeedback = (event) => {
-        console.log(event);
-        this.setState({
-            editActive: true
-        })
-    }
 
     setSubInput = (event) => {
-        this.setState({
-            submission: {
-                ...this.state.submission,
-                input: event.target.value
-            }
-        })
+        this.setState({ input: event.target.value })
     }
     setSubmission = () => {
-        const input = parseInt(this.state.submission.input);
+        const input = parseInt(this.state.input);
         const i = this.state.submission.list.findIndex(sub => sub.student.id === input);
         const sub = this.state.submission.list[i];
 
         if (i >= 0) {
             this.setState({
-                submission: {
-                    ...this.state.submission,
-                    input: sub.student.id + ' (' + sub.student.firstName + ')',
-                    id: sub.id,
-                    index: i,
-                    student: sub.student,
-                    validated: sub.validated,
-                    imagePath: 'api/images/solutions/' + this.props.exam.id + '/' + this.state.problem + '/' + sub.id                    
-                }
-            }, this.getSubmission)
+                index: i,
+                input: sub.student.id  + ' (' + sub.student.firstName + ' ' + sub.student.lastName + ')'
+            })
+            this.props.updateSubmission(i)
         } else {
             this.setState({
-                submission: {
-                    ...this.state.submission,
-                    input: this.state.submission.student.id
-                }
+                input: this.props.exam.submissions[this.state.sIndex].student.id  + ' (' + 
+                    this.props.exam.submissions[this.state.sIndex].student.firstName + ' ' + this.props.exam.submissions[this.state.sIndex].student.lastName + ')'
             })
             alert('Could not find that submission number :(\nSorry!');
         }
     }
-    changeProblem = (id) => {
-        console.log(id);
+    changeProblem = (event) => {
+        console.log(event.target.value);
         this.setState({
-            problem: id,
-            submission: {
-                ...this.state.submission,
-                imagePath: 'api/images/solutions/' + this.props.exam.id + '/' + id + '/' + this.state.submission.id
-            }
+            pIndex: event.target.value
         })
     }
-
-    componentDidMount = () => {
-        api.get('submissions/' + this.props.exam.id)
-            .then(subs => 
-            this.setState({
-                submission: {
-                    input: subs[0].student.id + ' (' + subs[0].student.firstName + ')',
-                    index: 0,
-                    id: subs[0].id,
-                    student: subs[0].student,
-                    validated: subs[0].validated,
-                    imagePath: 'api/images/solutions/' + this.props.exam.id + '/' + this.state.problem + '/' + subs[0].id,
-                    list: subs
-                }
-            }))
+    static getDerivedStateFromProps = (newProps, prevState) => {
+        console.log('Nieuwe props')
+        if (newProps.exam.id != prevState.examID && newProps.exam.submissions.length) {
+            return {
+                input: newProps.exam.submissions[0].student.id + ' (' + 
+                    newProps.exam.submissions[0].student.firstName + ' ' + newProps.exam.submissions[0].student.lastName + ')',
+                sIndex: 0,
+                pIndex: 0,
+                examID: newProps.exam.id
+            }
+        }
+        return {
+            input: newProps.exam.submissions[prevState.sIndex].student.id + ' (' + 
+            newProps.exam.submissions[prevState.sIndex].student.firstName + ' ' + newProps.exam.submissions[prevState.sIndex].student.lastName + ')'
+        }
     }
-
 
     render() {
 
@@ -151,12 +120,12 @@ class Grade extends React.Component {
                     <div className="container">
                         <div className="columns">
                             <div className="column is-one-quarter-desktop is-one-third-tablet">
-                                <ProblemSelector examID={this.props.exam.id} changeProblem={this.changeProblem}/>
+                                <ProblemSelector problems={this.props.exam.problems} changeProblem={this.changeProblem}/>
                                 {this.state.editActive ?
-                                    <EditPanel problem={this.state.problem} feedbackID={this.state.editFeedback} toggleEdit={this.toggleEdit}/>
+                                    <EditPanel problem={this.props.exam.problems[this.state.pIndex]} editFeedback={this.state.editFeedback} toggleEdit={this.toggleEdit}/>
                                     :
-                                    <FeedbackPanel problem={this.state.problem} toggleEdit={this.toggleEdit} 
-                                        editFeedback={this.editFeedback} />
+                                    <FeedbackPanel problem={this.props.exam.problems[this.state.pIndex]} solution={this.props.exam.submissions[this.state.sIndex]}
+                                        toggleEdit={this.toggleEdit} />
                                 }
                             </div>
 
@@ -172,7 +141,7 @@ class Grade extends React.Component {
                                             </div>
                                             <div className="control">
                                                 <input className="input is-rounded has-text-centered is-link"
-                                                    value={this.state.submission.input} type="text"
+                                                    value={this.state.input} type="text"
                                                     onChange={this.setSubInput} onSubmit={this.setSubmission} onBlur={this.setSubmission} />
                                             </div>
                                             <div className="control">
@@ -185,10 +154,11 @@ class Grade extends React.Component {
                                     </div>
                                 </div>
 
-                                <ProgressBar submissions={this.state.submission} />
+                                <ProgressBar submissions={this.props.exam.submissions} />
 
                                 <p className="box">
-                                    <img src={this.state.submission.imagePath} alt="" />
+                                    <img src={this.props.exam.id ? ('api/images/solutions/' + this.props.exam.id + '/' 
+                                        + this.props.exam.problems[this.state.pIndex].id + '/' + this.props.exam.submissions[this.state.sIndex].id) : ''} alt="" />
                                 </p>
 
                             </div>

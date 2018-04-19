@@ -44,7 +44,6 @@ class Grade extends React.Component {
         const newIndex = this.state.sIndex + 1;
 
         if (newIndex >= 0 && newIndex < this.props.exam.submissions.length) {
-            console.log(newIndex + ' / ' + this.props.exam.submissions.length)
             this.props.updateSubmission(newIndex)
             this.setState({
                 sIndex: newIndex,
@@ -89,13 +88,11 @@ class Grade extends React.Component {
         }
     }
     changeProblem = (event) => {
-        console.log(event.target.value);
         this.setState({
             pIndex: event.target.value
         })
     }
     static getDerivedStateFromProps = (newProps, prevState) => {
-        console.log('Nieuwe props')
         if (newProps.exam.id != prevState.examID && newProps.exam.submissions.length) {
             return {
                 input: Grade.inputString(newProps.exam.submissions[0]),

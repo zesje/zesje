@@ -22,28 +22,34 @@ class Grade extends React.Component {
         examID: null
     }
 
+    static inputString (sub) {
+        if(sub.student) {
+            return (sub.student.id + ' (' + sub.student.firstName + ' ' + sub.student.lastName + ')')
+        }
+        return ('#' + sub.id)
+    }
+
     prev = () => {
         const newIndex = this.state.sIndex - 1;
 
         if (newIndex >= 0 && newIndex < this.props.exam.submissions.length) {
+            this.props.updateSubmission(newIndex)
             this.setState({
                 sIndex: newIndex,
-                input: this.props.exam.submissions[newIndex].student.id  + ' (' + 
-                    this.props.exam.submissions[newIndex].student.firstName + ' ' + this.props.exam.submissions[newIndex].student.lastName + ')'
+                input: Grade.inputString(this.props.exam.submissions[newIndex])
             })
-            this.props.updateSubmission(newIndex)
         }
     }
     next = () => {
         const newIndex = this.state.sIndex + 1;
 
         if (newIndex >= 0 && newIndex < this.props.exam.submissions.length) {
+            console.log(newIndex + ' / ' + this.props.exam.submissions.length)
+            this.props.updateSubmission(newIndex)
             this.setState({
                 sIndex: newIndex,
-                input: this.props.exam.submissions[newIndex].student.id + ' (' + 
-                    this.props.exam.submissions[newIndex].student.firstName + ' ' + this.props.exam.submissions[newIndex].student.lastName + ')'
+                input: Grade.inputString(this.props.exam.submissions[newIndex])
             })
-            this.props.updateSubmission(newIndex)
         }
     }
 
@@ -70,15 +76,14 @@ class Grade extends React.Component {
         const sub = this.state.submission.list[i];
 
         if (i >= 0) {
+            this.props.updateSubmission(i)
             this.setState({
                 index: i,
-                input: sub.student.id  + ' (' + sub.student.firstName + ' ' + sub.student.lastName + ')'
+                input: Grade.inputString(sub)
             })
-            this.props.updateSubmission(i)
         } else {
             this.setState({
-                input: this.props.exam.submissions[this.state.sIndex].student.id  + ' (' + 
-                    this.props.exam.submissions[this.state.sIndex].student.firstName + ' ' + this.props.exam.submissions[this.state.sIndex].student.lastName + ')'
+                input: Grade.inputString(this.props.exam.submissions[this.state.sIndex])
             })
             alert('Could not find that submission number :(\nSorry!');
         }
@@ -93,16 +98,14 @@ class Grade extends React.Component {
         console.log('Nieuwe props')
         if (newProps.exam.id != prevState.examID && newProps.exam.submissions.length) {
             return {
-                input: newProps.exam.submissions[0].student.id + ' (' + 
-                    newProps.exam.submissions[0].student.firstName + ' ' + newProps.exam.submissions[0].student.lastName + ')',
+                input: Grade.inputString(newProps.exam.submissions[0]),
                 sIndex: 0,
                 pIndex: 0,
                 examID: newProps.exam.id
             }
         }
         return {
-            input: newProps.exam.submissions[prevState.sIndex].student.id + ' (' + 
-            newProps.exam.submissions[prevState.sIndex].student.firstName + ' ' + newProps.exam.submissions[prevState.sIndex].student.lastName + ')'
+            input: Grade.inputString(newProps.exam.submissions[prevState.sIndex])
         }
     }
 

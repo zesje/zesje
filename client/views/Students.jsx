@@ -58,8 +58,10 @@ class CheckStudents extends React.Component {
 
         if (newIndex >= 0 && newIndex < this.props.exam.submissions.length) {
             this.setState({
+                index: newIndex,
                 input: this.props.exam.submissions[newIndex].id
-            }, this.setSubmission)
+            })
+            this.props.updateSubmission(newIndex)
         }
     }
     next = () => {
@@ -67,8 +69,10 @@ class CheckStudents extends React.Component {
 
         if (newIndex >= 0 && newIndex < this.props.exam.submissions.length) {
             this.setState({
+                index: newIndex,
                 input: this.props.exam.submissions[newIndex].id
-            }, this.setSubmission)
+            })
+            this.props.updateSubmission(newIndex)
         }
 
     }
@@ -102,7 +106,8 @@ class CheckStudents extends React.Component {
         if (i >= 0) {
             this.setState({
                 index: i,
-            }, /* UPDATE SUBMISSION IN TOP COMPONENT */)
+            })
+            this.props.updateSubmission(i)
         } else {
             this.setState({
                 input: this.props.submissions[this.state.index].id

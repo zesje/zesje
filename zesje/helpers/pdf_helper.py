@@ -258,10 +258,12 @@ def guess_dpi(image_array):
 def rotate_and_shift(image_data, extracted_qr, qr_coords):
     """Roll the image such that QR occupies coords specified by the template."""
     page, position = extracted_qr.page, extracted_qr.coords
-    image = np.asarray(image_data)
+    image = np.array(image_data)
 
     if image.shape[0] < image.shape[1]:
-        image = np.transpose(image, (1, 0, 2))
+        image = np.copy(np.transpose(
+            image, ((1, 0) if len(image.shape) == 2 else (1, 0, 2))
+        ))
 
     dpi = guess_dpi(image)
     h, w, *_ = image.shape
@@ -279,6 +281,10 @@ def rotate_and_shift(image_data, extracted_qr, qr_coords):
     shift = np.round((y0-y, x0-x)).astype(int)
     shifted_image = np.roll(image, shift[0], axis=0)
     shifted_image = np.roll(shifted_image, shift[1], axis=1)
+
+    # Workaround of https://github.com/python-pillow/Pillow/issues/3109
+    if shifted_image.dtype == bool:
+        shifted_image = shifted_image * np.uint8(255)
 
     return Image.fromarray(shifted_image)
 

@@ -217,9 +217,6 @@ def process_page(output_dir, image_data, exam_config):
 def extract_qr(image_data):
     """Extract a QR code from a PIL Image."""
     grayscale = np.asarray(image_data.convert(mode='L'))
-    # Apply portrait orientation.
-    if grayscale.shape[0] < grayscale.shape[1]:
-        grayscale = grayscale.T
 
     # Empirically we observed that the most important parameter
     # for zbar to successfully read a qr code is the resolution
@@ -229,7 +226,8 @@ def extract_qr(image_data):
     for dirx, diry, factor in itertools.product([1, -1], [1, -1], [8, 5, 4, 3]):
         scaled = grayscale[::factor * dirx, ::factor * diry]
         scanner = zbar.Scanner()
-        results = scanner.scan(scaled)
+        # Filter only QR codes to eliminate some false positives.
+        results = [i for i in scanner.scan(scaled) if i.type == 'QR-Code']
         if len(results) > 1:
             raise RuntimeError("Found > 1 QR code on the page.")
         if results:
@@ -240,8 +238,6 @@ def extract_qr(image_data):
                 return
             coords = np.array(results[0].position)
             # zbar doesn't respect array ordering!
-            if not np.isfortran(scaled):
-                coords = coords[:, ::-1]
             coords *= [factor * dirx, factor * diry]
             coords %= grayscale.shape
             return ExtractedQR(version, name, int(page), int(copy), coords)
@@ -258,19 +254,18 @@ def guess_dpi(image_array):
 def rotate_and_shift(image_data, extracted_qr, qr_coords):
     """Roll the image such that QR occupies coords specified by the template."""
     page, position = extracted_qr.page, extracted_qr.coords
+    y, x = np.mean(position, axis=0)
     image = np.array(image_data)
 
     if image.shape[0] < image.shape[1]:
-        image = np.copy(np.transpose(
-            image, ((1, 0) if len(image.shape) == 2 else (1, 0, 2))
-        ))
+        image = np.transpose(image, [1, 0] + [2] * (len(image.shape) > 2))
+        x, y = y, x
 
     dpi = guess_dpi(image)
     h, w, *_ = image.shape
     qr_widget = qr_coords[qr_coords.page == page]
     box = dpi * qr_widget[['top', 'bottom', 'left', 'right']].values[0]
     y0, x0 = h - np.mean(box[:2]), np.mean(box[2:])
-    y, x = np.mean(position, axis=0)
     if (x > w / 2) != (x0 > w / 2):
         image = image[:, ::-1]
         x = w - x

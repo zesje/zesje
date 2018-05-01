@@ -119,7 +119,7 @@ class App extends React.Component {
                     <Switch>
                         <Route exact path="/" component={Home} />
                         <Route path="/exams/:examID" render={({match}) => 
-                            <Exam exam={exam} urlID={match.params.examID} changeExam={this.changeExam} updateSubmission={this.updateSubmission}/> }/>
+                            <Exam exam={exam} urlID={match.params.examID} updateExam={this.updateExam} updateSubmission={this.updateSubmission}/> }/>
                         <Route path="/exams" render={({history}) => 
                             <AddExam updateExamList={() => this.menu.current.updateExamList()} changeURL={history.push} /> }/>
                         <Route path="/students" render={() => 

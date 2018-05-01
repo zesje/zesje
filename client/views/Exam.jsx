@@ -31,7 +31,8 @@ class Exams extends React.Component {
 
     state = {
         yaml: "",
-        pdfs: []
+        pdfs: [],
+        examID: null
     };
 
     putYaml = () => {
@@ -97,6 +98,7 @@ class Exams extends React.Component {
     }
     componentDidUpdate = (prevProps) => {
         if (prevProps.exam.id != this.props.exam.id) this.updatePDFs()
+        if (prevProps.urlID !== this.props.urlID) this.props.updateExam(this.props.urlID)
     }
 
     componentWillUnmount = () => {

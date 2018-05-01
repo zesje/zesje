@@ -33,10 +33,12 @@ class FeedbackBlock extends React.Component {
     render() {
         const score = this.props.feedback.score;
 
+        console.log(this.props.checked);
+
         return (
             <a className="panel-block is-active" onClick={this.toggle} >
                 <span className="panel-icon">
-                    <i className={"fa fa-" + (this.state.checked ? "check-square-o" : "square-o")}></i>
+                    <i className={"fa fa-" + (this.props.checked ? "check-square-o" : "square-o")}></i>
                 </span>
                 <span style={{ width: '80%' }}>
                     {this.props.feedback.name}

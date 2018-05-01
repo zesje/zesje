@@ -195,6 +195,9 @@ def process_page(output_dir, image_data, exam_config):
         widgets_on_page = widget_data[widget_data.page == qr_data.page]
         for problem in widgets_on_page.index:
             if problem == 'studentnr':
+                if sub.signature_validated:
+                    # We already identified the student before
+                    continue
                 sub.signature_image_path = 'None'
                 try:
                     number_widget = widgets_on_page.loc['studentnr']

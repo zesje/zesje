@@ -83,6 +83,7 @@ class Exams extends React.Component {
 
     componentDidMount = () => {
         this.pdfUpdater = setInterval(this.updatePDFs, 1000)
+        if (this.props.urlID !== this.props.exam.id) this.props.updateExam(this.props.urlID)
         if (this.props.exam.id) this.updatePDFs()
     }
 

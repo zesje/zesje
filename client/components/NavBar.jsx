@@ -68,8 +68,8 @@ class NavBar extends React.Component {
 
                 <div className="navbar-brand">
                     <div className="navbar-item has-text-info">
-                        <span className="icon">
-                            <i className="fa fa-edit fa-3x"></i>
+                        <span className="icon is-medium">
+                            <i className="fa fa-edit fa-2x"></i>
                         </span>
                     </div>
 

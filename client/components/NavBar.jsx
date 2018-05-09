@@ -97,7 +97,7 @@ class NavBar extends React.Component {
                         <Link className="navbar-item" to='/graders'>Manage graders</Link>
                         <Link className="navbar-item has-text-info" to='/reset'>reset</Link>
                         <div className="navbar-item">
-                            <i>Version 0.6.4</i>
+                            <i>Version { __COMMIT_HASH__ }</i>
                         </div>
                     </div>
                 </div>

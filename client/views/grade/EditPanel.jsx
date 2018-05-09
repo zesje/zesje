@@ -75,7 +75,7 @@ class EditPanel extends React.Component {
         if (this.props.feedback) {
 
         } else {
-            api.post('feedback/' + this.props.problem, {
+            api.post('feedback/' + this.props.problem.id, {
                 name: this.state.name,
                 description: this.state.description,
                 score: this.state.score ? parseInt(this.state.score) : null

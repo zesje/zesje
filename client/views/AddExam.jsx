@@ -32,14 +32,14 @@ class Exams extends React.Component {
         return (
             <div>
 
-                <Hero title='Exams' subtitle="Omnomnomnom PDF's!" />
+                <Hero title='Add exam' subtitle="first step" />
 
                 <section className="section">
 
                     <div className="container">
 
-                        <h3 className='title'>Upload new exam config</h3>
-                        <h5 className='subtitle'>then we know that to do with PDF's</h5>
+                        <h3 className='title'>Upload new exam configuration YAML</h3>
+                        <h5 className='subtitle'>Each exam should have a unique name.</h5>
 
                         <Dropzone accept=".yml, text/yaml, text/x-yaml, application/yaml, application/x-yaml"
                             style={{}} activeStyle={{ borderStyle: 'dashed', width: 'fit-content', margin: 'auto' }}

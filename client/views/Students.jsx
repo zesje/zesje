@@ -166,7 +166,7 @@ class CheckStudents extends React.Component {
         return (
             <div>
 
-                <Hero title='Match Students' subtitle='Who made what?' />
+                <Hero title='Match Students' subtitle='Check that all submissions are correctly identified' />
 
                 <section className="section">
 

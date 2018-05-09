@@ -6,10 +6,9 @@ const StatisticsDashboard = () => {
   return (
       <div>
 
-        <Hero title='Statistics Dashboard' subtitle='Is your exam sane?' />
+        <Hero title='Statistics Dashboard' subtitle='Review the grading' />
 
         <h1>React Router demo</h1>
-        Hoi dit de Statistics Dashboard
 
        </div>
   )

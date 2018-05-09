@@ -113,7 +113,7 @@ class Grade extends React.Component {
         return (
             <div>
 
-                <Hero title='Grade' subtitle='This is where the magic happens!' />
+                <Hero title='Grade' subtitle='Assign feedback to each solution' />
 
                 <section className="section">
 

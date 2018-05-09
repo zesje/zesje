@@ -37,7 +37,7 @@ class Exams extends React.Component {
 
     putYaml = () => {
         api.patch('exams/' + this.props.exam.id, { yaml: this.state.yaml })
-            .then(() => alert('thank you for the update; it was delicious'))
+            .then(() => alert('Exam config successfully updated.'))
             .catch(resp => {
                 alert('failed to update the YAML (see javascript console)')
                 console.error('failed to update YAML', resp)
@@ -64,7 +64,7 @@ class Exams extends React.Component {
 
     onDropPDF = (accepted, rejected) => {
         if (rejected.length > 0) {
-            alert('Please upload a PDF..')
+            alert('Please upload a PDF.')
             return
         }
         accepted.map(file => {
@@ -131,8 +131,8 @@ class Exams extends React.Component {
 
 
                         <div className="column has-text-centered">
-                            <h3 className='title'>And upload PDF's</h3>
-                            <h5 className='subtitle'>we will work some magic!</h5>
+                            <h3 className='title'>upload PDF</h3>
+                            <h5 className='subtitle'>scanned exams</h5>
                             <Dropzone accept={"application/pdf"} style={{}}
                                 activeStyle={{ borderStyle: 'dashed', width: 'fit-content', margin: 'auto' }}
                                 onDrop={this.onDropPDF}

@@ -1,6 +1,6 @@
 import os
 
-from flask import abort, current_app as app
+from flask import abort, current_app as app, send_file
 from flask_restful import Resource, reqparse
 from werkzeug.datastructures import FileStorage
 
@@ -36,8 +36,7 @@ class ExamConfig(Resource):
         exam = Exam[exam_id]
 
         data_dir = app.config['DATA_DIRECTORY']
-        with open(os.path.join(data_dir, exam.yaml_path)) as f:
-            yml = f.read()
+        exam_dir = os.path.join(data_dir, exam.name + '_data')
 
         return {
             'id': exam_id,
@@ -83,7 +82,6 @@ class ExamConfig(Resource):
                     ]
                 } for prob in exam.problems.order_by(lambda p: p.id)
             ],
-            'yaml': yml
         }
 
     patch_parser = reqparse.RequestParser()
@@ -121,6 +119,18 @@ class ExamConfig(Resource):
 
 
 class Exams(Resource):
+
+    @orm.db_session
+    def get_pdf(exam_id):
+
+        exam = Exam[exam_id]
+
+        data_dir = app.config['DATA_DIRECTORY']
+        exam_dir = os.path.join(data_dir, exam.name + '_data')
+
+        return send_file(
+            os.path.join(exam_dir, 'exam.pdf'),
+            mimetype='application/pdf')
 
     @orm.db_session
     def get(self):

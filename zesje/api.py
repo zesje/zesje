@@ -42,6 +42,13 @@ api.add_resource(Solutions, '/solution/<int:exam_id>/<int:submission_id>/<int:pr
 # It is possible to get flask_restful to work with these, but not
 # very idiomatic.
 
+# Pdfs
+api_bp.add_url_rule(
+    '/exam_pdfs/<int:exam_id>',
+    'exam_pdf',
+    Exams.get_pdf
+)
+
 # Images
 api_bp.add_url_rule(
     '/images/signature/<int:exam_id>/<int:submission_id>',

@@ -2,16 +2,30 @@ import React from 'react';
 
 import Hero from '../components/Hero.jsx';
 
-const StatisticsDashboard = () => {
-  return (
-      <div>
+class Statistics extends React.Component {
 
-        <Hero title='Statistics Dashboard' subtitle='Review the grading' />
+    render() {
+        return (
+            <div>
 
-        <h1>React Router demo</h1>
+                <Hero title='Statistics' subtitle="Analyse how to the exam was made" />
 
-       </div>
-  )
+                <section className="section">
+
+                    <div className="container">
+
+                        <figure className="image is-4by3">
+                            <img src={'api/images/summary/' + this.props.exam.id} />
+                        </figure>
+
+                    </div>
+
+                </section>
+
+            </div >
+        )
+    }
+
 }
 
-export default StatisticsDashboard;
+export default Statistics;

@@ -27,12 +27,14 @@ const StatusPDF = (props) => {
     )
 }
 
+
 class Exams extends React.Component {
 
     state = {
         yaml: "",
         pdfs: [],
-        examID: null
+        submissions : [],
+        examID: null,
     };
 
     putYaml = () => {
@@ -58,8 +60,18 @@ class Exams extends React.Component {
                         pdfs: pdfs
                     })
                     this.props.updateSubmission()
+                    this.updateSubmissions()
                 }
             })
+    }
+
+    updateSubmissions = () => {
+        api.get('submissions/' + this.props.exam.id)
+        .then(submissions => {
+            this.setState({
+                submissions: submissions.map(sub => sub = {id: sub['id'], missing: sub['missing_pages']})
+            })
+        })
     }
 
     onDropPDF = (accepted, rejected) => {
@@ -150,6 +162,25 @@ class Exams extends React.Component {
                                 <ul className="menu-list">
                                     {this.state.pdfs.map(pdf =>
                                         <li key={pdf.id}><StatusPDF pdf={pdf} /></li>
+                                    )}
+                                </ul>
+                            </aside>
+
+                        </div>
+                        <div className="column has-text-centered">
+                            <h3 className='title'>Uploaded submissions</h3>
+                            <h5 className='subtitle'>ready for grading</h5>
+
+                            <br />
+                            <aside className="menu">
+                                <p className="menu-label">
+                                    Total: {this.state.submissions.length}
+                                </p>
+                                <ul className="menu-list">
+                                {this.state.submissions
+                                    .filter(sub => sub['missing'].length > 0)
+                                    .map(sub =>
+                                        <li key={sub.id}>Copy {sub.id} misses pages {sub['missing'].reduce((prev, curr) => [prev, ', ', curr])} </li>
                                     )}
                                 </ul>
                             </aside>

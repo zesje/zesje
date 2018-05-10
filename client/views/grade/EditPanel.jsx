@@ -54,7 +54,7 @@ class EditPanel extends React.Component {
         })
     }
     changeScore = (event) => {
-        const patt = new RegExp(/^([1-9]\d*|0)?$/);
+        const patt = new RegExp(/^(-|(-?[1-9]\d*)|0)?$/);
 
         if (patt.test(event.target.value)) {
             this.setState({
@@ -137,7 +137,8 @@ class EditPanel extends React.Component {
 
                 <div className="panel-block">
                     <BackButton onClick={this.props.toggleEdit} />
-                    <SaveButton onClick={this.saveFeedback} disabled={!this.state.name} exists={this.props.feedback} />
+                    <SaveButton onClick={this.saveFeedback} exists={this.props.feedback}
+                        disabled={ !this.state.name || (this.state.score && isNaN(parseInt(this.state.score))) } />
                 </div>
             </nav>
         )

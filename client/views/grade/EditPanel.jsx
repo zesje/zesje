@@ -113,13 +113,12 @@ class EditPanel extends React.Component {
                     <div className="field">
                         <label className="label">Description</label>
                         <div className="control has-icons-left">
-                            <input className="input" placeholder="Description"
+                            <textarea className="input" rows="2" placeholder="Description"
                                 value={this.state.description} onChange={this.changeDesc} onKeyDown={this.key} />
                             <span className="icon is-small is-left">
                                 <i className="fa fa-comment-o"></i>
                             </span>
                         </div>
-
                     </div>
                 </div>
 

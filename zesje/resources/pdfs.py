@@ -1,5 +1,6 @@
 import os
-from multiprocessing import Process
+from subprocess import run
+import multiprocessing
 
 from flask import abort, current_app as app
 from flask_restful import Resource, reqparse
@@ -73,12 +74,17 @@ class Pdfs(Resource):
                 pdf.delete()
             raise
 
-        # Fire off background process
+        # Fire off a background process
         # TODO: save these into a process-local datastructure, or save
         # it into the DB as well so that we can cull 'processing' tasks
         # that are actually dead.
+
+        # Because sharing a database connection with a subprocess is dangerous,
+        # we use the slower "spawn" method that fires up a new process instead
+        # of forking.
         args = (pdf.id, app.config['DATA_DIRECTORY'])
-        Process(target=pdf_helper.process_pdf, args=args).start()
+        ctx = multiprocessing.get_context('spawn')
+        ctx.Process(target=pdf_helper.process_pdf, args=args).start()
 
         return {
             'id': pdf.id,

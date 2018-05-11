@@ -38,6 +38,12 @@ def process_pdf(pdf_id, data_directory):
     data_directory : str
         The absolute path to the data directory on disk
     """
+
+    # Ensure we are not inheriting a bound database, which is dangerous and
+    # might be locked.
+    db.bind('sqlite', os.path.join(data_directory, 'course.sqlite'))
+    db.generate_mapping(create_tables=True)
+
     report_error = functools.partial(write_pdf_status, pdf_id, 'error')
     report_progress = functools.partial(write_pdf_status, pdf_id, 'processing')
     report_success = functools.partial(write_pdf_status, pdf_id, 'success')

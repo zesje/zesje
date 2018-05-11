@@ -179,40 +179,47 @@ def process_page(output_dir, image_data, exam_config):
     image_data = rotate_and_shift(image_data, qr_data, qr_coords)
     sub_nr = qr_data.sub_nr
 
+    target = os.path.join(output_dir, f'{qr_data.name}_{sub_nr}')
+    os.makedirs(target, exist_ok=True)
+    target_image = os.path.join(target, f'page{qr_data.page}.jpg')
+    image_data.save(target_image)
+
     with orm.db_session:
         exam = Exam.get(name=qr_data.name)
-        sub = Submission.get(copy_number=sub_nr, exam=exam) \
-              or Submission(copy_number=sub_nr, exam=exam)
-        target = os.path.join(output_dir, f'{qr_data.name}_{sub_nr}')
-        os.makedirs(target, exist_ok=True)
-        target_image = os.path.join(target, f'page{qr_data.page}.jpg')
-        image_data.save(target_image)
-        # We may have added this page in previous uploads; the above
-        # 'rename' then overwrites the previosly uploaded page, but
-        # we only want a single 'Page' entry.
+        sub = Submission.get(copy_number=sub_nr, exam=exam)
+
+        if sub is None:
+            sub = Submission(copy_number=sub_nr, exam=exam,
+                             signature_image_path='None')
+
+            for problem in widget_data.index:
+                if problem == 'studentnr':
+                    continue
+
+                prob = Problem.get(name=problem, exam=exam)
+                Solution(problem=prob, submission=sub, image_path='None')
+
+        # We may have added this page in previous uploads; the above then
+        # overwrites the previosly uploaded page, but we only want a single
+        # 'Page' entry.
         if Page.get(path=target_image, submission=sub) is None:
             Page(path=target_image, submission=sub)
-        widgets_on_page = widget_data[widget_data.page == qr_data.page]
-        for problem in widgets_on_page.index:
-            if problem == 'studentnr':
-                if sub.signature_validated:
-                    # We already identified the student before
-                    continue
-                sub.signature_image_path = 'None'
-                try:
-                    number_widget = widgets_on_page.loc['studentnr']
-                    number = get_student_number(target_image, number_widget)
-                    sub.student = Student.get(id=int(number))
-                except Exception:
-                    pass  # could not extract student name
-            else:
-                prob = Problem.get(name=problem, exam=exam)
-                sol = Solution.get(problem=prob, submission=sub)
-                if sol:
-                    sol.image_path = 'None'
-                else:
-                    Solution(problem=prob, submission=sub,
-                             image_path='None')
+
+        if sub.signature_validated:
+            # Nothing to update in the db
+            return True, ''
+
+    number_widget = widget_data.loc['studentnr']
+    if qr_data.page == number_widget.page:
+        try:
+            number = get_student_number(target_image, number_widget)
+        except Exception:
+            return True, ''  # could not extract student name
+
+        with orm.db_session:
+            exam = Exam.get(name=qr_data.name)
+            sub = Submission.get(copy_number=sub_nr, exam=exam)
+            sub.student = Student.get(id=int(number))
 
     return True, ''
 

@@ -64,13 +64,14 @@ class Pdfs(Resource):
             pdf = PDF(exam=Exam[exam_id], name=args['pdf'].filename,
                       status='processing', message='importing PDF')
 
-        with orm.db_session:
-            try:
-                path = os.path.join(app.config['PDF_DIRECTORY'], f'{pdf.id}.pdf')
-                args['pdf'].save(path)
-            except Exception:
+        try:
+            path = os.path.join(app.config['PDF_DIRECTORY'], f'{pdf.id}.pdf')
+            args['pdf'].save(path)
+        except Exception:
+            with orm.db_session:
+                pdf = PDF[pdf.id]
                 pdf.delete()
-                raise
+            raise
 
         # Fire off background process
         # TODO: save these into a process-local datastructure, or save

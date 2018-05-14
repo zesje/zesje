@@ -8,6 +8,7 @@ import Draggable from 'react-draggable';
 
 const editorStyle = {
     display: 'flex',
+    position: 'relative',
     // justifyContent: 'space-around',
     backgroundColor: '#ddd'
 };
@@ -52,10 +53,7 @@ class PDFEditor extends React.Component {
         }
         this.setState({
             mouseDown: true,
-            selectionStartPoint: {
-                x: e.pageX,
-                y: e.pageY
-            }
+            selectionStartPoint: this.getCoordinatesForEvent(e)
         });
 
         window.document.addEventListener('mousemove', this.handleMouseMove)
@@ -90,10 +88,7 @@ class PDFEditor extends React.Component {
     handleMouseMove = (e) => {
         e.preventDefault();
         if (this.state.mouseDown) {
-            const selectionEndPoint = {
-                x: e.pageX,
-                y: e.pageY
-            }
+            const selectionEndPoint = this.getCoordinatesForEvent(e)
             this.setState({
                 selectionEndPoint: selectionEndPoint,
                 selectionBox: this.calculateSelectionBox(this.state.selectionStartPoint, selectionEndPoint)
@@ -110,9 +105,9 @@ class PDFEditor extends React.Component {
         if (!this.state.mouseDown || selectionEndPoint === null || selectionStartPoint === null) {
             return null
         }
-        const parentNode = this.refs.selectionArea
-        const left = Math.min(selectionStartPoint.x, selectionEndPoint.x) - parentNode.offsetLeft
-        const top = Math.min(selectionStartPoint.y, selectionEndPoint.y) - parentNode.offsetTop
+
+        const left = Math.min(selectionStartPoint.x, selectionEndPoint.x)
+        const top = Math.min(selectionStartPoint.y, selectionEndPoint.y)
         const width = Math.abs(selectionStartPoint.x - selectionEndPoint.x)
         const height = Math.abs(selectionStartPoint.y - selectionEndPoint.y)
         const result = {
@@ -135,6 +130,35 @@ class PDFEditor extends React.Component {
             )
         } else {
             return null
+        }
+    }
+
+    getCoordinatesForEvent = (e) => {
+        const parentNode = this.refs.selectionArea
+        // const cumulativeOffset = this.calculateCumulativeOffsetForElement(parentNode)
+        const cumulativeOffset = this.cumulativeOffset(parentNode)
+        const scrollY = Math.abs(parentNode.getClientRects()[0].top - cumulativeOffset.top)
+        const scrollX = Math.abs(parentNode.getClientRects()[0].left - cumulativeOffset.left)
+        return {
+            x: e.clientX - cumulativeOffset.left + scrollX,
+            y: e.clientY - cumulativeOffset.top + scrollY
+        };
+    }
+
+    cumulativeOffset = (el) => {
+        var top = 0
+        var left = 0
+
+        // No tail-call optimization so this is fine
+        while (el) {
+            top  += el.offsetTop  || 0
+            left += el.offsetLeft || 0
+            el    = el.offsetParent
+        }
+
+        return {
+            top: top,
+            left: left
         }
     }
 
@@ -168,9 +192,9 @@ class PDFEditor extends React.Component {
                             renderTextLayer={false}
                             pageNumber={this.state.page}
                             onMouseDown={this.handleMouseDown} />
-                            {this.renderSelectionBox()}
                     </Document>
                     {draggables}
+                    {this.renderSelectionBox()}
                 </div>
             </div>
         )

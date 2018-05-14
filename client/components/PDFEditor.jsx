@@ -34,7 +34,8 @@ class PDFEditor extends React.Component {
         selectionEndPoint: null,
         selectionBox: null,
         examID: null,
-        page: 1,
+        page: null,
+        numPages: null,
         widgets: []
     }
 
@@ -45,6 +46,29 @@ class PDFEditor extends React.Component {
             }
         }
         return null
+    }
+
+    onPDFLoad = (pdf) => {
+        this.setState({
+            page: 1,
+            numPages: pdf.numPages
+        })
+    }
+
+    setPage = (newPage) => {
+        this.setState({
+            // clamp the page
+            page: Math.max(1, Math.min(newPage, this.state.numPages))
+        })
+
+    }
+
+    prevPage = (e) => {
+        this.setPage(this.state.page - 1)
+    }
+
+    nextPage = (e) => {
+        this.setPage(this.state.page + 1)
     }
 
     handleMouseDown = (e) => {
@@ -180,11 +204,11 @@ class PDFEditor extends React.Component {
             </Draggable>
         })
         return (
-            <div ref="selectionArea" style={editorStyle}>
-                <div style={{display: 'inline-block'}}>
+            <div className='editorArea columns' style={editorStyle} >
+                <div ref="selectionArea" className='SelectionArea column' >
                     <Document
-                        onLoadSuccess={this.onDocumentLoad}
                         file={(this.state.examID && "/api/exam_pdfs/" + this.state.examID) || null}
+                        onLoadSuccess={this.onPDFLoad}
                         style={{position: 'relative'}}
                     >
                         <Page
@@ -195,6 +219,29 @@ class PDFEditor extends React.Component {
                     </Document>
                     {draggables}
                     {this.renderSelectionBox()}
+                </div>
+                <div className="column">
+                    <div className="level">
+                        <div className="level-item">
+                            <div className="field has-addons is-mobile">
+                                <div className="control">
+                                    <button
+                                        type='submit'
+                                        className="button is-link is-rounded"
+                                        onClick={this.prevPage}>Previous</button>
+                                </div>
+                                <div className="control">
+                                    <span className="input has-text-centered">Page {this.state.page}</span>
+                                </div>
+                                <div className="control">
+                                    <button
+                                        type="submit"
+                                        className="button is-link is-rounded"
+                                        onClick={this.nextPage}>Next</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         )

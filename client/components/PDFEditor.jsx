@@ -129,12 +129,12 @@ class PDFEditor extends React.Component {
     }
 
     renderSelectionBox = () => {
-        if (!this.state.mouseDown || this.state.selectionEndPoint === null || this.state.selectionStartPoint === null) {
-            return null
-        } else {
+        if (this.state.mouseDown && this.state.selectionEndPoint && this.state.selectionStartPoint) {
             return(
                 <div className='selection-border' style={this.state.selectionBox}></div>
             )
+        } else {
+            return null
         }
     }
 

@@ -94,16 +94,18 @@ class PDFEditor extends React.Component {
             selectionEndPoint: null,
             selectionBox: null
         })
-        this.setState({
-            widgets:[...this.state.widgets, {
-                startPosition: {
-                    left: selectionBox.left,
-                    top: selectionBox.top,
-                    width: selectionBox.width,
-                    height: selectionBox.height,
-                }
-            }]
-        })
+        if (selectionBox) {
+            this.setState({
+                widgets:[...this.state.widgets, {
+                    startPosition: {
+                        left: selectionBox.left,
+                        top: selectionBox.top,
+                        width: selectionBox.width,
+                        height: selectionBox.height,
+                    }
+                }]
+            })
+        }
     }
 
     /**

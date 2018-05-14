@@ -159,8 +159,8 @@ class PDFEditor extends React.Component {
             <div ref="selectionArea" style={editorStyle}>
                 <div style={{display: 'inline-block'}}>
                     <Document
-                        file={"/api/exam_pdfs/" + this.state.examID}
                         onLoadSuccess={this.onDocumentLoad}
+                        file={(this.state.examID && "/api/exam_pdfs/" + this.state.examID) || null}
                         style={{position: 'relative'}}
                     >
                         <Page

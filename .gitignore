@@ -74,6 +74,9 @@ zesje/static/
 __pycache__/
 *.pyc
 
+# pytest temporary files
+.pytest_cache/
+
 # vscode folder
 .vscode
 

@@ -5,7 +5,7 @@ import { Document, Page } from 'react-pdf';
 PDFJS.workerSrc = true;
 
 import update from 'immutability-helper';
-import Draggable from 'react-draggable';
+import ResizeAndDrag from 'react-rnd'
 
 const editorStyle = {
     display: 'flex',
@@ -192,46 +192,62 @@ class PDFEditor extends React.Component {
         }
     }
 
-    setWidgetPosition = (page, index, x, y) => {
-        this.setState({
-            widgets: update(this.state.widgets,{
-                [page - 1]: {
-                    [index]: {
-                        x: {$set: x},
-                        y: {$set: y}
-                    }
-                }
-            })
-        })
-    }
-
     renderWidgets = () => {
         if (this.state.widgets) {
             const page = this.state.page
             const widgets = this.state.widgets[page - 1]
             return widgets.map((widget, index) => {
                 return (
-                    <Draggable
-                        position={{x: widget.x, y: widget.y}}
-                        bounds="parent"
+                    <ResizeAndDrag
                         key={'widget_' + page + '_' + index}
-                        onStop={(_, data) => this.setWidgetPosition(page, index, data.x, data.y)}
+                        bounds='parent'
+                        position={{
+                            x: widget.x,
+                            y: widget.y,
+                        }}
+                        size={{
+                            width: widget.width,
+                            height: widget.height,
+                        }}
+                        onResize={(e, direction, ref, delta, position) => {
+                            this.setState({
+                                widgets: update(this.state.widgets,{
+                                    [page - 1]: {
+                                        [index]: {
+                                            width: {$set: ref.offsetWidth},
+                                            height: {$set: ref.offsetHeight},
+                                            x: {$set: position.x},
+                                            y: {$set: position.y},
+                                        }
+                                    }
+                                })
+                            })
+                        }}
+                        onDragStop={(e, d) => {
+                            this.setState({
+                                widgets: update(this.state.widgets,{
+                                    [page - 1]: {
+                                        [index]: {
+                                            x: {$set: d.x},
+                                            y: {$set: d.y},
+                                        }
+                                    }
+                                })
+                            })
+                        }}
                     >
                         <div
-                            style={{...widgetStyle, ...{
-                                width: widget.width,
-                                height: widget.height,
-                            }}}
+                            style={widgetStyle}
                         >
                             This is a cool widget
                         </div>
-                    </Draggable>
+                    </ResizeAndDrag>
+
                 )
             })
         } else {
             return null
         }
-
     }
 
     render() {
@@ -239,19 +255,21 @@ class PDFEditor extends React.Component {
         return (
             <div className='editorArea columns' style={editorStyle} >
                 <div ref="selectionArea" className='SelectionArea column' >
-                    <Document
-                        file={(this.state.examID && "/api/exam_pdfs/" + this.state.examID) || null}
-                        onLoadSuccess={this.onPDFLoad}
-                        style={{position: 'relative'}}
-                    >
-                        <Page
-                            renderAnnotations={false}
-                            renderTextLayer={false}
-                            pageNumber={this.state.page}
-                            onMouseDown={this.handleMouseDown} />
-                    </Document>
-                    {widgets}
-                    {this.renderSelectionBox()}
+                    <div>
+                        <Document
+                            file={(this.state.examID && "/api/exam_pdfs/" + this.state.examID) || null}
+                            onLoadSuccess={this.onPDFLoad}
+                            style={{position: 'relative'}}
+                        >
+                            <Page
+                                renderAnnotations={false}
+                                renderTextLayer={false}
+                                pageNumber={this.state.page}
+                                onMouseDown={this.handleMouseDown} />
+                        </Document>
+                        {widgets}
+                        {this.renderSelectionBox()}
+                    </div>
                 </div>
                 <div className="column">
                     <div className="level">

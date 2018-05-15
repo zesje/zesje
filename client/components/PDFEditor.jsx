@@ -1,4 +1,5 @@
 import React from 'react';
+import './PDFEditor.css';
 
 import { Document, Page } from 'react-pdf';
 // worker is prefered but need to convince webpack to cooperate
@@ -6,26 +7,6 @@ PDFJS.workerSrc = true;
 
 import update from 'immutability-helper';
 import ResizeAndDrag from 'react-rnd'
-
-const editorStyle = {
-    display: 'flex',
-    position: 'relative',
-    // justifyContent: 'space-around',
-    backgroundColor: '#ddd'
-};
-
-const widgetStyle = {
-    background: '#fff',
-    border: '1px solid #999',
-    borderRadius: '3px',
-    width: '180px',
-    height: '180px',
-    margin: '0px',
-    padding: '0px',
-    top: '0px',
-    left: '0px',
-    position: 'absolute',
-}
 
 class PDFEditor extends React.Component {
 
@@ -237,7 +218,7 @@ class PDFEditor extends React.Component {
                         }}
                     >
                         <div
-                            style={widgetStyle}
+                            className='widget'
                         >
                             This is a cool widget
                         </div>
@@ -253,13 +234,12 @@ class PDFEditor extends React.Component {
     render() {
         const widgets = this.renderWidgets()
         return (
-            <div className='editorArea columns' style={editorStyle} >
-                <div ref="selectionArea" className='SelectionArea column' >
-                    <div>
+            <div className='editor-area columns' >
+                <div className='column' >
+                    <div ref="selectionArea" className='selection-area' >
                         <Document
                             file={(this.state.examID && "/api/exam_pdfs/" + this.state.examID) || null}
                             onLoadSuccess={this.onPDFLoad}
-                            style={{position: 'relative'}}
                         >
                             <Page
                                 renderAnnotations={false}

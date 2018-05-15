@@ -63,7 +63,6 @@ class PDFEditor extends React.Component {
             // clamp the page
             page: Math.max(1, Math.min(newPage, this.state.numPages))
         })
-
     }
 
     prevPage = (e) => {
@@ -193,7 +192,7 @@ class PDFEditor extends React.Component {
         }
     }
 
-    setDraggablePosition = (page, index, x, y) => {
+    setWidgetPosition = (page, index, x, y) => {
         this.setState({
             widgets: update(this.state.widgets,{
                 [page - 1]: {
@@ -206,17 +205,17 @@ class PDFEditor extends React.Component {
         })
     }
 
-    render() {
-        var draggables
+    renderWidgets = () => {
         if (this.state.widgets) {
-            const page = this.state.page;
-            draggables = this.state.widgets[page - 1].map((widget, index) => {
+            const page = this.state.page
+            const widgets = this.state.widgets[page - 1]
+            return widgets.map((widget, index) => {
                 return (
                     <Draggable
                         position={{x: widget.x, y: widget.y}}
                         bounds="parent"
-                        key={'widget_' + this.state.page + '_' + index}
-                        onStop={(_, data) => this.setDraggablePosition(this.state.page, index, data.x, data.y)}
+                        key={'widget_' + page + '_' + index}
+                        onStop={(_, data) => this.setWidgetPosition(page, index, data.x, data.y)}
                     >
                         <div
                             style={{...widgetStyle, ...{
@@ -229,7 +228,14 @@ class PDFEditor extends React.Component {
                     </Draggable>
                 )
             })
+        } else {
+            return null
         }
+
+    }
+
+    render() {
+        const widgets = this.renderWidgets()
         return (
             <div className='editorArea columns' style={editorStyle} >
                 <div ref="selectionArea" className='SelectionArea column' >
@@ -244,7 +250,7 @@ class PDFEditor extends React.Component {
                             pageNumber={this.state.page}
                             onMouseDown={this.handleMouseDown} />
                     </Document>
-                    {draggables}
+                    {widgets}
                     {this.renderSelectionBox()}
                 </div>
                 <div className="column">

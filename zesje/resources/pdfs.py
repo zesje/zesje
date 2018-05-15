@@ -9,7 +9,7 @@ from werkzeug.datastructures import FileStorage
 from pony import orm
 
 from ..models import db, Exam, PDF
-from ..helpers import pdf_helper
+from ..helpers import scan_helper
 
 class Pdfs(Resource):
     """Getting a list of uploaded PDFs, and uploading new ones."""
@@ -84,7 +84,7 @@ class Pdfs(Resource):
         # of forking.
         args = (pdf.id, app.config['DATA_DIRECTORY'])
         ctx = multiprocessing.get_context('spawn')
-        ctx.Process(target=pdf_helper.process_pdf, args=args).start()
+        ctx.Process(target=scan_helper.process_pdf, args=args).start()
 
         return {
             'id': pdf.id,

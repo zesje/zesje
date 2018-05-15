@@ -4,6 +4,7 @@ import { Document, Page } from 'react-pdf';
 // worker is prefered but need to convince webpack to cooperate
 PDFJS.workerSrc = true;
 
+import update from 'immutability-helper';
 import Draggable from 'react-draggable';
 
 const editorStyle = {
@@ -36,7 +37,7 @@ class PDFEditor extends React.Component {
         examID: null,
         page: null,
         numPages: null,
-        widgets: []
+        widgets: null
     }
 
     static getDerivedStateFromProps = (newProps, prevState) => {
@@ -51,7 +52,9 @@ class PDFEditor extends React.Component {
     onPDFLoad = (pdf) => {
         this.setState({
             page: 1,
-            numPages: pdf.numPages
+            numPages: pdf.numPages,
+            // initialize array to size of pdf
+            widgets: Array.from(Array(pdf.numPages), () => new Array()),
         })
     }
 
@@ -96,14 +99,16 @@ class PDFEditor extends React.Component {
         })
         if (selectionBox) {
             this.setState({
-                widgets:[...this.state.widgets, {
-                    startPosition: {
-                        left: selectionBox.left,
-                        top: selectionBox.top,
-                        width: selectionBox.width,
-                        height: selectionBox.height,
+                widgets: update(this.state.widgets, {
+                    [this.state.page - 1]: {
+                        $push: [{
+                            x: selectionBox.left,
+                            y: selectionBox.top,
+                            width: selectionBox.width,
+                            height: selectionBox.height,
+                        }]
                     }
-                }]
+                })
             })
         }
     }
@@ -188,23 +193,43 @@ class PDFEditor extends React.Component {
         }
     }
 
-    render() {
-
-        const dragHandlers = {onStart: this.onStart, onStop: this.onStop};
-
-        var cnt = 0
-        const draggables = this.state.widgets.map(widget => {
-            return <Draggable key={'widget_' + cnt++} {...dragHandlers} bounds="parent">
-              <div style={{...widgetStyle, ...{
-                  left: widget.startPosition.left,
-                  top: widget.startPosition.top,
-                  width: widget.startPosition.width,
-                  height: widget.startPosition.height,
-              }}}>
-                This is a cool widget
-              </div>
-            </Draggable>
+    setDraggablePosition = (page, index, x, y) => {
+        this.setState({
+            widgets: update(this.state.widgets,{
+                [page - 1]: {
+                    [index]: {
+                        x: {$set: x},
+                        y: {$set: y}
+                    }
+                }
+            })
         })
+    }
+
+    render() {
+        var draggables
+        if (this.state.widgets) {
+            const page = this.state.page;
+            draggables = this.state.widgets[page - 1].map((widget, index) => {
+                return (
+                    <Draggable
+                        position={{x: widget.x, y: widget.y}}
+                        bounds="parent"
+                        key={'widget_' + this.state.page + '_' + index}
+                        onStop={(_, data) => this.setDraggablePosition(this.state.page, index, data.x, data.y)}
+                    >
+                        <div
+                            style={{...widgetStyle, ...{
+                                width: widget.width,
+                                height: widget.height,
+                            }}}
+                        >
+                            This is a cool widget
+                        </div>
+                    </Draggable>
+                )
+            })
+        }
         return (
             <div className='editorArea columns' style={editorStyle} >
                 <div ref="selectionArea" className='SelectionArea column' >

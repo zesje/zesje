@@ -30,6 +30,10 @@ class PDFEditor extends React.Component {
         return null
     }
 
+    getPDFUrl = () => {
+        return (this.state.examID && "/api/exam_pdfs/" + this.state.examID) || null
+    }
+
     onPDFLoad = (pdf) => {
         this.setState({
             page: 1,
@@ -238,7 +242,7 @@ class PDFEditor extends React.Component {
                 <div className='column' >
                     <div ref="selectionArea" className='selection-area' >
                         <Document
-                            file={(this.state.examID && "/api/exam_pdfs/" + this.state.examID) || null}
+                            file={this.getPDFUrl()}
                             onLoadSuccess={this.onPDFLoad}
                         >
                             <Page

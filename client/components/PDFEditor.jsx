@@ -82,18 +82,20 @@ class PDFEditor extends React.Component {
             selectionBox: null
         })
         if (selectionBox) {
-            this.setState({
-                widgets: update(this.state.widgets, {
-                    [this.state.page - 1]: {
-                        $push: [{
-                            x: selectionBox.left,
-                            y: selectionBox.top,
-                            width: selectionBox.width,
-                            height: selectionBox.height,
-                        }]
-                    }
+            if (selectionBox.width >= this.props.widgetMinWidth && selectionBox.height >= this.props.widgetMinHeight) {
+                this.setState({
+                    widgets: update(this.state.widgets, {
+                        [this.state.page - 1]: {
+                            $push: [{
+                                x: selectionBox.left,
+                                y: selectionBox.top,
+                                width: selectionBox.width,
+                                height: selectionBox.height,
+                            }]
+                        }
+                    })
                 })
-            })
+            }
         }
     }
 
@@ -131,7 +133,12 @@ class PDFEditor extends React.Component {
             width: width,
             height: height,
 
-            background: 'rgba(0, 162, 255, 0.4)',
+            background:
+                width >= this.props.widgetMinWidth &&
+                height >= this.props.widgetMinHeight ?
+                    'rgba(100, 255, 100, 0.4)'
+                :
+                    'rgba(255, 100, 100, 0.4)',
             position: 'absolute',
             zIndex: 99,
         }
@@ -186,6 +193,8 @@ class PDFEditor extends React.Component {
                     <ResizeAndDrag
                         key={'widget_' + page + '_' + index}
                         bounds='parent'
+                        minWidth={this.props.widgetMinWidth}
+                        minHeight={this.props.widgetMinHeight}
                         position={{
                             x: widget.x,
                             y: widget.y,
@@ -282,6 +291,11 @@ class PDFEditor extends React.Component {
         )
     }
 
+}
+
+PDFEditor.defaultProps = {
+    widgetMinWidth: 75,
+    widgetMinHeight: 50,
 }
 
 export default PDFEditor

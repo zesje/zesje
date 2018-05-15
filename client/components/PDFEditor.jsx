@@ -18,7 +18,8 @@ class PDFEditor extends React.Component {
         examID: null,
         page: null,
         numPages: null,
-        widgets: null
+        widgets: null,
+        selectedWidget: null,
     }
 
     static getDerivedStateFromProps = (newProps, prevState) => {
@@ -84,6 +85,7 @@ class PDFEditor extends React.Component {
         if (selectionBox) {
             if (selectionBox.width >= this.props.widgetMinWidth && selectionBox.height >= this.props.widgetMinHeight) {
                 this.setState({
+                    selectedWidget: this.state.widgets[this.state.page - 1].length,
                     widgets: update(this.state.widgets, {
                         [this.state.page - 1]: {
                             $push: [{
@@ -215,6 +217,11 @@ class PDFEditor extends React.Component {
                                         }
                                     }
                                 })
+                            })
+                        }}
+                        onDragStart={() => {
+                            this.setState({
+                                selectedWidget: index,
                             })
                         }}
                         onDragStop={(e, d) => {

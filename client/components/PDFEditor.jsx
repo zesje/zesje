@@ -37,7 +37,7 @@ class PDFEditor extends React.Component {
 
     onPDFLoad = (pdf) => {
         this.setState({
-            page: 1,
+            page: 0,
             numPages: pdf.numPages,
             // initialize array to size of pdf
             widgets: Array.from(Array(pdf.numPages), () => new Array()),
@@ -48,7 +48,7 @@ class PDFEditor extends React.Component {
         this.setState({
             // clamp the page
             selectedWidget: null,
-            page: Math.max(1, Math.min(newPage, this.state.numPages))
+            page: Math.max(0, Math.min(newPage, this.state.numPages - 1))
         })
     }
 
@@ -86,9 +86,9 @@ class PDFEditor extends React.Component {
         if (selectionBox) {
             if (selectionBox.width >= this.props.widgetMinWidth && selectionBox.height >= this.props.widgetMinHeight) {
                 this.setState({
-                    selectedWidget: this.state.widgets[this.state.page - 1].length,
+                    selectedWidget: this.state.widgets[this.state.page].length,
                     widgets: update(this.state.widgets, {
-                        [this.state.page - 1]: {
+                        [this.state.page]: {
                             $push: [{
                                 x: selectionBox.left,
                                 y: selectionBox.top,
@@ -191,7 +191,7 @@ class PDFEditor extends React.Component {
     renderWidgets = () => {
         if (this.state.widgets) {
             const page = this.state.page
-            const widgets = this.state.widgets[page - 1]
+            const widgets = this.state.widgets[page]
             return widgets.map((widget, index) => {
                 return (
                     <ResizeAndDrag
@@ -210,7 +210,7 @@ class PDFEditor extends React.Component {
                         onResize={(e, direction, ref, delta, position) => {
                             this.setState({
                                 widgets: update(this.state.widgets,{
-                                    [page - 1]: {
+                                    [page]: {
                                         [index]: {
                                             width: {$set: ref.offsetWidth},
                                             height: {$set: ref.offsetHeight},
@@ -229,7 +229,7 @@ class PDFEditor extends React.Component {
                         onDragStop={(e, d) => {
                             this.setState({
                                 widgets: update(this.state.widgets,{
-                                    [page - 1]: {
+                                    [page]: {
                                         [index]: {
                                             x: {$set: d.x},
                                             y: {$set: d.y},
@@ -257,7 +257,7 @@ class PDFEditor extends React.Component {
         return (e) => {
             this.setState({
                 widgets: update(this.state.widgets, {
-                    [page - 1]: {
+                    [page]: {
                         [index]: {
                             name: {$set: e.target.value},
                         }
@@ -270,14 +270,14 @@ class PDFEditor extends React.Component {
     handleWidgetDeletion = (page, index, prompt = true) => {
         const widgets = this.state.widgets
         if (widgets && page && index !== null
-                && widgets[page - 1]
-                && widgets[page - 1][index]) {
-            const widget = widgets[page - 1][index]
+                && widgets[page]
+                && widgets[page][index]) {
+            const widget = widgets[page][index]
             if (prompt && confirm('Are you sure you want to delete this widget?')) {
                 this.setState({
                     selectedWidget: null,
                     widgets: update(this.state.widgets, {
-                        [this.state.page - 1]: {
+                        [this.state.page]: {
                             $splice: [[index, 1]]
                         }
                     })
@@ -291,10 +291,10 @@ class PDFEditor extends React.Component {
         const widgets = this.state.widgets
         const page = this.state.page
         const selectedWidget = this.state.selectedWidget
-        if (widgets && page && selectedWidget !== null
-                && widgets[page - 1]
-                && widgets[page - 1][selectedWidget]) {
-            const widget = widgets[page - 1][selectedWidget]
+        if (widgets && page !== null && selectedWidget !== null
+                && widgets[page]
+                && widgets[page][selectedWidget]) {
+            const widget = widgets[page][selectedWidget]
             console.log(widget.name)
             return (
                 <nav className="panel">
@@ -353,7 +353,7 @@ class PDFEditor extends React.Component {
                             <Page
                                 renderAnnotations={false}
                                 renderTextLayer={false}
-                                pageNumber={this.state.page}
+                                pageNumber={this.state.page + 1}
                                 onMouseDown={this.handleMouseDown} />
                         </Document>
                         {widgets}
@@ -369,7 +369,7 @@ class PDFEditor extends React.Component {
                                 onClick={this.prevPage}>Previous</button>
                         </div>
                         <div className='control'>
-                            <span className='input is-static has-text-centered'>Page {this.state.page} of {this.state.numPages}</span>
+                            <span className='input is-static has-text-centered'>Page {this.state.page + 1} of {this.state.numPages}</span>
                         </div>
                         <div className='control'>
                             <button

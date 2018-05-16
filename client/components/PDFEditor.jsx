@@ -309,8 +309,8 @@ class PDFEditor extends React.Component {
     render() {
         const widgets = this.renderWidgets()
         return (
-            <div className='editor-area columns' >
-                <div className='column' >
+            <div className='editor-area columns is-centered' >
+                <div className='column is-narrow'  >
                     <div ref="selectionArea" className='selection-area' >
                         <Document
                             file={this.getPDFUrl()}
@@ -326,26 +326,22 @@ class PDFEditor extends React.Component {
                         {this.renderSelectionBox()}
                     </div>
                 </div>
-                <div className="column">
-                    <div className="level">
-                        <div className="level-item">
-                            <div className="field has-addons is-mobile">
-                                <div className="control">
-                                    <button
-                                        type='submit'
-                                        className="button is-link is-rounded"
-                                        onClick={this.prevPage}>Previous</button>
-                                </div>
-                                <div className="control">
-                                    <span className="input has-text-centered">Page {this.state.page} of {this.state.numPages}</span>
-                                </div>
-                                <div className="control">
-                                    <button
-                                        type="submit"
-                                        className="button is-link is-rounded"
-                                        onClick={this.nextPage}>Next</button>
-                                </div>
-                            </div>
+                <div className='column is-narrow editor-side-panel' >
+                    <div className='field has-addons is-mobile'>
+                        <div className='control'>
+                            <button
+                                type='submit'
+                                className='button is-link is-rounded'
+                                onClick={this.prevPage}>Previous</button>
+                        </div>
+                        <div className='control'>
+                            <span className='input is-static has-text-centered'>Page {this.state.page} of {this.state.numPages}</span>
+                        </div>
+                        <div className='control'>
+                            <button
+                                type='submit'
+                                className='button is-link is-rounded'
+                                onClick={this.nextPage}>Next</button>
                         </div>
                     </div>
 
@@ -355,7 +351,6 @@ class PDFEditor extends React.Component {
             </div>
         )
     }
-
 }
 
 PDFEditor.defaultProps = {

@@ -267,6 +267,26 @@ class PDFEditor extends React.Component {
         }
     }
 
+    handleWidgetDeletion = (page, index, prompt = true) => {
+        const widgets = this.state.widgets
+        if (widgets && page && index !== null
+                && widgets[page - 1]
+                && widgets[page - 1][index]) {
+            const widget = widgets[page - 1][index]
+            if (prompt && confirm('Are you sure you want to delete this widget?')) {
+                this.setState({
+                    selectedWidget: null,
+                    widgets: update(this.state.widgets, {
+                        [this.state.page - 1]: {
+                            $splice: [[index, 1]]
+                        }
+                    })
+
+                })
+            }
+        }
+    }
+
     renderWidgetDetails = () => {
         const widgets = this.state.widgets
         const page = this.state.page
@@ -296,6 +316,19 @@ class PDFEditor extends React.Component {
                                     value={widget.name}
                                     onChange={this.handleWidgetNameChange(page, selectedWidget)}
                                 />
+                            </div>
+                        </div>
+                    </div>
+                    <div className="panel-block">
+                        <div className="field">
+                            <label className="label">Actions</label>
+                            <div className="control">
+                                <button
+                                    className="button is-danger"
+                                    onClick={() => this.handleWidgetDeletion(page, selectedWidget)}
+                                >
+                                    Delete
+                                </button>
                             </div>
                         </div>
                     </div>

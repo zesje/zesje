@@ -82,6 +82,12 @@ class ExamConfig(Resource):
                     ]
                 } for prob in exam.problems.order_by(lambda p: p.id)
             ],
+            'widgets': [
+                {
+                    'id': widget.id,
+                    'data': widget.data.decode("utf-8")
+                } for widget in exam.widgets.order_by(lambda w: w.id)
+            ],
         }
 
     patch_parser = reqparse.RequestParser()

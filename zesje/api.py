@@ -13,6 +13,7 @@ from .resources import export
 from .resources.problems import Problems
 from .resources.feedback import Feedback
 from .resources.solutions import Solutions
+from .resources.widgets import Widgets
 
 api_bp = Blueprint(__name__, __name__)
 
@@ -36,6 +37,9 @@ api.add_resource(Submissions,
 api.add_resource(Problems, '/problems/<int:exam_id>')
 api.add_resource(Feedback, '/feedback/<int:problem_id>')
 api.add_resource(Solutions, '/solution/<int:exam_id>/<int:submission_id>/<int:problem_id>')
+api.add_resource(Widgets,
+                 '/widgets',
+                 '/widgets/<int:widget_id>')
 
 
 # Other resources that don't return JSON

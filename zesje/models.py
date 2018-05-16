@@ -28,6 +28,13 @@ class Exam(db.Entity):
     submissions = Set('Submission')
     problems = Set('Problem')
     scans = Set('PDF')
+    widgets = Set('Widget')
+
+
+class Widget(db.Entity):
+    """ Widgets can be anything that will be rendered into the final exam (qrs, answerboxes, etc) """
+    exam = Required(Exam)
+    data = Required(bytes)
 
 
 class Submission(db.Entity):

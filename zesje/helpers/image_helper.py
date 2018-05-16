@@ -43,7 +43,8 @@ def get_box(image_array, box, padding):
 
 
 def calc_angle(keyp1, keyp2):
-    """Calculates the angle of the line connecting two keypoints
+    """Calculates the angle of the line connecting two keypoints in an image
+    Calculates it with respect to the horizontal axis.
 
     Parameters:
     -----------
@@ -53,6 +54,10 @@ def calc_angle(keyp1, keyp2):
     """
     xdiff = math.fabs(keyp1.pt[0] - keyp2.pt[0])
     ydiff = math.fabs(keyp2.pt[1] - keyp1.pt[1])
+
+    #Avoid division by zero
+    if xdiff == 0:
+        return 0
 
     if keyp1.pt[0] < keyp2.pt[0]:
         if(keyp2.pt[1] > keyp1.pt[1]):

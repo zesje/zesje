@@ -14,7 +14,7 @@ import PyPDF2
 
 from pony import orm
 
-from . import yaml_helper
+from . import yaml_helper,image_helper
 from ..models import db, PDF, Exam, Problem, Page, Student, Submission, Solution
 
 
@@ -308,22 +308,11 @@ def rotate_image(image_data):
 
     (keyp1,keyp2,dist) = best_keypoint_combination
 
-	
-    xdiff = math.fabs(keyp1.pt[0] - keyp2.pt[0])
-    ydiff = math.fabs(keyp2.pt[1] - keyp1.pt[1])
+	#If the angle is downward, we have a negative angle and we want to rotate it counterclockwise
+	#However warpaffine needs a positve angle if you want to rotate it counterclockwise
+	#So we invert the angle retrieved from calc_angle
+	angle = -1 * image_helper.calc_angle(keyp1,keyp2)
 
-	#Rotate counter clockwise if the slope is downward
-	#Rotate clockwise if it is upward
-    if keyp1.pt[0] < keyp2.pt[0]:
-        if(keyp2.pt[1] > keyp1.pt[1]):
-            angle = math.degrees(math.atan(ydiff/xdiff))
-        else:
-            angle = -1*math.degrees(math.atan(ydiff/xdiff))
-    else:
-        if(keyp1.pt[1] > keyp2.pt[1]):
-            angle = math.degrees(math.atan(ydiff/xdiff))
-        else:
-            angle = -1*math.degrees(math.atan(ydiff/xdiff))
 	
 	#Create rotation matrix and rotate the image around the center
     rot_mat = cv2.getRotationMatrix2D((w/2,h/2),angle,1)

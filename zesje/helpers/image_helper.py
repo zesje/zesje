@@ -39,3 +39,26 @@ def get_box(image_array, box, padding):
     top, bottom = min(h, box[0]), max(1, box[1])
     left, right = max(0, box[2]), min(w, box[3])
     return image_array[-top:-bottom, left:right]
+
+def calc_angle(keyp1,keyp2)
+	"""Calculates the angle of the line connecting two keypoints
+	
+	Parameters:
+	-----------
+	keyp1: OpenCV Keypoint
+	keyp2: OpenCV Keypoint
+	
+	"""
+	xdiff = math.fabs(keyp1.pt[0] - keyp2.pt[0])
+    ydiff = math.fabs(keyp2.pt[1] - keyp1.pt[1])
+
+    if keyp1.pt[0] < keyp2.pt[0]:
+        if(keyp2.pt[1] > keyp1.pt[1]):
+            return -1*math.degrees(math.atan(ydiff/xdiff))
+        else:
+            return math.degrees(math.atan(ydiff/xdiff))
+    else:
+        if(keyp1.pt[1] > keyp2.pt[1]):
+            return -1*math.degrees(math.atan(ydiff/xdiff))
+        else:
+            return math.degrees(math.atan(ydiff/xdiff))

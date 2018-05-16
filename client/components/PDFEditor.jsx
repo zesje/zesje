@@ -279,7 +279,7 @@ class PDFEditor extends React.Component {
             return (
                 <nav className="panel">
                     <p className="panel-heading">
-                        Question details
+                        Widget details
                     </p>
                     <div className="panel-block">
                         Position: ({widget.x},{widget.y})<br />
@@ -308,6 +308,7 @@ class PDFEditor extends React.Component {
 
     render() {
         const widgets = this.renderWidgets()
+        const widgetDetails = this.renderWidgetDetails()
         return (
             <div className='editor-area columns is-centered' >
                 <div className='column is-narrow'  >
@@ -345,7 +346,16 @@ class PDFEditor extends React.Component {
                         </div>
                     </div>
 
-                    {this.renderWidgetDetails()}
+                    {widgetDetails ? widgetDetails : (
+                        <nav className="panel">
+                            <p className="panel-heading">
+                                Widget details
+                            </p>
+                            <div className="panel-block">
+                                Select a widget to modify its details
+                            </div>
+                        </nav>
+                    )}
 
                 </div>
             </div>

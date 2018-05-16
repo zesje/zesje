@@ -2,6 +2,7 @@
 
 import numpy as np
 import cv2
+import math
 
 def get_widget_image(image_path, widget):
     box = (widget.top, widget.bottom, widget.left, widget.right)
@@ -40,25 +41,26 @@ def get_box(image_array, box, padding):
     left, right = max(0, box[2]), min(w, box[3])
     return image_array[-top:-bottom, left:right]
 
-def calc_angle(keyp1,keyp2)
-	"""Calculates the angle of the line connecting two keypoints
-	
-	Parameters:
-	-----------
-	keyp1: OpenCV Keypoint
-	keyp2: OpenCV Keypoint
-	
-	"""
-	xdiff = math.fabs(keyp1.pt[0] - keyp2.pt[0])
+
+def calc_angle(keyp1, keyp2):
+    """Calculates the angle of the line connecting two keypoints
+
+    Parameters:
+    -----------
+    keyp1: OpenCV Keypoint
+    keyp2: OpenCV Keypoint
+
+    """
+    xdiff = math.fabs(keyp1.pt[0] - keyp2.pt[0])
     ydiff = math.fabs(keyp2.pt[1] - keyp1.pt[1])
 
     if keyp1.pt[0] < keyp2.pt[0]:
         if(keyp2.pt[1] > keyp1.pt[1]):
-            return -1*math.degrees(math.atan(ydiff/xdiff))
+            return -1 * math.degrees(math.atan(ydiff / xdiff))
         else:
-            return math.degrees(math.atan(ydiff/xdiff))
+            return math.degrees(math.atan(ydiff / xdiff))
     else:
         if(keyp1.pt[1] > keyp2.pt[1]):
-            return -1*math.degrees(math.atan(ydiff/xdiff))
+            return -1 * math.degrees(math.atan(ydiff / xdiff))
         else:
-            return math.degrees(math.atan(ydiff/xdiff))
+            return math.degrees(math.atan(ydiff / xdiff))

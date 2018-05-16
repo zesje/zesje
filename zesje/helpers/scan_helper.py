@@ -182,7 +182,9 @@ def process_page(output_dir, image_data, exam_config):
 
     qr_coords, widget_data = exam_config.qr_coords, exam_config.widget_data
 
-    image_data = rotate_and_shift(image_data, qr_data, qr_coords)
+    image_data = rotate_image(image_data)
+    image_data = shift_image(image_data, qr_data, qr_coords)
+
     sub_nr = qr_data.sub_nr
 
     target = os.path.join(output_dir, f'{qr_data.name}_{sub_nr}')
@@ -265,6 +267,69 @@ def guess_dpi(image_array):
     h, *_ = image_array.shape
     resolutions = np.array([1200, 600, 300, 200, 150, 120, 100, 75, 60, 50, 40])
     return resolutions[np.argmin(abs(resolutions - 25.4 * h / 297))]
+
+
+def rotate_image(image_data):
+    """Rotate a PIL image according to the rotation of the corner markers."""
+    opencv_im = cv2.cvtColor(np.array(image_data), cv2.COLOR_RGB2BGR)
+
+    _, bin_im = cv2.threshold(opencv_im, 150, 255, cv2.THRESH_BINARY)
+
+    #Filter out everything in the center of the image
+    h, w, *_ = bin_im.shape
+    bin_im[round(0.125*h):round(0.875*h),round(0.125*w):round(0.875*w)] = 1
+
+    #Detect objects which look like corner markers
+    params = cv2.SimpleBlobDetector_Params()
+    params.filterByArea = True
+    params.minArea = 150
+    params.maxArea = 400
+    params.filterByCircularity = True
+    params.minCircularity = 0
+    params.maxCircularity = 0.15
+    params.filterByConvexity = True
+    params.minConvexity = 0.15
+    params.maxConvexity = 0.3
+    params.filterByInertia = True
+    params.minInertiaRatio = 0.20
+    params.maxInertiaRatio = 0.50
+    params.filterByColor = False
+
+    detector = cv2.SimpleBlobDetector_create(params)
+    keypoints = detector.detect(bin_im)
+
+	#Find two corner markers which lie in the same horizontal half.
+	#Same horizontal half is chosen as the line from one keypoint to the other shoud be 0.
+	#To get corner markers in the same horizontal half, the pair with the smallest distance is chosen.
+    distances = [(a,b,math.hypot(a.pt[0] - b.pt[0], a.pt[1] - b.pt[1])) for (a,b) in list(itertools.combinations(keypoints,2))]
+    distances.sort(key=lambda tup: tup[2], reverse=True)
+    best_keypoint_combination = distances.pop()
+
+
+    (keyp1,keyp2,dist) = best_keypoint_combination
+
+	
+    xdiff = math.fabs(keyp1.pt[0] - keyp2.pt[0])
+    ydiff = math.fabs(keyp2.pt[1] - keyp1.pt[1])
+
+	#Rotate counter clockwise if the slope is downward
+	#Rotate clockwise if it is upward
+    if keyp1.pt[0] < keyp2.pt[0]:
+        if(keyp2.pt[1] > keyp1.pt[1]):
+            angle = math.degrees(math.atan(ydiff/xdiff))
+        else:
+            angle = -1*math.degrees(math.atan(ydiff/xdiff))
+    else:
+        if(keyp1.pt[1] > keyp2.pt[1]):
+            angle = math.degrees(math.atan(ydiff/xdiff))
+        else:
+            angle = -1*math.degrees(math.atan(ydiff/xdiff))
+	
+	#Create rotation matrix and rotate the image around the center
+    rot_mat = cv2.getRotationMatrix2D((w/2,h/2),angle,1)
+    rot_image = cv2.warpAffine(opencv_im,rot_mat,(w,h), cv2.BORDER_CONSTANT, borderMode=cv2.BORDER_CONSTANT, borderValue=255)
+
+    return Image.fromarray(cv2.cvtColor(rot_image,cv2.COLOR_BGR2RGB))
 
 def shift_image(image_data, extracted_qr, qr_coords):
     """Roll the image such that QR occupies coords specified by the template."""

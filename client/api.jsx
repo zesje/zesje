@@ -38,5 +38,6 @@ const get = _fetch('GET')
 const post = _fetch('POST')
 const put = _fetch('PUT')
 const patch = _fetch('PATCH')
+const del = _fetch('DELETE')
 
-export {get, post, put, patch}
+export {get, post, put, patch, del}

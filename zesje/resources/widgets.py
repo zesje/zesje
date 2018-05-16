@@ -78,3 +78,19 @@ class Widgets(Resource):
         return {
             'id': widget.id
         }
+
+
+    @orm.db_session
+    def delete(self, widget_id):
+
+        widget = Widget.get(id=widget_id)
+
+        if widget is None:
+            msg = f"Widget with id {widget_id} doesn't exist"
+            return dict(status=404, message=msg), 404
+        else:
+
+            widget.delete()
+            db.commit()
+
+            return dict(status=200, message="ok"), 200

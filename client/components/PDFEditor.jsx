@@ -1,5 +1,6 @@
 import React from 'react';
 import './PDFEditor.css';
+import * as api from '../api.jsx'
 
 import { Document, Page } from 'react-pdf';
 // worker is prefered but need to convince webpack to cooperate
@@ -39,9 +40,33 @@ class PDFEditor extends React.Component {
         this.setState({
             page: 0,
             numPages: pdf.numPages,
-            // initialize array to size of pdf
-            widgets: Array.from(Array(pdf.numPages), () => new Array()),
         })
+        this.updateWidgets()
+    }
+
+    updateWidgets = (andThen) => {
+        api.get('exams/' + this.state.examID)
+            .then(exam => {
+                // initialize array to size of pdf
+                const widgets = Array.from(Array(this.state.numPages), () => new Array())
+                exam.widgets.forEach((widget) => {
+                    const data = JSON.parse(widget.data)
+                    console.log(widgets)
+                    console.log(data)
+                    console.log(widgets[data.page])
+                    widgets[data.page].push({
+                        id: widget.id,
+                        x: data.x,
+                        y: data.y,
+                        width: data.width,
+                        height: data.height,
+                    })
+                })
+                this.setState({
+                    widgets: widgets
+                })
+            })
+            .then(andThen)
     }
 
     setPage = (newPage) => {
@@ -85,19 +110,30 @@ class PDFEditor extends React.Component {
         })
         if (selectionBox) {
             if (selectionBox.width >= this.props.widgetMinWidth && selectionBox.height >= this.props.widgetMinHeight) {
-                this.setState({
-                    selectedWidget: this.state.widgets[this.state.page].length,
-                    widgets: update(this.state.widgets, {
-                        [this.state.page]: {
-                            $push: [{
-                                x: selectionBox.left,
-                                y: selectionBox.top,
-                                width: selectionBox.width,
-                                height: selectionBox.height,
-                                name: '',
-                            }]
-                        }
+                const widgetData = {
+                    page: this.state.page,
+                    x: selectionBox.left,
+                    y: selectionBox.top,
+                    width: selectionBox.width,
+                    height: selectionBox.height,
+                    name: '',
+                }
+                const formData = new FormData()
+                formData.append('exam_id', this.state.examID)
+                formData.append('data', JSON.stringify(widgetData))
+                api.post('widgets', formData).then(widget => {
+                    console.log(widget)
+                    widgetData.id = widget.id
+                    this.setState({
+                        selectedWidget: this.state.widgets[this.state.page].length,
+                        widgets: update(this.state.widgets, {
+                            [this.state.page]: {
+                                $push: [widgetData]
+                            }
+                        })
                     })
+                }).catch(err => {
+                    console.log(err)
                 })
             }
         }
@@ -189,6 +225,8 @@ class PDFEditor extends React.Component {
     }
 
     renderWidgets = () => {
+        console.log(this.state.selectedWidget)
+        console.log(this.state.widgets)
         if (this.state.widgets) {
             const page = this.state.page
             const widgets = this.state.widgets[page]
@@ -267,35 +305,53 @@ class PDFEditor extends React.Component {
         }
     }
 
-    handleWidgetDeletion = (page, index, prompt = true) => {
+    getWidgetSafe = (page, widget) => {
         const widgets = this.state.widgets
-        if (widgets && page && index !== null
+        if (widgets && page !== null && widget !== null
                 && widgets[page]
-                && widgets[page][index]) {
-            const widget = widgets[page][index]
+                && widgets[page][widget]) {
+            return widgets[page][widget]
+        } else {
+            return null
+        }
+    }
+
+    handleWidgetDeletion = (page, index, prompt = true) => {
+        const widget = this.getWidgetSafe(page, index)
+        if (widget) {
             if (prompt && confirm('Are you sure you want to delete this widget?')) {
-                this.setState({
-                    selectedWidget: null,
-                    widgets: update(this.state.widgets, {
-                        [this.state.page]: {
-                            $splice: [[index, 1]]
-                        }
+                console.log(widget)
+                api.del('widgets/' + widget.id)
+                    .then(resp => {
+                        console.log(resp)
+                        this.setState({
+                            selectedWidget: null,
+                            widgets: update(this.state.widgets, {
+                                [this.state.page]: {
+                                    $splice: [[index, 1]]
+                                }
+                            })
+
+                        })
+                    })
+                    .catch(err => {
+                        console.log(err)
+                        // update to try and get a consistent state
+                        this.updateWidgets()
                     })
 
-                })
             }
         }
     }
 
     renderWidgetDetails = () => {
-        const widgets = this.state.widgets
-        const page = this.state.page
-        const selectedWidget = this.state.selectedWidget
-        if (widgets && page !== null && selectedWidget !== null
-                && widgets[page]
-                && widgets[page][selectedWidget]) {
-            const widget = widgets[page][selectedWidget]
-            console.log(widget.name)
+        const {
+            page,
+            selectedWidget} = this.state
+        const widget = this.getWidgetSafe(
+            this.state.page,
+            this.state.selectedWidget)
+        if (widget) {
             return (
                 <nav className="panel">
                     <p className="panel-heading">

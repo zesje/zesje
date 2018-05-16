@@ -47,6 +47,7 @@ class PDFEditor extends React.Component {
     setPage = (newPage) => {
         this.setState({
             // clamp the page
+            selectedWidget: null,
             page: Math.max(1, Math.min(newPage, this.state.numPages))
         })
     }
@@ -93,6 +94,7 @@ class PDFEditor extends React.Component {
                                 y: selectionBox.top,
                                 width: selectionBox.width,
                                 height: selectionBox.height,
+                                name: '',
                             }]
                         }
                     })
@@ -251,6 +253,59 @@ class PDFEditor extends React.Component {
         }
     }
 
+    handleWidgetNameChange = (page, index) => {
+        return (e) => {
+            this.setState({
+                widgets: update(this.state.widgets, {
+                    [page - 1]: {
+                        [index]: {
+                            name: {$set: e.target.value},
+                        }
+                    }
+                })
+            })
+        }
+    }
+
+    renderWidgetDetails = () => {
+        const widgets = this.state.widgets
+        const page = this.state.page
+        const selectedWidget = this.state.selectedWidget
+        if (widgets && page && selectedWidget !== null
+                && widgets[page - 1]
+                && widgets[page - 1][selectedWidget]) {
+            const widget = widgets[page - 1][selectedWidget]
+            console.log(widget.name)
+            return (
+                <nav className="panel">
+                    <p className="panel-heading">
+                        Question details
+                    </p>
+                    <div className="panel-block">
+                        Position: ({widget.x},{widget.y})<br />
+                        Size: {widget.width}x{widget.height}<br />
+                    </div>
+                    <div className="panel-block">
+                        <div className="field">
+                            <label className="label">Name</label>
+                            <div className="control">
+                                <input
+                                    className="input"
+                                    type="text"
+                                    placeholder="Question name"
+                                    value={widget.name}
+                                    onChange={this.handleWidgetNameChange(page, selectedWidget)}
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </nav>
+            )
+        } else {
+            return null
+        }
+    }
+
     render() {
         const widgets = this.renderWidgets()
         return (
@@ -293,6 +348,9 @@ class PDFEditor extends React.Component {
                             </div>
                         </div>
                     </div>
+
+                    {this.renderWidgetDetails()}
+
                 </div>
             </div>
         )

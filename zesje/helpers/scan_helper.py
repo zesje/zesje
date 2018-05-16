@@ -266,8 +266,7 @@ def guess_dpi(image_array):
     resolutions = np.array([1200, 600, 300, 200, 150, 120, 100, 75, 60, 50, 40])
     return resolutions[np.argmin(abs(resolutions - 25.4 * h / 297))]
 
-
-def rotate_and_shift(image_data, extracted_qr, qr_coords):
+def shift_image(image_data, extracted_qr, qr_coords):
     """Roll the image such that QR occupies coords specified by the template."""
     page, position = extracted_qr.page, extracted_qr.coords
     y, x = np.mean(position, axis=0)

@@ -28,6 +28,10 @@ class Exams extends React.Component {
         }
     }
 
+    componentDidMount = () => {
+        if (this.props.urlID !== this.props.exam.id) this.props.updateExam(this.props.urlID)
+    }
+
     render() {
         return <div>
             <Hero title="Exam details" subtitle={"Selected: " + this.props.exam.name} />

@@ -51,9 +51,6 @@ class PDFEditor extends React.Component {
                 const widgets = Array.from(Array(this.state.numPages), () => new Array())
                 exam.widgets.forEach((widget) => {
                     const data = JSON.parse(widget.data)
-                    console.log(widgets)
-                    console.log(data)
-                    console.log(widgets[data.page])
                     widgets[data.page].push({
                         id: widget.id,
                         x: data.x,
@@ -230,8 +227,6 @@ class PDFEditor extends React.Component {
     }
 
     renderWidgets = () => {
-        console.log(this.state.selectedWidget)
-        console.log(this.state.widgets)
         if (this.state.widgets) {
             const page = this.state.page
             const widgets = this.state.widgets[page]

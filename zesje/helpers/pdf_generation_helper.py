@@ -17,9 +17,34 @@ def generate_pdfs(exam_pdf_file, exam_id, output_dir, num_copies, id_grid_x,
     """
     Generate the final PDFs from the original exam PDF.
 
+    To maintain a consistent size of the DataMatrix codes, adhere to (# of
+    letters in exam ID) + 2 * (# of digits in exam ID) = C for a certain
+    constant C. The reason for this is that pyStrich encodes two digits in as
+    much space as one letter.
+
+    If maximum interchangeability with version 1 QR codes is desired (error
+    correction level M), use exam IDs composed of only uppercase letters, and
+    composed of at most 12 letters.
+
     Parameters
     ----------
-    TODO
+    exam_pdf_file : file object
+        The exam PDF file
+    exam_id : str
+        The identifier of the exam
+    output_dir : path-like object
+        The directory where this function will store the generated PDF files.
+        They will have filenames like 00000.pdf, 00001.pdf, etc.
+    num_copies : int
+        The number of copies of the exam to generate
+    id_grid_x : int
+        The x coordinate where the student ID grid should be placed, in mm
+    id_grid_y : int
+        The y coordinate where the student ID grid should be placed, in mm
+    datamatrix_x : int
+        The x coordinate where the DataMatrix code should be placed, in mm
+    datamatrix_y : int
+        The y coordinate where the DataMatrix code should be placed, in mm
     """
     exam_pdf = PdfReader(exam_pdf_file)
 
@@ -52,13 +77,18 @@ def generate_pdfs(exam_pdf_file, exam_id, output_dir, num_copies, id_grid_x,
             PdfWriter(path, trailer=overlay_pdf).write()
 
 
-def join_pdfs(directory, output_file, num_copies):
+def join_pdfs(directory, output_filename, num_copies):
     """
     Join all the final PDFs into a single big PDF.
 
     Parameters
     ----------
-    TODO
+    directory : path-like object
+        The directory where the generated PDF files to be joined are located
+    output_filename : str
+        The filename where the joined PDF file should be stored
+    num_copies : int
+        The number of copies that are present in the given directory
     """
     writer = PdfWriter()
 
@@ -67,7 +97,7 @@ def join_pdfs(directory, output_file, num_copies):
                             _output_pdf_filename_format.format(copy_idx))
         writer.addpages(PdfReader(path).pages)
 
-    writer.write(output_file)
+    writer.write(output_filename)
 
 
 def generate_id_grid(canv, x, y):
@@ -76,8 +106,14 @@ def generate_id_grid(canv, x, y):
 
     Parameters
     ----------
-    TODO
+    canv : ReportLab Canvas object
+        The ReportLab canvas on which the grid should be drawn
+    x : int
+        The x coordinate where the grid should be drawn
+    x : int
+        The y coordinate where the grid should be drawn
     """
+    # TODO: actually draw a grid instead of the text Beatiful ID Grid
     canv.setFont('Helvetica', 14)
     canv.drawString(x * mm, y * mm, 'Beautiful ID Grid')
 
@@ -106,9 +142,9 @@ def generate_datamatrix(exam_id, page_num, copy_num):
 
     Returns
     -------
-    PIL.Image.Image object
-        The PIL image of the DataMatrix code, including quiet zone (you don't
-        need to add a quiet zone yourself)
+    Pillow Image object
+        The Pillow image of the DataMatrix code, including quiet zone (you
+        don't need to add a quiet zone yourself)
     """
 
     data = f'{exam_id}/{copy_num:04d}/{page_num:02d}'
@@ -123,9 +159,35 @@ def _generate_overlay(canv, pagesize, exam_id, copy_num, num_pages, id_grid_x,
     Generates an overlay ('watermark') PDF, which can then be overlaid onto
     the exam PDF.
 
+    To maintain a consistent size of the DataMatrix codes in the overlay,
+    adhere to (# of letters in exam ID) + 2 * (# of digits in exam ID) = C for
+    a certain constant C. The reason for this is that pyStrich encodes two
+    digits in as much space as one letter.
+
+    If maximum interchangeability with version 1 QR codes is desired (error
+    correction level M), use exam IDs composed of only uppercase letters, and
+    composed of at most 12 letters.
+
     Parameters
     ----------
-    TODO
+    canv : ReportLab Canvas object
+        The empty ReportLab canvas on which the overlay should be generated
+    pagesize : (float, float)
+        The ReportLab-style (i.e. (width, height)) page size of the canvas
+    exam_id : str
+        The identifier of the exam
+    copy_num : int
+        The copy number for which the overlay is being generated
+    num_pages : int
+        The amount of pages that the generated overlay should count
+    id_grid_x : int
+        The x coordinate where the student ID grid should be placed
+    id_grid_y : int
+        The y coordinate where the student ID grid should be placed
+    datamatrix_x : int
+        The x coordinate where the DataMatrix codes should be placed
+    datamatrix_y : int
+        The y coordinate where the DataMatrix codes should be placed
     """
     # ID grid on first page only
     generate_id_grid(canv, id_grid_x, id_grid_y)
@@ -145,7 +207,14 @@ def _add_corner_markers(canv, pagesize, margin=10):
 
     Parameters
     ----------
-    TODO
+    canv : ReportLab Canvas object
+        The canvas on which the corner markers should be drawn. Corner markers
+        will only be drawn on the current page of the canvas.
+    pagesize : (float, float)
+        The ReportLab-style (i.e. (width, height)) page size of the canvas
+    margin : int
+        The margin to be observed from the page edges, the corner markers will
+        be drawn at the edge of this margin
     """
     width = pagesize[0]
     height = pagesize[1]

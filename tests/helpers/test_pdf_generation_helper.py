@@ -37,7 +37,7 @@ def mock_generate_id_grid(monkeypatch):
 
 # Method to check whether the pages in a PDF are equal to a list of images.
 def assert_pdf_and_images_are_equal(pdf_filename, images,
-                                    ssim_threshold=0.998):
+                                    ssim_threshold=0.9985):
     images_pdf = []
     with WandImage(filename=pdf_filename, resolution=150) as pdf:
         for i, page in enumerate(pdf.sequence):
@@ -64,35 +64,45 @@ def assert_pdf_and_images_are_equal(pdf_filename, images,
 # Tests #
 
 
+@pytest.mark.parametrize('pagesize,name', [
+    (A4, 'a4'),
+    ((200 * mm, 200 * mm), 'square')
+], ids=['a4', 'square'])
 @pytest.mark.parametrize('margin', [15, 30])
-def test_add_corner_markers(datadir, tmpdir, margin):
+def test_add_corner_markers(datadir, tmpdir, margin, pagesize, name):
     pdf_filename = os.path.join(tmpdir, 'file.pdf')
 
-    canv = RLCanvas(pdf_filename, pagesize=A4)
-    pdf_generation_helper._add_corner_markers(canv, A4, margin)
+    canv = RLCanvas(pdf_filename, pagesize=pagesize)
+    pdf_generation_helper._add_corner_markers(canv, pagesize, margin)
     canv.save()
 
-    image_filename = os.path.join(datadir, f'cornermarkers-{margin}mm.png')
+    image_filename = os.path.join(datadir, 'cornermarkers',
+                                  f'{name}-{margin}mm.png')
     assert_pdf_and_images_are_equal(pdf_filename,
                                     [PIL.Image.open(image_filename)])
 
 
+@pytest.mark.parametrize('pagesize,name', [
+    (A4, 'a4'),
+    ((200 * mm, 200 * mm), 'square')
+], ids=['a4', 'square'])
 def test_generate_overlay(mock_generate_datamatrix, mock_generate_id_grid,
-                          datadir, tmpdir):
+                          datadir, tmpdir, pagesize, name):
     filename = os.path.join(str(tmpdir), 'file.pdf')
 
-    canv = RLCanvas(filename, pagesize=A4)
-    pdf_generation_helper._generate_overlay(canv, 'ABCDEFGHIJKL', 1, 2, 25,
-                                            270, 150, 270)
+    canv = RLCanvas(filename, pagesize=pagesize)
+    pdf_generation_helper._generate_overlay(canv, pagesize, 'ABCDEFGHIJKL', 1,
+                                            2, 25, 150, 125, 150)
     canv.save()
 
-    img_filenames = [os.path.join(datadir, f'overlay{i}.png') for i in [0, 1]]
+    img_filenames = [os.path.join(datadir, 'overlays', f'{name}-{i}.png')
+                     for i in [0, 1]]
     images = [PIL.Image.open(x) for x in img_filenames]
     assert_pdf_and_images_are_equal(filename, images)
 
 
 def test_generate_pdfs_num_files(datadir, tmpdir):
-    blank_pdf = os.path.join(datadir, 'blank-2pages.pdf')
+    blank_pdf = os.path.join(datadir, 'blank-a4-2pages.pdf')
 
     num_copies = 3
 
@@ -102,29 +112,35 @@ def test_generate_pdfs_num_files(datadir, tmpdir):
     assert len(tmpdir.listdir()) == num_copies
 
 
+@pytest.mark.parametrize('pagesize,name', [
+    (A4, 'a4'),
+    ((200 * mm, 200 * mm), 'square')
+], ids=['a4', 'square'])
 def test_generate_pdfs_blank(mock_generate_datamatrix, mock_generate_id_grid,
-                             datadir, tmpdir):
-    blank_pdf = os.path.join(datadir, 'blank-2pages.pdf')
+                             datadir, tmpdir, pagesize, name):
+    blank_pdf = os.path.join(datadir, f'blank-{name}-2pages.pdf')
 
     pdf_generation_helper.generate_pdfs(blank_pdf, 'ABCDEFGHIJKL', str(tmpdir),
-                                        2, 25, 270, 150, 270)
+                                        2, 25, 150, 125, 150)
 
-    img_filenames = [os.path.join(datadir, f'overlay{i}.png') for i in [0, 1]]
+    img_filenames = [os.path.join(datadir, 'overlays', f'{name}-{i}.png')
+                     for i in [0, 1]]
     images = [PIL.Image.open(x) for x in img_filenames]
     filenames = [os.path.join(tmpdir, x) for x in ['00000.pdf', '00001.pdf']]
     assert_pdf_and_images_are_equal(filenames[0], images)
     assert_pdf_and_images_are_equal(filenames[1], images)
 
 
+@pytest.mark.parametrize('name', ['a4', 'square'], ids=['a4', 'square'])
 def test_join_pdfs(mock_generate_datamatrix, mock_generate_id_grid,
-                   datadir, tmpdir):
-    directory = os.path.join(datadir, 'test-join-pdfs')
+                   datadir, tmpdir, name):
+    directory = os.path.join(datadir, f'test-join-pdfs-{name}')
     out = os.path.join(tmpdir, 'out.pdf')
     num_copies = 2
 
     pdf_generation_helper.join_pdfs(directory, out, num_copies)
 
-    image_filename = os.path.join(datadir, 'blank.png')
+    image_filename = os.path.join(datadir, f'blank-{name}.png')
     images = [PIL.Image.open(image_filename)] * 4
     assert_pdf_and_images_are_equal(out, images)
 

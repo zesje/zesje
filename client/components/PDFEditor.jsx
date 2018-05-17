@@ -289,23 +289,6 @@ class PDFEditor extends React.Component {
         }
     }
 
-    handleWidgetNameChange = (page, index) => {
-        return (e) => {
-            const value = e.target.value
-            this.setState((prevState, props) => {
-                return {
-                    widgets: update(prevState.widgets, {
-                        [page]: {
-                            [index]: {
-                                name: {$set: value},
-                            }
-                        }
-                    })
-                }
-            })
-        }
-    }
-
     getWidgetSafe = (page, widget) => {
         const widgets = this.state.widgets
         if (widgets && page !== null && widget !== null
@@ -399,14 +382,27 @@ class PDFEditor extends React.Component {
                     </div>
                     <div className="panel-block">
                         <div className="field">
-                            <label className="label">Name</label>
+                            <div className="control">
+                                <label className="label">Name</label>
+                            </div>
                             <div className="control">
                                 <input
                                     className="input"
                                     type="text"
                                     placeholder="Question name"
                                     value={widget.name || ''}
-                                    onChange={this.handleWidgetNameChange(page, selectedWidget)}
+                                    onChange={(e) => {
+                                        /*
+                                         * We're only updating with the button for now
+                                         * because onChange is too much spam and
+                                         * it is not guarranteed that the server
+                                         * receives requests in-order. This confuses
+                                         * ponyORM
+                                         */
+                                        this.handleWidgetUpdate(page, selectedWidget, {
+                                            name: {$set: e.target.value},
+                                        }, false)
+                                    }}
                                 />
                             </div>
                         </div>
@@ -414,12 +410,26 @@ class PDFEditor extends React.Component {
                     <div className="panel-block">
                         <div className="field">
                             <label className="label">Actions</label>
+                        </div>
+                    </div>
+                    <div className="panel-block">
+                        <div className="field has-addons">
                             <div className="control">
                                 <button
                                     className="button is-danger"
                                     onClick={() => this.handleWidgetDeletion(page, selectedWidget)}
                                 >
                                     Delete
+                                </button>
+                            </div>
+                            <div className="control">
+                                <button
+                                    className="button is-success"
+                                    onClick={(e) => {
+                                        this.handleWidgetUpdate(page, selectedWidget, {})
+                                    }}
+                                >
+                                    Save name
                                 </button>
                             </div>
                         </div>

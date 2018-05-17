@@ -370,75 +370,82 @@ class PDFEditor extends React.Component {
         const widget = this.getWidgetSafe(
             this.state.page,
             this.state.selectedWidget)
-        if (widget) {
-            return (
-                <nav className="panel">
-                    <p className="panel-heading">
-                        Widget details
-                    </p>
+        const isDisabled = widget == null
+        return (
+            <nav className="panel">
+                <p className="panel-heading">
+                    Widget details
+                </p>
+                {isDisabled ?
+                    <div className="panel-block">
+                        Position: (X,Y)<br />
+                        Size: WidthxHeight<br />
+                    </div>
+                :
                     <div className="panel-block">
                         Position: ({widget.x},{widget.y})<br />
                         Size: {widget.width}x{widget.height}<br />
                     </div>
-                    <div className="panel-block">
-                        <div className="field">
-                            <div className="control">
-                                <label className="label">Name</label>
-                            </div>
-                            <div className="control">
-                                <input
-                                    className="input"
-                                    type="text"
-                                    placeholder="Question name"
-                                    value={widget.name || ''}
-                                    onChange={(e) => {
-                                        /*
-                                         * We're only updating with the button for now
-                                         * because onChange is too much spam and
-                                         * it is not guarranteed that the server
-                                         * receives requests in-order. This confuses
-                                         * ponyORM
-                                         */
-                                        this.handleWidgetUpdate(page, selectedWidget, {
-                                            name: {$set: e.target.value},
-                                        }, false)
-                                    }}
-                                />
-                            </div>
+                }
+                <div className="panel-block">
+                    <div className="field">
+                        <div className="control">
+                            <label className="label">Name</label>
+                        </div>
+                        <div className="control">
+                            <input
+                                className="input"
+                                type="text"
+                                    disabled={isDisabled}
+                                placeholder="Question name"
+                                value={widget && widget.name || ''}
+                                onChange={(e) => {
+                                    /*
+                                     * We're only updating with the button for now
+                                     * because onChange is too much spam and
+                                     * it is not guarranteed that the server
+                                     * receives requests in-order. This confuses
+                                     * ponyORM
+                                     */
+                                    this.handleWidgetUpdate(page, selectedWidget, {
+                                        name: {$set: e.target.value},
+                                    }, false)
+                                }}
+                            />
                         </div>
                     </div>
-                    <div className="panel-block">
-                        <div className="field">
-                            <label className="label">Actions</label>
+                </div>
+                <div className="panel-block">
+                    <div className="field">
+                        <label className="label">Actions</label>
+                    </div>
+                </div>
+                <div className="panel-block">
+                    <div className="field has-addons">
+                        <div className="control">
+                            <button
+                                disabled={isDisabled}
+                                className="button is-danger"
+                                onClick={() => this.handleWidgetDeletion(page, selectedWidget)}
+                            >
+                                Delete
+                            </button>
+                        </div>
+                        <div className="control">
+                            <button
+                                disabled={isDisabled}
+                                className="button is-success"
+                                onClick={(e) => {
+                                    this.handleWidgetUpdate(page, selectedWidget, {})
+                                }}
+                            >
+                                Save name
+                            </button>
                         </div>
                     </div>
-                    <div className="panel-block">
-                        <div className="field has-addons">
-                            <div className="control">
-                                <button
-                                    className="button is-danger"
-                                    onClick={() => this.handleWidgetDeletion(page, selectedWidget)}
-                                >
-                                    Delete
-                                </button>
-                            </div>
-                            <div className="control">
-                                <button
-                                    className="button is-success"
-                                    onClick={(e) => {
-                                        this.handleWidgetUpdate(page, selectedWidget, {})
-                                    }}
-                                >
-                                    Save name
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </nav>
-            )
-        } else {
-            return null
-        }
+                </div>
+            </nav>
+        )
     }
 
     render() {
@@ -480,18 +487,7 @@ class PDFEditor extends React.Component {
                                 onClick={this.nextPage}>Next</button>
                         </div>
                     </div>
-
-                    {widgetDetails ? widgetDetails : (
-                        <nav className="panel">
-                            <p className="panel-heading">
-                                Widget details
-                            </p>
-                            <div className="panel-block">
-                                Select a widget to modify its details
-                            </div>
-                        </nav>
-                    )}
-
+                    {widgetDetails}
                 </div>
             </div>
         )

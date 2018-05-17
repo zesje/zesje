@@ -233,6 +233,7 @@ class PDFEditor extends React.Component {
             const page = this.state.page
             const widgets = this.state.widgets[page]
             return widgets.map((widget, index) => {
+                const isSelected = index == this.state.selectedWidget
                 return (
                     <ResizeAndDrag
                         key={'widget_' + page + '_' + index}
@@ -276,7 +277,7 @@ class PDFEditor extends React.Component {
                         }}
                     >
                         <div
-                            className='widget'
+                            className={isSelected ? 'widget selected' : 'widget'}
                         >
                             {widget.name}
                         </div>

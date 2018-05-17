@@ -89,6 +89,7 @@ class PDFEditor extends React.Component {
             return
         }
         this.setState({
+            selectedWidget: null,
             mouseDown: true,
             selectionStartPoint: this.getCoordinatesForEvent(e)
         });

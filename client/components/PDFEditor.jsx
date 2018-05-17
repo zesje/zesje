@@ -251,19 +251,19 @@ class PDFEditor extends React.Component {
                             height: widget.height,
                         }}
                         onResize={(e, direction, ref, delta, position) => {
-                            this.setState((prevState, props) => {
-                                return {
-                                    widgets: update(this.state.widgets, {
-                                        [page]: {
-                                            [index]: {
-                                                width: {$set: ref.offsetWidth},
-                                                height: {$set: ref.offsetHeight},
-                                                x: {$set: position.x},
-                                                y: {$set: position.y},
-                                            }
-                                        }
-                                    })
-                                }
+                            this.handleWidgetUpdate(page, index, {
+                                width: {$set: ref.offsetWidth},
+                                height: {$set: ref.offsetHeight},
+                                x: {$set: position.x},
+                                y: {$set: position.y},
+                            }, false)
+                        }}
+                        onResizeStop={(e, direction, ref, delta, position) => {
+                            this.handleWidgetUpdate(page, index, {
+                                width: {$set: ref.offsetWidth},
+                                height: {$set: ref.offsetHeight},
+                                x: {$set: position.x},
+                                y: {$set: position.y},
                             })
                         }}
                         onDragStart={() => {
@@ -272,17 +272,9 @@ class PDFEditor extends React.Component {
                             })
                         }}
                         onDragStop={(e, d) => {
-                            this.setState((prevState, props) => {
-                                return {
-                                    widgets: update(prevState.widgets, {
-                                        [page]: {
-                                            [index]: {
-                                                x: {$set: d.x},
-                                                y: {$set: d.y},
-                                            }
-                                        }
-                                    })
-                                }
+                            this.handleWidgetUpdate(page, index, {
+                                x: {$set: d.x},
+                                y: {$set: d.y},
                             })
                         }}
                     >
@@ -351,6 +343,43 @@ class PDFEditor extends React.Component {
                         this.updateWidgets()
                     })
             }
+        }
+    }
+
+    handleWidgetUpdate = (page, index, newData, putToServer = true) => {
+        // Now only relevant to update the data property
+        // check if widget really exists
+        if (this.getWidgetSafe(page, index)) {
+            this.setState((prevState, props) => {
+                return {
+                    widgets: update(prevState.widgets, {
+                        [page]: {
+                            [index]: newData
+                        }
+                    })
+                }
+            }, () => {
+                if (putToServer) {
+                    // make sure to fetch widget from updated state
+                    const widget = this.getWidgetSafe(page, index)
+                    // construct whole new data object as it is opaque to the
+                    // server and we're using http PUT
+                    api.put('widgets/' + widget.id + '/data', {
+                        page: page,
+                        x: widget.x,
+                        y: widget.y,
+                        width: widget.width,
+                        height: widget.height,
+                        name: widget.name,
+                    }).then(resp => {
+                        console.log(resp)
+                    }).catch(err => {
+                        console.log(err)
+                        // update to try and get a consistent state
+                        this.updateWidgets()
+                    })
+                }
+            })
         }
     }
 

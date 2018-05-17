@@ -279,7 +279,6 @@ class PDFEditor extends React.Component {
                         <div
                             className={isSelected ? 'widget selected' : 'widget'}
                         >
-                            {widget.name}
                         </div>
                     </ResizeAndDrag>
 

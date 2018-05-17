@@ -52,6 +52,7 @@ class PDFEditor extends React.Component {
                 exam.widgets.forEach((widget) => {
                     const data = JSON.parse(widget.data)
                     widgets[data.page].push({
+                        name: data.name,
                         id: widget.id,
                         x: data.x,
                         y: data.y,

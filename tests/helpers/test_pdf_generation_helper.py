@@ -64,6 +64,19 @@ def assert_pdf_and_images_are_equal(pdf_filename, images,
 # Tests #
 
 
+@pytest.mark.parametrize('margin', [15, 30])
+def test_add_corner_markers(datadir, tmpdir, margin):
+    pdf_filename = os.path.join(tmpdir, 'file.pdf')
+
+    canv = RLCanvas(pdf_filename, pagesize=A4)
+    pdf_generation_helper._add_corner_markers(canv, A4, margin)
+    canv.save()
+
+    image_filename = os.path.join(datadir, f'cornermarkers-{margin}mm.png')
+    assert_pdf_and_images_are_equal(pdf_filename,
+                                    [PIL.Image.open(image_filename)])
+
+
 def test_generate_overlay(mock_generate_datamatrix, mock_generate_id_grid,
                           datadir, tmpdir):
     filename = os.path.join(str(tmpdir), 'file.pdf')

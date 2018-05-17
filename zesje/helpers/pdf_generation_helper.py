@@ -129,6 +129,43 @@ def _generate_overlay(canv, exam_id, copy_num, num_pages, id_grid_x, id_grid_y,
     generate_id_grid(canv, id_grid_x, id_grid_y)
 
     for page_num in range(num_pages):
+        _add_corner_markers(canv, A4)
+
         datamatrix = generate_datamatrix(exam_id, page_num, copy_num)
         canv.drawInlineImage(datamatrix, datamatrix_x * mm, datamatrix_y * mm)
+
         canv.showPage()
+
+
+def _add_corner_markers(canv, pagesize, margin=10):
+    """
+    Adds corner markers to the given canvas.
+
+    Parameters
+    ----------
+    TODO
+    """
+    width = pagesize[0]
+    height = pagesize[1]
+    length = 8 * mm  # length of the lines
+
+    # Calculate coordinates offset from page edge
+    left = margin * mm
+    bottom = margin * mm
+    right = width - margin * mm
+    top = height - margin * mm
+
+    canv.lines([
+        # Bottom left
+        (left, bottom, left + length, bottom),
+        (left, bottom, left, bottom + length),
+        # Bottom right
+        (right, bottom, right - length, bottom),
+        (right, bottom, right, bottom + length),
+        # Top right
+        (right, top, right - length, top),
+        (right, top, right, top - length),
+        # Top left
+        (left, top, left + length, top),
+        (left, top, left, top - length)
+    ])

@@ -1,6 +1,8 @@
 import sys
 
 from flask_restful import Resource, reqparse
+from flask import request
+import json
 
 from pony import orm
 
@@ -78,6 +80,37 @@ class Widgets(Resource):
         return {
             'id': widget.id
         }
+
+    @orm.db_session
+    def put(self, widget_id, attr):
+
+        widget = Widget.get(id=widget_id)
+
+        if widget is None:
+            msg = f"Widget with id {widget_id} doesn't exist"
+            return dict(status=404, message=msg), 404
+
+        # will 400 on malformed json
+        data = request.get_json()
+
+        # check before modifying
+        if not hasattr(widget, attr):
+            msg = f"Widget doesn't have a property {attr}"
+            return dict(status=400, message=msg), 400
+
+        if attr in ["id", "exam"]:
+            msg = f"Not allowed to modify {attr}"
+            return dict(status=403, message=msg), 403
+
+        jsonDict = request.get_json()
+        jsonString = json.dumps(jsonDict)
+        jsonBuffer = bytes(jsonString, 'utf-8')
+
+        setattr(widget, attr, jsonBuffer)
+
+        db.commit()
+
+        return dict(status=200, message="ok"), 200
 
 
     @orm.db_session

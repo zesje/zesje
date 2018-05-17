@@ -39,7 +39,8 @@ api.add_resource(Feedback, '/feedback/<int:problem_id>')
 api.add_resource(Solutions, '/solution/<int:exam_id>/<int:submission_id>/<int:problem_id>')
 api.add_resource(Widgets,
                  '/widgets',
-                 '/widgets/<int:widget_id>')
+                 '/widgets/<int:widget_id>',
+                 '/widgets/<int:widget_id>/<string:attr>')
 
 
 # Other resources that don't return JSON

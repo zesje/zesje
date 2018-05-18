@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "concurrently --kill-others --names \"WEBPACK,PYTHON\" --prefix-colors \"bgBlue.bold,bgGreen.bold\" \"webpack-dev-server --hot --inline --progress --config webpack.dev.js\" \"ZESJE_SETTINGS=$(pwd)/zesje.dev.cfg python3 zesje\"",
     "build": "webpack --config webpack.prod.js",
+    "test": "jest",
     "start": "ZESJE_SETTINGS=$(pwd)/zesje.dev.cfg python3 zesje",
     "analyze": "webpack --config webpack.prod.js --json > stats.json; webpack-bundle-analyzer stats.json"
   },
@@ -43,9 +44,14 @@
   },
   "devDependencies": {
     "babel-core": "^6.26.0",
+    "babel-jest": "^22.4.3",
     "babel-loader": "^7.1.2",
+    "babel-preset-env": "^1.7.0",
     "babel-preset-flow": "^6.23.0",
     "babel-preset-react": "^6.24.1",
+    "identity-obj-proxy": "^3.0.0",
+    "jest": "^22.4.3",
+    "react-test-renderer": "^16.3.2",
     "webpack-bundle-analyzer": "^2.11.1",
     "webpack-dev-server": "^3.1.3"
   }

@@ -7,5 +7,19 @@
         "syntax-dynamic-import",
         "transform-class-properties",
         "transform-object-rest-spread"
-    ]
+    ],
+    "env": {
+        "test": {
+            "presets":[
+                [   "env",
+                    {
+                        "modules": "commonjs"
+                    }
+                ]
+            ],
+            "plugins": [
+                "transform-class-properties"
+            ]
+        }
+    }
 }

@@ -315,7 +315,7 @@ def rotate_image(image_data):
 
     # Create rotation matrix and rotate the image around the center
     rot_mat = cv2.getRotationMatrix2D((w / 2, h / 2), angle, 1)
-    rot_image = cv2.warpAffine(opencv_im, rot_mat, (w, h), cv2.BORDER_CONSTANT, borderMode=cv2.BORDER_CONSTANT, borderValue=255)
+    rot_image = cv2.warpAffine(opencv_im, rot_mat, (w, h), cv2.BORDER_CONSTANT, borderMode=cv2.BORDER_CONSTANT, borderValue=(255,255,255))
 
     return Image.fromarray(cv2.cvtColor(rot_image, cv2.COLOR_BGR2RGB))
 

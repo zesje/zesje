@@ -1,7 +1,7 @@
 import pytest
 import cv2
 import math
-from zesje.helpers import image_helper
+from zesje.helpers import image_helper,pdf_helper
 
 @pytest.mark.parametrize("test_input1, test_input2, expected", [
     (cv2.KeyPoint(0,100,0), cv2.KeyPoint(0,1000,0), 0),
@@ -10,6 +10,3 @@ from zesje.helpers import image_helper
 ])
 def test_calc_angle(test_input1, test_input2, expected):
     assert math.isclose(image_helper.calc_angle(test_input1, test_input2), expected, abs_tol=0.1)
-
-def test_yolo():
-    assert 1==1

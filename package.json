@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "concurrently --kill-others --names \"WEBPACK,PYTHON\" --prefix-colors \"bgBlue.bold,bgGreen.bold\" \"webpack-dev-server --hot --inline --progress --config webpack.dev.js\" \"ZESJE_SETTINGS=$(pwd)/zesje.dev.cfg python3 zesje\"",
     "build": "webpack --config webpack.prod.js",
-    "test": "jest",
+    "test": "jest; python -m pytest -v",
     "start": "ZESJE_SETTINGS=$(pwd)/zesje.dev.cfg python3 zesje",
     "analyze": "webpack --config webpack.prod.js --json > stats.json; webpack-bundle-analyzer stats.json"
   },

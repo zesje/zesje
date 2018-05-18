@@ -276,28 +276,9 @@ def rotate_image(image_data):
 
     _, bin_im = cv2.threshold(opencv_im, 150, 255, cv2.THRESH_BINARY)
 
-    # Filter out everything in the center of the image
     h, w, *_ = bin_im.shape
-    bin_im[round(0.125 * h):round(0.875 * h), round(0.125 * w):round(0.875 * w)] = 1
 
-    # Detect objects which look like corner markers
-    params = cv2.SimpleBlobDetector_Params()
-    params.filterByArea = True
-    params.minArea = 150
-    params.maxArea = 400
-    params.filterByCircularity = True
-    params.minCircularity = 0
-    params.maxCircularity = 0.15
-    params.filterByConvexity = True
-    params.minConvexity = 0.15
-    params.maxConvexity = 0.3
-    params.filterByInertia = True
-    params.minInertiaRatio = 0.20
-    params.maxInertiaRatio = 0.50
-    params.filterByColor = False
-
-    detector = cv2.SimpleBlobDetector_create(params)
-    keypoints = detector.detect(bin_im)
+    keypoints = image_helper.find_corner_marker_keypoints
 
     # Find two corner markers which lie in the same horizontal half.
     # Same horizontal half is chosen as the line from one keypoint to the other shoud be 0.

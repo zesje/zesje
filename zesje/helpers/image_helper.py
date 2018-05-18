@@ -55,9 +55,10 @@ def calc_angle(keyp1, keyp2):
     xdiff = math.fabs(keyp1.pt[0] - keyp2.pt[0])
     ydiff = math.fabs(keyp2.pt[1] - keyp1.pt[1])
 
-    #Avoid division by zero
+    #Avoid division by zero, it is unknown however whether it is turned 90
+    #degrees to the left or 90 degrees to the right, therefore we return
     if xdiff == 0:
-        return 0
+        return 90
 
     if keyp1.pt[0] < keyp2.pt[0]:
         if(keyp2.pt[1] > keyp1.pt[1]):
@@ -69,3 +70,37 @@ def calc_angle(keyp1, keyp2):
             return -1 * math.degrees(math.atan(ydiff / xdiff))
         else:
             return math.degrees(math.atan(ydiff / xdiff))
+
+
+def find_corner_marker_keypoints(bin_im):
+    """Generates a list of OpenCV keypoints which resemble corner markers.
+    This is done using a SimpleBlobDetector
+
+    Parameters:
+    -----------
+    bin_im: OpenCV binary image
+
+    """
+
+    # Filter out everything in the center of the image
+    h, w, *_ = bin_im.shape
+    bin_im[round(0.125 * h):round(0.875 * h), round(0.125 * w):round(0.875 * w)] = 1
+
+    # Detect objects which look like corner markers
+    params = cv2.SimpleBlobDetector_Params()
+    params.filterByArea = True
+    params.minArea = 150
+    params.maxArea = 400
+    params.filterByCircularity = True
+    params.minCircularity = 0
+    params.maxCircularity = 0.15
+    params.filterByConvexity = True
+    params.minConvexity = 0.15
+    params.maxConvexity = 0.3
+    params.filterByInertia = True
+    params.minInertiaRatio = 0.20
+    params.maxInertiaRatio = 0.50
+    params.filterByColor = False
+
+    detector = cv2.SimpleBlobDetector_create(params)
+    return detector.detect(bin_im)

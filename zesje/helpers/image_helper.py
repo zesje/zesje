@@ -55,8 +55,8 @@ def calc_angle(keyp1, keyp2):
     xdiff = math.fabs(keyp1.pt[0] - keyp2.pt[0])
     ydiff = math.fabs(keyp2.pt[1] - keyp1.pt[1])
 
-    #Avoid division by zero, it is unknown however whether it is turned 90
-    #degrees to the left or 90 degrees to the right, therefore we return
+    # Avoid division by zero, it is unknown however whether it is turned 90
+    # degrees to the left or 90 degrees to the right, therefore we return
     if xdiff == 0:
         return 90
 
@@ -84,7 +84,8 @@ def find_corner_marker_keypoints(bin_im):
 
     # Filter out everything in the center of the image
     h, w, *_ = bin_im.shape
-    bin_im[round(0.125 * h):round(0.875 * h), round(0.125 * w):round(0.875 * w)] = 1
+    bin_im[round(0.125 * h):round(0.875 * h),
+           round(0.125 * w):round(0.875 * w)] = 1
 
     # Detect objects which look like corner markers
     params = cv2.SimpleBlobDetector_Params()

@@ -278,25 +278,31 @@ def rotate_image(image_data):
 
     h, w, *_ = bin_im.shape
 
-    keypoints = image_helper.find_corner_marker_keypoints
+    keypoints = image_helper.find_corner_marker_keypoints(bin_im)
 
     # Find two corner markers which lie in the same horizontal half.
-    # Same horizontal half is chosen as the line from one keypoint to the other shoud be 0.
-    # To get corner markers in the same horizontal half, the pair with the smallest distance is chosen.
-    distances = [(a, b, math.hypot(a.pt[0] - b.pt[0], a.pt[1] - b.pt[1])) for (a, b) in list(itertools.combinations(keypoints, 2))]
+    # Same horizontal half is chosen as the line from one keypoint to
+    # the other shoud be 0. To get corner markers in the same horizontal half,
+    # the pair with the smallest distance is chosen.
+    distances = [(a, b, math.hypot(a.pt[0] - b.pt[0], a.pt[1] - b.pt[1]))
+                 for (a, b) in list(itertools.combinations(keypoints, 2))]
     distances.sort(key=lambda tup: tup[2], reverse=True)
     best_keypoint_combination = distances.pop()
 
     (keyp1, keyp2, dist) = best_keypoint_combination
 
-    # If the angle is downward, we have a negative angle and we want to rotate it counterclockwise
-    # However warpaffine needs a positve angle if you want to rotate it counterclockwise
+    # If the angle is downward, we have a negative angle and
+    # we want to rotate it counterclockwise
+    # However warpaffine needs a positve angle if
+    # you want to rotate it counterclockwise
     # So we invert the angle retrieved from calc_angle
     angle = -1 * image_helper.calc_angle(keyp1, keyp2)
 
     # Create rotation matrix and rotate the image around the center
     rot_mat = cv2.getRotationMatrix2D((w / 2, h / 2), angle, 1)
-    rot_image = cv2.warpAffine(opencv_im, rot_mat, (w, h), cv2.BORDER_CONSTANT, borderMode=cv2.BORDER_CONSTANT, borderValue=(255,255,255))
+    rot_image = cv2.warpAffine(opencv_im, rot_mat, (w, h), cv2.BORDER_CONSTANT,
+                               borderMode=cv2.BORDER_CONSTANT,
+                               borderValue=(255, 255, 255))
 
     return Image.fromarray(cv2.cvtColor(rot_image, cv2.COLOR_BGR2RGB))
 

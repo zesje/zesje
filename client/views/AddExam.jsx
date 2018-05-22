@@ -42,6 +42,14 @@ class Exams extends React.Component {
     }
 
     onUploadPDF = (event) => {
+        if (!this.state.exam_name) {
+            alert('Please enter exam name.')
+            return
+        }
+        if (!this.state.pdf) {
+            alert('Please upload a PDF.')
+            return
+        }
         const data = new FormData()
         data.append('pdf', this.state.pdf)
         data.append('exam_name', this.state.exam_name)
@@ -108,7 +116,6 @@ class Exams extends React.Component {
                         <div className="control">
                             <button
                                 type="submit"
-                                disabled={!this.state.exam_name}
                                 className="is-centered button is-info is-rounded"
                                 onClick={this.onUploadPDF}
                             >

@@ -35,9 +35,6 @@ class ExamConfig(Resource):
         """
         exam = Exam[exam_id]
 
-        data_dir = app.config['DATA_DIRECTORY']
-        exam_dir = os.path.join(data_dir, exam.name + '_data')
-
         return {
             'id': exam_id,
             'name': exam.name,

@@ -1,10 +1,12 @@
 import os
-from flask import current_app as app, send_file
+
+from flask import current_app as app, abort, send_file
 from flask_restful import Resource, reqparse
 from werkzeug.datastructures import FileStorage
 
 from pony import orm
 
+from ..helpers import pdf_generation_helper
 from ..models import db, Exam, Widget
 
 
@@ -218,5 +220,53 @@ class ExamSource(Resource):
 
 class ExamGenerateds(Resource):
 
-    def get(self, exam_id, generated_id):
-        return dict(status=501, message=f'Not implemented yet'), 501
+    @orm.db_session
+    def get(self, exam_id, copy_num):
+
+        exam_dir = _get_exam_dir(exam_id)
+        generated_pdfs_dir = os.path.join(
+            exam_dir,
+            'generated_pdfs'
+        )
+
+        if (not os.path.exists(generated_pdfs_dir)):
+            abort(404)
+
+        # TODO: Don't hardcode filename
+        pdf_path = os.path.join(generated_pdfs_dir, '00000.pdf')
+
+        if (not os.path.exists(pdf_path)):
+            abort(404)
+
+        return send_file(
+            pdf_path,
+            cache_timeout=0,
+            mimetype='application/pdf')
+
+    post_parser = reqparse.RequestParser()
+    post_parser.add_argument('copies', type=int, required=True)
+
+    @orm.db_session
+    def post(self, exam_id):
+
+        args = self.post_parser.parse_args()
+
+        exam_dir = _get_exam_dir(exam_id)
+
+        pdf_path = os.path.join(exam_dir, 'exam.pdf')
+
+        pdf_out_dir = os.path.join(exam_dir, 'generated_pdfs')
+        os.makedirs(pdf_out_dir, exist_ok=True)
+
+        pdf_generation_helper.generate_pdfs(
+            pdf_path,
+            'SomeCoolID',
+            pdf_out_dir,
+            args['copies'],
+            50, 150,
+            200, 300
+        )
+
+        return {
+            'success': True
+        }

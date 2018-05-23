@@ -31,7 +31,7 @@ api.add_resource(Exams, '/exams', '/exams/<int:exam_id>')
 api.add_resource(ExamSource, '/exams/<int:exam_id>/source_pdf')
 api.add_resource(ExamGenerateds,
                  '/exams/<int:exam_id>/generateds',
-                 '/exams/<int:exam_id>/generateds/<int:generated_id>')
+                 '/exams/<int:exam_id>/generateds/<int:copy_num>')
 api.add_resource(Pdfs, '/pdfs/<int:exam_id>')
 api.add_resource(Students, '/students', '/students/<int:student_id>')
 api.add_resource(Submissions,

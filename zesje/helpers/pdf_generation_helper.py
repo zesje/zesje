@@ -47,7 +47,6 @@ def generate_pdfs(exam_pdf_file, exam_id, output_dir, num_copies, id_grid_x,
         The y coordinate where the DataMatrix code should be placed, in mm
     """
     exam_pdf = PdfReader(exam_pdf_file)
-
     mediabox = exam_pdf.pages[0].MediaBox
     pagesize = (float(mediabox[2]), float(mediabox[3]))
 
@@ -63,18 +62,20 @@ def generate_pdfs(exam_pdf_file, exam_id, output_dir, num_copies, id_grid_x,
             overlay_canv.save()
 
             # Merge overlay and exam
+            exam_pdf = PdfReader(exam_pdf_file)
             overlay_pdf = PdfReader(overlay_file)
+
             for page_idx, exam_page in enumerate(exam_pdf.pages):
-                # First prepare the exam merge, and then add it to the overlay.
-                # If it were the other way around, all the overlays would
-                # 'stick' to the exam.
-                exam_merge = PageMerge().add(exam_page)[0]
-                overlay_merge = PageMerge(overlay_pdf.pages[page_idx]) \
-                    .add(exam_merge)
-                overlay_merge.render()
-            path = os.path.join(output_dir,
-                                _output_pdf_filename_format.format(copy_idx))
-            PdfWriter(path, trailer=overlay_pdf).write()
+                # First prepare the overlay merge, and then add it to the exam merge.
+                # It might seem more efficient to do it the other way around, because then we only need to load the exam
+                # PDF once. However, if there are elements in the exam PDF at the same place as the overlay, that would
+                # mean that the overlay ends up on the bottom, which is not good.
+                overlay_merge = PageMerge().add(overlay_pdf.pages[page_idx])[0]
+                exam_merge = PageMerge(exam_page).add(overlay_merge)
+                exam_merge.render()
+
+            path = os.path.join(output_dir, _output_pdf_filename_format.format(copy_idx))
+            PdfWriter(path, trailer=exam_pdf).write()
 
 
 def join_pdfs(directory, output_filename, num_copies):

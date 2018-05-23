@@ -144,6 +144,18 @@ def test_generate_pdf_nonblank(mock_generate_datamatrix, mock_generate_id_grid,
     assert_pdf_and_images_are_equal(os.path.join(tmpdir, '00000.pdf'), images)
 
 
+def test_generate_pdf_black(mock_generate_datamatrix, mock_generate_id_grid,
+                            datadir, tmpdir):
+    black_pdf = os.path.join(datadir, 'black-a4-2pages.pdf')
+
+    pdf_generation_helper.generate_pdfs(black_pdf, 'ABCDEFGHIJKL', str(tmpdir),
+                                        2, 25, 150, 125, 150)
+
+    images = [PIL.Image.open(os.path.join(datadir, 'generated-black.png'))] * 2
+    for pdf_name in ['00000.pdf', '00001.pdf']:
+        assert_pdf_and_images_are_equal(os.path.join(tmpdir, pdf_name), images)
+
+
 @pytest.mark.parametrize('name', ['a4', 'square'], ids=['a4', 'square'])
 def test_join_pdfs(mock_generate_datamatrix, mock_generate_id_grid,
                    datadir, tmpdir, name):

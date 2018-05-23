@@ -113,10 +113,10 @@ class PDFEditor extends React.Component {
             if (selectionBox.width >= this.props.widgetMinWidth && selectionBox.height >= this.props.widgetMinHeight) {
                 const widgetData = {
                     page: this.state.page,
-                    x: selectionBox.left,
-                    y: selectionBox.top,
-                    width: selectionBox.width,
-                    height: selectionBox.height,
+                    x: Math.round(selectionBox.left),
+                    y: Math.round(selectionBox.top),
+                    width: Math.round(selectionBox.width),
+                    height: Math.round(selectionBox.height),
                     name: null,
                 }
                 const formData = new FormData()

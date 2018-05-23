@@ -1,20 +1,57 @@
 import os
-
-from flask import abort, current_app as app, send_file
+from flask import current_app as app, send_file
 from flask_restful import Resource, reqparse
 from werkzeug.datastructures import FileStorage
 
 from pony import orm
 
-from ..helpers import yaml_helper, db_helper
-from ..models import db, Exam, Problem, FeedbackOption
-from ._helpers import required_string
+from ..models import db, Exam, Widget
 
 
-class ExamConfig(Resource):
+def _get_data_dir(exam_id):
+    return app.config['DATA_DIRECTORY']
+
+
+def _get_exam_dir(exam_id):
+    return os.path.join(
+        app.config['DATA_DIRECTORY'],
+        f'{exam_id}_data',
+    )
+
+
+class Exams(Resource):
+
+    def get(self, exam_id=None):
+        if exam_id:
+            return self._get_single(exam_id)
+        else:
+            return self._get_all()
 
     @orm.db_session
-    def get(self, exam_id):
+    def _get_all(self):
+        """get list of uploaded exams and their yaml.
+
+        Returns
+        -------
+        list of:
+            id : int
+                exam name
+            name : str
+                exam ID
+            submissions : int
+                Number of submissions
+        """
+        return [
+            {
+                'id': ex.id,
+                'name': ex.name,
+                'submissions': ex.submissions.count()
+            }
+            for ex in Exam.select().order_by(Exam.id)
+        ]
+
+    @orm.db_session
+    def _get_single(self, exam_id):
         """Get detailed information about a single exam
 
         URL Parameters
@@ -38,7 +75,7 @@ class ExamConfig(Resource):
         return {
             'id': exam_id,
             'name': exam.name,
-            'submissions': 
+            'submissions':
             [
                 {
                     'id': sub.copy_number,
@@ -75,88 +112,32 @@ class ExamConfig(Resource):
                             'description': fb.description,
                             'score': fb.score,
                             'used': fb.solutions.count()
-                        } for fb in prob.feedback_options.order_by(lambda f: f.id)
-                    ]
+                        }
+                        for fb
+                        in prob.feedback_options.order_by(lambda f: f.id)
+                    ],
+                    'page': prob.page,
+                    'widget': {
+                        'id': prob.widget.id,
+                        'name': prob.widget.name,
+                        'x': prob.widget.x,
+                        'y': prob.widget.y,
+                        'width': prob.widget.width,
+                        'height': prob.widget.height,
+                    },
                 } for prob in exam.problems.order_by(lambda p: p.id)
             ],
             'widgets': [
                 {
                     'id': widget.id,
-                    'data': widget.data.decode("utf-8")
+                    'name': widget.name,
+                    'x': widget.x,
+                    'y': widget.y,
+                    'width': widget.width,
+                    'height': widget.height,
                 } for widget in exam.widgets.order_by(lambda w: w.id)
-            ],
+            ]
         }
-
-    patch_parser = reqparse.RequestParser()
-    required_string(patch_parser, 'yaml')
-
-    @orm.db_session
-    def patch(self, exam_id):
-        """Update a single exam's config
-
-        URL Parameters
-        --------------
-        exam_id : int
-            exam ID
-
-        Parameters
-        ----------
-        yaml : str
-            processed YAML config
-        """
-        args = self.patch_parser.parse_args()
-
-        exam = Exam[exam_id]
-
-        data_dir = app.config['DATA_DIRECTORY']
-        yaml_filename = exam.id + '.yml'
-        yaml_abspath = os.path.join(data_dir, yaml_filename)
-        existing_yml = yaml_helper.read(yaml_abspath)
-        new_yml = yaml_helper.load(args['yaml'])
-
-        db_helper.update_exam(exam, existing_yml, new_yml)
-
-        yaml_helper.save(new_yml, yaml_abspath)
-
-        print(f"Updated problem names for exam {exam_id} (name: {exam.name}, token: {exam.token})")
-
-
-class Exams(Resource):
-
-    @orm.db_session
-    def get_pdf(exam_id):
-
-        exam = Exam[exam_id]
-
-        data_dir = app.config['DATA_DIRECTORY']
-        exam_dir = os.path.join(data_dir, f'{exam.id}_data')
-
-        return send_file(
-            os.path.join(exam_dir, 'exam.pdf'),
-            mimetype='application/pdf')
-
-    @orm.db_session
-    def get(self):
-        """get list of uploaded exams and their yaml.
-
-        Returns
-        -------
-        list of:
-            id : int
-                exam name
-            name : str
-                exam ID
-            submissions : int
-                Number of submissions
-        """
-        return [
-            {
-                'id': ex.id,
-                'name' : ex.name,
-                'submissions': ex.submissions.count()
-            }
-            for ex in Exam.select().order_by(Exam.id)
-        ]
 
     post_parser = reqparse.RequestParser()
     post_parser.add_argument('pdf', type=FileStorage, required=True, location='files')
@@ -183,23 +164,59 @@ class Exams(Resource):
         exam_name = args['exam_name']
         pdf_data = args['pdf']
 
-        exam = Exam(name=exam_name)
+        widgets = [
+            Widget(
+                name='student_id_widget',
+                x=50,
+                y=50,
+                width=264,
+                height=100,
+            ),
+            Widget(
+                name='barcode_widget',
+                x=500,
+                y=40,
+                width=44,
+                height=44,
+            ),
+        ]
+
+        exam = Exam(
+            name=exam_name,
+            widgets=widgets
+        )
+
         db.commit()  # so exam gets an id
 
-        data_dir = app.config['DATA_DIRECTORY']
-        exam_dir = os.path.join(data_dir, f'{exam.id}_data')
+        exam_dir = _get_exam_dir(exam.id)
         pdf_path = os.path.join(exam_dir, 'exam.pdf')
 
         os.makedirs(exam_dir, exist_ok=True)
 
         pdf_data.save(pdf_path)
 
-        # Default feedback (maybe factor out eventually).
-        feedback_options = ['Everything correct',
-                            'No solution provided']
-
         print(f"Added exam {exam.id} (name: {exam_name}, token: {exam.token}) to database")
 
         return {
             'id': exam.id
         }
+
+
+class ExamSource(Resource):
+
+    @orm.db_session
+    def get(self, exam_id):
+
+        exam = Exam[exam_id]
+
+        exam_dir = _get_exam_dir(exam.id)
+
+        return send_file(
+            os.path.join(exam_dir, 'exam.pdf'),
+            mimetype='application/pdf')
+
+
+class ExamGenerateds(Resource):
+
+    def get(self, exam_id, generated_id):
+        return dict(status=501, message=f'Not implemented yet'), 501

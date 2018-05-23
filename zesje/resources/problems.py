@@ -1,31 +1,61 @@
 """ REST api for problems """
 
-from flask_restful import Resource
-
+from flask import request
+from flask_restful import Resource, reqparse
 from pony import orm
 
-from ..models import Exam, Problem
+from ..models import db, Exam, Problem, Widget
+
 
 class Problems(Resource):
     """ List of problems associated with a particular exam_id """
 
-    @orm.db_session
-    def get(self, exam_id):
-        """get list of problems of exam
+    post_parser = reqparse.RequestParser()
+    post_parser.add_argument('exam_id', type=int, required=True, location='form')
+    post_parser.add_argument('name', type=str, required=True, location='form')
+    post_parser.add_argument('page', type=int, required=True, location='form')
+    post_parser.add_argument('x', type=int, required=True, location='form')
+    post_parser.add_argument('y', type=int, required=True, location='form')
+    post_parser.add_argument('width', type=int, required=True, location='form')
+    post_parser.add_argument('height', type=int, required=True, location='form')
 
-        Returns
-        -------
-        list of:
-            id: int
-            name: str
+    @orm.db_session
+    def post(self):
+        """Add a new problem.
+
+        Will error if exam for given id does not exist
+
         """
 
-        exam = Exam[exam_id]
+        args = self.post_parser.parse_args()
 
-        return [
-            {
+        exam_id = args['exam_id']
+
+        try:
+            exam = Exam[exam_id]
+        except orm.ObjectNotFound:
+            msg = f"Exam with id {exam_id} doesn't exist"
+            return dict(status=400, message=msg), 400
+        else:
+            widget = Widget(
+                x=args['x'],
+                y=args['y'],
+                width=args['width'],
+                height=args['height'],
+            )
+
+            problem = Problem(
+                exam=exam,
+                name=args['name'],
+                page=args['page'],
+                widget=widget
+            )
+
+            db.commit()
+
+            widget.name = f'problem_{problem.id}'
+
+            return {
                 'id': problem.id,
-                'name': problem.name
+                'widget_id': widget.id,
             }
-            for problem in Problem.select(lambda p: p.exam == exam)
-        ]

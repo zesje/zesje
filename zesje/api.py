@@ -2,7 +2,7 @@ from flask import Blueprint
 from flask_restful import Api
 
 from .resources.graders import Graders
-from .resources.exams import Exams, ExamConfig
+from .resources.exams import Exams, ExamSource, ExamGenerateds
 from .resources.pdfs import Pdfs
 from .resources.students import Students
 from .resources.submissions import Submissions
@@ -27,32 +27,29 @@ errors = {
 api = Api(api_bp, errors=errors)
 
 api.add_resource(Graders, '/graders')
-api.add_resource(Exams, '/exams')
-api.add_resource(ExamConfig, '/exams/<int:exam_id>')
+api.add_resource(Exams, '/exams', '/exams/<int:exam_id>')
+api.add_resource(ExamSource, '/exams/<int:exam_id>/source_pdf')
+api.add_resource(ExamGenerateds,
+                 '/exams/<int:exam_id>/generateds',
+                 '/exams/<int:exam_id>/generateds/<int:generated_id>')
 api.add_resource(Pdfs, '/pdfs/<int:exam_id>')
 api.add_resource(Students, '/students', '/students/<int:student_id>')
 api.add_resource(Submissions,
                  '/submissions/<int:exam_id>',
                  '/submissions/<int:exam_id>/<int:submission_id>')
-api.add_resource(Problems, '/problems/<int:exam_id>')
+api.add_resource(Problems,
+                 '/problems',
+                 '/problems/<int:problem_id>/<string:attr>')
 api.add_resource(Feedback, '/feedback/<int:problem_id>')
 api.add_resource(Solutions, '/solution/<int:exam_id>/<int:submission_id>/<int:problem_id>')
 api.add_resource(Widgets,
                  '/widgets',
-                 '/widgets/<int:widget_id>',
-                 '/widgets/<int:widget_id>/<string:attr>')
+                 '/widgets/<int:widget_id>')
 
 
 # Other resources that don't return JSON
 # It is possible to get flask_restful to work with these, but not
 # very idiomatic.
-
-# Pdfs
-api_bp.add_url_rule(
-    '/exam_pdfs/<int:exam_id>',
-    'exam_pdf',
-    Exams.get_pdf
-)
 
 # Images
 api_bp.add_url_rule(

@@ -25,10 +25,17 @@ class Grader(db.Entity):
 class Exam(db.Entity):
     """ New instances are created when providing a new exam. """
     name = Required(str, unique=True)
-    yaml_path = Required(str)
     submissions = Set('Submission')
     problems = Set('Problem')
-    pdfs = Set('PDF')
+    scans = Set('PDF')
+    widgets = Set('Widget')
+
+
+class Widget(db.Entity):
+    """ Widgets can be anything that will be rendered into the final exam
+    such as barcodes, answerboxes, etc """
+    exam = Required(Exam)
+    data = Required(bytes)
 
 
 class Submission(db.Entity):

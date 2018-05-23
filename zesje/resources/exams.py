@@ -1,6 +1,6 @@
 import os
 
-from flask import abort, current_app as app
+from flask import abort, current_app as app, send_file
 from flask_restful import Resource, reqparse
 from werkzeug.datastructures import FileStorage
 
@@ -34,10 +34,6 @@ class ExamConfig(Resource):
             YAML config
         """
         exam = Exam[exam_id]
-
-        data_dir = app.config['DATA_DIRECTORY']
-        with open(os.path.join(data_dir, exam.yaml_path)) as f:
-            yml = f.read()
 
         return {
             'id': exam_id,
@@ -83,7 +79,12 @@ class ExamConfig(Resource):
                     ]
                 } for prob in exam.problems.order_by(lambda p: p.id)
             ],
-            'yaml': yml
+            'widgets': [
+                {
+                    'id': widget.id,
+                    'data': widget.data.decode("utf-8")
+                } for widget in exam.widgets.order_by(lambda w: w.id)
+            ],
         }
 
     patch_parser = reqparse.RequestParser()
@@ -123,6 +124,18 @@ class ExamConfig(Resource):
 class Exams(Resource):
 
     @orm.db_session
+    def get_pdf(exam_id):
+
+        exam = Exam[exam_id]
+
+        data_dir = app.config['DATA_DIRECTORY']
+        exam_dir = os.path.join(data_dir, exam.name + '_data')
+
+        return send_file(
+            os.path.join(exam_dir, 'exam.pdf'),
+            mimetype='application/pdf')
+
+    @orm.db_session
     def get(self):
         """get list of uploaded exams and their yaml.
 
@@ -146,75 +159,55 @@ class Exams(Resource):
         ]
 
     post_parser = reqparse.RequestParser()
-    post_parser.add_argument('yaml', type=FileStorage, required=True,
-                             location='files')
+    post_parser.add_argument('pdf', type=FileStorage, required=True, location='files')
+    post_parser.add_argument('exam_name', type=str, required=True, location='form')
 
     @orm.db_session
     def post(self):
         """Add a new exam.
 
-        Will overwrite an existing exam if the name is the same.
+        Will error if an existing exam exists with the same name.
 
         Parameters
         ----------
-        yaml : file
-            potentially unprocessed exam config.
+        pdf : file
+            raw pdf file.
+        exam_name: str
+            name for the exam
 
         Returns
         -------
         id : int
             exam ID
-        name : str
-            exam name
-        yaml : str
-            processed config
         """
 
         args = self.post_parser.parse_args()
+        exam_name = args['exam_name']
+        pdf_data = args['pdf']
 
-        try:
-            yml = yaml_helper.load(args['yaml'])
-            version, exam_name, qr, widgets = yaml_helper.parse(yml)
-        except Exception:
-            return dict(message='Invalid config file'), 400
-        
-        data_dir = app.config['DATA_DIRECTORY']
-        yaml_filename = exam_name + '.yml'
-        yaml_abspath = os.path.join(data_dir, yaml_filename)
-        exam_dir = os.path.join(data_dir, exam_name + '_data')
         exam = Exam.get(name=exam_name)
 
         if exam is None:
-            os.makedirs(exam_dir, exist_ok=True)
+            exam = Exam(name=exam_name)
 
-            exam = Exam(name=exam_name, yaml_path=exam_name + '.yml')
+            data_dir = app.config['DATA_DIRECTORY']
+            exam_dir = os.path.join(data_dir, exam_name + '_data')
+            pdf_path = os.path.join(exam_dir, 'exam.pdf')
+
+            os.makedirs(exam_dir, exist_ok=True)
             db.commit()
+
+            pdf_data.save(pdf_path)
 
             # Default feedback (maybe factor out eventually).
             feedback_options = ['Everything correct',
                                 'No solution provided']
 
-            for name in widgets.index:
-                if name == 'studentnr':
-                    continue
-                p = Problem(name=name, exam=exam)
-                for fb in feedback_options:
-                    FeedbackOption(text=fb, problem=p)
-
-            yaml_helper.save(yml, yaml_abspath)
-            print("Added exam {} to database".format(exam_name))
+            print("Added exam {} to database".format(exam.name))
         else:
-            assert yaml_abspath == os.path.join(data_dir, exam.yaml_path)
-            existing_yml = yaml_helper.read(yaml_abspath)
-            db_helper.update_exam(exam, existing_yml, yml)
-            yaml_helper.save(yml, yaml_abspath)
-            print("Updated problem names for {}".format(exam_name))
-
-        with open(yaml_abspath) as f:
-            yml = f.read()
+            msg = "Exam with name {} already exists".format(exam.name)
+            return dict(status=400, message=msg), 400
 
         return {
-            'id': exam.id,
-            'name': exam.name,
-            'yaml': yml,
+            'id': exam.id
         }

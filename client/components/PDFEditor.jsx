@@ -510,7 +510,9 @@ class PDFEditor extends React.Component {
                                 onClick={this.prevPage}>Previous</button>
                         </div>
                         <div className='control'>
-                            <span className='input is-static has-text-centered'>Page {this.state.page + 1} of {this.state.numPages}</span>
+                            <div className="field-text is-rounded has-text-centered is-link">
+                                {'Page ' + (this.state.page + 1) + ' of ' + this.state.numPages}
+                            </div>
                         </div>
                         <div className='control'>
                             <button

@@ -32,7 +32,8 @@ class Exam(db.Entity):
 
 
 class Widget(db.Entity):
-    """ Widgets can be anything that will be rendered into the final exam (qrs, answerboxes, etc) """
+    """ Widgets can be anything that will be rendered into the final exam
+    such as barcodes, answerboxes, etc """
     exam = Required(Exam)
     data = Required(bytes)
 

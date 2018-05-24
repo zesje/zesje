@@ -59,3 +59,17 @@ class Problems(Resource):
                 'id': problem.id,
                 'widget_id': widget.id,
             }
+
+    put_parser = reqparse.RequestParser()
+    put_parser.add_argument('name', type=str, required=True, location='form')
+
+    @orm.db_session
+    def put(self, problem_id, attr):
+
+        args = self.put_parser.parse_args()
+
+        name = args['name']
+        problem = Problem[problem_id]
+        problem.name = name
+
+        return dict(status=200, message="ok"), 200

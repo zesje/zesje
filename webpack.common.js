@@ -10,6 +10,7 @@ const HtmlWebpackPluginConfig = new HtmlWebpackPlugin({
   filename: 'index.html',
   inject: 'body'
 })
+const WebpackShellPlugin = require('webpack-shell-plugin');
 
 module.exports = {
   entry: './client/index.jsx',
@@ -27,5 +28,11 @@ module.exports = {
     ]
   },
 
-  plugins: [HtmlWebpackPluginConfig]
+  plugins: [
+      HtmlWebpackPluginConfig,
+      new WebpackShellPlugin({
+        onBuildStart: ['echo "generate sample barcode"'],
+        onBuildEnd: ['python zesje/helpers/pdf_generation_helper.py']
+      })
+    ]
   }

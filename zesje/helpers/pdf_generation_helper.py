@@ -241,3 +241,9 @@ def _add_corner_markers(canv, pagesize, margin=10):
         (left, top, left + length, top),
         (left, top, left, top - length)
     ])
+
+
+if __name__ == "__main__":
+    output_dir = 'zesje/static'
+    image = generate_datamatrix('some_id', 1, 0)
+    image.save(os.path.join(output_dir, 'barcode_example.png'))

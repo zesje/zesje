@@ -18,9 +18,9 @@ class Widgets(Resource):
             return dict(status=404, message=msg), 404
 
         # will 400 on malformed json
-        data = request.get_json()
+        body = request.get_json()
 
-        for attr, value in data.items():
+        for attr, value in body.items():
             # check before modifying
             if hasattr(widget, attr):
                 setattr(widget, attr, value)

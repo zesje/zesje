@@ -9,31 +9,6 @@ from ..models import db, Widget
 class Widgets(Resource):
 
     @orm.db_session
-    def get(self, widget_id=None):
-        """Get detailed information about a single widget
-
-        URL Parameters
-        --------------
-        widget_id : int
-            widget ID
-
-        Returns
-        -------
-        id : int
-            widget ID
-        data : str
-            data associated with the widget. Opaque to the server, client should
-            know what to do.
-        """
-
-        widget = Widget[widget_id]
-
-        return {
-            'id': widget.id,
-            'data': widget.data.decode("utf-8")
-        }
-
-    @orm.db_session
     def patch(self, widget_id):
 
         widget = Widget.get(id=widget_id)

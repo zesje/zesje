@@ -218,7 +218,7 @@ class ExamSource(Resource):
             mimetype='application/pdf')
 
 
-class ExamGenerateds(Resource):
+class ExamGeneratedPdfs(Resource):
 
     @orm.db_session
     def get(self, exam_id, copy_num):
@@ -251,7 +251,24 @@ class ExamGenerateds(Resource):
 
         args = self.post_parser.parse_args()
 
+        exam = Exam.get(id=exam_id)
+        if (exam is None):
+            abort(404)
+
         exam_dir = _get_exam_dir(exam_id)
+
+        student_id_widget = next(
+            widget
+            for widget
+            in exam.widgets
+            if widget.name == 'student_id_widget'
+        )
+        barcode_widget = next(
+            widget
+            for widget
+            in exam.widgets
+            if widget.name == 'barcode_widget'
+        )
 
         pdf_path = os.path.join(exam_dir, 'exam.pdf')
 
@@ -263,8 +280,8 @@ class ExamGenerateds(Resource):
             'SomeCoolID',
             pdf_out_dir,
             args['copies'],
-            50, 150,
-            200, 300
+            student_id_widget.x, student_id_widget.y,
+            barcode_widget.x, barcode_widget.y
         )
 
         return {

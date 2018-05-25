@@ -1,5 +1,7 @@
 import React from 'react';
 
+import * as api from '../../api.jsx'
+
 class FeedbackBlock extends React.Component {
 
     state = {
@@ -17,15 +19,28 @@ class FeedbackBlock extends React.Component {
         })
     }
 
-    componentDidMount = () => {
-        console.log('mounting! ' + this.props.feedback.id)        
+    static getDerivedStateFromProps(nextProps, prevState) {
+        return {checked: nextProps.checked}
     }
 
     toggle = () => {
         if (!this.state.hover) {
+
             this.setState({
                 checked: !this.state.checked
             })
+
+            api.put('solution/' + this.props.examID + '/' + this.props.submissionID + '/' + this.props.problemID, {
+                id: this.props.feedback.id
+            })
+                .then(result => {
+                    if (result.state != this.state.checked) {
+                        this.setState({
+                            checked: result.checked
+                        })
+                    }
+                })
+
         }
     }
 
@@ -33,12 +48,10 @@ class FeedbackBlock extends React.Component {
     render() {
         const score = this.props.feedback.score;
 
-        console.log(this.props.checked);
-
         return (
             <a className="panel-block is-active" onClick={this.toggle} >
                 <span className="panel-icon">
-                    <i className={"fa fa-" + (this.props.checked ? "check-square-o" : "square-o")}></i>
+                    <i className={"fa fa-" + (this.state.checked ? "check-square-o" : "square-o")}></i>
                 </span>
                 <span style={{ width: '80%' }}>
                     {this.props.feedback.name}

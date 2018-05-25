@@ -28,3 +28,7 @@
     background: #fff;
     margin: 0.75em;
 }
+
+div.notification {
+    width: 15em;
+}

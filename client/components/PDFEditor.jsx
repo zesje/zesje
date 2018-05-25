@@ -21,6 +21,7 @@ class PDFEditor extends React.Component {
         numPages: null,
         widgets: null,
         selectedWidget: null,
+        valid_space: null,
     }
 
     static getDerivedStateFromProps = (newProps, prevState) => {
@@ -42,6 +43,12 @@ class PDFEditor extends React.Component {
             numPages: pdf.numPages,
         })
         this.updateWidgets()
+        api.get('exam_check/' + this.state.examID)
+            .then(page_list => {
+                  this.setState({
+                      valid_space: page_list,
+                  })
+            })
     }
 
     updateWidgets = (andThen) => {
@@ -366,7 +373,8 @@ class PDFEditor extends React.Component {
     renderWidgetDetails = () => {
         const {
             page,
-            selectedWidget} = this.state
+            selectedWidget,
+            valid_space} = this.state
         const widget = this.getWidgetSafe(
             this.state.page,
             this.state.selectedWidget)
@@ -387,6 +395,18 @@ class PDFEditor extends React.Component {
                         Size: {widget.width}x{widget.height}<br />
                     </div>
                 }
+                {valid_space != null && page != null  && !valid_space[page] ?
+                  <div className="panel-block">
+                  <div class="notification is-warning">
+                      Please consider reuploading your exam with more blank space
+                      on this specific page.
+                  </div>
+                  </div>
+                :
+                  null
+                }
+
+
                 <div className="panel-block">
                     <div className="field">
                         <div className="control">

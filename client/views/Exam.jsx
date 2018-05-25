@@ -4,6 +4,9 @@ import Dropzone from 'react-dropzone';
 import Hero from '../components/Hero.jsx';
 import DropzoneContent from '../components/DropzoneContent.jsx';
 import PDFEditor from '../components/PDFEditor.jsx';
+import GeneratedExamPreview from '../components/GeneratedExamPreview.jsx';
+import GeneratedExamDownload from '../components/GeneratedExamDownload.jsx';
+
 import { Link } from 'react-router-dom'
 
 import * as api from '../api.jsx'
@@ -36,9 +39,9 @@ class Exams extends React.Component {
     renderContent = (action) => {
         switch (action) {
             case 'preview':
-                return <div>preview</div>
+                return <GeneratedExamPreview examID={this.state.examID} />
             case 'export':
-                return <div>export</div>
+                return <GeneratedExamDownload examID={this.state.examID} />
             case 'edit':
                 return <PDFEditor exam={this.props.exam} examID={this.state.examID} />
             default:

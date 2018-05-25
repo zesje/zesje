@@ -277,7 +277,7 @@ class ExamGeneratedPdfs(Resource):
 
         pdf_generation_helper.generate_pdfs(
             pdf_path,
-            'SomeCoolID',
+            'ABCDEFGHIJKL',
             pdf_out_dir,
             args['copies'],
             student_id_widget.x, student_id_widget.y,

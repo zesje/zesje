@@ -1,5 +1,7 @@
 import React from 'react';
 import './PDFEditor.css';
+import barcodeExampleImage from './barcode_example.png'
+import studentIdExampleImage from './student_id_example.png'
 import * as api from '../api.jsx'
 
 import { Document, Page } from 'react-pdf';
@@ -245,6 +247,7 @@ class PDFEditor extends React.Component {
             var minWidth
             var minHeight
             var view
+            var enableResizing
 
             return widgets.map((widget, index) => {
                 if (widget.problem && widget.problem.page !== page) {
@@ -261,24 +264,44 @@ class PDFEditor extends React.Component {
                             className={isSelected ? 'widget selected' : 'widget'}
                         />
                     )
+                    enableResizing = true
                 } else {
                     minWidth = 0
                     minHeight = 0
+                    var image
+                    if (widget.name == 'barcode_widget') {
+                        image = barcodeExampleImage
+                    } else if (widget.name == 'student_id_widget') {
+                        image = studentIdExampleImage
+                    }
                     view = (
                         <div
                             className={isSelected ? 'widget selected' : 'widget'}
-                        >
-                            {'This is widget with name: ' + widget.name }
-                        </div>
+                            style={{
+                                boxSizing: 'content-box',
+                                backgroundImage: 'url(' + image + ')',
+                                backgroundRepeat: 'no-repeat',
+                            }}
+                        />
                     )
+                    enableResizing = false
                 }
-
                 return (
                     <ResizeAndDrag
                         key={'widget_' + widget.id}
                         bounds='parent'
                         minWidth={minWidth}
                         minHeight={minHeight}
+                        enableResizing={{
+                            bottom: enableResizing,
+                            bottomLeft: enableResizing,
+                            bottomRight: enableResizing,
+                            left: enableResizing,
+                            right: enableResizing,
+                            top: enableResizing,
+                            topLeft: enableResizing,
+                            topRight: enableResizing,
+                        }}
                         position={{
                             x: widget.x,
                             y: widget.y,

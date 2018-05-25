@@ -2,7 +2,10 @@
 
 import numpy as np
 import cv2
+from . import scan_helper
 import math
+from wand.color import Color as WandColor
+from wand.image import Image as WandImage
 
 def get_widget_image(image_path, widget):
     box = (widget.top, widget.bottom, widget.left, widget.right)
@@ -40,7 +43,6 @@ def get_box(image_array, box, padding):
     top, bottom = min(h, box[0]), max(1, box[1])
     left, right = max(0, box[2]), min(w, box[3])
     return image_array[-top:-bottom, left:right]
-
 
 def calc_angle(keyp1, keyp2):
     """Calculates the angle of the line connecting two keypoints in an image
@@ -105,3 +107,54 @@ def find_corner_marker_keypoints(bin_im):
 
     detector = cv2.SimpleBlobDetector_create(params)
     return detector.detect(bin_im)
+
+def check_space_corner(bin_im):
+    h, w, *_ = bin_im.shape
+
+    size = math.floor(w/10)
+    topleft = np.sum(np.sum(bin_im[0:size,0:size])) > 0
+    topright = np.sum(np.sum(bin_im[0:size, w - size - 1:w - 1])) > 0
+    bottomleft = np.sum(np.sum(bin_im[h - size - 1 : h - 1, 0:size])) > 0
+    bottomright = np.sum(np.sum(
+                         bin_im[h - size - 1: h - 1, w - size - 1: w - 1])) > 0
+
+    if topleft or topright or bottomleft or bottomright:
+        return False
+    else:
+        return True
+
+def check_space_idwidget(bin_im):
+    return False
+
+def check_space_datamatrix(bin_im):
+    return False
+
+def check_enough_blankspace(pdf_path):
+
+    result = []
+
+    with WandImage(filename=pdf_path, resolution=150) as pdf:
+        for i, page in enumerate(pdf.sequence):
+            with WandImage(page) as img:
+                img.background_color = WandColor('white')
+                img.alpha_channel = 'remove'
+                img_buffer = np.asarray(bytearray(img.make_blob()), dtype=np.uint8)
+
+                if img_buffer is not None:
+                    opencv_im = cv2.imdecode(img_buffer, cv2.IMREAD_GRAYSCALE)
+
+                _, bin_im = cv2.threshold(opencv_im, 150, 255, cv2.THRESH_BINARY)
+
+                bin_im = cv2.bitwise_not(bin_im)
+
+                result_id = True
+
+                if (page == 1):
+                    result_id = check_space_idwidget(bin_im)
+                result_corner = check_space_corner(bin_im)
+                result_datam = check_space_datamatrix(bin_im)
+
+                page_result = result_id and result_corner and result_datam
+                result.append(result_corner)
+
+    return result

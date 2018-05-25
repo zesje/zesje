@@ -1,4 +1,5 @@
 import os
+import json
 
 from flask import abort, current_app as app, send_file
 from flask_restful import Resource, reqparse
@@ -6,7 +7,7 @@ from werkzeug.datastructures import FileStorage
 
 from pony import orm
 
-from ..helpers import yaml_helper, db_helper
+from ..helpers import yaml_helper, db_helper, image_helper
 from ..models import db, Exam, Problem, FeedbackOption
 from ._helpers import required_string
 
@@ -134,6 +135,18 @@ class Exams(Resource):
         return send_file(
             os.path.join(exam_dir, 'exam.pdf'),
             mimetype='application/pdf')
+
+    @orm.db_session
+    def check_validity(exam_id):
+
+        exam = Exam[exam_id]
+
+        data_dir = app.config['DATA_DIRECTORY']
+        pdf_path = os.path.join(data_dir, exam.name + '_data', 'exam.pdf')
+
+        result = image_helper.check_enough_blankspace(pdf_path)
+
+        return json.dumps(result)
 
     @orm.db_session
     def get(self):

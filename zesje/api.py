@@ -29,7 +29,6 @@ api = Api(api_bp, errors=errors)
 api.add_resource(Graders, '/graders')
 api.add_resource(Exams, '/exams')
 api.add_resource(ExamConfig, '/exams/<int:exam_id>')
-api.add_resource(Pdfs, '/pdfs/<int:exam_id>')
 api.add_resource(Students, '/students', '/students/<int:student_id>')
 api.add_resource(Submissions,
                  '/submissions/<int:exam_id>',
@@ -52,6 +51,12 @@ api_bp.add_url_rule(
     '/exam_pdfs/<int:exam_id>',
     'exam_pdf',
     Exams.get_pdf
+)
+
+api_bp.add_url_rule(
+    '/exam_check/<int:exam_id>',
+    'exam_check',
+    Exams.check_validity
 )
 
 # Images

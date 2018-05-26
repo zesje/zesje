@@ -7,7 +7,26 @@ import FeedbackBlock from './FeedbackBlock.jsx';
 class FeedbackPanel extends React.Component {
 
     state = {
-        remark: null
+        remark: ""
+    }
+
+    static getDerivedStateFromProps(nextProps, prevState) {
+        return {remark: nextProps.solution.remark}
+    }
+
+    saveRemark = () => {
+        api.post('solution/' + this.props.examID + '/' + this.props.submissionID + '/' + this.props.problem.id, {
+            remark: this.state.remark
+        })
+            .then(sucess => {
+                if (!sucess) alert('Remark not saved!')
+            })
+    }
+
+    changeRemark = (event) => {
+        this.setState({
+            remark: event.target.value
+        })
     }
 
     render() {
@@ -22,7 +41,7 @@ class FeedbackPanel extends React.Component {
                         feedback={feedback} checked={this.props.solution.feedback.includes(feedback.id)} onClick={this.props.editFeedback} />
                 )}
                 <div className="panel-block">
-                    <textarea className="textarea" rows="2" placeholder="remark" />
+                    <textarea className="textarea" rows="2" placeholder="remark" value={this.state.remark} onBlur={this.saveRemark} onChange={this.changeRemark} />
                 </div>
                 <div className="panel-block">
                     <button className="button is-link is-outlined is-fullwidth" onClick={this.props.toggleEdit}>

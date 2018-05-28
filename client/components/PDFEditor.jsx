@@ -27,7 +27,8 @@ class PDFEditor extends React.Component {
     static getDerivedStateFromProps = (newProps, prevState) => {
         if (newProps.examID != prevState.examID) {
             return {
-                examID: newProps.examID
+                examID: newProps.examID,
+                valid_space: null
             }
         }
         return null

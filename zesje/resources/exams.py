@@ -1,4 +1,7 @@
 import os
+import zipfile
+from io import BytesIO
+import datetime
 
 from flask import current_app as app, abort, send_file
 from flask_restful import Resource, reqparse
@@ -6,7 +9,9 @@ from werkzeug.datastructures import FileStorage
 
 from pony import orm
 
-from ..helpers import pdf_generation_helper
+from ..helpers.pdf_generation_helper import generate_pdfs, \
+    output_pdf_filename_format
+
 from ..models import db, Exam, Widget
 
 
@@ -217,7 +222,7 @@ class ExamSource(Resource):
 class ExamGeneratedPdfs(Resource):
 
     @orm.db_session
-    def get(self, exam_id, copy_num):
+    def get(self, exam_id, copy_num=None):
 
         exam_dir = _get_exam_dir(exam_id)
         generated_pdfs_dir = os.path.join(
@@ -228,16 +233,42 @@ class ExamGeneratedPdfs(Resource):
         if (not os.path.exists(generated_pdfs_dir)):
             abort(404)
 
-        # TODO: Don't hardcode filename
-        pdf_path = os.path.join(generated_pdfs_dir, '00000.pdf')
+        if copy_num is None:
+            # get all (zip)
+            # TODO: use query to define ranges
 
-        if (not os.path.exists(pdf_path)):
-            abort(404)
+            exam = Exam[exam_id]
+            now_str = datetime.datetime.now().strftime("%Y-%m-%d_%H:%M")
 
-        return send_file(
-            pdf_path,
-            cache_timeout=0,
-            mimetype='application/pdf')
+            memory_file = BytesIO()
+            with zipfile.ZipFile(memory_file, 'w') as zf:
+                for root, dirs, files in os.walk(generated_pdfs_dir):
+                    for file in files:
+                        zf.write(
+                            os.path.join(root, file),
+                            file)
+
+            memory_file.seek(0)
+
+            return send_file(
+                memory_file,
+                cache_timeout=0,
+                attachment_filename=f'{exam.name}_generated_{now_str}.zip',
+                as_attachment=True)
+
+        else:
+
+            pdf_path = os.path.join(
+                generated_pdfs_dir,
+                output_pdf_filename_format.format(copy_num))
+
+            if (not os.path.exists(pdf_path)):
+                abort(404)
+
+            return send_file(
+                pdf_path,
+                cache_timeout=0,
+                mimetype='application/pdf')
 
     post_parser = reqparse.RequestParser()
     post_parser.add_argument('copies', type=int, required=True)
@@ -271,7 +302,7 @@ class ExamGeneratedPdfs(Resource):
         pdf_out_dir = os.path.join(exam_dir, 'generated_pdfs')
         os.makedirs(pdf_out_dir, exist_ok=True)
 
-        pdf_generation_helper.generate_pdfs(
+        generate_pdfs(
             pdf_path,
             'ABCDEFGHIJKL',
             pdf_out_dir,

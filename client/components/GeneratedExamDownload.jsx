@@ -1,6 +1,9 @@
 import React from 'react'
 import * as api from '../api.jsx'
 
+// TODO: don't use alert
+/*global alert*/
+
 class GeneratedExamDownload extends React.Component {
 
     state = {
@@ -50,12 +53,8 @@ class GeneratedExamDownload extends React.Component {
         })
     }
 
-    onClickDownloadZip = () => {
-        console.log('TODO: download zip')
-    }
-
     onClickDownloadPDF = () => {
-        console.log('TODO: download pdf')
+        alert('Unsupported')
     }
 
     render = () => {
@@ -92,7 +91,8 @@ class GeneratedExamDownload extends React.Component {
                                 <a
                                     className='button is-primary'
                                     disabled={!this.state.isGenerated}
-                                    onClick={this.onClickDownloadZip}
+                                    target='_blank'
+                                    href={'/api/exams/' + this.state.examID + '/generated_pdfs'}
                                 >
                                     Download Zip
                                 </a>

@@ -117,7 +117,7 @@ def check_space_corner(bin_im):
     Parameters:
     -----------
         bin_im: 2D Array
-            The image source in binary
+            The image source in inverted binary
 
     """
     h, w, *_ = bin_im.shape
@@ -143,7 +143,7 @@ def check_space_idwidget(bin_im):
     Parameters:
     -----------
         bin_im: 2D Array
-            The image source in binary
+            The image source in inverted binary
 
     """
 
@@ -156,7 +156,7 @@ def check_space_datamatrix(bin_im):
     Parameters:
     -----------
         bin_im: 2D Array
-            The image source in binary
+            The image source in inverted binary
 
     """
     return False

@@ -69,3 +69,25 @@ def test_detect_space_corner_incompatible(name, datadir,
 
     for i in range(len(result)):
         assert not(result[i])
+
+
+def test_detect_space_datamatrix_incompatible(datadir,
+                                              mock_check_space_corner_true,
+                                              mock_check_space_idwidget_true):
+
+    pdf_path = os.path.join(datadir, 'black-a4-2pages.pdf')
+    result = image_helper.check_enough_blankspace(pdf_path)
+
+    for i in range(len(result)):
+        assert not(result[i])
+
+
+def test_detect_space_datamatrix_compatible(datadir,
+                                            mock_check_space_corner_true,
+                                            mock_check_space_idwidget_true):
+
+    pdf_path = os.path.join(datadir, 'blank-a4-2pages.pdf')
+    result = image_helper.check_enough_blankspace(pdf_path)
+
+    for i in range(len(result)):
+        assert(result[i])

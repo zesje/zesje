@@ -4,6 +4,7 @@ import * as api from '../api.jsx'
 
 import { Document, Page } from 'react-pdf';
 // worker is prefered but need to convince webpack to cooperate
+/*global PDFJS*/
 PDFJS.workerSrc = true;
 
 class GeneratedExamPreview extends React.Component {
@@ -29,7 +30,7 @@ class GeneratedExamPreview extends React.Component {
             copies: 1,
         }
         api.post('exams/' + this.state.examID + '/generated_pdfs', data)
-            .then(result => {
+            .then(() => {
                 this.setState({
                     pdfUrl: '/api/exams/' + this.state.examID + '/generated_pdfs/0'
                 })
@@ -45,7 +46,7 @@ class GeneratedExamPreview extends React.Component {
     }
 
     setPage = (newPage) => {
-        this.setState((prevState, props) => {
+        this.setState((prevState) => {
             return {
                 // clamp the page
                 selectedWidget: null,
@@ -54,11 +55,11 @@ class GeneratedExamPreview extends React.Component {
         })
     }
 
-    prevPage = (e) => {
+    prevPage = () => {
         this.setPage(this.state.page - 1)
     }
 
-    nextPage = (e) => {
+    nextPage = () => {
         this.setPage(this.state.page + 1)
     }
 

@@ -32,7 +32,7 @@ class GeneratedExamDownload extends React.Component {
         }
     }
 
-    onClickGenerate = (e) => {
+    onClickGenerate = () => {
         this.setState({
             isGenerating: true,
             isGenerated: false,
@@ -41,7 +41,7 @@ class GeneratedExamDownload extends React.Component {
                 copies: this.state.numberOfCopies,
             }
             api.post('exams/' + this.state.examID + '/generated_pdfs', data)
-                .then(result => {
+                .then(() => {
                     this.setState({
                         isGenerated: true,
                         isGenerating: false,
@@ -50,11 +50,11 @@ class GeneratedExamDownload extends React.Component {
         })
     }
 
-    onClickDownloadZip = (e) => {
+    onClickDownloadZip = () => {
         console.log('TODO: download zip')
     }
 
-    onClickDownloadPDF = (e) => {
+    onClickDownloadPDF = () => {
         console.log('TODO: download pdf')
     }
 

@@ -6,7 +6,12 @@ import * as api from '../api.jsx'
 
 import { Document, Page } from 'react-pdf';
 // worker is prefered but need to convince webpack to cooperate
+/*global PDFJS*/
 PDFJS.workerSrc = true;
+
+/*global window*/
+/*global FormData*/
+/*global confirm*/
 
 import update from 'immutability-helper';
 import ResizeAndDrag from 'react-rnd'
@@ -71,7 +76,7 @@ class PDFEditor extends React.Component {
     }
 
     setPage = (newPage) => {
-        this.setState((prevState, props) => {
+        this.setState((prevState) => {
             return {
                 // clamp the page
                 selectedWidgetIndex: null,
@@ -80,11 +85,11 @@ class PDFEditor extends React.Component {
         })
     }
 
-    prevPage = (e) => {
+    prevPage = () => {
         this.setPage(this.state.page - 1)
     }
 
-    nextPage = (e) => {
+    nextPage = () => {
         this.setPage(this.state.page + 1)
     }
 
@@ -102,7 +107,7 @@ class PDFEditor extends React.Component {
         window.document.addEventListener('mouseup', this.handleMouseUp)
     }
 
-    handleMouseUp = (e) => {
+    handleMouseUp = () => {
         window.document.removeEventListener('mousemove', this.handleMouseMove)
         window.document.removeEventListener('mouseup', this.handleMouseUp)
         const selectionBox = this.state.selectionBox
@@ -136,7 +141,7 @@ class PDFEditor extends React.Component {
                     widgetData.id = result.widget_id
                     problemData.id = result.id
                     widgetData.problem = problemData
-                    this.setState((prevState, props) => {
+                    this.setState((prevState) => {
                         return {
                             selectedWidgetIndex: prevState.widgets.length,
                             widgets: update(prevState.widgets, {
@@ -158,7 +163,7 @@ class PDFEditor extends React.Component {
         e.preventDefault();
         if (this.state.mouseDown) {
             const selectionEndPoint = this.getCoordinatesForEvent(e)
-            this.setState((prevState, props) => {
+            this.setState((prevState) => {
                 return {
                     selectionEndPoint: selectionEndPoint,
                     selectionBox: this.calculateSelectionBox(prevState.selectionStartPoint, selectionEndPoint)
@@ -210,7 +215,7 @@ class PDFEditor extends React.Component {
     }
 
     getCoordinatesForEvent = (e) => {
-        const parentNode = this.refs.selectionArea
+        const parentNode = this.selectionArea
         // const cumulativeOffset = this.calculateCumulativeOffsetForElement(parentNode)
         const cumulativeOffset = this.cumulativeOffset(parentNode)
         const scrollY = Math.abs(parentNode.getClientRects()[0].top - cumulativeOffset.top)
@@ -350,8 +355,8 @@ class PDFEditor extends React.Component {
         if (widget) {
             if (prompt && confirm('Are you sure you want to delete this widget?')) {
                 api.del('widgets/' + widget.id)
-                    .then(resp => {
-                        this.setState((prevState, props) => {
+                    .then(() => {
+                        this.setState((prevState) => {
                             return {
                                 selectedWidgetIndex: null,
                                 widgets: update(prevState.widgets, {
@@ -373,7 +378,7 @@ class PDFEditor extends React.Component {
         // Now only relevant to update the data property
         // check if widget really exists
         if (this.state.widgets[index]) {
-            this.setState((prevState, props) => {
+            this.setState((prevState) => {
                 return {
                     widgets: update(prevState.widgets, {
                         [index]: newData
@@ -388,7 +393,7 @@ class PDFEditor extends React.Component {
                         width: widget.width,
                         height: widget.height,
                     }
-                    api.patch('widgets/' + widget.id, patchData).then(resp => {
+                    api.patch('widgets/' + widget.id, patchData).then(() => {
                         // ok
                     }).catch(err => {
                         console.log(err)
@@ -416,7 +421,7 @@ class PDFEditor extends React.Component {
                 isDisabled = false
                 name = widget.problem.name || ''
                 onNameChange = (newName) => {
-                    this.setState((prevState, props) => {
+                    this.setState((prevState) => {
                         return {
                             widgets: update(prevState.widgets, {
                                 [selectedWidgetIndex]: {
@@ -433,7 +438,7 @@ class PDFEditor extends React.Component {
                 onNameSaveClick = () => {
                     const formData = new FormData()
                     formData.append('name', widget.problem.name)
-                    api.put('problems/' + widget.problem.id + '/name', formData).then(result => {
+                    api.put('problems/' + widget.problem.id + '/name', formData).then(() => {
                         // ok
                     }).catch(err => {
                         console.log(err)
@@ -443,7 +448,7 @@ class PDFEditor extends React.Component {
                 }
             } else {
                 name = widget.name || ''
-                onNameChange = (e) => {
+                onNameChange = () => {
                     // not anyway
                 }
 
@@ -492,7 +497,7 @@ class PDFEditor extends React.Component {
                             <button
                                 disabled={isDisabled}
                                 className="button is-success"
-                                onClick={(e) => onNameSaveClick()}
+                                onClick={() => onNameSaveClick()}
                             >
                                 Save name
                             </button>
@@ -509,7 +514,7 @@ class PDFEditor extends React.Component {
         return (
             <div className='editor-area columns is-centered' >
                 <div className='column is-narrow'  >
-                    <div ref="selectionArea" className='selection-area' >
+                    <div ref={c => this.selectionArea = c} className='selection-area' >
                         <Document
                             file={this.getPDFUrl()}
                             onLoadSuccess={this.onPDFLoad}

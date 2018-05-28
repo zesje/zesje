@@ -109,6 +109,14 @@ def find_corner_marker_keypoints(bin_im):
     return detector.detect(bin_im)
 
 def check_space_corner(bin_im):
+    """Checks if there is enough space to place the corner markers
+
+    Parameters:
+    -----------
+        bin_im: 2D Array
+            The image source in binary
+
+    """
     h, w, *_ = bin_im.shape
 
     size = math.floor(w/10)
@@ -124,12 +132,39 @@ def check_space_corner(bin_im):
         return True
 
 def check_space_idwidget(bin_im):
+    # TODO Implement function, since ID widget generation code is still
+    # not present
+    """Checks if there is enough space to place the identification widget
+
+    Parameters:
+    -----------
+        bin_im: 2D Array
+            The image source in binary
+
+    """
+
     return False
 
 def check_space_datamatrix(bin_im):
+    """Checks if there is enough space to place the data matrix
+
+    Parameters:
+    -----------
+        bin_im: 2D Array
+            The image source in binary
+
+    """
     return False
 
 def check_enough_blankspace(pdf_path):
+    """Checks if there is enough space to place all the various widgets
+
+    Parameters:
+    -----------
+        pdf_path: String
+            Path to the pdf file
+
+    """
 
     result = []
 

@@ -16,10 +16,11 @@ class SearchPanel extends React.Component {
         }
     ];
 
-    state= {
+    state = {
         input: '',
         selected: 0,
-        result: []
+        result: [],
+        subIndex: null
     }
 
     componentDidMount = () => {
@@ -93,19 +94,21 @@ class SearchPanel extends React.Component {
         }
     }
 
-    static getDerivedStateFromProps = (nextProps) => {
-
-        return {
-            input: '',
-            selected: 0,
-            result: nextProps.student ? [nextProps.student] : []
-        }
+    static getDerivedStateFromProps = (nextProps, prevState) => {
+        if (prevState.subIndex != nextProps.subIndex) {
+            return {
+                input: '',
+                selected: 0,
+                result: nextProps.student ? [nextProps.student] : [],
+                subIndex: nextProps.subIndex
+            }
+        } else return null
     }
 
     render() {
 
         return (
-            <nav className="panel">            
+            <nav className="panel">
                 <p className="panel-heading">
                     Search students
                 </p>
@@ -123,7 +126,7 @@ class SearchPanel extends React.Component {
                     <StudentPanelBlock key={student.id} student={student}
                         selected={index === this.state.selected}
                         matched={this.props.student && student.id === this.props.student.id && this.props.validated}
-                        selectStudent={this.selectStudent} editStudent={this.props.toggleEdit}/>
+                        selectStudent={this.selectStudent} editStudent={this.props.toggleEdit} />
                 )}
                 <div className="panel-block is-hidden-mobile">
                     <button className="button is-link is-outlined is-fullwidth" onClick={this.props.toggleEdit}>

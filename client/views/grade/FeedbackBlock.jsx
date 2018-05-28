@@ -1,10 +1,11 @@
 import React from 'react';
 
+import * as api from '../../api.jsx'
+
 class FeedbackBlock extends React.Component {
 
     state = {
-        hover: false,
-        checked: false
+        hover: false
     }
     leave = () => {
         this.setState({
@@ -17,23 +18,22 @@ class FeedbackBlock extends React.Component {
         })
     }
 
-    componentDidMount = () => {
-        console.log('mounting! ' + this.props.feedback.id)        
-    }
-
     toggle = () => {
         if (!this.state.hover) {
-            this.setState({
-                checked: !this.state.checked
+
+            api.put('solution/' + this.props.examID + '/' + this.props.submissionID + '/' + this.props.problemID, {
+                id: this.props.feedback.id
             })
+                .then(result => {
+                    this.props.updateSubmission();
+                })
+
         }
     }
 
 
     render() {
         const score = this.props.feedback.score;
-
-        console.log(this.props.checked);
 
         return (
             <a className="panel-block is-active" onClick={this.toggle} >

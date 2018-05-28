@@ -9,7 +9,7 @@ from reportlab.lib.units import mm
 from reportlab.pdfgen import canvas
 
 
-_output_pdf_filename_format = '{0:05d}.pdf'
+output_pdf_filename_format = '{0:05d}.pdf'
 
 
 def generate_pdfs(exam_pdf_file, exam_id, output_dir, num_copies, id_grid_x,
@@ -80,7 +80,7 @@ def generate_pdfs(exam_pdf_file, exam_id, output_dir, num_copies, id_grid_x,
                 exam_merge = PageMerge(exam_page).add(overlay_merge)
                 exam_merge.render()
 
-            path = os.path.join(output_dir, _output_pdf_filename_format.format(copy_idx))
+            path = os.path.join(output_dir, output_pdf_filename_format.format(copy_idx))
             PdfWriter(path, trailer=exam_pdf).write()
 
 
@@ -101,7 +101,7 @@ def join_pdfs(directory, output_filename, num_copies):
 
     for copy_idx in range(num_copies):
         path = os.path.join(directory,
-                            _output_pdf_filename_format.format(copy_idx))
+                            output_pdf_filename_format.format(copy_idx))
         writer.addpages(PdfReader(path).pages)
 
     writer.write(output_filename)

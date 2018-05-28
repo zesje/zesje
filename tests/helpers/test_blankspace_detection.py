@@ -2,12 +2,16 @@ import pytest
 import os
 from zesje.helpers import image_helper
 
+
+# Mocks
+# Used to isolate the condition in check_enough_blankspace for testing purposes
 @pytest.fixture
 def mock_check_space_datamatrix_true(monkeypatch):
     def mock_return(bin_im):
         return True
     monkeypatch.setattr(image_helper, 'check_space_datamatrix',
                         mock_return)
+
 
 @pytest.fixture
 def mock_check_space_idwidget_true(monkeypatch):

@@ -159,6 +159,16 @@ def check_space_datamatrix(bin_im):
             The image source in inverted binary
 
     """
+
+    h, w, *_ = bin_im.shape
+
+    edge = math.floor(w/8)
+    for i in range(edge + 1, h - edge - 38):
+        for j in range(edge + 1, w - edge - 38):
+            box = np.sum(np.sum(bin_im[i:i + 39, j:j + 39])) == 0
+            if box:
+                return True
+
     return False
 
 

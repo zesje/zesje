@@ -28,8 +28,8 @@ def generate_pdfs(exam_pdf_file, exam_id, output_dir, num_copies, id_grid_x,
 
     Parameters
     ----------
-    exam_pdf_file : file object
-        The exam PDF file
+    exam_pdf_file : file object or str
+        The exam PDF file or its filename
     exam_id : str
         The identifier of the exam
     output_dir : path-like object

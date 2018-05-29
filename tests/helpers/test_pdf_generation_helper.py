@@ -68,16 +68,14 @@ def assert_pdf_and_images_are_equal(pdf_filename, images,
     (A4, 'a4'),
     ((200 * mm, 200 * mm), 'square')
 ], ids=['a4', 'square'])
-@pytest.mark.parametrize('margin', [15, 30])
-def test_add_corner_markers(datadir, tmpdir, margin, pagesize, name):
+def test_add_corner_markers_and_bottom_bar(datadir, tmpdir, pagesize, name):
     pdf_filename = os.path.join(tmpdir, 'file.pdf')
 
     canv = RLCanvas(pdf_filename, pagesize=pagesize)
-    pdf_generation_helper._add_corner_markers(canv, pagesize, margin)
+    pdf_generation_helper._add_corner_markers_and_bottom_bar(canv, pagesize)
     canv.save()
 
-    image_filename = os.path.join(datadir, 'cornermarkers',
-                                  f'{name}-{margin}mm.png')
+    image_filename = os.path.join(datadir, 'cornermarkers', f'{name}.png')
     assert_pdf_and_images_are_equal(pdf_filename,
                                     [PIL.Image.open(image_filename)])
 
@@ -138,10 +136,11 @@ def test_generate_pdf_nonblank(mock_generate_datamatrix, mock_generate_id_grid,
     pdf_generation_helper.generate_pdfs(exam_pdf, 'ABCDEFGHIJKL', str(tmpdir),
                                         2, 25, 150, 125, 150)
 
-    img_filenames = [os.path.join(datadir, f'generated{i}.png')
+    img_filenames = [os.path.join(datadir, f'generated-{i}.png')
                      for i in [0, 1]]
     images = [PIL.Image.open(x) for x in img_filenames]
-    assert_pdf_and_images_are_equal(os.path.join(tmpdir, '00000.pdf'), images)
+    for pdf_name in ['00000.pdf', '00001.pdf']:
+        assert_pdf_and_images_are_equal(os.path.join(tmpdir, pdf_name), images)
 
 
 def test_generate_pdf_black(mock_generate_datamatrix, mock_generate_id_grid,

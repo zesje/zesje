@@ -194,7 +194,7 @@ def _generate_overlay(canv, pagesize, exam_id, copy_num, num_pages, id_grid_x,
     generate_id_grid(canv, id_grid_x, id_grid_y)
 
     for page_num in range(num_pages):
-        _add_corner_markers(canv, pagesize)
+        _add_corner_markers_and_bottom_bar(canv, pagesize)
 
         datamatrix = generate_datamatrix(exam_id, page_num, copy_num)
         canv.drawInlineImage(datamatrix, datamatrix_x * mm, datamatrix_y * mm)
@@ -202,42 +202,47 @@ def _generate_overlay(canv, pagesize, exam_id, copy_num, num_pages, id_grid_x,
         canv.showPage()
 
 
-def _add_corner_markers(canv, pagesize, margin=10):
+def _add_corner_markers_and_bottom_bar(canv, pagesize):
     """
-    Adds corner markers to the given canvas.
+    Adds corner markers and a bottom bar to the given canvas.
 
     Parameters
     ----------
     canv : ReportLab Canvas object
-        The canvas on which the corner markers should be drawn. Corner markers
+        The canvas on which the corner markers and bottom bar should be drawn. Corner markers
         will only be drawn on the current page of the canvas.
     pagesize : (float, float)
         The ReportLab-style (i.e. (width, height)) page size of the canvas
-    margin : int
-        The margin to be observed from the page edges, the corner markers will
-        be drawn at the edge of this margin
     """
-    width = pagesize[0]
-    height = pagesize[1]
-    length = 8 * mm  # length of the lines
+    page_width = pagesize[0]
+    page_height = pagesize[1]
+    margin = 10 * mm
+    marker_line_length = 8 * mm
+    bar_length = 40 * mm
 
     # Calculate coordinates offset from page edge
-    left = margin * mm
-    bottom = margin * mm
-    right = width - margin * mm
-    top = height - margin * mm
+    left = margin
+    bottom = margin
+    right = page_width - margin
+    top = page_height - margin
+
+    # Calculate start and end coordinates of bottom bar
+    bar_start = page_width / 2 - bar_length / 2
+    bar_end = page_width / 2 + bar_length / 2
 
     canv.lines([
-        # Bottom left
-        (left, bottom, left + length, bottom),
-        (left, bottom, left, bottom + length),
-        # Bottom right
-        (right, bottom, right - length, bottom),
-        (right, bottom, right, bottom + length),
-        # Top right
-        (right, top, right - length, top),
-        (right, top, right, top - length),
-        # Top left
-        (left, top, left + length, top),
-        (left, top, left, top - length)
+        # Bottom left corner marker
+        (left, bottom, left + marker_line_length, bottom),
+        (left, bottom, left, bottom + marker_line_length),
+        # Bottom right corner marker
+        (right, bottom, right - marker_line_length, bottom),
+        (right, bottom, right, bottom + marker_line_length),
+        # Top right corner marker
+        (right, top, right - marker_line_length, top),
+        (right, top, right, top - marker_line_length),
+        # Top left corner marker
+        (left, top, left + marker_line_length, top),
+        (left, top, left, top - marker_line_length),
+        # Bottom bar
+        (bar_start, bottom, bar_end, bottom)
     ])

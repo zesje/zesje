@@ -62,6 +62,12 @@ def generate_pdfs(exam_pdf_file, exam_id, output_dir, num_copies, id_grid_x,
             overlay_canv.save()
 
             # Merge overlay and exam
+            try:
+                exam_pdf_file.seek(0)  # go back to the start of the file object
+            except AttributeError:
+                # exam_pdf_file is the filename instead of the file object, so we don't have to seek to the start of it
+                pass
+
             exam_pdf = PdfReader(exam_pdf_file)
             overlay_pdf = PdfReader(overlay_file)
 

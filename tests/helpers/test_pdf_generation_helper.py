@@ -131,7 +131,7 @@ def test_generate_pdfs_blank(mock_generate_datamatrix, mock_generate_id_grid,
     assert_pdf_and_images_are_equal(filenames[1], images)
 
 
-def test_generate_pdf_nonblank(mock_generate_datamatrix, mock_generate_id_grid,
+def test_generate_pdfs_nonblank(mock_generate_datamatrix, mock_generate_id_grid,
                                datadir, tmpdir):
     exam_pdf = os.path.join(datadir, 'exam-2pages.pdf')
 
@@ -144,7 +144,7 @@ def test_generate_pdf_nonblank(mock_generate_datamatrix, mock_generate_id_grid,
     assert_pdf_and_images_are_equal(os.path.join(tmpdir, '00000.pdf'), images)
 
 
-def test_generate_pdf_black(mock_generate_datamatrix, mock_generate_id_grid,
+def test_generate_pdfs_black(mock_generate_datamatrix, mock_generate_id_grid,
                             datadir, tmpdir):
     black_pdf = os.path.join(datadir, 'black-a4-2pages.pdf')
 

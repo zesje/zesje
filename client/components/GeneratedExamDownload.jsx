@@ -1,4 +1,8 @@
 import React from 'react'
+import ReactMarkdown from 'react-markdown';
+
+import downloadMarkdown from './exam_download.md'
+
 import * as api from '../api.jsx'
 
 // TODO: don't use alert
@@ -62,7 +66,10 @@ class GeneratedExamDownload extends React.Component {
         return (
             <React.Fragment>
                 <div className={'columns is-centered'} >
-                    <div className='column is-narrow '>
+                    <div className='column is-narrow is-one-third content'>
+                        <ReactMarkdown source={downloadMarkdown} />
+                    </div>
+                    <div className='column is-narrow'>
                         <div className='field control has-icons-left'>
                             <input
                                 className='input'
@@ -108,6 +115,7 @@ class GeneratedExamDownload extends React.Component {
                             </p>
                         </div>
                     </div>
+                    <div className='column is-narrow is-one-third' />
                 </div>
             </React.Fragment>
         )

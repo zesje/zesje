@@ -10,7 +10,8 @@ from werkzeug.datastructures import FileStorage
 from pony import orm
 
 from ..helpers.pdf_generation_helper import generate_pdfs, \
-    output_pdf_filename_format
+    output_pdf_filename_format, join_pdfs
+
 
 from ..models import db, Exam, Widget
 
@@ -221,6 +222,9 @@ class ExamSource(Resource):
 
 class ExamGeneratedPdfs(Resource):
 
+    get_parser = reqparse.RequestParser()
+    get_parser.add_argument('type', type=str, required=True, location='args')
+
     @orm.db_session
     def get(self, exam_id, copy_num=None):
 
@@ -237,27 +241,51 @@ class ExamGeneratedPdfs(Resource):
             # get all (zip)
             # TODO: use query to define ranges
 
+            args = self.get_parser.parse_args()
+
             exam = Exam[exam_id]
             now_str = datetime.datetime.now().strftime("%Y-%m-%d_%H:%M")
 
-            memory_file = BytesIO()
-            with zipfile.ZipFile(memory_file, 'w') as zf:
-                for root, dirs, files in os.walk(generated_pdfs_dir):
-                    for file in files:
-                        zf.write(
-                            os.path.join(root, file),
-                            file)
+            if args['type'] == 'pdf':
+                out_pdf_path = os.path.join(generated_pdfs_dir, 'all.pdf')
 
-            memory_file.seek(0)
+                join_pdfs(
+                    generated_pdfs_dir,
+                    out_pdf_path,
+                    100
+                )
 
-            return send_file(
-                memory_file,
-                cache_timeout=0,
-                attachment_filename=f'{exam.name}_generated_{now_str}.zip',
-                as_attachment=True)
+                return send_file(
+                    out_pdf_path,
+                    cache_timeout=0,
+                    attachment_filename=f'{exam.name}_{now_str}.pdf',
+                    as_attachment=True,
+                    mimetype='application/pdf')
+
+            elif args['type'] == 'zip':
+
+                memory_file = BytesIO()
+                with zipfile.ZipFile(memory_file, 'w') as zf:
+                    for root, dirs, files in os.walk(generated_pdfs_dir):
+                        for file in files:
+                            zf.write(
+                                os.path.join(root, file),
+                                file)
+
+                memory_file.seek(0)
+
+                return send_file(
+                    memory_file,
+                    cache_timeout=0,
+                    attachment_filename=f'{exam.name}_{now_str}.zip',
+                    as_attachment=True,
+                    mimetype='application/zip')
+            else:
+                # needs either zip or pdf
+                abort(400)
 
         else:
-
+            # single file requested, we can directly send
             pdf_path = os.path.join(
                 generated_pdfs_dir,
                 output_pdf_filename_format.format(copy_num))

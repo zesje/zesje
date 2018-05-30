@@ -5,9 +5,6 @@ import downloadMarkdown from './exam_download.md'
 
 import * as api from '../api.jsx'
 
-// TODO: don't use alert
-/*global alert*/
-
 class GeneratedExamDownload extends React.Component {
 
     state = {
@@ -57,10 +54,6 @@ class GeneratedExamDownload extends React.Component {
         })
     }
 
-    onClickDownloadPDF = () => {
-        alert('Unsupported')
-    }
-
     render = () => {
 
         return (
@@ -99,7 +92,7 @@ class GeneratedExamDownload extends React.Component {
                                     className='button is-primary'
                                     disabled={!this.state.isGenerated}
                                     target='_blank'
-                                    href={'/api/exams/' + this.state.examID + '/generated_pdfs'}
+                                    href={'/api/exams/' + this.state.examID + '/generated_pdfs?type=zip'}
                                 >
                                     Download Zip
                                 </a>
@@ -108,7 +101,8 @@ class GeneratedExamDownload extends React.Component {
                                 <a
                                     className='button is-primary'
                                     disabled={!this.state.isGenerated}
-                                    onClick={this.onClickDownloadPDF}
+                                    target='_blank'
+                                    href={'/api/exams/' + this.state.examID + '/generated_pdfs?type=pdf'}
                                 >
                                     Download PDF
                                 </a>
@@ -120,10 +114,6 @@ class GeneratedExamDownload extends React.Component {
             </React.Fragment>
         )
     }
-
-}
-
-GeneratedExamDownload.defaultProps = {
 
 }
 

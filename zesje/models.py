@@ -1,10 +1,31 @@
 """ Models used in the db """
-from pony.orm import Database, Required, Optional, PrimaryKey, Set
-
+import random
+import string
 from datetime import datetime
+
+from pony.orm import db_session, Database, Required, Optional, PrimaryKey, Set
 
 db = Database()
 
+
+# Helper functions #
+# Have to appear at the top of the file, because otherwise they won't be defined when the models are defined
+
+def _generate_exam_token():
+    """Generate an exam token which is not already present in the database. The token consists of 12 randomly generated
+    uppercase letters."""
+    length = 12
+    chars = string.ascii_uppercase
+
+    while True:
+        rand_string = ''.join(random.choices(chars, k=length))
+
+        with db_session:
+            if not Exam.select(lambda e: e.token == rand_string).exists():  # no collision
+                return rand_string
+
+
+# Models #
 
 class Student(db.Entity):
     """ New students may be added throughout the course. """
@@ -24,7 +45,8 @@ class Grader(db.Entity):
 
 class Exam(db.Entity):
     """ New instances are created when providing a new exam. """
-    name = Required(str, unique=True)
+    name = Required(str)
+    token = Required(str, unique=True, default=_generate_exam_token)
     submissions = Set('Submission')
     problems = Set('Problem')
     scans = Set('PDF')

@@ -335,6 +335,10 @@ class ExamGeneratedPdfs(Resource):
         pdf_out_dir = os.path.join(exam_dir, 'generated_pdfs')
         os.makedirs(pdf_out_dir, exist_ok=True)
 
+        for f in glob.glob1(pdf_out_dir,
+                            '[0-9][0-9][0-9][0-9][0-9].pdf'):
+            os.remove(os.path.join(pdf_out_dir, f))
+
         generate_pdfs(
             pdf_path,
             'ABCDEFGHIJKL',

@@ -10,10 +10,6 @@ from ..helpers import pdf_generation_helper
 from ..models import db, Exam, Widget
 
 
-def _get_data_dir(exam_id):
-    return app.config['DATA_DIRECTORY']
-
-
 def _get_exam_dir(exam_id):
     return os.path.join(
         app.config['DATA_DIRECTORY'],

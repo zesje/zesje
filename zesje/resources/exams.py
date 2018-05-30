@@ -1,4 +1,5 @@
 import os
+import glob
 import zipfile
 from io import BytesIO
 import datetime
@@ -249,10 +250,14 @@ class ExamGeneratedPdfs(Resource):
             if args['type'] == 'pdf':
                 out_pdf_path = os.path.join(generated_pdfs_dir, 'all.pdf')
 
+                pdf_count = len(glob.glob1(
+                    generated_pdfs_dir,
+                    '[0-9][0-9][0-9][0-9][0-9].pdf'))
+
                 join_pdfs(
                     generated_pdfs_dir,
                     out_pdf_path,
-                    100
+                    pdf_count,
                 )
 
                 return send_file(

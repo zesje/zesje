@@ -109,7 +109,7 @@ class ExamConfig(Resource):
         exam = Exam[exam_id]
 
         data_dir = app.config['DATA_DIRECTORY']
-        yaml_filename = exam.name + '.yml'
+        yaml_filename = exam.id + '.yml'
         yaml_abspath = os.path.join(data_dir, yaml_filename)
         existing_yml = yaml_helper.read(yaml_abspath)
         new_yml = yaml_helper.load(args['yaml'])
@@ -118,7 +118,7 @@ class ExamConfig(Resource):
 
         yaml_helper.save(new_yml, yaml_abspath)
 
-        print("Updated problem names for {}".format(exam.name))
+        print(f"Updated problem names for exam {exam_id} (name: {exam.name}, token: {exam.token})")
 
 
 class Exams(Resource):
@@ -129,7 +129,7 @@ class Exams(Resource):
         exam = Exam[exam_id]
 
         data_dir = app.config['DATA_DIRECTORY']
-        exam_dir = os.path.join(data_dir, exam.name + '_data')
+        exam_dir = os.path.join(data_dir, f'{exam.id}_data')
 
         return send_file(
             os.path.join(exam_dir, 'exam.pdf'),
@@ -166,8 +166,6 @@ class Exams(Resource):
     def post(self):
         """Add a new exam.
 
-        Will error if an existing exam exists with the same name.
-
         Parameters
         ----------
         pdf : file
@@ -185,28 +183,22 @@ class Exams(Resource):
         exam_name = args['exam_name']
         pdf_data = args['pdf']
 
-        exam = Exam.get(name=exam_name)
+        exam = Exam(name=exam_name)
+        db.commit()  # so exam gets an id
 
-        if exam is None:
-            exam = Exam(name=exam_name)
+        data_dir = app.config['DATA_DIRECTORY']
+        exam_dir = os.path.join(data_dir, f'{exam.id}_data')
+        pdf_path = os.path.join(exam_dir, 'exam.pdf')
 
-            data_dir = app.config['DATA_DIRECTORY']
-            exam_dir = os.path.join(data_dir, exam_name + '_data')
-            pdf_path = os.path.join(exam_dir, 'exam.pdf')
+        os.makedirs(exam_dir, exist_ok=True)
 
-            os.makedirs(exam_dir, exist_ok=True)
-            db.commit()
+        pdf_data.save(pdf_path)
 
-            pdf_data.save(pdf_path)
+        # Default feedback (maybe factor out eventually).
+        feedback_options = ['Everything correct',
+                            'No solution provided']
 
-            # Default feedback (maybe factor out eventually).
-            feedback_options = ['Everything correct',
-                                'No solution provided']
-
-            print("Added exam {} to database".format(exam.name))
-        else:
-            msg = "Exam with name {} already exists".format(exam.name)
-            return dict(status=400, message=msg), 400
+        print(f"Added exam {exam.id} (name: {exam_name}, token: {exam.token}) to database")
 
         return {
             'id': exam.id

@@ -56,7 +56,7 @@ def process_pdf(pdf_id, data_directory):
         pdf_filename = f'{pdf.id}.pdf'
         pdf_path = os.path.join(data_directory, 'pdfs', pdf_filename)
         config_path = os.path.join(data_directory, pdf.exam.yaml_path)
-        output_directory = os.path.join(data_directory, pdf.exam.name + '_data')
+        output_directory = os.path.join(data_directory, f'{pdf.exam.id}_data')
 
     try:
         # Read in exam metadata

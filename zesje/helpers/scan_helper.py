@@ -349,7 +349,7 @@ def rotate_image(image_data):
             after_rot_keypoints)
 
 
-def shift_image(image_data, extracted_qr, qr_coords):
+def shift_image(image_data, corner_keypoints):
     """Roll the image such that QR occupies coords specified by the template."""
     page, position = extracted_qr.page, extracted_qr.coords
     y, x = np.mean(position, axis=0)

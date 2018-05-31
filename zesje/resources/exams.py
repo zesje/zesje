@@ -289,7 +289,7 @@ class ExamGeneratedPdfs(Resource):
                 generated_pdfs_dir,
                 output_pdf_filename_format.format(copy_num))
 
-            if (not os.path.exists(pdf_path)):
+            if not os.path.exists(pdf_path):
                 abort(404)
 
             return send_file(

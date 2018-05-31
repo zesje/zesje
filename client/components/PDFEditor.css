@@ -31,6 +31,6 @@
 
 .field-text {
     padding: calc(0.375em - 1px) 1em;
-    border-top: 1px solid hsl(217, 71%, 53%);;
-    border-bottom: 1px solid hsl(217, 71%, 53%);;
+    border-top: 1px solid hsl(217, 71%, 53%);
+    border-bottom: 1px solid hsl(217, 71%, 53%);
 }

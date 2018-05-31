@@ -52,21 +52,21 @@ def calc_angle(keyp1, keyp2):
     keyp2: OpenCV Keypoint
 
     """
-    xdiff = math.fabs(keyp1.pt[0] - keyp2.pt[0])
-    ydiff = math.fabs(keyp2.pt[1] - keyp1.pt[1])
+    xdiff = math.fabs(keyp1[0] - keyp2[0])
+    ydiff = math.fabs(keyp2[1] - keyp1[1])
 
     # Avoid division by zero, it is unknown however whether it is turned 90
     # degrees to the left or 90 degrees to the right, therefore we return
     if xdiff == 0:
         return 90
 
-    if keyp1.pt[0] < keyp2.pt[0]:
-        if(keyp2.pt[1] > keyp1.pt[1]):
+    if keyp1[0] < keyp2[0]:
+        if(keyp2[1] > keyp1[1]):
             return -1 * math.degrees(math.atan(ydiff / xdiff))
         else:
             return math.degrees(math.atan(ydiff / xdiff))
     else:
-        if(keyp1.pt[1] > keyp2.pt[1]):
+        if(keyp1[1] > keyp2[1]):
             return -1 * math.degrees(math.atan(ydiff / xdiff))
         else:
             return math.degrees(math.atan(ydiff / xdiff))

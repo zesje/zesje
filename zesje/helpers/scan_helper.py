@@ -272,35 +272,62 @@ def guess_dpi(image_array):
 
 def rotate_image(image_data):
     """Rotate a PIL image according to the rotation of the corner markers."""
-    opencv_im = cv2.cvtColor(np.array(image_data), cv2.COLOR_RGB2BGR)
+    color_im = cv2.cvtColor(np.array(image_data), cv2.COLOR_RGB2BGR)
 
-    _, bin_im = cv2.threshold(opencv_im, 150, 255, cv2.THRESH_BINARY)
+    gray_im = cv2.cvtColor(color_im, cv2.COLOR_BGR2GRAY)
+
+    _, bin_im = cv2.threshold(gray_im, 150, 255, cv2.THRESH_BINARY)
 
     h, w, *_ = bin_im.shape
 
-    keypoints = image_helper.find_corner_marker_keypoints(bin_im)
+    # Blob detector keypoints, less accurate than harris
+    blob_keypoints = image_helper.find_corner_marker_keypoints(bin_im)
+
+    corner_keypoints = []
+
+    # For each blob keypoint, extract an image patch as a descriptor
+    for keyp in blob_keypoints:
+        pt_x, pt_y = keyp.pt[0], keyp.pt[1]
+        topleft = (int(round(pt_x - 0.75 * keyp.size)),
+                   int(round(pt_y - 0.75 * keyp.size)))
+        bottomright = (int(round(pt_x + 0.75 * keyp.size)),
+                       int(round(pt_y + 0.75 * keyp.size)))
+        image_patch = gray_im[topleft[1]:bottomright[1],
+                              topleft[0]:bottomright[0]]
+
+        # Find the best corner
+        corners = cv2.goodFeaturesToTrack(image_patch, 1, 0.01, 10)
+        corners = np.int0(corners)
+
+        # Change the coordinates of the corner to be respective of the origin
+        # of the original image, and not the image patch.
+        patch_x, patch_y = corners.ravel()
+        corner_x, corner_y = patch_x + topleft[0], patch_y + topleft[1]
+
+        corner_keypoints.append((corner_x, corner_y))
 
     # Find two corner markers which lie in the same horizontal half.
     # Same horizontal half is chosen as the line from one keypoint to
     # the other shoud be 0. To get corner markers in the same horizontal half,
     # the pair with the smallest distance is chosen.
-    distances = [(a, b, math.hypot(a.pt[0] - b.pt[0], a.pt[1] - b.pt[1]))
-                 for (a, b) in list(itertools.combinations(keypoints, 2))]
+    distances = [(a, b, math.hypot(a[0] - b[0], a[1] - b[1]))
+                 for (a, b)
+                 in list(itertools.combinations(corner_keypoints, 2))]
     distances.sort(key=lambda tup: tup[2], reverse=True)
     best_keypoint_combination = distances.pop()
 
-    (keyp1, keyp2, dist) = best_keypoint_combination
+    (coords1, coords2, dist) = best_keypoint_combination
 
     # If the angle is downward, we have a negative angle and
     # we want to rotate it counterclockwise
     # However warpaffine needs a positve angle if
     # you want to rotate it counterclockwise
     # So we invert the angle retrieved from calc_angle
-    angle = -1 * image_helper.calc_angle(keyp1, keyp2)
+    angle = -1 * image_helper.calc_angle(coords1, coords2)
 
     # Create rotation matrix and rotate the image around the center
     rot_mat = cv2.getRotationMatrix2D((w / 2, h / 2), angle, 1)
-    rot_image = cv2.warpAffine(opencv_im, rot_mat, (w, h), cv2.BORDER_CONSTANT,
+    rot_image = cv2.warpAffine(color_im, rot_mat, (w, h), cv2.BORDER_CONSTANT,
                                borderMode=cv2.BORDER_CONSTANT,
                                borderValue=(255, 255, 255))
 

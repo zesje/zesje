@@ -27,10 +27,10 @@ def generate_binary_image(name, datadir):
 
 # Tests whether the output of calc angle is correct
 @pytest.mark.parametrize('test_input1, test_input2, expected', [
-    (cv2.KeyPoint(1337, 69, 0), cv2.KeyPoint(9001, 69, 0), 0),
-    (cv2.KeyPoint(0, 100, 0), cv2.KeyPoint(0, 1000, 0), 90),
-    (cv2.KeyPoint(25, 25, 0), cv2.KeyPoint(50, 50, 0), -45),
-    (cv2.KeyPoint(25, 25, 0), cv2.KeyPoint(50, 0, 0), 45)],
+    ((1337, 69), (9001, 69), 0),
+    ((0, 100), (0, 1000), 90),
+    ((25, 25), (50, 50), -45),
+    ((25, 25), (50, 0), 45)],
     ids=['Same horizontal line', 'Same vertical line', 'Negative angle',
          'Positive angle'])
 def test_calc_angle(test_input1, test_input2, expected):

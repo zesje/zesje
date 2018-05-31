@@ -234,7 +234,6 @@ class ExamGeneratedPdfs(Resource):
             abort(404)
 
         if copy_num is None:
-            # get all (zip)
             # TODO: use query to define ranges
 
             args = self.get_parser.parse_args()

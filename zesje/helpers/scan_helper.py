@@ -323,15 +323,30 @@ def rotate_image(image_data):
     # However warpaffine needs a positve angle if
     # you want to rotate it counterclockwise
     # So we invert the angle retrieved from calc_angle
-    angle = -1 * image_helper.calc_angle(coords1, coords2)
+    angle_deg = -1 * image_helper.calc_angle(coords1, coords2)
+    angle_rad = math.radians(angle_deg)
+
+    rot_origin = (w / 2, h / 2)
+    keyp_from_rot_origin = [(coord_x - rot_origin[0], coord_y - rot_origin[1])
+                            for (coord_x, coord_y)
+                            in corner_keypoints]
+
+    after_rot_keypoints = [(coord_y * math.sin(angle_rad) +
+                            coord_x * math.cos(angle_rad),
+                            coord_y * math.cos(angle_rad) -
+                            coord_x * math.sin(angle_rad))
+                           for (coord_x, coord_y)
+                           in keyp_from_rot_origin]
+
 
     # Create rotation matrix and rotate the image around the center
-    rot_mat = cv2.getRotationMatrix2D((w / 2, h / 2), angle, 1)
+    rot_mat = cv2.getRotationMatrix2D(rot_origin, angle_deg, 1)
     rot_image = cv2.warpAffine(color_im, rot_mat, (w, h), cv2.BORDER_CONSTANT,
                                borderMode=cv2.BORDER_CONSTANT,
                                borderValue=(255, 255, 255))
 
-    return Image.fromarray(cv2.cvtColor(rot_image, cv2.COLOR_BGR2RGB))
+    return (Image.fromarray(cv2.cvtColor(rot_image, cv2.COLOR_BGR2RGB)),
+            after_rot_keypoints)
 
 
 def shift_image(image_data, extracted_qr, qr_coords):

@@ -279,10 +279,12 @@ class PDFEditor extends React.Component {
                         minWidth = barcodeExampleImageSize.width
                         minHeight = barcodeExampleImageSize.height
                         image = barcodeExampleImage
-                    } else if (widget.name == 'student_id_widget') {
+                    } else if (this.state.page == 0 && widget.name == 'student_id_widget') {
                         minWidth = studentIdExampleImageSize.width
                         minHeight = studentIdExampleImageSize.height
                         image = studentIdExampleImage
+                    } else {
+                        return null
                     }
                     view = (
                         <div

@@ -183,8 +183,8 @@ def process_page(output_dir, image_data, exam_config):
 
     qr_coords, widget_data = exam_config.qr_coords, exam_config.widget_data
 
-    image_data = rotate_image(image_data)
-    image_data = shift_image(image_data, qr_data, qr_coords)
+    (image_data, new_keypoints) = rotate_image(image_data)
+    image_data = shift_image(image_data, new_keypoints)
 
     sub_nr = qr_data.sub_nr
 

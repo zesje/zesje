@@ -288,10 +288,10 @@ def rotate_image(image_data):
     # For each blob keypoint, extract an image patch as a descriptor
     for keyp in blob_keypoints:
         pt_x, pt_y = keyp.pt[0], keyp.pt[1]
-        topleft = (int(round(pt_x - 0.75*keyp.size)),
-                   int(round(pt_y - 0.75*keyp.size)))
-        bottomright = (int(round(pt_x + 0.75*keyp.size)),
-                       int(round(pt_y + 0.75*keyp.size)))
+        topleft = (int(round(pt_x - 0.75 * keyp.size)),
+                   int(round(pt_y - 0.75 * keyp.size)))
+        bottomright = (int(round(pt_x + 0.75 * keyp.size)),
+                       int(round(pt_y + 0.75 * keyp.size)))
         image_patch = gray_im[topleft[1]:bottomright[1],
                               topleft[0]:bottomright[0]]
 

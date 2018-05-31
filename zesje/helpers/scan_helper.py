@@ -280,10 +280,12 @@ def rotate_image(image_data):
 
     h, w, *_ = bin_im.shape
 
+    # Blob detector keypoints, less accurate than harris
     blob_keypoints = image_helper.find_corner_marker_keypoints(bin_im)
 
     corner_keypoints = []
 
+    # For each blob keypoint, extract an image patch as a descriptor
     for keyp in blob_keypoints:
         pt_x, pt_y = keyp.pt[0], keyp.pt[1]
         topleft = (int(round(pt_x - 0.75*keyp.size)),
@@ -293,9 +295,12 @@ def rotate_image(image_data):
         image_patch = gray_im[topleft[1]:bottomright[1],
                               topleft[0]:bottomright[0]]
 
+        # Find the best corner
         corners = cv2.goodFeaturesToTrack(image_patch, 1, 0.01, 10)
         corners = np.int0(corners)
 
+        # Change the coordinates of the corner to be respective of the origin
+        # of the original image, and not the image patch.
         patch_x, patch_y = corners.ravel()
         corner_x, corner_y = patch_x + topleft[0], patch_y + topleft[1]
 

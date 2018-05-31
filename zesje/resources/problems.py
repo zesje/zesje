@@ -65,6 +65,17 @@ class Problems(Resource):
 
     @orm.db_session
     def put(self, problem_id, attr):
+        """PUT to a problem
+
+        As of writing this method only supports putting the name property
+
+        problem_id: int
+            the problem id to put to
+        attr: str
+            the attribute (or property) to put to (only supports 'name' now)
+
+        Returns HTTP 200 on success
+        """
 
         args = self.put_parser.parse_args()
 

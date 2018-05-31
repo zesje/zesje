@@ -316,14 +316,14 @@ def rotate_image(image_data):
     distances.sort(key=lambda tup: tup[2], reverse=True)
     best_keypoint_combination = distances.pop()
 
-    (tuple1, tuple2, dist) = best_keypoint_combination
+    (coords1, coords2, dist) = best_keypoint_combination
 
     # If the angle is downward, we have a negative angle and
     # we want to rotate it counterclockwise
     # However warpaffine needs a positve angle if
     # you want to rotate it counterclockwise
     # So we invert the angle retrieved from calc_angle
-    angle = -1 * image_helper.calc_angle(tuple1, tuple2)
+    angle = -1 * image_helper.calc_angle(coords1, coords2)
 
     # Create rotation matrix and rotate the image around the center
     rot_mat = cv2.getRotationMatrix2D((w / 2, h / 2), angle, 1)

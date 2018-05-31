@@ -51,7 +51,7 @@ class Exam(db.Entity):
     submissions = Set('Submission')
     problems = Set('Problem')
     scans = Set('PDF')
-    widgets = Set('Widget')
+    widgets = Set('ExamWidget')
 
 
 class Submission(db.Entity):
@@ -78,7 +78,7 @@ class Problem(db.Entity):
     feedback_options = Set('FeedbackOption')
     solutions = Set('Solution')
     page = Required(int)
-    widget = Required('Widget')
+    widget = Required('ProblemWidget')
 
 
 class FeedbackOption(db.Entity):
@@ -114,12 +114,17 @@ class PDF(db.Entity):
 
 
 class Widget(db.Entity):
-    """Should be related to either one Exam or one Problem, never both."""
     id = PrimaryKey(int, auto=True)
     name = Optional(str)  # Can be used to discretise widgets for barcodes, student_id and problems
     x = Required(int)
     y = Required(int)
+
+
+class ExamWidget(Widget):
+    exam = Required(Exam)
+
+
+class ProblemWidget(Widget):
+    problem = Optional(Problem)
     width = Required(int)
     height = Required(int)
-    problem = Optional(Problem, cascade_delete=True)  # cascade_delete must be set to True
-    exam = Optional(Exam)

@@ -1,7 +1,10 @@
 import React from 'react';
 import './PDFEditor.css';
 import barcodeExampleImage from './barcode_example.png'
+import barcodeExampleImageSize from '!image-dimensions-loader!./barcode_example.png'
 import studentIdExampleImage from './student_id_example.png'
+import studentIdExampleImageSize from '!image-dimensions-loader!./student_id_example.png'
+
 import * as api from '../api.jsx'
 
 import { Document, Page } from 'react-pdf';
@@ -271,12 +274,14 @@ class PDFEditor extends React.Component {
                     )
                     enableResizing = true
                 } else {
-                    minWidth = 0
-                    minHeight = 0
                     var image
                     if (widget.name == 'barcode_widget') {
+                        minWidth = barcodeExampleImageSize.width
+                        minHeight = barcodeExampleImageSize.height
                         image = barcodeExampleImage
                     } else if (widget.name == 'student_id_widget') {
+                        minWidth = studentIdExampleImageSize.width
+                        minHeight = studentIdExampleImageSize.height
                         image = studentIdExampleImage
                     }
                     view = (

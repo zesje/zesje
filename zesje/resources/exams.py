@@ -14,7 +14,7 @@ from ..helpers.pdf_generation_helper import generate_pdfs, \
     output_pdf_filename_format, join_pdfs
 
 
-from ..models import db, Exam, Widget
+from ..models import db, Exam, ExamWidget
 
 
 def _get_exam_dir(exam_id):
@@ -138,8 +138,6 @@ class Exams(Resource):
                     'name': widget.name,
                     'x': widget.x,
                     'y': widget.y,
-                    'width': widget.width,
-                    'height': widget.height,
                 } for widget in exam.widgets.order_by(lambda w: w.id)
             ]
         }
@@ -169,27 +167,24 @@ class Exams(Resource):
         exam_name = args['exam_name']
         pdf_data = args['pdf']
 
-        widgets = [
-            Widget(
+        exam = Exam(
+            name=exam_name,
+        )
+
+        exam.widgets = [
+            ExamWidget(
                 name='student_id_widget',
                 x=50,
                 y=50,
-                width=264,
-                height=100,
+                exam=exam,
             ),
-            Widget(
+            ExamWidget(
                 name='barcode_widget',
                 x=500,
                 y=40,
-                width=44,
-                height=44,
+                exam=exam,
             ),
         ]
-
-        exam = Exam(
-            name=exam_name,
-            widgets=widgets
-        )
 
         db.commit()  # so exam gets an id
 

@@ -4,7 +4,7 @@ from flask import request
 from flask_restful import Resource, reqparse
 from pony import orm
 
-from ..models import db, Exam, Problem, Widget
+from ..models import db, Exam, Problem, ProblemWidget
 
 
 class Problems(Resource):
@@ -37,7 +37,7 @@ class Problems(Resource):
             msg = f"Exam with id {exam_id} doesn't exist"
             return dict(status=400, message=msg), 400
         else:
-            widget = Widget(
+            widget = ProblemWidget(
                 x=args['x'],
                 y=args['y'],
                 width=args['width'],

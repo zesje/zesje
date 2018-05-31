@@ -42,7 +42,6 @@ class GeneratedExamPreview extends React.Component {
             page: 0,
             numPages: pdf.numPages,
         })
-        //this.updateWidgets()
     }
 
     setPage = (newPage) => {

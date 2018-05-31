@@ -48,8 +48,10 @@ def calc_angle(keyp1, keyp2):
 
     Parameters:
     -----------
-    keyp1: Tuple in the form of (x,y) with origin top left
-    keyp2: Tuple in the form of (x,y) with origin top left
+    keyp1: Keypoint represented by a tuple in the form of (x,y) with
+    origin top left
+    keyp2: Keypoint represented by a tuple in the form of (x,y) with
+    origin top left
 
     """
     xdiff = math.fabs(keyp1[0] - keyp2[0])

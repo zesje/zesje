@@ -22,9 +22,9 @@ class Widgets(Resource):
 
         for attr, value in body.items():
             # check before modifying
-            if hasattr(widget, attr):
+            try:
                 setattr(widget, attr, value)
-            else:
+            except AttributeError:
                 msg = f"Widget doesn't have a property {attr}"
                 return dict(status=400, message=msg), 400
 

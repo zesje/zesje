@@ -28,13 +28,9 @@ def test_get_studentnumber_precision(datadir, mock_get_box_return_original):
         right = 0
 
     im_names = os.listdir(os.path.join(datadir, 'studentnumbers'))
-    count = 0
     for filename_full in im_names:
         im_path = os.path.join(datadir, 'studentnumbers', f'{filename_full}')
         filename_short, _ = os.path.splitext(filename_full)
         expected_number = int(filename_short)
         detected_number = scan_helper.get_student_number(im_path, MockWidget)
-        if(expected_number == detected_number):
-            count = count + 1
-
-    assert((count / len(im_names)) > 0.8)
+        assert(expected_number == detected_number)

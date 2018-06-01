@@ -9,7 +9,7 @@ from reportlab.lib.units import mm
 from reportlab.pdfgen import canvas
 
 
-_output_pdf_filename_format = '{0:05d}.pdf'
+output_pdf_filename_format = '{0:05d}.pdf'
 
 
 def generate_pdfs(exam_pdf_file, exam_id, output_dir, num_copies, id_grid_x,
@@ -38,13 +38,13 @@ def generate_pdfs(exam_pdf_file, exam_id, output_dir, num_copies, id_grid_x,
     num_copies : int
         The number of copies of the exam to generate
     id_grid_x : int
-        The x coordinate where the student ID grid should be placed, in mm
+        The x coordinate where the student ID grid should be placed
     id_grid_y : int
-        The y coordinate where the student ID grid should be placed, in mm
+        The y coordinate where the student ID grid should be placed
     datamatrix_x : int
-        The x coordinate where the DataMatrix code should be placed, in mm
+        The x coordinate where the DataMatrix code should be placed
     datamatrix_y : int
-        The y coordinate where the DataMatrix code should be placed, in mm
+        The y coordinate where the DataMatrix code should be placed
     """
     exam_pdf = PdfReader(exam_pdf_file)
     mediabox = exam_pdf.pages[0].MediaBox
@@ -80,7 +80,7 @@ def generate_pdfs(exam_pdf_file, exam_id, output_dir, num_copies, id_grid_x,
                 exam_merge = PageMerge(exam_page).add(overlay_merge)
                 exam_merge.render()
 
-            path = os.path.join(output_dir, _output_pdf_filename_format.format(copy_idx))
+            path = os.path.join(output_dir, output_pdf_filename_format.format(copy_idx))
             PdfWriter(path, trailer=exam_pdf).write()
 
 
@@ -101,7 +101,7 @@ def join_pdfs(directory, output_filename, num_copies):
 
     for copy_idx in range(num_copies):
         path = os.path.join(directory,
-                            _output_pdf_filename_format.format(copy_idx))
+                            output_pdf_filename_format.format(copy_idx))
         writer.addpages(PdfReader(path).pages)
 
     writer.write(output_filename)
@@ -122,7 +122,7 @@ def generate_id_grid(canv, x, y):
     """
     # TODO: actually draw a grid instead of the text Beatiful ID Grid
     canv.setFont('Helvetica', 14)
-    canv.drawString(x * mm, y * mm, 'Beautiful ID Grid')
+    canv.drawString(x, y, 'Beautiful ID Grid')
 
 
 def generate_datamatrix(exam_id, page_num, copy_num):
@@ -196,6 +196,10 @@ def _generate_overlay(canv, pagesize, exam_id, copy_num, num_pages, id_grid_x,
     datamatrix_y : int
         The y coordinate where the DataMatrix codes should be placed
     """
+
+    # transform y-cooridate to different origin location
+    id_grid_y = pagesize[1] - id_grid_y
+
     # ID grid on first page only
     generate_id_grid(canv, id_grid_x, id_grid_y)
 
@@ -203,7 +207,11 @@ def _generate_overlay(canv, pagesize, exam_id, copy_num, num_pages, id_grid_x,
         _add_corner_markers_and_bottom_bar(canv, pagesize)
 
         datamatrix = generate_datamatrix(exam_id, page_num, copy_num)
-        canv.drawInlineImage(datamatrix, datamatrix_x * mm, datamatrix_y * mm)
+
+        # transform y-cooridate to different origin location
+        datamatrix_y_adjusted = pagesize[1] - datamatrix_y - datamatrix.height
+
+        canv.drawInlineImage(datamatrix, datamatrix_x, datamatrix_y_adjusted)
 
         canv.showPage()
 

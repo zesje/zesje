@@ -1,20 +1,62 @@
 import os
+import glob
+import zipfile
+from io import BytesIO
+import datetime
 
-from flask import abort, current_app as app, send_file
+from flask import current_app as app, abort, send_file
 from flask_restful import Resource, reqparse
 from werkzeug.datastructures import FileStorage
 
 from pony import orm
 
-from ..helpers import yaml_helper, db_helper
-from ..models import db, Exam, Problem, FeedbackOption
-from ._helpers import required_string
+from ..helpers.pdf_generation_helper import generate_pdfs, \
+    output_pdf_filename_format, join_pdfs
 
 
-class ExamConfig(Resource):
+from ..models import db, Exam, ExamWidget
+
+
+def _get_exam_dir(exam_id):
+    return os.path.join(
+        app.config['DATA_DIRECTORY'],
+        f'{exam_id}_data',
+    )
+
+
+class Exams(Resource):
+
+    def get(self, exam_id=None):
+        if exam_id:
+            return self._get_single(exam_id)
+        else:
+            return self._get_all()
 
     @orm.db_session
-    def get(self, exam_id):
+    def _get_all(self):
+        """get list of uploaded exams and their yaml.
+
+        Returns
+        -------
+        list of:
+            id : int
+                exam name
+            name : str
+                exam ID
+            submissions : int
+                Number of submissions
+        """
+        return [
+            {
+                'id': ex.id,
+                'name': ex.name,
+                'submissions': ex.submissions.count()
+            }
+            for ex in Exam.select().order_by(Exam.id)
+        ]
+
+    @orm.db_session
+    def _get_single(self, exam_id):
         """Get detailed information about a single exam
 
         URL Parameters
@@ -38,7 +80,7 @@ class ExamConfig(Resource):
         return {
             'id': exam_id,
             'name': exam.name,
-            'submissions': 
+            'submissions':
             [
                 {
                     'id': sub.copy_number,
@@ -75,88 +117,30 @@ class ExamConfig(Resource):
                             'description': fb.description,
                             'score': fb.score,
                             'used': fb.solutions.count()
-                        } for fb in prob.feedback_options.order_by(lambda f: f.id)
-                    ]
+                        }
+                        for fb
+                        in prob.feedback_options.order_by(lambda f: f.id)
+                    ],
+                    'page': prob.page,
+                    'widget': {
+                        'id': prob.widget.id,
+                        'name': prob.widget.name,
+                        'x': prob.widget.x,
+                        'y': prob.widget.y,
+                        'width': prob.widget.width,
+                        'height': prob.widget.height,
+                    },
                 } for prob in exam.problems.order_by(lambda p: p.id)
             ],
             'widgets': [
                 {
                     'id': widget.id,
-                    'data': widget.data.decode("utf-8")
+                    'name': widget.name,
+                    'x': widget.x,
+                    'y': widget.y,
                 } for widget in exam.widgets.order_by(lambda w: w.id)
-            ],
+            ]
         }
-
-    patch_parser = reqparse.RequestParser()
-    required_string(patch_parser, 'yaml')
-
-    @orm.db_session
-    def patch(self, exam_id):
-        """Update a single exam's config
-
-        URL Parameters
-        --------------
-        exam_id : int
-            exam ID
-
-        Parameters
-        ----------
-        yaml : str
-            processed YAML config
-        """
-        args = self.patch_parser.parse_args()
-
-        exam = Exam[exam_id]
-
-        data_dir = app.config['DATA_DIRECTORY']
-        yaml_filename = exam.id + '.yml'
-        yaml_abspath = os.path.join(data_dir, yaml_filename)
-        existing_yml = yaml_helper.read(yaml_abspath)
-        new_yml = yaml_helper.load(args['yaml'])
-
-        db_helper.update_exam(exam, existing_yml, new_yml)
-
-        yaml_helper.save(new_yml, yaml_abspath)
-
-        print(f"Updated problem names for exam {exam_id} (name: {exam.name}, token: {exam.token})")
-
-
-class Exams(Resource):
-
-    @orm.db_session
-    def get_pdf(exam_id):
-
-        exam = Exam[exam_id]
-
-        data_dir = app.config['DATA_DIRECTORY']
-        exam_dir = os.path.join(data_dir, f'{exam.id}_data')
-
-        return send_file(
-            os.path.join(exam_dir, 'exam.pdf'),
-            mimetype='application/pdf')
-
-    @orm.db_session
-    def get(self):
-        """get list of uploaded exams and their yaml.
-
-        Returns
-        -------
-        list of:
-            id : int
-                exam name
-            name : str
-                exam ID
-            submissions : int
-                Number of submissions
-        """
-        return [
-            {
-                'id': ex.id,
-                'name' : ex.name,
-                'submissions': ex.submissions.count()
-            }
-            for ex in Exam.select().order_by(Exam.id)
-        ]
 
     post_parser = reqparse.RequestParser()
     post_parser.add_argument('pdf', type=FileStorage, required=True, location='files')
@@ -183,23 +167,181 @@ class Exams(Resource):
         exam_name = args['exam_name']
         pdf_data = args['pdf']
 
-        exam = Exam(name=exam_name)
+        exam = Exam(
+            name=exam_name,
+        )
+
+        exam.widgets = [
+            ExamWidget(
+                name='student_id_widget',
+                x=50,
+                y=50,
+                exam=exam,
+            ),
+            ExamWidget(
+                name='barcode_widget',
+                x=500,
+                y=40,
+                exam=exam,
+            ),
+        ]
+
         db.commit()  # so exam gets an id
 
-        data_dir = app.config['DATA_DIRECTORY']
-        exam_dir = os.path.join(data_dir, f'{exam.id}_data')
+        exam_dir = _get_exam_dir(exam.id)
         pdf_path = os.path.join(exam_dir, 'exam.pdf')
 
         os.makedirs(exam_dir, exist_ok=True)
 
         pdf_data.save(pdf_path)
 
-        # Default feedback (maybe factor out eventually).
-        feedback_options = ['Everything correct',
-                            'No solution provided']
-
         print(f"Added exam {exam.id} (name: {exam_name}, token: {exam.token}) to database")
 
         return {
             'id': exam.id
+        }
+
+
+class ExamSource(Resource):
+
+    @orm.db_session
+    def get(self, exam_id):
+
+        exam = Exam[exam_id]
+
+        exam_dir = _get_exam_dir(exam.id)
+
+        return send_file(
+            os.path.join(exam_dir, 'exam.pdf'),
+            mimetype='application/pdf')
+
+
+class ExamGeneratedPdfs(Resource):
+
+    get_parser = reqparse.RequestParser()
+    get_parser.add_argument('type', type=str, required=True, location='args')
+
+    @orm.db_session
+    def get(self, exam_id, copy_num=None):
+
+        exam_dir = _get_exam_dir(exam_id)
+        generated_pdfs_dir = os.path.join(
+            exam_dir,
+            'generated_pdfs'
+        )
+
+        if (not os.path.exists(generated_pdfs_dir)):
+            abort(404)
+
+        if copy_num is None:
+            # TODO: use query to define ranges
+
+            args = self.get_parser.parse_args()
+
+            exam = Exam[exam_id]
+            now_str = datetime.datetime.now().strftime("%Y-%m-%d_%H:%M")
+
+            if args['type'] == 'pdf':
+                out_pdf_path = os.path.join(generated_pdfs_dir, 'all.pdf')
+
+                pdf_count = len(glob.glob1(
+                    generated_pdfs_dir,
+                    '[0-9][0-9][0-9][0-9][0-9].pdf'))
+
+                join_pdfs(
+                    generated_pdfs_dir,
+                    out_pdf_path,
+                    pdf_count,
+                )
+
+                return send_file(
+                    out_pdf_path,
+                    cache_timeout=0,
+                    attachment_filename=f'{exam.name}_{now_str}.pdf',
+                    as_attachment=True,
+                    mimetype='application/pdf')
+
+            elif args['type'] == 'zip':
+
+                memory_file = BytesIO()
+                with zipfile.ZipFile(memory_file, 'w') as zf:
+                    for root, dirs, files in os.walk(generated_pdfs_dir):
+                        for file in files:
+                            zf.write(
+                                os.path.join(root, file),
+                                file)
+
+                memory_file.seek(0)
+
+                return send_file(
+                    memory_file,
+                    cache_timeout=0,
+                    attachment_filename=f'{exam.name}_{now_str}.zip',
+                    as_attachment=True,
+                    mimetype='application/zip')
+            else:
+                # needs either zip or pdf
+                abort(400)
+
+        else:
+            # single file requested, we can directly send
+            pdf_path = os.path.join(
+                generated_pdfs_dir,
+                output_pdf_filename_format.format(copy_num))
+
+            if not os.path.exists(pdf_path):
+                abort(404)
+
+            return send_file(
+                pdf_path,
+                cache_timeout=0,
+                mimetype='application/pdf')
+
+    post_parser = reqparse.RequestParser()
+    post_parser.add_argument('copies', type=int, required=True)
+
+    @orm.db_session
+    def post(self, exam_id):
+
+        args = self.post_parser.parse_args()
+
+        exam = Exam.get(id=exam_id)
+        if (exam is None):
+            abort(404)
+
+        exam_dir = _get_exam_dir(exam_id)
+
+        student_id_widget = next(
+            widget
+            for widget
+            in exam.widgets
+            if widget.name == 'student_id_widget'
+        )
+        barcode_widget = next(
+            widget
+            for widget
+            in exam.widgets
+            if widget.name == 'barcode_widget'
+        )
+
+        pdf_path = os.path.join(exam_dir, 'exam.pdf')
+
+        pdf_out_dir = os.path.join(exam_dir, 'generated_pdfs')
+        os.makedirs(pdf_out_dir, exist_ok=True)
+
+        for f in glob.glob1(pdf_out_dir,
+                            '[0-9][0-9][0-9][0-9][0-9].pdf'):
+            os.remove(os.path.join(pdf_out_dir, f))
+
+        generate_pdfs(
+            pdf_path,
+            'ABCDEFGHIJKL',
+            pdf_out_dir,
+            args['copies'],
+            student_id_widget.x, student_id_widget.y,
+            barcode_widget.x, barcode_widget.y
+        )
+
+        return {
+            'success': True
         }

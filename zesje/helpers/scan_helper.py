@@ -413,14 +413,15 @@ def get_student_number(image_path, widget):
     centers = np.array(sorted([kp.pt for kp in keypoints])).astype(int)
     right, bottom = np.max(centers, axis=0)
     left, top = np.min(centers, axis=0)
-    centers = np.mgrid[left:right:10j, top:bottom:7j].astype(int)
+    centers = np.mgrid[left:right:7j, top:bottom:10j].astype(int)
     weights = []
     for center in centers.reshape(2, -1).T:
         x, y = center
-        r = 12
+        r = 10
         weights.append(np.sum(255 - image[y-r:y+r, x-r:x+r]))
-    weights = np.array(weights).reshape(10, 7)
-    return sum(((np.argmax(weights, axis=0) + 1) % 10)[::-1] * 10**np.arange(7))
+
+    weights = np.array(weights).reshape(10, 7, order='F')
+    return sum(((np.argmax(weights, axis=0)) % 10)[::-1] * 10**np.arange(7))
 
 
 def get_box(image_array, box, padding):

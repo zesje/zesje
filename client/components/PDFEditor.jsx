@@ -456,7 +456,7 @@ class PDFEditor extends React.Component {
             } else {
                 name = widget.name || ''
                 onNameChange = () => {
-                    // not anyway
+                    // don't do anything
                 }
 
             }

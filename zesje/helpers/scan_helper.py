@@ -331,10 +331,10 @@ def rotate_image(image_data):
                             for (coord_x, coord_y)
                             in corner_keypoints]
 
-    after_rot_keypoints = [(coord_y * math.sin(angle_rad) +
-                            coord_x * math.cos(angle_rad),
-                            coord_y * math.cos(angle_rad) -
-                            coord_x * math.sin(angle_rad))
+    after_rot_keypoints = [((coord_y * math.sin(angle_rad) +
+                            coord_x * math.cos(angle_rad) + rot_origin[0]),
+                            (coord_y * math.cos(angle_rad) -
+                            coord_x * math.sin(angle_rad)) + rot_origin[1])
                            for (coord_x, coord_y)
                            in keyp_from_rot_origin]
 

@@ -21,7 +21,6 @@ class Widgets(Resource):
         body = request.get_json()
 
         for attr, value in body.items():
-            # check before modifying
             try:
                 setattr(widget, attr, value)
             except AttributeError:

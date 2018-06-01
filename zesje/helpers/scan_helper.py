@@ -339,7 +339,6 @@ def rotate_image(image_data):
                            for (coord_x, coord_y)
                            in keyp_from_rot_origin]
 
-
     # Create rotation matrix and rotate the image around the center
     rot_mat = cv2.getRotationMatrix2D(rot_origin, angle_deg, 1)
     rot_image = cv2.warpAffine(color_im, rot_mat, (w, h), cv2.BORDER_CONSTANT,
@@ -351,9 +350,8 @@ def rotate_image(image_data):
 
 
 def shift_image(image_data, corner_keypoints):
-    """Roll the image such that QR occupies coords specified by the template."""
-    page, position = extracted_qr.page, extracted_qr.coords
-    y, x = np.mean(position, axis=0)
+    """Roll the image such that QR occupies coords
+       specified by the template."""
     image = np.array(image_data)
     h, w, *_ = image.shape
 

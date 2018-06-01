@@ -14,6 +14,7 @@ from PIL import Image
 import PyPDF2
 
 from pony import orm
+from reportlab.lib.units import mm
 
 from . import yaml_helper, image_helper
 from ..models import db, PDF, Exam, Problem, Page, Student, Submission, Solution
@@ -354,22 +355,24 @@ def shift_image(image_data, corner_keypoints):
     page, position = extracted_qr.page, extracted_qr.coords
     y, x = np.mean(position, axis=0)
     image = np.array(image_data)
-
-    if image.shape[0] < image.shape[1]:
-        image = np.transpose(image, [1, 0] + [2] * (len(image.shape) > 2))
-        x, y = y, x
-
-    dpi = guess_dpi(image)
     h, w, *_ = image.shape
-    qr_widget = qr_coords[qr_coords.page == page]
-    box = dpi * qr_widget[['top', 'bottom', 'left', 'right']].values[0]
-    y0, x0 = h - np.mean(box[:2]), np.mean(box[2:])
-    if (x > w / 2) != (x0 > w / 2):
-        image = image[:, ::-1]
-        x = w - x
-    if (y > h / 2) != (y0 > h / 2):
-        image = image[::-1]
-        y = h - y
+
+    # Assuming that rotation goes correctly, we can just take a random
+    # keypoint.
+    (x, y) = corner_keypoints[0]
+
+    is_left_half = x < (w / 2)
+    is_top_half = y < (h / 2)
+
+    if is_left_half:
+        x0 = 10 * mm
+    else:
+        x0 = w - 10 * mm
+
+    if is_top_half:
+        y0 = 10 * mm
+    else:
+        y0 = h - 10 * mm
 
     shift = np.round((y0-y, x0-x)).astype(int)
     shifted_image = np.roll(image, shift[0], axis=0)

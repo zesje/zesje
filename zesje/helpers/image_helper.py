@@ -74,15 +74,20 @@ def calc_angle(keyp1, keyp2):
             return math.degrees(math.atan(ydiff / xdiff))
 
 
-def find_corner_marker_keypoints(bin_im):
+def find_corner_marker_keypoints(image_data):
     """Generates a list of OpenCV keypoints which resemble corner markers.
     This is done using a SimpleBlobDetector
 
     Parameters:
     -----------
-    bin_im: OpenCV binary image
+    image_data: Source image
 
     """
+    color_im = cv2.cvtColor(np.array(image_data), cv2.COLOR_RGB2BGR)
+    gray_im = cv2.cvtColor(color_im, cv2.COLOR_BGR2GRAY)
+    _, bin_im = cv2.threshold(gray_im, 150, 255, cv2.THRESH_BINARY)
+
+    h, w, *_ = color_im.shape
 
     # Filter out everything in the center of the image
     h, w, *_ = bin_im.shape
@@ -106,4 +111,31 @@ def find_corner_marker_keypoints(bin_im):
     params.filterByColor = False
 
     detector = cv2.SimpleBlobDetector_create(params)
-    return detector.detect(bin_im)
+    blob_keypoints = detector.detect(bin_im)
+
+    corner_keypoints = []
+
+    # For each blob keypoint, extract an image patch as a descriptor
+    for keyp in blob_keypoints:
+        pt_x, pt_y = keyp.pt[0], keyp.pt[1]
+        topleft = (int(round(pt_x - 0.75 * keyp.size)),
+                   int(round(pt_y - 0.75 * keyp.size)))
+        bottomright = (int(round(pt_x + 0.75 * keyp.size)),
+                       int(round(pt_y + 0.75 * keyp.size)))
+        image_patch = gray_im[topleft[1]:bottomright[1],
+                              topleft[0]:bottomright[0]]
+
+        # Find the best corner
+        corners = cv2.goodFeaturesToTrack(image_patch, 1, 0.01, 10)
+        corners = np.int0(corners)
+
+        # Change the coordinates of the corner to be respective of the origin
+        # of the original image, and not the image patch.
+        patch_x, patch_y = corners.ravel()
+        corner_x, corner_y = patch_x + topleft[0], patch_y + topleft[1]
+
+        corner_keypoints.append((corner_x, corner_y))
+
+    return corner_keypoints
+
+

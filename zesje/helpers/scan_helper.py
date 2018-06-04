@@ -14,7 +14,6 @@ from PIL import Image
 import PyPDF2
 
 from pony import orm
-from reportlab.lib.units import mm
 
 from . import yaml_helper, image_helper
 from ..models import db, PDF, Exam, Problem, Page, Student, Submission, Solution

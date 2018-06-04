@@ -353,24 +353,36 @@ def shift_image(image_data, corner_keypoints):
     """Roll the image such that QR occupies coords
        specified by the template."""
     image = np.array(image_data)
+    corner_keypoints = np.array(corner_keypoints)
     h, w, *_ = image.shape
 
     # Assuming that rotation goes correctly, we can just take a random
     # keypoint.
     (x, y) = corner_keypoints[0]
+    xkeypoints = np.array([keypoint[0] for keypoint in corner_keypoints])
+    ykeypoints = np.array([keypoint[1] for keypoint in corner_keypoints])
 
-    is_left_half = x < (w / 2)
-    is_top_half = y < (h / 2)
+    is_left_half = xkeypoints < (w / 2)
+    is_top_half = ykeypoints < (h / 2)
 
-    if is_left_half:
-        x0 = 10 * mm
+    x0 = 10/210 * w
+    y0 = 10/297 * h
+
+    topleft = corner_keypoints[is_left_half & is_top_half]
+    if(len(topleft) == 1):
+        x = topleft[0][0]
+        y = topleft[0][1]
     else:
-        x0 = w - 10 * mm
 
-    if is_top_half:
-        y0 = 10 * mm
-    else:
-        y0 = h - 10 * mm
+        topright = corner_keypoints[~is_left_half & is_top_half]
+        bottomleft = corner_keypoints[is_left_half & ~is_top_half]
+        if(len(topright) == 1 & len(bottomleft) == 1):
+            x = bottomleft[0]
+            y = topright[1]
+
+        else:
+            x = x0
+            y = y0
 
     shift = np.round((y0-y, x0-x)).astype(int)
     shifted_image = np.roll(image, shift[0], axis=0)

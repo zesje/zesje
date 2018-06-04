@@ -356,24 +356,27 @@ def shift_image(image_data, corner_keypoints):
     corner_keypoints = np.array(corner_keypoints)
     h, w, *_ = image.shape
 
-    # Assuming that rotation goes correctly, we can just take a random
-    # keypoint.
-    (x, y) = corner_keypoints[0]
     xkeypoints = np.array([keypoint[0] for keypoint in corner_keypoints])
     ykeypoints = np.array([keypoint[1] for keypoint in corner_keypoints])
 
     is_left_half = xkeypoints < (w / 2)
     is_top_half = ykeypoints < (h / 2)
 
+    # Get pixel locations
     x0 = 10/210 * w
     y0 = 10/297 * h
 
+    # If there is a keypoint in the topleft, take that point as starting point
+    # for the translation
     topleft = corner_keypoints[is_left_half & is_top_half]
     if(len(topleft) == 1):
         x = topleft[0][0]
         y = topleft[0][1]
     else:
 
+        # If there is no keypoint in the topleft, try to check if there is one
+        # in the bottom left and bottom right. If so, infer the topleft
+        # coordinates from their coordinates
         topright = corner_keypoints[~is_left_half & is_top_half]
         bottomleft = corner_keypoints[is_left_half & ~is_top_half]
         if(len(topright) == 1 & len(bottomleft) == 1):
@@ -381,6 +384,8 @@ def shift_image(image_data, corner_keypoints):
             y = topright[1]
 
         else:
+            # We can only end here if something went wrong with the detection
+            # of corner markers. If so, just don't shift at all.
             x = x0
             y = y0
 

@@ -139,3 +139,30 @@ def find_corner_marker_keypoints(image_data):
     return corner_keypoints
 
 
+def check_corner_keypoints(image_array, keypoints):
+    """Checks whether the corner markers are valid.
+        1. Checks whether there is 3 or more corner markers
+        2. Checks whether there exist no 2 corner markers
+           in the same corner of the image.
+
+    Parameters:
+    -----------
+    image_array: source image
+    keypoints: list of tuples containing the coordinates of keypoints
+    """
+    if(len(keypoints) < 3):
+        raise RuntimeError('Not enough corner markers detected')
+
+    h, w, *_ = image_array.shape
+
+    checklist = [False, False, False, False]
+
+    for (x, y) in keypoints:
+            is_left_half = 2 * int(x < (w / 2))
+            is_top_half = 1 * int(y < (h / 2))
+            index = is_left_half + is_top_half
+            if(checklist[index]):
+                raise RuntimeError("""Found multiple corner markers
+                                      in the same corner""")
+            else:
+                checklist[index] = True

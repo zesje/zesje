@@ -142,18 +142,18 @@ def generate_id_grid(canv, x, y):
                       markboxsize, markboxsize)
 
     # Draw first name text and box
-    canv.drawString(x + (digits + 1) * (fontsize+margin) + 3 * margin - 1,
+    canv.drawString(x + (digits + 1) * (fontsize + margin) + 3 * margin - 1,
                     y - fontsize - margin, "First name :")
 
-    canv.rect(x + (digits + 1) * (fontsize+margin) + 3 * margin,
+    canv.rect(x + (digits + 1) * (fontsize + margin) + 3 * margin,
               y - fontsize * 3 - 3 * margin - 1,
               textboxwidth, textboxheight)
 
     # Draw last name text and box
-    canv.drawString(x + (digits + 1) * (fontsize+margin) + 3 * margin - 1,
-                    y - 5*fontsize - 2 * margin, "Last name :")
+    canv.drawString(x + (digits + 1) * (fontsize + margin) + 3 * margin - 1,
+                    y - 5 * fontsize - 2 * margin, "Last name :")
 
-    canv.rect(x + (digits + 1) * (fontsize+margin) + 3 * margin,
+    canv.rect(x + (digits + 1) * (fontsize + margin) + 3 * margin,
               y - fontsize * 6 - 6 * margin - 1,
               textboxwidth, textboxheight)
 

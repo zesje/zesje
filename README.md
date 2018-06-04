@@ -5,7 +5,7 @@ Zesje is an online grading system for written exams.
 ## Development
 
 ### Setting up a development environment
-Make sure you have `yarn` (installable via your local package manager), and Python 3.5 installed.
+Make sure you have `yarn` (installable via your local package manager), and Python 3.6 installed.
 
 Install the necessary `yarn` dependencies:
 

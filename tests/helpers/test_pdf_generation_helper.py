@@ -80,6 +80,19 @@ def test_add_corner_markers_and_bottom_bar(datadir, tmpdir, pagesize, name):
                                     [PIL.Image.open(image_filename)])
 
 
+def test_generate_id_grid(datadir, tmpdir):
+    pdf_filename = os.path.join(tmpdir, 'file.pdf')
+
+    canv = RLCanvas(pdf_filename, pagesize=A4)
+    pdf_generation_helper.generate_id_grid(canv, 0, 0)
+    canv.save()
+
+    image_filename = os.path.join(datadir, 'idwidgettest-1.png')
+    assert_pdf_and_images_are_equal(pdf_filename,
+                                    [PIL.Image.open(image_filename)],
+                                    ssim_threshold=0.95)
+
+
 @pytest.mark.parametrize('pagesize,name', [
     (A4, 'a4'),
     ((200 * mm, 200 * mm), 'square')

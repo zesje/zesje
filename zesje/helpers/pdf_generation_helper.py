@@ -120,9 +120,42 @@ def generate_id_grid(canv, x, y):
     x : int
         The y coordinate where the grid should be drawn
     """
-    # TODO: actually draw a grid instead of the text Beatiful ID Grid
-    canv.setFont('Helvetica', 14)
-    canv.drawString(x, y, 'Beautiful ID Grid')
+
+    fontsize = 11  # Size of font
+    margin = 5  # Margin between elements and sides
+    markboxsize = fontsize - 2  # Size of student number boxes
+    textboxwidth = fontsize * 15  # Width of textbox
+    textboxheight = markboxsize * 2 + margin + 2  # Height of textbox
+    digits = 7  # Max amount of digits you want for student numbers
+
+    canv.setFont('Helvetica', fontsize)
+
+    # Draw numbers and boxes for student number
+    canv.drawString(x + margin, y - fontsize - margin, "Student number :")
+    for i in range(10):
+        canv.drawString(x + margin,
+                        y - ((i + 2) * (fontsize + margin)),
+                        str(i))
+        for j in range(digits):
+            canv.rect(x + (j + 1) * (fontsize + margin),
+                      y - (i + 2) * (fontsize + margin) - 1,
+                      markboxsize, markboxsize)
+
+    # Draw first name text and box
+    canv.drawString(x + (digits + 1) * (fontsize + margin) + 3 * margin - 1,
+                    y - fontsize - margin, "First name :")
+
+    canv.rect(x + (digits + 1) * (fontsize + margin) + 3 * margin,
+              y - fontsize * 3 - 3 * margin - 1,
+              textboxwidth, textboxheight)
+
+    # Draw last name text and box
+    canv.drawString(x + (digits + 1) * (fontsize + margin) + 3 * margin - 1,
+                    y - 5 * fontsize - 2 * margin, "Last name :")
+
+    canv.rect(x + (digits + 1) * (fontsize + margin) + 3 * margin,
+              y - fontsize * 6 - 6 * margin - 1,
+              textboxwidth, textboxheight)
 
 
 def generate_datamatrix(exam_id, page_num, copy_num):

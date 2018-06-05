@@ -1,8 +1,9 @@
-import os
-from flask import abort, Response, current_app as app
+from flask import abort, Response
 from pony import orm
+import numpy as np
+import cv2
 
-from ..helpers import yaml_helper, image_helper
+from ..helpers import image_helper
 from ..models import Exam, Submission
 
 
@@ -30,11 +31,33 @@ def get(exam_id, submission_id):
     if not sub:
         abort(404)
 
-    data_dir = app.config['DATA_DIRECTORY']
-    yaml_abspath = os.path.join(data_dir, sub.exam.yaml_path)
-    *_, widgets = yaml_helper.parse(yaml_helper.read(yaml_abspath))
-    first_page = next(p.path for p in sub.pages if 'page1.jpg' in p.path)
-    image = image_helper.get_widget_image(first_page,
-                                          widgets.loc['studentnr'])
+    student_id_widget = next(
+        widget
+        for widget
+        in exam.widgets
+        if widget.name == 'student_id_widget'
+    )
 
-    return Response(image, 200, mimetype='image/jpeg')
+    #  TODO: fix hardcoding width/height
+    widget_area = np.asarray([
+        student_id_widget.y,  # top
+        student_id_widget.y + 181,  # bottom
+        student_id_widget.x,  # left
+        student_id_widget.x + 313,  # right
+    ])
+
+    # TODO: use points as base unit
+    widget_area_in = widget_area / 72
+
+    #  get first page
+    #  TODO: is this a reliable way to get the first page?
+    first_page_path = next(p.path for p in sub.pages if 'page00.jpg' in p.path)
+    first_page_im = cv2.imread(first_page_path)
+
+    raw_image = image_helper.get_box(
+        first_page_im,
+        widget_area_in,
+        padding=0.3,
+    )
+    image_encoded = cv2.imencode(".jpg", raw_image)[1].tostring()
+    return Response(image_encoded, 200, mimetype='image/jpeg')

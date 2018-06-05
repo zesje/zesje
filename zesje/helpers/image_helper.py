@@ -4,11 +4,6 @@ import numpy as np
 import cv2
 import math
 
-def get_widget_image(image_path, widget):
-    box = (widget.top, widget.bottom, widget.left, widget.right)
-    raw_image = get_box(cv2.imread(image_path), box, padding=0.3)
-    return cv2.imencode(".jpg", raw_image)[1].tostring()
-
 
 def guess_dpi(image_array):
     h, *_ = image_array.shape

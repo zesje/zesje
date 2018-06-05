@@ -8,21 +8,23 @@ from io import BytesIO
 import numpy as np
 import pandas
 import cv2
-import zbar
+from pylibdmtx import pylibdmtx
 import math
 from PIL import Image
 import PyPDF2
 
 from pony import orm
 
-from . import yaml_helper, image_helper
+from . import image_helper
+from .datamatrix_helper import decode_raw_datamatrix
 from ..models import db, Scan, Exam, Problem, Page, Student, Submission, Solution
 
 
-ExtractedQR = namedtuple('ExtractedQR',
-                         ['version', 'name', 'page', 'sub_nr', 'coords'])
+ExtractedBarcode = namedtuple('ExtractedBarcode',
+                              ['token', 'copy', 'page'])
+
 ExamMetadata = namedtuple('ExamMetadata',
-                          ['version', 'exam_name', 'qr_coords', 'widget_data'])
+                          ['token', 'barcode_area', 'problem_ids'])
 
 
 def process_pdf(scan_id, data_directory):
@@ -52,18 +54,38 @@ def process_pdf(scan_id, data_directory):
     with orm.db_session:
         scan = Scan[scan_id]
 
-        # TODO: paths
-        pdf_filename = f'{scan.id}.pdf'
-        pdf_path = os.path.join(data_directory, 'pdfs', pdf_filename)
-        config_path = os.path.join(data_directory, scan.exam.yaml_path)
+        pdf_path = os.path.join(data_directory, 'scans', f'{scan.id}.pdf')
         output_directory = os.path.join(data_directory, f'{scan.exam.id}_data')
 
-    try:
-        # Read in exam metadata
-        config = ExamMetadata(*yaml_helper.parse(yaml_helper.read(config_path)))
-    except Exception as e:
-        report_error(f'Error while reading Exam metadata: {e}')
-        raise
+        try:
+            # Read in exam metadata
+            student_id_widget = next(
+                widget
+                for widget
+                in pdf.exam.widgets
+                if widget.name == 'student_id_widget'
+            )
+            barcode_widget = next(
+                widget
+                for widget
+                in pdf.exam.widgets
+                if widget.name == 'barcode_widget'
+            )
+            exam_config = ExamMetadata(
+                token=pdf.exam.token,
+                barcode_area=[
+                    max(0, barcode_widget.y),
+                    max(0, barcode_widget.y + 50),
+                    max(0, barcode_widget.x),
+                    max(0, barcode_widget.x + 50),
+                ],
+                problem_ids=[
+                    problem.id for problem in pdf.exam.problems
+                ]
+            )
+        except Exception as e:
+            report_error(f'Error while reading Exam metadata: {e}')
+            raise
 
     total = PyPDF2.PdfFileReader(open(pdf_path, "rb")).getNumPages()
     failures = []
@@ -71,7 +93,7 @@ def process_pdf(scan_id, data_directory):
         for image, page in extract_images(pdf_path):
             report_progress(f'Processing page {page} / {total}')
             try:
-                success, reason = process_page(output_directory, image, config)
+                success, reason = process_page(output_directory, image, exam_config)
                 if not success:
                     print(reason)
                     failures.append(page)
@@ -139,11 +161,12 @@ def process_page(output_dir, image_data, exam_config):
     """Incorporate a scanned image in the data structure.
 
     For each page perform the following steps:
-    1. Extract the page QR code
+    1. Extract the page barcode
     2. Verify it satisfies the format required by zesje
     3. Verify it belongs to the correct exam
-    4. Correct the image so that the coordinates are best aligned with the
-       yaml (currently uses only QR code position)
+    4. Correct the image, using the corner markers to align:
+        4.1. deskew
+        4.2. shift
     5. Incorporate the page in the database
     6. If the page contains student number, try to read it off the page
 
@@ -170,44 +193,36 @@ def process_page(output_dir, image_data, exam_config):
     Because the failure of steps 1-3 likely means we're reading a wrong pdf, we
     should stop processing any other pages if this function raises.
     """
-    ext = image_data.format
-    image_data.load()
-    qr_data = extract_qr(image_data)
 
-    if qr_data is None:
-        return False, "Reading QR code failed"
-    elif qr_data.version != f'v{exam_config.version}':
-        raise ValueError('Zesje version mismatch between config file and PDF')
-    elif qr_data.name != exam_config.exam_name:
+    barcode_data = decode_barcode(image_data, exam_config)
+
+    if barcode_data is None:
+        return False, "Reading barcode failed"
+    elif barcode_data.token != exam_config.token:
         raise ValueError('PDF is not from this exam')
 
-    qr_coords, widget_data = exam_config.qr_coords, exam_config.widget_data
+    image_array = np.array(image_data)
 
     corner_keypoints = image_helper.find_corner_marker_keypoints(image_data)
-    image_helper.check_corner_keypoints(image_data, corner_keypoints)
+    image_helper.check_corner_keypoints(image_array, corner_keypoints)
     (image_data, new_keypoints) = rotate_image(image_data, corner_keypoints)
     image_data = shift_image(image_data, new_keypoints)
 
-    sub_nr = qr_data.sub_nr
-
-    target = os.path.join(output_dir, f'{qr_data.name}_{sub_nr}')
+    target = os.path.join(output_dir, 'submissions', f'{barcode_data.copy}')
     os.makedirs(target, exist_ok=True)
-    target_image = os.path.join(target, f'page{qr_data.page}.jpg')
+    target_image = os.path.join(target, f'page{barcode_data.page:02d}.jpg')
     image_data.save(target_image)
 
     with orm.db_session:
-        exam = Exam.get(name=qr_data.name)
-        sub = Submission.get(copy_number=sub_nr, exam=exam)
+        exam = Exam.get(token=barcode_data.token)
+        sub = Submission.get(copy_number=barcode_data.copy, exam=exam)
 
         if sub is None:
-            sub = Submission(copy_number=sub_nr, exam=exam,
+            sub = Submission(copy_number=barcode_data.copy, exam=exam,
                              signature_image_path='None')
 
-            for problem in widget_data.index:
-                if problem == 'studentnr':
-                    continue
-
-                prob = Problem.get(name=problem, exam=exam)
+            for problem_id in exam_config.problem_ids:
+                prob = Problem.get(id=problem_id)
                 Solution(problem=prob, submission=sub, image_path='None')
 
         # We may have added this page in previous uploads; the above then
@@ -220,48 +235,47 @@ def process_page(output_dir, image_data, exam_config):
             # Nothing to update in the db
             return True, ''
 
-    number_widget = widget_data.loc['studentnr']
-    if qr_data.page == number_widget.page:
-        try:
-            number = get_student_number(target_image, number_widget)
-        except Exception:
-            return True, ''  # could not extract student name
-
-        with orm.db_session:
-            exam = Exam.get(name=qr_data.name)
-            sub = Submission.get(copy_number=sub_nr, exam=exam)
-            sub.student = Student.get(id=int(number))
+    # TODO: JK: Stud nmr uitlezen
+    # number_widget = widget_data.loc['studentnr']
+    # if qr_data.page == number_widget.page:
+    #     try:
+    #         number = get_student_number(target_image, number_widget)
+    #     except Exception:
+    #         return True, ''  # could not extract student name
+    #
+    #     with orm.db_session:
+    #         exam = Exam.get(name=qr_data.name)
+    #         sub = Submission.get(copy_number=barcode_data.sub_nr, exam=exam)
+    #         sub.student = Student.get(id=int(number))
 
     return True, ''
 
 
-def extract_qr(image_data):
-    """Extract a QR code from a PIL Image."""
-    grayscale = np.asarray(image_data.convert(mode='L'))
+def decode_barcode(image, exam_config):
+    """Extract a barcode from a PIL Image."""
 
-    # Empirically we observed that the most important parameter
-    # for zbar to successfully read a qr code is the resolution
-    # controlled below by scaling the image by factor.
-    # zbar also seems to care about image orientation, hence
-    # the loop over dirx/diry.
-    for dirx, diry, factor in itertools.product([1, -1], [1, -1], [8, 5, 4, 3]):
-        scaled = grayscale[::factor * dirx, ::factor * diry]
-        scanner = zbar.Scanner()
-        # Filter only QR codes to eliminate some false positives.
-        results = [i for i in scanner.scan(scaled) if i.type == 'QR-Code']
+    barcode_area = exam_config.barcode_area
+
+    # TODO: properly convert to inches
+    barcode_area_in = np.asarray(barcode_area) / 72
+
+    grayscale = np.asarray(image.convert(mode='L'))
+
+    image_crop = get_box(grayscale, barcode_area_in, padding=0.3)
+
+    results = pylibdmtx.decode(image_crop)
+
+    if results:
         if len(results) > 1:
-            raise RuntimeError("Found > 1 QR code on the page.")
-        if results:
-            try:
-                version, name, page, copy = \
-                            results[0].data.decode().split(';')
-            except ValueError:
-                return
-            coords = np.array(results[0].position)
-            # zbar doesn't respect array ordering!
-            coords *= [factor * dirx, factor * diry]
-            coords %= grayscale.shape
-            return ExtractedQR(version, name, int(page), int(copy), coords)
+            # we shouldn't read multiple codes
+            raise
+        try:
+            proper_data = decode_raw_datamatrix(results[0].data)
+            token, copy, page = proper_data.split('/')
+        except ValueError:
+            return
+
+        return ExtractedBarcode(token, copy, page)
     else:
         return
 
@@ -310,6 +324,8 @@ def rotate_image(image_data, corner_keypoints):
                             coord_x * math.sin(angle_rad)) + rot_origin[1])
                            for (coord_x, coord_y)
                            in keyp_from_rot_origin]
+
+    color_im = cv2.cvtColor(np.array(image_data), cv2.COLOR_RGB2BGR)
 
     # Create rotation matrix and rotate the image around the center
     rot_mat = cv2.getRotationMatrix2D(rot_origin, angle_deg, 1)
@@ -451,10 +467,10 @@ def get_box(image_array, box, padding):
     h, w, *_ = image_array.shape
     dpi = guess_dpi(image_array)
     box = np.array(box)
-    box += (padding, -padding, -padding, padding)
+    box += (-padding, padding, -padding, padding)
     box = (np.array(box) * dpi).astype(int)
     # Here we are not returning the lowest pixel of the image because otherwise
     # the numpy slicing is not correct.
     top, bottom = min(h, box[0]), max(1, box[1])
     left, right = max(0, box[2]), min(w, box[3])
-    return image_array[-top:-bottom, left:right]
+    return image_array[top:bottom, left:right]

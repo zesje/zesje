@@ -205,8 +205,3 @@ def test_join_pdfs(mock_generate_datamatrix, mock_generate_id_grid,
 #   algorithm. A test for this function would therefore be brittle.
 #   Furthermore, the function is very short, so the need for testing is not
 #   very high.
-#
-# - generate_id_grid()
-#   This method is trivial. It just draws some stuff using ReportLab. If
-#   ReportLab works correctly, this method will certainly also work correctly,
-#   so there's no need to test it.

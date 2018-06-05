@@ -15,7 +15,7 @@ def update_exam(exam, existing_yaml, new_yaml):
         raise ValueError('cannot change the exam name')
     if not all(v == 1 for v in (new_version, existing_version)):
         raise ValueError('Exam data for {} already exists, and updating it requires both the old '
-                        'and new YAML to be version 1'.format(exam_name))
+                         'and new YAML to be version 1'.format(exam_name))
     if not existing_widgets.shape == new_widgets.shape:
         raise ValueError('Exam data for {} already exists, and contains a different number of '
                          'exam problems than the old version'.format(exam_name))

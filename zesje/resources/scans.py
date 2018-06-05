@@ -63,7 +63,7 @@ class Scans(Resource):
 
         with orm.db_session:
             scan = Scan(exam=Exam[exam_id], name=args['pdf'].filename,
-                      status='processing', message='importing PDF')
+                        status='processing', message='importing PDF')
 
         try:
             path = os.path.join(app.config['SCAN_DIRECTORY'], f'{scan.id}.pdf')

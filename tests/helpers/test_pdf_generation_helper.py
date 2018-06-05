@@ -143,7 +143,7 @@ def test_generate_pdfs_blank(mock_generate_datamatrix, mock_generate_id_grid,
 
 
 def test_generate_pdfs_nonblank(mock_generate_datamatrix, mock_generate_id_grid,
-                               datadir, tmpdir):
+                                datadir, tmpdir):
     exam_pdf = os.path.join(datadir, 'exam-2pages.pdf')
 
     pdf_generation_helper.generate_pdfs(exam_pdf, 'ABCDEFGHIJKL', str(tmpdir),
@@ -157,7 +157,7 @@ def test_generate_pdfs_nonblank(mock_generate_datamatrix, mock_generate_id_grid,
 
 
 def test_generate_pdfs_black(mock_generate_datamatrix, mock_generate_id_grid,
-                            datadir, tmpdir):
+                             datadir, tmpdir):
     black_pdf = os.path.join(datadir, 'black-a4-2pages.pdf')
 
     pdf_generation_helper.generate_pdfs(black_pdf, 'ABCDEFGHIJKL', str(tmpdir),

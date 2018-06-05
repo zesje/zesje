@@ -111,6 +111,7 @@ class Students(Resource):
     post_parser = reqparse.RequestParser()
     post_parser.add_argument('csv', type=FileStorage, required=True,
                              location='files')
+
     @orm.db_session
     def post(self):
         """Upload a PDF
@@ -134,9 +135,9 @@ class Students(Resource):
             student = Student.get(id=row['OrgDefinedId'][1:])
             if not student:
                 student = Student(id=row['OrgDefinedId'][1:],
-                        first_name=row['First Name'],
-                        last_name=row['Last Name'],
-                        email=row['Email'] or None)
+                                  first_name=row['First Name'],
+                                  last_name=row['Last Name'],
+                                  email=row['Email'] or None)
             else:
                 student.set(id=row['OrgDefinedId'][1:],
                             first_name=row['First Name'],

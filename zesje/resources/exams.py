@@ -80,20 +80,17 @@ class Exams(Resource):
         return {
             'id': exam_id,
             'name': exam.name,
-            'submissions':
-            [
+            'submissions': [
                 {
                     'id': sub.copy_number,
-                    'student':
-                        {
+                    'student': {
                             'id': sub.student.id,
                             'firstName': sub.student.first_name,
                             'lastName': sub.student.last_name,
                             'email': sub.student.email
-                        } if sub.student else None,
+                    } if sub.student else None,
                     'validated': sub.signature_validated,
-                    'problems':
-                    [
+                    'problems': [
                         {
                             'id': sol.problem.id,
                             'graded_by': sol.graded_by,

@@ -98,7 +98,7 @@ def find_corner_marker_keypoints(image_data):
     params = cv2.SimpleBlobDetector_Params()
     params.filterByArea = True
     params.minArea = 150
-    params.maxArea = 400
+    params.maxArea = 1500
     params.filterByCircularity = True
     params.minCircularity = 0
     params.maxCircularity = 0.15

@@ -1,3 +1,4 @@
+import os
 from flask import abort, Response
 from pony import orm
 
@@ -26,7 +27,7 @@ def get(exam_id, problem_id, submission_id):
     """
     try:
         exam = Exam[exam_id]
-        sub = Submission.get(exam=exam, copy_number=submission_id)
+        submission = Submission.get(exam=exam, copy_number=submission_id)
         problem = Problem[problem_id]
     except (KeyError, ValueError):
         abort(404)
@@ -42,12 +43,8 @@ def get(exam_id, problem_id, submission_id):
     widget_area_in = widget_area / 72
 
     #  get the page
-    page = f'{problem.page:02d}'
-    page_path = (
-        sub.pages
-        .select(lambda p: page in p.path)
-        .first().path
-    )
+    page = f'page{problem.page:02d}.jpg'
+    page_path = next(p.path for p in submission.pages if page == os.path.basename(p.path))
 
     page_im = cv2.imread(page_path)
 

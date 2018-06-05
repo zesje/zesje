@@ -53,6 +53,8 @@ class Exam(db.Entity):
     problems = Set('Problem')
     scans = Set('PDF')
     widgets = Set('ExamWidget')
+    total_generated_copies = Required(int, default=0)  # number of copies that will be generated
+    currently_generated_copies = Required(int, default=0)  # number of copies that has been generated at this moment
 
 
 class Submission(db.Entity):

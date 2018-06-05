@@ -4,9 +4,12 @@ from tempfile import NamedTemporaryFile
 
 import PIL
 from pdfrw import PdfReader, PdfWriter, PageMerge
+from pony import orm
 from pystrich.datamatrix import DataMatrixEncoder
 from reportlab.lib.units import mm
 from reportlab.pdfgen import canvas
+
+from ..models import db, Exam
 
 
 output_pdf_filename_format = '{0:05d}.pdf'
@@ -17,20 +20,11 @@ def generate_pdfs(exam_pdf_file, exam_id, output_dir, num_copies, id_grid_x,
     """
     Generate the final PDFs from the original exam PDF.
 
-    To maintain a consistent size of the DataMatrix codes, adhere to (# of
-    letters in exam ID) + 2 * (# of digits in exam ID) = C for a certain
-    constant C. The reason for this is that pyStrich encodes two digits in as
-    much space as one letter.
-
-    If maximum interchangeability with version 1 QR codes is desired (error
-    correction level M), use exam IDs composed of only uppercase letters, and
-    composed of at most 12 letters.
-
     Parameters
     ----------
     exam_pdf_file : file object or str
         The exam PDF file or its filename
-    exam_id : str
+    exam_id : int
         The identifier of the exam
     output_dir : path-like object
         The directory where this function will store the generated PDF files.
@@ -50,13 +44,23 @@ def generate_pdfs(exam_pdf_file, exam_id, output_dir, num_copies, id_grid_x,
     mediabox = exam_pdf.pages[0].MediaBox
     pagesize = (float(mediabox[2]), float(mediabox[3]))
 
+    with orm.db_session:
+        db_exam = Exam[exam_id]
+        exam_token = db_exam.token
+
+        if db_exam.currently_generated_copies < db_exam.total_generated_copies:
+            raise ConcurrentGenerationError
+
+        db_exam.total_generated_copies = num_copies
+        db_exam.currently_generated_copies = 0
+
     for copy_idx in range(num_copies):
         # ReportLab can't deal with file handles, but only with file names,
         # so we have to use a named file
         with NamedTemporaryFile() as overlay_file:
             # Generate overlay
             overlay_canv = canvas.Canvas(overlay_file.name, pagesize=pagesize)
-            _generate_overlay(overlay_canv, pagesize, exam_id, copy_idx,
+            _generate_overlay(overlay_canv, pagesize, exam_token, copy_idx,
                               len(exam_pdf.pages), id_grid_x, id_grid_y,
                               datamatrix_x, datamatrix_y)
             overlay_canv.save()
@@ -82,6 +86,10 @@ def generate_pdfs(exam_pdf_file, exam_id, output_dir, num_copies, id_grid_x,
 
             path = os.path.join(output_dir, output_pdf_filename_format.format(copy_idx))
             PdfWriter(path, trailer=exam_pdf).write()
+
+            with orm.db_session:
+                db_exam.currently_generated_copies += 1
+                db.commit()
 
 
 def join_pdfs(directory, output_filename, num_copies):
@@ -158,23 +166,23 @@ def generate_id_grid(canv, x, y):
               textboxwidth, textboxheight)
 
 
-def generate_datamatrix(exam_id, page_num, copy_num):
+def generate_datamatrix(exam_token, page_num, copy_num):
     """
     Generates a DataMatrix code to be used on a page.
 
     To maintain a consistent size of the DataMatrix codes, adhere to (# of
-    letters in exam ID) + 2 * (# of digits in exam ID) = C for a certain
+    letters in exam token) + 2 * (# of digits in exam token) = C for a certain
     constant C. The reason for this is that pyStrich encodes two digits in as
     much space as one letter.
 
     If maximum interchangeability with version 1 QR codes is desired (error
-    correction level M), use exam IDs composed of only uppercase letters, and
+    correction level M), use exam tokens composed of only uppercase letters, and
     composed of at most 12 letters.
 
     Parameters
     ----------
-    exam_id : str
-        The identifier of the exam
+    exam_token : str
+        The token of the exam
     page_num : int
         The page number
     copy_num : int
@@ -187,25 +195,25 @@ def generate_datamatrix(exam_id, page_num, copy_num):
         don't need to add a quiet zone yourself)
     """
 
-    data = f'{exam_id}/{copy_num:04d}/{page_num:02d}'
+    data = f'{exam_token}/{copy_num:04d}/{page_num:02d}'
 
     image_bytes = DataMatrixEncoder(data).get_imagedata(cellsize=2)
     return PIL.Image.open(BytesIO(image_bytes))
 
 
-def _generate_overlay(canv, pagesize, exam_id, copy_num, num_pages, id_grid_x,
+def _generate_overlay(canv, pagesize, exam_token, copy_num, num_pages, id_grid_x,
                       id_grid_y, datamatrix_x, datamatrix_y):
     """
     Generates an overlay ('watermark') PDF, which can then be overlaid onto
     the exam PDF.
 
     To maintain a consistent size of the DataMatrix codes in the overlay,
-    adhere to (# of letters in exam ID) + 2 * (# of digits in exam ID) = C for
+    adhere to (# of letters in exam token) + 2 * (# of digits in exam token) = C for
     a certain constant C. The reason for this is that pyStrich encodes two
     digits in as much space as one letter.
 
     If maximum interchangeability with version 1 QR codes is desired (error
-    correction level M), use exam IDs composed of only uppercase letters, and
+    correction level M), use exam tokens composed of only uppercase letters, and
     composed of at most 12 letters.
 
     Parameters
@@ -214,8 +222,8 @@ def _generate_overlay(canv, pagesize, exam_id, copy_num, num_pages, id_grid_x,
         The empty ReportLab canvas on which the overlay should be generated
     pagesize : (float, float)
         The ReportLab-style (i.e. (width, height)) page size of the canvas
-    exam_id : str
-        The identifier of the exam
+    exam_token : str
+        The token of the exam
     copy_num : int
         The copy number for which the overlay is being generated
     num_pages : int
@@ -239,7 +247,7 @@ def _generate_overlay(canv, pagesize, exam_id, copy_num, num_pages, id_grid_x,
     for page_num in range(num_pages):
         _add_corner_markers_and_bottom_bar(canv, pagesize)
 
-        datamatrix = generate_datamatrix(exam_id, page_num, copy_num)
+        datamatrix = generate_datamatrix(exam_token, page_num, copy_num)
 
         # transform y-cooridate to different origin location
         datamatrix_y_adjusted = pagesize[1] - datamatrix_y - datamatrix.height
@@ -293,3 +301,8 @@ def _add_corner_markers_and_bottom_bar(canv, pagesize):
         # Bottom bar
         (bar_start, bottom, bar_end, bottom)
     ])
+
+
+class ConcurrentGenerationError(Exception):
+    """Raised upon an attempt to start PDF generation when generation is already ongoing."""
+    pass

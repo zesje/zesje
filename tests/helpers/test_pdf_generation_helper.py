@@ -3,6 +3,7 @@ from io import BytesIO
 
 import PIL
 import pytest
+from pony import orm
 from ssim import compute_ssim
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import mm
@@ -11,9 +12,31 @@ from wand.color import Color as WandColor
 from wand.image import Image as WandImage
 
 from zesje.helpers import pdf_generation_helper
+from zesje.models import Exam
 
 
 # Mock fixtures #
+
+
+@pytest.fixture
+def mock_db_session(monkeypatch):
+    class MockDBSession():
+        def __enter__(self):
+            return self
+        def __exit__(self, e_type, e_val, e_tb):  # noqa: E306
+            return (e_type is None)
+    monkeypatch.setattr(pdf_generation_helper.orm, 'db_session', MockDBSession())
+
+
+@pytest.fixture
+def mock_db_for_generate_pdfs_happy_path(monkeypatch, mock_db_session):
+    class MockExam:
+        token = 'ABCDEFGHIJKL'
+        currently_generated_copies = 5
+        total_generated_copies = 5
+        def __getitem__(self, key):  # noqa: E306
+            return self
+    monkeypatch.setattr(pdf_generation_helper, 'Exam', MockExam())
 
 
 @pytest.fixture
@@ -102,7 +125,7 @@ def test_generate_overlay(mock_generate_datamatrix, mock_generate_id_grid,
     filename = os.path.join(str(tmpdir), 'file.pdf')
 
     canv = RLCanvas(filename, pagesize=pagesize)
-    pdf_generation_helper._generate_overlay(canv, pagesize, 'ABCDEFGHIJKL', 1,
+    pdf_generation_helper._generate_overlay(canv, pagesize, 1, 1,
                                             2, 25, 150, 125, 150)
     canv.save()
 
@@ -112,12 +135,12 @@ def test_generate_overlay(mock_generate_datamatrix, mock_generate_id_grid,
     assert_pdf_and_images_are_equal(filename, images)
 
 
-def test_generate_pdfs_num_files(datadir, tmpdir):
+def test_generate_pdfs_num_files(mock_db_for_generate_pdfs_happy_path, datadir, tmpdir):
     blank_pdf = os.path.join(datadir, 'blank-a4-2pages.pdf')
 
     num_copies = 3
 
-    pdf_generation_helper.generate_pdfs(blank_pdf, 'ABCDEFGHIJKL', str(tmpdir),
+    pdf_generation_helper.generate_pdfs(blank_pdf, 1, str(tmpdir),
                                         num_copies, 25, 270, 150, 270)
 
     assert len(tmpdir.listdir()) == num_copies
@@ -127,11 +150,11 @@ def test_generate_pdfs_num_files(datadir, tmpdir):
     (A4, 'a4'),
     ((200 * mm, 200 * mm), 'square')
 ], ids=['a4', 'square'])
-def test_generate_pdfs_blank(mock_generate_datamatrix, mock_generate_id_grid,
+def test_generate_pdfs_blank(mock_db_for_generate_pdfs_happy_path, mock_generate_datamatrix, mock_generate_id_grid,
                              datadir, tmpdir, pagesize, name):
     blank_pdf = os.path.join(datadir, f'blank-{name}-2pages.pdf')
 
-    pdf_generation_helper.generate_pdfs(blank_pdf, 'ABCDEFGHIJKL', str(tmpdir),
+    pdf_generation_helper.generate_pdfs(blank_pdf, 1, str(tmpdir),
                                         2, 25, 150, 125, 150)
 
     img_filenames = [os.path.join(datadir, 'overlays', f'{name}-{i}.png')
@@ -142,11 +165,11 @@ def test_generate_pdfs_blank(mock_generate_datamatrix, mock_generate_id_grid,
     assert_pdf_and_images_are_equal(filenames[1], images)
 
 
-def test_generate_pdfs_nonblank(mock_generate_datamatrix, mock_generate_id_grid,
-                               datadir, tmpdir):
+def test_generate_pdfs_nonblank(mock_db_for_generate_pdfs_happy_path, mock_generate_datamatrix, mock_generate_id_grid,
+                                datadir, tmpdir):
     exam_pdf = os.path.join(datadir, 'exam-2pages.pdf')
 
-    pdf_generation_helper.generate_pdfs(exam_pdf, 'ABCDEFGHIJKL', str(tmpdir),
+    pdf_generation_helper.generate_pdfs(exam_pdf, 1, str(tmpdir),
                                         2, 25, 150, 125, 150)
 
     img_filenames = [os.path.join(datadir, f'generated-{i}.png')
@@ -156,11 +179,11 @@ def test_generate_pdfs_nonblank(mock_generate_datamatrix, mock_generate_id_grid,
         assert_pdf_and_images_are_equal(os.path.join(tmpdir, pdf_name), images)
 
 
-def test_generate_pdfs_black(mock_generate_datamatrix, mock_generate_id_grid,
-                            datadir, tmpdir):
+def test_generate_pdfs_black(mock_db_for_generate_pdfs_happy_path, mock_generate_datamatrix, mock_generate_id_grid,
+                             datadir, tmpdir):
     black_pdf = os.path.join(datadir, 'black-a4-2pages.pdf')
 
-    pdf_generation_helper.generate_pdfs(black_pdf, 'ABCDEFGHIJKL', str(tmpdir),
+    pdf_generation_helper.generate_pdfs(black_pdf, 1, str(tmpdir),
                                         2, 25, 150, 125, 150)
 
     images = [PIL.Image.open(os.path.join(datadir, 'generated-black.png'))] * 2
@@ -168,10 +191,11 @@ def test_generate_pdfs_black(mock_generate_datamatrix, mock_generate_id_grid,
         assert_pdf_and_images_are_equal(os.path.join(tmpdir, pdf_name), images)
 
 
-def test_generate_pdfs_exam_is_file(mock_generate_datamatrix, mock_generate_id_grid, datadir, tmpdir):
+def test_generate_pdfs_exam_is_file(mock_db_for_generate_pdfs_happy_path, mock_generate_datamatrix,
+                                    mock_generate_id_grid, datadir, tmpdir):
     blank_pdf = open(os.path.join(datadir, f'blank-a4-2pages.pdf'), 'rb')
 
-    pdf_generation_helper.generate_pdfs(blank_pdf, 'ABCDEFGHIJKL', str(tmpdir),
+    pdf_generation_helper.generate_pdfs(blank_pdf, 1, str(tmpdir),
                                         2, 25, 150, 125, 150)
 
     img_filenames = [os.path.join(datadir, 'overlays', f'a4-{i}.png') for i in [0, 1]]
@@ -179,6 +203,33 @@ def test_generate_pdfs_exam_is_file(mock_generate_datamatrix, mock_generate_id_g
     filenames = [os.path.join(tmpdir, x) for x in ['00000.pdf', '00001.pdf']]
     assert_pdf_and_images_are_equal(filenames[0], images)
     assert_pdf_and_images_are_equal(filenames[1], images)
+
+
+def test_generate_pdfs_id_not_exists(mock_db_session, datadir, tmpdir, monkeypatch):
+    class MockExam:
+        def __getitem__(self, key):
+            raise orm.ObjectNotFound(Exam)
+    monkeypatch.setattr(pdf_generation_helper, 'Exam', MockExam())
+
+    blank_pdf = open(os.path.join(datadir, f'blank-a4-2pages.pdf'), 'rb')
+
+    with pytest.raises(orm.ObjectNotFound):
+        pdf_generation_helper.generate_pdfs(blank_pdf, 1, str(tmpdir), 2, 25, 150, 125, 150)
+
+
+def test_generate_pdfs_concurrent(mock_db_session, datadir, tmpdir, monkeypatch):
+    class MockExam:
+        token = 'ABCDEFGHIJKL'
+        currently_generated_copies = 3
+        total_generated_copies = 10
+        def __getitem__(self, key):  # noqa: E306
+            return self
+    monkeypatch.setattr(pdf_generation_helper, 'Exam', MockExam())
+
+    blank_pdf = open(os.path.join(datadir, f'blank-a4-2pages.pdf'), 'rb')
+
+    with pytest.raises(pdf_generation_helper.ConcurrentGenerationError):
+        pdf_generation_helper.generate_pdfs(blank_pdf, 1, str(tmpdir), 2, 25, 150, 125, 150)
 
 
 @pytest.mark.parametrize('name', ['a4', 'square'], ids=['a4', 'square'])

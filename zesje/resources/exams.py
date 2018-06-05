@@ -335,7 +335,7 @@ class ExamGeneratedPdfs(Resource):
 
         generate_pdfs(
             pdf_path,
-            'ABCDEFGHIJKL',
+            exam_id,
             pdf_out_dir,
             args['copies'],
             student_id_widget.x, student_id_widget.y,

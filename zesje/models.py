@@ -62,7 +62,6 @@ class Submission(db.Entity):
     solutions = Set('Solution')
     pages = Set('Page')
     student = Optional(Student)
-    signature_image_path = Optional(str)
     signature_validated = Required(bool, default=False)
 
 
@@ -100,7 +99,6 @@ class Solution(db.Entity):
     problem = Required(Problem)
     graded_by = Optional(Grader)  # if null, this has not yet been graded
     graded_at = Optional(datetime)
-    image_path = Required(str)
     feedback = Set(FeedbackOption)
     remarks = Optional(str)
     PrimaryKey(submission, problem)

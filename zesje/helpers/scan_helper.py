@@ -226,12 +226,11 @@ def process_page(output_dir, image_data, exam_config):
         sub = Submission.get(copy_number=barcode_data.copy, exam=exam)
 
         if sub is None:
-            sub = Submission(copy_number=barcode_data.copy, exam=exam,
-                             signature_image_path='None')
+            sub = Submission(copy_number=barcode_data.copy, exam=exam)
 
             for problem_id in exam_config.problem_ids:
                 prob = Problem.get(id=problem_id)
-                Solution(problem=prob, submission=sub, image_path='None')
+                Solution(problem=prob, submission=sub)
 
         # We may have added this page in previous uploads; the above then
         # overwrites the previosly uploaded page, but we only want a single

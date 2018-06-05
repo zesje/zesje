@@ -8,15 +8,15 @@ from werkzeug.datastructures import FileStorage
 
 from pony import orm
 
-from ..models import db, Exam, PDF
+from ..models import Exam, Scan
 from ..helpers import scan_helper
 
-class Pdfs(Resource):
-    """Getting a list of uploaded PDFs, and uploading new ones."""
+class Scans(Resource):
+    """Getting a list of uploaded scans, and uploading new ones."""
 
     @orm.db_session
     def get(self, exam_id):
-        """get all uploaded PDFs for a particular exam.
+        """get all uploaded scans for a particular exam.
 
         Parameters
         ----------
@@ -30,12 +30,12 @@ class Pdfs(Resource):
         """
         return [
             {
-                'id': pdf.id,
-                'name': pdf.name,
-                'status': pdf.status,
-                'message': pdf.message,
+                'id': scan.id,
+                'name': scan.name,
+                'status': scan.status,
+                'message': scan.message,
             }
-            for pdf in PDF.select(lambda pdf: pdf.exam.id == exam_id)
+            for scan in Scan.select(lambda scan: scan.exam.id == exam_id)
         ]
 
     post_parser = reqparse.RequestParser()
@@ -43,7 +43,7 @@ class Pdfs(Resource):
                              location='files')
 
     def post(self, exam_id):
-        """Upload a PDF
+        """Upload a scan PDF
 
         Parameters
         ----------
@@ -62,16 +62,16 @@ class Pdfs(Resource):
             return dict(message='Uploaded file is not a PDF'), 400
 
         with orm.db_session:
-            pdf = PDF(exam=Exam[exam_id], name=args['pdf'].filename,
+            scan = Scan(exam=Exam[exam_id], name=args['pdf'].filename,
                       status='processing', message='importing PDF')
 
         try:
-            path = os.path.join(app.config['PDF_DIRECTORY'], f'{pdf.id}.pdf')
+            path = os.path.join(app.config['SCAN_DIRECTORY'], f'{scan.id}.pdf')
             args['pdf'].save(path)
         except Exception:
             with orm.db_session:
-                pdf = PDF[pdf.id]
-                pdf.delete()
+                scan = Scan[scan.id]
+                scan.delete()
             raise
 
         # Fire off a background process
@@ -82,13 +82,13 @@ class Pdfs(Resource):
         # Because sharing a database connection with a subprocess is dangerous,
         # we use the slower "spawn" method that fires up a new process instead
         # of forking.
-        args = (pdf.id, app.config['DATA_DIRECTORY'])
+        args = (scan.id, app.config['DATA_DIRECTORY'])
         ctx = multiprocessing.get_context('spawn')
         ctx.Process(target=scan_helper.process_pdf, args=args).start()
 
         return {
-            'id': pdf.id,
-            'name': pdf.name,
-            'status': pdf.status,
-            'message': pdf.message
+            'id': scan.id,
+            'name': scan.name,
+            'status': scan.status,
+            'message': scan.message
         }

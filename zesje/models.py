@@ -51,7 +51,7 @@ class Exam(db.Entity):
     token = Required(str, unique=True, default=_generate_exam_token)
     submissions = Set('Submission')
     problems = Set('Problem')
-    scans = Set('PDF')
+    scans = Set('Scan')
     widgets = Set('ExamWidget')
 
 
@@ -106,7 +106,7 @@ class Solution(db.Entity):
     PrimaryKey(submission, problem)
 
 
-class PDF(db.Entity):
+class Scan(db.Entity):
     """Metadata on uploaded PDFs"""
     exam = Required(Exam)
     name = Required(str)

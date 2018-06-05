@@ -16,7 +16,7 @@ import PyPDF2
 from pony import orm
 
 from . import yaml_helper, image_helper
-from ..models import db, PDF, Exam, Problem, Page, Student, Submission, Solution
+from ..models import db, Scan, Exam, Problem, Page, Student, Submission, Solution
 
 
 ExtractedQR = namedtuple('ExtractedQR',
@@ -25,7 +25,7 @@ ExamMetadata = namedtuple('ExamMetadata',
                           ['version', 'exam_name', 'qr_coords', 'widget_data'])
 
 
-def process_pdf(pdf_id, data_directory):
+def process_pdf(scan_id, data_directory):
     """Process a PDF, recording progress to a database
 
     This *must* be called from a subprocess of the
@@ -34,8 +34,8 @@ def process_pdf(pdf_id, data_directory):
 
     Parameters
     ----------
-    pdf_id : int
-        The ID in the database of the PDF to process
+    scan_id : int
+        The ID in the database of the Scan to process
     data_directory : str
         The absolute path to the data directory on disk
     """
@@ -45,18 +45,18 @@ def process_pdf(pdf_id, data_directory):
     db.bind('sqlite', os.path.join(data_directory, 'course.sqlite'))
     db.generate_mapping(create_tables=True)
 
-    report_error = functools.partial(write_pdf_status, pdf_id, 'error')
-    report_progress = functools.partial(write_pdf_status, pdf_id, 'processing')
-    report_success = functools.partial(write_pdf_status, pdf_id, 'success')
+    report_error = functools.partial(write_pdf_status, scan_id, 'error')
+    report_progress = functools.partial(write_pdf_status, scan_id, 'processing')
+    report_success = functools.partial(write_pdf_status, scan_id, 'success')
 
     with orm.db_session:
-        pdf = PDF[pdf_id]
+        scan = Scan[scan_id]
 
         # TODO: paths
-        pdf_filename = f'{pdf.id}.pdf'
+        pdf_filename = f'{scan.id}.pdf'
         pdf_path = os.path.join(data_directory, 'pdfs', pdf_filename)
-        config_path = os.path.join(data_directory, pdf.exam.yaml_path)
-        output_directory = os.path.join(data_directory, f'{pdf.exam.id}_data')
+        config_path = os.path.join(data_directory, scan.exam.yaml_path)
+        output_directory = os.path.join(data_directory, f'{scan.exam.id}_data')
 
     try:
         # Read in exam metadata
@@ -128,11 +128,11 @@ def extract_images(filename):
                 yield img, pagenr+1
 
 
-def write_pdf_status(pdf_id, status, message):
+def write_pdf_status(scan_id, status, message):
     with orm.db_session:
-        pdf = PDF[pdf_id]
-        pdf.status = status
-        pdf.message = message
+        scan = Scan[scan_id]
+        scan.status = status
+        scan.message = message
 
 
 def process_page(output_dir, image_data, exam_config):

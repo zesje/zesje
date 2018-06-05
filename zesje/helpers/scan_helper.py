@@ -275,6 +275,8 @@ def guess_dpi(image_array):
 def rotate_image(image_data, corner_keypoints):
     """Rotate a PIL image according to the rotation of the corner markers."""
 
+    color_im = cv2.cvtColor(np.array(image_data), cv2.COLOR_RGB2BGR)
+
     # Find two corner markers which lie in the same horizontal half.
     # Same horizontal half is chosen as the line from one keypoint to
     # the other shoud be 0. To get corner markers in the same horizontal half,
@@ -295,7 +297,9 @@ def rotate_image(image_data, corner_keypoints):
     angle_deg = -1 * image_helper.calc_angle(coords1, coords2)
     angle_rad = math.radians(angle_deg)
 
+    h, w, *_ = color_im.shape
     rot_origin = (w / 2, h / 2)
+
     keyp_from_rot_origin = [(coord_x - rot_origin[0], coord_y - rot_origin[1])
                             for (coord_x, coord_y)
                             in corner_keypoints]

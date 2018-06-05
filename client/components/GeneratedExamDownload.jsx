@@ -92,7 +92,7 @@ class GeneratedExamDownload extends React.Component {
                                     className='button is-primary'
                                     disabled={!this.state.isGenerated}
                                     target='_blank'
-                                    href={'/api/exams/' + this.state.examID + '/generated_pdfs?type=zip'}
+                                    href={this.state.isGenerated ? '/api/exams/' + this.state.examID + '/generated_pdfs?type=zip' : null}
                                 >
                                     Download Zip
                                 </a>
@@ -102,7 +102,7 @@ class GeneratedExamDownload extends React.Component {
                                     className='button is-primary'
                                     disabled={!this.state.isGenerated}
                                     target='_blank'
-                                    href={'/api/exams/' + this.state.examID + '/generated_pdfs?type=pdf'}
+                                    href={this.state.isGenerated ? '/api/exams/' + this.state.examID + '/generated_pdfs?type=pdf' : null}
                                 >
                                     Download PDF
                                 </a>

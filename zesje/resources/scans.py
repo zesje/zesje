@@ -1,15 +1,15 @@
-import os
-from subprocess import run
 import multiprocessing
+import os
 
-from flask import abort, current_app as app
+from flask import current_app as app
 from flask_restful import Resource, reqparse
 from werkzeug.datastructures import FileStorage
 
 from pony import orm
 
-from ..models import Exam, Scan
 from ..helpers import scan_helper
+from ..models import Exam, Scan
+
 
 class Scans(Resource):
     """Getting a list of uploaded scans, and uploading new ones."""

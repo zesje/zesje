@@ -1,5 +1,7 @@
-import pytest
 import os
+
+import pytest
+
 from zesje.helpers import scan_helper, image_helper
 
 # Mocks

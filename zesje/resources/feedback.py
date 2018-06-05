@@ -6,6 +6,7 @@ from pony import orm
 
 from ..models import Problem, FeedbackOption
 
+
 class Feedback(Resource):
     """ List of feedback options of a problem """
 

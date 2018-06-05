@@ -1,7 +1,10 @@
+import io
+
 from flask_restful import Resource, reqparse
+
 from pony import orm
 from werkzeug.datastructures import FileStorage
-import pandas as pd, io
+import pandas as pd
 
 from ..models import Student
 
@@ -24,7 +27,7 @@ class Students(Resource):
             id: int
             first_name: str
             last_name: str
-            email: str 
+            email: str
 
         If no student_id is provided the entire list of students will be returned.
         """
@@ -63,7 +66,7 @@ class Students(Resource):
         Expects a json payload in the format::
 
             {
-                "studentID": int, 
+                "studentID": int,
                 "firstName": str,
                 "lastName": str,
                 "email": str OR null - this value is optional and may be empty, but must be unique

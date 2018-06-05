@@ -7,7 +7,6 @@ import pandas
 import yaml
 
 
-
 def parse(yml):
     """ Get the important parameters from a yaml """
 

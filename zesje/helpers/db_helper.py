@@ -1,9 +1,12 @@
-import pandas
-from pony import orm
-from collections import namedtuple, OrderedDict, ChainMap
+from collections import ChainMap
 
-from ..models import Exam, Problem, Student, Solution
+from pony import orm
+
+import pandas
+
 from . import yaml_helper
+from ..models import Exam, Problem, Solution, Student
+
 
 def update_exam(exam, existing_yaml, new_yaml):
     existing_version, existing_name, _, existing_widgets = yaml_helper.parse(existing_yaml)

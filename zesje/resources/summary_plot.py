@@ -1,18 +1,20 @@
-import os
 from io import BytesIO
-from flask import abort, Response, current_app as app
+
+from flask import abort, Response
+
 from pony import orm
 
-import pandas
-import numpy as np
-
-from ..models import Exam, Submission
-from ..helpers.db_helper import full_exam_data
-
 import matplotlib
+import numpy as np
+import pandas
+
+from ..helpers.db_helper import full_exam_data
+from ..models import Exam
+
 matplotlib.use('agg')
-import seaborn
-from matplotlib import pyplot
+import seaborn  # noqa: E402
+from matplotlib import pyplot  # noqa: E402
+
 
 @orm.db_session
 def get(exam_id):

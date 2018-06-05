@@ -1,8 +1,8 @@
-import os
+import datetime
 import glob
+import os
 import zipfile
 from io import BytesIO
-import datetime
 
 from flask import current_app as app, abort, send_file
 from flask_restful import Resource, reqparse

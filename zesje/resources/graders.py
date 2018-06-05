@@ -5,7 +5,6 @@ from flask_restful import Resource, reqparse
 
 from pony import orm
 
-from ..models import db, Grader
 from ._helpers import required_string
 
 
@@ -60,7 +59,7 @@ class Graders(Resource):
             last_name: str
         """
         args = self.post_parser.parse_args()
-        
+
         try:
             Grader(first_name= args['first_name'],
                    last_name=args['last_name'])

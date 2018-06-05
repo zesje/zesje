@@ -1,9 +1,11 @@
 import re
 
 from flask_restful import Resource, reqparse
+
 from pony import orm
 
 from ..models import Exam, Submission, Student
+
 
 page_match = re.compile(r'.*page(\d+).jpg').match
 

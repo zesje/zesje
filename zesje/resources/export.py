@@ -1,7 +1,7 @@
 import os
 from io import BytesIO
+
 from flask import abort, Response, current_app as app
-from pony import orm
 
 from ..helpers import db_helper
 

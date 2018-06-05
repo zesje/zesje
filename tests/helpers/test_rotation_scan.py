@@ -1,9 +1,11 @@
-import pytest
-import cv2
-import PIL
-import os
 import math
+import os
+
+import cv2
 import numpy as np
+import PIL
+import pytest
+
 from zesje.helpers import image_helper
 
 

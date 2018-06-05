@@ -150,8 +150,8 @@ def check_corner_keypoints(image_array, keypoints):
     image_array: source image
     keypoints: list of tuples containing the coordinates of keypoints
     """
-    if(len(keypoints) < 3):
-        raise RuntimeError('Not enough corner markers detected')
+    if(len(keypoints) < 3 or len(keypoints) > 4):
+        raise RuntimeError('Incorrect amount of corner markers detected')
 
     h, w, *_ = image_array.shape
 

@@ -1,9 +1,11 @@
-import os
-from flask import abort, Response, current_app as app
+from flask import abort, Response
 from pony import orm
 
-from ..helpers import yaml_helper, image_helper
-from ..models import Exam, Submission, Solution, Problem
+import numpy as np
+import cv2
+
+from ..helpers import image_helper
+from ..models import Exam, Submission, Problem
 
 
 @orm.db_session
@@ -25,23 +27,34 @@ def get(exam_id, problem_id, submission_id):
     try:
         exam = Exam[exam_id]
         sub = Submission.get(exam=exam, copy_number=submission_id)
-        name = Problem[problem_id].name
+        problem = Problem[problem_id]
     except (KeyError, ValueError):
         abort(404)
 
-    data_dir = app.config['DATA_DIRECTORY']
-    yaml_abspath = os.path.join(data_dir, sub.exam.yaml_path)
-    *_, widgets = yaml_helper.parse(yaml_helper.read(yaml_abspath))
-    problem_metadata = widgets.loc[name]
-    page = f'page{int(problem_metadata.page)}.'
+    widget_area = np.asarray([
+        problem.widget.y,  # top
+        problem.widget.y + problem.widget.height,  # bottom
+        problem.widget.x,  # left
+        problem.widget.x + problem.widget.width,  # right
+    ])
+
+    # TODO: use points as base unit
+    widget_area_in = widget_area / 72
+
+    #  get the page
+    page = f'{problem.page:02d}'
     page_path = (
         sub.pages
         .select(lambda p: page in p.path)
         .first().path
     )
-    image = image_helper.get_widget_image(
-        page_path,
-        problem_metadata
-    )
 
-    return Response(image, 200, mimetype='image/jpeg')
+    page_im = cv2.imread(page_path)
+
+    raw_image = image_helper.get_box(
+        page_im,
+        widget_area_in,
+        padding=0.3,
+    )
+    image_encoded = cv2.imencode(".jpg", raw_image)[1].tostring()
+    return Response(image_encoded, 200, mimetype='image/jpeg')

@@ -162,7 +162,7 @@ def check_corner_keypoints(image_array, keypoints):
             is_top_half = 1 * int(y < (h / 2))
             index = is_left_half + is_top_half
             if(checklist[index]):
-                raise RuntimeError("""Found multiple corner markers
-                                      in the same corner""")
+                raise RuntimeError(("Found multiple corner markers"
+                                    "in the same corner"))
             else:
                 checklist[index] = True

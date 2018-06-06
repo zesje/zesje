@@ -183,8 +183,10 @@ def process_page(output_dir, image_data, exam_config):
 
     qr_coords, widget_data = exam_config.qr_coords, exam_config.widget_data
 
-    image_data = rotate_image(image_data)
-    image_data = shift_image(image_data, qr_data, qr_coords)
+    corner_keypoints = image_helper.find_corner_marker_keypoints(image_data)
+    image_helper.check_corner_keypoints(image_data, corner_keypoints)
+    (image_data, new_keypoints) = rotate_image(image_data, corner_keypoints)
+    image_data = shift_image(image_data, new_keypoints)
 
     sub_nr = qr_data.sub_nr
 
@@ -270,41 +272,10 @@ def guess_dpi(image_array):
     return resolutions[np.argmin(abs(resolutions - 25.4 * h / 297))]
 
 
-def rotate_image(image_data):
+def rotate_image(image_data, corner_keypoints):
     """Rotate a PIL image according to the rotation of the corner markers."""
+
     color_im = cv2.cvtColor(np.array(image_data), cv2.COLOR_RGB2BGR)
-
-    gray_im = cv2.cvtColor(color_im, cv2.COLOR_BGR2GRAY)
-
-    _, bin_im = cv2.threshold(gray_im, 150, 255, cv2.THRESH_BINARY)
-
-    h, w, *_ = bin_im.shape
-
-    # Blob detector keypoints, less accurate than harris
-    blob_keypoints = image_helper.find_corner_marker_keypoints(bin_im)
-
-    corner_keypoints = []
-
-    # For each blob keypoint, extract an image patch as a descriptor
-    for keyp in blob_keypoints:
-        pt_x, pt_y = keyp.pt[0], keyp.pt[1]
-        topleft = (int(round(pt_x - 0.75 * keyp.size)),
-                   int(round(pt_y - 0.75 * keyp.size)))
-        bottomright = (int(round(pt_x + 0.75 * keyp.size)),
-                       int(round(pt_y + 0.75 * keyp.size)))
-        image_patch = gray_im[topleft[1]:bottomright[1],
-                              topleft[0]:bottomright[0]]
-
-        # Find the best corner
-        corners = cv2.goodFeaturesToTrack(image_patch, 1, 0.01, 10)
-        corners = np.int0(corners)
-
-        # Change the coordinates of the corner to be respective of the origin
-        # of the original image, and not the image patch.
-        patch_x, patch_y = corners.ravel()
-        corner_x, corner_y = patch_x + topleft[0], patch_y + topleft[1]
-
-        corner_keypoints.append((corner_x, corner_y))
 
     # Find two corner markers which lie in the same horizontal half.
     # Same horizontal half is chosen as the line from one keypoint to
@@ -323,38 +294,74 @@ def rotate_image(image_data):
     # However warpaffine needs a positve angle if
     # you want to rotate it counterclockwise
     # So we invert the angle retrieved from calc_angle
-    angle = -1 * image_helper.calc_angle(coords1, coords2)
+    angle_deg = -1 * image_helper.calc_angle(coords1, coords2)
+    angle_rad = math.radians(angle_deg)
+
+    h, w, *_ = color_im.shape
+    rot_origin = (w / 2, h / 2)
+
+    keyp_from_rot_origin = [(coord_x - rot_origin[0], coord_y - rot_origin[1])
+                            for (coord_x, coord_y)
+                            in corner_keypoints]
+
+    after_rot_keypoints = [((coord_y * math.sin(angle_rad) +
+                            coord_x * math.cos(angle_rad) + rot_origin[0]),
+                            (coord_y * math.cos(angle_rad) -
+                            coord_x * math.sin(angle_rad)) + rot_origin[1])
+                           for (coord_x, coord_y)
+                           in keyp_from_rot_origin]
 
     # Create rotation matrix and rotate the image around the center
-    rot_mat = cv2.getRotationMatrix2D((w / 2, h / 2), angle, 1)
+    rot_mat = cv2.getRotationMatrix2D(rot_origin, angle_deg, 1)
     rot_image = cv2.warpAffine(color_im, rot_mat, (w, h), cv2.BORDER_CONSTANT,
                                borderMode=cv2.BORDER_CONSTANT,
                                borderValue=(255, 255, 255))
 
-    return Image.fromarray(cv2.cvtColor(rot_image, cv2.COLOR_BGR2RGB))
+    return (Image.fromarray(cv2.cvtColor(rot_image, cv2.COLOR_BGR2RGB)),
+            after_rot_keypoints)
 
 
-def shift_image(image_data, extracted_qr, qr_coords):
-    """Roll the image such that QR occupies coords specified by the template."""
-    page, position = extracted_qr.page, extracted_qr.coords
-    y, x = np.mean(position, axis=0)
+def shift_image(image_data, corner_keypoints):
+    """Roll the image such that QR occupies coords
+       specified by the template."""
     image = np.array(image_data)
-
-    if image.shape[0] < image.shape[1]:
-        image = np.transpose(image, [1, 0] + [2] * (len(image.shape) > 2))
-        x, y = y, x
-
-    dpi = guess_dpi(image)
+    corner_keypoints = np.array(corner_keypoints)
     h, w, *_ = image.shape
-    qr_widget = qr_coords[qr_coords.page == page]
-    box = dpi * qr_widget[['top', 'bottom', 'left', 'right']].values[0]
-    y0, x0 = h - np.mean(box[:2]), np.mean(box[2:])
-    if (x > w / 2) != (x0 > w / 2):
-        image = image[:, ::-1]
-        x = w - x
-    if (y > h / 2) != (y0 > h / 2):
-        image = image[::-1]
-        y = h - y
+
+    xkeypoints = np.array([keypoint[0] for keypoint in corner_keypoints])
+    ykeypoints = np.array([keypoint[1] for keypoint in corner_keypoints])
+
+    is_left_half = xkeypoints < (w / 2)
+    is_top_half = ykeypoints < (h / 2)
+
+    # Get pixel locations to translate to. Currently only works with A4 sized
+    # paper
+    # TODO Add US letter functionality
+    x0 = 10/210 * w
+    y0 = 10/297 * h
+
+    # If there is a keypoint in the topleft, take that point as starting point
+    # for the translation
+    topleft = corner_keypoints[is_left_half & is_top_half]
+    if(len(topleft) == 1):
+        x = topleft[0][0]
+        y = topleft[0][1]
+    else:
+
+        # If there is no keypoint in the topleft, try to check if there is one
+        # in the bottom left and bottom right. If so, infer the topleft
+        # coordinates from their coordinates
+        topright = corner_keypoints[~is_left_half & is_top_half]
+        bottomleft = corner_keypoints[is_left_half & ~is_top_half]
+        if(len(topright) == 1 & len(bottomleft) == 1):
+            x = bottomleft[0]
+            y = topright[1]
+
+        else:
+            # We can only end here if something went wrong with the detection
+            # of corner markers. If so, just don't shift at all.
+            x = x0
+            y = y0
 
     shift = np.round((y0-y, x0-x)).astype(int)
     shifted_image = np.roll(image, shift[0], axis=0)

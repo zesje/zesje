@@ -10,7 +10,7 @@ from zesje.helpers import image_helper
 # Helper functions
 # Given 2 keypoints, calculates the distance between them
 def distance(keyp1, keyp2):
-    return math.hypot(keyp1.pt[0] - keyp2.pt[0], keyp1.pt[1] - keyp2.pt[1])
+    return math.hypot(keyp1[0] - keyp2[0], keyp1[1] - keyp2[1])
 
 
 # Given a name of a exam image and the location it is stored, retrieves the
@@ -69,8 +69,7 @@ def test_detect_valid_cornermarkers(name, datadir):
     (xcorner, ycorner) = (round(30 * w / xmm), round(30 * h / ymm))
     maxdist = math.hypot(xcorner, ycorner)
 
-    cornerlist = [cv2.KeyPoint(0, 0, 0), cv2.KeyPoint(w, 0, 0),
-                  cv2.KeyPoint(0, h, 0), cv2.KeyPoint(w, h, 0)]
+    cornerlist = [(0, 0), (0, 0), (0, 0), (0, 0)]
 
     # Checks whether there aren't multiple keypoints in the same corner.
     # If there is, one of those probably isn't a corner marker.

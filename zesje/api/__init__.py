@@ -1,19 +1,19 @@
 from flask import Blueprint
 from flask_restful import Api
 
-from .resources.graders import Graders
-from .resources.exams import Exams, ExamSource, ExamGeneratedPdfs
-from .resources.scans import Scans
-from .resources.students import Students
-from .resources.submissions import Submissions
-from .resources import signature
-from .resources import images
-from .resources import summary_plot
-from .resources import export
-from .resources.problems import Problems
-from .resources.feedback import Feedback
-from .resources.solutions import Solutions
-from .resources.widgets import Widgets
+from .graders import Graders
+from .exams import Exams, ExamSource, ExamGeneratedPdfs
+from .scans import Scans
+from .students import Students
+from .submissions import Submissions
+from .problems import Problems
+from .feedback import Feedback
+from .solutions import Solutions
+from .widgets import Widgets
+from . import signature
+from . import images
+from . import summary_plot
+from . import export
 
 api_bp = Blueprint(__name__, __name__)
 

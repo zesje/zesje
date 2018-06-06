@@ -4,7 +4,7 @@ from flask_restful import Resource, reqparse
 
 from pony import orm
 
-from ..models import Problem, FeedbackOption
+from ..database import Problem, FeedbackOption
 
 
 class Feedback(Resource):

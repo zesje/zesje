@@ -8,7 +8,7 @@ from werkzeug.datastructures import FileStorage
 from pony import orm
 
 from ..helpers import scan_helper
-from ..models import Exam, Scan
+from ..database import Exam, Scan
 
 
 class Scans(Resource):

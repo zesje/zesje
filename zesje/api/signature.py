@@ -5,7 +5,7 @@ import numpy as np
 import cv2
 
 from ..helpers import image_helper
-from ..models import Exam, Submission
+from ..database import Exam, Submission
 
 
 @orm.db_session

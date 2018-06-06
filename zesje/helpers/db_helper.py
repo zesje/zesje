@@ -5,7 +5,7 @@ from pony import orm
 import pandas
 
 from . import yaml_helper
-from ..models import Exam, Problem, Solution, Student
+from ..database import Exam, Problem, Solution, Student
 
 
 def update_exam(exam, existing_yaml, new_yaml):

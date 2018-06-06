@@ -9,7 +9,7 @@ import numpy as np
 import pandas
 
 from ..helpers.db_helper import full_exam_data
-from ..models import Exam
+from ..database import Exam
 
 matplotlib.use('agg')
 import seaborn  # noqa: E402

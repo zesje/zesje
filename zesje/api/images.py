@@ -8,7 +8,7 @@ import numpy as np
 import cv2
 
 from ..helpers import image_helper
-from ..models import Exam, Submission, Problem
+from ..database import Exam, Submission, Problem
 
 
 @orm.db_session

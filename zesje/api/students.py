@@ -6,7 +6,7 @@ from pony import orm
 from werkzeug.datastructures import FileStorage
 import pandas as pd
 
-from ..models import Student
+from ..database import Student
 
 
 class Students(Resource):

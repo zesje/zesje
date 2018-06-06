@@ -17,8 +17,8 @@ import PyPDF2
 from pony import orm
 
 from . import image_helper
+from ..database import db, Scan, Exam, Problem, Page, Student, Submission, Solution
 from .datamatrix_helper import decode_raw_datamatrix
-from ..models import db, Scan, Exam, Problem, Page, Student, Submission, Solution
 
 
 ExtractedBarcode = namedtuple('ExtractedBarcode',

@@ -6,7 +6,7 @@ from flask_restful import Resource, reqparse
 from pony import orm
 
 from ._helpers import required_string
-from ..models import Grader
+from ..database import Grader
 
 
 # TODO: when making new database structure, have only a single

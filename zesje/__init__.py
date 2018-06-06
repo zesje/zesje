@@ -8,7 +8,7 @@ from flask_basicauth import BasicAuth
 from werkzeug.exceptions import NotFound
 
 from .api import api_bp
-from .models import db
+from .database import db
 
 
 STATIC_FOLDER_PATH = os.path.join(abspath(dirname(__file__)), 'static')

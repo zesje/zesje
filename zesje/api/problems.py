@@ -4,7 +4,7 @@ from flask_restful import Resource, reqparse
 
 from pony import orm
 
-from ..models import db, Exam, Problem, ProblemWidget
+from ..database import db, Exam, Problem, ProblemWidget
 
 
 class Problems(Resource):

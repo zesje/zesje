@@ -14,7 +14,7 @@ from ..helpers.pdf_generation_helper import generate_pdfs, \
     output_pdf_filename_format, join_pdfs
 
 
-from ..models import db, Exam, ExamWidget
+from ..database import db, Exam, ExamWidget
 
 
 def _get_exam_dir(exam_id):

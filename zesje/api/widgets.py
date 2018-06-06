@@ -3,7 +3,7 @@ from flask import request
 
 from pony import orm
 
-from ..models import db, Widget
+from ..database import db, Widget
 
 
 class Widgets(Resource):

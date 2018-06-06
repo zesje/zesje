@@ -334,7 +334,9 @@ def shift_image(image_data, corner_keypoints):
     is_left_half = xkeypoints < (w / 2)
     is_top_half = ykeypoints < (h / 2)
 
-    # Get pixel locations
+    # Get pixel locations to translate to. Currently only works with A4 sized
+    # paper
+    # TODO Add US letter functionality
     x0 = 10/210 * w
     y0 = 10/297 * h
 

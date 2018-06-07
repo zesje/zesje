@@ -24,7 +24,7 @@ ExtractedBarcode = namedtuple('ExtractedBarcode',
                               ['token', 'copy', 'page'])
 
 ExamMetadata = namedtuple('ExamMetadata',
-                          ['token', 'barcode_area', 'problem_ids'])
+                          ['token', 'barcode_area', 'student_id_widget_area', 'problem_ids'])
 
 
 def process_pdf(scan_id, data_directory):
@@ -78,6 +78,12 @@ def process_pdf(scan_id, data_directory):
                     max(0, barcode_widget.y + 50),
                     max(0, barcode_widget.x),
                     max(0, barcode_widget.x + 50),
+                ],
+                student_id_widget_area=[
+                    student_id_widget.y,  # top
+                    student_id_widget.y + 181,  # bottom
+                    student_id_widget.x,  # left
+                    student_id_widget.x + 313,  # right
                 ],
                 problem_ids=[
                     problem.id for problem in pdf.exam.problems
@@ -235,18 +241,17 @@ def process_page(output_dir, image_data, exam_config):
             # Nothing to update in the db
             return True, ''
 
-    # TODO: JK: Stud nmr uitlezen
-    # number_widget = widget_data.loc['studentnr']
-    # if qr_data.page == number_widget.page:
-    #     try:
-    #         number = get_student_number(target_image, number_widget)
-    #     except Exception:
-    #         return True, ''  # could not extract student name
-    #
-    #     with orm.db_session:
-    #         exam = Exam.get(name=qr_data.name)
-    #         sub = Submission.get(copy_number=barcode_data.sub_nr, exam=exam)
-    #         sub.student = Student.get(id=int(number))
+    if barcode_data.page is 0:
+        try:
+            number = get_student_number(target_image, exam_config)
+        except Exception:
+            return True, ''  # could not extract student name
+
+        with orm.db_session:
+            exam = Exam.get(token=barcode_data.token)
+            sub = Submission.get(copy_number=barcode_data.copy, exam=exam)
+            student = Student.get(id=int(number))
+            sub.student = student
 
     return True, ''
 
@@ -272,6 +277,8 @@ def decode_barcode(image, exam_config):
         try:
             proper_data = decode_raw_datamatrix(results[0].data)
             token, copy, page = proper_data.split('/')
+            copy = int(copy)
+            page = int(page)
         except ValueError:
             return
 
@@ -390,15 +397,16 @@ def shift_image(image_data, corner_keypoints):
     return Image.fromarray(shifted_image)
 
 
-def get_student_number(image_path, widget):
+def get_student_number(image_path, exam_config):
     """Extract the student number from the image path with the scanned number.
 
     TODO: all the numerical parameters are guessed and work well on the first
     exam.  Yet, they should be inferred from the scans.
     """
     image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
-    box = (widget.top, widget.bottom, widget.left, widget.right)
-    image = image_helper.get_box(image, box, padding=0.3)
+    # TODO: use points as base unit
+    student_id_widget_area_in = np.asarray(exam_config.student_id_widget_area) / 72
+    image = image_helper.get_box(image, student_id_widget_area_in, padding=0.0)
     _, thresholded = cv2.threshold(image, 150, 255, cv2.THRESH_BINARY)
     thresholded = cv2.bitwise_not(thresholded)
 
@@ -426,7 +434,8 @@ def get_student_number(image_path, widget):
     params.minArea = min_box_size
     params.maxArea = min_box_size * 2
     params.filterByCircularity = True
-    params.minCircularity = 0.01
+    params.minCircularity = 0.1
+    params.maxCircularity = 0.8
     params.filterByConvexity = True
     params.minConvexity = 0.87
     params.filterByInertia = True

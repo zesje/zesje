@@ -26,10 +26,6 @@ class Graders(Resource):
             first_name: str
             last_name: str
         """
-        return self._get()
-
-    @orm.db_session
-    def _get(self):
         return [
             {
                 'id': g.id,
@@ -67,4 +63,4 @@ class Graders(Resource):
         except KeyError as error:
             abort(400, error)
 
-        return self._get()
+        return self.get()

@@ -403,10 +403,12 @@ def get_student_number(image_path, widget):
     # Combine the two images to get the foreground.
     im_out = ~(thresholded | im_floodfill_inv)
 
+    min_box_size = int(h*w/1000)
+
     params = cv2.SimpleBlobDetector_Params()
     params.filterByArea = True
-    params.minArea = 500
-    params.maxArea = 2000
+    params.minArea = min_box_size
+    params.maxArea = min_box_size * 2
     params.filterByCircularity = True
     params.minCircularity = 0.01
     params.filterByConvexity = True

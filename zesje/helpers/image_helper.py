@@ -93,8 +93,8 @@ def find_corner_marker_keypoints(image_data):
 
     im_floodfill = bin_im_inv.copy()
 
-    # Mask used to flood filling.
-    # Notice the size needs to be 2 pixels than the image for floodFill
+    # Mask used for flood filling.
+    # Notice the size needs to be 2 pixels larger than the image for floodFill
     # to function.
     mask = np.zeros((h+2, w+2), np.uint8)
 
@@ -104,7 +104,7 @@ def find_corner_marker_keypoints(image_data):
     im_floodfill_inv = cv2.bitwise_not(im_floodfill)
 
     # Combine the two images to get the original image but with all enclosed
-    # space by text completely black.
+    # space completely black.
     bin_im = ~(bin_im_inv | im_floodfill_inv)
 
     # Filter out everything in the center of the image

@@ -109,7 +109,7 @@ def find_corner_marker_keypoints(image_data):
 
     # Filter out everything in the center of the image
     bin_im[round(0.125 * h):round(0.875 * h),
-           round(0.125 * w):round(0.875 * w)] = 1
+           round(0.125 * w):round(0.875 * w)] = 255
 
     # Detect objects which look like corner markers
     params = cv2.SimpleBlobDetector_Params()

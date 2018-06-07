@@ -89,6 +89,24 @@ def find_corner_marker_keypoints(image_data):
 
     h, w, *_ = color_im.shape
 
+    bin_im_inv = cv2.bitwise_not(bin_im)
+
+    # Copy the thresholded image.
+    im_floodfill = bin_im_inv.copy()
+
+    # Mask used to flood filling.
+    # Notice the size needs to be 2 pixels than the image.
+    mask = np.zeros((h+2, w+2), np.uint8)
+
+    # Floodfill from point (0, 0)
+    cv2.floodFill(im_floodfill, mask, (0, 0), 255)
+
+    # Invert floodfilled image
+    im_floodfill_inv = cv2.bitwise_not(im_floodfill)
+
+    # Combine the two images to get the foreground.
+    bin_im = ~(bin_im_inv | im_floodfill_inv)
+
     # Filter out everything in the center of the image
     h, w, *_ = bin_im.shape
     bin_im[round(0.125 * h):round(0.875 * h),

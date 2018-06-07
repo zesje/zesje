@@ -108,7 +108,6 @@ def find_corner_marker_keypoints(image_data):
     bin_im = ~(bin_im_inv | im_floodfill_inv)
 
     # Filter out everything in the center of the image
-    h, w, *_ = bin_im.shape
     bin_im[round(0.125 * h):round(0.875 * h),
            round(0.125 * w):round(0.875 * w)] = 1
 

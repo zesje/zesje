@@ -50,10 +50,9 @@ If you followed the instructions above, the linter `flake8` is installed in your
 
     "python.linting.pylintEnabled": false,
     "python.linting.flake8Enabled": true,
-    "python.linting.flake8Args": ["--config=.flake8"],
     "[python]": {
         "editor.rulers": [120]
-    }
+    },
 
 If you use Atom, install the [linter-flake8](https://atom.io/packages/linter-flake8) plugin and add the following lines to your config:
 

@@ -185,12 +185,10 @@ def check_corner_keypoints(image_array, keypoints):
             checklist[index] = True
 
 
-def find_orientation_bar(image_array):
+def find_orientation_bar(image_data):
 
     color_im = cv2.cvtColor(np.array(image_data), cv2.COLOR_RGB2BGR)
-    opencv_im_copy = opencv_im.copy()
-    gray_im = cv2.cvtColor(opencv_im, cv2.COLOR_BGR2GRAY)
-
+    gray_im = cv2.cvtColor(color_im, cv2.COLOR_BGR2GRAY)
     _, bin_im = cv2.threshold(gray_im, 150, 255, cv2.THRESH_BINARY)
 
     # Filter out everything in the center of the image

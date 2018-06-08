@@ -403,10 +403,12 @@ def get_student_number(image_path, widget):
     # Combine the two images to get the foreground.
     im_out = ~(thresholded | im_floodfill_inv)
 
+    min_box_size = int(h*w/1000)
+
     params = cv2.SimpleBlobDetector_Params()
     params.filterByArea = True
-    params.minArea = 500
-    params.maxArea = 1500
+    params.minArea = min_box_size
+    params.maxArea = min_box_size * 2
     params.filterByCircularity = True
     params.minCircularity = 0.01
     params.filterByConvexity = True
@@ -418,13 +420,14 @@ def get_student_number(image_path, widget):
 
     keypoints = detector.detect(im_out)
     centers = np.array(sorted([kp.pt for kp in keypoints])).astype(int)
-    right, bottom = np.max(centers, axis=0)
-    left, top = np.min(centers, axis=0)
+    diameters = np.array([kp.size for kp in keypoints])
+    r = int(np.median(diameters)/4)
+    (right, bottom) = np.max(centers, axis=0)
+    (left, top) = np.min(centers, axis=0)
     centers = np.mgrid[left:right:7j, top:bottom:10j].astype(int)
     weights = []
     for center in centers.reshape(2, -1).T:
         x, y = center
-        r = 10
         weights.append(np.sum(255 - image[y-r:y+r, x-r:x+r]))
 
     weights = np.array(weights).reshape(10, 7, order='F')

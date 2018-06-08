@@ -6,20 +6,41 @@ import DropzoneContent from '../components/DropzoneContent.jsx';
 
 import * as api from '../api.jsx'
 
+const ScanStatus = (props) => {
+    let iconClass = 'fa fa-'
+    switch (props.scan.status) {
+        case 'processing':
+            iconClass += 'refresh fa-spin'
+            break
+        case 'success':
+            iconClass += 'check'
+            break
+        case 'error':
+            iconClass += 'times'
+            break
+    }
+    return (
+        <div>
+            {props.scan.name}&emsp;<i className={iconClass} />
+        <i>&nbsp;{props.scan.message}</i>
+        </div>
+    )
+}
+
 class Submissions extends React.Component {
 
     state = {
-        pdfs: [],
+        scans: [],
         submissions : [],
         examID: null,
     };
 
-    updatePDFs = () => {
+    updateScans = () => {
         api.get('scans/' + this.props.exam.id)
-            .then(pdfs => {
-                if (JSON.stringify(pdfs) != JSON.stringify(this.state.pdfs)) {
+            .then(scans => {
+                if (JSON.stringify(scans) != JSON.stringify(this.state.scans)) {
                     this.setState({
-                        pdfs: pdfs
+                        scans: scans
                     })
                     this.props.updateSubmission()
                     this.updateSubmissions()
@@ -38,7 +59,7 @@ class Submissions extends React.Component {
 
     onDropPDF = (accepted, rejected) => {
         if (rejected.length > 0) {
-            alert('Please upload a PDF.')
+            alert('Please upload a scan PDF.')
             return
         }
         accepted.map(file => {
@@ -46,13 +67,21 @@ class Submissions extends React.Component {
             data.append('pdf', file)
             api.post('scans/' + this.props.exam.id, data)
                 .then(() => {
-                    this.updatePDFs();
+                    this.updateScans();
                 })
                 .catch(resp => {
                     alert('failed to upload pdf (see javascript console for details)')
                     console.error('failed to upload PDF:', resp)
                 })
         })
+    }
+
+    componentDidMount = () => {
+        this.scanUpdater = setInterval(this.updateScans, 1000)
+    }
+
+    componentWillUnmount = () => {
+        clearInterval(this.scanUpdater);
     }
 
     render() {
@@ -65,7 +94,6 @@ class Submissions extends React.Component {
 
                 <div className="container">
                     <div className="columns">
-
                         <div className="column has-text-centered">
                             <h3 className='title'>Upload scans</h3>
                             <h5 className='subtitle'>Scanned pdf files</h5>
@@ -77,6 +105,19 @@ class Submissions extends React.Component {
                             >
                                 <DropzoneContent />
                             </Dropzone>
+                            <br />
+                            <aside className='menu'>
+                                <p className='menu-label'>
+                                    Previously uploaded
+                                </p>
+                                <ul className='menu-list'>
+                                    {this.state.scans.map(scan =>
+                                        <li key={scan.id}>
+                                            <ScanStatus scan={scan} />
+                                        </li>
+                                    )}
+                                </ul>
+                            </aside>
                         </div>
                     </div>
                 </div>

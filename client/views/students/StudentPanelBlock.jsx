@@ -24,7 +24,7 @@ const StudentPanelBlock = (props) => {
                 key="info" style={{ backgroundColor: '#dbdbdb' }}>
 
                 <a className="panel-icon" onClick={() => props.editStudent(props.student)}>
-                    <i className="fa fa-database"></i>
+                    <i className="fa fa-pencil"></i>
                 </a>
                 {props.student.id}&emsp;
                 <span className="panel-icon">

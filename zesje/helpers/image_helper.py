@@ -174,39 +174,15 @@ def check_corner_keypoints(image_array, keypoints):
 
     checklist = [False, False, False, False]
 
-    for (x, y) in keypoints:opencv_im = cv2.imread(path_to_image,cv2.IMREAD_COLOR)
-    opencv_im_copy = opencv_im.copy()
-    gray_im = cv2.cvtColor(opencv_im,cv2.COLOR_BGR2GRAY)
-
-    _, bin_im = cv2.threshold(gray_im, 150, 255, cv2.THRESH_BINARY)
-
-    #Filter out everything in the center of the image
-    h, w, *_ = bin_im.shape
-    bin_im[round(0.125*h):round(0.875*h),round(0.125*w):round(0.875*w)] = 1
-
-    #Detect objects which look like corner markers
-    params = cv2.SimpleBlobDetector_Params()
-    params.filterByArea = True
-    params.minArea = 1000
-    params.maxArea = 2000
-    params.filterByCircularity = True
-    params.minCircularity = 0
-    params.maxCircucorner_keypointslarity = 0.1
-    params.filterByConvexity = True
-    params.minConvexity = 0.2
-    params.maxConvexity = 0.8
-    params.filterByInertia = True
-    params.minInertiaRatio = 0
-    params.maxInertiaRatio = 0.5
-    params.filterByColor = False
-            is_left_half = 2 * int(x < (w / 2))
-            is_top_half = 1 * int(y < (h / 2))
-            index = is_left_half + is_top_half
-            if(checklist[index]):
-                raise RuntimeError(("Found multiple corner markers"
-                                    "in the same corner"))
-            else:
-                checklist[index] = True
+    for (x, y) in keypoints:
+        is_left_half = 2 * int(x < (w / 2))
+        is_top_half = 1 * int(y < (h / 2))
+        index = is_left_half + is_top_half
+        if(checklist[index]):
+            raise RuntimeError(("Found multiple corner markers"
+                                "in the same corner"))
+        else:
+            checklist[index] = True
 
 
 def find_orientation_bar(image_array):

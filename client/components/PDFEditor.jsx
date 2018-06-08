@@ -520,22 +520,6 @@ class PDFEditor extends React.Component {
         const details = this.renderDetails()
         return (
             <div className='editor-area columns is-centered' >
-                <div className='column is-narrow'  >
-                    <div ref={c => this.selectionArea = c} className='selection-area' >
-                        <Document
-                            file={this.getPDFUrl()}
-                            onLoadSuccess={this.onPDFLoad}
-                        >
-                            <Page
-                                renderAnnotations={false}
-                                renderTextLayer={false}
-                                pageNumber={this.state.page + 1}
-                                onMouseDown={this.handleMouseDown} />
-                        </Document>
-                        {renderedWidgets}
-                        {this.renderSelectionBox()}
-                    </div>
-                </div>
                 <div className='column is-narrow editor-side-panel' >
                     <div className='field has-addons is-mobile'>
                         <div className='control'>
@@ -557,6 +541,22 @@ class PDFEditor extends React.Component {
                         </div>
                     </div>
                     {details}
+                </div>
+                <div className='column is-narrow'  >
+                    <div ref={c => this.selectionArea = c} className='selection-area' >
+                        <Document
+                            file={this.getPDFUrl()}
+                            onLoadSuccess={this.onPDFLoad}
+                        >
+                            <Page
+                                renderAnnotations={false}
+                                renderTextLayer={false}
+                                pageNumber={this.state.page + 1}
+                                onMouseDown={this.handleMouseDown} />
+                        </Document>
+                        {renderedWidgets}
+                        {this.renderSelectionBox()}
+                    </div>
                 </div>
             </div>
         )

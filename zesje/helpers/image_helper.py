@@ -89,10 +89,27 @@ def find_corner_marker_keypoints(image_data):
 
     h, w, *_ = color_im.shape
 
+    bin_im_inv = cv2.bitwise_not(bin_im)
+
+    im_floodfill = bin_im_inv.copy()
+
+    # Mask used for flood filling.
+    # Notice the size needs to be 2 pixels larger than the image for floodFill
+    # to function.
+    mask = np.zeros((h+2, w+2), np.uint8)
+
+    # Floodfill from point (0, 0)
+    cv2.floodFill(im_floodfill, mask, (0, 0), 255)
+
+    im_floodfill_inv = cv2.bitwise_not(im_floodfill)
+
+    # Combine the two images to get the original image but with all enclosed
+    # space completely black.
+    bin_im = ~(bin_im_inv | im_floodfill_inv)
+
     # Filter out everything in the center of the image
-    h, w, *_ = bin_im.shape
     bin_im[round(0.125 * h):round(0.875 * h),
-           round(0.125 * w):round(0.875 * w)] = 1
+           round(0.125 * w):round(0.875 * w)] = 255
 
     # Detect objects which look like corner markers
     params = cv2.SimpleBlobDetector_Params()

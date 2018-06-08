@@ -519,7 +519,7 @@ class PDFEditor extends React.Component {
         const renderedWidgets = this.renderWidgets()
         const details = this.renderDetails()
         return (
-            <div className='editor-area columns is-centered' >
+            <div className='columns is-centered' >
                 <div className='column is-narrow editor-side-panel' >
                     <div className='field has-addons is-mobile'>
                         <div className='control'>
@@ -542,7 +542,7 @@ class PDFEditor extends React.Component {
                     </div>
                     {details}
                 </div>
-                <div className='column is-narrow'  >
+                <div className='column is-narrow editor-content' >
                     <div ref={c => this.selectionArea = c} className='selection-area' >
                         <Document
                             file={this.getPDFUrl()}

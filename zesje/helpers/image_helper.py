@@ -212,6 +212,4 @@ def find_orientation_bar(image_data):
     detector = cv2.SimpleBlobDetector_create(params)
     keypoints = detector.detect(bin_im)
 
-    bar_keypoints = [(keyp.pt[0], keyp.pt[1]) for keyp in keypoints]
-
-    return bar_keypoints
+    return [(keyp.pt[0], keyp.pt[1]) for keyp in keypoints]

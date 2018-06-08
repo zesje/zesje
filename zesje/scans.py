@@ -244,6 +244,7 @@ def process_page(output_dir, image_data, exam_config):
     if barcode_data.page is 0:
         try:
             number = get_student_number(target_image, exam_config)
+            number = fuzzy_match_student_number(number)
         except Exception:
             return True, ''  # could not extract student name
 
@@ -606,3 +607,8 @@ def check_corner_keypoints(image_array, keypoints):
                                     "in the same corner"))
             else:
                 checklist[index] = True
+
+
+def fuzzy_match_student_number(detected_number):
+    with orm.db_session:
+        student_number_list = orm.select(s.id for s in Student)[:]

@@ -204,11 +204,9 @@ def find_orientation_bar(image_data):
     params.minCircularity = 0
     params.maxCircularity = 0.1
     params.filterByConvexity = True
-    params.minConvexity = 0.2
-    params.maxConvexity = 0.8
-    params.filterByInertia = True
-    params.minInertiaRatio = 0
-    params.maxInertiaRatio = 0.5
+    params.minConvexity = 0.75
+    params.maxConvexity = 1
+    params.filterByInertia = False
     params.filterByColor = False
 
     detector = cv2.SimpleBlobDetector_create(params)

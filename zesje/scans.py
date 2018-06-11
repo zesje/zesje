@@ -251,6 +251,8 @@ def process_page(output_dir, image_data, exam_config):
         with orm.db_session:
             exam = Exam.get(token=barcode_data.token)
             sub = Submission.get(copy_number=barcode_data.copy, exam=exam)
+            students = Student.select(s.id for s in Student)
+            number = fuzzy_match_student_number(students, number)
             student = Student.get(id=int(number))
             sub.student = student
 

@@ -216,3 +216,15 @@ def find_orientation_bar(image_data):
     keypoints = detector.detect(bin_im)
 
     return [(keyp.pt[0], keyp.pt[1]) for keyp in keypoints]
+
+
+def check_bar_keypoint(keypoints):
+    """Checks whether the detect orientation bar is valid.
+        1. Checks whether there is only one bar found.
+
+    Parameters:
+    -----------
+    keypoints: list of tuples containing the coordinates of keypoints
+    """
+    if(len(keypoints) < 1 or len(keypoints) > 1):
+        raise RuntimeError('Incorrect amount of bars detected')

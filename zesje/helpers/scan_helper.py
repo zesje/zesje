@@ -183,6 +183,8 @@ def process_page(output_dir, image_data, exam_config):
 
     qr_coords, widget_data = exam_config.qr_coords, exam_config.widget_data
 
+    bar_keypoints = image_helper.find_orientation_bar(image_data)
+    image_helper.check_bar_keypoint(image_data,  bar_keypoints)
     corner_keypoints = image_helper.find_corner_marker_keypoints(image_data)
     image_helper.check_corner_keypoints(image_data, corner_keypoints)
     (image_data, new_keypoints) = rotate_image(image_data, corner_keypoints)

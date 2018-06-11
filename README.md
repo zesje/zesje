@@ -17,6 +17,16 @@ We will keep the Python dependencies in a virtual environment:
     source venv/bin/activate
     pip install -r requirements.txt
     
+Native dependencies:
+
+Mac OS X:
+
+    brew install libdmtx
+
+Linux:
+
+    sudo apt install libdmtx0a
+
 ### Adding dependencies
 
 #### Server-side

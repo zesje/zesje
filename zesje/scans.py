@@ -13,6 +13,7 @@ import numpy as np
 import PyPDF2
 from PIL import Image
 from pylibdmtx import pylibdmtx
+from weighted_levenshtein import lev
 
 
 from .database import db, Scan, Exam, Problem, Page, Student, Submission, Solution
@@ -611,6 +612,35 @@ def check_corner_keypoints(image_array, keypoints):
                 checklist[index] = True
 
 
-def fuzzy_match_student_number(detected_number):
-    with orm.db_session:
-        student_number_list = orm.select(s.id for s in Student)[:]
+def fuzzy_match_student_number(student_list, detected_number):
+
+    result = detected_number
+
+    if(len(student_list) > 0):
+
+        substitute_costs = np.ones((128, 128), dtype=np.float64)
+        other_costs = np.full((128), 100, dtype=np.float64)
+        digitcombs = list(itertools.combinations(range(0, 10), 2))
+        for (a, b) in digitcombs:
+            cost = abs(b-a)
+            stra = str(a)
+            strb = str(b)
+            substitute_costs[ord(stra), ord(strb)] = cost
+            substitute_costs[ord(strb), ord(stra)] = cost
+
+        costs = []
+        detected_str = str(detected_number)
+
+        for student_id in student_list:
+
+            student_str = str(student_id)
+
+            costs.append((student_id, lev(detected_str, student_str,
+                                          insert_costs=other_costs,
+                                          delete_costs=other_costs,
+                                          substitute_costs=substitute_costs)))
+        costs.sort(key=lambda x: x[1], reverse=True)
+        lowest_cost = costs.pop()
+        result = lowest_cost[0]
+
+    return result

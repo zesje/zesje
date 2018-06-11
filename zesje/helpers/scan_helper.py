@@ -1,4 +1,5 @@
 import os
+import platform
 from collections import namedtuple, ChainMap
 import functools
 import itertools
@@ -275,8 +276,14 @@ def decode_barcode(image, exam_config):
             # we shouldn't read multiple codes
             raise
         try:
-            proper_data = decode_raw_datamatrix(results[0].data)
-            token, copy, page = proper_data.split('/')
+            data = results[0].data
+            #  See https://github.com/NaturalHistoryMuseum/pylibdmtx/issues/24
+            if 'Darwin' == platform.system():
+                data = decode_raw_datamatrix(data)
+            else:
+                data = data.decode('utf-8')
+
+            token, copy, page = data.split('/')
             copy = int(copy)
             page = int(page)
         except ValueError:

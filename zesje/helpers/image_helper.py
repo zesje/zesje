@@ -196,11 +196,13 @@ def find_orientation_bar(image_data):
     bin_im[round(0.125 * h):round(0.875 * h),
            round(0.125 * w):round(0.875*w)] = 255
 
+    min_bar_size = (h * w * 0.00025)
+
     # Detect objects which look like straight lines
     params = cv2.SimpleBlobDetector_Params()
     params.filterByArea = True
-    params.minArea = 1000
-    params.maxArea = 2000
+    params.minArea = min_bar_size
+    params.maxArea = min_bar_size * 2
     params.filterByCircularity = True
     params.minCircularity = 0
     params.maxCircularity = 0.1

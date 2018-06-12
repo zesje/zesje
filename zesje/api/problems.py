@@ -61,7 +61,7 @@ class Problems(Resource):
             }
 
     put_parser = reqparse.RequestParser()
-    put_parser.add_argument('name', type=str, required=True, location='form')
+    put_parser.add_argument('name', type=str, required=True)
 
     @orm.db_session
     def put(self, problem_id, attr):

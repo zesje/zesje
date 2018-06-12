@@ -139,10 +139,14 @@ class Exams extends React.Component {
     }
 
     Pager = (props) => {
+        const isDisabled = props.numPages == null
+        const pageNum = isDisabled ? '_' : props.page + 1
+        const numPages = isDisabled ? '_' : props.numPages
         return (
             <div className='field has-addons is-mobile'>
                 <div className='control'>
                     <button
+                        disabled={isDisabled}
                         type='submit'
                         className='button is-link is-rounded'
                         onClick={() => props.setPage(props.page - 1)}
@@ -152,11 +156,12 @@ class Exams extends React.Component {
                 </div>
                 <div className='control'>
                     <div className='field-text is-rounded has-text-centered is-link'>
-                        {'Page ' + (props.page + 1) + ' of ' + props.numPages}
+                        {'Page ' + pageNum + ' of ' + numPages}
                     </div>
                 </div>
                 <div className='control'>
                     <button
+                        disabled={isDisabled}
                         type='submit'
                         className='button is-link is-rounded'
                         onClick={() => props.setPage(props.page + 1)}

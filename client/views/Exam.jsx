@@ -92,6 +92,7 @@ class Exams extends React.Component {
     renderContent = (action) => {
         switch (action) {
             case 'preview':
+            case 'export':
                 return (
                     <GeneratedExamPreview
                         examID={this.state.examID}
@@ -99,8 +100,6 @@ class Exams extends React.Component {
                         onPDFLoad={this.onPDFLoad}
                     />
                 )
-            case 'export':
-                return <GeneratedExamDownload examID={this.state.examID} />
             case 'edit':
                 return (
                     <ExamEditor

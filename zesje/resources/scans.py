@@ -82,7 +82,7 @@ class Scans(Resource):
         # Because sharing a database connection with a subprocess is dangerous,
         # we use the slower "spawn" method that fires up a new process instead
         # of forking.
-        args = (scan.id, app.config['DATA_DIRECTORY'])
+        args = (scan.id, app.config)
         ctx = multiprocessing.get_context('spawn')
         ctx.Process(target=scan_helper.process_pdf, args=args).start()
 

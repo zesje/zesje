@@ -1,4 +1,4 @@
-from flask import abort, Response
+from flask import abort, Response, current_app as app
 from pony import orm
 import numpy as np
 import cv2
@@ -38,12 +38,11 @@ def get(exam_id, submission_id):
         if widget.name == 'student_id_widget'
     )
 
-    #  TODO: fix hardcoding width/height
     widget_area = np.asarray([
         student_id_widget.y,  # top
-        student_id_widget.y + 181,  # bottom
+        student_id_widget.y + app.config.get('ID_GRID_HEIGHT', 181),  # bottom
         student_id_widget.x,  # left
-        student_id_widget.x + 313,  # right
+        student_id_widget.x + app.config.get('ID_GRID_WIDTH', 313),  # right
     ])
 
     # TODO: use points as base unit

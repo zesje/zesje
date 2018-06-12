@@ -28,7 +28,7 @@ ExamMetadata = namedtuple('ExamMetadata',
                           ['token', 'barcode_area', 'student_id_widget_area', 'problem_ids'])
 
 
-def process_pdf(scan_id, data_directory):
+def process_pdf(scan_id, app_config):
     """Process a PDF, recording progress to a database
 
     This *must* be called from a subprocess of the
@@ -39,10 +39,11 @@ def process_pdf(scan_id, data_directory):
     ----------
     scan_id : int
         The ID in the database of the Scan to process
-    data_directory : str
-        The absolute path to the data directory on disk
+    app_config : obj
+        The Flask app config
     """
 
+    data_directory = app_config.get('DATA_DIRECTORY', 'data')
     # Ensure we are not inheriting a bound database, which is dangerous and
     # might be locked.
     db.bind('sqlite', os.path.join(data_directory, 'course.sqlite'))
@@ -63,17 +64,17 @@ def process_pdf(scan_id, data_directory):
             student_id_widget = next(
                 widget
                 for widget
-                in pdf.exam.widgets
+                in scan.exam.widgets
                 if widget.name == 'student_id_widget'
             )
             barcode_widget = next(
                 widget
                 for widget
-                in pdf.exam.widgets
+                in scan.exam.widgets
                 if widget.name == 'barcode_widget'
             )
             exam_config = ExamMetadata(
-                token=pdf.exam.token,
+                token=scan.exam.token,
                 barcode_area=[
                     max(0, barcode_widget.y),
                     max(0, barcode_widget.y + 50),
@@ -82,12 +83,12 @@ def process_pdf(scan_id, data_directory):
                 ],
                 student_id_widget_area=[
                     student_id_widget.y,  # top
-                    student_id_widget.y + 181,  # bottom
+                    student_id_widget.y + app_config.get('ID_GRID_HEIGHT', 181),  # bottom
                     student_id_widget.x,  # left
-                    student_id_widget.x + 313,  # right
+                    student_id_widget.x + app_config.get('ID_GRID_WIDTH', 313),  # right
                 ],
                 problem_ids=[
-                    problem.id for problem in pdf.exam.problems
+                    problem.id for problem in scan.exam.problems
                 ]
             )
         except Exception as e:

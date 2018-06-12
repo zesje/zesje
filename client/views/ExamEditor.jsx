@@ -167,7 +167,8 @@ class ExamEditor extends React.Component {
     }
 
     renderWidgets = () => {
-        if (this.props.widgets) {
+        // Only render when numPage is set
+        if (this.props.numPages !== null && this.props.widgets) {
             const widgets = this.props.widgets.filter(widget => {
                 if (widget.problem) {
                     return widget.problem.page == this.props.page

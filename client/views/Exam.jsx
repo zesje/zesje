@@ -12,7 +12,7 @@ class Exams extends React.Component {
 
     state = {
         examID: null,
-        page: null,
+        page: 0,
         numPages: null,
         selectedWidgetId: null,
         widgets: {},
@@ -101,6 +101,7 @@ class Exams extends React.Component {
                         widgets={this.state.widgets}
                         examID={this.state.examID}
                         page={this.state.page}
+                        numPages={this.state.numPages}
                         onPDFLoad={this.onPDFLoad}
                         updateWidget={this.updateWidget}
                         deleteWidget={this.deleteWidget}

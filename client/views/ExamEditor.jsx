@@ -4,6 +4,7 @@ import barcodeExampleImage from '../components/barcode_example.png'
 import barcodeExampleImageSize from '!image-dimensions-loader!../components/barcode_example.png'
 import studentIdExampleImage from '../components/student_id_example.png'
 import studentIdExampleImageSize from '!image-dimensions-loader!../components/student_id_example.png'
+import EmptyPDF from '../components/EmptyPDF.jsx'
 
 import ResizeAndDrag from 'react-rnd'
 
@@ -301,6 +302,8 @@ class ExamEditor extends React.Component {
                 <Document
                     file={this.getPDFUrl()}
                     onLoadSuccess={this.props.onPDFLoad}
+                    loading={<EmptyPDF />}
+                    noData={<EmptyPDF />}
                 >
                     <Page
                         renderAnnotations={false}

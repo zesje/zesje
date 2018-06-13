@@ -137,7 +137,8 @@ class Exams(Resource):
                     'x': widget.x,
                     'y': widget.y,
                 } for widget in exam.widgets.order_by(lambda w: w.id)
-            ]
+            ],
+            'finalized': exam.finalized,
         }
 
     post_parser = reqparse.RequestParser()

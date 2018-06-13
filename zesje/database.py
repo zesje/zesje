@@ -54,6 +54,7 @@ class Exam(db.Entity):
     problems = Set('Problem')
     scans = Set('Scan')
     widgets = Set('ExamWidget')
+    finalized = Required(bool, default=False)
 
 
 class Submission(db.Entity):

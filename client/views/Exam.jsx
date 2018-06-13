@@ -18,6 +18,7 @@ class Exams extends React.Component {
         numPages: null,
         selectedWidgetId: null,
         widgets: {},
+        previewing: false,
     }
 
     static getDerivedStateFromProps = (newProps, prevState) => {
@@ -91,49 +92,53 @@ class Exams extends React.Component {
         }))
     }
 
-    renderContent = (action) => {
-        switch (action) {
-            case 'preview':
-            case 'export':
-                return (
-                    <GeneratedExamPreview
-                        examID={this.state.examID}
-                        page={this.state.page}
-                        onPDFLoad={this.onPDFLoad}
-                    />
-                )
-            case 'edit':
-                return (
-                    <ExamEditor
-                        widgets={this.state.widgets}
-                        examID={this.state.examID}
-                        page={this.state.page}
-                        numPages={this.state.numPages}
-                        onPDFLoad={this.onPDFLoad}
-                        updateWidget={this.updateWidget}
-                        deleteWidget={this.deleteWidget}
-                        selectedWidgetId={this.state.selectedWidgetId}
-                        selectWidget={(widgetId) => {
-                            this.setState({
-                                selectedWidgetId: widgetId,
-                            })
-                        }}
-                        createNewWidget={(widgetData) => {
-                            this.setState((prevState) => {
-                                return {
-                                    selectedWidgetId: widgetData.id,
-                                    widgets: update(prevState.widgets, {
-                                        [widgetData.id]: {
-                                            $set: widgetData
-                                        }
-                                    })
-                                }
-                            })
-                        }}
-                    />
-                )
-            default:
-                return <div>Unsupported action</div>
+    renderContent = () => {
+        if (this.props.exam.finalized || this.state.previewing) {
+            return (
+                <GeneratedExamPreview
+                    examID={this.state.examID}
+                    page={this.state.page}
+                    onPDFLoad={this.onPDFLoad}
+                />
+            )
+        } else {
+            return (
+                <ExamEditor
+                    widgets={this.state.widgets}
+                    examID={this.state.examID}
+                    page={this.state.page}
+                    numPages={this.state.numPages}
+                    onPDFLoad={this.onPDFLoad}
+                    updateWidget={this.updateWidget}
+                    deleteWidget={this.deleteWidget}
+                    selectedWidgetId={this.state.selectedWidgetId}
+                    selectWidget={(widgetId) => {
+                        this.setState({
+                            selectedWidgetId: widgetId,
+                        })
+                    }}
+                    createNewWidget={(widgetData) => {
+                        this.setState((prevState) => {
+                            return {
+                                selectedWidgetId: prevState.widgets.length,
+                                widgets: update(prevState.widgets, {
+                                    $push: [widgetData]
+                                })
+                            }
+                        })
+                        this.setState((prevState) => {
+                            return {
+                                selectedWidgetId: widgetData.id,
+                                widgets: update(prevState.widgets, {
+                                    [widgetData.id]: {
+                                        $set: widgetData
+                                    }
+                                })
+                            }
+                        })
+                    }}
+                />
+            )
         }
     }
 
@@ -191,72 +196,64 @@ class Exams extends React.Component {
     }
 
     SidePanel = (props) => {
-        switch (props.action) {
-            case 'preview':
-                return (
-                    <this.PanelConfirm
-                        onYesClick={() => this.props.changeURL('/exams/' + this.props.examID + '/export')}
-                        onNoClick={() => this.props.changeURL('/exams/' + this.props.examID + '/edit')}
-                    />
-                )
-            case 'export':
-                return (
-                    <this.PanelGenerate/>
-                )
-            case 'edit': {
-                const selectedWidgetId = this.state.selectedWidgetId
-                let problem
-                let disabled
-                if (selectedWidgetId && this.state.widgets[selectedWidgetId]) {
-                    const widget = this.state.widgets[selectedWidgetId]
-                    if (widget.problem) {
-                        problem = widget.problem
-                        disabled = false
-                    } else {
-                        disabled = true
-                    }
+        if (this.props.exam.finalized) {
+            return (
+                <this.PanelGenerate />
+            )
+        } else if (this.state.previewing) {
+            return (
+                <this.PanelConfirm
+                    onYesClick={() => api.put('exams/' + props.examID + '/finalized', 'true').then(() => {
+                        this.props.updateExam(props.examID)
+                    })}
+                    onNoClick={() => this.setState({
+                        previewing: false,
+                    })}
+                />
+            )
+        } else {
+            const selectedWidgetId = this.state.selectedWidgetId
+            let problem
+            let disabled
+            if (this.state.selectedWidgetId && this.state.widgets[this.state.selectedWidgetId]) {
+                const widget = this.state.widgets[this.state.selectedWidgetId]
+                if (widget.problem) {
+                    problem = widget.problem
+                    disabled = false
                 } else {
                     disabled = true
                 }
-                return (
-                    <React.Fragment>
-                        <this.PanelEdit
-                            disabled={disabled}
-                            onDeleteClick={() => console.log('onDelete')}
-                            problem={problem}
-                            changeProblemName={(newName) => {
-                                this.setState(prevState => ({
-                                    widgets: update(prevState.widgets, {
-                                        [selectedWidgetId]: {
-                                            problem: {
-                                                name: {
-                                                    $set: newName
-                                                }
+            } else {
+                // no selection
+                disabled = true
+            }
+            return (
+                <React.Fragment>
+                    <this.PanelEdit
+                        disabled={disabled}
+                        onDeleteClick={() => alert('Not implemented')}
+                        problem={problem}
+                        changeProblemName={newName => {
+                            this.setState(prevState => ({
+                                widgets: update(prevState.widgets, {
+                                    [selectedWidgetId]: {
+                                        problem: {
+                                            name: {
+                                                $set: newName
                                             }
                                         }
-                                    })
-                                }))
-                            }}
-                            saveProblemName={(newName) => {
-                                api.put('problems/' + problem.id + '/name', {
-                                    name: newName
-                                }).then(() => {
-                                    // ok
-                                }).catch(err => {
-                                    console.log(err)
-                                    // update to try and get a consistent state
-                                    this.updateExam()
+                                    }
                                 })
-                            }}
-                        />
-                        <this.PanelExamActions
-                            onFinalizeClicked={() => this.props.changeURL('/exams/' + this.props.examID + '/preview')}
-                        />
-                    </React.Fragment>
-                )
-            }
-            default:
-                return <div>Unsupported action</div>
+                            }))
+                        }}
+                    />
+                    <this.PanelExamActions
+                        onFinalizeClicked={() => this.setState({
+                            previewing: true,
+                        })}
+                    />
+                </React.Fragment>
+            )
         }
     }
 
@@ -419,10 +416,10 @@ class Exams extends React.Component {
                                 numPages={this.state.numPages}
                                 setPage={this.setPage}
                             />
-                            <this.SidePanel action={this.props.action} />
+                            <this.SidePanel examID={this.state.examID} />
                         </div>
                         <div className='column is-narrow editor-content' >
-                            {this.renderContent(this.props.action)}
+                            {this.renderContent()}
                         </div>
                     </div>
                 </div>

@@ -5,6 +5,8 @@ import './Exam.css'
 import GeneratedExamPreview from '../components/GeneratedExamPreview.jsx'
 import ExamEditor from './ExamEditor.jsx'
 import update from 'immutability-helper'
+import ReactMarkdown from 'react-markdown';
+import ExamFinalizeMarkdown from './ExamFinalize.md'
 
 import * as api from '../api.jsx'
 
@@ -328,10 +330,11 @@ class Exams extends React.Component {
     PanelConfirm = (props) => {
         return (
             <nav className='panel'>
-                <div className='panel-block'>
-                    <div className='field'>
-                        <label className='label'>Are you sure?</label>
-                    </div>
+                <div className='content'>
+                    <ReactMarkdown source={ExamFinalizeMarkdown} />
+                </div>
+                <div className='panel-heading'>
+                    <label className='label'>Are you sure?</label>
                 </div>
                 <div className='panel-block'>
                     <div className='field has-addons'>

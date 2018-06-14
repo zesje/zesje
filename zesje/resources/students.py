@@ -1,7 +1,10 @@
 from flask_restful import Resource, reqparse
 from pony import orm
+from werkzeug.datastructures import FileStorage
+import pandas as pd, io
 
 from ..models import Student
+
 
 class Students(Resource):
     """Getting a list of students."""
@@ -37,7 +40,6 @@ class Students(Resource):
                 'email': s.email,
             }
 
-
         return [
             {
                 'id': s.id,
@@ -47,7 +49,7 @@ class Students(Resource):
             }
             for s in Student.select()
         ]
-    
+
     put_parser = reqparse.RequestParser()
     put_parser.add_argument('studentID', type=int, required=True)
     put_parser.add_argument('firstName', type=str, required=True)
@@ -85,20 +87,56 @@ class Students(Resource):
 
         student = Student.get(id=args.studentID)
         if not student:
-            student = Student(id = args.studentID,
-                                first_name = args.firstName,
-                                last_name = args.lastName,
-                                email = args.email or None)
+            student = Student(id=args.studentID,
+                              first_name=args.firstName,
+                              last_name=args.lastName,
+                              email=args.email or None)
         else:
-            student.set(id = args.studentID,
-                                first_name = args.firstName,
-                                last_name = args.lastName,
-                                email = args.email or None)
+            student.set(id=args.studentID,
+                        first_name=args.firstName,
+                        last_name=args.lastName,
+                        email=args.email or None)
         orm.commit()
 
-        return  {
-                'studentID': student.id,
-                "firstName": student.first_name,
-                "lastName": student.last_name,
-                "email": student.email
-            }
+        return {
+            'studentID': student.id,
+            "firstName": student.first_name,
+            "lastName": student.last_name,
+            "email": student.email
+        }
+
+    post_parser = reqparse.RequestParser()
+    post_parser.add_argument('csv', type=FileStorage, required=True,
+                             location='files')
+    @orm.db_session
+    def post(self):
+        """Upload a PDF
+
+        Parameters
+        ----------
+        csv : FileStorage
+
+        Returns
+        -------
+        'true' is succesfull
+
+        """
+        args = self.post_parser.parse_args()
+        if args['csv'].mimetype != 'text/csv':
+            return dict(message='Uploaded file is not CSV'), 400
+
+        df = pd.read_csv(io.BytesIO(args['csv'].read()))
+
+        for index, row in df.iterrows():
+            student = Student.get(id=row['OrgDefinedId'][1:])
+            if not student:
+                student = Student(id=row['OrgDefinedId'][1:],
+                        first_name=row['First Name'],
+                        last_name=row['Last Name'],
+                        email=row['Email'] or None)
+            else:
+                student.set(id=row['OrgDefinedId'][1:],
+                            first_name=row['First Name'],
+                            last_name=row['Last Name'],
+                            email=row['Email'] or None)
+        return True

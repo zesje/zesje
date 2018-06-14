@@ -142,8 +142,14 @@ def find_corner_marker_keypoints(image_data):
         image_patch = gray_im[topleft[1]:bottomright[1],
                               topleft[0]:bottomright[0]]
 
+        dpi = guess_dpi(np.array(image_data))
+        block_size = int(round(dpi / 60))
+        if block_size % 2 == 0:
+            block_size += 1
+
         # Find the best corner
-        corners = cv2.goodFeaturesToTrack(image_patch, 1, 0.01, 10)
+        corners = cv2.goodFeaturesToTrack(image_patch, 1, 0.01, 10,
+                                          blockSize=block_size)
         corners = np.int0(corners)
 
         # Change the coordinates of the corner to be respective of the origin

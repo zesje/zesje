@@ -23,6 +23,10 @@ const Exam = Loadable({
     loader: () => import('./views/Exam.jsx'),
     loading: Loading
   });
+const Submissions = Loadable({
+  loader: () => import('./views/Submissions.jsx'),
+  loading: Loading
+});
 const Students = Loadable({
   loader: () => import('./views/Students.jsx'),
   loading: Loading
@@ -124,9 +128,15 @@ class App extends React.Component {
                                 urlID={match.params.examID}
                                 action={match.params.action || 'edit' }
                                 updateExam={this.updateExam}
-                                updateSubmission={this.updateSubmission}/> }/>
+                                updateSubmission={this.updateSubmission} /> }/>
                         <Route path="/exams" render={({history}) =>
                             <AddExam updateExamList={() => this.menu.current.updateExamList()} changeURL={history.push} /> }/>
+                        <Route path="/submissions/:examID" render={({match}) =>
+                            <Submissions
+                                exam={exam}
+                                urlID={match.params.examID}
+                                updateExam={this.updateExam}
+                                updateSubmission={this.updateSubmission} /> }/>
                         <Route path="/students" render={() =>
                             <Students exam={exam} updateSubmission={this.updateSubmission}/> }/>
                         <Route path="/grade" render={() => (

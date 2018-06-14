@@ -3,7 +3,7 @@ from flask_restful import Api
 
 from .resources.graders import Graders
 from .resources.exams import Exams, ExamSource, ExamGeneratedPdfs
-from .resources.pdfs import Pdfs
+from .resources.scans import Scans
 from .resources.students import Students
 from .resources.submissions import Submissions
 from .resources import signature
@@ -32,7 +32,7 @@ api.add_resource(ExamSource, '/exams/<int:exam_id>/source_pdf')
 api.add_resource(ExamGeneratedPdfs,
                  '/exams/<int:exam_id>/generated_pdfs',
                  '/exams/<int:exam_id>/generated_pdfs/<int:copy_num>')
-api.add_resource(Pdfs, '/pdfs/<int:exam_id>')
+api.add_resource(Scans, '/scans/<int:exam_id>')
 api.add_resource(Students, '/students', '/students/<int:student_id>')
 api.add_resource(Submissions,
                  '/submissions/<int:exam_id>',

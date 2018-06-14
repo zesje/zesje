@@ -5,6 +5,7 @@ pony
 Pillow
 opencv-python
 zbar-py
+pylibdmtx
 pyStrich
 numpy
 scipy

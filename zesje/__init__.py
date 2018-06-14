@@ -27,7 +27,7 @@ app.config.update(
 
 # These reference DATA_DIRECTORY, so they need to be in a separate update
 app.config.update(
-    PDF_DIRECTORY=os.path.join(app.config['DATA_DIRECTORY'], 'pdfs'),
+    SCAN_DIRECTORY=os.path.join(app.config['DATA_DIRECTORY'], 'scans'),
     DB_PATH=os.path.join(app.config['DATA_DIRECTORY'], 'course.sqlite'),
 )
 
@@ -37,7 +37,7 @@ def setup():
     auth.init_app(app)
 
     os.makedirs(app.config['DATA_DIRECTORY'], exist_ok=True)
-    os.makedirs(app.config['PDF_DIRECTORY'], exist_ok=True)
+    os.makedirs(app.config['SCAN_DIRECTORY'], exist_ok=True)
 
     db.bind('sqlite', app.config['DB_PATH'], create_db=True)
     db.generate_mapping(create_tables=True)

@@ -1,6 +1,6 @@
 import pytest
 import os
-from zesje.helpers import scan_helper
+from zesje.helpers import scan_helper, image_helper
 
 # Mocks
 
@@ -10,7 +10,7 @@ from zesje.helpers import scan_helper
 def mock_get_box_return_original(monkeypatch, datadir):
     def mock_return(image, widget, padding):
         return image
-    monkeypatch.setattr(scan_helper, 'get_box',
+    monkeypatch.setattr(image_helper, 'get_box',
                         mock_return)
 
 
@@ -21,16 +21,18 @@ def mock_get_box_return_original(monkeypatch, datadir):
 # More test data should be added. If done, maybe also consider increasing
 # the threshold in the assert.
 def test_get_studentnumber_precision(datadir, mock_get_box_return_original):
-    class MockWidget:
-        top = 0
-        bottom = 0
-        left = 0
-        right = 0
+    class MockExamConfig:
+        student_id_widget_area = [
+            0,
+            0,
+            0,
+            0,
+        ]
 
     im_names = os.listdir(os.path.join(datadir, 'studentnumbers'))
     for filename_full in im_names:
         im_path = os.path.join(datadir, 'studentnumbers', f'{filename_full}')
         filename_short, _ = os.path.splitext(filename_full)
         expected_number = int(filename_short)
-        detected_number = scan_helper.get_student_number(im_path, MockWidget)
+        detected_number = scan_helper.get_student_number(im_path, MockExamConfig)
         assert(expected_number == detected_number)

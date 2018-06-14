@@ -34,7 +34,7 @@ class Exams(Resource):
 
     @orm.db_session
     def _get_all(self):
-        """get list of uploaded exams and their yaml.
+        """get list of uploaded exams.
 
         Returns
         -------
@@ -70,10 +70,12 @@ class Exams(Resource):
             exam ID
         name : str
             exam name
-        submissions: int
-            Number of submissions
-        yaml : str
-            YAML config
+        submissions
+            list of submissions for this exam
+        problems
+            list of problems defined for this exam
+        widgets
+            list of widgets in this exam
         """
         exam = Exam[exam_id]
 

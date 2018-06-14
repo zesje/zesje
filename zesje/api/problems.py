@@ -24,6 +24,7 @@ class Problems(Resource):
         """Add a new problem.
 
         Will error if exam for given id does not exist
+        Will 403 if exam is finalized
 
         """
 
@@ -37,6 +38,8 @@ class Problems(Resource):
             msg = f"Exam with id {exam_id} doesn't exist"
             return dict(status=400, message=msg), 400
         else:
+            if exam.finalized:
+                return dict(status=403, message=f'Exam is finalized'), 403
             widget = ProblemWidget(
                 x=args['x'],
                 y=args['y'],
@@ -74,13 +77,18 @@ class Problems(Resource):
         attr: str
             the attribute (or property) to put to (only supports 'name' now)
 
-        Returns HTTP 200 on success
+        Returns
+            HTTP 200 on success
+            HTTP 403 if corresponding Exam is finalized
         """
 
         args = self.put_parser.parse_args()
 
         name = args['name']
         problem = Problem[problem_id]
+        if problem.exam.finalized:
+            return dict(status=403, message=f'Exam is finalized'), 403
+
         problem.name = name
 
         return dict(status=200, message="ok"), 200

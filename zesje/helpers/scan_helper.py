@@ -377,6 +377,20 @@ def shift_image(image_data, corner_keypoints):
     return Image.fromarray(shifted_image)
 
 
+def orient_image(image_data, keypoints):
+    """Orientates the image if the bar is detected on the upper side of
+       the image
+        """
+    image = np.array(image_data)
+    bar_keypoint = keypoints[0]
+    h, w, *_ = image.shape
+
+    if(bar_keypoint[1] < (h / 2)):
+        np.rot90(image, k=2)
+
+    return Image.fromarray(image)
+
+
 def get_student_number(image_path, widget):
     """Extract the student number from the image path with the scanned number.
 

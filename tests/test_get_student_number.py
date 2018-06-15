@@ -2,7 +2,7 @@ import os
 
 import pytest
 
-from zesje import scans, images
+from zesje import scans
 
 # Mocks
 
@@ -12,7 +12,7 @@ from zesje import scans, images
 def mock_get_box_return_original(monkeypatch, datadir):
     def mock_return(image, widget, padding):
         return image
-    monkeypatch.setattr(images, 'get_box', mock_return)
+    monkeypatch.setattr(scans, 'get_box', mock_return)
 
 
 # Tests

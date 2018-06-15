@@ -1,24 +1,23 @@
-import os
-import platform
-from collections import namedtuple, ChainMap
 import functools
 import itertools
-import argparse
-from io import BytesIO
-
-import numpy as np
-import pandas
-import cv2
-from pylibdmtx import pylibdmtx
 import math
-from PIL import Image
-import PyPDF2
+import os
+import platform
+from collections import namedtuple
+from io import BytesIO
 
 from pony import orm
 
-from .image_helper import guess_dpi, get_box
+import cv2
+import numpy as np
+import PyPDF2
+from PIL import Image
+from pylibdmtx import pylibdmtx
+
+
 from ..database import db, Scan, Exam, Problem, Page, Student, Submission, Solution
 from .datamatrix_helper import decode_raw_datamatrix
+from .image_helper import guess_dpi, get_box
 
 
 ExtractedBarcode = namedtuple('ExtractedBarcode',

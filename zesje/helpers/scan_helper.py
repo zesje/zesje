@@ -16,7 +16,7 @@ import PyPDF2
 
 from pony import orm
 
-from . import image_helper
+from .image_helper import guess_dpi, get_box
 from ..database import db, Scan, Exam, Problem, Page, Student, Submission, Solution
 from .datamatrix_helper import decode_raw_datamatrix
 
@@ -211,8 +211,8 @@ def process_page(output_dir, image_data, exam_config):
 
     image_array = np.array(image_data)
 
-    corner_keypoints = image_helper.find_corner_marker_keypoints(image_data)
-    image_helper.check_corner_keypoints(image_array, corner_keypoints)
+    corner_keypoints = find_corner_marker_keypoints(image_data)
+    check_corner_keypoints(image_array, corner_keypoints)
     (image_data, new_keypoints) = rotate_image(image_data, corner_keypoints)
     image_data = shift_image(image_data, new_keypoints)
 
@@ -267,7 +267,7 @@ def decode_barcode(image, exam_config):
 
     grayscale = np.asarray(image.convert(mode='L'))
 
-    image_crop = image_helper.get_box(grayscale, barcode_area_in, padding=0.3)
+    image_crop = get_box(grayscale, barcode_area_in, padding=0.3)
 
     results = pylibdmtx.decode(image_crop)
 
@@ -316,7 +316,7 @@ def rotate_image(image_data, corner_keypoints):
     # However warpaffine needs a positve angle if
     # you want to rotate it counterclockwise
     # So we invert the angle retrieved from calc_angle
-    angle_deg = -1 * image_helper.calc_angle(coords1, coords2)
+    angle_deg = -1 * calc_angle(coords1, coords2)
     angle_rad = math.radians(angle_deg)
 
     h, w, *_ = color_im.shape
@@ -407,7 +407,7 @@ def get_student_number(image_path, exam_config):
     image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
     # TODO: use points as base unit
     student_id_widget_area_in = np.asarray(exam_config.student_id_widget_area) / 72
-    image = image_helper.get_box(image, student_id_widget_area_in, padding=0.0)
+    image = get_box(image, student_id_widget_area_in, padding=0.0)
     _, thresholded = cv2.threshold(image, 150, 255, cv2.THRESH_BINARY)
     thresholded = cv2.bitwise_not(thresholded)
 
@@ -458,3 +458,152 @@ def get_student_number(image_path, exam_config):
 
     weights = np.array(weights).reshape(10, 7, order='F')
     return sum(((np.argmax(weights, axis=0)) % 10)[::-1] * 10**np.arange(7))
+
+
+def calc_angle(keyp1, keyp2):
+    """Calculates the angle of the line connecting two keypoints in an image
+    Calculates it with respect to the horizontal axis.
+
+    Parameters:
+    -----------
+    keyp1: Keypoint represented by a tuple in the form of (x,y) with
+    origin top left
+    keyp2: Keypoint represented by a tuple in the form of (x,y) with
+    origin top left
+
+    """
+    xdiff = math.fabs(keyp1[0] - keyp2[0])
+    ydiff = math.fabs(keyp2[1] - keyp1[1])
+
+    # Avoid division by zero, it is unknown however whether it is turned 90
+    # degrees to the left or 90 degrees to the right, therefore we return
+    if xdiff == 0:
+        return 90
+
+    if keyp1[0] < keyp2[0]:
+        if(keyp2[1] > keyp1[1]):
+            return -1 * math.degrees(math.atan(ydiff / xdiff))
+        else:
+            return math.degrees(math.atan(ydiff / xdiff))
+    else:
+        if(keyp1[1] > keyp2[1]):
+            return -1 * math.degrees(math.atan(ydiff / xdiff))
+        else:
+            return math.degrees(math.atan(ydiff / xdiff))
+
+
+def find_corner_marker_keypoints(image_data):
+    """Generates a list of OpenCV keypoints which resemble corner markers.
+    This is done using a SimpleBlobDetector
+
+    Parameters:
+    -----------
+    image_data: Source image
+
+    """
+    color_im = cv2.cvtColor(np.array(image_data), cv2.COLOR_RGB2BGR)
+    gray_im = cv2.cvtColor(color_im, cv2.COLOR_BGR2GRAY)
+    _, bin_im = cv2.threshold(gray_im, 150, 255, cv2.THRESH_BINARY)
+
+    h, w, *_ = color_im.shape
+
+    bin_im_inv = cv2.bitwise_not(bin_im)
+
+    im_floodfill = bin_im_inv.copy()
+
+    # Mask used for flood filling.
+    # Notice the size needs to be 2 pixels larger than the image for floodFill
+    # to function.
+    mask = np.zeros((h+2, w+2), np.uint8)
+
+    # Floodfill from point (0, 0)
+    cv2.floodFill(im_floodfill, mask, (0, 0), 255)
+
+    im_floodfill_inv = cv2.bitwise_not(im_floodfill)
+
+    # Combine the two images to get the original image but with all enclosed
+    # space completely black.
+    bin_im = ~(bin_im_inv | im_floodfill_inv)
+
+    # Filter out everything in the center of the image
+    bin_im[round(0.125 * h):round(0.875 * h),
+           round(0.125 * w):round(0.875 * w)] = 255
+
+    # Detect objects which look like corner markers
+    params = cv2.SimpleBlobDetector_Params()
+    params.filterByArea = True
+    params.minArea = 150
+    params.maxArea = 1500
+    params.filterByCircularity = True
+    params.minCircularity = 0
+    params.maxCircularity = 0.15
+    params.filterByConvexity = True
+    params.minConvexity = 0.15
+    params.maxConvexity = 0.3
+    params.filterByInertia = True
+    params.minInertiaRatio = 0.20
+    params.maxInertiaRatio = 0.50
+    params.filterByColor = False
+
+    detector = cv2.SimpleBlobDetector_create(params)
+    blob_keypoints = detector.detect(bin_im)
+
+    corner_keypoints = []
+
+    # For each blob keypoint, extract an image patch as a descriptor
+    for keyp in blob_keypoints:
+        pt_x, pt_y = keyp.pt[0], keyp.pt[1]
+        topleft = (int(round(pt_x - 0.75 * keyp.size)),
+                   int(round(pt_y - 0.75 * keyp.size)))
+        bottomright = (int(round(pt_x + 0.75 * keyp.size)),
+                       int(round(pt_y + 0.75 * keyp.size)))
+        image_patch = gray_im[topleft[1]:bottomright[1],
+                              topleft[0]:bottomright[0]]
+
+        dpi = guess_dpi(np.array(image_data))
+        block_size = int(round(dpi / 60))
+        if block_size % 2 == 0:
+            block_size += 1
+
+        # Find the best corner
+        corners = cv2.goodFeaturesToTrack(image_patch, 1, 0.01, 10,
+                                          blockSize=block_size)
+        corners = np.int0(corners)
+
+        # Change the coordinates of the corner to be respective of the origin
+        # of the original image, and not the image patch.
+        patch_x, patch_y = corners.ravel()
+        corner_x, corner_y = patch_x + topleft[0], patch_y + topleft[1]
+
+        corner_keypoints.append((corner_x, corner_y))
+
+    return corner_keypoints
+
+
+def check_corner_keypoints(image_array, keypoints):
+    """Checks whether the corner markers are valid.
+        1. Checks whether there is 3 or more corner markers
+        2. Checks whether there exist no 2 corner markers
+           in the same corner of the image.
+
+    Parameters:
+    -----------
+    image_array: source image
+    keypoints: list of tuples containing the coordinates of keypoints
+    """
+    if(len(keypoints) < 3 or len(keypoints) > 4):
+        raise RuntimeError('Incorrect amount of corner markers detected')
+
+    h, w, *_ = image_array.shape
+
+    checklist = [False, False, False, False]
+
+    for (x, y) in keypoints:
+            is_left_half = 2 * int(x < (w / 2))
+            is_top_half = 1 * int(y < (h / 2))
+            index = is_left_half + is_top_half
+            if(checklist[index]):
+                raise RuntimeError(("Found multiple corner markers"
+                                    "in the same corner"))
+            else:
+                checklist[index] = True

@@ -5,6 +5,7 @@ import barcodeExampleImageSize from '!image-dimensions-loader!../components/barc
 import studentIdExampleImage from '../components/student_id_example.png'
 import studentIdExampleImageSize from '!image-dimensions-loader!../components/student_id_example.png'
 import EmptyPDF from '../components/EmptyPDF.jsx'
+import PDFOverlay from '../components/PDFOverlay.jsx'
 
 import ResizeAndDrag from 'react-rnd'
 
@@ -311,6 +312,7 @@ class ExamEditor extends React.Component {
                         pageIndex={this.props.page}
                         onMouseDown={this.handleMouseDown} />
                 </Document>
+                <PDFOverlay />
                 {this.renderWidgets()}
                 {this.renderSelectionBox()}
             </div>

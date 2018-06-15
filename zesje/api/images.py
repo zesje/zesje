@@ -13,7 +13,7 @@ from ..database import Exam, Submission, Problem
 
 @orm.db_session
 def get(exam_id, problem_id, submission_id):
-    """get student signature for the given submission.
+    """get image for the given problem.
 
     Parameters
     ----------

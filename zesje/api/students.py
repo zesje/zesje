@@ -114,11 +114,16 @@ class Students(Resource):
 
     @orm.db_session
     def post(self):
-        """Upload a PDF
+        """Upload a CSV file containing students.
 
         Parameters
         ----------
         csv : FileStorage
+            The CSV file. It should have the following columns:
+             - "OrgDefinedId" (student id)
+             - "First Name"
+             - "Last Name"
+             - "Email" (optional)
 
         Returns
         -------

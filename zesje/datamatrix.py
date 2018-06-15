@@ -2,9 +2,11 @@
 def decode_raw_datamatrix(data_in):
     """
     Decode a raw datamatrix string returned by pylibdmtx.
-    Somehow for non-pure-ascii data (?) it doesn't decode the data on MacOS with
-    libdmtx 0.7.5. See https://github.com/NaturalHistoryMuseum/pylibdmtx/issues/24
+    Somehow for data containing the '/' character (and possibly in other cases?) it
+    doesn't decode the data on macOS with pylibdmtx 0.1.7 / libdmtx 0.7.5.
+    See https://github.com/NaturalHistoryMuseum/pylibdmtx/issues/24
     Luckily our encoded data isn't too complicated and this function is enough
+
     Based on https://en.wikipedia.org/wiki/Data_Matrix#Encoding
     """
 

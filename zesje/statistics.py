@@ -4,7 +4,7 @@ from pony import orm
 
 import pandas
 
-from ..database import Exam, Problem, Solution, Student
+from .database import Exam, Problem, Solution, Student
 
 
 def solution_data(exam_id, student_id):

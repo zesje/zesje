@@ -10,8 +10,7 @@ from werkzeug.datastructures import FileStorage
 
 from pony import orm
 
-from ..helpers.pdf_generation_helper import generate_pdfs, \
-    output_pdf_filename_format, join_pdfs
+from ..pdf_generation import generate_pdfs, output_pdf_filename_format, join_pdfs
 
 
 from ..database import db, Exam, ExamWidget

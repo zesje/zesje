@@ -8,7 +8,7 @@ import matplotlib
 import numpy as np
 import pandas
 
-from ..helpers.db_helper import full_exam_data
+from ..statistics import full_exam_data
 from ..database import Exam
 
 matplotlib.use('agg')

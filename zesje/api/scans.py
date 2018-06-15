@@ -7,7 +7,7 @@ from werkzeug.datastructures import FileStorage
 
 from pony import orm
 
-from ..helpers import scan_helper
+from ..scans import process_pdf
 from ..database import Exam, Scan
 
 
@@ -84,7 +84,7 @@ class Scans(Resource):
         # of forking.
         args = (scan.id, app.config)
         ctx = multiprocessing.get_context('spawn')
-        ctx.Process(target=scan_helper.process_pdf, args=args).start()
+        ctx.Process(target=process_pdf, args=args).start()
 
         return {
             'id': scan.id,

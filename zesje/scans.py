@@ -15,9 +15,9 @@ from PIL import Image
 from pylibdmtx import pylibdmtx
 
 
-from ..database import db, Scan, Exam, Problem, Page, Student, Submission, Solution
-from .datamatrix_helper import decode_raw_datamatrix
-from .image_helper import guess_dpi, get_box
+from .database import db, Scan, Exam, Problem, Page, Student, Submission, Solution
+from .datamatrix import decode_raw_datamatrix
+from .images import guess_dpi, get_box
 
 
 ExtractedBarcode = namedtuple('ExtractedBarcode',

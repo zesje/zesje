@@ -7,7 +7,7 @@ from pony import orm
 import numpy as np
 import cv2
 
-from ..helpers import image_helper
+from ..images import get_box
 from ..database import Exam, Submission, Problem
 
 
@@ -50,10 +50,6 @@ def get(exam_id, problem_id, submission_id):
 
     page_im = cv2.imread(page_path)
 
-    raw_image = image_helper.get_box(
-        page_im,
-        widget_area_in,
-        padding=0.3,
-    )
+    raw_image = get_box(page_im, widget_area_in, padding=0.3)
     image_encoded = cv2.imencode(".jpg", raw_image)[1].tostring()
     return Response(image_encoded, 200, mimetype='image/jpeg')

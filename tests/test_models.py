@@ -2,7 +2,7 @@ import random
 
 import pytest
 
-from zesje.models import Exam, _generate_exam_token
+from zesje.database import Exam, _generate_exam_token
 
 
 # I couldn't figure out how to make the mock return True on the first call and False on the second call. Therefore,

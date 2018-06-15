@@ -1,9 +1,8 @@
 import pytest
 from PIL import Image
 import os
-from pylibdmtx.pylibdmtx import decode
-from zesje.helpers.scan_helper import decode_barcode, ExamMetadata, ExtractedBarcode
-from zesje.helpers import image_helper
+from zesje.scans import decode_barcode, ExamMetadata, ExtractedBarcode
+from zesje import images
 
 
 # Returns the original image instead of retrieving a box from it
@@ -11,8 +10,7 @@ from zesje.helpers import image_helper
 def mock_get_box_return_original(monkeypatch, datadir):
     def mock_return(image, widget, padding):
         return image
-    monkeypatch.setattr(image_helper, 'get_box',
-                        mock_return)
+    monkeypatch.setattr(images, 'get_box', mock_return)
 
 
 # Tests whether the output of calc angle is correct

@@ -294,12 +294,6 @@ def decode_barcode(image, exam_config):
         return
 
 
-def guess_dpi(image_array):
-    h, *_ = image_array.shape
-    resolutions = np.array([1200, 600, 300, 200, 150, 120, 100, 75, 60, 50, 40])
-    return resolutions[np.argmin(abs(resolutions - 25.4 * h / 297))]
-
-
 def rotate_image(image_data, corner_keypoints):
     """Rotate a PIL image according to the rotation of the corner markers."""
 

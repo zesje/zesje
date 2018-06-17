@@ -110,7 +110,7 @@ class Students(Resource):
                              location='files')
     @orm.db_session
     def post(self):
-        """Upload a PDF
+        """upload CSV and add/update the students
 
         Parameters
         ----------

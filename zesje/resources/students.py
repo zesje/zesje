@@ -1,7 +1,8 @@
 from flask_restful import Resource, reqparse
 from pony import orm
 from werkzeug.datastructures import FileStorage
-import pandas as pd, io
+import pandas as pd
+from io import BytesIO
 
 from ..models import Student
 
@@ -125,7 +126,7 @@ class Students(Resource):
         if args['csv'].mimetype != 'text/csv':
             return dict(message='Uploaded file is not CSV'), 400
 
-        df = pd.read_csv(io.BytesIO(args['csv'].read()))
+        df = pd.read_csv(BytesIO(args['csv'].read()))
 
         for index, row in df.iterrows():
             student = Student.get(id=row['OrgDefinedId'][1:])

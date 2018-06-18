@@ -60,7 +60,6 @@ class ExamEditor extends React.Component {
         }
         this.props.selectWidget(null)
         this.setState({
-            selectedWidgetIndex: null,
             mouseDown: true,
             selectionStartPoint: this.getCoordinatesForEvent(e)
         })

@@ -67,7 +67,7 @@ class Exams extends React.Component {
                     .then(() => {
                         this.setState((prevState) => {
                             return {
-                                selectedWidgetIndex: null,
+                                selectedWidgetId: null,
                                 widgets: update(prevState.widgets, {
                                     $splice: [[index, 1]]
                                 })
@@ -119,18 +119,9 @@ class Exams extends React.Component {
                             })
                         }}
                         createNewWidget={(widgetData) => {
-
                             this.setState((prevState) => {
                                 return {
-                                    selectedWidgetIndex: prevState.widgets.length,
-                                    widgets: update(prevState.widgets, {
-                                        $push: [widgetData]
-                                    })
-                                }
-                            })
-                            this.setState((prevState) => {
-                                return {
-                                    selectedWidgetIndex: widgetData.id,
+                                    selectedWidgetId: widgetData.id,
                                     widgets: update(prevState.widgets, {
                                         [widgetData.id]: {
                                             $set: widgetData

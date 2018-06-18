@@ -1,10 +1,12 @@
-import pytest
-import cv2
-import PIL
-import os
 import math
+import os
+
+import cv2
 import numpy as np
-from zesje.helpers import image_helper
+import PIL
+import pytest
+
+from zesje import scans
 
 
 # Helper functions
@@ -34,8 +36,7 @@ def generate_binary_image(name, datadir):
     ids=['Same horizontal line', 'Same vertical line', 'Negative angle',
          'Positive angle'])
 def test_calc_angle(test_input1, test_input2, expected):
-    assert math.isclose(image_helper.calc_angle(test_input1, test_input2),
-                        expected, abs_tol=0.1)
+    assert math.isclose(scans.calc_angle(test_input1, test_input2), expected, abs_tol=0.1)
 
 
 # Tests whether the amount of cornermakers is enough to calculate the angle and
@@ -47,7 +48,7 @@ def test_calc_angle(test_input1, test_input2, expected):
                             os.path.join('tests', 'data', 'scanned_pdfs')))
 def test_detect_enough_cornermarkers(name, datadir):
     bin_im = generate_binary_image(name, datadir)
-    keypoints = image_helper.find_corner_marker_keypoints(bin_im)
+    keypoints = scans.find_corner_marker_keypoints(bin_im)
     assert(len(keypoints) >= 2 & len(keypoints) <= 4)
 
 
@@ -62,7 +63,7 @@ def test_detect_enough_cornermarkers(name, datadir):
                             os.path.join('tests', 'data', 'scanned_pdfs')))
 def test_detect_valid_cornermarkers(name, datadir):
     bin_im = generate_binary_image(name, datadir)
-    keypoints = image_helper.find_corner_marker_keypoints(bin_im)
+    keypoints = scans.find_corner_marker_keypoints(bin_im)
 
     h, w, *_ = bin_im.shape
     (xmm, ymm) = (210, 297)

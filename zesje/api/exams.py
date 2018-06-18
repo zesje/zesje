@@ -1,8 +1,8 @@
-import os
+import datetime
 import glob
+import os
 import zipfile
 from io import BytesIO
-import datetime
 
 from flask import current_app as app, abort, send_file
 from flask_restful import Resource, reqparse
@@ -10,11 +10,10 @@ from werkzeug.datastructures import FileStorage
 
 from pony import orm
 
-from ..helpers.pdf_generation_helper import generate_pdfs, \
-    output_pdf_filename_format, join_pdfs
+from ..pdf_generation import generate_pdfs, output_pdf_filename_format, join_pdfs
 
 
-from ..models import db, Exam, ExamWidget
+from ..database import db, Exam, ExamWidget
 
 
 def _get_exam_dir(exam_id):
@@ -34,7 +33,7 @@ class Exams(Resource):
 
     @orm.db_session
     def _get_all(self):
-        """get list of uploaded exams and their yaml.
+        """get list of uploaded exams.
 
         Returns
         -------
@@ -70,30 +69,29 @@ class Exams(Resource):
             exam ID
         name : str
             exam name
-        submissions: int
-            Number of submissions
-        yaml : str
-            YAML config
+        submissions
+            list of submissions for this exam
+        problems
+            list of problems defined for this exam
+        widgets
+            list of widgets in this exam
         """
         exam = Exam[exam_id]
 
         return {
             'id': exam_id,
             'name': exam.name,
-            'submissions':
-            [
+            'submissions': [
                 {
                     'id': sub.copy_number,
-                    'student':
-                        {
+                    'student': {
                             'id': sub.student.id,
                             'firstName': sub.student.first_name,
                             'lastName': sub.student.last_name,
                             'email': sub.student.email
-                        } if sub.student else None,
+                    } if sub.student else None,
                     'validated': sub.signature_validated,
-                    'problems':
-                    [
+                    'problems': [
                         {
                             'id': sol.problem.id,
                             'graded_by': sol.graded_by,

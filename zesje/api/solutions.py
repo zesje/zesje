@@ -1,10 +1,12 @@
 """ REST api for solutions """
 
-from flask_restful import Resource, reqparse
 from datetime import datetime
+
+from flask_restful import Resource, reqparse
+
 from pony import orm
 
-from ..models import Exam, Submission, Problem, Solution, FeedbackOption
+from ..database import Exam, Submission, Problem, Solution, FeedbackOption
 
 
 class Solutions(Resource):

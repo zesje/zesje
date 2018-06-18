@@ -1,9 +1,9 @@
 import os
 from io import BytesIO
-from flask import abort, Response, current_app as app
-from pony import orm
 
-from ..helpers import db_helper
+from flask import abort, Response, current_app as app
+
+from ..statistics import full_exam_data
 
 
 def full():
@@ -37,7 +37,7 @@ def exam(file_format, exam_id):
     exam.pd : pickled pandas dataframe
     """
     try:
-        data = db_helper.full_exam_data(exam_id)
+        data = full_exam_data(exam_id)
     except KeyError:
         abort(404)
     serialized = BytesIO()
@@ -45,7 +45,7 @@ def exam(file_format, exam_id):
     if file_format == 'dataframe':
         data.to_pickle(serialized)
     elif file_format == 'xlsx':
-        data = data.iloc[:, data.columns.get_level_values(1)=='total']
+        data = data.iloc[:, data.columns.get_level_values(1) == 'total']
         data.columns = data.columns.get_level_values(0)
         data.to_excel(serialized)
     elif file_format == 'xlsx_detailed':

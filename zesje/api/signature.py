@@ -1,10 +1,11 @@
 from flask import abort, Response, current_app as app
+
 from pony import orm
 import numpy as np
 import cv2
 
-from ..helpers import image_helper
-from ..models import Exam, Submission
+from ..images import get_box
+from ..database import Exam, Submission
 
 
 @orm.db_session
@@ -53,10 +54,6 @@ def get(exam_id, submission_id):
     first_page_path = next(p.path for p in sub.pages if 'page00.jpg' in p.path)
     first_page_im = cv2.imread(first_page_path)
 
-    raw_image = image_helper.get_box(
-        first_page_im,
-        widget_area_in,
-        padding=0.3,
-    )
+    raw_image = get_box(first_page_im, widget_area_in, padding=0.3)
     image_encoded = cv2.imencode(".jpg", raw_image)[1].tostring()
     return Response(image_encoded, 200, mimetype='image/jpeg')

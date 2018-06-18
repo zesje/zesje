@@ -1,6 +1,8 @@
-import pytest
 import os
-from zesje.helpers import scan_helper, image_helper
+
+import pytest
+
+from zesje import scans
 
 # Mocks
 
@@ -10,8 +12,7 @@ from zesje.helpers import scan_helper, image_helper
 def mock_get_box_return_original(monkeypatch, datadir):
     def mock_return(image, widget, padding):
         return image
-    monkeypatch.setattr(image_helper, 'get_box',
-                        mock_return)
+    monkeypatch.setattr(scans, 'get_box', mock_return)
 
 
 # Tests
@@ -34,5 +35,5 @@ def test_get_studentnumber_precision(datadir, mock_get_box_return_original):
         im_path = os.path.join(datadir, 'studentnumbers', f'{filename_full}')
         filename_short, _ = os.path.splitext(filename_full)
         expected_number = int(filename_short)
-        detected_number = scan_helper.get_student_number(im_path, MockExamConfig)
+        detected_number = scans.get_student_number(im_path, MockExamConfig)
         assert(expected_number == detected_number)

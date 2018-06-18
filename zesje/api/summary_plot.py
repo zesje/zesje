@@ -1,18 +1,20 @@
-import os
 from io import BytesIO
-from flask import abort, Response, current_app as app
+
+from flask import abort, Response
+
 from pony import orm
 
-import pandas
-import numpy as np
-
-from ..models import Exam, Submission
-from ..helpers.db_helper import full_exam_data
-
 import matplotlib
+import numpy as np
+import pandas
+
+from ..statistics import full_exam_data
+from ..database import Exam
+
 matplotlib.use('agg')
-import seaborn
-from matplotlib import pyplot
+import seaborn  # noqa: E402
+from matplotlib import pyplot  # noqa: E402
+
 
 @orm.db_session
 def get(exam_id):
@@ -53,24 +55,22 @@ def get(exam_id):
     bounds = np.linspace(0, 1, 21)
     norm = matplotlib.colors.BoundaryNorm(bounds, cm.N)
 
-
     maxes = pandas.DataFrame(problem_scores.max())
     maxes['max_rubric'] = maxes.index
     maxes = maxes.replace({'max_rubric': scores}).max(axis=1)
 
-    corrs = {column: (problem_scores[column]
-                      .astype(float)
-                      .corr(problem_scores
-                            .total
-                            .subtract(problem_scores[column])
-                            .astype(float)
-                           ).round(2)
+    corrs = {column: (problem_scores[column]  # noqa: E127
+                          .astype(float)
+                          .corr(problem_scores
+                                    .total
+                                    .subtract(problem_scores[column])
+                                    .astype(float)
+                               ).round(2)
                      ) for column in problem_scores if column != 'total'}
 
     alpha = ((len(problem_scores) - 1) / (len(problem_scores) - 2)
              * (1 - problem_scores.var()[:-1].sum()
-                / problem_scores.total.var())
-            )
+                / problem_scores.total.var()))
 
     vals = [
         problem_scores[i].value_counts(normalize=True).sort_index().cumsum()
@@ -90,7 +90,7 @@ def get(exam_id):
     ax.barh(
         data[0], data[1], 0.5, data[2], color=cm(norm(data[3])), align='center'
     )
-    ax.set_yticks(np.arange(0, -len(problem_scores.columns), -1));
+    ax.set_yticks(np.arange(0, -len(problem_scores.columns), -1))
     ax.set_yticklabels(
         [f'{i} ($Rir={corrs[i]:.2f}$)' for i in problem_scores.columns[:-1]]
         + [f'total: ($\\alpha = {alpha:.2f}$)']

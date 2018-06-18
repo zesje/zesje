@@ -1,15 +1,15 @@
-import os
-from subprocess import run
 import multiprocessing
+import os
 
-from flask import abort, current_app as app
+from flask import current_app as app
 from flask_restful import Resource, reqparse
 from werkzeug.datastructures import FileStorage
 
 from pony import orm
 
-from ..models import Exam, Scan
-from ..helpers import scan_helper
+from ..scans import process_pdf
+from ..database import Exam, Scan
+
 
 class Scans(Resource):
     """Getting a list of uploaded scans, and uploading new ones."""
@@ -63,7 +63,7 @@ class Scans(Resource):
 
         with orm.db_session:
             scan = Scan(exam=Exam[exam_id], name=args['pdf'].filename,
-                      status='processing', message='importing PDF')
+                        status='processing', message='importing PDF')
 
         try:
             path = os.path.join(app.config['SCAN_DIRECTORY'], f'{scan.id}.pdf')
@@ -84,7 +84,7 @@ class Scans(Resource):
         # of forking.
         args = (scan.id, app.config)
         ctx = multiprocessing.get_context('spawn')
-        ctx.Process(target=scan_helper.process_pdf, args=args).start()
+        ctx.Process(target=process_pdf, args=args).start()
 
         return {
             'id': scan.id,

@@ -5,8 +5,8 @@ from flask_restful import Resource, reqparse
 
 from pony import orm
 
-from ..models import db, Grader
 from ._helpers import required_string
+from ..database import Grader
 
 
 # TODO: when making new database structure, have only a single
@@ -26,15 +26,11 @@ class Graders(Resource):
             first_name: str
             last_name: str
         """
-        return self._get()
-
-    # Do not call this method without wrapping it in 'orm.db_session'
-    def _get(self):
         return [
             {
-                'id' : g.id,
-                'first_name' : g.first_name,
-                'last_name' : g.last_name
+                'id': g.id,
+                'first_name': g.first_name,
+                'last_name': g.last_name
             }
             for g in Grader.select()
         ]
@@ -60,12 +56,11 @@ class Graders(Resource):
             last_name: str
         """
         args = self.post_parser.parse_args()
-        
+
         try:
-            Grader(first_name= args['first_name'],
-                   last_name=args['last_name'])
+            Grader(first_name=args['first_name'], last_name=args['last_name'])
             orm.commit()
         except KeyError as error:
             abort(400, error)
 
-        return self._get()
+        return self.get()

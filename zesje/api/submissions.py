@@ -1,9 +1,11 @@
 import re
 
 from flask_restful import Resource, reqparse
+
 from pony import orm
 
-from ..models import Exam, Submission, Student
+from ..database import Exam, Submission, Student
+
 
 page_match = re.compile(r'.*page(\d+).jpg').match
 
@@ -16,26 +18,24 @@ def sub_to_data(sub, all_pages):
     """Transform a submission into a data structure frontend expects."""
     return {
         'id': sub.copy_number,
-        'student':
-            {
+        'student': {
                 'id': sub.student.id,
                 'firstName': sub.student.first_name,
                 'lastName': sub.student.last_name,
                 'email': sub.student.email
             } if sub.student else None,
         'validated': sub.signature_validated,
-        'problems':
-        [
-            {
-                'id': sol.problem.id,
-                'graded_by': sol.graded_by,
-                'graded_at': sol.graded_at.isoformat() if sol.graded_at else None,
-                'feedback': [
-                    fb.id for fb in sol.feedback
-                ],
-                'remark': sol.remarks
-            } for sol in sub.solutions.order_by(lambda s: s.problem.id)
-        ],
+        'problems': [
+                {
+                    'id': sol.problem.id,
+                    'graded_by': sol.graded_by,
+                    'graded_at': sol.graded_at.isoformat() if sol.graded_at else None,
+                    'feedback': [
+                        fb.id for fb in sol.feedback
+                    ],
+                    'remark': sol.remarks
+                } for sol in sub.solutions.order_by(lambda s: s.problem.id)
+            ],
         'missing_pages': sorted(all_pages - set(page_nr(i) for i in sub.pages.path)),
     }
 
@@ -136,16 +136,15 @@ class Submissions(Resource):
                     'email': sub.student.email
                 } if sub.student else None,
             'validated': sub.signature_validated,
-            'problems':
-            [
-                {
-                    'id': sol.problem.id,
-                    'graded_by': sol.graded_by,
-                    'graded_at': sol.graded_at.isoformat() if sol.graded_at else None,
-                    'feedback': [
-                        fb.id for fb in sol.feedback
-                    ],
-                    'remark': sol.remarks
-                } for sol in sub.solutions.order_by(lambda s: s.problem.id)
-            ]
+            'problems': [
+                    {
+                        'id': sol.problem.id,
+                        'graded_by': sol.graded_by,
+                        'graded_at': sol.graded_at.isoformat() if sol.graded_at else None,
+                        'feedback': [
+                            fb.id for fb in sol.feedback
+                        ],
+                        'remark': sol.remarks
+                    } for sol in sub.solutions.order_by(lambda s: s.problem.id)
+                ]
         }

@@ -67,7 +67,7 @@ class Exams extends React.Component {
                     .then(() => {
                         this.setState((prevState) => {
                             return {
-                                selectedWidgetIndex: null,
+                                selectedWidgetId: null,
                                 widgets: update(prevState.widgets, {
                                     $splice: [[index, 1]]
                                 })
@@ -130,7 +130,7 @@ class Exams extends React.Component {
                             })
                             this.setState((prevState) => {
                                 return {
-                                    selectedWidgetIndex: widgetData.id,
+                                    selectedWidgetId: widgetData.id,
                                     widgets: update(prevState.widgets, {
                                         [widgetData.id]: {
                                             $set: widgetData

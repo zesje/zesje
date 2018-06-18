@@ -119,15 +119,6 @@ class Exams extends React.Component {
                             })
                         }}
                         createNewWidget={(widgetData) => {
-
-                            this.setState((prevState) => {
-                                return {
-                                    selectedWidgetIndex: prevState.widgets.length,
-                                    widgets: update(prevState.widgets, {
-                                        $push: [widgetData]
-                                    })
-                                }
-                            })
                             this.setState((prevState) => {
                                 return {
                                     selectedWidgetId: widgetData.id,

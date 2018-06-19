@@ -377,7 +377,6 @@ class ExamGeneratedPdfs(Resource):
 
         if args['type'] == 'pdf':
             join_pdfs(
-                generated_pdfs_dir,
                 output_file,
                 pdf_paths,
             )

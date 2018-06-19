@@ -81,18 +81,16 @@ def generate_pdfs(exam_pdf_file, exam_id, copy_nums, output_paths, id_grid_x,
             PdfWriter(output_path, trailer=exam_pdf).write()
 
 
-def join_pdfs(directory, output_filename, pdf_paths):
+def join_pdfs(output_filename, pdf_paths):
     """
     Join all the final PDFs into a single big PDF.
 
     Parameters
     ----------
-    directory : path-like object
-        The directory where the generated PDF files to be joined are located
     output_filename : str
         The filename where the joined PDF file should be stored
-    num_copies : int
-        The number of copies that are present in the given directory
+    pdf_paths : [str]
+        The paths of the PDF files that should be joined
     """
     writer = PdfWriter()
 

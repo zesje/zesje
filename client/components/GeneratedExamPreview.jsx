@@ -1,5 +1,4 @@
 import React from 'react'
-import * as api from '../api.jsx'
 import EmptyPDF from '../components/EmptyPDF.jsx'
 
 import { Document, Page } from 'react-pdf';
@@ -9,26 +8,10 @@ PDFJS.workerSrc = true;
 
 class GeneratedExamPreview extends React.Component {
 
-    state = {
-        pdfUrl: null,
-    }
-
-    componentDidMount() {
-        let data = {
-            copies: 1,
-        }
-        api.post('exams/' + this.props.examID + '/generated_pdfs', data)
-            .then(() => {
-                this.setState({
-                    pdfUrl: '/api/exams/' + this.props.examID + '/generated_pdfs/0'
-                })
-            })
-    }
-
     render = () => {
         return (
             <Document
-                file={this.state.pdfUrl}
+                file={'/api/exams/' + this.props.examID + '/preview'}
                 onLoadSuccess={this.props.onPDFLoad}
                 loading={<EmptyPDF />}
                 noData={<EmptyPDF />}

@@ -1,4 +1,3 @@
-import os
 from io import BytesIO
 from tempfile import NamedTemporaryFile
 
@@ -12,7 +11,7 @@ from reportlab.pdfgen import canvas
 output_pdf_filename_format = '{0:05d}.pdf'
 
 
-def generate_pdfs(exam_pdf_file, exam_id, output_dir, num_copies, id_grid_x,
+def generate_pdfs(exam_pdf_file, exam_id, copy_nums, output_paths, id_grid_x,
                   id_grid_y, datamatrix_x, datamatrix_y):
     """
     Generate the final PDFs from the original exam PDF.
@@ -32,11 +31,10 @@ def generate_pdfs(exam_pdf_file, exam_id, output_dir, num_copies, id_grid_x,
         The exam PDF file or its filename
     exam_id : str
         The identifier of the exam
-    output_dir : path-like object
-        The directory where this function will store the generated PDF files.
-        They will have filenames like 00000.pdf, 00001.pdf, etc.
-    num_copies : int
-        The number of copies of the exam to generate
+    copy_nums : [int]
+        copy numbers of the generated pdfs. These are integers greater than 1
+    output_paths : [str]
+        Output file paths of the generated pdfs
     id_grid_x : int
         The x coordinate where the student ID grid should be placed
     id_grid_y : int
@@ -50,13 +48,13 @@ def generate_pdfs(exam_pdf_file, exam_id, output_dir, num_copies, id_grid_x,
     mediabox = exam_pdf.pages[0].MediaBox
     pagesize = (float(mediabox[2]), float(mediabox[3]))
 
-    for copy_idx in range(num_copies):
+    for copy_num, output_path in zip(copy_nums, output_paths):
         # ReportLab can't deal with file handles, but only with file names,
         # so we have to use a named file
         with NamedTemporaryFile() as overlay_file:
             # Generate overlay
             overlay_canv = canvas.Canvas(overlay_file.name, pagesize=pagesize)
-            _generate_overlay(overlay_canv, pagesize, exam_id, copy_idx,
+            _generate_overlay(overlay_canv, pagesize, exam_id, copy_num,
                               len(exam_pdf.pages), id_grid_x, id_grid_y,
                               datamatrix_x, datamatrix_y)
             overlay_canv.save()
@@ -80,11 +78,10 @@ def generate_pdfs(exam_pdf_file, exam_id, output_dir, num_copies, id_grid_x,
                 exam_merge = PageMerge(exam_page).add(overlay_merge)
                 exam_merge.render()
 
-            path = os.path.join(output_dir, output_pdf_filename_format.format(copy_idx))
-            PdfWriter(path, trailer=exam_pdf).write()
+            PdfWriter(output_path, trailer=exam_pdf).write()
 
 
-def join_pdfs(directory, output_filename, num_copies):
+def join_pdfs(directory, output_filename, pdf_paths):
     """
     Join all the final PDFs into a single big PDF.
 
@@ -99,9 +96,7 @@ def join_pdfs(directory, output_filename, num_copies):
     """
     writer = PdfWriter()
 
-    for copy_idx in range(num_copies):
-        path = os.path.join(directory,
-                            output_pdf_filename_format.format(copy_idx))
+    for path in pdf_paths:
         writer.addpages(PdfReader(path).pages)
 
     writer.write(output_filename)

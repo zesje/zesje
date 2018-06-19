@@ -4,7 +4,7 @@ import os
 import zipfile
 from io import BytesIO
 
-from flask import current_app as app, abort, send_file
+from flask import current_app as app, abort, send_file, request
 from flask_restful import Resource, reqparse
 from werkzeug.datastructures import FileStorage
 
@@ -137,7 +137,8 @@ class Exams(Resource):
                     'x': widget.x,
                     'y': widget.y,
                 } for widget in exam.widgets.order_by(lambda w: w.id)
-            ]
+            ],
+            'finalized': exam.finalized,
         }
 
     post_parser = reqparse.RequestParser()
@@ -198,6 +199,22 @@ class Exams(Resource):
         return {
             'id': exam.id
         }
+
+    @orm.db_session
+    def put(self, exam_id, attr):
+        if attr == 'finalized':
+            exam = Exam[exam_id]
+            bodyStr = request.data.decode('utf-8')
+            if bodyStr == 'true':
+                exam.finalized = True
+            elif bodyStr == 'false':
+                if exam.finalized:
+                    return dict(status=403, message=f'Exam already finalized'), 403
+            else:
+                return dict(status=400, message=f'Body should be "true" or "false"'), 400
+            return dict(status=200, message="ok"), 200
+        else:
+            return dict(status=400, message=f'Attribute {attr} not allowed'), 400
 
 
 class ExamSource(Resource):

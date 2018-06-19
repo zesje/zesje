@@ -27,7 +27,7 @@ errors = {
 api = Api(api_bp, errors=errors)
 
 api.add_resource(Graders, '/graders')
-api.add_resource(Exams, '/exams', '/exams/<int:exam_id>')
+api.add_resource(Exams, '/exams', '/exams/<int:exam_id>', '/exams/<int:exam_id>/<string:attr>')
 api.add_resource(ExamSource, '/exams/<int:exam_id>/source_pdf')
 api.add_resource(ExamGeneratedPdfs,
                  '/exams/<int:exam_id>/generated_pdfs',

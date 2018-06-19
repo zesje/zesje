@@ -122,13 +122,11 @@ class App extends React.Component {
                     <NavBar exam={exam} updateExam={this.updateExam} ref={this.menu} />
                     <Switch>
                         <Route exact path="/" component={Home} />
-                        <Route path="/exams/:examID/:action?" render={({match, history}) =>
+                        <Route path="/exams/:examID" render={({match, history}) =>
                             <Exam
                                 exam={exam}
                                 examID={match.params.examID}
-                                action={match.params.action || 'edit' }
                                 updateExam={this.updateExam}
-                                changeURL={history.push}
                                 updateSubmission={this.updateSubmission} /> }/>
                         <Route path="/exams" render={({history}) =>
                             <AddExam updateExamList={() => this.menu.current.updateExamList()} changeURL={history.push} /> }/>

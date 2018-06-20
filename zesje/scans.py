@@ -210,6 +210,10 @@ def process_page(output_dir, image_data, exam_config):
 
     image_array = np.array(image_data)
 
+    bar_keypoints = find_orientation_bar(image_data)
+    check_bar_keypoint(image_data,  bar_keypoints)
+    image_data = orient_image(image_data, bar_keypoints)
+
     corner_keypoints = find_corner_marker_keypoints(image_data)
     check_corner_keypoints(image_array, corner_keypoints)
     (image_data, new_keypoints) = rotate_image(image_data, corner_keypoints)

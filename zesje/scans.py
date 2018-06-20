@@ -297,6 +297,20 @@ def decode_barcode(image, exam_config):
         return
 
 
+def orient_image(image_data, keypoints):
+    """Orientates the image if the bar is detected on the upper side of
+       the image
+        """
+    image = np.array(image_data)
+    bar_keypoint = keypoints[0]
+    h, w, *_ = image.shape
+
+    if(bar_keypoint[1] < (h / 2)):
+        np.rot90(image, k=2)
+
+    return Image.fromarray(image)
+
+
 def rotate_image(image_data, corner_keypoints):
     """Rotate a PIL image according to the rotation of the corner markers."""
 

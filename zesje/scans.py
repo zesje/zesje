@@ -616,14 +616,16 @@ def check_corner_keypoints(image_array, keypoints):
     checklist = [False, False, False, False]
 
     for (x, y) in keypoints:
-            is_left_half = 2 * int(x < (w / 2))
-            is_top_half = 1 * int(y < (h / 2))
-            index = is_left_half + is_top_half
-            if(checklist[index]):
-                raise RuntimeError(("Found multiple corner markers"
-                                    "in the same corner"))
-            else:
-                checklist[index] = True
+        is_left_half = 2 * int(x < (w / 2))
+        is_top_half = 1 * int(y < (h / 2))
+        index = is_left_half + is_top_half
+        if(checklist[index]):
+            raise RuntimeError(("Found multiple corner markers"
+                                "in the same corner"))
+        else:
+            checklist[index] = True
+
+
 def find_orientation_bar(image_data):
 
     color_im = cv2.cvtColor(np.array(image_data), cv2.COLOR_RGB2BGR)

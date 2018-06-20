@@ -1,7 +1,5 @@
 # Finalize this exam
 
-TODO
-
-After finalizing you _**can not**_ modify the location of widgets anymore.
+After finalizing you _**will not**_ be able to modify the the exam anymore.
 
 You can verify every page here.

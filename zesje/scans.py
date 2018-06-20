@@ -624,3 +624,46 @@ def check_corner_keypoints(image_array, keypoints):
                                     "in the same corner"))
             else:
                 checklist[index] = True
+def find_orientation_bar(image_data):
+
+    color_im = cv2.cvtColor(np.array(image_data), cv2.COLOR_RGB2BGR)
+    gray_im = cv2.cvtColor(color_im, cv2.COLOR_BGR2GRAY)
+    _, bin_im = cv2.threshold(gray_im, 150, 255, cv2.THRESH_BINARY)
+
+    # Filter out everything in the center of the image
+    h, w, *_ = bin_im.shape
+    bin_im[round(0.125 * h):round(0.875 * h),
+           round(0.125 * w):round(0.875*w)] = 255
+
+    min_bar_size = (h * w * 0.00025)
+
+    # Detect objects which look like straight lines
+    params = cv2.SimpleBlobDetector_Params()
+    params.filterByArea = True
+    params.minArea = min_bar_size
+    params.maxArea = min_bar_size * 2
+    params.filterByCircularity = True
+    params.minCircularity = 0
+    params.maxCircularity = 0.1
+    params.filterByConvexity = True
+    params.minConvexity = 0.75
+    params.maxConvexity = 1
+    params.filterByInertia = False
+    params.filterByColor = False
+
+    detector = cv2.SimpleBlobDetector_create(params)
+    keypoints = detector.detect(bin_im)
+
+    return [(keyp.pt[0], keyp.pt[1]) for keyp in keypoints]
+
+
+def check_bar_keypoint(keypoints):
+    """Checks whether the detect orientation bar is valid.
+        1. Checks whether there is only one bar found.
+
+    Parameters:
+    -----------
+    keypoints: list of tuples containing the coordinates of keypoints
+    """
+    if(len(keypoints) < 1 or len(keypoints) > 1):
+        raise RuntimeError('Incorrect amount of bars detected')

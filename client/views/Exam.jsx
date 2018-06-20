@@ -3,6 +3,7 @@ import React from 'react'
 import Hero from '../components/Hero.jsx'
 import './Exam.css'
 import GeneratedExamPreview from '../components/GeneratedExamPreview.jsx'
+import PanelGenerate from '../components/PanelGenerate.jsx'
 import ExamEditor from './ExamEditor.jsx'
 import update from 'immutability-helper'
 import ReactMarkdown from 'react-markdown';
@@ -198,7 +199,9 @@ class Exams extends React.Component {
     SidePanel = (props) => {
         if (this.props.exam.finalized) {
             return (
-                <this.PanelGenerate />
+                <PanelGenerate
+                    examID={this.state.examID}
+                />
             )
         } else if (this.state.previewing) {
             return (
@@ -345,58 +348,6 @@ class Exams extends React.Component {
                             </button>
                         </div>
                     </div>
-                </div>
-            </nav>
-        )
-    }
-
-    PanelGenerate = (props) => {
-        return (
-            <nav className='panel'>
-                <div className='panel-block'>
-                    <div className='control has-icons-left'>
-                        <input
-                            className='input'
-                            type='text'
-                            maxLength='4'
-                            placeholder='Number of copies'
-                            value={this.state.numberOfCopies}
-                            onChange={this.onChange}
-                            onFocus={this.onFocus} />
-                        <span className='icon is-small is-left'>
-                            <i className='fa fa-copy'></i>
-                        </span>
-                    </div>
-                </div>
-                <div className='panel-block'>
-                    <p className='control'>
-                        <a
-                            className={(this.state.isGenerating ? 'is-loading ' : '') + 'is-fullwidth button is-link'}
-                            onClick={this.onClickGenerate}
-                        >
-                            Generate
-                        </a>
-                    </p>
-                </div>
-                <div className='panel-block'>
-                    <p className='control'>
-                        <a
-                            className='button is-primary'
-                            disabled={!this.state.isGenerated}
-                            href={this.state.isGenerated ? '/api/exams/' + this.state.examID + '/generated_pdfs?type=zip' : null}
-                        >
-                            Download Zip
-                        </a>
-                    </p>
-                    <p className='control'>
-                        <a
-                            className='button is-primary'
-                            disabled={!this.state.isGenerated}
-                            href={this.state.isGenerated ? '/api/exams/' + this.state.examID + '/generated_pdfs?type=pdf' : null}
-                        >
-                            Download PDF
-                        </a>
-                    </p>
                 </div>
             </nav>
         )

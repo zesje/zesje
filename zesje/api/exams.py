@@ -1,10 +1,10 @@
-import datetime
-import glob
+import itertools
 import os
 import zipfile
 from io import BytesIO
+from tempfile import TemporaryFile
 
-from flask import current_app as app, abort, send_file, request
+from flask import current_app as app, send_file, request
 from flask_restful import Resource, reqparse
 from werkzeug.datastructures import FileStorage
 
@@ -233,98 +233,25 @@ class ExamSource(Resource):
 
 class ExamGeneratedPdfs(Resource):
 
-    get_parser = reqparse.RequestParser()
-    get_parser.add_argument('type', type=str, required=True, location='args')
-
-    @orm.db_session
-    def get(self, exam_id, copy_num=None):
-
-        exam_dir = _get_exam_dir(exam_id)
-        generated_pdfs_dir = os.path.join(
+    def _get_generated_exam_dir(self, exam_dir):
+        return os.path.join(
             exam_dir,
             'generated_pdfs'
         )
 
-        if (not os.path.exists(generated_pdfs_dir)):
-            abort(404)
-
-        if copy_num is None:
-            # TODO: use query to define ranges
-
-            args = self.get_parser.parse_args()
-
-            exam = Exam[exam_id]
-            now_str = datetime.datetime.now().strftime("%Y-%m-%d_%H:%M")
-
-            if args['type'] == 'pdf':
-                out_pdf_path = os.path.join(generated_pdfs_dir, 'all.pdf')
-
-                pdf_count = len(glob.glob1(
-                    generated_pdfs_dir,
-                    '[0-9][0-9][0-9][0-9][0-9].pdf'))
-
-                join_pdfs(
-                    generated_pdfs_dir,
-                    out_pdf_path,
-                    pdf_count,
-                )
-
-                return send_file(
-                    out_pdf_path,
-                    cache_timeout=0,
-                    attachment_filename=f'{exam.name}_{now_str}.pdf',
-                    as_attachment=True,
-                    mimetype='application/pdf')
-
-            elif args['type'] == 'zip':
-
-                memory_file = BytesIO()
-                with zipfile.ZipFile(memory_file, 'w') as zf:
-                    for root, dirs, files in os.walk(generated_pdfs_dir):
-                        for file in files:
-                            zf.write(
-                                os.path.join(root, file),
-                                file)
-
-                memory_file.seek(0)
-
-                return send_file(
-                    memory_file,
-                    cache_timeout=0,
-                    attachment_filename=f'{exam.name}_{now_str}.zip',
-                    as_attachment=True,
-                    mimetype='application/zip')
-            else:
-                # needs either zip or pdf
-                abort(400)
-
-        else:
-            # single file requested, we can directly send
-            pdf_path = os.path.join(
+    def _get_paths_for_range(self, generated_pdfs_dir, copies_start, copies_end):
+        copy_nums = range(copies_start, copies_end + 1)
+        pdf_paths = [
+            os.path.join(
                 generated_pdfs_dir,
                 output_pdf_filename_format.format(copy_num))
+            for copy_num
+            in copy_nums
+        ]
+        return pdf_paths, copy_nums
 
-            if not os.path.exists(pdf_path):
-                abort(404)
-
-            return send_file(
-                pdf_path,
-                cache_timeout=0,
-                mimetype='application/pdf')
-
-    post_parser = reqparse.RequestParser()
-    post_parser.add_argument('copies', type=int, required=True)
-
-    @orm.db_session
-    def post(self, exam_id):
-
-        args = self.post_parser.parse_args()
-
-        exam = Exam.get(id=exam_id)
-        if (exam is None):
-            abort(404)
-
-        exam_dir = _get_exam_dir(exam_id)
+    def _generate_exam_pdfs(self, exam, pdf_paths, copy_nums):
+        exam_dir = _get_exam_dir(exam.id)
 
         student_id_widget = next(
             widget
@@ -332,6 +259,7 @@ class ExamGeneratedPdfs(Resource):
             in exam.widgets
             if widget.name == 'student_id_widget'
         )
+
         barcode_widget = next(
             widget
             for widget
@@ -339,24 +267,185 @@ class ExamGeneratedPdfs(Resource):
             if widget.name == 'barcode_widget'
         )
 
-        pdf_path = os.path.join(exam_dir, 'exam.pdf')
+        exam_path = os.path.join(exam_dir, 'exam.pdf')
 
-        pdf_out_dir = os.path.join(exam_dir, 'generated_pdfs')
-        os.makedirs(pdf_out_dir, exist_ok=True)
-
-        for f in glob.glob1(pdf_out_dir,
-                            '[0-9][0-9][0-9][0-9][0-9].pdf'):
-            os.remove(os.path.join(pdf_out_dir, f))
+        generated_pdfs_dir = self._get_generated_exam_dir(exam_dir)
+        os.makedirs(generated_pdfs_dir, exist_ok=True)
 
         generate_pdfs(
-            pdf_path,
-            'ABCDEFGHIJKL',
-            pdf_out_dir,
-            args['copies'],
+            exam_path,
+            exam.token,
+            copy_nums,
+            pdf_paths,
             student_id_widget.x, student_id_widget.y,
             barcode_widget.x, barcode_widget.y
         )
 
+    post_parser = reqparse.RequestParser()
+    post_parser.add_argument('copies_start', type=int, required=True)
+    post_parser.add_argument('copies_end', type=int, required=True)
+
+    @orm.db_session
+    def post(self, exam_id):
+        """Generates the exams with corner markers and Widgets.
+
+        A range is given. Ranges should be starting from 1.
+
+        Parameters
+        ----------
+        copies_start : int
+            start of the range of exam pdfs you want to get
+        copies_end : int
+            end of the range of exam pdfs you want to get
+        type: str
+            One of "zip", "pdf"
+            the pdf option will give a large pdf consisting of concatenated
+            exams. Zip will get a zip with all exams as separate files.
+
+        Returns
+        -------
+        the file : File
+            The requested file (zip or pdf)
+        """
+
+        args = self.post_parser.parse_args()
+
+        copies_start = args.get('copies_start')
+        copies_end = args.get('copies_end')
+
+        try:
+            exam = Exam[exam_id]
+        except orm.ObjectNotFound:
+            return dict(status=404, message=f'Exam not found'), 404
+
+        exam_dir = _get_exam_dir(exam_id)
+        generated_pdfs_dir = self._get_generated_exam_dir(exam_dir)
+
+        if not exam.finalized:
+            msg = f'Exam is not finalized.'
+            return dict(status=403, message=msg), 403
+        if copies_start is None or copies_end is None:
+            msg = f'Missing parameters and/or "copies_start", "copies_end"'
+            return dict(status=400, message=msg), 400
+        if copies_end < copies_start:
+            msg = f'copies_end should be larger than copies_start'
+            return dict(status=400, message=msg), 400
+        if copies_start <= 0:
+            msg = f'copies_start should be larger than 0'
+            return dict(status=400, message=msg), 400
+
+        pdf_paths, copy_nums = self._get_paths_for_range(generated_pdfs_dir, copies_start, copies_end)
+
+        generate_selectors = [not os.path.exists(pdf_path) for pdf_path in pdf_paths]
+        pdf_paths = itertools.compress(pdf_paths, generate_selectors)
+        copy_nums = itertools.compress(copy_nums, generate_selectors)
+
+        self._generate_exam_pdfs(exam, pdf_paths, copy_nums)
+
         return {
             'success': True
         }
+
+    get_parser = reqparse.RequestParser()
+    get_parser.add_argument('copies_start', type=int, required=True)
+    get_parser.add_argument('copies_end', type=int, required=True)
+    get_parser.add_argument('type', type=str, required=True)
+
+    @orm.db_session
+    def get(self, exam_id):
+        args = self.get_parser.parse_args()
+
+        copies_start = args['copies_start']
+        copies_end = args['copies_end']
+
+        try:
+            exam = Exam[exam_id]
+        except orm.ObjectNotFound:
+            return dict(status=404, message=f'Exam not found'), 404
+
+        exam_dir = _get_exam_dir(exam_id)
+        generated_pdfs_dir = self._get_generated_exam_dir(exam_dir)
+
+        output_file = TemporaryFile()
+
+        pdf_paths, copy_nums = self._get_paths_for_range(generated_pdfs_dir, copies_start, copies_end)
+
+        for pdf_path in pdf_paths:
+            if not os.path.exists(pdf_path):
+                msg = f'One or more exams in range have not been generated (yet)'
+                return dict(status=400, message=msg), 400
+
+        if args['type'] == 'pdf':
+            join_pdfs(
+                output_file,
+                pdf_paths,
+            )
+            attachment_filename = f'{exam.name}_{copies_start}-{copies_end}.pdf'
+            mimetype = 'application/pdf'
+        elif args['type'] == 'zip':
+            with zipfile.ZipFile(output_file, 'w') as zf:
+                for pdf_path in pdf_paths:
+                    zf.write(
+                        pdf_path,
+                        os.path.basename(pdf_path)
+                    )
+            attachment_filename = f'{exam.name}_{copies_start}-{copies_end}.zip'
+            mimetype = 'application/zip'
+        else:
+            msg = f'type must be one of ["pdf", "zip"]'
+            return dict(status=400, message=msg), 400
+
+        output_file.seek(0)
+
+        return send_file(
+            output_file,
+            cache_timeout=0,
+            attachment_filename=attachment_filename,
+            as_attachment=True,
+            mimetype=mimetype)
+
+
+class ExamPreview(Resource):
+
+    @orm.db_session
+    def get(self, exam_id):
+        try:
+            exam = Exam[exam_id]
+        except orm.ObjectNotFound:
+            return dict(status=404, message=f'Exam not found'), 404
+
+        output_file = BytesIO()
+
+        exam_dir = _get_exam_dir(exam.id)
+
+        student_id_widget = next(
+            widget
+            for widget
+            in exam.widgets
+            if widget.name == 'student_id_widget'
+        )
+
+        barcode_widget = next(
+            widget
+            for widget
+            in exam.widgets
+            if widget.name == 'barcode_widget'
+        )
+
+        exam_path = os.path.join(exam_dir, 'exam.pdf')
+
+        generate_pdfs(
+            exam_path,
+            exam.token[:5] + 'PREVIEW',
+            [0],
+            [output_file],
+            student_id_widget.x, student_id_widget.y,
+            barcode_widget.x, barcode_widget.y
+        )
+
+        output_file.seek(0)
+
+        return send_file(
+            output_file,
+            cache_timeout=0,
+            mimetype='application/pdf')

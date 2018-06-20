@@ -114,8 +114,10 @@ def test_generate_pdfs_num_files(datadir, tmpdir):
     blank_pdf = os.path.join(datadir, 'blank-a4-2pages.pdf')
 
     num_copies = 3
+    copy_nums = range(num_copies)
+    paths = map(lambda copy_num: os.path.join(tmpdir, f'{copy_num}.pdf'), copy_nums)
 
-    pdf_generation.generate_pdfs(blank_pdf, 'ABCDEFGHIJKL', str(tmpdir), num_copies, 25, 270, 150, 270)
+    pdf_generation.generate_pdfs(blank_pdf, 'ABCDEFGHIJKL', copy_nums, paths, 25, 270, 150, 270)
 
     assert len(tmpdir.listdir()) == num_copies
 
@@ -178,10 +180,12 @@ def test_generate_pdfs_exam_is_file(mock_generate_datamatrix, mock_generate_id_g
 def test_join_pdfs(mock_generate_datamatrix, mock_generate_id_grid,
                    datadir, tmpdir, name):
     directory = os.path.join(datadir, f'test-join-pdfs-{name}')
+    paths = [
+        os.path.join(directory, '00000.pdf'),
+        os.path.join(directory, '00001.pdf')]
     out = os.path.join(tmpdir, 'out.pdf')
-    num_copies = 2
 
-    pdf_generation.join_pdfs(directory, out, num_copies)
+    pdf_generation.join_pdfs(out, paths)
 
     image_filename = os.path.join(datadir, f'blank-{name}.png')
     images = [PIL.Image.open(image_filename)] * 4

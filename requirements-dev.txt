@@ -1,0 +1,9 @@
+# Tests
+pytest
+Pillow
+Wand
+pyssim
+reportlab
+
+# Linting
+flake8

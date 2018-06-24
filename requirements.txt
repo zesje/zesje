@@ -5,6 +5,8 @@ pony
 Pillow
 opencv-python
 zbar-py
+pylibdmtx
+pyStrich
 numpy
 scipy
 pandas
@@ -13,3 +15,5 @@ matplotlib
 seaborn
 pyyaml
 git+https://github.com/mstamy2/PyPDF2
+pdfrw
+reportlab

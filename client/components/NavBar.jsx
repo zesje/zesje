@@ -88,6 +88,7 @@ class NavBar extends React.Component {
                             <Link className="navbar-item" to='/exams'>Add exam</Link>
                         }
 
+                        <Link className="navbar-item" to={'/submissions/' + this.props.exam.id}>Submissions</Link>
                         <Link className="navbar-item" to='/students'>Students</Link>
                         <Link className="navbar-item" style={examStyle} to='/grade'><strong><i>Grade</i></strong></Link>
                         <Link className="navbar-item" style={examStyle} to='/statistics'>Statistics</Link>

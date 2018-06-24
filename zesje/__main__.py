@@ -1,6 +1,8 @@
-import sys
 import os
-sys.path.append(os.getcwd())
+import sys
 
-from zesje import app
+sys.path.append(os.getcwd())
+from zesje import app  # noqa: E402
+
+
 app.run()

@@ -3,7 +3,7 @@ import 'font-awesome/css/font-awesome.css';
 import React from 'react';
 import ReactDOM from 'react-dom';
 import Loadable from 'react-loadable';
-import {BrowserRouter as Router, Route, Switch} from 'react-router-dom';
+import {BrowserRouter as Router, Route, Switch, Redirect} from 'react-router-dom';
 
 import * as api from './api.jsx'
 
@@ -23,6 +23,10 @@ const Exam = Loadable({
     loader: () => import('./views/Exam.jsx'),
     loading: Loading
   });
+const Submissions = Loadable({
+  loader: () => import('./views/Submissions.jsx'),
+  loading: Loading
+});
 const Students = Loadable({
   loader: () => import('./views/Students.jsx'),
   loading: Loading
@@ -118,11 +122,21 @@ class App extends React.Component {
                     <NavBar exam={exam} updateExam={this.updateExam} ref={this.menu} />
                     <Switch>
                         <Route exact path="/" component={Home} />
-                        <Route path="/exams/:examID" render={({match}) => 
-                            <Exam exam={exam} urlID={match.params.examID} updateExam={this.updateExam} updateSubmission={this.updateSubmission}/> }/>
-                        <Route path="/exams" render={({history}) => 
+                        <Route path="/exams/:examID" render={({match, history}) =>
+                            <Exam
+                                exam={exam}
+                                examID={match.params.examID}
+                                updateExam={this.updateExam}
+                                updateSubmission={this.updateSubmission} /> }/>
+                        <Route path="/exams" render={({history}) =>
                             <AddExam updateExamList={() => this.menu.current.updateExamList()} changeURL={history.push} /> }/>
-                        <Route path="/students" render={() => 
+                        <Route path="/submissions/:examID" render={({match}) =>
+                            <Submissions
+                                exam={exam}
+                                urlID={match.params.examID}
+                                updateExam={this.updateExam}
+                                updateSubmission={this.updateSubmission} /> }/>
+                        <Route path="/students" render={() =>
                             <Students exam={exam} updateSubmission={this.updateSubmission}/> }/>
                         <Route path="/grade" render={() => (
                             exam.submissions.length ? <Grade exam={exam} updateSubmission={this.updateSubmission}/> : <Fail message="No exams uploaded. Please do not bookmark URLs" />
@@ -132,7 +146,7 @@ class App extends React.Component {
                         )} />
                         <Route path="/graders" component={Graders} />
                         <Route path="/reset" component={Reset} />
-                        <Route render={() => 
+                        <Route render={() =>
                             <Fail message="404. Could not find that page :'(" /> }/>
                     </Switch>
                     <Footer />

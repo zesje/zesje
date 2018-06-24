@@ -39,7 +39,12 @@ or `zesje/`.
 
 ### Running the tests
 
-You can run the tests by running `yarn test`.
+You can run the tests by running
+
+    yarn test
+
+### Building and running the production version
+
 
 ### Code style
 
@@ -63,7 +68,13 @@ If you use Atom, install the [linter-flake8](https://atom.io/packages/linter-fla
 ### Adding dependencies
 
 #### Server-side
-If you start using a new Python library, be sure to add it to `requirements.txt`.
+If you start using a new Python library, be sure to add it to `requirements.txt`. Python libraries for the testing are in `requirements-dev.txt`.
+The packages can be installed and updated in your environment by `pip` using
 
-#### Client side
-Yarn keeps track of all the client-side dependancies in `config.json` when you install new packages with `yarn add ...`
+    pip install -r requirements.txt -r requirements-dev.txt
+
+
+#### Client-side
+Yarn keeps track of all the client-side dependancies in `package.json` when you install new packages with `yarn add [packageName]`. Yarn will install and update your packages if your run
+
+    yarn install

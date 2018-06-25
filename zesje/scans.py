@@ -204,6 +204,10 @@ def process_page(output_dir, image_data, exam_config):
     """
 
     image_array = np.array(image_data)
+    shape = image_array.shape
+    if shape[0] < shape[1]:
+        # Handle possible horizontal image orientation.
+        image_array = np.array(np.rot90(image_array, -1))
 
     corner_keypoints = find_corner_marker_keypoints(image_data)
     try:

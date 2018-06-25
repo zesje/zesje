@@ -160,7 +160,8 @@ class Grade extends React.Component {
 
                                 <p className="box">
                                     <img src={this.props.exam.id ? ('api/images/solutions/' + this.props.exam.id + '/' 
-                                        + this.props.exam.problems[this.state.pIndex].id + '/' + this.props.exam.submissions[this.state.sIndex].id) : ''} alt="" />
+                                        + this.props.exam.problems[this.state.pIndex].id + '/' + this.props.exam.submissions[this.state.sIndex].id)
+                                        + '/' + '0' : ''} alt="" />
                                 </p>
 
                             </div>

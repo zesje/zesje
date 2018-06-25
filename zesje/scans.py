@@ -154,6 +154,8 @@ def extract_images(filename):
                 else:
                     img = Image.open(BytesIO(data))
 
+                if img.mode == 'L':
+                    img = img.convert('RGB')
                 yield img, pagenr+1
 
 

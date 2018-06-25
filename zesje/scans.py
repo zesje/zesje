@@ -377,8 +377,8 @@ def shift_image(image_data, corner_keypoints):
         topright = corner_keypoints[~is_left_half & is_top_half]
         bottomleft = corner_keypoints[is_left_half & ~is_top_half]
         if(len(topright) == 1 & len(bottomleft) == 1):
-            x = bottomleft[0]
-            y = topright[1]
+            x = bottomleft[0][0]
+            y = topright[0][1]
 
         else:
             # We can only end here if something went wrong with the detection

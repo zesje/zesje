@@ -204,7 +204,10 @@ def process_page(output_dir, image_data, exam_config):
     image_array = np.array(image_data)
 
     corner_keypoints = find_corner_marker_keypoints(image_data)
-    check_corner_keypoints(image_array, corner_keypoints)
+    try:
+        check_corner_keypoints(image_array, corner_keypoints)
+    except CornerMarkersError:
+        return False, "Incorrect amount of corner markers detected (blank page?)"
     (image_data, new_keypoints) = rotate_image(image_data, corner_keypoints)
 
     try:
@@ -603,7 +606,7 @@ def check_corner_keypoints(image_array, keypoints):
     keypoints: list of tuples containing the coordinates of keypoints
     """
     if(len(keypoints) < 3 or len(keypoints) > 4):
-        raise RuntimeError('Incorrect amount of corner markers detected')
+        raise CornerMarkersError('Incorrect amount of corner markers detected')
 
     h, w, *_ = image_array.shape
 
@@ -618,6 +621,10 @@ def check_corner_keypoints(image_array, keypoints):
                                     "in the same corner"))
             else:
                 checklist[index] = True
+
+
+class CornerMarkersError(Exception):
+    pass
 
 
 class BarcodeNotFoundError(Exception):

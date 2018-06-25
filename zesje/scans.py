@@ -136,7 +136,7 @@ def extract_images(filename):
 
         if sum((xObject[obj]['/Subtype'] == '/Image')
                for obj in xObject) > 1:
-            raise RuntimeError('Page {pagenr} contains more than 1 image,'
+            raise RuntimeError(f'Page {pagenr + 1} contains more than 1 image,'
                                'likely not a scan')
 
         for obj in xObject:

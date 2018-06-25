@@ -30,9 +30,8 @@ ExamMetadata = namedtuple('ExamMetadata',
 def process_pdf(scan_id, app_config):
     """Process a PDF, recording progress to a database
 
-    This *must* be called from a subprocess of the
-    Flask process, so that we inherit the bound DB instance
-    and the app config.
+    This *must* be called from a subprocess of the Flask process, so that we
+    inherit the app config.
 
     Parameters
     ----------
@@ -40,6 +39,7 @@ def process_pdf(scan_id, app_config):
         The ID in the database of the Scan to process
     app_config : obj
         The Flask app config
+
     """
 
     data_directory = app_config.get('DATA_DIRECTORY', 'data')

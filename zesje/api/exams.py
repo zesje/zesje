@@ -10,7 +10,7 @@ from werkzeug.datastructures import FileStorage
 
 from pony import orm
 
-from ..pdf_generation import generate_pdfs, output_pdf_filename_format, join_pdfs
+from ..pdf_generation import generate_pdfs, output_pdf_filename_format, join_pdfs, page_size
 
 
 from ..database import db, Exam, ExamWidget
@@ -177,6 +177,17 @@ class Exams(Resource):
         args = self.post_parser.parse_args()
         exam_name = args['exam_name']
         pdf_data = args['pdf']
+
+        need_page_size = app.config.get('PAGE_SIZE', (595.276, 841.89))
+        actual_size = page_size(pdf_data)
+        if need_page_size != actual_size:
+            return (
+                dict(status=400, message=f'PDF page size {actual_size} does not match the one supported by printer.'),
+                400
+            )
+        else:
+            # Return caret to the beginning of the file.
+            pdf_data.seek(0)
 
         exam = Exam(
             name=exam_name,

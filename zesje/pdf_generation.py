@@ -286,3 +286,39 @@ def _add_corner_markers_and_bottom_bar(canv, pagesize):
         # Bottom bar
         (bar_start, bottom, bar_end, bottom)
     ])
+
+
+def page_size(exam_pdf_file):
+    """
+    Verify whether all pages of the file have the same shape and return it.
+
+    Parameters
+    ----------
+    exam_pdf_file : file object or str
+        The exam PDF file or its filename.
+
+    Returns
+    -------
+    shape : tuple of floats
+        Page width and height in points.
+
+    Raises
+    ------
+    ValueError
+        If the pages have different sizes.
+    """
+    exam_pdf = PdfReader(exam_pdf_file)
+    mediabox = exam_pdf.pages[0].MediaBox
+    shape = (float(mediabox[2]), float(mediabox[3]))
+    for page in exam_pdf.pages:
+        if (float(page.MediaBox[2]), float(page.MediaBox[3])) != shape:
+            raise ValueError('Exam pages have different sizes.')
+
+    # Be considerate and return the caret in the stream to the beginning.
+    try:
+        exam_pdf_file.seek(0)
+    except Exception:
+        # Not a file
+        pass
+
+    return shape

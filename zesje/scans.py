@@ -209,12 +209,12 @@ def process_page(output_dir, image_data, exam_config):
         # Handle possible horizontal image orientation.
         image_array = np.array(np.rot90(image_array, -1))
 
-    corner_keypoints = find_corner_marker_keypoints(image_data)
+    corner_keypoints = find_corner_marker_keypoints(image_array)
     try:
         check_corner_keypoints(image_array, corner_keypoints)
     except CornerMarkersError:
         return False, "Incorrect amount of corner markers detected (blank page?)"
-    (image_data, new_keypoints) = rotate_image(image_data, corner_keypoints)
+    (image_data, new_keypoints) = rotate_image(image_array, corner_keypoints)
 
     try:
         barcode_data, upside_down = decode_barcode(image_data, exam_config)
@@ -314,10 +314,10 @@ def decode_barcode(image, exam_config):
     raise BarcodeNotFoundError
 
 
-def rotate_image(image_data, corner_keypoints):
-    """Rotate a PIL image according to the rotation of the corner markers."""
+def rotate_image(image_array, corner_keypoints):
+    """Rotate an image according to the rotation of the corner markers."""
 
-    color_im = cv2.cvtColor(np.array(image_data), cv2.COLOR_RGB2BGR)
+    color_im = cv2.cvtColor(image_array, cv2.COLOR_RGB2BGR)
 
     # Find two corner markers which lie in the same horizontal half.
     # Same horizontal half is chosen as the line from one keypoint to
@@ -353,7 +353,7 @@ def rotate_image(image_data, corner_keypoints):
                            for (coord_x, coord_y)
                            in keyp_from_rot_origin]
 
-    color_im = cv2.cvtColor(np.array(image_data), cv2.COLOR_RGB2BGR)
+    color_im = cv2.cvtColor(image_array, cv2.COLOR_RGB2BGR)
 
     # Create rotation matrix and rotate the image around the center
     rot_mat = cv2.getRotationMatrix2D(rot_origin, angle_deg, 1)
@@ -512,7 +512,7 @@ def calc_angle(keyp1, keyp2):
             return math.degrees(math.atan(ydiff / xdiff))
 
 
-def find_corner_marker_keypoints(image_data):
+def find_corner_marker_keypoints(image_array):
     """Generates a list of OpenCV keypoints which resemble corner markers.
     This is done using a SimpleBlobDetector
 
@@ -521,11 +521,10 @@ def find_corner_marker_keypoints(image_data):
     image_data: Source image
 
     """
-    color_im = cv2.cvtColor(np.array(image_data), cv2.COLOR_RGB2BGR)
-    gray_im = cv2.cvtColor(color_im, cv2.COLOR_BGR2GRAY)
+    gray_im = cv2.cvtColor(image_array, cv2.COLOR_BGR2GRAY)
     _, bin_im = cv2.threshold(gray_im, 150, 255, cv2.THRESH_BINARY)
 
-    h, w, *_ = color_im.shape
+    h, w = gray_im.shape
 
     bin_im_inv = cv2.bitwise_not(bin_im)
 
@@ -580,7 +579,7 @@ def find_corner_marker_keypoints(image_data):
         image_patch = gray_im[topleft[1]:bottomright[1],
                               topleft[0]:bottomright[0]]
 
-        dpi = guess_dpi(np.array(image_data))
+        dpi = guess_dpi(image_array)
         block_size = int(round(dpi / 60))
         if block_size % 2 == 0:
             block_size += 1

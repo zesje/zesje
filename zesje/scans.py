@@ -282,8 +282,9 @@ def decode_barcode(image, exam_config):
     barcode_area_in = np.asarray(barcode_area) / 72
     grayscale = np.asarray(image.convert(mode='L'))
     grayscale_rotated = np.rot90(grayscale, k=2)
-    image_crop = Image.fromarray(get_box(grayscale, barcode_area_in, padding=0.3))
-    image_crop_rotated = Image.fromarray(get_box(grayscale_rotated, barcode_area_in, padding=0.3))
+    step = 2 if guess_dpi(grayscale) >= 200 else 1
+    image_crop = Image.fromarray(get_box(grayscale, barcode_area_in, padding=0.3)[::step, ::step])
+    image_crop_rotated = Image.fromarray(get_box(grayscale_rotated, barcode_area_in, padding=0.3)[::step, ::step])
 
     # Use a generator to attemt multiple strategies for decoding
     def image_generator():

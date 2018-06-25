@@ -214,14 +214,15 @@ def process_page(output_dir, image_data, exam_config):
         check_corner_keypoints(image_array, corner_keypoints)
     except CornerMarkersError:
         return False, "Incorrect amount of corner markers detected (blank page?)"
-    (image_data, new_keypoints) = rotate_image(image_array, corner_keypoints)
+    (image_array, new_keypoints) = rotate_image(image_array, corner_keypoints)
 
     try:
-        barcode_data, upside_down = decode_barcode(image_data, exam_config)
+        barcode_data, upside_down = decode_barcode(image_array, exam_config)
         if upside_down:
             h, w, *_ = image_array.shape
             new_keypoints = [(w - kp[0], h - kp[1]) for kp in new_keypoints]
-            image_data = image_data.rotate(180)
+            # TODO: check if view errors appear
+            image_array = np.array(image_array[::-1, ::-1])
     except BarcodeNotFoundError:
         barcode_data = None
 
@@ -230,7 +231,7 @@ def process_page(output_dir, image_data, exam_config):
     elif barcode_data.token != exam_config.token:
         raise ValueError('PDF is not from this exam')
 
-    image_data = shift_image(image_data, new_keypoints)
+    image_data = Image.fromarray(shift_image(image_array, new_keypoints))
 
     target = os.path.join(output_dir, 'submissions', f'{barcode_data.copy}')
     os.makedirs(target, exist_ok=True)
@@ -280,11 +281,10 @@ def decode_barcode(image, exam_config):
 
     # TODO: use points as base unit
     barcode_area_in = np.asarray(barcode_area) / 72
-    grayscale = np.asarray(image.convert(mode='L'))
-    grayscale_rotated = np.rot90(grayscale, k=2)
-    step = 2 if guess_dpi(grayscale) >= 200 else 1
-    image_crop = Image.fromarray(get_box(grayscale, barcode_area_in, padding=0.3)[::step, ::step])
-    image_crop_rotated = Image.fromarray(get_box(grayscale_rotated, barcode_area_in, padding=0.3)[::step, ::step])
+    rotated = np.rot90(image, k=2)
+    step = 2 if guess_dpi(image) >= 200 else 1
+    image_crop = Image.fromarray(get_box(image, barcode_area_in, padding=0.3)[::step, ::step]).convert(mode='L')
+    image_crop_rotated = Image.fromarray(get_box(rotated, barcode_area_in, padding=0.3)[::step, ::step]).convert(mode='L')
 
     # Use a generator to attemt multiple strategies for decoding
     def image_generator():
@@ -362,14 +362,13 @@ def rotate_image(image_array, corner_keypoints):
                                borderMode=cv2.BORDER_CONSTANT,
                                borderValue=(255, 255, 255))
 
-    return (Image.fromarray(cv2.cvtColor(rot_image, cv2.COLOR_BGR2RGB)),
+    return (cv2.cvtColor(rot_image, cv2.COLOR_BGR2RGB),
             after_rot_keypoints)
 
 
-def shift_image(image_data, corner_keypoints):
+def shift_image(image, corner_keypoints):
     """Roll the image such that QR occupies coords
        specified by the template."""
-    image = np.array(image_data)
     corner_keypoints = np.array(corner_keypoints)
     h, w, *_ = image.shape
 
@@ -416,7 +415,7 @@ def shift_image(image_data, corner_keypoints):
     if shifted_image.dtype == bool:
         shifted_image = shifted_image * np.uint8(255)
 
-    return Image.fromarray(shifted_image)
+    return shifted_image
 
 
 def get_student_number(image_path, exam_config):

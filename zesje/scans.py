@@ -201,18 +201,26 @@ def process_page(output_dir, image_data, exam_config):
     should stop processing any other pages if this function raises.
     """
 
-    barcode_data = decode_barcode(image_data, exam_config)
+    image_array = np.array(image_data)
+
+    corner_keypoints = find_corner_marker_keypoints(image_data)
+    check_corner_keypoints(image_array, corner_keypoints)
+    (image_data, new_keypoints) = rotate_image(image_data, corner_keypoints)
+
+    try:
+        barcode_data, upside_down = decode_barcode(image_data, exam_config)
+        if upside_down:
+            h, w, *_ = image_array.shape
+            new_keypoints = [(w - kp[0], h - kp[1]) for kp in new_keypoints]
+            image_data = image_data.rotate(180)
+    except BarcodeNotFoundError:
+        barcode_data = None
 
     if barcode_data is None:
         return False, "Reading barcode failed"
     elif barcode_data.token != exam_config.token:
         raise ValueError('PDF is not from this exam')
 
-    image_array = np.array(image_data)
-
-    corner_keypoints = find_corner_marker_keypoints(image_data)
-    check_corner_keypoints(image_array, corner_keypoints)
-    (image_data, new_keypoints) = rotate_image(image_data, corner_keypoints)
     image_data = shift_image(image_data, new_keypoints)
 
     target = os.path.join(output_dir, 'submissions', f'{barcode_data.copy}')
@@ -263,34 +271,38 @@ def decode_barcode(image, exam_config):
 
     # TODO: use points as base unit
     barcode_area_in = np.asarray(barcode_area) / 72
-
     grayscale = np.asarray(image.convert(mode='L'))
+    grayscale_rotated = np.rot90(grayscale, k=2)
+    image_crop = Image.fromarray(get_box(grayscale, barcode_area_in, padding=0.3))
+    image_crop_rotated = Image.fromarray(get_box(grayscale_rotated, barcode_area_in, padding=0.3))
 
-    image_crop = get_box(grayscale, barcode_area_in, padding=0.3)
+    # Use a generator to attemt multiple strategies for decoding
+    def image_generator():
+        yield image_crop, False
+        yield image_crop_rotated, True
+        yield image_crop.point(lambda p: p > 100 and 255), False
+        yield image_crop_rotated.point(lambda p: p > 100 and 255), True
 
-    results = pylibdmtx.decode(image_crop)
+    for image, upside_down in image_generator():
+        results = pylibdmtx.decode(image)
+        if len(results) == 1:
+            try:
+                data = results[0].data
+                #  See https://github.com/NaturalHistoryMuseum/pylibdmtx/issues/24
+                if 'Darwin' == platform.system():
+                    data = decode_raw_datamatrix(data)
+                else:
+                    data = data.decode('utf-8')
 
-    if results:
-        if len(results) > 1:
-            # we shouldn't read multiple codes
-            raise
-        try:
-            data = results[0].data
-            #  See https://github.com/NaturalHistoryMuseum/pylibdmtx/issues/24
-            if 'Darwin' == platform.system():
-                data = decode_raw_datamatrix(data)
-            else:
-                data = data.decode('utf-8')
+                token, copy, page = data.split('/')
+                copy = int(copy)
+                page = int(page)
 
-            token, copy, page = data.split('/')
-            copy = int(copy)
-            page = int(page)
-        except ValueError:
-            return
+                return ExtractedBarcode(token, copy, page), upside_down
+            except ValueError:
+                pass
 
-        return ExtractedBarcode(token, copy, page)
-    else:
-        return
+    raise BarcodeNotFoundError
 
 
 def rotate_image(image_data, corner_keypoints):
@@ -606,3 +618,7 @@ def check_corner_keypoints(image_array, keypoints):
                                     "in the same corner"))
             else:
                 checklist[index] = True
+
+
+class BarcodeNotFoundError(Exception):
+    pass

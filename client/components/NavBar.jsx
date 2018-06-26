@@ -92,7 +92,8 @@ class NavBar extends React.Component {
 
     render() {
 
-        const examStyle = this.props.exam.submissions.length ? {} : { pointerEvents: 'none', opacity: .65 }
+        const examStyle = this.props.exam.submissions.length && this.props.grader ? {} : { pointerEvents: 'none', opacity: .65 }
+        const statsStyle = this.props.exam.submissions.length ? {} : { pointerEvents: 'none', opacity: .65 }
 
         return (
             <nav className="navbar" role="navigation" aria-label="dropdown navigation">
@@ -122,7 +123,7 @@ class NavBar extends React.Component {
                         <Link className="navbar-item" to={'/submissions/' + this.props.exam.id}>Submissions</Link>
                         <Link className="navbar-item" to='/students'>Students</Link>
                         <Link className="navbar-item" style={examStyle} to='/grade'><strong><i>Grade</i></strong></Link>
-                        <Link className="navbar-item" style={examStyle} to='/statistics'>Statistics</Link>
+                        <Link className="navbar-item" style={statsStyle} to='/statistics'>Statistics</Link>
                     </div>
 
                     <div className="navbar-end">

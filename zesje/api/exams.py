@@ -94,7 +94,10 @@ class Exams(Resource):
                     'problems': [
                         {
                             'id': sol.problem.id,
-                            'graded_by': sol.graded_by,
+                            'graded_by': {
+                                'id': sol.graded_by.id,
+                                'name': sol.graded_by.name
+                            } if sol.graded_by else None,
                             'graded_at': sol.graded_at.isoformat() if sol.graded_at else None,
                             'feedback': [
                                 fb.id for fb in sol.feedback

@@ -6,7 +6,7 @@ from flask_restful import Resource, reqparse
 
 from pony import orm
 
-from ..database import Exam, Submission, Problem, Solution, FeedbackOption
+from ..database import Exam, Submission, Problem, Solution, FeedbackOption, Grader
 
 
 class Solutions(Resource):
@@ -38,29 +38,37 @@ class Solutions(Resource):
 
         return {
             'feedback': [fb.id for fb in solution.feedback],
-            'gradedBy': solution.graded_by,
+            'gradedBy': {
+                'id': solution.graded_by.id,
+                'name': solution.graded_by.name
+            } if solution.graded_by else None,
             'gradedAt': solution.graded_at.isoformat() if solution.graded_at else None,
             'remarks': solution.remarks
         }
 
     post_parser = reqparse.RequestParser()
     post_parser.add_argument('remark', type=str, required=True)
+    post_parser.add_argument('graderID', type=int, required=True)
 
     @orm.db_session
     def post(self, exam_id, submission_id, problem_id):
-        """Toggles an existing feedback option
+        """Change the remark of a solution
 
         Parameters
         ----------
             remark: string
+            graderID: int
 
         Returns
         -------
             true (if succesfull)
         """
 
+        args = self.post_parser.parse_args()
+
         problem = Problem[problem_id]
         exam = Exam[exam_id]
+        grader = Grader[args.graderID]
 
         sub = Submission.get(exam=exam, copy_number=submission_id)
         if not sub:
@@ -70,16 +78,15 @@ class Solutions(Resource):
         if not solution:
             raise orm.core.ObjectNotFound(Solution)
 
-        args = self.post_parser.parse_args()
-
         solution.graded_at = datetime.now()
-
         solution.remarks = args.remark
+        solution.graded_by = grader
 
         return True
 
     put_parser = reqparse.RequestParser()
     put_parser.add_argument('id', type=int, required=True)
+    put_parser.add_argument('graderID', type=int, required=True)
 
     @orm.db_session
     def put(self, exam_id, submission_id, problem_id):
@@ -88,14 +95,17 @@ class Solutions(Resource):
         Parameters
         ----------
             id: int
+            graderID: int
 
         Returns
         -------
             state: boolean
         """
+        args = self.put_parser.parse_args()
 
         problem = Problem[problem_id]
         exam = Exam[exam_id]
+        grader = Grader[args.graderID]
 
         sub = Submission.get(exam=exam, copy_number=submission_id)
         if not sub:
@@ -105,13 +115,12 @@ class Solutions(Resource):
         if not solution:
             raise orm.core.ObjectNotFound(Solution)
 
-        args = self.put_parser.parse_args()
-
         fb = FeedbackOption.get(id=args.id)
         if not fb:
             raise orm.core.ObjectNotFound(FeedbackOption)
 
         solution.graded_at = datetime.now()
+        solution.graded_by = grader
 
         if fb in solution.feedback:
             solution.feedback.remove(fb)

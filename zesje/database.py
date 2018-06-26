@@ -40,9 +40,8 @@ class Student(db.Entity):
 
 
 class Grader(db.Entity):
-    """This will be initialized @ app initialization and immutable from then on."""
-    first_name = Required(str)
-    last_name = Required(str)
+    """Graders can be created by any user at any time, but are immutable once they are created"""
+    name = Required(str)
     graded_solutions = Set('Solution')
 
 

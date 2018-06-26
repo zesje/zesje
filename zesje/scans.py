@@ -212,7 +212,7 @@ def process_page(output_dir, image_data, exam_config):
     corner_keypoints = find_corner_marker_keypoints(image_array)
     try:
         check_corner_keypoints(image_array, corner_keypoints)
-    except CornerMarkersError:
+    except RuntimeError:
         return False, "Incorrect amount of corner markers detected (blank page?)"
     (image_array, new_keypoints) = rotate_image(image_array, corner_keypoints)
 
@@ -223,7 +223,7 @@ def process_page(output_dir, image_data, exam_config):
             new_keypoints = [(w - kp[0], h - kp[1]) for kp in new_keypoints]
             # TODO: check if view errors appear
             image_array = np.array(image_array[::-1, ::-1])
-    except BarcodeNotFoundError:
+    except RuntimeError:
         barcode_data = None
 
     if barcode_data is None:
@@ -312,7 +312,7 @@ def decode_barcode(image, exam_config):
             except ValueError:
                 pass
 
-    raise BarcodeNotFoundError
+    raise RuntimeError("No barcode found.")
 
 
 def rotate_image(image_array, corner_keypoints):
@@ -611,7 +611,7 @@ def check_corner_keypoints(image_array, keypoints):
     keypoints: list of tuples containing the coordinates of keypoints
     """
     if(len(keypoints) < 3 or len(keypoints) > 4):
-        raise CornerMarkersError('Incorrect amount of corner markers detected')
+        raise RuntimeError('Incorrect amount of corner markers detected')
 
     h, w, *_ = image_array.shape
 
@@ -626,11 +626,3 @@ def check_corner_keypoints(image_array, keypoints):
                                     "in the same corner"))
             else:
                 checklist[index] = True
-
-
-class CornerMarkersError(Exception):
-    pass
-
-
-class BarcodeNotFoundError(Exception):
-    pass

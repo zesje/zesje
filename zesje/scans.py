@@ -154,6 +154,8 @@ def extract_images(filename):
                 else:
                     img = Image.open(BytesIO(data))
 
+                if img.mode == 'L':
+                    img = img.convert('RGB')
                 yield img, pagenr+1
 
 
@@ -201,19 +203,35 @@ def process_page(output_dir, image_data, exam_config):
     should stop processing any other pages if this function raises.
     """
 
-    barcode_data = decode_barcode(image_data, exam_config)
+    image_array = np.array(image_data)
+    shape = image_array.shape
+    if shape[0] < shape[1]:
+        # Handle possible horizontal image orientation.
+        image_array = np.array(np.rot90(image_array, -1))
+
+    corner_keypoints = find_corner_marker_keypoints(image_array)
+    try:
+        check_corner_keypoints(image_array, corner_keypoints)
+    except CornerMarkersError:
+        return False, "Incorrect amount of corner markers detected (blank page?)"
+    (image_array, new_keypoints) = rotate_image(image_array, corner_keypoints)
+
+    try:
+        barcode_data, upside_down = decode_barcode(image_array, exam_config)
+        if upside_down:
+            h, w, *_ = image_array.shape
+            new_keypoints = [(w - kp[0], h - kp[1]) for kp in new_keypoints]
+            # TODO: check if view errors appear
+            image_array = np.array(image_array[::-1, ::-1])
+    except BarcodeNotFoundError:
+        barcode_data = None
 
     if barcode_data is None:
         return False, "Reading barcode failed"
     elif barcode_data.token != exam_config.token:
         raise ValueError('PDF is not from this exam')
 
-    image_array = np.array(image_data)
-
-    corner_keypoints = find_corner_marker_keypoints(image_data)
-    check_corner_keypoints(image_array, corner_keypoints)
-    (image_data, new_keypoints) = rotate_image(image_data, corner_keypoints)
-    image_data = shift_image(image_data, new_keypoints)
+    image_data = Image.fromarray(shift_image(image_array, new_keypoints))
 
     target = os.path.join(output_dir, 'submissions', f'{barcode_data.copy}')
     os.makedirs(target, exist_ok=True)
@@ -263,40 +281,44 @@ def decode_barcode(image, exam_config):
 
     # TODO: use points as base unit
     barcode_area_in = np.asarray(barcode_area) / 72
+    rotated = np.rot90(image, k=2)
+    step = 2 if guess_dpi(image) >= 200 else 1
+    image_crop = Image.fromarray(get_box(image, barcode_area_in, padding=0.3)[::step, ::step]).convert(mode='L')
+    image_crop_rotated = Image.fromarray(get_box(rotated, barcode_area_in, padding=0.3)[::step, ::step]).convert(mode='L')
 
-    grayscale = np.asarray(image.convert(mode='L'))
+    # Use a generator to attemt multiple strategies for decoding
+    def image_generator():
+        yield image_crop, False
+        yield image_crop_rotated, True
+        yield image_crop.point(lambda p: p > 100 and 255), False
+        yield image_crop_rotated.point(lambda p: p > 100 and 255), True
 
-    image_crop = get_box(grayscale, barcode_area_in, padding=0.3)
+    for image, upside_down in image_generator():
+        results = pylibdmtx.decode(image)
+        if len(results) == 1:
+            try:
+                data = results[0].data
+                #  See https://github.com/NaturalHistoryMuseum/pylibdmtx/issues/24
+                if 'Darwin' == platform.system():
+                    data = decode_raw_datamatrix(data)
+                else:
+                    data = data.decode('utf-8')
 
-    results = pylibdmtx.decode(image_crop)
+                token, copy, page = data.split('/')
+                copy = int(copy)
+                page = int(page)
 
-    if results:
-        if len(results) > 1:
-            # we shouldn't read multiple codes
-            raise
-        try:
-            data = results[0].data
-            #  See https://github.com/NaturalHistoryMuseum/pylibdmtx/issues/24
-            if 'Darwin' == platform.system():
-                data = decode_raw_datamatrix(data)
-            else:
-                data = data.decode('utf-8')
+                return ExtractedBarcode(token, copy, page), upside_down
+            except ValueError:
+                pass
 
-            token, copy, page = data.split('/')
-            copy = int(copy)
-            page = int(page)
-        except ValueError:
-            return
-
-        return ExtractedBarcode(token, copy, page)
-    else:
-        return
+    raise BarcodeNotFoundError
 
 
-def rotate_image(image_data, corner_keypoints):
-    """Rotate a PIL image according to the rotation of the corner markers."""
+def rotate_image(image_array, corner_keypoints):
+    """Rotate an image according to the rotation of the corner markers."""
 
-    color_im = cv2.cvtColor(np.array(image_data), cv2.COLOR_RGB2BGR)
+    color_im = cv2.cvtColor(image_array, cv2.COLOR_RGB2BGR)
 
     # Find two corner markers which lie in the same horizontal half.
     # Same horizontal half is chosen as the line from one keypoint to
@@ -332,7 +354,7 @@ def rotate_image(image_data, corner_keypoints):
                            for (coord_x, coord_y)
                            in keyp_from_rot_origin]
 
-    color_im = cv2.cvtColor(np.array(image_data), cv2.COLOR_RGB2BGR)
+    color_im = cv2.cvtColor(image_array, cv2.COLOR_RGB2BGR)
 
     # Create rotation matrix and rotate the image around the center
     rot_mat = cv2.getRotationMatrix2D(rot_origin, angle_deg, 1)
@@ -340,14 +362,13 @@ def rotate_image(image_data, corner_keypoints):
                                borderMode=cv2.BORDER_CONSTANT,
                                borderValue=(255, 255, 255))
 
-    return (Image.fromarray(cv2.cvtColor(rot_image, cv2.COLOR_BGR2RGB)),
+    return (cv2.cvtColor(rot_image, cv2.COLOR_BGR2RGB),
             after_rot_keypoints)
 
 
-def shift_image(image_data, corner_keypoints):
+def shift_image(image, corner_keypoints):
     """Roll the image such that QR occupies coords
        specified by the template."""
-    image = np.array(image_data)
     corner_keypoints = np.array(corner_keypoints)
     h, w, *_ = image.shape
 
@@ -377,8 +398,8 @@ def shift_image(image_data, corner_keypoints):
         topright = corner_keypoints[~is_left_half & is_top_half]
         bottomleft = corner_keypoints[is_left_half & ~is_top_half]
         if(len(topright) == 1 & len(bottomleft) == 1):
-            x = bottomleft[0]
-            y = topright[1]
+            x = bottomleft[0][0]
+            y = topright[0][1]
 
         else:
             # We can only end here if something went wrong with the detection
@@ -394,7 +415,7 @@ def shift_image(image_data, corner_keypoints):
     if shifted_image.dtype == bool:
         shifted_image = shifted_image * np.uint8(255)
 
-    return Image.fromarray(shifted_image)
+    return shifted_image
 
 
 def get_student_number(image_path, exam_config):
@@ -491,7 +512,7 @@ def calc_angle(keyp1, keyp2):
             return math.degrees(math.atan(ydiff / xdiff))
 
 
-def find_corner_marker_keypoints(image_data):
+def find_corner_marker_keypoints(image_array):
     """Generates a list of OpenCV keypoints which resemble corner markers.
     This is done using a SimpleBlobDetector
 
@@ -500,11 +521,10 @@ def find_corner_marker_keypoints(image_data):
     image_data: Source image
 
     """
-    color_im = cv2.cvtColor(np.array(image_data), cv2.COLOR_RGB2BGR)
-    gray_im = cv2.cvtColor(color_im, cv2.COLOR_BGR2GRAY)
+    gray_im = cv2.cvtColor(image_array, cv2.COLOR_BGR2GRAY)
     _, bin_im = cv2.threshold(gray_im, 150, 255, cv2.THRESH_BINARY)
 
-    h, w, *_ = color_im.shape
+    h, w = gray_im.shape
 
     bin_im_inv = cv2.bitwise_not(bin_im)
 
@@ -525,8 +545,8 @@ def find_corner_marker_keypoints(image_data):
     bin_im = ~(bin_im_inv | im_floodfill_inv)
 
     # Filter out everything in the center of the image
-    bin_im[round(0.125 * h):round(0.875 * h),
-           round(0.125 * w):round(0.875 * w)] = 255
+    bin_im[round(0.125 * h):round(0.875 * h)] = 255
+    bin_im[:, round(0.125 * w):round(0.875 * w)] = 255
 
     # Detect objects which look like corner markers
     params = cv2.SimpleBlobDetector_Params()
@@ -559,7 +579,7 @@ def find_corner_marker_keypoints(image_data):
         image_patch = gray_im[topleft[1]:bottomright[1],
                               topleft[0]:bottomright[0]]
 
-        dpi = guess_dpi(np.array(image_data))
+        dpi = guess_dpi(image_array)
         block_size = int(round(dpi / 60))
         if block_size % 2 == 0:
             block_size += 1
@@ -591,7 +611,7 @@ def check_corner_keypoints(image_array, keypoints):
     keypoints: list of tuples containing the coordinates of keypoints
     """
     if(len(keypoints) < 3 or len(keypoints) > 4):
-        raise RuntimeError('Incorrect amount of corner markers detected')
+        raise CornerMarkersError('Incorrect amount of corner markers detected')
 
     h, w, *_ = image_array.shape
 
@@ -606,3 +626,11 @@ def check_corner_keypoints(image_array, keypoints):
                                     "in the same corner"))
             else:
                 checklist[index] = True
+
+
+class CornerMarkersError(Exception):
+    pass
+
+
+class BarcodeNotFoundError(Exception):
+    pass

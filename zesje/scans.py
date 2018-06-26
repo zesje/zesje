@@ -259,7 +259,7 @@ def process_page(output_dir, image_data, exam_config):
             # Nothing to update in the db
             return True, ''
 
-    if barcode_data.page is 0:
+    if barcode_data.page == 0:
         try:
             number = get_student_number(target_image, exam_config)
         except Exception:

@@ -78,10 +78,7 @@ class Exams(Resource):
         """
         exam = Exam[exam_id]
 
-        return {
-            'id': exam_id,
-            'name': exam.name,
-            'submissions': [
+        submissions = [
                 {
                     'id': sub.copy_number,
                     'student': {
@@ -101,9 +98,21 @@ class Exams(Resource):
                             ],
                             'remark': sol.remarks
                         } for sol in sub.solutions.order_by(lambda s: s.problem.id)
-                    ]
-                } for sub in exam.submissions.order_by(lambda s: s.copy_number)
-            ],
+                    ],
+                } for sub in exam.submissions
+        ]
+        # Sort submissions by selecting those with students assigned, then by
+        # student number, then by copy number.
+        # TODO: This is a minimal fix of #166, to be replaced later.
+        submissions = sorted(
+            submissions,
+            key=(lambda s: (bool(s['student']) and -s['student']['id'], s['id']))
+        )
+
+        return {
+            'id': exam_id,
+            'name': exam.name,
+            'submissions': submissions,
             'problems': [
                 {
                     'id': prob.id,

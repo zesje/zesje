@@ -8,8 +8,6 @@ import ProblemSelector from './grade/ProblemSelector.jsx';
 import EditPanel from './grade/EditPanel.jsx';
 const ProgressBar = () => null;
 
-import * as api from '../api.jsx';
-
 
 class Grade extends React.Component {
 
@@ -127,7 +125,8 @@ class Grade extends React.Component {
                                     <FeedbackPanel examID={this.props.exam.id} submissionID={this.props.exam.submissions[this.state.sIndex].id}
                                         problem={this.props.exam.problems[this.state.pIndex]}
                                         solution={this.props.exam.submissions[this.state.sIndex].problems[this.state.pIndex]}
-                                        toggleEdit={this.toggleEdit} updateSubmission={() => this.props.updateSubmission(this.state.sIndex)}/>
+                                        toggleEdit={this.toggleEdit} updateSubmission={() => this.props.updateSubmission(this.state.sIndex)}
+                                        graderID={this.props.graderID} />
                                 }
                             </div>
 

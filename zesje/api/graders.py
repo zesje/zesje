@@ -23,21 +23,18 @@ class Graders(Resource):
         -------
         list of:
             id: int
-            first_name: str
-            last_name: str
+            name: str
         """
         return [
             {
                 'id': g.id,
-                'first_name': g.first_name,
-                'last_name': g.last_name
+                'name': g.name
             }
             for g in Grader.select()
         ]
 
     post_parser = reqparse.RequestParser()
-    required_string(post_parser, 'first_name')
-    required_string(post_parser, 'last_name')
+    required_string(post_parser, 'name')
 
     @orm.db_session
     def post(self):
@@ -45,20 +42,18 @@ class Graders(Resource):
 
         Parameters
         ----------
-        first_name: str
-        last_name: str
+        name: str
 
         Returns
         -------
         list of:
             id: int
-            first_name: str
-            last_name: str
+            name: str
         """
         args = self.post_parser.parse_args()
 
         try:
-            Grader(first_name=args['first_name'], last_name=args['last_name'])
+            Grader(name=args['name'])
             orm.commit()
         except KeyError as error:
             abort(400, error)

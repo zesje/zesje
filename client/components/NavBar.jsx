@@ -32,15 +32,37 @@ const ExamDropdown = (props) => (
     </div>
 )
 
+const GraderDropdown = (props) => (
+    <div className="navbar-item has-dropdown is-hoverable">
+        <div className="navbar-link" >
+            {props.grader ? <i>{props.grader.name}</i> : "Select grader"}
+        </div>
+        <div className="navbar-dropdown">
+            {props.list.map((grader) => (
+                <a className={"navbar-item" + (props.grader && props.grader.id === grader.id ? " is-active" : "")}
+                    key={grader.id} onClick={() => props.changeGrader(grader)} >
+                    <i>{grader.name}</i>
+                </a>
+            ))}
+            <hr className="navbar-divider" />
+            <Link className="navbar-item" to={'/graders'} >
+                Add grader
+            </Link>
+        </div>
+    </div>
+)
+
 class NavBar extends React.Component {
 
     state = {
         foldOut: false,
-        examList: []
+        examList: [],
+        graderList: []
     }
 
     componentDidMount = () => {
         this.updateExamList();
+        this.updateGraderList();
     }
 
     updateExamList = () => {
@@ -53,6 +75,15 @@ class NavBar extends React.Component {
             })
     }
 
+    updateGraderList = () => {
+        api.get('graders')
+            .then(graders => {
+                this.setState({
+                    graderList: graders
+                })
+            })
+    }
+
     burgerClick = () => {
         this.setState({
             foldOut: !this.state.foldOut
@@ -61,7 +92,8 @@ class NavBar extends React.Component {
 
     render() {
 
-        const examStyle = this.props.exam.submissions.length ? {} : { pointerEvents: 'none', opacity: .65 }
+        const examStyle = this.props.exam.submissions.length && this.props.grader ? {} : { pointerEvents: 'none', opacity: .65 }
+        const statsStyle = this.props.exam.submissions.length ? {} : { pointerEvents: 'none', opacity: .65 }
 
         return (
             <nav className="navbar" role="navigation" aria-label="dropdown navigation">
@@ -91,14 +123,18 @@ class NavBar extends React.Component {
                         <Link className="navbar-item" to={'/submissions/' + this.props.exam.id}>Submissions</Link>
                         <Link className="navbar-item" to='/students'>Students</Link>
                         <Link className="navbar-item" style={examStyle} to='/grade'><strong><i>Grade</i></strong></Link>
-                        <Link className="navbar-item" style={examStyle} to='/statistics'>Statistics</Link>
+                        <Link className="navbar-item" style={statsStyle} to='/statistics'>Statistics</Link>
                     </div>
 
                     <div className="navbar-end">
-                        <Link className="navbar-item" to='/graders'>Manage graders</Link>
+                        {this.state.graderList.length ?
+                            <GraderDropdown grader={this.props.grader} list={this.state.graderList} changeGrader={this.props.changeGrader} />
+                            :
+                            <Link className="navbar-item" to='/graders'>Add grader</Link>
+                        }
                         <Link className="navbar-item has-text-info" to='/reset'>reset</Link>
                         <div className="navbar-item">
-                            <i>Version { __COMMIT_HASH__ }</i>
+                            <i>Version {__COMMIT_HASH__}</i>
                         </div>
                     </div>
                 </div>

@@ -8,8 +8,6 @@ import ProblemSelector from './grade/ProblemSelector.jsx';
 import EditPanel from './grade/EditPanel.jsx';
 const ProgressBar = () => null;
 
-import * as api from '../api.jsx';
-
 
 class Grade extends React.Component {
 
@@ -107,8 +105,9 @@ class Grade extends React.Component {
     }
 
     render() {
-
-
+        const submission = this.props.exam.submissions[this.state.sIndex];
+        const solution = submission.problems[this.state.pIndex];
+        const problem = this.props.exam.problems[this.state.pIndex];
 
         return (
             <div>
@@ -122,12 +121,11 @@ class Grade extends React.Component {
                             <div className="column is-one-quarter-desktop is-one-third-tablet">
                                 <ProblemSelector problems={this.props.exam.problems} changeProblem={this.changeProblem}/>
                                 {this.state.editActive ?
-                                    <EditPanel problem={this.props.exam.problems[this.state.pIndex]} editFeedback={this.state.editFeedback} toggleEdit={this.toggleEdit}/>
+                                    <EditPanel problem={problem} editFeedback={this.state.editFeedback} toggleEdit={this.toggleEdit}/>
                                     :
-                                    <FeedbackPanel examID={this.props.exam.id} submissionID={this.props.exam.submissions[this.state.sIndex].id}
-                                        problem={this.props.exam.problems[this.state.pIndex]}
-                                        solution={this.props.exam.submissions[this.state.sIndex].problems[this.state.pIndex]}
-                                        toggleEdit={this.toggleEdit} updateSubmission={() => this.props.updateSubmission(this.state.sIndex)}/>
+                                    <FeedbackPanel examID={this.props.exam.id} submissionID={submission.id}
+                                        problem={problem} solution={solution} graderID={this.props.graderID}
+                                        toggleEdit={this.toggleEdit} updateSubmission={() => this.props.updateSubmission(this.state.sIndex)} />
                                 }
                             </div>
 
@@ -157,10 +155,14 @@ class Grade extends React.Component {
                                 </div>
 
                                 <ProgressBar submissions={this.props.exam.submissions} />
-
+                                {solution.graded_at ?
+                                    <div>Graded by: {solution.graded_by.name} <i>({solution.graded_at})</i></div>
+                                    :
+                                    <div>Ungraded</div>
+                                }
                                 <p className="box">
                                     <img src={this.props.exam.id ? ('api/images/solutions/' + this.props.exam.id + '/' 
-                                        + this.props.exam.problems[this.state.pIndex].id + '/' + this.props.exam.submissions[this.state.sIndex].id) : ''} alt="" />
+                                        + this.props.exam.problems[this.state.pIndex].id + '/' + submission.id) : ''} alt="" />
                                 </p>
 
                             </div>

@@ -52,6 +52,39 @@ const GraderDropdown = (props) => (
     </div>
 )
 
+
+const ExportDropdown = (props) => {
+    const export_formats = [
+        {label: "Excel Spreadsheet", format: "xlsx"},
+        {label: "Detailed Excel Spreadsheet", format: "xlsx_detailed"},
+        {label: "Pandas Dataframe", format: "dataframe"}
+    ]
+
+    const export_url = format => `/api/export/${format}/${props.exam.id}`
+
+    return (
+        <div className="navbar-item has-dropdown is-hoverable" style={props.style}>
+            <div className="navbar-link">
+                Export
+            </div>
+            <div className="navbar-dropdown">
+                {export_formats.map((export_format, i) =>
+                    <a className="navbar-item"
+                       href={export_url(export_format.format)}
+                       key={i}>
+                        {export_format.label}
+                    </a>
+                )}
+                <hr className="navbar-divider" />
+                <a className="navbar-item" href='/api/export/full'>
+                    Export full database
+                </a>
+            </div>
+        </div>
+    )
+}
+
+
 class NavBar extends React.Component {
 
     state = {
@@ -124,6 +157,7 @@ class NavBar extends React.Component {
                         <Link className="navbar-item" to='/students'>Students</Link>
                         <Link className="navbar-item" style={examStyle} to='/grade'><strong><i>Grade</i></strong></Link>
                         <Link className="navbar-item" style={statsStyle} to='/statistics'>Statistics</Link>
+                        <ExportDropdown className="navbar-item" style={examStyle} exam={this.props.exam}/>
                     </div>
 
                     <div className="navbar-end">

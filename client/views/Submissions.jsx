@@ -78,6 +78,17 @@ class Submissions extends React.Component {
 
     componentDidMount = () => {
         this.scanUpdater = setInterval(this.updateScans, 1000)
+        // TODO: remove this when https://gitlab.kwant-project.org/zesje/zesje/issues/173
+        //       has been solved. This is a
+        api.get('students')
+           .then(students => {
+               if (students.length == 0) {
+                   alert("You have not yet uploaded any students. " +
+                         "If you don't upload students before the scans " +
+                         "then we can't automatically assign students " +
+                         "to their submissions")
+               }
+           })
     }
 
     componentWillUnmount = () => {

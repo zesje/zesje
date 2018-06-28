@@ -59,8 +59,7 @@ class Exams extends React.Component {
                 this.props.changeURL('/exams/' + exam.id);
             })
             .catch(resp => {
-                alert('failed to upload exam (see javascript console for details)')
-                console.error('failed to upload exam:', resp)
+                resp.json().then(body => alert(body.message))
             })
     }
 

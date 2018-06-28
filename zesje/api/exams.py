@@ -10,7 +10,7 @@ from werkzeug.datastructures import FileStorage
 
 from pony import orm
 
-from ..pdf_generation import generate_pdfs, output_pdf_filename_format, join_pdfs
+from ..pdf_generation import generate_pdfs, output_pdf_filename_format, join_pdfs, page_size
 
 
 from ..database import db, Exam, ExamWidget
@@ -177,6 +177,21 @@ class Exams(Resource):
         args = self.post_parser.parse_args()
         exam_name = args['exam_name']
         pdf_data = args['pdf']
+
+        # Default to A4 page size
+        need_page_size = app.config.get('PAGE_SIZE', (595.276, 841.89))
+        try:
+            actual_size = page_size(pdf_data)
+        except ValueError as error:
+            return dict(status=400, message=str(error)), 400
+
+        if need_page_size != actual_size:
+            return (
+                dict(status=400,
+                     # TODO: don't hardcode page format in error message
+                     message=f'PDF page size ({actual_size} points) is not A4.'),
+                400
+            )
 
         exam = Exam(
             name=exam_name,

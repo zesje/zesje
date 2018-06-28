@@ -17,11 +17,12 @@ class Grade extends React.Component {
         sIndex: 0,
         pIndex: 0,
         input: "",
-        examID: null
+        examID: null,
+        fullPage: false
     }
 
-    static inputString (sub) {
-        if(sub.student) {
+    static inputString(sub) {
+        if (sub.student) {
             return (sub.student.id + ' (' + sub.student.firstName + ' ' + sub.student.lastName + ')')
         }
         return ('#' + sub.id)
@@ -90,6 +91,13 @@ class Grade extends React.Component {
             pIndex: event.target.value
         })
     }
+
+    toggleFullPage = (event) => {
+        this.setState({
+            fullPage: event.target.checked
+        })
+    }
+
     static getDerivedStateFromProps = (newProps, prevState) => {
         if (newProps.exam.id != prevState.examID && newProps.exam.submissions.length) {
             return {
@@ -119,9 +127,9 @@ class Grade extends React.Component {
                     <div className="container">
                         <div className="columns">
                             <div className="column is-one-quarter-desktop is-one-third-tablet">
-                                <ProblemSelector problems={this.props.exam.problems} changeProblem={this.changeProblem}/>
+                                <ProblemSelector problems={this.props.exam.problems} changeProblem={this.changeProblem} />
                                 {this.state.editActive ?
-                                    <EditPanel problem={problem} editFeedback={this.state.editFeedback} toggleEdit={this.toggleEdit}/>
+                                    <EditPanel problem={problem} editFeedback={this.state.editFeedback} toggleEdit={this.toggleEdit} />
                                     :
                                     <FeedbackPanel examID={this.props.exam.id} submissionID={submission.id}
                                         problem={problem} solution={solution} graderID={this.props.graderID}
@@ -155,15 +163,22 @@ class Grade extends React.Component {
                                 </div>
 
                                 <ProgressBar submissions={this.props.exam.submissions} />
+
+                                <p className="box">
+                                    <img src={this.props.exam.id ? ('api/images/solutions/' + this.props.exam.id + '/'
+                                        + problem.id + '/' + submission.id + '/' + (this.state.fullPage ? '1' : '0')) : ''} alt="" />
+                                </p>
+
                                 {solution.graded_at ?
                                     <div>Graded by: {solution.graded_by.name} <i>({solution.graded_at})</i></div>
                                     :
                                     <div>Ungraded</div>
                                 }
-                                <p className="box">
-                                    <img src={this.props.exam.id ? ('api/images/solutions/' + this.props.exam.id + '/' 
-                                        + problem.id + '/' + submission.id + '/' + '0') : ''} alt="" />
-                                </p>
+
+                                <label className="checkbox">
+                                    <input checked={this.state.fullPage} onChange={this.toggleFullPage} type="checkbox" />
+                                    View full page
+                                </label>
 
                             </div>
                         </div>

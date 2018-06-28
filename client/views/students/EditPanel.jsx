@@ -1,4 +1,5 @@
 import React from 'react';
+import Dropzone from 'react-dropzone';
 
 import * as api from '../../api.jsx';
 
@@ -23,12 +24,16 @@ const SaveButton = (props) => (
 )
 
 const UploadButton = (props) => (
-    <button className="button is-link is-fullwidth" onClick={props.onClick}>
+    <Dropzone
+        className="button is-link is-fullwidth"
+        accept="text/csv"
+        onDrop={props.onDrop}
+        disablePreview>
         <span className="icon is-small">
             <i className="fa fa-upload"></i>
         </span>
         <span>upload</span>
-    </button>
+    </Dropzone>
 )
 
 class EditPanel extends React.Component {
@@ -107,6 +112,26 @@ class EditPanel extends React.Component {
     }
 
 
+    uploadStudent = (accepted, rejected) => {
+        if (rejected.length > 0) {
+            alert('Please upload a CSV file')
+            return
+        }
+        accepted.map(file => {
+            const data = new FormData()
+            data.append('csv', file)
+            api.post('students', data)
+               .then(() => {
+                   alert('uploaded')
+               })
+               .catch(resp => {
+                   console.error('failed to upload student CSV file')
+                   resp.json().then(r => alert(r.message))
+               })
+        })
+    }
+
+
     render() {
 
         const empty = !(this.state.id + this.state.firstName + this.state.lastName + this.state.email);
@@ -158,7 +183,7 @@ class EditPanel extends React.Component {
                 <div className="panel-block">
                     <BackButton onClick={this.props.toggleEdit} />
                     {empty ?
-                        <UploadButton />
+                        <UploadButton onDrop={this.uploadStudent} />
                         :
                         <SaveButton disabled={!full} onClick={this.saveStudent} />
                     }

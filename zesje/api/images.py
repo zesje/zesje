@@ -12,7 +12,7 @@ from ..database import Exam, Submission, Problem
 
 
 @orm.db_session
-def get(exam_id, problem_id, submission_id):
+def get(exam_id, problem_id, submission_id, full_page=False):
     """get image for the given problem.
 
     Parameters
@@ -22,6 +22,8 @@ def get(exam_id, problem_id, submission_id):
     submission_id : int
         The copy number of the submission. This uniquely identifies
         the submission *within a given exam*.
+    full_page : bool
+        Whether to return a complete page
 
     Returns
     -------
@@ -49,7 +51,10 @@ def get(exam_id, problem_id, submission_id):
     page_path = next(p.path for p in submission.pages if page == os.path.basename(p.path))
 
     page_im = cv2.imread(page_path)
+    if not full_page:
+        raw_image = get_box(page_im, widget_area_in, padding=0.3)
+    else:
+        raw_image = page_im
 
-    raw_image = get_box(page_im, widget_area_in, padding=0.3)
     image_encoded = cv2.imencode(".jpg", raw_image)[1].tostring()
     return Response(image_encoded, 200, mimetype='image/jpeg')

@@ -57,7 +57,7 @@ api_bp.add_url_rule(
     signature.get,
 )
 api_bp.add_url_rule(
-    '/images/solutions/<int:exam_id>/<int:problem_id>/<int:submission_id>',
+    '/images/solutions/<int:exam_id>/<int:problem_id>/<int:submission_id>/<int:full_page>',
     'solution_image',
     images.get,
 )

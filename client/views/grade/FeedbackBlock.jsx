@@ -22,7 +22,8 @@ class FeedbackBlock extends React.Component {
         if (!this.state.hover) {
 
             api.put('solution/' + this.props.examID + '/' + this.props.submissionID + '/' + this.props.problemID, {
-                id: this.props.feedback.id
+                id: this.props.feedback.id,
+                graderID: this.props.graderID
             })
                 .then(result => {
                     this.props.updateSubmission();

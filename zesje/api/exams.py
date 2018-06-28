@@ -178,16 +178,20 @@ class Exams(Resource):
         exam_name = args['exam_name']
         pdf_data = args['pdf']
 
+        # Default to A4 page size
         need_page_size = app.config.get('PAGE_SIZE', (595.276, 841.89))
-        actual_size = page_size(pdf_data)
+        try:
+            actual_size = page_size(pdf_data)
+        except ValueError as error:
+            return dict(status=400, message=str(error)), 400
+
         if need_page_size != actual_size:
             return (
-                dict(status=400, message=f'PDF page size {actual_size} does not match the one supported by printer.'),
+                dict(status=400,
+                     # TODO: don't hardcode page format in error message
+                     message=f'PDF page size ({actual_size} points) is not A4.'),
                 400
             )
-        else:
-            # Return caret to the beginning of the file.
-            pdf_data.seek(0)
 
         exam = Exam(
             name=exam_name,

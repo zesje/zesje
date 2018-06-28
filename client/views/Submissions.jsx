@@ -49,10 +49,14 @@ class Submissions extends React.Component {
     }
 
     updateSubmissions = () => {
-        api.get('scans/' + this.props.exam.id)
+        api.get('submissions/' + this.props.exam.id)
             .then(submissions => {
+                console.log(submissions)
                 this.setState({
-                    submissions: submissions.map(sub => sub = {id: sub['id'], missing: sub['missing_pages']})
+                    submissions: submissions.map(sub => ({
+                        id: sub['id'],
+                        missing: sub['missing_pages']
+                    }))
                 })
             })
     }
@@ -96,6 +100,25 @@ class Submissions extends React.Component {
     }
 
     render() {
+        const missing_submissions = this.state.submissions.filter(s => s.missing.length > 0)
+
+        const missing_submissions_status = (
+            missing_submissions.length > 0 ?
+                <div>
+                <p className="menu-label">
+                    Missing Pages
+                </p>
+                <ul className="menu-list">
+                    {missing_submissions.map(sub =>
+                        <li key={sub.id}>
+                            Copy {sub.id} is missing pages {sub.missing.join(',')}
+                        </li>
+                    )}
+                </ul>
+                </div>
+            :
+                null
+        )
 
         return <div>
 
@@ -118,8 +141,14 @@ class Submissions extends React.Component {
                             </Dropzone>
                             <br />
                             <aside className='menu'>
+                                <p className="menu-label">
+                                    Uploaded submissions: {this.state.submissions.length}
+                                </p>
+
+                                {missing_submissions_status}
+
                                 <p className='menu-label'>
-                                    Previously uploaded
+                                    Upload History
                                 </p>
                                 <ul className='menu-list'>
                                     {this.state.scans.map(scan =>

@@ -130,21 +130,29 @@ class Students(Resource):
 
         """
         args = self.post_parser.parse_args()
-        if args['csv'].mimetype != 'text/csv':
+        try:
+            df = pd.read_csv(BytesIO(args['csv'].read()))
+        except Exception:
             return dict(message='Uploaded file is not CSV'), 400
 
-        df = pd.read_csv(BytesIO(args['csv'].read()))
+        try:
+            for _, row in df.iterrows():
+                _add_or_update_student(row)
+        except Exception as e:
+            message = ('Uploaded CSV is not in the correct format: '
+                       'did you export it from Brightspace?' + repr(e))
+            return dict(message=message), 400
 
-        for index, row in df.iterrows():
-            student = Student.get(id=row['OrgDefinedId'][1:])
-            if not student:
-                student = Student(id=row['OrgDefinedId'][1:],
-                                  first_name=row['First Name'],
-                                  last_name=row['Last Name'],
-                                  email=row['Email'] or None)
-            else:
-                student.set(id=row['OrgDefinedId'][1:],
-                            first_name=row['First Name'],
-                            last_name=row['Last Name'],
-                            email=row['Email'] or None)
         return True
+
+
+def _add_or_update_student(row):
+    content = dict(id=row['OrgDefinedId'][1:],
+                   first_name=row['First Name'],
+                   last_name=row['Last Name'],
+                   email=row['Email'] or None)
+    student = Student.get(id=content['id'])
+    if not student:
+        Student(**content)
+    else:
+        student.set(**content)

@@ -122,7 +122,7 @@ class EditPanel extends React.Component {
             data.append('csv', file)
             api.post('students', data)
                .then(() => {
-                   alert('uploaded')
+                   alert('successfully uploaded students')
                })
                .catch(resp => {
                    console.error('failed to upload student CSV file')

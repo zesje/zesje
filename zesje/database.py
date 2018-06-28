@@ -70,6 +70,7 @@ class Page(db.Entity):
     """Page of an exam"""
     path = Required(str)
     submission = Required(Submission)
+    number = Optional(int)
 
 
 class Problem(db.Entity):

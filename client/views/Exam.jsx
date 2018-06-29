@@ -198,24 +198,14 @@ class Exams extends React.Component {
 
     SidePanel = (props) => {
         const selectedWidgetId = this.state.selectedWidgetId
-        let problem
-        let disabled
-        if (this.state.selectedWidgetId && this.state.widgets[this.state.selectedWidgetId]) {
-            const widget = this.state.widgets[this.state.selectedWidgetId]
-            if (widget.problem) {
-                problem = widget.problem
-                disabled = false
-            } else {
-                disabled = true
-            }
-        } else {
-            // no selection
-            disabled = true
-        }
+        let selectedWidget = selectedWidgetId && this.state.widgets[selectedWidgetId]
+        let problem = selectedWidget && selectedWidget.problem
+        let widgetEditDisabled = this.state.previewing || !problem
+
         return (
             <React.Fragment>
                 <this.PanelEdit
-                    disabled={disabled}
+                    disabled={widgetEditDisabled}
                     onDeleteClick={() => alert('Not implemented')}
                     problem={problem}
                     changeProblemName={newName => {

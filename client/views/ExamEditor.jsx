@@ -23,7 +23,8 @@ class ExamEditor extends React.Component {
     }
 
     getPDFUrl = () => {
-        return (this.props.examID && '/api/exams/' + this.props.examID + '/source_pdf') || null
+        let whichPDF = this.props.finalized ? 'preview' : 'source_pdf'
+        return this.props.examID && `/api/exams/${this.props.examID}/${whichPDF}` || null
     }
 
     getCoordinatesForEvent = (e) => {
@@ -171,7 +172,10 @@ class ExamEditor extends React.Component {
         // Only render when numPage is set
         if (this.props.numPages !== null && this.props.widgets) {
             const widgets = this.props.widgets.filter(widget => {
-                if (widget.problem) {
+                if (widget.name == 'student_id_widget' ||
+                    widget.name == 'barcode_widget') {
+                    return !this.props.finalized
+                } else if (widget.problem) {
                     return widget.problem.page == this.props.page
                 } else {
                     return true

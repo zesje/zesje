@@ -94,7 +94,7 @@ class Exams extends React.Component {
     }
 
     renderContent = () => {
-        if (this.props.exam.finalized || this.state.previewing) {
+        if (this.state.previewing) {
             return (
                 <GeneratedExamPreview
                     examID={this.state.examID}
@@ -105,6 +105,7 @@ class Exams extends React.Component {
         } else {
             return (
                 <ExamEditor
+                    finalized={this.props.exam.finalized}
                     widgets={this.state.widgets}
                     examID={this.state.examID}
                     page={this.state.page}
@@ -286,7 +287,10 @@ class Exams extends React.Component {
                     <this.PanelConfirm
                         onYesClick={() =>
                             api.put(`exams/${this.props.examID}/finalized`, 'true')
-                               .then(() => {this.props.updateExam(this.props.examID)})
+                               .then(() => {
+                                   this.props.updateExam(this.props.examID)
+                                   this.setState({previewing: false})
+                               })
                         }
                         onNoClick={() => this.setState({
                              previewing: false,

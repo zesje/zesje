@@ -52,10 +52,26 @@ class Grade extends React.Component {
     }
 
     prevUngraded = () => {
+        const ungraded = this.props.exam.submissions.filter(sub => sub.problems[this.state.pIndex].graded_at === null).map(sub => sub.id);
+        const newInput = getClosest.lowerNumber(this.props.exam.submissions[this.state.sIndex].id - 1, ungraded);
 
+        if (typeof newInput !== 'undefined') {
+            this.setState({
+                input: ungraded[newInput]
+            })
+            this.setSubmission(ungraded[newInput])
+        }
     }
     nextUngraded = () => {
+        const ungraded = this.props.exam.submissions.filter(sub => sub.problems[this.state.pIndex].graded_at === null).map(sub => sub.id);
+        const newInput = getClosest.greaterNumber(this.props.exam.submissions[this.state.sIndex].id + 1, ungraded);
 
+        if (typeof newInput !== 'undefined') {
+            this.setState({
+                input: ungraded[newInput]
+            })
+            this.setSubmission(ungraded[newInput])
+        }
     }
 
     toggleEdit = () => {
@@ -70,22 +86,23 @@ class Grade extends React.Component {
     setSubInput = (event) => {
         this.setState({ input: event.target.value })
     }
-    setSubmission = () => {
-        const input = parseInt(this.state.input);
-        const i = this.state.submission.list.findIndex(sub => sub.student.id === input);
-        const sub = this.state.submission.list[i];
+    setSubmission = (id) => {
+
+        const input = id >= 0 ? id : parseInt(this.state.input);
+        const i = this.props.exam.submissions.findIndex(sub => sub.id === input);
+        const sub = this.props.exam.submissions[i];
 
         if (i >= 0) {
             this.props.updateSubmission(i)
             this.setState({
-                index: i,
+                sIndex: i,
                 input: Grade.inputString(sub)
             })
         } else {
             this.setState({
                 input: Grade.inputString(this.props.exam.submissions[this.state.sIndex])
             })
-            alert('Could not find that submission number :(\nSorry!');
+            alert('Could not find that submission number (' + this.state.input + ') :(\nSorry!');
         }
     }
     changeProblem = (event) => {

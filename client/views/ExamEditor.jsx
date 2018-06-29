@@ -43,9 +43,9 @@ class ExamEditor extends React.Component {
 
         // No tail-call optimization so this is fine
         while (el) {
-            top  += el.offsetTop  || 0
+            top += el.offsetTop || 0
             left += el.offsetLeft || 0
-            el    = el.offsetParent
+            el = el.offsetParent
         }
 
         return {
@@ -147,9 +147,9 @@ class ExamEditor extends React.Component {
 
             background:
                 width >= this.props.problemMinWidth &&
-                height >= this.props.problemMinHeight ?
+                    height >= this.props.problemMinHeight ?
                     'rgba(100, 255, 100, 0.4)'
-                :
+                    :
                     'rgba(255, 100, 100, 0.4)',
             position: 'absolute',
             zIndex: 99,
@@ -159,7 +159,7 @@ class ExamEditor extends React.Component {
 
     renderSelectionBox = () => {
         if (this.state.mouseDown && this.state.selectionEndPoint && this.state.selectionStartPoint) {
-            return(
+            return (
                 <div className='selection-border' style={this.state.selectionBox}></div>
             )
         } else {
@@ -246,10 +246,10 @@ class ExamEditor extends React.Component {
                         }}
                         onResize={(e, direction, ref, delta, position) => {
                             this.props.updateWidget(widget.id, {
-                                width: {$set: ref.offsetWidth},
-                                height: {$set: ref.offsetHeight},
-                                x: {$set: position.x},
-                                y: {$set: position.y},
+                                width: { $set: ref.offsetWidth },
+                                height: { $set: ref.offsetHeight },
+                                x: { $set: position.x },
+                                y: { $set: position.y },
                             })
                         }}
                         onResizeStop={(e, direction, ref, delta, position) => {
@@ -271,8 +271,8 @@ class ExamEditor extends React.Component {
                         }}
                         onDragStop={(e, data) => {
                             this.props.updateWidget(widget.id, {
-                                x: {$set: data.x},
-                                y: {$set: data.y},
+                                x: { $set: data.x },
+                                y: { $set: data.y },
                             })
                             api.patch('widgets/' + widget.id, {
                                 x: data.x,

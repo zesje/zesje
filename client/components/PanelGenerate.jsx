@@ -76,7 +76,7 @@ class PanelGenerate extends React.Component {
             maxLength={4}
             style={props.style}
             value={props.value}
-            onFocus={() => this.setState({editing: true})}
+            onFocus={() => this.setState({ editing: true })}
             onBlur={() => this.validate()}
             onChange={(e) => {
                 if (this.pageNumberOrEmpty.test(e.target.value)) {
@@ -102,7 +102,7 @@ class PanelGenerate extends React.Component {
                     <label className='label'>Copy number range</label>
                 </div>
                 <div className='panel-block'>
-                    <div className='field has-addons' style={{maxWidth: '11em'}}>
+                    <div className='field has-addons' style={{ maxWidth: '11em' }}>
                         <p className='control'>
                             {this.renderInput({
                                 placeholder: 'start',

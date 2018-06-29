@@ -3,45 +3,45 @@ import React from 'react';
 import Hero from '../components/Hero.jsx';
 
 const Reset = () => {
-  return (
-      <div>
+    return (
+        <div>
 
-        <Hero title='Reset' subtitle="Please don't hurt my database :(" />
-        
-        <section className="section">
+            <Hero title='Reset' subtitle="Please don't hurt my database :(" />
+
+            <section className="section">
 
 
-          <div className="container">
-            <h1 className='title'>Are your very sure?</h1>
-            <h5 className='subtitle'>This cannot be undone...</h5>
-            
-            <hr />
+                <div className="container">
+                    <h1 className='title'>Are your very sure?</h1>
+                    <h5 className='subtitle'>This cannot be undone...</h5>
 
-            <nav className="level">
+                    <hr />
 
-                <div class="level-item control">
-                  <button class="button is-danger">Everything</button>
+                    <nav className="level">
+
+                        <div class="level-item control">
+                            <button class="button is-danger">Everything</button>
+                        </div>
+                        <div class="level-item control">
+                            <button class="button is-warning">Exams</button>
+                        </div>
+                        <div class="level-item control">
+                            <button class="button is-warning">Students</button>
+                        </div>
+                        <div class="level-item control">
+                            <button class="button is-warning">Grading</button>
+                        </div>
+                        <div class="level-item control">
+                            <button class="button is-warning">Graders</button>
+                        </div>
+                    </nav>
                 </div>
-                <div class="level-item control">
-                  <button class="button is-warning">Exams</button>
-                </div>
-                <div class="level-item control">
-                  <button class="button is-warning">Students</button>
-                </div>
-                <div class="level-item control">
-                  <button class="button is-warning">Grading</button>
-                </div>
-                <div class="level-item control">
-                  <button class="button is-warning">Graders</button>
-                </div>
-            </nav>
-          </div>
 
 
-        </section>
+            </section>
 
-      </div>
-  )
+        </div>
+    )
 }
 
 export default Reset;

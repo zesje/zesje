@@ -131,13 +131,13 @@ class CheckStudents extends React.Component {
         api.put('submissions/' + this.props.exam.id + '/' + this.props.exam.submissions[this.state.index].id, { studentID: stud.id })
             .then(sub => {
                 this.props.updateSubmission(this.state.index, sub)
-                this.nextUnchecked()                
+                this.nextUnchecked()
             })
             .catch(err => {
                 alert('failed to put submission (see javascript console for details)')
                 console.error('failed to put submission:', err)
                 throw err
-            })        
+            })
     }
 
     toggleEdit = (student) => {

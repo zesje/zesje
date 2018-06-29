@@ -138,7 +138,7 @@ class EditPanel extends React.Component {
                 <div className="panel-block">
                     <BackButton onClick={this.props.toggleEdit} />
                     <SaveButton onClick={this.saveFeedback} exists={this.props.feedback}
-                        disabled={ !this.state.name || (this.state.score && isNaN(parseInt(this.state.score))) } />
+                        disabled={!this.state.name || (this.state.score && isNaN(parseInt(this.state.score)))} />
                 </div>
             </nav>
         )

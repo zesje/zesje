@@ -9,28 +9,28 @@ function _fetch(method) {
     return (endpoint, data) => {
         var headers = new Headers()
         if (_typeof(data) == "Object") {
-            headers.append('Content-Type', 'application/json',)
+            headers.append('Content-Type', 'application/json', )
             data = JSON.stringify(data)
         }
 
-        return fetch('/api/'+endpoint, {
+        return fetch('/api/' + endpoint, {
             method: method,
             credentials: 'same-origin',
             body: data,
             headers: headers,
         })
-        .catch(error =>
-            console.error('Error in', method, endpoint, 'with data', data))
-        .then(resp => {
-            if (! resp.ok) {
-                throw resp
-            } else {
-                return resp
-            }
-        })
-        // valid responses always return JSON
-        .then(r => r.json())
-   }
+            .catch(error =>
+                console.error('Error in', method, endpoint, 'with data', data))
+            .then(resp => {
+                if (!resp.ok) {
+                    throw resp
+                } else {
+                    return resp
+                }
+            })
+            // valid responses always return JSON
+            .then(r => r.json())
+    }
 
 }
 
@@ -40,4 +40,4 @@ const put = _fetch('PUT')
 const patch = _fetch('PATCH')
 const del = _fetch('DELETE')
 
-export {get, post, put, patch, del}
+export { get, post, put, patch, del }

@@ -197,71 +197,48 @@ class Exams extends React.Component {
     }
 
     SidePanel = (props) => {
-        if (this.props.exam.finalized) {
-            return (
-                <PanelGenerate
-                    examID={this.state.examID}
-                />
-            )
-        } else if (this.state.previewing) {
-            return (
-                <this.PanelConfirm
-                    onYesClick={() => api.put('exams/' + props.examID + '/finalized', 'true').then(() => {
-                        this.props.updateExam(props.examID)
-                    })}
-                    onNoClick={() => this.setState({
-                        previewing: false,
-                    })}
-                />
-            )
-        } else {
-            const selectedWidgetId = this.state.selectedWidgetId
-            let problem
-            let disabled
-            if (this.state.selectedWidgetId && this.state.widgets[this.state.selectedWidgetId]) {
-                const widget = this.state.widgets[this.state.selectedWidgetId]
-                if (widget.problem) {
-                    problem = widget.problem
-                    disabled = false
-                } else {
-                    disabled = true
-                }
+        const selectedWidgetId = this.state.selectedWidgetId
+        let problem
+        let disabled
+        if (this.state.selectedWidgetId && this.state.widgets[this.state.selectedWidgetId]) {
+            const widget = this.state.widgets[this.state.selectedWidgetId]
+            if (widget.problem) {
+                problem = widget.problem
+                disabled = false
             } else {
-                // no selection
                 disabled = true
             }
-            return (
-                <React.Fragment>
-                    <this.PanelEdit
-                        disabled={disabled}
-                        onDeleteClick={() => alert('Not implemented')}
-                        problem={problem}
-                        changeProblemName={newName => {
-                            this.setState(prevState => ({
-                                widgets: update(prevState.widgets, {
-                                    [selectedWidgetId]: {
-                                        problem: {
-                                            name: {
-                                                $set: newName
-                                            }
+        } else {
+            // no selection
+            disabled = true
+        }
+        return (
+            <React.Fragment>
+                <this.PanelEdit
+                    disabled={disabled}
+                    onDeleteClick={() => alert('Not implemented')}
+                    problem={problem}
+                    changeProblemName={newName => {
+                        this.setState(prevState => ({
+                            widgets: update(prevState.widgets, {
+                                [selectedWidgetId]: {
+                                    problem: {
+                                        name: {
+                                            $set: newName
                                         }
                                     }
-                                })
-                            }))
-                        }}
-                        saveProblemName={newName => {
-                            api.put('problems/' + problem.id + '/name', { name: newName })
-                                .catch(e => alert('Could not save new problem name: ' + e))
-                        }}
-                    />
-                    <this.PanelExamActions
-                        onFinalizeClicked={() => this.setState({
-                            previewing: true,
-                        })}
-                    />
-                </React.Fragment>
-            )
-        }
+                                }
+                            })
+                        }))
+                    }}
+                    saveProblemName={newName => {
+                        api.put('problems/' + problem.id + '/name', {name: newName})
+                            .catch(e => alert('Could not save new problem name: ' + e))
+                    }}
+                />
+                <this.PanelExamActions />
+            </React.Fragment>
+        )
     }
 
     PanelEdit = (props) => {
@@ -304,21 +281,47 @@ class Exams extends React.Component {
         )
     }
 
-    PanelExamActions = (props) => {
+    PanelExamActions = () => {
+        if (this.props.exam.finalized) {
+            return <PanelGenerate examID={this.state.examID} />
+        }
+
         return (
             <nav className='panel'>
                 <p className='panel-heading'>
                     Actions
                 </p>
                 <div className='panel-block'>
-                    <button
-                        className='button is-link is-fullwidth'
-                        onClick={() => props.onFinalizeClicked()}
-                    >
-                        Finalize
-                    </button>
+                { this.state.previewing ?
+                    <this.PanelConfirm
+                        onYesClick={() =>
+                            api.put(`exams/${this.props.examID}/finalized`, 'true')
+                               .then(() => {this.props.updateExam(this.props.examID)})
+                        }
+                        onNoClick={() => this.setState({
+                             previewing: false,
+                        })}
+                    />
+                  :
+                    <this.Finalize
+                        onFinalizeClicked={() => this.setState({
+                            previewing: true,
+                        })}
+                    />
+                }
                 </div>
             </nav>
+        )
+    }
+
+    Finalize = (props) => {
+        return (
+            <button
+                className='button is-link is-fullwidth'
+                onClick={() => props.onFinalizeClicked()}
+            >
+                Finalize
+            </button>
         )
     }
 

@@ -34,7 +34,7 @@ class Students(Resource):
         if student_id is not None:
             s = Student.get(id=student_id)
             if not s:
-                raise orm.core.ObjectNotFound(Student)
+                return dict(status=404, message='Student not found'), 404
             return {
                 'id': s.id,
                 'firstName': s.first_name,

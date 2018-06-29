@@ -62,6 +62,8 @@ class Grade extends React.Component {
         this.setState({
             editActive: !this.state.editActive,
             editFeedback: null
+        }, () => {
+            if (!this.state.editActive) this.props.updateExam(this.props.exam.id)
         })
     }
 

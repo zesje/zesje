@@ -1,5 +1,5 @@
-# Finalize this exam
+You _**will no longer**_ be able to:
 
-After finalizing you _**will not**_ be able to modify the the exam anymore.
-
-You can verify every page here.
++ add or delete problems
++ modify the position of the student ID widget
++ modify the position of the page markers

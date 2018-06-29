@@ -88,3 +88,19 @@ class Problems(Resource):
         problem.name = name
 
         return dict(status=200, message="ok"), 200
+
+    @orm.db_session
+    def delete(self, problem_id):
+
+        problem = Problem.get(id=problem_id)
+
+        if problem is None:
+            msg = f"Problem with id {problem_id} doesn't exist"
+            return dict(status=404, message=msg), 404
+        if problem.exam.finalized:
+            return dict(status=403, message=f'Exam is finalized'), 403
+        else:
+            problem.delete()
+            problem.widget.delete()
+            db.commit()
+            return dict(status=200, message="ok"), 200

@@ -18,7 +18,7 @@ class Exams extends React.Component {
         page: 0,
         numPages: null,
         selectedWidgetId: null,
-        widgets: {},
+        widgets: [],
         previewing: false,
     }
 
@@ -65,13 +65,13 @@ class Exams extends React.Component {
         const widget = this.state.widgets[widgetId]
         if (widget) {
             if (prompt && confirm('Are you sure you want to delete this widget?')) {
-                api.del('widgets/' + widget.id)
+                api.del('problems/' + widget.problem.id)
                     .then(() => {
                         this.setState((prevState) => {
                             return {
                                 selectedWidgetId: null,
                                 widgets: update(prevState.widgets, {
-                                    $splice: [[index, 1]]
+                                    $splice: [[widgetId, 1]],
                                 })
                             }
                         })
@@ -112,7 +112,6 @@ class Exams extends React.Component {
                     numPages={this.state.numPages}
                     onPDFLoad={this.onPDFLoad}
                     updateWidget={this.updateWidget}
-                    deleteWidget={this.deleteWidget}
                     selectedWidgetId={this.state.selectedWidgetId}
                     selectWidget={(widgetId) => {
                         this.setState({
@@ -120,14 +119,6 @@ class Exams extends React.Component {
                         })
                     }}
                     createNewWidget={(widgetData) => {
-                        this.setState((prevState) => {
-                            return {
-                                selectedWidgetId: prevState.widgets.length,
-                                widgets: update(prevState.widgets, {
-                                    $push: [widgetData]
-                                })
-                            }
-                        })
                         this.setState((prevState) => {
                             return {
                                 selectedWidgetId: widgetData.id,
@@ -207,7 +198,9 @@ class Exams extends React.Component {
             <React.Fragment>
                 <this.PanelEdit
                     disabled={widgetEditDisabled}
-                    onDeleteClick={() => alert('Not implemented')}
+                    onDeleteClick={() => {
+                        this.deleteWidget(selectedWidgetId)
+                    }}
                     problem={problem}
                     changeProblemName={newName => {
                         this.setState(prevState => ({

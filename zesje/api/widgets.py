@@ -3,7 +3,7 @@ from flask import request
 
 from pony import orm
 
-from ..database import db, Widget, ProblemWidget, ExamWidget
+from ..database import db, Widget, ExamWidget
 
 
 class Widgets(Resource):
@@ -32,25 +32,3 @@ class Widgets(Resource):
         db.commit()
 
         return dict(status=200, message="ok"), 200
-
-    @orm.db_session
-    def delete(self, widget_id):
-
-        widget = Widget.get(id=widget_id)
-
-        if widget is None:
-            msg = f"Widget with id {widget_id} doesn't exist"
-            return dict(status=404, message=msg), 404
-        elif widget.name in ['barcode_widget', 'student_id_widget']:
-            msg = f"Widget with name {widget.name} is not deletable"
-            return dict(status=403, message=msg), 403
-        elif isinstance(widget, ProblemWidget) and widget.problem.exam.finalized:
-            return dict(status=403, message=f'Exam is finalized'), 403
-        elif isinstance(widget, ExamWidget) and widget.exam.finalized:
-            return dict(status=400, message=f'ExamWidgets are not deletable'), 400
-        else:
-
-            widget.delete()
-            db.commit()
-
-            return dict(status=200, message="ok"), 200

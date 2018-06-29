@@ -250,7 +250,7 @@ class Exams extends React.Component {
                             }))
                         }}
                         saveProblemName={newName => {
-                            api.put('problems/' + problem.id + '/name', {name: newName})
+                            api.put('problems/' + problem.id + '/name', { name: newName })
                                 .catch(e => alert('Could not save new problem name: ' + e))
                         }}
                     />

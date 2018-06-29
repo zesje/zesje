@@ -47,8 +47,8 @@ class FeedbackPanel extends React.Component {
                 </p>
                 {this.props.problem.feedback.map((feedback, i) =>
                     <FeedbackBlock key={feedback.id} examID={this.props.examID} submissionID={this.props.submissionID} problemID={this.props.problem.id}
-                        feedback={feedback} checked={this.props.solution.feedback.includes(feedback.id)} 
-                        onClick={this.props.editFeedback} updateSubmission={this.props.updateSubmission} 
+                        feedback={feedback} checked={this.props.solution.feedback.includes(feedback.id)}
+                        onClick={this.props.editFeedback} updateSubmission={this.props.updateSubmission}
                         graderID={this.props.graderID} />
                 )}
                 <div className="panel-block">

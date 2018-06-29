@@ -28,7 +28,7 @@ const StudentPanelBlock = (props) => {
                 </a>
                 {props.student.id}&emsp;
                 <span className="panel-icon">
-                    {props.matched ? <i className="fa fa-check" /> : null }
+                    {props.matched ? <i className="fa fa-check" /> : null}
                     {/* TODO: Show other submissions that student is assigned to */}
                 </span>
                 <i>{props.matched ? "matched" : ""}</i>

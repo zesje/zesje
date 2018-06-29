@@ -22,7 +22,7 @@ const ScanStatus = (props) => {
     return (
         <div>
             {props.scan.name}&emsp;<i className={iconClass} />
-        <i>&nbsp;{props.scan.message}</i>
+            <i>&nbsp;{props.scan.message}</i>
         </div>
     )
 }
@@ -31,7 +31,7 @@ class Submissions extends React.Component {
 
     state = {
         scans: [],
-        submissions : [],
+        submissions: [],
         examID: null,
     };
 
@@ -85,14 +85,14 @@ class Submissions extends React.Component {
         // TODO: remove this when https://gitlab.kwant-project.org/zesje/zesje/issues/173
         //       has been solved. This is a
         api.get('students')
-           .then(students => {
-               if (students.length == 0) {
-                   alert("You have not yet uploaded any students. " +
-                         "If you don't upload students before the scans " +
-                         "then we can't automatically assign students " +
-                         "to their submissions")
-               }
-           })
+            .then(students => {
+                if (students.length == 0) {
+                    alert("You have not yet uploaded any students. " +
+                        "If you don't upload students before the scans " +
+                        "then we can't automatically assign students " +
+                        "to their submissions")
+                }
+            })
     }
 
     componentWillUnmount = () => {
@@ -105,18 +105,18 @@ class Submissions extends React.Component {
         const missing_submissions_status = (
             missing_submissions.length > 0 ?
                 <div>
-                <p className="menu-label">
-                    Missing Pages
+                    <p className="menu-label">
+                        Missing Pages
                 </p>
-                <ul className="menu-list">
-                    {missing_submissions.map(sub =>
-                        <li key={sub.id}>
-                            Copy {sub.id} is missing pages {sub.missing.join(',')}
-                        </li>
-                    )}
-                </ul>
+                    <ul className="menu-list">
+                        {missing_submissions.map(sub =>
+                            <li key={sub.id}>
+                                Copy {sub.id} is missing pages {sub.missing.join(',')}
+                            </li>
+                        )}
+                    </ul>
                 </div>
-            :
+                :
                 null
         )
 

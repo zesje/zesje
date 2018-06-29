@@ -57,35 +57,35 @@ class Graders extends React.Component {
                         <h5 className='subtitle'>to add them to the system</h5>
                         <hr />
 
-                            <form onSubmit={this.submitName}>
-                                <div className="field has-addons">
-                                    <div className="control">
-                                        <input name="first_name" value={this.state.name}
-                                            onChange={this.changeName} className="input" type="text"
-                                            placeholder="Name" />
-                                    </div>
-                                    <div className="control">
-                                        <button type="submit" className="button is-info">
-                                            <span className="icon">
-                                                <i className="fa fa-plus"></i>
-                                            </span>
-                                            <span>Add</span>
-                                        </button>
-                                    </div>
+                        <form onSubmit={this.submitName}>
+                            <div className="field has-addons">
+                                <div className="control">
+                                    <input name="first_name" value={this.state.name}
+                                        onChange={this.changeName} className="input" type="text"
+                                        placeholder="Name" />
                                 </div>
-                            </form>
-                            <br />
+                                <div className="control">
+                                    <button type="submit" className="button is-info">
+                                        <span className="icon">
+                                            <i className="fa fa-plus"></i>
+                                        </span>
+                                        <span>Add</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                        <br />
 
-                            <aside className="menu">
-                                <p className="menu-label">
-                                    Added graders
+                        <aside className="menu">
+                            <p className="menu-label">
+                                Added graders
                                 </p>
-                                <ul className="menu-list">
-                                    {this.state.graders.map((grader) =>
-                                        <li key={grader.id}>{grader.name}</li>
-                                    )}
-                                </ul>
-                            </aside>
+                            <ul className="menu-list">
+                                {this.state.graders.map((grader) =>
+                                    <li key={grader.id}>{grader.name}</li>
+                                )}
+                            </ul>
+                        </aside>
                     </div>
                 </section>
 

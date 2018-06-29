@@ -13,9 +13,9 @@ import * as api from '../api.jsx'
 class Exams extends React.Component {
 
     state = {
-      pdf: null,
-      previewPageCount: 0,
-      exam_name: '',
+        pdf: null,
+        previewPageCount: 0,
+        exam_name: '',
     };
 
     onDropPDF = (accepted, rejected) => {
@@ -35,9 +35,9 @@ class Exams extends React.Component {
 
     changeInput = (name, regex) => {
         return (event) => {
-          this.setState({
-            [name]: event.target.value
-          });
+            this.setState({
+                [name]: event.target.value
+            });
         }
     }
 
@@ -64,10 +64,10 @@ class Exams extends React.Component {
     }
 
     render() {
-        const previewPages = Array.from({length: this.state.previewPageCount}, (v, k) => k + 1).map(pageNum => {
-          return <div key={'preview_col_' + pageNum} className="column">
-              <Page width={150} height={200} renderAnnotations={false} renderTextLayer={false} pageNumber={pageNum} />
-          </div>
+        const previewPages = Array.from({ length: this.state.previewPageCount }, (v, k) => k + 1).map(pageNum => {
+            return <div key={'preview_col_' + pageNum} className="column">
+                <Page width={150} height={200} renderAnnotations={false} renderTextLayer={false} pageNumber={pageNum} />
+            </div>
         })
         return (
             <div>
@@ -90,19 +90,19 @@ class Exams extends React.Component {
                                 </Document>
                             </div>
                         ) : (
-                            <div className="column has-text-centered">
-                              <h3 className='title'>Upload new exam PDF</h3>
-                              <h5 className='subtitle'>a preview will be shown</h5>
-                                <Dropzone accept=".pdf, application/pdf"
-                                    style={{}} activeStyle={{ borderStyle: 'dashed', width: 'fit-content', margin: 'auto' }}
-                                    onDrop={this.onDropPDF}
-                                    disablePreview
-                                    multiple={false}
-                                >
-                                    <DropzoneContent />
-                                </Dropzone>
-                            </div>
-                        )}
+                                <div className="column has-text-centered">
+                                    <h3 className='title'>Upload new exam PDF</h3>
+                                    <h5 className='subtitle'>a preview will be shown</h5>
+                                    <Dropzone accept=".pdf, application/pdf"
+                                        style={{}} activeStyle={{ borderStyle: 'dashed', width: 'fit-content', margin: 'auto' }}
+                                        onDrop={this.onDropPDF}
+                                        disablePreview
+                                        multiple={false}
+                                    >
+                                        <DropzoneContent />
+                                    </Dropzone>
+                                </div>
+                            )}
 
                         <div className="control">
                             <input
@@ -118,7 +118,7 @@ class Exams extends React.Component {
                                 className="is-centered button is-info is-rounded"
                                 onClick={this.onUploadPDF}
                             >
-                            Upload
+                                Upload
                             </button>
                         </div>
 

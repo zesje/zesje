@@ -46,7 +46,7 @@ class EditPanel extends React.Component {
     }
 
     componentWillMount = () => {
-        if (this.props.editStud){
+        if (this.props.editStud) {
             const stud = this.props.editStud;
             this.setState({
                 id: stud.id,
@@ -90,11 +90,11 @@ class EditPanel extends React.Component {
 
     saveStudent = () => {
         api.put('students', {
-                studentID: this.state.id,
-                firstName: this.state.firstName,
-                lastName: this.state.lastName,
-                email: this.state.email
-            })
+            studentID: this.state.id,
+            firstName: this.state.firstName,
+            lastName: this.state.lastName,
+            email: this.state.email
+        })
             .then((stud) => {
                 this.setState({
                     id: "",
@@ -121,13 +121,13 @@ class EditPanel extends React.Component {
             const data = new FormData()
             data.append('csv', file)
             api.post('students', data)
-               .then(() => {
-                   alert('successfully uploaded students')
-               })
-               .catch(resp => {
-                   console.error('failed to upload student CSV file')
-                   resp.json().then(r => alert(r.message))
-               })
+                .then(() => {
+                    alert('successfully uploaded students')
+                })
+                .catch(resp => {
+                    console.error('failed to upload student CSV file')
+                    resp.json().then(r => alert(r.message))
+                })
         })
     }
 
@@ -142,7 +142,7 @@ class EditPanel extends React.Component {
                 <p className="panel-heading">
                     Manage students
                 </p>
-                <IDBlock setID={this.setID} editStud={this.state.id} ref={(id) => { this.idblock = id; }}/>
+                <IDBlock setID={this.setID} editStud={this.state.id} ref={(id) => { this.idblock = id; }} />
 
                 <div className="panel-block">
                     <div className="field">

@@ -3,21 +3,20 @@ import React from 'react';
 import Hero from '../components/Hero.jsx';
 
 const Home = () => {
-  return (
-      <div>
+    return (
+        <div>
 
-        <Hero title='' subtitle='' />
+            <Hero title='' subtitle='' />
 
-        <section className="section">
+            <section className="section">
 
-          <div className="container">
-           
-          </div>
+                <div className="container">
+                </div>
 
-        </section>
-        
-      </div>
-  )
+            </section>
+
+        </div>
+    )
 }
 
 export default Home;

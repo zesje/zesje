@@ -112,7 +112,6 @@ class Exams extends React.Component {
                     numPages={this.state.numPages}
                     onPDFLoad={this.onPDFLoad}
                     updateWidget={this.updateWidget}
-                    deleteWidget={this.deleteWidget}
                     selectedWidgetId={this.state.selectedWidgetId}
                     selectWidget={(widgetId) => {
                         this.setState({

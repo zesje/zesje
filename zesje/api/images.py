@@ -8,7 +8,7 @@ import numpy as np
 import cv2
 
 from ..images import get_box
-from ..database import Exam, Submission, Problem
+from ..database import Exam, Submission, Problem, Page
 
 
 @orm.db_session
@@ -47,8 +47,7 @@ def get(exam_id, problem_id, submission_id, full_page=False):
     widget_area_in = widget_area / 72
 
     #  get the page
-    page = f'page{problem.page:02d}.jpg'
-    page_path = next(p.path for p in submission.pages if page == os.path.basename(p.path))
+    page_path = Page.get(submission=submission, number=problem.widget.page).path
 
     page_im = cv2.imread(page_path)
     if not full_page:

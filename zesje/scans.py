@@ -253,7 +253,7 @@ def process_page(output_dir, image_data, exam_config):
         # overwrites the previosly uploaded page, but we only want a single
         # 'Page' entry.
         if Page.get(path=target_image, submission=sub) is None:
-            Page(path=target_image, submission=sub)
+            Page(path=target_image, submission=sub, number=barcode_data.page)
 
         if sub.signature_validated:
             # Nothing to update in the db

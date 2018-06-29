@@ -45,13 +45,13 @@ class Problems(Resource):
                 y=args['y'],
                 width=args['width'],
                 height=args['height'],
+                page=args['page'],
             )
 
             problem = Problem(
                 exam=exam,
                 name=args['name'],
-                page=args['page'],
-                widget=widget
+                widget=widget,
             )
 
             db.commit()

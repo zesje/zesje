@@ -70,7 +70,7 @@ class Page(db.Entity):
     """Page of an exam"""
     path = Required(str)
     submission = Required(Submission)
-    number = Optional(int)
+    number = Required(int)
 
 
 class Problem(db.Entity):
@@ -79,7 +79,6 @@ class Problem(db.Entity):
     exam = Required(Exam)
     feedback_options = Set('FeedbackOption')
     solutions = Set('Solution')
-    page = Required(int)
     widget = Required('ProblemWidget')
 
 
@@ -116,7 +115,8 @@ class Scan(db.Entity):
 
 class Widget(db.Entity):
     id = PrimaryKey(int, auto=True)
-    name = Optional(str)  # Can be used to discretise widgets for barcodes, student_id and problems
+    # Can be used to distinguish widgets for barcodes, student_id and problems
+    name = Optional(str)
     x = Required(int)
     y = Required(int)
 
@@ -127,5 +127,6 @@ class ExamWidget(Widget):
 
 class ProblemWidget(Widget):
     problem = Optional(Problem)
+    page = Required(int)
     width = Required(int)
     height = Required(int)

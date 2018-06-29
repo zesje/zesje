@@ -79,16 +79,12 @@ class Problems(Resource):
 
         Returns
             HTTP 200 on success
-            HTTP 403 if corresponding Exam is finalized
         """
 
         args = self.put_parser.parse_args()
 
         name = args['name']
         problem = Problem[problem_id]
-        if problem.exam.finalized:
-            return dict(status=403, message=f'Exam is finalized'), 403
-
         problem.name = name
 
         return dict(status=200, message="ok"), 200

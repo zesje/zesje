@@ -47,7 +47,7 @@ class Widgets(Resource):
         elif isinstance(widget, ProblemWidget) and widget.problem.exam.finalized:
             return dict(status=403, message=f'Exam is finalized'), 403
         elif isinstance(widget, ExamWidget) and widget.exam.finalized:
-            return dict(status=403, message=f'Exam is finalized'), 403
+            return dict(status=400, message=f'ExamWidgets are not deletable'), 400
         else:
 
             widget.delete()

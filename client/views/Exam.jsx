@@ -18,7 +18,7 @@ class Exams extends React.Component {
         page: 0,
         numPages: null,
         selectedWidgetId: null,
-        widgets: {},
+        widgets: [],
         previewing: false,
     }
 

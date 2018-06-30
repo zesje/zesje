@@ -156,24 +156,24 @@ class Grade extends React.Component {
                   <div className='level'>
                     <div className='level-item'>
                       <div className='field has-addons is-mobile'>
-                          <div className='control'>
+                        <div className='control'>
                           <button type='submit' className='button is-info is-rounded is-hidden-mobile'
                             onClick={this.prevUngraded}>ungraded</button>
                           <button type='submit' className='button is-link'
                             onClick={this.prev}>Previous</button>
                         </div>
-                          <div className='control'>
+                        <div className='control'>
                           <input className='input is-rounded has-text-centered is-link'
                             value={this.state.input} type='text'
                             onChange={this.setSubInput} onSubmit={this.setSubmission} onBlur={this.setSubmission} />
                         </div>
-                          <div className='control'>
+                        <div className='control'>
                           <button type='submit' className='button is-link'
                             onClick={this.next}>Next</button>
                           <button type='submit' className='button is-info is-rounded is-hidden-mobile'
                             onClick={this.nextUngraded}>ungraded</button>
                         </div>
-                        </div>
+                      </div>
                     </div>
                   </div>
 

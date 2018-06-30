@@ -15,7 +15,7 @@ module.exports = merge(common, {
   mode: 'production',
   module: {
     rules: [
-      { test: /\.css$/, use: [ MiniCssExtractPlugin.loader, 'css-loader' ]}
+      { test: /\.css$/, use: [ MiniCssExtractPlugin.loader, 'css-loader' ] }
     ]
   },
   devtool: 'source-map',
@@ -29,7 +29,7 @@ module.exports = merge(common, {
       new OptimizeCssAssetsPlugin({
         assetNameRegExp: /\.optimize\.css$/g,
         cssProcessor: require('cssnano'),
-        cssProcessorOptions: { discardComments: {removeAll: true } },
+        cssProcessorOptions: { discardComments: { removeAll: true } },
         canPrint: true
       })
     ]

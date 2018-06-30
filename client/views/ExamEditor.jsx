@@ -23,7 +23,7 @@ class ExamEditor extends React.Component {
 
     getPDFUrl = () => {
       let whichPDF = this.props.finalized ? 'preview' : 'source_pdf'
-      return this.props.examID && `/api/exams/${this.props.examID}/${whichPDF}` || null
+      return this.props.examID >= 0 ? `/api/exams/${this.props.examID}/${whichPDF}` : null
     }
 
     getCoordinatesForEvent = (e) => {
@@ -90,7 +90,7 @@ class ExamEditor extends React.Component {
             width: Math.round(selectionBox.width),
             height: Math.round(selectionBox.height)
           }
-          const formData = new FormData()
+          const formData = new window.FormData()
           formData.append('exam_id', this.props.examID)
           formData.append('name', problemData.name)
           formData.append('page', problemData.page)
@@ -169,11 +169,11 @@ class ExamEditor extends React.Component {
       // Only render when numPage is set
       if (this.props.numPages !== null && this.props.widgets) {
         const widgets = this.props.widgets.filter(widget => {
-          if (widget.name == 'student_id_widget' ||
-                    widget.name == 'barcode_widget') {
+          if (widget.name === 'student_id_widget' ||
+                    widget.name === 'barcode_widget') {
             return !this.props.finalized
           } else if (widget.problem) {
-            return widget.problem.page == this.props.page
+            return widget.problem.page === this.props.page
           } else {
             return true
           }
@@ -184,7 +184,7 @@ class ExamEditor extends React.Component {
         let view
         let enableResizing
         return widgets.map((widget) => {
-          const isSelected = widget.id == this.props.selectedWidgetId
+          const isSelected = widget.id === this.props.selectedWidgetId
 
           if (widget.problem) {
             minWidth = this.props.problemMinWidth
@@ -197,11 +197,11 @@ class ExamEditor extends React.Component {
             enableResizing = true
           } else {
             let image
-            if (widget.name == 'barcode_widget') {
+            if (widget.name === 'barcode_widget') {
               minWidth = barcodeExampleImageSize.width
               minHeight = barcodeExampleImageSize.height
               image = barcodeExampleImage
-            } else if (this.props.page == 0 && widget.name == 'student_id_widget') {
+            } else if (this.props.page === 0 && widget.name === 'student_id_widget') {
               minWidth = studentIdExampleImageSize.width
               minHeight = studentIdExampleImageSize.height
               image = studentIdExampleImage
@@ -296,7 +296,7 @@ class ExamEditor extends React.Component {
     render = () => {
       return (
         <div
-          ref={c => this.selectionArea = c}
+          ref={c => (this.selectionArea = c)}
           className='selection-area'
         >
           <Document

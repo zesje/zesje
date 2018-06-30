@@ -115,7 +115,7 @@ class Grade extends React.Component {
     }
 
     static getDerivedStateFromProps = (newProps, prevState) => {
-      if (newProps.exam.id != prevState.examID && newProps.exam.submissions.length) {
+      if (newProps.exam.id !== prevState.examID && newProps.exam.submissions.length) {
         return {
           input: Grade.inputString(newProps.exam.submissions[0]),
           sIndex: 0,

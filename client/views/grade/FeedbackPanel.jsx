@@ -12,7 +12,7 @@ class FeedbackPanel extends React.Component {
     }
 
     static getDerivedStateFromProps (nextProps, prevState) {
-      if (prevState.problemID != nextProps.problem.id || prevState.submissionID != nextProps.submissionID) {
+      if (prevState.problemID !== nextProps.problem.id || prevState.submissionID !== nextProps.submissionID) {
         return {
           remark: nextProps.solution.remark,
           problemID: nextProps.problem.id,

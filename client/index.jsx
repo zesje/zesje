@@ -3,7 +3,7 @@ import 'font-awesome/css/font-awesome.css'
 import React from 'react'
 import ReactDOM from 'react-dom'
 import Loadable from 'react-loadable'
-import { BrowserRouter as Router, Route, Switch, Redirect } from 'react-router-dom'
+import { BrowserRouter as Router, Route, Switch } from 'react-router-dom'
 
 import * as api from './api.jsx'
 
@@ -73,7 +73,7 @@ class App extends React.Component {
         }))
     }
     updateSubmission = (index, sub) => {
-      if (index == undefined) {
+      if (index === undefined) {
         api.get('submissions/' + this.state.exam.id)
           .then(subs => this.setState({
             exam: {
@@ -83,7 +83,7 @@ class App extends React.Component {
           }))
       } else {
         if (sub) {
-          if (JSON.stringify(sub) != JSON.stringify(this.state.exam.submissions[index])) {
+          if (JSON.stringify(sub) !== JSON.stringify(this.state.exam.submissions[index])) {
             let newList = this.state.exam.submissions
             newList[index] = sub
             this.setState({
@@ -96,7 +96,7 @@ class App extends React.Component {
         } else {
           api.get('submissions/' + this.state.exam.id + '/' + this.state.exam.submissions[index].id)
             .then(sub => {
-              if (JSON.stringify(sub) != JSON.stringify(this.state.exam.submissions[index])) {
+              if (JSON.stringify(sub) !== JSON.stringify(this.state.exam.submissions[index])) {
                 let newList = this.state.exam.submissions
                 newList[index] = sub
                 this.setState({

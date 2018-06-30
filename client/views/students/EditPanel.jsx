@@ -114,7 +114,7 @@ class EditPanel extends React.Component {
         return
       }
       accepted.map(file => {
-        const data = new FormData()
+        const data = new window.FormData()
         data.append('csv', file)
         api.post('students', data)
           .then(() => {

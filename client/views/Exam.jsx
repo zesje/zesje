@@ -22,7 +22,7 @@ class Exams extends React.Component {
     }
 
     static getDerivedStateFromProps = (newProps, prevState) => {
-      if (newProps.exam.id != prevState.examID) {
+      if (newProps.exam.id !== prevState.examID) {
         // initialize array to size of pdf
         const widgets = []
         newProps.exam.problems.forEach(problem => {

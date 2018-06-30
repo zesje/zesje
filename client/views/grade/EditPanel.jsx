@@ -1,7 +1,6 @@
 import React from 'react'
 
 import * as api from '../../api.jsx'
-import { startOfToday } from 'date-fns'
 
 const BackButton = (props) => (
   <button className='button is-light is-fullwidth' onClick={props.onClick}>

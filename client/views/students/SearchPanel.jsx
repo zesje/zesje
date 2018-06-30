@@ -63,8 +63,8 @@ class SearchPanel extends React.Component {
         event.preventDefault()
         let sel = this.state.selected
 
-        if (event.keyCode == 38 && sel > 0) sel--
-        if (event.keyCode == 40 && sel < this.state.result.length - 1) sel++
+        if (event.keyCode === 38 && sel > 0) sel--
+        if (event.keyCode === 40 && sel < this.state.result.length - 1) sel++
 
         this.setState({
           ...this.state,
@@ -84,7 +84,7 @@ class SearchPanel extends React.Component {
       if (event.target.selected) {
         this.props.matchStudent(this.state.result[this.state.selected])
       } else {
-        const index = this.state.result.findIndex(result => result.id == event.target.id)
+        const index = this.state.result.findIndex(result => result.id === event.target.id)
         this.setState({
           ...this.state,
           selected: index
@@ -93,7 +93,7 @@ class SearchPanel extends React.Component {
     }
 
     static getDerivedStateFromProps = (nextProps, prevState) => {
-      if (prevState.subIndex != nextProps.subIndex) {
+      if (prevState.subIndex !== nextProps.subIndex) {
         return {
           input: '',
           selected: 0,

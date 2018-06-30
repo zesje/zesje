@@ -50,7 +50,6 @@ class PanelGenerate extends React.Component {
           copies_start: this.state.copyRangeStart,
           copies_end: this.state.copyRangeEnd
         }
-        const type = this.state.type
         this.setState({
           isGenerating: true
         }, () => {

@@ -40,7 +40,7 @@ class CheckStudents extends React.Component {
     }
 
     static getDerivedStateFromProps = (newProps, prevState) => {
-      if (newProps.exam.id != prevState.examID && newProps.exam.submissions.length) {
+      if (newProps.exam.id !== prevState.examID && newProps.exam.submissions.length) {
         return {
           input: newProps.exam.submissions[0].id,
           index: 0,
@@ -152,8 +152,6 @@ class CheckStudents extends React.Component {
       const inputStyle = {
         width: '5em'
       }
-
-      const maxSubmission = Math.max(...this.props.exam.submissions.map(o => o.id))
 
       const subm = this.props.exam.submissions[this.state.index]
 

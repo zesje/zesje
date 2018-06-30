@@ -1,14 +1,13 @@
 import React from 'react'
 import Dropzone from 'react-dropzone'
+import { Document, Page } from 'react-pdf'
 
+import * as api from '../api.jsx'
 import Hero from '../components/Hero.jsx'
 import DropzoneContent from '../components/DropzoneContent.jsx'
 
-import { Document, Page } from 'react-pdf'
 // worker is prefered but need to convince webpack to cooperate
 PDFJS.workerSrc = true
-
-import * as api from '../api.jsx'
 
 class Exams extends React.Component {
     state = {
@@ -49,7 +48,7 @@ class Exams extends React.Component {
         alert('Please upload a PDF.')
         return
       }
-      const data = new FormData()
+      const data = new window.FormData()
       data.append('pdf', this.state.pdf)
       data.append('exam_name', this.state.exam_name)
       api.post('exams', data)

@@ -3,7 +3,6 @@ import EmptyPDF from '../components/EmptyPDF.jsx'
 
 import { Document, Page } from 'react-pdf'
 // worker is prefered but need to convince webpack to cooperate
-/* global PDFJS */
 PDFJS.workerSrc = true
 
 class GeneratedExamPreview extends React.Component {

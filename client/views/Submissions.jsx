@@ -37,7 +37,7 @@ class Submissions extends React.Component {
     updateScans = () => {
       api.get('scans/' + this.props.exam.id)
         .then(scans => {
-          if (JSON.stringify(scans) != JSON.stringify(this.state.scans)) {
+          if (JSON.stringify(scans) !== JSON.stringify(this.state.scans)) {
             this.setState({
               scans: scans
             })
@@ -66,7 +66,7 @@ class Submissions extends React.Component {
         return
       }
       accepted.map(file => {
-        const data = new FormData()
+        const data = new window.FormData()
         data.append('pdf', file)
         api.post('scans/' + this.props.exam.id, data)
           .then(() => {
@@ -85,7 +85,7 @@ class Submissions extends React.Component {
       //       has been solved. This is a
       api.get('students')
         .then(students => {
-          if (students.length == 0) {
+          if (students.length === 0) {
             alert('You have not yet uploaded any students. ' +
                         "If you don't upload students before the scans " +
                         "then we can't automatically assign students " +
@@ -99,16 +99,16 @@ class Submissions extends React.Component {
     }
 
     render () {
-      const missing_submissions = this.state.submissions.filter(s => s.missing.length > 0)
+      const missingSubmissions = this.state.submissions.filter(s => s.missing.length > 0)
 
-      const missing_submissions_status = (
-        missing_submissions.length > 0
+      const missingSubmissionsStatus = (
+        missingSubmissions.length > 0
           ? <div>
             <p className='menu-label'>
                         Missing Pages
             </p>
             <ul className='menu-list'>
-              {missing_submissions.map(sub =>
+              {missingSubmissions.map(sub =>
                 <li key={sub.id}>
                                 Copy {sub.id} is missing pages {sub.missing.join(',')}
                 </li>
@@ -143,7 +143,7 @@ class Submissions extends React.Component {
                                     Uploaded submissions: {this.state.submissions.length}
                   </p>
 
-                  {missing_submissions_status}
+                  {missingSubmissionsStatus}
 
                   <p className='menu-label'>
                                     Upload History

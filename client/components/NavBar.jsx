@@ -53,13 +53,13 @@ const GraderDropdown = (props) => (
 )
 
 const ExportDropdown = (props) => {
-  const export_formats = [
+  const exportFormats = [
     {label: 'Excel Spreadsheet', format: 'xlsx'},
     {label: 'Detailed Excel Spreadsheet', format: 'xlsx_detailed'},
     {label: 'Pandas Dataframe', format: 'dataframe'}
   ]
 
-  const export_url = format => `/api/export/${format}/${props.exam.id}`
+  const exportUrl = format => `/api/export/${format}/${props.exam.id}`
 
   return (
     <div className='navbar-item has-dropdown is-hoverable' style={props.style}>
@@ -67,11 +67,11 @@ const ExportDropdown = (props) => {
                 Export
       </div>
       <div className='navbar-dropdown'>
-        {export_formats.map((export_format, i) =>
+        {exportFormats.map((exportFormat, i) =>
           <a className='navbar-item'
-            href={export_url(export_format.format)}
+            href={exportUrl(exportFormat.format)}
             key={i}>
-            {export_format.label}
+            {exportFormat.label}
           </a>
         )}
         <hr className='navbar-divider' />

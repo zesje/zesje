@@ -28,7 +28,7 @@ function _fetch (method) {
           return resp
         }
       })
-    // valid responses always return JSON
+      // valid responses always return JSON
       .then(r => r.json())
   }
 }

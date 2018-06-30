@@ -26,7 +26,7 @@ const ExamDropdown = (props) => (
       ))}
       <hr className='navbar-divider' />
       <Link className='navbar-item' to={'/exams'} >
-                Add new
+        Add new
       </Link>
     </div>
   </div>
@@ -46,7 +46,7 @@ const GraderDropdown = (props) => (
       ))}
       <hr className='navbar-divider' />
       <Link className='navbar-item' to={'/graders'} >
-                Add grader
+        Add grader
       </Link>
     </div>
   </div>
@@ -54,9 +54,9 @@ const GraderDropdown = (props) => (
 
 const ExportDropdown = (props) => {
   const exportFormats = [
-    {label: 'Excel Spreadsheet', format: 'xlsx'},
-    {label: 'Detailed Excel Spreadsheet', format: 'xlsx_detailed'},
-    {label: 'Pandas Dataframe', format: 'dataframe'}
+    { label: 'Excel Spreadsheet', format: 'xlsx' },
+    { label: 'Detailed Excel Spreadsheet', format: 'xlsx_detailed' },
+    { label: 'Pandas Dataframe', format: 'dataframe' }
   ]
 
   const exportUrl = format => `/api/export/${format}/${props.exam.id}`
@@ -64,7 +64,7 @@ const ExportDropdown = (props) => {
   return (
     <div className='navbar-item has-dropdown is-hoverable' style={props.style}>
       <div className='navbar-link'>
-                Export
+        Export
       </div>
       <div className='navbar-dropdown'>
         {exportFormats.map((exportFormat, i) =>
@@ -76,7 +76,7 @@ const ExportDropdown = (props) => {
         )}
         <hr className='navbar-divider' />
         <a className='navbar-item' href='/api/export/full'>
-                    Export full database
+          Export full database
         </a>
       </div>
     </div>
@@ -84,91 +84,91 @@ const ExportDropdown = (props) => {
 }
 
 class NavBar extends React.Component {
-    state = {
-      foldOut: false,
-      examList: [],
-      graderList: []
-    }
+  state = {
+    foldOut: false,
+    examList: [],
+    graderList: []
+  }
 
-    componentDidMount = () => {
-      this.updateExamList()
-      this.updateGraderList()
-    }
+  componentDidMount = () => {
+    this.updateExamList()
+    this.updateGraderList()
+  }
 
-    updateExamList = () => {
-      api.get('exams')
-        .then(exams => {
-          this.setState({
-            examList: exams
-          })
-          if (this.props.exam.id == null && exams.length) this.props.updateExam(exams[exams.length - 1].id)
+  updateExamList = () => {
+    api.get('exams')
+      .then(exams => {
+        this.setState({
+          examList: exams
         })
-    }
-
-    updateGraderList = () => {
-      api.get('graders')
-        .then(graders => {
-          this.setState({
-            graderList: graders
-          })
-        })
-    }
-
-    burgerClick = () => {
-      this.setState({
-        foldOut: !this.state.foldOut
+        if (this.props.exam.id == null && exams.length) this.props.updateExam(exams[exams.length - 1].id)
       })
-    }
+  }
 
-    render () {
-      const examStyle = this.props.exam.submissions.length && this.props.grader ? {} : { pointerEvents: 'none', opacity: 0.65 }
-      const statsStyle = this.props.exam.submissions.length ? {} : { pointerEvents: 'none', opacity: 0.65 }
+  updateGraderList = () => {
+    api.get('graders')
+      .then(graders => {
+        this.setState({
+          graderList: graders
+        })
+      })
+  }
 
-      return (
-        <nav className='navbar' role='navigation' aria-label='dropdown navigation'>
+  burgerClick = () => {
+    this.setState({
+      foldOut: !this.state.foldOut
+    })
+  }
 
-          <div className='navbar-brand'>
-            <div className='navbar-item has-text-info'>
-              <span className='icon is-medium'>
-                <i className='fa fa-edit fa-2x' />
-              </span>
-            </div>
+  render () {
+    const examStyle = this.props.exam.submissions.length && this.props.grader ? {} : { pointerEvents: 'none', opacity: 0.65 }
+    const statsStyle = this.props.exam.submissions.length ? {} : { pointerEvents: 'none', opacity: 0.65 }
 
-            <Link className='navbar-item has-text-info' to='/'><b>Zesje</b></Link>
-            <div className='navbar-item' />
+    return (
+      <nav className='navbar' role='navigation' aria-label='dropdown navigation'>
 
-            <BurgerButton foldOut={this.props.foldOut} burgerClick={this.burgerClick} />
+        <div className='navbar-brand'>
+          <div className='navbar-item has-text-info'>
+            <span className='icon is-medium'>
+              <i className='fa fa-edit fa-2x' />
+            </span>
           </div>
 
-          <div className={'navbar-menu' + (this.state.foldOut ? ' is-active' : '')} onClick={this.burgerClick}>
-            <div className='navbar-start'>
+          <Link className='navbar-item has-text-info' to='/'><b>Zesje</b></Link>
+          <div className='navbar-item' />
 
-              {this.state.examList.length
-                ? <ExamDropdown exam={this.props.exam} list={this.state.examList} />
-                : <Link className='navbar-item' to='/exams'>Add exam</Link>
-              }
+          <BurgerButton foldOut={this.props.foldOut} burgerClick={this.burgerClick} />
+        </div>
 
-              <Link className='navbar-item' to={'/submissions/' + this.props.exam.id}>Submissions</Link>
-              <Link className='navbar-item' to='/students'>Students</Link>
-              <Link className='navbar-item' style={examStyle} to='/grade'><strong><i>Grade</i></strong></Link>
-              <Link className='navbar-item' style={statsStyle} to='/statistics'>Statistics</Link>
-              <ExportDropdown className='navbar-item' style={examStyle} exam={this.props.exam} />
-            </div>
+        <div className={'navbar-menu' + (this.state.foldOut ? ' is-active' : '')} onClick={this.burgerClick}>
+          <div className='navbar-start'>
 
-            <div className='navbar-end'>
-              {this.state.graderList.length
-                ? <GraderDropdown grader={this.props.grader} list={this.state.graderList} changeGrader={this.props.changeGrader} />
-                : <Link className='navbar-item' to='/graders'>Add grader</Link>
-              }
-              <Link className='navbar-item has-text-info' to='/reset'>reset</Link>
-              <div className='navbar-item'>
-                <i>Version {__COMMIT_HASH__}</i>
-              </div>
+            {this.state.examList.length
+              ? <ExamDropdown exam={this.props.exam} list={this.state.examList} />
+              : <Link className='navbar-item' to='/exams'>Add exam</Link>
+            }
+
+            <Link className='navbar-item' to={'/submissions/' + this.props.exam.id}>Submissions</Link>
+            <Link className='navbar-item' to='/students'>Students</Link>
+            <Link className='navbar-item' style={examStyle} to='/grade'><strong><i>Grade</i></strong></Link>
+            <Link className='navbar-item' style={statsStyle} to='/statistics'>Statistics</Link>
+            <ExportDropdown className='navbar-item' style={examStyle} exam={this.props.exam} />
+          </div>
+
+          <div className='navbar-end'>
+            {this.state.graderList.length
+              ? <GraderDropdown grader={this.props.grader} list={this.state.graderList} changeGrader={this.props.changeGrader} />
+              : <Link className='navbar-item' to='/graders'>Add grader</Link>
+            }
+            <Link className='navbar-item has-text-info' to='/reset'>reset</Link>
+            <div className='navbar-item'>
+              <i>Version {__COMMIT_HASH__}</i>
             </div>
           </div>
-        </nav>
-      )
-    }
+        </div>
+      </nav>
+    )
+  }
 }
 
 export default NavBar

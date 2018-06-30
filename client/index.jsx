@@ -53,116 +53,116 @@ const Fail = Loadable({
 })
 
 class App extends React.Component {
-    menu = React.createRef();
+  menu = React.createRef();
 
-    state = {
-      exam: {
-        id: null,
-        name: '',
-        submissions: [],
-        problems: [],
-        widgets: []
-      },
-      grader: null
-    }
+  state = {
+    exam: {
+      id: null,
+      name: '',
+      submissions: [],
+      problems: [],
+      widgets: []
+    },
+    grader: null
+  }
 
-    updateExam = (examID) => {
-      api.get('exams/' + examID)
-        .then(ex => this.setState({
-          exam: ex
+  updateExam = (examID) => {
+    api.get('exams/' + examID)
+      .then(ex => this.setState({
+        exam: ex
+      }))
+  }
+  updateSubmission = (index, sub) => {
+    if (index === undefined) {
+      api.get('submissions/' + this.state.exam.id)
+        .then(subs => this.setState({
+          exam: {
+            ...this.state.exam,
+            submissions: subs
+          }
         }))
-    }
-    updateSubmission = (index, sub) => {
-      if (index === undefined) {
-        api.get('submissions/' + this.state.exam.id)
-          .then(subs => this.setState({
+    } else {
+      if (sub) {
+        if (JSON.stringify(sub) !== JSON.stringify(this.state.exam.submissions[index])) {
+          let newList = this.state.exam.submissions
+          newList[index] = sub
+          this.setState({
             exam: {
               ...this.state.exam,
-              submissions: subs
+              submissions: newList
             }
-          }))
-      } else {
-        if (sub) {
-          if (JSON.stringify(sub) !== JSON.stringify(this.state.exam.submissions[index])) {
-            let newList = this.state.exam.submissions
-            newList[index] = sub
-            this.setState({
-              exam: {
-                ...this.state.exam,
-                submissions: newList
-              }
-            })
-          }
-        } else {
-          api.get('submissions/' + this.state.exam.id + '/' + this.state.exam.submissions[index].id)
-            .then(sub => {
-              if (JSON.stringify(sub) !== JSON.stringify(this.state.exam.submissions[index])) {
-                let newList = this.state.exam.submissions
-                newList[index] = sub
-                this.setState({
-                  exam: {
-                    ...this.state.exam,
-                    submissions: newList
-                  }
-                })
-              }
-            })
+          })
         }
+      } else {
+        api.get('submissions/' + this.state.exam.id + '/' + this.state.exam.submissions[index].id)
+          .then(sub => {
+            if (JSON.stringify(sub) !== JSON.stringify(this.state.exam.submissions[index])) {
+              let newList = this.state.exam.submissions
+              newList[index] = sub
+              this.setState({
+                exam: {
+                  ...this.state.exam,
+                  submissions: newList
+                }
+              })
+            }
+          })
       }
     }
+  }
 
-    changeGrader = (grader) => {
-      this.setState({
-        grader: grader
-      })
-    }
+  changeGrader = (grader) => {
+    this.setState({
+      grader: grader
+    })
+  }
 
-    render () {
-      const exam = this.state.exam
-      const grader = this.state.grader
+  render () {
+    const exam = this.state.exam
+    const grader = this.state.grader
 
-      return (
-        <Router>
-          <div>
-            <NavBar exam={exam} updateExam={this.updateExam} grader={grader} changeGrader={this.changeGrader} ref={this.menu} />
-            <Switch>
-              <Route exact path='/' component={Home} />
-              <Route path='/exams/:examID' render={({ match, history }) =>
-                <Exam
-                  exam={exam}
-                  examID={match.params.examID}
-                  updateExam={this.updateExam}
-                  updateSubmission={this.updateSubmission} />} />
-              <Route path='/exams' render={({ history }) =>
-                <AddExam updateExamList={this.menu.current ? this.menu.current.updateExamList : null} changeURL={history.push} />} />
-              <Route path='/submissions/:examID' render={({ match }) =>
-                <Submissions
-                  exam={exam}
-                  urlID={match.params.examID}
-                  updateExam={this.updateExam}
-                  updateSubmission={this.updateSubmission} />} />
-              <Route path='/students' render={() =>
-                <Students exam={exam} updateSubmission={this.updateSubmission} />} />
-              <Route path='/grade' render={() => (
-                exam.submissions.length && grader
-                  ? <Grade exam={exam} graderID={this.state.grader.id}
-                    updateSubmission={this.updateSubmission} updateExam={this.updateExam} />
-                  : <Fail message='No exams uploaded or no grader selected. Please do not bookmark URLs' />
-              )} />
-              <Route path='/statistics' render={() => (
-                exam.submissions.length ? <Statistics exam={exam} /> : <Fail message='No exams uploaded. Please do not bookmark URLs' />
-              )} />
-              <Route path='/graders' render={() =>
-                <Graders updateGraderList={this.menu.current ? this.menu.current.updateGraderList : null} />} />
-              <Route path='/reset' component={Reset} />
-              <Route render={() =>
-                <Fail message="404. Could not find that page :'(" />} />
-            </Switch>
-            <Footer />
-          </div>
-        </Router>
-      )
-    }
+    return (
+      <Router>
+        <div>
+          <NavBar exam={exam} updateExam={this.updateExam} grader={grader} changeGrader={this.changeGrader} ref={this.menu} />
+          <Switch>
+            <Route exact path='/' component={Home} />
+            <Route path='/exams/:examID' render={({ match, history }) =>
+              <Exam
+                exam={exam}
+                examID={match.params.examID}
+                updateExam={this.updateExam}
+                updateSubmission={this.updateSubmission} />} />
+            <Route path='/exams' render={({ history }) =>
+              <AddExam updateExamList={this.menu.current ? this.menu.current.updateExamList : null} changeURL={history.push} />} />
+            <Route path='/submissions/:examID' render={({ match }) =>
+              <Submissions
+                exam={exam}
+                urlID={match.params.examID}
+                updateExam={this.updateExam}
+                updateSubmission={this.updateSubmission} />} />
+            <Route path='/students' render={() =>
+              <Students exam={exam} updateSubmission={this.updateSubmission} />} />
+            <Route path='/grade' render={() => (
+              exam.submissions.length && grader
+                ? <Grade exam={exam} graderID={this.state.grader.id}
+                  updateSubmission={this.updateSubmission} updateExam={this.updateExam} />
+                : <Fail message='No exams uploaded or no grader selected. Please do not bookmark URLs' />
+            )} />
+            <Route path='/statistics' render={() => (
+              exam.submissions.length ? <Statistics exam={exam} /> : <Fail message='No exams uploaded. Please do not bookmark URLs' />
+            )} />
+            <Route path='/graders' render={() =>
+              <Graders updateGraderList={this.menu.current ? this.menu.current.updateGraderList : null} />} />
+            <Route path='/reset' component={Reset} />
+            <Route render={() =>
+              <Fail message="404. Could not find that page :'(" />} />
+          </Switch>
+          <Footer />
+        </div>
+      </Router>
+    )
+  }
 }
 
 var root = document.getElementById('root')

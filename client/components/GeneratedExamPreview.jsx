@@ -6,21 +6,21 @@ import { Document, Page } from 'react-pdf'
 PDFJS.workerSrc = true
 
 class GeneratedExamPreview extends React.Component {
-    render = () => {
-      return (
-        <Document
-          file={'/api/exams/' + this.props.examID + '/preview'}
-          onLoadSuccess={this.props.onPDFLoad}
-          loading={<EmptyPDF />}
-          noData={<EmptyPDF />}
-        >
-          <Page
-            renderAnnotations={false}
-            renderTextLayer={false}
-            pageIndex={this.props.page} />
-        </Document>
-      )
-    }
+  render = () => {
+    return (
+      <Document
+        file={'/api/exams/' + this.props.examID + '/preview'}
+        onLoadSuccess={this.props.onPDFLoad}
+        loading={<EmptyPDF />}
+        noData={<EmptyPDF />}
+      >
+        <Page
+          renderAnnotations={false}
+          renderTextLayer={false}
+          pageIndex={this.props.page} />
+      </Document>
+    )
+  }
 }
 
 GeneratedExamPreview.defaultProps = {

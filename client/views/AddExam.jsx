@@ -69,61 +69,55 @@ class Exams extends React.Component {
     })
     return (
       <div>
-
         <Hero title='Add exam' subtitle='first step' />
-
         <section className='section'>
           <div className='container'>
-            {this.state.pdf != null ? (
-              <div className='column has-text-centered'>
-                <h3 className='title'>Preview the PDF</h3>
-                <h5 className='subtitle'>{previewPages.length > 1 ? 'The first ' + previewPages.length + ' pages are shown' : 'The first page is shown'}</h5>
-                <Document
-                  file={this.state.pdf}
-                  onLoadSuccess={this.onDocumentLoad}
-                >
-                  <div className='columns'>
-                    {previewPages}
+            <div className='columns is-centered'>
+              <div className='column is-narrow has-text-centered'>
+                {this.state.pdf != null ? (
+                  <div className='has-text-centered'>
+                    <h3 className='title'>Preview the PDF</h3>
+                    <h5 className='subtitle'>{previewPages.length > 1 ? 'The first ' + previewPages.length + ' pages are shown' : 'The first page is shown'}</h5>
+                    <Document
+                      file={this.state.pdf}
+                      onLoadSuccess={this.onDocumentLoad}
+                    >
+                      <div className='columns'>
+                        {previewPages}
+                      </div>
+                    </Document>
                   </div>
-                </Document>
-              </div>
-            ) : (
-              <div className='column has-text-centered'>
-                <h3 className='title'>Upload new exam PDF</h3>
-                <h5 className='subtitle'>a preview will be shown</h5>
-                <Dropzone accept='.pdf, application/pdf'
-                  style={{}} activeStyle={{ borderStyle: 'dashed', width: 'fit-content', margin: 'auto' }}
-                  onDrop={this.onDropPDF}
-                  disablePreview
-                  multiple={false}
+                ) : (
+                  <div className='column has-text-centered'>
+                    <h3 className='title'>Upload new exam PDF</h3>
+                    <h5 className='subtitle'>a preview will be shown</h5>
+                    <Dropzone accept='.pdf, application/pdf'
+                      style={{}} activeStyle={{ borderStyle: 'dashed', width: 'fit-content', margin: 'auto' }}
+                      onDrop={this.onDropPDF}
+                      disablePreview
+                      multiple={false}
+                    >
+                      <DropzoneContent />
+                    </Dropzone>
+                  </div>
+                )}
+                <input
+                  className='input'
+                  placeholder='Exam name'
+                  value={this.state.exam_name}
+                  required
+                  onChange={this.changeInput('exam_name')} />
+                <button
+                  type='submit'
+                  className='button is-info is-rounded'
+                  onClick={this.onUploadPDF}
                 >
-                  <DropzoneContent />
-                </Dropzone>
+                  Upload
+                </button>
               </div>
-            )}
-
-            <div className='control'>
-              <input
-                className='input'
-                placeholder='Exam name'
-                value={this.state.exam_name}
-                required
-                onChange={this.changeInput('exam_name')} />
             </div>
-            <div className='control'>
-              <button
-                type='submit'
-                className='is-centered button is-info is-rounded'
-                onClick={this.onUploadPDF}
-              >
-                Upload
-              </button>
-            </div>
-
           </div>
-
         </section>
-
       </div >
     )
   }

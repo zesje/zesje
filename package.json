@@ -11,7 +11,8 @@
     "analyze": "webpack --config webpack.prod.js --json > stats.json; webpack-bundle-analyzer stats.json"
   },
   "standard": {
-    "parser": "babel-eslint"
+    "parser": "babel-eslint",
+    "globals": [ "__COMMIT_HASH__", "alert" ]
   },
   "dependencies": {
     "babel-plugin-syntax-dynamic-import": "^6.18.0",

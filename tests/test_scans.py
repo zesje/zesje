@@ -1,6 +1,9 @@
-import pytest
-from PIL import Image
 import os
+
+import pytest
+import numpy as np
+from PIL import Image
+
 from zesje.scans import decode_barcode, ExamMetadata, ExtractedBarcode
 from zesje import scans
 
@@ -30,11 +33,10 @@ def test_decode_barcode(datadir, image_filename, token, expected, mock_get_box_r
         problem_ids=None
     )
 
-    image = Image.open(image_path)
+    image = np.array(Image.open(image_path))
 
-    result = decode_barcode(image, exam_config)
+    assert decode_barcode(image, exam_config) == (expected, False)
 
-    assert result == expected
 
 # Untested:
 # - def process_pdf()

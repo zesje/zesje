@@ -10,6 +10,9 @@
     "start": "ZESJE_SETTINGS=$(pwd)/zesje.dev.cfg python3 zesje",
     "analyze": "webpack --config webpack.prod.js --json > stats.json; webpack-bundle-analyzer stats.json"
   },
+  "standard": {
+    "parser": "babel-eslint"
+  },
   "dependencies": {
     "babel-plugin-syntax-dynamic-import": "^6.18.0",
     "babel-plugin-transform-class-properties": "^6.24.1",
@@ -48,6 +51,7 @@
   },
   "devDependencies": {
     "babel-core": "^6.26.0",
+    "babel-eslint": "^8.2.5",
     "babel-jest": "^23.2.0",
     "babel-loader": "^7.1.2",
     "babel-preset-env": "^1.7.0",

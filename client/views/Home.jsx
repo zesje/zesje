@@ -1,28 +1,28 @@
-import React from 'react';
-import ReactMarkdown from 'react-markdown';
+import React from 'react'
+import ReactMarkdown from 'react-markdown'
 
-import Hero from '../components/Hero.jsx';
+import Hero from '../components/Hero.jsx'
 
 import homeMarkdown from './home.md'
 
 const Home = () => {
-    return (
-        <div>
+  return (
+    <div>
 
-            <Hero title='Home' subtitle='Zesje - open source exam grading software' />
+      <Hero title='Home' subtitle='Zesje - open source exam grading software' />
 
-            <section className="section">
+      <section className='section'>
 
-                <div className="container">
-                    <div className="content">
-                        <ReactMarkdown source={homeMarkdown} />
-                    </div>
-                </div>
-
-            </section>
-
+        <div className='container'>
+          <div className='content'>
+            <ReactMarkdown source={homeMarkdown} />
+          </div>
         </div>
-    )
+
+      </section>
+
+    </div>
+  )
 }
 
-export default Home;
+export default Home

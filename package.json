@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "concurrently --kill-others --names \"WEBPACK,PYTHON\" --prefix-colors \"bgBlue.bold,bgGreen.bold\" \"webpack-dev-server --hot --inline --progress --config webpack.dev.js\" \"ZESJE_SETTINGS=$(pwd)/zesje.dev.cfg python3 zesje\"",
     "build": "webpack --config webpack.prod.js",
-    "test": "jest; python -m pytest -v",
+    "test": "standard --verbose | snazzy; jest; python -m pytest -v",
     "start": "ZESJE_SETTINGS=$(pwd)/zesje.dev.cfg python3 zesje",
     "analyze": "webpack --config webpack.prod.js --json > stats.json; webpack-bundle-analyzer stats.json"
   },
@@ -56,6 +56,8 @@
     "identity-obj-proxy": "^3.0.0",
     "jest": "^23.2.0",
     "react-test-renderer": "^16.3.2",
+    "snazzy": "^7.1.1",
+    "standard": "^11.0.1",
     "webpack-bundle-analyzer": "^2.13.1",
     "webpack-dev-server": "^3.1.4"
   }

@@ -1,5 +1,4 @@
 import React from 'react'
-import getClosest from 'get-closest'
 import Mousetrap from 'mousetrap'
 
 import Hero from '../components/Hero.jsx'
@@ -74,23 +73,27 @@ class CheckStudents extends React.Component {
   }
 
   prevUnchecked = () => {
-    const unchecked = this.props.exam.submissions.filter(sub => sub.validated === false).map(sub => sub.id)
-    const newInput = getClosest.lowerNumber(this.props.exam.submissions[this.state.index].id - 1, unchecked)
-
-    if (typeof newInput !== 'undefined') {
-      this.setState({
-        input: unchecked[newInput]
-      }, this.setSubmission)
+    for (let i = this.state.index - 1; i >= 0; i--) {
+      if (this.props.exam.submissions[i].validated === false) {
+        this.setState({
+          input: this.props.exam.submissions[i].id,
+          index: i
+        })
+        this.props.updateSubmission(i)
+        return
+      }
     }
   }
   nextUnchecked = () => {
-    const unchecked = this.props.exam.submissions.filter(sub => sub.validated === false).map(sub => sub.id)
-    const newInput = getClosest.greaterNumber(this.props.exam.submissions[this.state.index].id + 1, unchecked)
-
-    if (typeof newInput !== 'undefined') {
-      this.setState({
-        input: unchecked[newInput]
-      }, this.setSubmission)
+    for (let i = this.state.index + 1; i < this.props.exam.submissions.length; i++) {
+      if (this.props.exam.submissions[i].validated === false) {
+        this.setState({
+          input: this.props.exam.submissions[i].id,
+          index: i
+        })
+        this.props.updateSubmission(i)
+        return
+      }
     }
   }
 

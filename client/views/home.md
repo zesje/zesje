@@ -28,82 +28,41 @@ This notebook is a tutorial and a reference documentation for Zesje. If you want
 
 If you want to use zesje in a course, we are happy to host it for you, contact us at [zesje@antonakhmerov.org](mailto:zesje@antonakhmerov.org) or [me@josephweston.org](mailto:me@josephweston.org).
 
-If you have questions about using zesje, please use one of the two options: if you have a question, use the zesje support chat at https://chat.quantumtinkerer.tudelft.nl/external/channels/zesje (you'll need to create an account and join the **external** team after creating it).
+We will also sign you up for the zesje support mailing list.
 
-If you found a bug or if you have a suggestion for improvement, please report it at Zesje [issue tracker](https://gitlab.kwant-project.org/zesje/zesje/issues).
+If you have questions about using zesje, please use the following channels:
+* if you have a question, use the zesje support chat at https://chat.quantumtinkerer.tudelft.nl/external/channels/zesje (you'll need to create an account and join the **external** team after creating it).
+* if you found a bug or if you have a suggestion for improvement, please report it at Zesje [issue tracker](https://gitlab.kwant-project.org/zesje/zesje/issues).
 
 ## Initializing a course
 
 Each course will need its own zesje installation, but a single installation can be used to grade multiple exams.
 
 ### Adding students
-1. Export the student information from Brightspace. To do that go to the course page, select *Grades* → *Enter grades* → *Export grades*. Then choose the options as shown: ![](../files/brightspace_export.png)
-2. After exporting the csv do the following edits:
-   - Remove the first line with field names
-   - Remove all occurrences of `,#` at the end of each line
-   - Remove all occurrences of `#` at the beginning of each line
-   - Remove/edit all entries that do not have the correct student id format.
-3. Browse to the [add-graders-and-students](../add-graders-and-students.ipynb) dashboard and select the *students* tab.
-4. Copy/paste the contents of the csv file into the text area and click *add students*. You should see a green check mark appear next to the button and the student information should appear to the right of the text area. ![](../files/add-students.png)
+
+1. Export the student information from Brightspace. To do that go to the course page, select *Grades* → *Enter grades* → *Export grades*. Then choose the options as shown: ![](/brightspace_export.png)
+2. Browse to [students](/students) and upload the resulting `.csv` file.
 
 You can add more students and edit existing student information at any time. It is currently not possible to remove students from zesje.
-
-You can also use any other source of the student information, and you can add students manually.
+You can also add students manually one by one.
 
 ### Adding graders
-1. Browse to the [add-graders-and-students](../add-graders-and-students.ipynb) dashboard and select the *graders* tab.
-2. Add grader information to the text area, one grader per line. and click *add graders". ![](../files/add-graders.png)
 
-It is currently not possible to modify or remove graders from zesje.
-
-The different graders are only used to identify who graded a particular solution.
-
-There is only a single set of login credentials for a zesje instance, so anyone can in principle "impersonate" anyone else.
+Go to the [graders page](/graders) and add all the names of the graders. Currently zesje considers all the users as trusted, but for the ease of figuring out who graded what, you must tell the app who you are before starting to grade.
 
 ## Creating an exam
 
-### Make a source latex document
-
-While you can use any software to create a printed exam, we are using automatically generated QR codes, and we have written a script that does so using LaTex. Therefore the main option for creating exams right now is to use LaTeX.
-
-The step-by-step instructions are as follows:
-1. Get the necessary [package file](../files/exam.sty) and the [mini-form](../files/number_widget.pdf) for providing the student number
-2. Depending on your latex installation, you might also need the [qrcode](https://www.ctan.org/tex-archive/macros/latex/contrib/qrcode) LaTeX package provided for most popular LaTeX distributions.
-3. For details on making the exam, check out a detailed example of an exam used for zesje sandbox [over here](https://gitlab.kwant-project.org/zesje/demo-data/blob/master/raw_data/test-1/manuscript/test-1.tex).  
-   The following is the minimal skeleton of an exam source file:  
-
-```latex
-\documentclass[11pt, twoside]{article}
-\usepackage[margin=1.5cm]{geometry}
-\usepackage[name=test-1, copies=100]{exam}
-\begin{document}
-\begin{exam}
-\answerbox{4cm}{}
-\end{exam}
-\end{document}
-```
-
 #### Important warnings:
-+ Do not use a title page, they are currently not supported.
-+ The exam name provided in the header **must be unique**. Otherwise you won't be able to import it in zesje.
-+ When developing and trying an exam form you will want to use `copies=1` for speed. Use a reasonable number of copies when printing the final version. 
-+ Since every copy of an exam should have a unique copy number, you shouldn't print the same exam twice.
++ Since every copy of an exam should have a unique copy number, you shouldn't print the same copies twice.
 + Use sufficient space for each answer, and provide an extra answerbox at the end of the exam in case the students run out of space. If that fails, have a student submit **two complete copies of the exam**.
 
 ### Create the exam in zesje
-Once the exams have been printed you can tell zesje about the new exam by uploading the metadata file generated during the latex compilation.
-
-1. Browse to the [upload](../upload.ipynb) dashboard and select the *Upload exam metadata* tab
-2. Select *None* in the *Exam* dropdown list at the top of the dashboard
-3. Copy/paste the contents of the **.yml** file (generated when compiling the latex document) into the text area, and click *Upload metadata*.
-   If the upload was successful a green checkmark should appear. ![](../files/upload-metadata.png)
    
-It is possible to tweak the metadata once it is uploaded. Simply select the *Upload exam metadata* tab and the correct exam in the *Exam* dropdown to see the currently uploaded metadata. After making your changes, be sure to click *Upload metadata* to save your changes.
-
-The main uses of tweaking the metadata are to:
-
-+ **rename problems**. By default zesje numbers the exam problems automatically, and it is unlikely that zesje's names correspond to the problem names used in the exam manuscript (e.g. problems *1a* and *1b* would be denoted *question_1* and *question_2* in zesje by default). You may change the *name* fields in the metadata to rename your questions accordingly. *Do not rename the "qrcode" metadata elements*; these are used to identify different pages in the scanned exams.
-+ **adjust the viewport when grading**. If the exam was scanned at a jaunty angle, or with an offset, then the metadata that specifies the area on the page where the answer boxes are will be incorrect. The *bottom*, *top*, *left* and *right* metadata can be modified to change the positions of the sides of the viewport.
+1. Upload the pdf of your exam at this [URL (exam selector → Add new)](/exams).
+2. Check that the student identification widget and the barcode do not overlap with other text.
+3. Mark the places where the students are supposed to write their answers in the preview and add problem names.
+4. Finalize the exam (do check that everything looks correct!)
+5. Prepare multiple exam copies for printing.
 
 ## Scanning and uploading the solutions
 
@@ -115,15 +74,15 @@ There are two types of scanners in TUD: Ricoh Alficio 3001 and Ricoh Alficio 450
 
 #### Select the "My Home Folder" option:
 
-![](../files/scan_to_me.jpg)
+![Scanner option selection](/scan_to_me.jpg)
 
 #### Select the following scanner settings:
 
-![](../files/scan_settings.jpg)
+![Scanner settings](/scan_settings.jpg)
 
 #### Use the paper feed, as shown:
 
-![](../files/paper_feed.jpg)
+![How to insert exams into the scanner](/paper_feed.jpg)
 
 ### Uploading the scan results
 
@@ -131,35 +90,19 @@ There are two types of scanners in TUD: Ricoh Alficio 3001 and Ricoh Alficio 450
 
 Once it's done, get it from your webdata by any means, for example at `https://webdata.tudelft.nl/staff-homes/<first letter of last name>/<netid>/My Documents/`
 
-The next step is to make the pdf file available for download via URL. Here we show how to do it with dropbox, but [surfdrive](https://surfdrive.nl) is another viable option.
-
-#### Step 1
-
-![](../files/share_file.png)
-
-#### Step 2
-
-![](../files/share_link.png)
-
-#### Step 3
-
-Finally, select the correct exam in the [upload](../upload.ipynb) dashboard, and paste the resulting link:
-
-![](../files/upload_exam.png)
+Finally select the correct exam and upload the files via the submissions tab.
 
 **Note:** If you reupload scans of the same pages, these will overwrite the older uploads. Therefore you can always fix problems later if your initial upload isn't good enough.
 
 ### Verifying the students
 
-Check that the students are identified correctly in the [check_student_numbers](../check_student_numbers.ipynb) dashboard. This is necessary to ensure that all the student numbers are identified correctly.
-
-This is done as shown in the [**video**](../files/validate.ogv).
+Check that the students are identified correctly in the [students](/students) tab. This is necessary to ensure that all the student numbers are identified correctly.
 
 ## Grading an exam
 
-### Video summary:
+**This section of the documentation is not up to date yet.**
 
-Watch the [**video**](../files/grade.ogv) showing the typical workflow.
+### Video summary:
 
 ### Assiging grades and feedback
 + Select the feedback options
@@ -175,7 +118,7 @@ Watch the [**video**](../files/grade.ogv) showing the typical workflow.
 While you are completely free in choosing the grading scheme, and you should choose the workflow that works best for you, there are several things that you may want to follow.
 
 + **Important**: Zesje uses integers for all scores. Ensure that the smallest amount of score differences is 1 point.
-+ Keep one option with 0 points, and one with maximal score for the problem.
++ Keep one option with 0 points, and one with the maximal score for the problem.
 + Since the feedback the students see is based on the feedback options you select, for most cases it makes sense to give the students a maximal score and subtract some points for the omissions they made.
 + Choose short and easy to remember names for the feedback options. In the extended description try to outline the part of the solution. The students can see this in an email.
 
@@ -184,6 +127,8 @@ While you are completely free in choosing the grading scheme, and you should cho
 If you need to navigate to a specific student, use the "jump to student" text field. Thanks to autocompletion, it allows you to search a student by name or their student number.
 
 ## Processing results
+
+**UNFINISHED**
 
 Most of the parts should be self-explanatory, however let us list the currently available options:
 

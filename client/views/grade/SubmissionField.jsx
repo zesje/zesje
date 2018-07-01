@@ -47,6 +47,19 @@ class SubmissionField extends React.Component {
       value: newValue
     })
   }
+  onBlur = () => {
+    this.setState({
+      value: getSuggestionValue(this.props.submission)
+    })
+  }
+  onFocus = () => {
+    this.setState({
+      value: ''
+    })
+  }
+  onSuggestionSelected = (event, { suggestion }) => {
+    this.props.setSubmission(suggestion.id)
+  }
 
   // Autosuggest will call this function every time you need to update suggestions.
   // You already implemented this logic above, so just use it.
@@ -89,7 +102,7 @@ class SubmissionField extends React.Component {
       placeholder: 'Search for a submission',
       value,
       onChange: this.onChange,
-      onSubmit: this.setSubmission
+      onFocus: this.onFocus
     }
 
     return (
@@ -97,6 +110,8 @@ class SubmissionField extends React.Component {
         suggestions={suggestions}
         onSuggestionsFetchRequested={this.onSuggestionsFetchRequested}
         onSuggestionsClearRequested={this.onSuggestionsClearRequested}
+        onSuggestionSelected={this.onSuggestionSelected}
+        onBlur={this.onBlur}
         getSuggestionValue={getSuggestionValue}
         renderSuggestion={renderSuggestion}
         inputProps={inputProps}

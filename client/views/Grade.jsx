@@ -132,7 +132,11 @@ class Grade extends React.Component {
                           onClick={this.prev}>Previous</button>
                       </div>
                       <div className='control'>
-                        <SubmissionField submission={submission} submissions={exam.submissions} />
+                        <SubmissionField
+                          submission={submission}
+                          submissions={exam.submissions}
+                          setSubmission={this.setSubmission}
+                        />
                       </div>
                       <div className='control'>
                         <button type='submit' className='button is-link'

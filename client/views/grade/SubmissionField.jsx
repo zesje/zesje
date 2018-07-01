@@ -16,7 +16,9 @@ const theme = {
     backgroundColor: '#fff',
     borderBottomLeftRadius: 4,
     borderBottomRightRadius: 4,
-    zIndex: 2
+    zIndex: 2,
+    maxHeight: '300px',
+    overflowY: 'auto'
   },
   suggestion: {
     cursor: 'pointer',
@@ -45,7 +47,7 @@ const renderSuggestion = submission => {
   return (
     <div>
       <b>{stud.firstName + ' ' + stud.lastName}</b>
-      <i> ({stud.id})</i>
+      <i style={{float: 'right'}} > ({stud.id})</i>
     </div>
   )
 }
@@ -141,6 +143,8 @@ class SubmissionField extends React.Component {
         renderSuggestion={renderSuggestion}
         inputProps={inputProps}
         theme={theme}
+        focusInputOnSuggestionClick={false}
+        highlightFirstSuggestion
       />
     )
   }

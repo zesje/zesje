@@ -53,10 +53,15 @@ class Exams extends React.Component {
     data.append('exam_name', this.state.exam_name)
     api.post('exams', data)
       .then(exam => {
-        this.props.updateExamList()
-        this.props.changeURL('/exams/' + exam.id)
+        console.log('updateExamList')
+        console.log(this.props.updateExamList)
+        this.props.updateExamList(() => {
+          console.log('updateExamList calling changeURL now')
+          this.props.changeURL('/exams/' + exam.id)
+        })
       })
       .catch(resp => {
+        console.log(resp)
         resp.json().then(body => alert(body.message))
       })
   }

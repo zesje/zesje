@@ -134,7 +134,12 @@ class App extends React.Component {
                 updateExam={this.updateExam}
                 updateSubmission={this.updateSubmission} />} />
             <Route path='/exams' render={({ history }) =>
-              <AddExam updateExamList={this.menu.current ? this.menu.current.updateExamList : null} changeURL={history.push} />} />
+              <AddExam updateExamList={(callback) => {
+                console.log(this.menu.current)
+                if (this.menu.current) {
+                  this.menu.current.updateExamList(callback)
+                }
+              }} changeURL={history.push} />} />
             <Route path='/submissions/:examID' render={({ match }) =>
               <Submissions
                 exam={exam}

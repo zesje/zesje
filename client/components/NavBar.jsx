@@ -95,11 +95,17 @@ class NavBar extends React.Component {
     this.updateGraderList()
   }
 
-  updateExamList = () => {
+  updateExamList = (callback) => {
+    console.log('updateExamList actually called')
     api.get('exams')
       .then(exams => {
+        console.log('updateExamList setting state now')
         this.setState({
           examList: exams
+        }, () => {
+          if (callback) {
+            callback()
+          }
         })
         if (this.props.exam.id == null && exams.length) this.props.updateExam(exams[exams.length - 1].id)
       })

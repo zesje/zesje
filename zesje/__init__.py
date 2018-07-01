@@ -39,8 +39,11 @@ def setup():
     os.makedirs(app.config['DATA_DIRECTORY'], exist_ok=True)
     os.makedirs(app.config['SCAN_DIRECTORY'], exist_ok=True)
 
-    db.bind('sqlite', app.config['DB_PATH'], create_db=True)
-    db.generate_mapping(create_tables=True)
+    try:
+        db.bind('sqlite', app.config['DB_PATH'], create_db=True)
+        db.generate_mapping(create_tables=True)
+    except TypeError:
+        print('DB already bound error suppressed')
 
 
 @app.route('/')

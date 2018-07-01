@@ -1,5 +1,5 @@
 module.exports = {
-    "moduleNameMapper": {
-        "\\.(css|md)$": "identity-obj-proxy"
-    }
+  'moduleNameMapper': {
+    '\\.(css|md)$': 'identity-obj-proxy'
+  }
 }

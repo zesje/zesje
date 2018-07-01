@@ -1,28 +1,26 @@
 import React from 'react'
 import EmptyPDF from '../components/EmptyPDF.jsx'
 
-import { Document, Page } from 'react-pdf';
+import { Document, Page } from 'react-pdf'
 // worker is prefered but need to convince webpack to cooperate
-/*global PDFJS*/
-PDFJS.workerSrc = true;
+PDFJS.workerSrc = true
 
 class GeneratedExamPreview extends React.Component {
-
-    render = () => {
-        return (
-            <Document
-                file={'/api/exams/' + this.props.examID + '/preview'}
-                onLoadSuccess={this.props.onPDFLoad}
-                loading={<EmptyPDF />}
-                noData={<EmptyPDF />}
-            >
-                <Page
-                    renderAnnotations={false}
-                    renderTextLayer={false}
-                    pageIndex={this.props.page} />
-            </Document>
-        )
-    }
+  render = () => {
+    return (
+      <Document
+        file={'/api/exams/' + this.props.examID + '/preview'}
+        onLoadSuccess={this.props.onPDFLoad}
+        loading={<EmptyPDF />}
+        noData={<EmptyPDF />}
+      >
+        <Page
+          renderAnnotations={false}
+          renderTextLayer={false}
+          pageIndex={this.props.page} />
+      </Document>
+    )
+  }
 }
 
 GeneratedExamPreview.defaultProps = {

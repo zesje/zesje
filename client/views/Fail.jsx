@@ -1,22 +1,21 @@
-import React from 'react';
+import React from 'react'
 
-import Hero from '../components/Hero.jsx';
+import Hero from '../components/Hero.jsx'
 
 const Home = (props) => {
-    return (
-        <div>
+  return (
+    <div>
 
-            <Hero title='Oops!' subtitle={props.message ? props.message : "Something went wrong :'("} />
+      <Hero title='Oops!' subtitle={props.message ? props.message : "Something went wrong :'("} />
 
-            <section className="section">
+      <section className='section'>
 
-                <div className="container">
-                </div>
+        <div className='container' />
 
-            </section>
+      </section>
 
-        </div>
-    )
+    </div>
+  )
 }
 
-export default Home;
+export default Home

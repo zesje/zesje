@@ -1,5 +1,4 @@
 import React from 'react'
-import getClosest from 'get-closest'
 
 import Hero from '../components/Hero.jsx'
 
@@ -24,34 +23,44 @@ class Grade extends React.Component {
     const newIndex = this.state.sIndex - 1
 
     if (newIndex >= 0 && newIndex < this.props.exam.submissions.length) {
-      this.props.updateSubmission(newIndex)
       this.setState({
         sIndex: newIndex
       })
+      this.props.updateSubmission(newIndex)
     }
   }
   next = () => {
     const newIndex = this.state.sIndex + 1
 
     if (newIndex >= 0 && newIndex < this.props.exam.submissions.length) {
-      this.props.updateSubmission(newIndex)
       this.setState({
         sIndex: newIndex
       })
+      this.props.updateSubmission(newIndex)
     }
   }
 
   prevUngraded = () => {
-    const ungraded = this.props.exam.submissions.filter(sub => sub.problems[this.state.pIndex].graded_at === null).map(sub => sub.id)
-    const newInput = getClosest.lowerNumber(this.props.exam.submissions[this.state.sIndex].id - 1, ungraded)
-
-    if (typeof newInput !== 'undefined') this.setSubmission(ungraded[newInput])
+    for (let i = this.state.sIndex - 1; i >= 0; i--) {
+      if (this.props.exam.submissions[i].problems[this.state.pIndex].graded_by === null) {
+        this.setState({
+          sIndex: i
+        })
+        this.props.updateSubmission(i)
+        return
+      }
+    }
   }
   nextUngraded = () => {
-    const ungraded = this.props.exam.submissions.filter(sub => sub.problems[this.state.pIndex].graded_at === null).map(sub => sub.id)
-    const newInput = getClosest.greaterNumber(this.props.exam.submissions[this.state.sIndex].id + 1, ungraded)
-
-    if (typeof newInput !== 'undefined') this.setSubmission(ungraded[newInput])
+    for (let i = this.state.sIndex + 1; i < this.props.exam.submissions.length; i++) {
+      if (this.props.exam.submissions[i].problems[this.state.pIndex].graded_by === null) {
+        this.setState({
+          sIndex: i
+        })
+        this.props.updateSubmission(i)
+        return
+      }
+    }
   }
 
   toggleEdit = () => {

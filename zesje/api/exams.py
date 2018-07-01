@@ -131,7 +131,7 @@ class Exams(Resource):
                         for fb
                         in prob.feedback_options.order_by(lambda f: f.id)
                     ],
-                    'page': prob.page,
+                    'page': prob.widget.page,
                     'widget': {
                         'id': prob.widget.id,
                         'name': prob.widget.name,

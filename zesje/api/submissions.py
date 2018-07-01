@@ -7,13 +7,6 @@ from pony import orm
 from ..database import Exam, Submission, Student
 
 
-page_match = re.compile(r'.*page(\d+).jpg').match
-
-
-def page_nr(path):
-    return int(page_match(path).group(1))
-
-
 def sub_to_data(sub, all_pages):
     """Transform a submission into a data structure frontend expects."""
     return {
@@ -39,7 +32,7 @@ def sub_to_data(sub, all_pages):
                 'remark': sol.remarks
             } for sol in sub.solutions.order_by(lambda s: s.problem.id)
         ],
-        'missing_pages': sorted(all_pages - set(page_nr(i) for i in sub.pages.path)),
+        'missing_pages': sorted(all_pages - set(sub.pages.number)),
     }
 
 
@@ -73,7 +66,9 @@ class Submissions(Resource):
         # This makes sure we raise ObjectNotFound if the exam does not exist
         exam = Exam[exam_id]
 
-        all_pages = set(page_nr(i) for i in exam.submissions.pages.path)
+        # Some pages might not have a problem widget (e.g. title page) and some
+        # pages might not have been uploaded yet.
+        all_pages = set(exam.problems.widget.page).union(exam.submissions.pages.number)
 
         if submission_id is not None:
             sub = Submission.get(exam=exam, copy_number=submission_id)

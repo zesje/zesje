@@ -16,16 +16,8 @@ class Grade extends React.Component {
     editFeedback: null,
     sIndex: 0,
     pIndex: 0,
-    input: '',
     examID: null,
     fullPage: false
-  }
-
-  static inputString (sub) {
-    if (sub.student) {
-      return (sub.student.id + ' (' + sub.student.firstName + ' ' + sub.student.lastName + ')')
-    }
-    return ('#' + sub.id)
   }
 
   prev = () => {
@@ -34,8 +26,7 @@ class Grade extends React.Component {
     if (newIndex >= 0 && newIndex < this.props.exam.submissions.length) {
       this.props.updateSubmission(newIndex)
       this.setState({
-        sIndex: newIndex,
-        input: Grade.inputString(this.props.exam.submissions[newIndex])
+        sIndex: newIndex
       })
     }
   }
@@ -45,8 +36,7 @@ class Grade extends React.Component {
     if (newIndex >= 0 && newIndex < this.props.exam.submissions.length) {
       this.props.updateSubmission(newIndex)
       this.setState({
-        sIndex: newIndex,
-        input: Grade.inputString(this.props.exam.submissions[newIndex])
+        sIndex: newIndex
       })
     }
   }
@@ -55,23 +45,13 @@ class Grade extends React.Component {
     const ungraded = this.props.exam.submissions.filter(sub => sub.problems[this.state.pIndex].graded_at === null).map(sub => sub.id)
     const newInput = getClosest.lowerNumber(this.props.exam.submissions[this.state.sIndex].id - 1, ungraded)
 
-    if (typeof newInput !== 'undefined') {
-      this.setState({
-        input: ungraded[newInput]
-      })
-      this.setSubmission(ungraded[newInput])
-    }
+    if (typeof newInput !== 'undefined') this.setSubmission(ungraded[newInput])
   }
   nextUngraded = () => {
     const ungraded = this.props.exam.submissions.filter(sub => sub.problems[this.state.pIndex].graded_at === null).map(sub => sub.id)
     const newInput = getClosest.greaterNumber(this.props.exam.submissions[this.state.sIndex].id + 1, ungraded)
 
-    if (typeof newInput !== 'undefined') {
-      this.setState({
-        input: ungraded[newInput]
-      })
-      this.setSubmission(ungraded[newInput])
-    }
+    if (typeof newInput !== 'undefined') this.setSubmission(ungraded[newInput])
   }
 
   toggleEdit = () => {
@@ -83,25 +63,14 @@ class Grade extends React.Component {
     })
   }
 
-  setSubInput = (event) => {
-    this.setState({ input: event.target.value })
-  }
   setSubmission = (id) => {
-    const input = id >= 0 ? id : parseInt(this.state.input)
-    const i = this.props.exam.submissions.findIndex(sub => sub.id === input)
-    const sub = this.props.exam.submissions[i]
+    const i = this.props.exam.submissions.findIndex(sub => sub.id === id)
 
     if (i >= 0) {
       this.props.updateSubmission(i)
       this.setState({
-        sIndex: i,
-        input: Grade.inputString(sub)
+        sIndex: i
       })
-    } else {
-      this.setState({
-        input: Grade.inputString(this.props.exam.submissions[this.state.sIndex])
-      })
-      alert('Could not find that submission number (' + this.state.input + ') :(\nSorry!')
     }
   }
   changeProblem = (event) => {
@@ -119,15 +88,12 @@ class Grade extends React.Component {
   static getDerivedStateFromProps = (newProps, prevState) => {
     if (newProps.exam.id !== prevState.examID && newProps.exam.submissions.length) {
       return {
-        input: Grade.inputString(newProps.exam.submissions[0]),
         sIndex: 0,
         pIndex: 0,
         examID: newProps.exam.id
       }
     }
-    return {
-      input: Grade.inputString(newProps.exam.submissions[prevState.sIndex])
-    }
+    return null
   }
 
   render () {

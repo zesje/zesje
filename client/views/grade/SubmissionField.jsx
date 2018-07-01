@@ -2,6 +2,31 @@ import React from 'react'
 import Autosuggest from 'react-autosuggest'
 import Fuse from 'fuse.js'
 
+const theme = {
+  input: {
+    width: '25vw',
+    minWidth: '225px'
+  },
+  suggestionsContainerOpen: {
+    display: 'block',
+    position: 'absolute',
+    right: '0px',
+    left: '0px',
+    border: '1px solid #aaa',
+    backgroundColor: '#fff',
+    borderBottomLeftRadius: 4,
+    borderBottomRightRadius: 4,
+    zIndex: 2
+  },
+  suggestion: {
+    cursor: 'pointer',
+    padding: '5px 10px'
+  },
+  suggestionHighlighted: {
+    backgroundColor: '#ddd'
+  }
+}
+
 // When suggestion is clicked, Autosuggest needs to populate the input
 // based on the clicked suggestion. Teach Autosuggest how to calculate the
 // input value for every given suggestion.
@@ -115,6 +140,7 @@ class SubmissionField extends React.Component {
         getSuggestionValue={getSuggestionValue}
         renderSuggestion={renderSuggestion}
         inputProps={inputProps}
+        theme={theme}
       />
     )
   }

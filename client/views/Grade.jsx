@@ -6,6 +6,8 @@ import Hero from '../components/Hero.jsx'
 import FeedbackPanel from './grade/FeedbackPanel.jsx'
 import ProblemSelector from './grade/ProblemSelector.jsx'
 import EditPanel from './grade/EditPanel.jsx'
+import SubmissionField from './grade/SubmissionField.jsx'
+
 const ProgressBar = () => null
 
 class Grade extends React.Component {
@@ -129,9 +131,10 @@ class Grade extends React.Component {
   }
 
   render () {
-    const submission = this.props.exam.submissions[this.state.sIndex]
+    const exam = this.props.exam
+    const submission = exam.submissions[this.state.sIndex]
     const solution = submission.problems[this.state.pIndex]
-    const problem = this.props.exam.problems[this.state.pIndex]
+    const problem = exam.problems[this.state.pIndex]
 
     return (
       <div>
@@ -143,10 +146,10 @@ class Grade extends React.Component {
           <div className='container'>
             <div className='columns'>
               <div className='column is-one-quarter-desktop is-one-third-tablet'>
-                <ProblemSelector problems={this.props.exam.problems} changeProblem={this.changeProblem} />
+                <ProblemSelector problems={exam.problems} changeProblem={this.changeProblem} />
                 {this.state.editActive
                   ? <EditPanel problem={problem} editFeedback={this.state.editFeedback} toggleEdit={this.toggleEdit} />
-                  : <FeedbackPanel examID={this.props.exam.id} submissionID={submission.id}
+                  : <FeedbackPanel examID={exam.id} submissionID={submission.id}
                     problem={problem} solution={solution} graderID={this.props.graderID}
                     toggleEdit={this.toggleEdit} updateSubmission={() => this.props.updateSubmission(this.state.sIndex)} />
                 }
@@ -163,9 +166,7 @@ class Grade extends React.Component {
                           onClick={this.prev}>Previous</button>
                       </div>
                       <div className='control'>
-                        <input className='input is-rounded has-text-centered is-link'
-                          value={this.state.input} type='text'
-                          onChange={this.setSubInput} onSubmit={this.setSubmission} onBlur={this.setSubmission} />
+                        <SubmissionField student={submission.student} submissions={exam.submissions} />
                       </div>
                       <div className='control'>
                         <button type='submit' className='button is-link'
@@ -177,10 +178,10 @@ class Grade extends React.Component {
                   </div>
                 </div>
 
-                <ProgressBar submissions={this.props.exam.submissions} />
+                <ProgressBar submissions={exam.submissions} />
 
                 <p className='box'>
-                  <img src={this.props.exam.id ? ('api/images/solutions/' + this.props.exam.id + '/' +
+                  <img src={exam.id ? ('api/images/solutions/' + exam.id + '/' +
                     problem.id + '/' + submission.id + '/' + (this.state.fullPage ? '1' : '0')) : ''} alt='' />
                 </p>
 

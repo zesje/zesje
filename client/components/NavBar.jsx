@@ -158,7 +158,6 @@ class NavBar extends React.Component {
             <Link className='navbar-item' to='/students'>Students</Link>
             <Link className='navbar-item' style={examStyle} to='/grade'><strong><i>Grade</i></strong></Link>
             <Link className='navbar-item' style={statsStyle} to='/statistics'>Statistics</Link>
-            <ExportDropdown className='navbar-item' style={examStyle} exam={this.props.exam} />
           </div>
 
           <div className='navbar-end'>
@@ -166,7 +165,6 @@ class NavBar extends React.Component {
               ? <GraderDropdown grader={this.props.grader} list={this.state.graderList} changeGrader={this.props.changeGrader} />
               : <Link className='navbar-item' to='/graders'>Add grader</Link>
             }
-            <Link className='navbar-item has-text-info' to='/reset'>reset</Link>
             <div className='navbar-item'>
               <i>Version {__COMMIT_HASH__}</i>
             </div>

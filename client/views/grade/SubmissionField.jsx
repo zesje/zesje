@@ -7,7 +7,11 @@ import Fuse from 'fuse.js'
 // input value for every given suggestion.
 const getSuggestionValue = (submission) => {
   const stud = submission.student
-  return stud.firstName + ' ' + stud.lastName + ' (' + stud.id + ')'
+  if (stud) {
+    return stud.firstName + ' ' + stud.lastName + ' (' + stud.id + ')'
+  } else {
+    return '#' + submission.id
+  }
 }
 
 // Use your imagination to render suggestions.
@@ -24,7 +28,18 @@ const renderSuggestion = submission => {
 class SubmissionField extends React.Component {
   state = {
     value: '',
-    suggestions: []
+    suggestions: [],
+    subID: null
+  }
+
+  static getDerivedStateFromProps (nextProps, prevState) {
+    if (nextProps.submission.id !== prevState.subID) {
+      return {
+        value: getSuggestionValue(nextProps.submission),
+        subID: nextProps.submission.id
+      }
+    }
+    return null
   }
 
   onChange = (event, { newValue }) => {

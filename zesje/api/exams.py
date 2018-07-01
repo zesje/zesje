@@ -464,7 +464,7 @@ class ExamPreview(Resource):
         generate_pdfs(
             exam_path,
             exam.token[:5] + 'PREVIEW',
-            [0],
+            [1519],
             [output_file],
             student_id_widget.x, student_id_widget.y,
             barcode_widget.x, barcode_widget.y

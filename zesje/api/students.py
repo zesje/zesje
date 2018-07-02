@@ -140,7 +140,8 @@ class Students(Resource):
                 _add_or_update_student(row)
         except Exception as e:
             message = ('Uploaded CSV is not in the correct format: '
-                       'did you export it from Brightspace?' + repr(e))
+                       'did you export it from Brightspace? '
+                       'The error was: ' + str(e))
             return dict(message=message), 400
 
         return True

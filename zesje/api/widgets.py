@@ -28,6 +28,8 @@ class Widgets(Resource):
             except AttributeError:
                 msg = f"Widget doesn't have a property {attr}"
                 return dict(status=400, message=msg), 400
+            except (TypeError, ValueError) as error:
+                return dict(status=400, message=str(error)), 400
 
         db.commit()
 

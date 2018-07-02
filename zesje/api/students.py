@@ -126,8 +126,7 @@ class Students(Resource):
 
         Returns
         -------
-        'true' is succesfull
-
+        The number of *new* students that were added.
         """
         args = self.post_parser.parse_args()
         try:
@@ -136,15 +135,15 @@ class Students(Resource):
             return dict(message='Uploaded file is not CSV'), 400
 
         try:
-            for _, row in df.iterrows():
-                _add_or_update_student(row)
+            added_students = sum(_add_or_update_student(row)
+                                 for _, row in df.iterrows())
         except Exception as e:
             message = ('Uploaded CSV is not in the correct format: '
                        'did you export it from Brightspace? '
                        'The error was: ' + str(e))
             return dict(message=message), 400
 
-        return True
+        return added_students
 
 
 def _add_or_update_student(row):

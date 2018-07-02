@@ -44,10 +44,13 @@ def setup():
 
 
 @app.route('/')
-@app.route('/<file>')
-def index(file='index.html'):
-    """Serve the static react content, otherwise fallback to the index.html"""
+@app.route('/<path:path>')
+def index(path='index.html'):
+    """Serve the static react content, otherwise fallback to the index.html
+
+    React Router will decide what to do with the URL in that case.
+    """
     try:
-        return app.send_static_file(file)
+        return app.send_static_file(path)
     except NotFound:
         return app.send_static_file('index.html')

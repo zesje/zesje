@@ -12,7 +12,7 @@ const ProgressBar = () => null
 class Grade extends React.Component {
   state = {
     editActive: false,
-    editFeedback: null,
+    feedbackToEdit: null,
     sIndex: 0,
     pIndex: 0,
     examID: null,
@@ -63,12 +63,18 @@ class Grade extends React.Component {
     }
   }
 
-  toggleEdit = () => {
+  editFeedback = (feedback) => {
     this.setState({
-      editActive: !this.state.editActive,
-      editFeedback: null
+      editActive: true,
+      feedbackToEdit: feedback
+    })
+  }
+
+  backToFeedback = () => {
+    this.setState({
+      editActive: false,
     }, () => {
-      if (!this.state.editActive) this.props.updateExam(this.props.exam.id)
+      this.props.updateExam(this.props.exam.id)
     })
   }
 
@@ -123,10 +129,11 @@ class Grade extends React.Component {
               <div className='column is-one-quarter-desktop is-one-third-tablet'>
                 <ProblemSelector problems={exam.problems} changeProblem={this.changeProblem} />
                 {this.state.editActive
-                  ? <EditPanel problem={problem} editFeedback={this.state.editFeedback} toggleEdit={this.toggleEdit} />
+                  ? <EditPanel problem={problem} feedback={this.state.feedbackToEdit}
+                               goBack={this.backToFeedback} />
                   : <FeedbackPanel examID={exam.id} submissionID={submission.id}
                     problem={problem} solution={solution} graderID={this.props.graderID}
-                    toggleEdit={this.toggleEdit} updateSubmission={() => this.props.updateSubmission(this.state.sIndex)} />
+                    editFeedback={this.editFeedback} updateSubmission={() => this.props.updateSubmission(this.state.sIndex)} />
                 }
               </div>
 

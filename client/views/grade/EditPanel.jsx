@@ -123,7 +123,7 @@ class EditPanel extends React.Component {
         </div>
 
         <div className='panel-block'>
-          <BackButton onClick={this.props.toggleEdit} />
+          <BackButton onClick={this.props.goBack} />
           <SaveButton onClick={this.saveFeedback} exists={this.props.feedback}
             disabled={!this.state.name || (this.state.score && isNaN(parseInt(this.state.score)))} />
         </div>

@@ -46,14 +46,14 @@ class FeedbackPanel extends React.Component {
         {this.props.problem.feedback.map((feedback, i) =>
           <FeedbackBlock key={feedback.id} examID={this.props.examID} submissionID={this.props.submissionID} problemID={this.props.problem.id}
             feedback={feedback} checked={this.props.solution.feedback.includes(feedback.id)}
-            onClick={this.props.editFeedback} updateSubmission={this.props.updateSubmission}
+            editFeedback={() => this.props.editFeedback(feedback)} updateSubmission={this.props.updateSubmission}
             graderID={this.props.graderID} />
         )}
         <div className='panel-block'>
           <textarea className='textarea' rows='2' placeholder='remark' value={this.state.remark} onBlur={this.saveRemark} onChange={this.changeRemark} />
         </div>
         <div className='panel-block'>
-          <button className='button is-link is-outlined is-fullwidth' onClick={this.props.toggleEdit}>
+          <button className='button is-link is-outlined is-fullwidth' onClick={() => this.props.editFeedback()}>
             <span className='icon is-small'>
               <i className='fa fa-plus' />
             </span>

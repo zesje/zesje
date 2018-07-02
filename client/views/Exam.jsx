@@ -70,7 +70,7 @@ class Exams extends React.Component {
               return {
                 selectedWidgetId: null,
                 widgets: update(prevState.widgets, {
-                  $splice: [[widgetId, 1]]
+                  $unset: [widgetId]
                 })
               }
             })

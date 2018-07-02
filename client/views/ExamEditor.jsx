@@ -248,14 +248,14 @@ class ExamEditor extends React.Component {
               this.props.updateWidget(widget.id, {
                 width: { $set: ref.offsetWidth },
                 height: { $set: ref.offsetHeight },
-                x: { $set: position.x },
-                y: { $set: position.y }
+                x: { $set: Math.round(position.x) },
+                y: { $set: Math.round(position.y) }
               })
             }}
             onResizeStop={(e, direction, ref, delta, position) => {
               api.patch('widgets/' + widget.id, {
-                x: position.x,
-                y: position.y,
+                x: Math.round(position.x),
+                y: Math.round(position.y),
                 width: ref.offsetWidth,
                 height: ref.offsetHeight
               }).then(() => {
@@ -271,12 +271,12 @@ class ExamEditor extends React.Component {
             }}
             onDragStop={(e, data) => {
               this.props.updateWidget(widget.id, {
-                x: { $set: data.x },
-                y: { $set: data.y }
+                x: { $set: Math.round(data.x) },
+                y: { $set: Math.round(data.y) }
               })
               api.patch('widgets/' + widget.id, {
-                x: data.x,
-                y: data.y
+                x: Math.round(data.x),
+                y: Math.round(data.y)
               }).then(() => {
                 // ok
               }).catch(err => {

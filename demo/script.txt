@@ -1,0 +1,46 @@
+- General GUI
+- Add exam
+  - select file '1. Source.pdf'
+  - enter name (ex. 'Example upload')
+
+- Edit Exam
+  - Define Problems Examples
+
+- Choose 'Demo Exam' from dropdown (prepared exam + problems)
+  - Show page 2/3 to confirm added widgets
+  - Generate
+    - Show dropdown
+    - Select zip
+    - Download
+  - Show PDFs
+
+===== students "grade" ======
+
+- Show submission PDFs
+
+- Go to submissions
+  - upload 2 pdf files: 1-3,4-5
+
+- Go to Students
+  - 1. Verify match
+  - 2. Search student
+  - 3. Create student
+  - 4. Verify match
+  - 5. Verify match
+
+- Add grader
+
+- Go to Grade
+  - first question (1)
+    - walk through submissions
+  - change question (4)
+    - add 'Aula' feedback option
+    - add 'Old building' feedback option
+    - add 'Old building' feedback option
+    - walk through submissions
+  - change question (5)
+    - Show fullpage check
+
+(- Go to Statistics)
+
+

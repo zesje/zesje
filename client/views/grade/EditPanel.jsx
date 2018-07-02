@@ -29,13 +29,7 @@ class EditPanel extends React.Component {
 
   componentWillMount = () => {
     if (this.props.feedback) {
-      const stud = this.props.editStud
-      this.setState({
-        id: stud.id,
-        firstName: stud.firstName,
-        lastName: stud.lastName,
-        email: stud.email
-      })
+      this.setState(this.props.feedback)
     }
   }
 

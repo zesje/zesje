@@ -29,13 +29,7 @@ class EditPanel extends React.Component {
 
   componentWillMount = () => {
     if (this.props.feedback) {
-      const stud = this.props.editStud
-      this.setState({
-        id: stud.id,
-        firstName: stud.firstName,
-        lastName: stud.lastName,
-        email: stud.email
-      })
+      this.setState(this.props.feedback)
     }
   }
 
@@ -67,19 +61,13 @@ class EditPanel extends React.Component {
   }
 
   saveFeedback = () => {
-    if (this.props.feedback) {
+    let save = this.props.feedback ? api.put : api.post
 
-    } else {
-      api.post('feedback/' + this.props.problem.id, {
-        name: this.state.name,
-        description: this.state.description,
-        score: this.state.score ? parseInt(this.state.score) : null
+    save('feedback/' + this.props.problem.id, this.state)
+      .then(feedback => {
+        console.log(feedback)
+        this.props.goBack()
       })
-        .then(feedback => {
-          console.log(feedback)
-          this.props.toggleEdit()
-        })
-    }
   }
 
   render () {
@@ -129,7 +117,7 @@ class EditPanel extends React.Component {
         </div>
 
         <div className='panel-block'>
-          <BackButton onClick={this.props.toggleEdit} />
+          <BackButton onClick={this.props.goBack} />
           <SaveButton onClick={this.saveFeedback} exists={this.props.feedback}
             disabled={!this.state.name || (this.state.score && isNaN(parseInt(this.state.score)))} />
         </div>

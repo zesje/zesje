@@ -45,7 +45,7 @@ class FeedbackBlock extends React.Component {
             <div className='tags has-addons'>
               {score ? <span className='tag is-link'>{this.props.feedback.score}</span> : null}
               <span className={'tag' + (this.state.hover ? ' is-white' : '')}
-                onMouseEnter={this.enter} onMouseLeave={this.leave} onClick={() => console.log('pencil click')}>
+                onMouseEnter={this.enter} onMouseLeave={this.leave} onClick={this.props.editFeedback}>
                 <i className='fa fa-pencil' />
               </span>
             </div>

@@ -80,6 +80,7 @@ class Submissions extends React.Component {
   }
 
   componentDidMount = () => {
+    this.updateScans()
     this.scanUpdater = setInterval(this.updateScans, 1000)
     // TODO: remove this when https://gitlab.kwant-project.org/zesje/zesje/issues/173
     //       has been solved. This is a

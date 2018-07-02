@@ -69,12 +69,10 @@ class Grade extends React.Component {
       feedbackToEdit: feedback
     })
   }
-
   backToFeedback = () => {
+    this.props.updateExam(this.props.exam.id)
     this.setState({
-      editActive: false,
-    }, () => {
-      this.props.updateExam(this.props.exam.id)
+      editActive: false
     })
   }
 
@@ -129,8 +127,8 @@ class Grade extends React.Component {
               <div className='column is-one-quarter-desktop is-one-third-tablet'>
                 <ProblemSelector problems={exam.problems} changeProblem={this.changeProblem} />
                 {this.state.editActive
-                  ? <EditPanel problem={problem} feedback={this.state.feedbackToEdit}
-                               goBack={this.backToFeedback} />
+                  ? <EditPanel problemID={problem.id} feedback={this.state.feedbackToEdit}
+                    goBack={this.backToFeedback} />
                   : <FeedbackPanel examID={exam.id} submissionID={submission.id}
                     problem={problem} solution={solution} graderID={this.props.graderID}
                     editFeedback={this.editFeedback} updateSubmission={() => this.props.updateSubmission(this.state.sIndex)} />

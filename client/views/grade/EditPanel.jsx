@@ -22,25 +22,28 @@ const SaveButton = (props) => (
 
 class EditPanel extends React.Component {
   state = {
+    id: null,
     name: '',
     description: '',
     score: ''
   }
 
-  componentWillMount = () => {
-    if (this.props.feedback) {
-      this.setState(this.props.feedback)
+  static getDerivedStateFromProps (nextProps, prevState) {
+    if (nextProps.feedback && prevState.id !== nextProps.feedback.id) {
+      const fb = nextProps.feedback
+      return {
+        id: fb.id,
+        name: fb.name,
+        description: fb.description,
+        score: fb.score
+      }
     }
+    return null
   }
 
-  changeName = (event) => {
+  changeText = (event) => {
     this.setState({
-      name: event.target.value
-    })
-  }
-  changeDesc = (event) => {
-    this.setState({
-      description: event.target.value
+      [event.target.name]: event.target.value
     })
   }
   changeScore = (event) => {
@@ -55,19 +58,33 @@ class EditPanel extends React.Component {
 
   key = (event) => {
     if (event.keyCode === 13 && this.state.name.length) {
-      console.log(this.state)
       this.saveFeedback()
     }
   }
 
   saveFeedback = () => {
-    let save = this.props.feedback ? api.put : api.post
+    const uri = 'feedback/' + this.props.problemID
+    const fb = {
+      name: this.state.name,
+      description: this.state.description,
+      score: this.state.score
+    }
 
-    save('feedback/' + this.props.problem.id, this.state)
-      .then(feedback => {
-        console.log(feedback)
-        this.props.goBack()
-      })
+    if (this.state.id) {
+      fb.id = this.state.id
+      api.put(uri, fb)
+        .then(() => this.props.goBack)
+    } else {
+      api.post(uri, fb)
+        .then(() => {
+          this.setState({
+            id: null,
+            name: '',
+            description: '',
+            score: ''
+          })
+        })
+    }
   }
 
   render () {
@@ -81,8 +98,8 @@ class EditPanel extends React.Component {
           <div className='field'>
             <label className='label'>Name</label>
             <div className='control has-icons-left'>
-              <input className='input' placeholder='Name'
-                value={this.state.name} onChange={this.changeName} onKeyDown={this.key} />
+              <input className='input' placeholder='Name' name='name'
+                value={this.state.name} onChange={this.changeText} onKeyDown={this.key} />
               <span className='icon is-small is-left'>
                 <i className='fa fa-quote-left' />
               </span>
@@ -94,8 +111,8 @@ class EditPanel extends React.Component {
           <div className='field'>
             <label className='label'>Description</label>
             <div className='control has-icons-left'>
-              <textarea className='input' rows='2' placeholder='Description'
-                value={this.state.description} onChange={this.changeDesc} onKeyDown={this.key} />
+              <textarea className='input' rows='2' placeholder='Description' name='description'
+                value={this.state.description} onChange={this.changeText} onKeyDown={this.key} />
               <span className='icon is-small is-left'>
                 <i className='fa fa-comment-o' />
               </span>

@@ -126,8 +126,7 @@ class Students(Resource):
 
         Returns
         -------
-        'true' is succesfull
-
+        The number of *new* students that were added.
         """
         args = self.post_parser.parse_args()
         try:
@@ -136,24 +135,38 @@ class Students(Resource):
             return dict(message='Uploaded file is not CSV'), 400
 
         try:
-            for _, row in df.iterrows():
-                _add_or_update_student(row)
+            added_students = sum(_add_or_update_student(row)
+                                 for _, row in df.iterrows())
         except Exception as e:
             message = ('Uploaded CSV is not in the correct format: '
                        'did you export it from Brightspace? '
                        'The error was: ' + str(e))
             return dict(message=message), 400
 
-        return True
+        return added_students
 
 
 def _add_or_update_student(row):
+    """Add or update a student from a CSV row.
+
+    Returns whether a new student was added
+    (False if the student was already present, or
+    if there was an error processing the row).
+    """
     content = dict(id=row['OrgDefinedId'][1:],
                    first_name=row['First Name'],
                    last_name=row['Last Name'],
                    email=row['Email'] or None)
-    student = Student.get(id=content['id'])
+    try:
+        # Brightspace includes instructors in the course list,
+        # and these might not have student numbers. (If they
+        # do then they will be added to the student list).
+        student = Student.get(id=content['id'])
+    except ValueError:
+        return False
     if not student:
         Student(**content)
+        return True
     else:
         student.set(**content)
+        return False

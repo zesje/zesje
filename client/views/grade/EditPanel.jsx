@@ -61,19 +61,13 @@ class EditPanel extends React.Component {
   }
 
   saveFeedback = () => {
-    if (this.props.feedback) {
+    let save = this.props.feedback ? api.put : api.post
 
-    } else {
-      api.post('feedback/' + this.props.problem.id, {
-        name: this.state.name,
-        description: this.state.description,
-        score: this.state.score ? parseInt(this.state.score) : null
+    save('feedback/' + this.props.problem.id, this.state)
+      .then(feedback => {
+        console.log(feedback)
+        this.props.goBack()
       })
-        .then(feedback => {
-          console.log(feedback)
-          this.props.toggleEdit()
-        })
-    }
   }
 
   render () {

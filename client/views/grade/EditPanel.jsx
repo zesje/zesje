@@ -16,7 +16,7 @@ const SaveButton = (props) => (
     <span className='icon is-small'>
       <i className='fa fa-floppy-o' />
     </span>
-    <span>{props.exists ? 'edit' : 'add'}</span>
+    <span>{props.exists ? 'save' : 'add'}</span>
   </button>
 )
 
@@ -136,7 +136,7 @@ class EditPanel extends React.Component {
         <div className='panel-block'>
           <BackButton onClick={this.props.goBack} />
           <SaveButton onClick={this.saveFeedback} exists={this.props.feedback}
-            disabled={!this.state.name || (this.state.score && isNaN(parseInt(this.state.score)))} />
+            disabled={!this.state.name || !this.state.score || isNaN(parseInt(this.state.score))} />
         </div>
       </nav>
     )

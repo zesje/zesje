@@ -1,0 +1,43 @@
+
+image: zesje/base
+
+stages:
+  - build
+  - lint
+  - test
+
+build_js:
+  stage: build
+  script:
+    - yarn build
+
+build_py:
+  stage: build
+  script: python -m compileall zesje
+
+lint_js:
+  stage: lint
+  script: yarn lint:js
+
+lint_py:
+  stage: lint
+  script: yarn lint:py
+
+test_js:
+  stage: test
+  script: yarn test:js
+
+test_py:
+  stage: test
+  script: yarn test:py
+
+    
+#pacman -Sy --noconfirm nodejs python-pip libdmtx libsm 	libxrender libxext gcc libmagick6 imagemagick
+#pacman -U --noconfirm https://archive.archlinux.org/packages/y/yarn/yarn-1.6.0-1-any.pkg.tar.xz
+#pip install -r requirements.txt -r requirements-dev.txt
+#yarn install
+#
+#yarn build
+#python -m compileall zesje
+#
+#yarn ci

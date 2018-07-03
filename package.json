@@ -6,8 +6,12 @@
   "scripts": {
     "dev": "concurrently --kill-others --names \"WEBPACK,PYTHON\" --prefix-colors \"bgBlue.bold,bgGreen.bold\" \"webpack-dev-server --hot --inline --progress --config webpack.dev.js\" \"ZESJE_SETTINGS=$(pwd)/zesje.dev.cfg python3 zesje\"",
     "build": "webpack --config webpack.prod.js",
+    "ci": "yarn lint; yarn test",
+    "lint": "yarn lint:js; yarn lint:py",
     "test": "yarn test:js; yarn test:py",
-    "test:js": "standard --verbose | snazzy; jest",
+    "lint:js": "standard --verbose | snazzy",
+    "test:js": "jest",
+    "lint:py": "flake8",
     "test:py": "python -m pytest -v",
     "start": "ZESJE_SETTINGS=$(pwd)/zesje.dev.cfg python3 zesje",
     "analyze": "webpack --config webpack.prod.js --profile --json > stats.json; webpack-bundle-analyzer stats.json zesje/static"

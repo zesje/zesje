@@ -16,7 +16,7 @@ const SaveButton = (props) => (
     <span className='icon is-small'>
       <i className='fa fa-floppy-o' />
     </span>
-    <span>{props.exists ? 'edit' : 'add'}</span>
+    <span>{props.exists ? 'save' : 'add'}</span>
   </button>
 )
 

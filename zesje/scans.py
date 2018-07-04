@@ -95,7 +95,7 @@ def process_pdf(scan_id, bind=True, app_config=None):
 
 
 @orm.db_session
-def exam_config(exam_id, app_config=None):
+def exam_metadata(exam_id, app_config=None):
     """Read off widget coordinates and problems from the database."""
     exam = Exam[exam_id]
     if app_config is None:

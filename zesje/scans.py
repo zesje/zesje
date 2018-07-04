@@ -3,7 +3,7 @@ import itertools
 import math
 import os
 import platform
-from collections import namedtuple
+from collections import namedtuple, Counter
 from io import BytesIO
 
 from pony import orm
@@ -215,8 +215,8 @@ def process_page(output_dir, image_data, exam_config):
     corner_keypoints = find_corner_marker_keypoints(image_array)
     try:
         check_corner_keypoints(image_array, corner_keypoints)
-    except RuntimeError:
-        return False, "Incorrect amount of corner markers detected (blank page?)"
+    except RuntimeError as e:
+        return False, str(e)
     (image_array, new_keypoints) = rotate_image(image_array, corner_keypoints)
 
     try:
@@ -560,28 +560,24 @@ def find_corner_marker_keypoints(image_array):
 
 def check_corner_keypoints(image_array, keypoints):
     """Checks whether the corner markers are valid.
-        1. Checks whether there is 3 or more corner markers
-        2. Checks whether there exist no 2 corner markers
-           in the same corner of the image.
+
+    1. Checks that there are between 3 and 4 corner markers.
+    2. Checks that no 2 corner markers are the same corner of the image.
 
     Parameters:
     -----------
-    image_array: source image
-    keypoints: list of tuples containing the coordinates of keypoints
+    image_array : source image
+    keypoints : list of tuples containing the coordinates of keypoints
     """
-    if(len(keypoints) < 3 or len(keypoints) > 4):
-        raise RuntimeError('Incorrect amount of corner markers detected')
+    total = len(keypoints)
+    if total < 3:
+        raise RuntimeError(f"Too few corner markers found ({total}).")
+    elif total > 4:
+        raise RuntimeError(f"Too many corner markers found ({total}).")
 
     h, w, *_ = image_array.shape
 
-    checklist = [False, False, False, False]
+    corners = Counter((x < (w / 2), (y < h / 2)) for x, y in keypoints)
 
-    for (x, y) in keypoints:
-            is_left_half = 2 * int(x < (w / 2))
-            is_top_half = 1 * int(y < (h / 2))
-            index = is_left_half + is_top_half
-            if(checklist[index]):
-                raise RuntimeError(("Found multiple corner markers"
-                                    "in the same corner"))
-            else:
-                checklist[index] = True
+    if max(corners.values()) > 1:
+        raise RuntimeError("Found multiple corner markers in the same corner")

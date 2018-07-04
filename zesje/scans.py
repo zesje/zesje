@@ -206,7 +206,6 @@ def process_page(output_dir, image_data, exam_config):
     Because the failure of steps 1-3 likely means we're reading a wrong pdf, we
     should stop processing any other pages if this function raises.
     """
-
     image_array = np.array(image_data)
     shape = image_array.shape
     if shape[0] < shape[1]:
@@ -525,82 +524,43 @@ def find_corner_marker_keypoints(image_array):
     image_data: Source image
 
     """
-    gray_im = cv2.cvtColor(image_array, cv2.COLOR_BGR2GRAY)
-    _, bin_im = cv2.threshold(gray_im, 150, 255, cv2.THRESH_BINARY)
-
-    h, w = gray_im.shape
-
-    bin_im_inv = cv2.bitwise_not(bin_im)
-
-    im_floodfill = bin_im_inv.copy()
-
-    # Mask used for flood filling.
-    # Notice the size needs to be 2 pixels larger than the image for floodFill
-    # to function.
-    mask = np.zeros((h+2, w+2), np.uint8)
-
-    # Floodfill from point (0, 0)
-    cv2.floodFill(im_floodfill, mask, (0, 0), 255)
-
-    im_floodfill_inv = cv2.bitwise_not(im_floodfill)
-
-    # Combine the two images to get the original image but with all enclosed
-    # space completely black.
-    bin_im = ~(bin_im_inv | im_floodfill_inv)
+    h, w, *_ = image_array.shape
+    marker_length = .8 / 2.54 * guess_dpi(image_array) # 8 mm in inches × dpi
+    marker_width = .1 / 2.54 * guess_dpi(image_array) # should get exact width
 
     # Filter out everything in the center of the image
-    bin_im[round(0.125 * h):round(0.875 * h)] = 255
-    bin_im[:, round(0.125 * w):round(0.875 * w)] = 255
+    tb = slice(0, h//8), slice(7*h//8, h)
+    lr = slice(0, w//8), slice(7*w//8, w)
+    corner_points = []
+    for corner in itertools.product(tb, lr):
+        gray_im = cv2.cvtColor(image_array[corner], cv2.COLOR_BGR2GRAY)
+        _, bin_im = cv2.threshold(gray_im, 150, 255, cv2.THRESH_BINARY)
+        img = bin_im
+        ret, labels = cv2.connectedComponents(~img)
+        for label in range(1, ret):
+            new_img = (labels == label)
+            if np.sum(new_img) > marker_length * marker_width * 2:
+                continue  # The blob is too large
+            lines = cv2.HoughLines(new_img.astype(np.uint8), 1, np.pi/180, int(marker_length * .9))
+            if lines is None:
+                continue  # Didn't find any lines
+            lines = lines.reshape(-1, 2).T
 
-    # Detect objects which look like corner markers
-    params = cv2.SimpleBlobDetector_Params()
-    params.filterByArea = True
-    params.minArea = 150
-    params.maxArea = 1500
-    params.filterByCircularity = True
-    params.minCircularity = 0
-    params.maxCircularity = 0.15
-    params.filterByConvexity = True
-    params.minConvexity = 0.15
-    params.maxConvexity = 0.3
-    params.filterByInertia = True
-    params.minInertiaRatio = 0.20
-    params.maxInertiaRatio = 0.50
-    params.filterByColor = False
+            # One of the lines is nearly horizontal, can have both theta ≈ 0 or theta ≈ π;
+            # here we flip those points to ensure that we end up with two reasonably contiguous regions.
+            to_flip = lines[1] > 3*np.pi/4
+            lines[1, to_flip] -= np.pi
+            lines[0, to_flip] *= -1
+            v = (lines[1] > np.pi/4)
+            rho1, theta1 = np.average(lines[:, v], axis=1)
+            rho2, theta2 = np.average(lines[:, ~v], axis=1)
+            y, x = np.linalg.solve([[np.cos(theta1), np.sin(theta1)], [np.cos(theta2), np.sin(theta2)]], [rho1, rho2])
+            # TODO: add failsafes
+            if np.isnan(x) or np.isnan(y):
+                continue
+            corner_points.append((int(y) + corner[1].start, int(x) + corner[0].start))
 
-    detector = cv2.SimpleBlobDetector_create(params)
-    blob_keypoints = detector.detect(bin_im)
-
-    corner_keypoints = []
-
-    # For each blob keypoint, extract an image patch as a descriptor
-    for keyp in blob_keypoints:
-        pt_x, pt_y = keyp.pt[0], keyp.pt[1]
-        topleft = (int(round(pt_x - 0.75 * keyp.size)),
-                   int(round(pt_y - 0.75 * keyp.size)))
-        bottomright = (int(round(pt_x + 0.75 * keyp.size)),
-                       int(round(pt_y + 0.75 * keyp.size)))
-        image_patch = gray_im[topleft[1]:bottomright[1],
-                              topleft[0]:bottomright[0]]
-
-        dpi = guess_dpi(image_array)
-        block_size = int(round(dpi / 60))
-        if block_size % 2 == 0:
-            block_size += 1
-
-        # Find the best corner
-        corners = cv2.goodFeaturesToTrack(image_patch, 1, 0.01, 10,
-                                          blockSize=block_size)
-        corners = np.int0(corners)
-
-        # Change the coordinates of the corner to be respective of the origin
-        # of the original image, and not the image patch.
-        patch_x, patch_y = corners.ravel()
-        corner_x, corner_y = patch_x + topleft[0], patch_y + topleft[1]
-
-        corner_keypoints.append((corner_x, corner_y))
-
-    return corner_keypoints
+    return corner_points
 
 
 def check_corner_keypoints(image_array, keypoints):

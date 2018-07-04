@@ -29,20 +29,23 @@ ExamMetadata = namedtuple('ExamMetadata',
 def process_pdf(scan_id, bind=True, app_config=None):
     """Process a PDF, recording progress to a database
 
-    This *must* be called from a subprocess of the Flask process, so that we
-    inherit the app config.
-
     Parameters
     ----------
     scan_id : int
         The ID in the database of the Scan to process
     app_config : obj
         The Flask app config
-
     """
-    if app_config is None:
-        app_config = {}
+    try:
+        _process_pdf(scan_id, app_config)
+    except Exception as error:
+        # TODO: When #182 is implemented, properly separate user-facing
+        #       messages (written to DB) from developer-facing messages,
+        #       which should be written into the log.
+        write_pdf_status(scan_id, 'error', "Unexpected error: " + str(error))
 
+
+def _process_pdf(scan_id, app_config):
     data_directory = app_config.get('DATA_DIRECTORY', 'data')
     if bind:
         # Ensure we are not inheriting a bound database, which is dangerous and

@@ -6,11 +6,10 @@ RUN pacman -Sy --noconfirm nodejs python-pip git libdmtx libsm libxrender libxex
 
 WORKDIR ~
 ADD requirements*.txt ./
-ADD package.json .
-RUN pip install --no-cache-dir -r requirements.txt -r requirements-dev.txt; \
-    rm requirements*.txt
-RUN yarn install; \
-    yarn cache clean; \
-    rm package.json
+#ADD package.json .
+RUN pip install --no-cache-dir -r requirements.txt -r requirements-dev.txt;
+#RUN yarn install; \
+#    yarn cache clean; \
+#    rm package.json
 
 CMD bash

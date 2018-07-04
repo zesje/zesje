@@ -6,6 +6,9 @@ stages:
   - lint
   - test
 
+before_script:
+  - yarn install
+
 build_js:
   stage: build
   script:

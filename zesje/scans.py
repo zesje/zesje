@@ -27,7 +27,7 @@ ExamMetadata = namedtuple('ExamMetadata',
                           ['token', 'barcode_area', 'student_id_widget_area', 'problem_ids'])
 
 
-def process_pdf(scan_id, app_config):
+def process_pdf(scan_id, bind=True, app_config=None):
     """Process a PDF, recording progress to a database
 
     This *must* be called from a subprocess of the Flask process, so that we
@@ -41,12 +41,15 @@ def process_pdf(scan_id, app_config):
         The Flask app config
 
     """
+    if app_config is None:
+        app_config = {}
 
     data_directory = app_config.get('DATA_DIRECTORY', 'data')
-    # Ensure we are not inheriting a bound database, which is dangerous and
-    # might be locked.
-    db.bind('sqlite', os.path.join(data_directory, 'course.sqlite'))
-    db.generate_mapping(create_tables=True)
+    if bind:
+        # Ensure we are not inheriting a bound database, which is dangerous and
+        # might be locked.
+        db.bind('sqlite', os.path.join(data_directory, 'course.sqlite'))
+        db.generate_mapping(create_tables=True)
 
     report_error = functools.partial(write_pdf_status, scan_id, 'error')
     report_progress = functools.partial(write_pdf_status, scan_id, 'processing')

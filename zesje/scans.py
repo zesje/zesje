@@ -170,7 +170,7 @@ def write_pdf_status(scan_id, status, message):
         scan.message = message
 
 
-def process_page(image_data, exam_config, output_dir=None):
+def process_page(image_data, exam_config, output_dir=None, strict=False):
     """Incorporate a scanned image in the data structure.
 
     For each page perform the following steps:
@@ -190,6 +190,9 @@ def process_page(image_data, exam_config, output_dir=None):
         Information about the exam to which this page should belong
     output_dir : string
         Path to save the processed image must be stored.
+    strict : bool
+        Whether to stop trying if we did not find corner markers.
+        This spoils page positioning, but may increase the success rate.
 
     Returns
     -------
@@ -216,31 +219,30 @@ def process_page(image_data, exam_config, output_dir=None):
     try:
         check_corner_keypoints(image_array, corner_keypoints)
     except RuntimeError as e:
-        return False, str(e)
-    (image_array, new_keypoints) = rotate_image(image_array, corner_keypoints)
+        if strict:
+            return False, str(e)
+    else:
+        (image_array, new_keypoints) = rotate_image(image_array, corner_keypoints)
+        image_array = shift_image(image_array, new_keypoints)
 
     try:
         barcode_data, upside_down = decode_barcode(image_array, exam_config)
         if upside_down:
-            h, w, *_ = image_array.shape
-            new_keypoints = [(w - kp[0], h - kp[1]) for kp in new_keypoints]
             # TODO: check if view errors appear
             image_array = np.array(image_array[::-1, ::-1])
     except RuntimeError:
-        barcode_data = None
-
-    if barcode_data is None:
         return False, "Reading barcode failed"
-    elif barcode_data.token != exam_config.token:
-        raise ValueError('PDF is not from this exam')
 
-    image_data = Image.fromarray(shift_image(image_array, new_keypoints))
+    if barcode_data.token != exam_config.token:
+        # If we have one page from a wrong exam, chances are they all are from
+        # a wrong exam and we should therefore stop processing.
+        raise ValueError('PDF is not from this exam')
 
     if output_dir is not None:
         target = os.path.join(output_dir, 'submissions', f'{barcode_data.copy}')
         os.makedirs(target, exist_ok=True)
         target_image = os.path.join(target, f'page{barcode_data.page:02d}.jpg')
-        image_data.save(target_image)
+        Image.fromarray(image_array).save(target_image)
 
     with orm.db_session:
         exam = Exam.get(token=barcode_data.token)

@@ -15,7 +15,7 @@ from PIL import Image
 from pylibdmtx import pylibdmtx
 
 
-from .database import db, Scan, Exam, Problem, Page, Student, Submission, ExamWidget
+from .database import db, Scan, Exam, Problem, Page, Student, Submission, Solution, ExamWidget
 from .datamatrix import decode_raw_datamatrix
 from .images import guess_dpi, get_box
 

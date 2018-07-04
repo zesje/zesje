@@ -73,7 +73,7 @@ def process_pdf(scan_id, bind=True, app_config=None):
         for image, page in extract_images(pdf_path):
             report_progress(f'Processing page {page} / {total}')
             try:
-                success, reason = process_page(output_directory, image, exam_config)
+                success, reason = process_page(image, exam_config, output_directory)
                 if not success:
                     print(reason)
                     failures.append(page)
@@ -170,7 +170,7 @@ def write_pdf_status(scan_id, status, message):
         scan.message = message
 
 
-def process_page(output_dir, image_data, exam_config):
+def process_page(image_data, exam_config, output_dir=None):
     """Incorporate a scanned image in the data structure.
 
     For each page perform the following steps:
@@ -185,11 +185,11 @@ def process_page(output_dir, image_data, exam_config):
 
     Parameters
     ----------
-    output_dir : string
-        Path where the processed image must be stored.
     image_data : PIL Image
     exam_config : ExamMetadata instance
         Information about the exam to which this page should belong
+    output_dir : string
+        Path to save the processed image must be stored.
 
     Returns
     -------
@@ -236,10 +236,11 @@ def process_page(output_dir, image_data, exam_config):
 
     image_data = Image.fromarray(shift_image(image_array, new_keypoints))
 
-    target = os.path.join(output_dir, 'submissions', f'{barcode_data.copy}')
-    os.makedirs(target, exist_ok=True)
-    target_image = os.path.join(target, f'page{barcode_data.page:02d}.jpg')
-    image_data.save(target_image)
+    if output_dir is not None:
+        target = os.path.join(output_dir, 'submissions', f'{barcode_data.copy}')
+        os.makedirs(target, exist_ok=True)
+        target_image = os.path.join(target, f'page{barcode_data.page:02d}.jpg')
+        image_data.save(target_image)
 
     with orm.db_session:
         exam = Exam.get(token=barcode_data.token)

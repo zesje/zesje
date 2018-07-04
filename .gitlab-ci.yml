@@ -1,13 +1,24 @@
 
+# This base image can be found in 'Dockerfile'
 image: zesje/base
 
+# Cache the JS modules that yarn fetches
+cache:
+  untracked: true
+  key: "$CI_BUILD_REF_NAME"
+  paths:
+    - node_modules/
+
 stages:
+  - install
   - build
   - lint
   - test
 
-before_script:
-  - yarn install
+setup:
+  stage: setup
+  script:
+    - yarn install
 
 build_js:
   stage: build
@@ -33,14 +44,3 @@ test_js:
 test_py:
   stage: test
   script: yarn test:py
-
-    
-#pacman -Sy --noconfirm nodejs python-pip libdmtx libsm 	libxrender libxext gcc libmagick6 imagemagick
-#pacman -U --noconfirm https://archive.archlinux.org/packages/y/yarn/yarn-1.6.0-1-any.pkg.tar.xz
-#pip install -r requirements.txt -r requirements-dev.txt
-#yarn install
-#
-#yarn build
-#python -m compileall zesje
-#
-#yarn ci

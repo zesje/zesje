@@ -11,31 +11,25 @@ cache:
 
 stages:
   - install
-  - build
   - lint
   - test
 
 setup:
-  stage: setup
+  stage: install
   script:
     - yarn install
 
-build_js:
-  stage: build
-  script:
-    - yarn build
-
-build_py:
-  stage: build
-  script: python -m compileall zesje
-
 lint_js:
   stage: lint
-  script: yarn lint:js
+  script:
+    - yarn build
+    - yarn lint:js
 
 lint_py:
   stage: lint
-  script: yarn lint:py
+  script: 
+    - python -m compileall zesje
+    - yarn lint:py
 
 test_js:
   stage: test

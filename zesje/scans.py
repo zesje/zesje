@@ -15,7 +15,7 @@ from PIL import Image
 from pylibdmtx import pylibdmtx
 
 
-from .database import db, Scan, Exam, Problem, Page, Student, Submission, Solution
+from .database import db, Scan, Exam, Problem, Page, Student, Submission, ExamWidget
 from .datamatrix import decode_raw_datamatrix
 from .images import guess_dpi, get_box
 
@@ -59,37 +59,7 @@ def process_pdf(scan_id, app_config):
         output_directory = os.path.join(data_directory, f'{scan.exam.id}_data')
 
         try:
-            # Read in exam metadata
-            student_id_widget = next(
-                widget
-                for widget
-                in scan.exam.widgets
-                if widget.name == 'student_id_widget'
-            )
-            barcode_widget = next(
-                widget
-                for widget
-                in scan.exam.widgets
-                if widget.name == 'barcode_widget'
-            )
-            exam_config = ExamMetadata(
-                token=scan.exam.token,
-                barcode_area=[
-                    max(0, barcode_widget.y),
-                    max(0, barcode_widget.y + 50),
-                    max(0, barcode_widget.x),
-                    max(0, barcode_widget.x + 50),
-                ],
-                student_id_widget_area=[
-                    student_id_widget.y,  # top
-                    student_id_widget.y + app_config.get('ID_GRID_HEIGHT', 181),  # bottom
-                    student_id_widget.x,  # left
-                    student_id_widget.x + app_config.get('ID_GRID_WIDTH', 313),  # right
-                ],
-                problem_ids=[
-                    problem.id for problem in scan.exam.problems
-                ]
-            )
+            exam_config = exam_metadata(scan.exam.id)
         except Exception as e:
             report_error(f'Error while reading Exam metadata: {e}')
             raise
@@ -119,6 +89,37 @@ def process_pdf(scan_id, app_config):
         )
     else:
         report_success(f'processed {total} pages')
+
+
+@orm.db_session
+def exam_config(exam_id, app_config=None):
+    """Read off widget coordinates and problems from the database."""
+    exam = Exam[exam_id]
+    if app_config is None:
+        app_config = {}
+
+    student_id_widget = ExamWidget.get(exam=exam, name="student_id_widget")
+    barcode_widget = ExamWidget.get(exam=exam, name="barcode_widget")
+
+    config = ExamMetadata(
+        token=exam.token,
+        barcode_area=[
+            max(0, barcode_widget.y),
+            max(0, barcode_widget.y + 50),
+            max(0, barcode_widget.x),
+            max(0, barcode_widget.x + 50),
+        ],
+        student_id_widget_area=[
+            student_id_widget.y,  # top
+            student_id_widget.y + app_config.get('ID_GRID_HEIGHT', 181),  # bottom
+            student_id_widget.x,  # left
+            student_id_widget.x + app_config.get('ID_GRID_WIDTH', 313),  # right
+        ],
+        problem_ids=[
+            problem.id for problem in exam.problems
+        ]
+    )
+    return config
 
 
 def extract_images(filename):

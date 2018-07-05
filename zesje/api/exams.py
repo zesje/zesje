@@ -178,7 +178,7 @@ class Exams(Resource):
         exam_name = args['exam_name']
         pdf_data = args['pdf']
 
-        # Default to A4 page size
+        # Default to A series paper
         need_page_ratio = app.config.get('PAGE_RATIO', 1.4142)
 
         try:
@@ -191,7 +191,7 @@ class Exams(Resource):
             return (
                 dict(status=400,
                      # TODO: don't hardcode page format in error message
-                     message=f'PDF page size ({actual_size} points) is not A4.'),
+                     message=f'PDF page size ({actual_size} points) is not A series paper size'),
                 400
             )
 

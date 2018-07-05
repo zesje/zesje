@@ -179,13 +179,15 @@ class Exams(Resource):
         pdf_data = args['pdf']
 
         # Default to A4 page size
-        need_page_size = app.config.get('PAGE_SIZE', (595.276, 841.89))
+        need_page_ratio = app.config.get('PAGE_RATIO', 1.4142)
+
         try:
             actual_size = page_size(pdf_data)
+            actual_ratio = actual_size[1] / actual_size[0]
         except ValueError as error:
             return dict(status=400, message=str(error)), 400
 
-        if need_page_size != actual_size:
+        if abs(need_page_ratio - actual_ratio) > 0.1:
             return (
                 dict(status=400,
                      # TODO: don't hardcode page format in error message

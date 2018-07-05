@@ -3,7 +3,7 @@
 image: zesje/base
 
 stages:
-  - lint
+  - build
   - test
 
 # Special hidden job that is merged with JS jobs
@@ -17,20 +17,16 @@ stages:
   before_script:
   - yarn install
 
-lint_js:
+build:
   <<: *node_modules
-  stage: lint
+  stage: build
   allow_failure: true
   script:
     - yarn build
-    - yarn lint:js
-
-lint_py:
-  stage: lint
-  allow_failure: true
-  script: 
-    - python -m compileall zesje
-    - yarn lint:py
+  artifacts:
+    paths:
+      - zesje/static
+    expire_in: 1 week
 
 test_js:
   <<: *node_modules
@@ -40,3 +36,15 @@ test_js:
 test_py:
   stage: test
   script: yarn test:py
+  
+lint_js:
+  stage: test
+  allow_failure: true
+  script:
+    - yarn lint:js
+
+lint_py:
+  stage: test
+  allow_failure: true
+  script: 
+    - yarn lint:py

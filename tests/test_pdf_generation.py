@@ -2,6 +2,7 @@ import os
 from io import BytesIO
 
 import PIL
+from PIL import Image
 import pytest
 from ssim import compute_ssim
 from reportlab.lib.pagesizes import A4
@@ -9,6 +10,7 @@ from reportlab.lib.units import mm
 from reportlab.pdfgen.canvas import Canvas as RLCanvas
 from wand.color import Color as WandColor
 from wand.image import Image as WandImage
+from pylibdmtx import pylibdmtx
 
 from zesje import pdf_generation
 
@@ -192,13 +194,8 @@ def test_join_pdfs(mock_generate_datamatrix, mock_generate_id_grid,
     assert_pdf_and_images_are_equal(out, images)
 
 
-# Untested:
-#
-# - generate_datamatrix()
-#   Given a single data string, there may be many generated DataMatrix codes
-#   that correspond to that string. Therefore, a test to check the generated
-#   DataMatrix code would break if we ever move to a different encoding library
-#   or if the current library ever implements a more efficient encoding
-#   algorithm. A test for this function would therefore be brittle.
-#   Furthermore, the function is very short, so the need for testing is not
-#   very high.
+def test_generate_datamatrix():
+    # Checks for input and output formats, as well as string contents.
+    datamatrix = pdf_generation.generate_datamatrix('ABCD', 2, 3)
+    assert isinstance(datamatrix, Image.Image)
+    assert pylibdmtx.decode(datamatrix)[0].data.decode('utf-8') == 'ABCD/0003/02'

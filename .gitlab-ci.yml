@@ -9,15 +9,14 @@ cache:
   paths:
     - node_modules/
 
-before_script:
-  - yarn install
-
 stages:
   - lint
   - test
 
 lint_js:
   stage: lint
+  before_script:
+  - yarn install
   allow_failure: true
   script:
     - yarn build
@@ -32,6 +31,8 @@ lint_py:
 
 test_js:
   stage: test
+  before_script:
+  - yarn install
   script: yarn test:js
 
 test_py:

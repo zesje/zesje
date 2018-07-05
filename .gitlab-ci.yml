@@ -21,12 +21,14 @@ setup:
 
 lint_js:
   stage: lint
+  allow_failure: true
   script:
     - yarn build
     - yarn lint:js
 
 lint_py:
   stage: lint
+  allow_failure: true
   script: 
     - python -m compileall zesje
     - yarn lint:py

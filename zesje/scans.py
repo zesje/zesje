@@ -5,6 +5,7 @@ import os
 import platform
 from collections import namedtuple, Counter
 from io import BytesIO
+import signal
 
 from pony import orm
 
@@ -36,9 +37,19 @@ def process_pdf(scan_id, bind=True, app_config=None):
     app_config : obj
         The Flask app config
     """
+
+    def raise_exit(signo, frame):
+        raise SystemExit('PDF processing was killed by an external signal')
+
+    # We want to trigger an exit from within Python when a signal is received.
+    # The default behaviour for SIGTERM is to terminate the process without
+    # calling 'atexit' handlers, and SIGINT raises keyboard interrupt.
+    for signal_type in (signal.SIGINT, signal.SIGTERM):
+        signal.signal(signal_type, raise_exit)
+
     try:
         _process_pdf(scan_id, app_config)
-    except Exception as error:
+    except BaseException as error:
         # TODO: When #182 is implemented, properly separate user-facing
         #       messages (written to DB) from developer-facing messages,
         #       which should be written into the log.

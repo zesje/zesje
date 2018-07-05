@@ -551,6 +551,8 @@ def find_corner_marker_keypoints(image_array):
             lines[1, to_flip] -= np.pi
             lines[0, to_flip] *= -1
             v = (lines[1] > np.pi/4)
+            if np.all(v) or not np.any(v):
+                continue
             rho1, theta1 = np.average(lines[:, v], axis=1)
             rho2, theta2 = np.average(lines[:, ~v], axis=1)
             y, x = np.linalg.solve([[np.cos(theta1), np.sin(theta1)], [np.cos(theta2), np.sin(theta2)]], [rho1, rho2])

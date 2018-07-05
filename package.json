@@ -12,7 +12,7 @@
     "lint:js": "standard --verbose | snazzy",
     "test:js": "jest",
     "lint:py": "flake8",
-    "test:py": "python -m pytest -v",
+    "test:py": "python -m pytest -v -W error::RuntimeWarning",
     "start": "ZESJE_SETTINGS=$(pwd)/zesje.dev.cfg python3 zesje",
     "analyze": "webpack --config webpack.prod.js --profile --json > stats.json; webpack-bundle-analyzer stats.json zesje/static"
   },

@@ -2,21 +2,24 @@
 # This base image can be found in 'Dockerfile'
 image: zesje/base
 
-# Cache the JS modules that yarn fetches
-cache:
-  untracked: true
-  key: "$CI_COMMIT_SHA"
-  paths:
-    - node_modules/
-
 stages:
   - lint
   - test
 
-lint_js:
-  stage: lint
+# Special hidden job that is merged with JS jobs
+.node_modules: &node_modules
+  # Cache the JS modules that yarn fetches
+  cache:
+    untracked: true
+    key: "$CI_COMMIT_SHA"
+    paths:
+      - node_modules/
   before_script:
   - yarn install
+
+lint_js:
+  <<: *node_modules
+  stage: lint
   allow_failure: true
   script:
     - yarn build
@@ -30,9 +33,8 @@ lint_py:
     - yarn lint:py
 
 test_js:
+  <<: *node_modules
   stage: test
-  before_script:
-  - yarn install
   script: yarn test:js
 
 test_py:

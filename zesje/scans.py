@@ -14,7 +14,6 @@ import PyPDF2
 from PIL import Image
 from pylibdmtx import pylibdmtx
 
-
 from .database import db, Scan, Exam, Problem, Page, Student, Submission, Solution, ExamWidget
 from .datamatrix import decode_raw_datamatrix
 from .images import guess_dpi, get_box
@@ -290,7 +289,9 @@ def decode_barcode(image, exam_config):
     rotated = np.rot90(image, k=2)
     step = 2 if guess_dpi(image) >= 200 else 1
     image_crop = Image.fromarray(get_box(image, barcode_area_in, padding=0.3)[::step, ::step]).convert(mode='L')
-    image_crop_rotated = Image.fromarray(get_box(rotated, barcode_area_in, padding=0.3)[::step, ::step]).convert(mode='L')
+    image_crop_rotated = Image.fromarray(
+        get_box(rotated, barcode_area_in, padding=0.3)[::step, ::step]
+    ).convert(mode='L')
 
     # Use a generator to attemt multiple strategies for decoding
     def image_generator():
@@ -523,8 +524,8 @@ def find_corner_marker_keypoints(image_array):
 
     """
     h, w, *_ = image_array.shape
-    marker_length = .8 / 2.54 * guess_dpi(image_array) # 8 mm in inches × dpi
-    marker_width = .1 / 2.54 * guess_dpi(image_array) # should get exact width
+    marker_length = .8 / 2.54 * guess_dpi(image_array)  # 8 mm in inches × dpi
+    marker_width = .1 / 2.54 * guess_dpi(image_array)  # should get exact width
 
     # Filter out everything in the center of the image
     tb = slice(0, h//8), slice(7*h//8, h)
@@ -550,6 +551,8 @@ def find_corner_marker_keypoints(image_array):
             lines[1, to_flip] -= np.pi
             lines[0, to_flip] *= -1
             v = (lines[1] > np.pi/4)
+            if np.all(v) or not np.any(v):
+                continue
             rho1, theta1 = np.average(lines[:, v], axis=1)
             rho2, theta2 = np.average(lines[:, ~v], axis=1)
             y, x = np.linalg.solve([[np.cos(theta1), np.sin(theta1)], [np.cos(theta2), np.sin(theta2)]], [rho1, rho2])

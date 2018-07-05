@@ -2,6 +2,7 @@ import os
 from io import BytesIO
 
 import PIL
+from PIL import Image
 import pytest
 from ssim import compute_ssim
 from reportlab.lib.pagesizes import A4
@@ -9,6 +10,7 @@ from reportlab.lib.units import mm
 from reportlab.pdfgen.canvas import Canvas as RLCanvas
 from wand.color import Color as WandColor
 from wand.image import Image as WandImage
+from pylibdmtx import pylibdmtx
 
 from zesje import pdf_generation
 
@@ -92,24 +94,6 @@ def test_generate_id_grid(datadir, tmpdir):
                                     ssim_threshold=0.95)
 
 
-@pytest.mark.parametrize('pagesize,name', [
-    (A4, 'a4'),
-    ((200 * mm, 200 * mm), 'square')
-], ids=['a4', 'square'])
-def test_generate_overlay(mock_generate_datamatrix, mock_generate_id_grid,
-                          datadir, tmpdir, pagesize, name):
-    filename = os.path.join(str(tmpdir), 'file.pdf')
-
-    canv = RLCanvas(filename, pagesize=pagesize)
-    pdf_generation._generate_overlay(canv, pagesize, 'ABCDEFGHIJKL', 1, 2, 25, 150, 125, 150)
-    canv.save()
-
-    img_filenames = [os.path.join(datadir, 'overlays', f'{name}-{i}.png')
-                     for i in [0, 1]]
-    images = [PIL.Image.open(x) for x in img_filenames]
-    assert_pdf_and_images_are_equal(filename, images)
-
-
 def test_generate_pdfs_num_files(datadir, tmpdir):
     blank_pdf = os.path.join(datadir, 'blank-a4-2pages.pdf')
 
@@ -120,60 +104,6 @@ def test_generate_pdfs_num_files(datadir, tmpdir):
     pdf_generation.generate_pdfs(blank_pdf, 'ABCDEFGHIJKL', copy_nums, paths, 25, 270, 150, 270)
 
     assert len(tmpdir.listdir()) == num_copies
-
-
-@pytest.mark.parametrize('pagesize,name', [
-    (A4, 'a4'),
-    ((200 * mm, 200 * mm), 'square')
-], ids=['a4', 'square'])
-def test_generate_pdfs_blank(mock_generate_datamatrix, mock_generate_id_grid,
-                             datadir, tmpdir, pagesize, name):
-    blank_pdf = os.path.join(datadir, f'blank-{name}-2pages.pdf')
-
-    pdf_generation.generate_pdfs(blank_pdf, 'ABCDEFGHIJKL', str(tmpdir), 2, 25, 150, 125, 150)
-
-    img_filenames = [os.path.join(datadir, 'overlays', f'{name}-{i}.png')
-                     for i in [0, 1]]
-    images = [PIL.Image.open(x) for x in img_filenames]
-    filenames = [os.path.join(tmpdir, x) for x in ['00000.pdf', '00001.pdf']]
-    assert_pdf_and_images_are_equal(filenames[0], images)
-    assert_pdf_and_images_are_equal(filenames[1], images)
-
-
-def test_generate_pdfs_nonblank(mock_generate_datamatrix, mock_generate_id_grid,
-                                datadir, tmpdir):
-    exam_pdf = os.path.join(datadir, 'exam-2pages.pdf')
-
-    pdf_generation.generate_pdfs(exam_pdf, 'ABCDEFGHIJKL', str(tmpdir), 2, 25, 150, 125, 150)
-
-    img_filenames = [os.path.join(datadir, f'generated-{i}.png')
-                     for i in [0, 1]]
-    images = [PIL.Image.open(x) for x in img_filenames]
-    for pdf_name in ['00000.pdf', '00001.pdf']:
-        assert_pdf_and_images_are_equal(os.path.join(tmpdir, pdf_name), images)
-
-
-def test_generate_pdfs_black(mock_generate_datamatrix, mock_generate_id_grid,
-                             datadir, tmpdir):
-    black_pdf = os.path.join(datadir, 'black-a4-2pages.pdf')
-
-    pdf_generation.generate_pdfs(black_pdf, 'ABCDEFGHIJKL', str(tmpdir), 2, 25, 150, 125, 150)
-
-    images = [PIL.Image.open(os.path.join(datadir, 'generated-black.png'))] * 2
-    for pdf_name in ['00000.pdf', '00001.pdf']:
-        assert_pdf_and_images_are_equal(os.path.join(tmpdir, pdf_name), images)
-
-
-def test_generate_pdfs_exam_is_file(mock_generate_datamatrix, mock_generate_id_grid, datadir, tmpdir):
-    blank_pdf = open(os.path.join(datadir, f'blank-a4-2pages.pdf'), 'rb')
-
-    pdf_generation.generate_pdfs(blank_pdf, 'ABCDEFGHIJKL', str(tmpdir), 2, 25, 150, 125, 150)
-
-    img_filenames = [os.path.join(datadir, 'overlays', f'a4-{i}.png') for i in [0, 1]]
-    images = [PIL.Image.open(x) for x in img_filenames]
-    filenames = [os.path.join(tmpdir, x) for x in ['00000.pdf', '00001.pdf']]
-    assert_pdf_and_images_are_equal(filenames[0], images)
-    assert_pdf_and_images_are_equal(filenames[1], images)
 
 
 @pytest.mark.parametrize('name', ['a4', 'square'], ids=['a4', 'square'])
@@ -192,13 +122,8 @@ def test_join_pdfs(mock_generate_datamatrix, mock_generate_id_grid,
     assert_pdf_and_images_are_equal(out, images)
 
 
-# Untested:
-#
-# - generate_datamatrix()
-#   Given a single data string, there may be many generated DataMatrix codes
-#   that correspond to that string. Therefore, a test to check the generated
-#   DataMatrix code would break if we ever move to a different encoding library
-#   or if the current library ever implements a more efficient encoding
-#   algorithm. A test for this function would therefore be brittle.
-#   Furthermore, the function is very short, so the need for testing is not
-#   very high.
+def test_generate_datamatrix():
+    # Checks for input and output formats, as well as string contents.
+    datamatrix = pdf_generation.generate_datamatrix('ABCD', 2, 3)
+    assert isinstance(datamatrix, Image.Image)
+    assert pylibdmtx.decode(datamatrix)[0].data.decode('utf-8') == 'ABCD/0003/02'

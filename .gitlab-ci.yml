@@ -1,0 +1,50 @@
+
+# This base image can be found in 'Dockerfile'
+image: zesje/base
+
+stages:
+  - build
+  - test
+
+# Special hidden job that is merged with JS jobs
+.node_modules: &node_modules
+  # Cache the JS modules that yarn fetches
+  cache:
+    untracked: true
+    key: "$CI_COMMIT_SHA"
+    paths:
+      - node_modules/
+  before_script:
+  - yarn install
+
+build:
+  <<: *node_modules
+  stage: build
+  allow_failure: true
+  script:
+    - yarn build
+  artifacts:
+    paths:
+      - zesje/static
+    expire_in: 1 week
+
+# test_js:
+#   <<: *node_modules
+#   stage: test
+#   script: yarn test:js
+
+test_py:
+  stage: test
+  script: yarn test:py
+  
+lint_js:
+  stage: test
+  allow_failure: true
+  script:
+    - yarn lint:js
+
+lint_py:
+  stage: test
+  allow_failure: true
+  script: 
+    - yarn lint:py

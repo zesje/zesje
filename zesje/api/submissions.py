@@ -1,5 +1,3 @@
-import re
-
 from flask_restful import Resource, reqparse
 
 from pony import orm

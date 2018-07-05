@@ -9,15 +9,12 @@ cache:
   paths:
     - node_modules/
 
+before_script:
+  - yarn install
+
 stages:
-  - install
   - lint
   - test
-
-setup:
-  stage: install
-  script:
-    - yarn install
 
 lint_js:
   stage: lint

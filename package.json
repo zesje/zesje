@@ -1,8 +1,7 @@
 {
-  "name": "negenje",
-  "version": "0.0.1",
+  "name": "zesje",
   "main": "index.js",
-  "license": "MIT",
+  "license": "AGPL-3.0-or-later",
   "scripts": {
     "dev": "concurrently --kill-others --names \"WEBPACK,PYTHON\" --prefix-colors \"bgBlue.bold,bgGreen.bold\" \"webpack-dev-server --hot --inline --progress --config webpack.dev.js\" \"ZESJE_SETTINGS=$(pwd)/zesje.dev.cfg python3 zesje\"",
     "build": "webpack --config webpack.prod.js",

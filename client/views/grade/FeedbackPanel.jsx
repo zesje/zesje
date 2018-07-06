@@ -38,16 +38,16 @@ class FeedbackPanel extends React.Component {
   }
 
   render () {
+    const blockURI = this.props.examID + '/' + this.props.submissionID + '/' + this.props.problemID
     return (
       <nav className='panel'>
         <p className='panel-heading'>
           Feedback
         </p>
-        {this.props.problem.feedback.map((feedback, i) =>
-          <FeedbackBlock key={feedback.id} examID={this.props.examID} submissionID={this.props.submissionID} problemID={this.props.problem.id}
+        {this.props.problem.feedback.map(feedback =>
+          <FeedbackBlock key={feedback.id} uri={blockURI} graderID={this.props.graderID}
             feedback={feedback} checked={this.props.solution.feedback.includes(feedback.id)}
-            editFeedback={() => this.props.editFeedback(feedback)} updateSubmission={this.props.updateSubmission}
-            graderID={this.props.graderID} />
+            editFeedback={() => this.props.editFeedback(feedback)} updateSubmission={this.props.updateSubmission} />
         )}
         <div className='panel-block'>
           <textarea className='textarea' rows='2' placeholder='remark' value={this.state.remark} onBlur={this.saveRemark} onChange={this.changeRemark} />

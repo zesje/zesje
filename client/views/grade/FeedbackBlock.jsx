@@ -19,7 +19,7 @@ class FeedbackBlock extends React.Component {
 
   toggle = () => {
     if (!this.state.hover) {
-      api.put('solution/' + this.props.examID + '/' + this.props.submissionID + '/' + this.props.problemID, {
+      api.put('solution/' + this.props.uri, {
         id: this.props.feedback.id,
         graderID: this.props.graderID
       })

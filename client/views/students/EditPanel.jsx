@@ -27,7 +27,6 @@ const SaveButton = (props) => (
 const UploadButton = (props) => (
   <Dropzone
     className='button is-link is-fullwidth'
-
     accept='text/csv,application/vnd.ms-excel'
     onDrop={props.onDrop}
     disablePreview>
@@ -119,8 +118,8 @@ class EditPanel extends React.Component {
       const data = new window.FormData()
       data.append('csv', file)
       api.post('students', data)
-        .then(num_students => {
-          alert(`successfully added ${num_students} students`)
+        .then(newStudentCount => {
+          alert('successfully added ' + newStudentCount + ' students')
         })
         .catch(resp => {
           console.error('failed to upload student CSV file')

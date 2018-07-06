@@ -1,8 +1,12 @@
 import React from 'react'
 
 import barcodeExampleImage from '../components/barcode_example.png'
+// FIXME!
+// eslint-disable-next-line import/no-webpack-loader-syntax
 import barcodeExampleImageSize from '!image-dimensions-loader!../components/barcode_example.png'
 import studentIdExampleImage from '../components/student_id_example.png'
+// FIXME!
+// eslint-disable-next-line import/no-webpack-loader-syntax
 import studentIdExampleImageSize from '!image-dimensions-loader!../components/student_id_example.png'
 import EmptyPDF from '../components/EmptyPDF.jsx'
 import PDFOverlay from '../components/PDFOverlay.jsx'

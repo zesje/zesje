@@ -38,6 +38,7 @@ test_py:
   script: yarn test:py
   
 lint_js:
+  <<: *node_modules
   stage: test
   allow_failure: true
   script:

@@ -101,7 +101,7 @@ class NavBar extends React.Component {
         this.setState({
           examList: exams
         })
-        if (this.props.exam.id == null && exams.length) this.props.updateExam(exams[exams.length - 1].id)
+        if (this.props.exam.id === null && exams.length) this.props.updateExam(exams[exams.length - 1].id)
       })
   }
 
@@ -111,6 +111,12 @@ class NavBar extends React.Component {
         this.setState({
           graderList: graders
         })
+
+        const oldGraderID = parseInt(window.sessionStorage.getItem('graderID'))
+        if (oldGraderID >= 0) {
+          const i = graders.findIndex(grader => grader.id === oldGraderID)
+          if (this.props.grader === null && i >= 0) this.props.changeGrader(graders[i])
+        }
       })
   }
 

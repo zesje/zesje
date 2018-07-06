@@ -49,16 +49,13 @@ class FeedbackPanel extends React.Component {
     return (
       <nav className='panel'>
         <p className='panel-heading'>
-          Feedback
+          Total:&nbsp;<b>{totalScore}</b>
         </p>
         {this.props.problem.feedback.map(feedback =>
           <FeedbackBlock key={feedback.id} uri={blockURI} graderID={this.props.graderID}
             feedback={feedback} checked={this.props.solution.feedback.includes(feedback.id)}
             editFeedback={() => this.props.editFeedback(feedback)} updateSubmission={this.props.updateSubmission} />
         )}
-        <div className='panel-block has-background-light'>
-          Total score:&nbsp;<b>{totalScore}</b>
-        </div>
         <div className='panel-block'>
           <textarea className='textarea' rows='2' placeholder='remark' value={this.state.remark} onBlur={this.saveRemark} onChange={this.changeRemark} />
         </div>

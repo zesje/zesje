@@ -30,8 +30,6 @@ class FeedbackBlock extends React.Component {
   }
 
   render () {
-    const score = this.props.feedback.score
-
     return (
       <a className='panel-block is-active' onClick={this.toggle} >
         <span className='panel-icon'>
@@ -43,7 +41,7 @@ class FeedbackBlock extends React.Component {
         <div className='field is-grouped'>
           <div className='control'>
             <div className='tags has-addons'>
-              {score ? <span className='tag is-link'>{this.props.feedback.score}</span> : null}
+              <span className='tag is-link'>{this.props.feedback.score}</span>
               <span className={'tag' + (this.state.hover ? ' is-white' : '')}
                 onMouseEnter={this.enter} onMouseLeave={this.leave} onClick={this.props.editFeedback}>
                 <i className='fa fa-pencil' />

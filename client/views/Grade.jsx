@@ -6,8 +6,7 @@ import FeedbackPanel from './grade/FeedbackPanel.jsx'
 import ProblemSelector from './grade/ProblemSelector.jsx'
 import EditPanel from './grade/EditPanel.jsx'
 import SubmissionField from './grade/SubmissionField.jsx'
-
-const ProgressBar = () => null
+import ProgressBar from './grade/ProgressBar.jsx'
 
 class Grade extends React.Component {
   state = {
@@ -114,6 +113,7 @@ class Grade extends React.Component {
     const submission = exam.submissions[this.state.sIndex]
     const solution = submission.problems[this.state.pIndex]
     const problem = exam.problems[this.state.pIndex]
+    const progress = exam.submissions.map(sub => sub.problems[this.state.pIndex])
 
     return (
       <div>
@@ -162,7 +162,7 @@ class Grade extends React.Component {
                   </div>
                 </div>
 
-                <ProgressBar submissions={exam.submissions} />
+                <ProgressBar progress={progress} value={'graded_by'} />
 
                 <p className='box'>
                   <img src={exam.id ? ('api/images/solutions/' + exam.id + '/' +

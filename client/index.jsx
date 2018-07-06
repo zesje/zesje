@@ -43,10 +43,6 @@ const Statistics = Loadable({
   loader: () => import('./views/Statistics.jsx'),
   loading: Loading
 })
-const Reset = Loadable({
-  loader: () => import('./views/Reset.jsx'),
-  loading: Loading
-})
 const Fail = Loadable({
   loader: () => import('./views/Fail.jsx'),
   loading: Loading
@@ -155,7 +151,6 @@ class App extends React.Component {
             )} />
             <Route path='/graders' render={() =>
               <Graders updateGraderList={this.menu.current ? this.menu.current.updateGraderList : null} />} />
-            <Route path='/reset' component={Reset} />
             <Route render={() =>
               <Fail message="404. Could not find that page :'(" />} />
           </Switch>

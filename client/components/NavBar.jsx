@@ -166,7 +166,6 @@ class NavBar extends React.Component {
               ? <GraderDropdown grader={this.props.grader} list={this.state.graderList} changeGrader={this.props.changeGrader} />
               : <Link className='navbar-item' to='/graders'>Add grader</Link>
             }
-            <Link className='navbar-item has-text-info' to='/reset'>reset</Link>
             <div className='navbar-item'>
               <i>Version {__COMMIT_HASH__}</i>
             </div>

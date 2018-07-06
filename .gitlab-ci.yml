@@ -20,8 +20,8 @@ stages:
 build:
   <<: *node_modules
   stage: build
-  allow_failure: true
   script:
+    - python -m compileall zesje
     - yarn build
   artifacts:
     paths:

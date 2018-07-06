@@ -6,7 +6,7 @@ import FeedbackPanel from './grade/FeedbackPanel.jsx'
 import ProblemSelector from './grade/ProblemSelector.jsx'
 import EditPanel from './grade/EditPanel.jsx'
 import SubmissionField from './grade/SubmissionField.jsx'
-import ProgressBar from './grade/ProgressBar.jsx'
+import ProgressBar from '../components/ProgressBar.jsx'
 
 class Grade extends React.Component {
   state = {

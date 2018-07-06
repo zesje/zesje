@@ -1,11 +1,11 @@
 import React from 'react'
 import Mousetrap from 'mousetrap'
 
-import Hero from '../components/Hero.jsx'
-
 import * as api from '../api.jsx'
 
-import ProgressBar from './students/ProgressBar.jsx'
+import Hero from '../components/Hero.jsx'
+import ProgressBar from '../components/ProgressBar.jsx'
+
 import SearchPanel from './students/SearchPanel.jsx'
 import EditPanel from './students/EditPanel.jsx'
 
@@ -203,7 +203,7 @@ class CheckStudents extends React.Component {
                     </div>
                   </div>
 
-                  <ProgressBar submissions={this.props.exam.submissions} />
+                  <ProgressBar progress={this.props.exam.submissions} value={'validated'} />
 
                   <p className='box'>
                     <img src={'api/images/signature/' + this.props.exam.id + '/' + subm.id} alt='' />

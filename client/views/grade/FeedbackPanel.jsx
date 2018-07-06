@@ -38,7 +38,14 @@ class FeedbackPanel extends React.Component {
   }
 
   render () {
-    const blockURI = this.props.examID + '/' + this.props.submissionID + '/' + this.props.problemID
+    const blockURI = this.props.examID + '/' + this.props.submissionID + '/' + this.props.problem.id
+
+    let totalScore = 0
+    for (let i = 0; i < this.props.solution.feedback.length; i++) {
+      const probIndex = this.props.problem.feedback.findIndex(fb => fb.id === this.props.solution.feedback[i])
+      if (probIndex >= 0) totalScore += this.props.problem.feedback[probIndex].score
+    }
+
     return (
       <nav className='panel'>
         <p className='panel-heading'>
@@ -49,6 +56,9 @@ class FeedbackPanel extends React.Component {
             feedback={feedback} checked={this.props.solution.feedback.includes(feedback.id)}
             editFeedback={() => this.props.editFeedback(feedback)} updateSubmission={this.props.updateSubmission} />
         )}
+        <div className='panel-block has-background-light'>
+          Total score:&nbsp;<b>{totalScore}</b>
+        </div>
         <div className='panel-block'>
           <textarea className='textarea' rows='2' placeholder='remark' value={this.state.remark} onBlur={this.saveRemark} onChange={this.changeRemark} />
         </div>

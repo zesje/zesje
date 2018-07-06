@@ -115,6 +115,7 @@ class App extends React.Component {
     this.setState({
       grader: grader
     })
+    window.sessionStorage.setItem('graderID', grader.id)
   }
 
   render () {

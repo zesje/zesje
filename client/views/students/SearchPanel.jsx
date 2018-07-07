@@ -67,7 +67,6 @@ class SearchPanel extends React.Component {
       if (event.keyCode === 40 && sel < this.state.result.length - 1) sel++
 
       this.setState({
-        ...this.state,
         selected: sel
       })
     }
@@ -86,7 +85,6 @@ class SearchPanel extends React.Component {
     } else {
       const index = this.state.result.findIndex(result => result.id === event.target.id)
       this.setState({
-        ...this.state,
         selected: index
       })
     }

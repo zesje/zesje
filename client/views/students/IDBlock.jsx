@@ -92,7 +92,7 @@ class IDBlock extends React.Component {
             short: false,
             new: false
           })
-          this.props.setID(id, stud)
+          this.props.setID(stud)
         })
         .catch(res => {
           console.log('If your browser just gave a 404 error, that is normal - do not worry!')
@@ -101,7 +101,6 @@ class IDBlock extends React.Component {
             short: false,
             new: true
           })
-          this.props.setID(id)
         })
     } else {
       this.setState({

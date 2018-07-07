@@ -42,19 +42,23 @@ class EditPanel extends React.Component {
     id: '',
     firstName: '',
     lastName: '',
-    email: ''
+    email: '',
+    propID: null
   }
 
-  componentWillMount = () => {
-    if (this.props.editStud) {
-      const stud = this.props.editStud
-      this.setState({
+  static getDerivedStateFromProps (nextProps, prevState) {
+    const stud = nextProps.editStud
+    if (prevState.propID !== stud.id) {
+      console.log(stud)
+      return {
         id: stud.id,
         firstName: stud.firstName,
         lastName: stud.lastName,
-        email: stud.email
-      })
+        email: stud.email ? stud.email : '',
+        propID: stud.id
+      }
     }
+    return null
   }
 
   changeText = (event) => {
@@ -63,18 +67,13 @@ class EditPanel extends React.Component {
     })
   }
 
-  setID = (id, student) => {
+  setID = (stud) => {
     this.setState({
-      id: id
+      id: stud.id,
+      firstName: stud.firstName,
+      lastName: stud.lastName,
+      email: stud.email ? stud.email : ''
     })
-
-    if (student) {
-      this.setState({
-        firstName: student.firstName,
-        lastName: student.lastName,
-        email: student.email
-      })
-    }
   }
 
   saveStudent = () => {
@@ -85,15 +84,15 @@ class EditPanel extends React.Component {
       email: this.state.email
     })
       .then((stud) => {
-        this.setState({
-          id: '',
-          firstName: '',
-          lastName: '',
-          email: ''
-        })
         if (this.props.editStud) {
           this.props.toggleEdit()
         } else {
+          this.setState({
+            id: '',
+            firstName: '',
+            lastName: '',
+            email: ''
+          })
           this.idblock.clear()
         }
       })

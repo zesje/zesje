@@ -13,7 +13,7 @@ import PDFOverlay from '../components/PDFOverlay.jsx'
 
 import ResizeAndDrag from 'react-rnd'
 
-import { Document, Page } from 'react-pdf'
+import { Document, Page } from 'react-pdf/dist/entry.webpack'
 
 import * as api from '../api.jsx'
 

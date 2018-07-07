@@ -1,13 +1,10 @@
 import React from 'react'
 import Dropzone from 'react-dropzone'
-import { Document, Page } from 'react-pdf'
+import { Document, Page } from 'react-pdf/dist/entry.webpack'
 
 import * as api from '../api.jsx'
 import Hero from '../components/Hero.jsx'
 import DropzoneContent from '../components/DropzoneContent.jsx'
-
-// worker is prefered but need to convince webpack to cooperate
-PDFJS.workerSrc = true
 
 class Exams extends React.Component {
   state = {

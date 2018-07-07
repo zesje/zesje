@@ -40,7 +40,7 @@ Each course will need its own zesje installation, but a single installation can 
 
 ### Adding students
 
-1. Export the student information from Brightspace. To do that go to the course page, select *Grades* → *Enter grades* → *Export grades*. Then choose the options as shown: ![](/brightspace_export.png)
+1. Export the student information from Brightspace. To do that go to the course page, select *Grades* → *Enter grades* → *Export grades*. Then choose the options as shown: ![](brightspace_export.png)
 2. Browse to [students](/students) and upload the resulting `.csv` file.
 
 You can add more students and edit existing student information at any time. It is currently not possible to remove students from zesje.
@@ -57,7 +57,7 @@ Go to the [graders page](/graders) and add all the names of the graders. Current
 + Use sufficient space for each answer, and provide an extra answerbox at the end of the exam in case the students run out of space. If that fails, have a student submit **two complete copies of the exam**.
 
 ### Create the exam in zesje
-   
+
 1. Upload the pdf of your exam at this [URL (exam selector → Add new)](/exams).
 2. Check that the student identification widget and the barcode do not overlap with other text.
 3. Mark the places where the students are supposed to write their answers in the preview and add problem names.
@@ -74,15 +74,15 @@ There are two types of scanners in TUD: Ricoh Alficio 3001 and Ricoh Alficio 450
 
 #### Select the "My Home Folder" option:
 
-![Scanner option selection](/scan_to_me.jpg)
+![Scanner option selection](scan_to_me.jpg)
 
 #### Select the following scanner settings:
 
-![Scanner settings](/scan_settings.jpg)
+![Scanner settings](scan_settings.jpg)
 
 #### Use the paper feed, as shown:
 
-![How to insert exams into the scanner](/paper_feed.jpg)
+![How to insert exams into the scanner](paper_feed.jpg)
 
 ### Uploading the scan results
 
@@ -132,11 +132,11 @@ If you need to navigate to a specific student, use the "jump to student" text fi
 
 Most of the parts should be self-explanatory, however let us list the currently available options:
 
-+ **Problem statistics and scores**:  
++ **Problem statistics and scores**:
   Available in the *problem statistics* tab of the [grade](../grade.ipynb) dashboard, it shows a quick-and-dirty summary of the problem grading.
-+ **Exam statistics report**:  
++ **Exam statistics report**:
   Available in the *summary & email* tab of the [grade](../grade.ipynb) dashboard. A rendered html summary with the detailed but anonymized data that shows the score distributions, all the feedback options, scores, and clarifications. Depending on your preferences, it may be shared with the students.
-+ **Export grades**  
++ **Export grades**
   Available in the *summary & email* tab of the [grade](../grade.ipynb) dashboard.
   - **Spreadsheet (detailed)**: an Excel file with full information about the exam.
   - **Spreadsheet (summary)**: an Excel file containing only scores per problem.
@@ -199,7 +199,7 @@ Within your templates you can use the **`student`** and **`results`** variables.
 ##### elements of `results`
 + `name`: Problem name
 + `max_score`: Maximum score for the problem
-+ `feedback`: List of feedback the student got for this problem. Each   
++ `feedback`: List of feedback the student got for this problem. Each
               element has the following attributes:
   - `short`: Short description of the feedback, as used when grading
   - `score`: Score associated with this feedback

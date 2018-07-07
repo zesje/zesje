@@ -6,7 +6,6 @@ import GeneratedExamPreview from '../components/GeneratedExamPreview.jsx'
 import PanelGenerate from '../components/PanelGenerate.jsx'
 import ExamEditor from './ExamEditor.jsx'
 import update from 'immutability-helper'
-import ReactMarkdown from 'react-markdown'
 import ExamFinalizeMarkdown from './ExamFinalize.md'
 
 import * as api from '../api.jsx'
@@ -313,9 +312,7 @@ class Exams extends React.Component {
   PanelConfirm = (props) => {
     return (
       <nav className='panel'>
-        <div className='content'>
-          <ReactMarkdown source={ExamFinalizeMarkdown} />
-        </div>
+        <div className='content' dangerouslySetInnerHTML={{__html: ExamFinalizeMarkdown}} />
         <div className='panel-heading'>
           <label className='label'>Are you sure?</label>
         </div>

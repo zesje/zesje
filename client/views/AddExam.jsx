@@ -22,7 +22,9 @@ class Exams extends React.Component {
       return
     }
 
-    this.setState({ pdf: accepted[0] })
+    this.setState({
+      pdf: accepted[0]
+    })
   }
 
   onDocumentLoad = ({ numPages }) => {

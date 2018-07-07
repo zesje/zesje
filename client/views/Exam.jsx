@@ -1,15 +1,15 @@
 import React from 'react'
-
-import Hero from '../components/Hero.jsx'
-import './Exam.css'
-import GeneratedExamPreview from '../components/GeneratedExamPreview.jsx'
-import PanelGenerate from '../components/PanelGenerate.jsx'
-import ExamEditor from './ExamEditor.jsx'
 import update from 'immutability-helper'
 import ReactMarkdown from 'react-markdown'
-import ExamFinalizeMarkdown from './ExamFinalize.md'
+import ExamFinalizeMarkdown from './exam/ExamFinalize.md'
 
 import * as api from '../api.jsx'
+import Hero from '../components/Hero.jsx'
+
+import './exam/Exam.css'
+import GeneratedExamPreview from './exam/GeneratedExamPreview.jsx'
+import PanelGenerate from './exam/PanelGenerate.jsx'
+import ExamEditor from './exam/ExamEditor.jsx'
 
 class Exams extends React.Component {
   state = {
@@ -78,7 +78,7 @@ class Exams extends React.Component {
           .catch(err => {
             console.log(err)
             // update to try and get a consistent state
-            this.updateExam()
+            this.props.updateExam(this.props.examID)
           })
       }
     }
@@ -145,8 +145,7 @@ class Exams extends React.Component {
             disabled={isDisabled}
             type='submit'
             className='button is-link is-rounded'
-            onClick={() => props.setPage(props.page - 1)}
-          >
+            onClick={() => props.setPage(props.page - 1)} >
             Previous
           </button>
         </div>
@@ -160,8 +159,7 @@ class Exams extends React.Component {
             disabled={isDisabled}
             type='submit'
             className='button is-link is-rounded'
-            onClick={() => props.setPage(props.page + 1)}
-          >
+            onClick={() => props.setPage(props.page + 1)} >
             Next
           </button>
         </div>
@@ -170,10 +168,9 @@ class Exams extends React.Component {
   }
 
   onPDFLoad = (pdf) => {
-    this.setState((newProps, prevState) => ({
+    this.props.updateExam(this.props.examID)
+    this.setState({
       numPages: pdf.numPages
-    }), () => {
-      this.props.updateExam(this.props.examID)
     })
   }
 
@@ -239,14 +236,8 @@ class Exams extends React.Component {
                 className='input'
                 placeholder='Problem name'
                 value={props.problem ? props.problem.name : ''}
-                onChange={(e) => {
-                  console.log('onChange')
-                  props.changeProblemName(e.target.value)
-                }}
-                onBlur={(e) => {
-                  console.log('onBlur')
-                  props.saveProblemName(e.target.value)
-                }} />
+                onChange={(e) => props.changeProblemName(e.target.value)}
+                onBlur={(e) => props.saveProblemName(e.target.value)} />
             </div>
           </div>
         </div>
@@ -254,8 +245,7 @@ class Exams extends React.Component {
           <button
             disabled={props.disabled}
             className='button is-danger is-fullwidth'
-            onClick={() => props.onDeleteClick()}
-          >
+            onClick={() => props.onDeleteClick()} >
             Delete
           </button>
         </div>
@@ -265,9 +255,7 @@ class Exams extends React.Component {
   }
 
   PanelExamActions = () => {
-    if (this.props.exam.finalized) {
-      return <PanelGenerate examID={this.state.examID} />
-    }
+    if (this.props.exam.finalized) return <PanelGenerate examID={this.state.examID} />
 
     return (
       <nav className='panel'>
@@ -281,18 +269,18 @@ class Exams extends React.Component {
                 api.put(`exams/${this.props.examID}/finalized`, 'true')
                   .then(() => {
                     this.props.updateExam(this.props.examID)
-                    this.setState({ previewing: false })
+                    this.setState({
+                      previewing: false
+                    })
                   })
               }
               onNoClick={() => this.setState({
                 previewing: false
-              })}
-            />
+              })} />
             : <this.Finalize
               onFinalizeClicked={() => this.setState({
                 previewing: true
-              })}
-            />
+              })} />
           }
         </div>
       </nav>
@@ -303,8 +291,7 @@ class Exams extends React.Component {
     return (
       <button
         className='button is-link is-fullwidth'
-        onClick={() => props.onFinalizeClicked()}
-      >
+        onClick={() => props.onFinalizeClicked()} >
         Finalize
       </button>
     )
@@ -325,8 +312,7 @@ class Exams extends React.Component {
               <button
                 disabled={props.disabled}
                 className='button is-danger'
-                onClick={() => props.onYesClick()}
-              >
+                onClick={() => props.onYesClick()} >
                 Yes
               </button>
             </div>
@@ -334,8 +320,7 @@ class Exams extends React.Component {
               <button
                 disabled={props.disabled}
                 className='button is-link'
-                onClick={() => props.onNoClick()}
-              >
+                onClick={() => props.onNoClick()} >
                 No
               </button>
             </div>
@@ -357,8 +342,7 @@ class Exams extends React.Component {
               <this.Pager
                 page={this.state.page}
                 numPages={this.state.numPages}
-                setPage={this.setPage}
-              />
+                setPage={this.setPage} />
               <this.SidePanel examID={this.state.examID} />
             </div>
             <div className='column is-narrow editor-content' >

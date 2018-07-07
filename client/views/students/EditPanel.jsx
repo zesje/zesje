@@ -57,19 +57,9 @@ class EditPanel extends React.Component {
     }
   }
 
-  changeFirstName = (event) => {
+  changeText = (event) => {
     this.setState({
-      firstName: event.target.value
-    })
-  }
-  changeLastName = (event) => {
-    this.setState({
-      lastName: event.target.value
-    })
-  }
-  changeMail = (event) => {
-    this.setState({
-      email: event.target.value
+      [event.target.name]: event.target.value
     })
   }
 
@@ -143,16 +133,16 @@ class EditPanel extends React.Component {
           <div className='field'>
             <label className='label'>Name</label>
             <div className='control has-icons-left'>
-              <input className='input' placeholder='First name'
-                value={this.state.firstName} onChange={this.changeFirstName} />
+              <input className='input' placeholder='First name' name='firstName'
+                value={this.state.firstName} onChange={this.changeText} />
               <span className='icon is-small is-left'>
                 <i className='fa fa-quote-left' />
               </span>
             </div>
 
             <div className='control has-icons-left'>
-              <input className='input' placeholder='Second name'
-                value={this.state.lastName} onChange={this.changeLastName} />
+              <input className='input' placeholder='Second name' name='lastName'
+                value={this.state.lastName} onChange={this.changeText} />
               <span className='icon is-small is-left'>
                 <i className='fa fa-quote-right' />
               </span>
@@ -165,8 +155,8 @@ class EditPanel extends React.Component {
           <div className='field'>
             <label className='label'>Email</label>
             <div className='control has-icons-left has-icons-right'>
-              <input className='input' placeholder='Email input'
-                value={this.state.email} onChange={this.changeMail} />
+              <input className='input' placeholder='Email input' name='email'
+                value={this.state.email} onChange={this.changeText} />
               <span className='icon is-small is-left'>
                 <i className='fa fa-envelope' />
               </span>

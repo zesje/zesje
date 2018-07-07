@@ -121,9 +121,9 @@ class NavBar extends React.Component {
   }
 
   burgerClick = () => {
-    this.setState({
-      foldOut: !this.state.foldOut
-    })
+    this.setState(prevState => ({
+      foldOut: !prevState.foldOut
+    }))
   }
 
   render () {

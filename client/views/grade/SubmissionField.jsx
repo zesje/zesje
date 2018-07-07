@@ -75,9 +75,9 @@ class SubmissionField extends React.Component {
     })
   }
   onBlur = () => {
-    this.setState({
-      value: getSuggestionValue(this.props.submission)
-    })
+    this.setState((prevState, prevProps) => ({
+      value: getSuggestionValue(prevProps.submission)
+    }))
   }
   onFocus = () => {
     this.setState({

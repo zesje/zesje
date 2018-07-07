@@ -53,10 +53,10 @@ class CheckStudents extends React.Component {
     const newIndex = this.state.index - 1
 
     if (newIndex >= 0 && newIndex < this.props.exam.submissions.length) {
-      this.setState({
+      this.setState((prevState, prevProps) => ({
         index: newIndex,
-        input: this.props.exam.submissions[newIndex].id
-      })
+        input: prevProps.exam.submissions[newIndex].id
+      }))
       this.props.updateSubmission(newIndex)
     }
   }
@@ -64,10 +64,10 @@ class CheckStudents extends React.Component {
     const newIndex = this.state.index + 1
 
     if (newIndex >= 0 && newIndex < this.props.exam.submissions.length) {
-      this.setState({
+      this.setState((prevState, prevProps) => ({
         index: newIndex,
-        input: this.props.exam.submissions[newIndex].id
-      })
+        input: prevProps.exam.submissions[newIndex].id
+      }))
       this.props.updateSubmission(newIndex)
     }
   }
@@ -75,10 +75,10 @@ class CheckStudents extends React.Component {
   prevUnchecked = () => {
     for (let i = this.state.index - 1; i >= 0; i--) {
       if (this.props.exam.submissions[i].validated === false) {
-        this.setState({
-          input: this.props.exam.submissions[i].id,
+        this.setState((prevState, prevProps) => ({
+          input: prevProps.exam.submissions[i].id,
           index: i
-        })
+        }))
         this.props.updateSubmission(i)
         return
       }
@@ -87,10 +87,10 @@ class CheckStudents extends React.Component {
   nextUnchecked = () => {
     for (let i = this.state.index + 1; i < this.props.exam.submissions.length; i++) {
       if (this.props.exam.submissions[i].validated === false) {
-        this.setState({
-          input: this.props.exam.submissions[i].id,
+        this.setState((prevState, prevProps) => ({
+          input: prevProps.exam.submissions[i].id,
           index: i
-        })
+        }))
         this.props.updateSubmission(i)
         return
       }
@@ -107,9 +107,9 @@ class CheckStudents extends React.Component {
       })
       this.props.updateSubmission(i)
     } else {
-      this.setState({
-        input: this.props.submissions[this.state.index].id
-      })
+      this.setState((prevState, prevProps) => ({
+        input: prevProps.submissions[this.state.index].id
+      }))
       alert('Could not find that submission number :(\nSorry!')
     }
   }
@@ -118,7 +118,9 @@ class CheckStudents extends React.Component {
     const patt = new RegExp(/^([1-9]\d*|0)?$/)
 
     if (patt.test(event.target.value)) {
-      this.setState({ input: event.target.value })
+      this.setState({
+        input: event.target.value
+      })
     }
   }
 
@@ -144,10 +146,10 @@ class CheckStudents extends React.Component {
         editStud: student
       })
     } else {
-      this.setState({
-        editActive: !this.state.editActive,
+      this.setState(prevState => ({
+        editActive: !prevState.editActive,
         editStud: null
-      })
+      }))
     }
   }
 

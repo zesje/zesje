@@ -1,21 +1,18 @@
 import React from 'react'
-
-import barcodeExampleImage from '../components/barcode_example.png'
-// FIXME!
-// eslint-disable-next-line import/no-webpack-loader-syntax
-import barcodeExampleImageSize from '!image-dimensions-loader!../components/barcode_example.png'
-import studentIdExampleImage from '../components/student_id_example.png'
-// FIXME!
-// eslint-disable-next-line import/no-webpack-loader-syntax
-import studentIdExampleImageSize from '!image-dimensions-loader!../components/student_id_example.png'
-import EmptyPDF from '../components/EmptyPDF.jsx'
-import PDFOverlay from '../components/PDFOverlay.jsx'
-
 import ResizeAndDrag from 'react-rnd'
-
 import { Document, Page } from 'react-pdf'
 
-import * as api from '../api.jsx'
+import * as api from '../../api.jsx'
+import EmptyPDF from './EmptyPDF.jsx'
+import PDFOverlay from './PDFOverlay.jsx'
+
+import barcodeExampleImage from './barcode_example.png'
+import studentIdExampleImage from './student_id_example.png'
+// FIXME!
+// eslint-disable-next-line import/no-webpack-loader-syntax
+import barcodeExampleImageSize from '!image-dimensions-loader!./barcode_example.png'
+// eslint-disable-next-line import/no-webpack-loader-syntax
+import studentIdExampleImageSize from '!image-dimensions-loader!./student_id_example.png'
 
 class ExamEditor extends React.Component {
   state = {
@@ -59,9 +56,8 @@ class ExamEditor extends React.Component {
   }
 
   handleMouseDown = (e) => {
-    if (e.button === 2 || e.nativeEvent.which === 2) {
-      return
-    }
+    if (e.button === 2 || e.nativeEvent.which === 2) return
+
     this.props.selectWidget(null)
     this.setState({
       mouseDown: true,
@@ -193,11 +189,7 @@ class ExamEditor extends React.Component {
         if (widget.problem) {
           minWidth = this.props.problemMinWidth
           minHeight = this.props.problemMinHeight
-          view = (
-            <div
-              className={isSelected ? 'widget selected' : 'widget'}
-            />
-          )
+          view = <div className={isSelected ? 'widget selected' : 'widget'} />
           enableResizing = true
         } else {
           let image
@@ -262,12 +254,8 @@ class ExamEditor extends React.Component {
                 y: Math.round(position.y),
                 width: ref.offsetWidth,
                 height: ref.offsetHeight
-              }).then(() => {
-                // ok
               }).catch(err => {
                 console.log(err)
-                // update to try and get a consistent state
-                this.updateExam()
               })
             }}
             onDragStart={() => {
@@ -281,12 +269,8 @@ class ExamEditor extends React.Component {
               api.patch('widgets/' + widget.id, {
                 x: Math.round(data.x),
                 y: Math.round(data.y)
-              }).then(() => {
-                // ok
               }).catch(err => {
                 console.log(err)
-                // update to try and get a consistent state
-                this.updateExam()
               })
             }}
           >
@@ -301,14 +285,12 @@ class ExamEditor extends React.Component {
     return (
       <div
         ref={c => (this.selectionArea = c)}
-        className='selection-area'
-      >
+        className='selection-area' >
         <Document
           file={this.getPDFUrl()}
           onLoadSuccess={this.props.onPDFLoad}
           loading={<EmptyPDF />}
-          noData={<EmptyPDF />}
-        >
+          noData={<EmptyPDF />} >
           <Page
             renderAnnotations={false}
             renderTextLayer={false}

@@ -11,7 +11,9 @@ class Graders extends React.Component {
   };
 
   changeName = (event) => {
-    this.setState({ name: event.target.value })
+    this.setState({
+      name: event.target.value
+    })
   }
 
   submitName = (event) => {
@@ -34,7 +36,9 @@ class Graders extends React.Component {
   componentDidMount = () => {
     api.get('graders')
       .then(graders => {
-        this.setState({ graders: graders })
+        this.setState({
+          graders: graders
+        })
       })
       .catch(resp => {
         alert('could not fetch graders (see Javascript console for details)')

@@ -27,6 +27,21 @@ const ScanStatus = (props) => {
   )
 }
 
+const MissingSubmissionsStatus = (props) => (
+  <div>
+    <p className='menu-label'>
+      Missing Pages
+    </p>
+    <ul className='menu-list'>
+      {props.missing.map(sub =>
+        <li key={sub.id}>
+          Copy {sub.id} is missing pages {sub.missing.join(',')}
+        </li>
+      )}
+    </ul>
+  </div>
+)
+
 class Submissions extends React.Component {
   state = {
     scans: [],
@@ -50,7 +65,6 @@ class Submissions extends React.Component {
   updateSubmissions = () => {
     api.get('submissions/' + this.props.exam.id)
       .then(submissions => {
-        console.log(submissions)
         this.setState({
           submissions: submissions.map(sub => ({
             id: sub['id'],
@@ -102,23 +116,6 @@ class Submissions extends React.Component {
   render () {
     const missingSubmissions = this.state.submissions.filter(s => s.missing.length > 0)
 
-    const missingSubmissionsStatus = (
-      missingSubmissions.length > 0
-        ? <div>
-          <p className='menu-label'>
-            Missing Pages
-          </p>
-          <ul className='menu-list'>
-            {missingSubmissions.map(sub =>
-              <li key={sub.id}>
-                Copy {sub.id} is missing pages {sub.missing.join(',')}
-              </li>
-            )}
-          </ul>
-        </div>
-        : null
-    )
-
     return <div>
 
       <Hero title='Exam details' subtitle={'Selected: ' + this.props.exam.name} />
@@ -144,7 +141,7 @@ class Submissions extends React.Component {
                   Uploaded submissions: {this.state.submissions.length}
                 </p>
 
-                {missingSubmissionsStatus}
+                {missingSubmissions.length > 0 && <MissingSubmissionsStatus missing={missingSubmissions} />}
 
                 <p className='menu-label'>
                   Upload History

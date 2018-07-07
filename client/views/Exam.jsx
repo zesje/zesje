@@ -43,7 +43,11 @@ class Exams extends React.Component {
 
       return {
         examID: newProps.exam.id,
-        widgets: widgets
+        page: 0,
+        numPages: null,
+        selectedWidgetId: null,
+        widgets: widgets,
+        previewing: false
       }
     }
 

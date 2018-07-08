@@ -16,7 +16,8 @@ module.exports = {
   output: {
     path: path.resolve('zesje/static'),
     filename: 'index_bundle.js',
-    publicPath: '/'
+    publicPath: '/',
+    globalObject: 'this'
   },
   module: {
     rules: [

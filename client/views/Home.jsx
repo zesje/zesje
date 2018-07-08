@@ -1,9 +1,8 @@
 import React from 'react'
-import ReactMarkdown from 'react-markdown'
 
 import Hero from '../components/Hero.jsx'
 
-import homeMarkdown from './home.md'
+import homeMarkdown from './home/home.md'
 
 const Home = () => {
   return (
@@ -14,9 +13,7 @@ const Home = () => {
       <section className='section'>
 
         <div className='container'>
-          <div className='content'>
-            <ReactMarkdown source={homeMarkdown} />
-          </div>
+          <div className='content' dangerouslySetInnerHTML={{__html: homeMarkdown}} />
         </div>
 
       </section>

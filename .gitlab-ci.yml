@@ -12,9 +12,10 @@ stages:
   cache:
     untracked: true
     paths:
-      - ~/.yarn-cache
+      - .yarn
   before_script:
-  - yarn install
+    - yarn config set cache-folder .yarn
+    - yarn install
 
 build:
   <<: *node_modules

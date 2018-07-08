@@ -16,14 +16,15 @@ module.exports = {
   output: {
     path: path.resolve('zesje/static'),
     filename: 'index_bundle.js',
-    publicPath: '/'
+    publicPath: '/',
+    globalObject: 'this'
   },
   module: {
     rules: [
       { test: /\.(jsx|js)$/, loader: 'babel-loader?cacheDirectory', exclude: /node_modules/ },
       { test: /\.(png|jpg|gif)$/, loader: 'file-loader' },
       { test: /\.(woff(2)?|ttf|eot|svg|otf)(\?v=\d+\.\d+\.\d+)?$/, loader: 'file-loader' },
-      { test: /\.(md)$/, loader: 'raw-loader' }
+      { test: /\.md$/, use: [{ loader: 'html-loader' }, { loader: 'markdown-loader' }] }
     ]
   },
 

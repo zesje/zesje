@@ -1,6 +1,6 @@
 import React from 'react'
 import ResizeAndDrag from 'react-rnd'
-import { Document, Page } from 'react-pdf'
+import { Document, Page } from 'react-pdf/dist/entry.webpack'
 
 import * as api from '../../api.jsx'
 import EmptyPDF from './EmptyPDF.jsx'

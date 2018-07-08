@@ -1,7 +1,5 @@
 import React from 'react'
 import update from 'immutability-helper'
-import ReactMarkdown from 'react-markdown'
-import ExamFinalizeMarkdown from './exam/ExamFinalize.md'
 
 import * as api from '../api.jsx'
 import Hero from '../components/Hero.jsx'
@@ -10,6 +8,7 @@ import './exam/Exam.css'
 import GeneratedExamPreview from './exam/GeneratedExamPreview.jsx'
 import PanelGenerate from './exam/PanelGenerate.jsx'
 import ExamEditor from './exam/ExamEditor.jsx'
+import ExamFinalizeMarkdown from './exam/ExamFinalize.md'
 
 class Exams extends React.Component {
   state = {
@@ -43,7 +42,11 @@ class Exams extends React.Component {
 
       return {
         examID: newProps.exam.id,
-        widgets: widgets
+        page: 0,
+        numPages: null,
+        selectedWidgetId: null,
+        widgets: widgets,
+        previewing: false
       }
     }
 
@@ -300,9 +303,7 @@ class Exams extends React.Component {
   PanelConfirm = (props) => {
     return (
       <nav className='panel'>
-        <div className='content'>
-          <ReactMarkdown source={ExamFinalizeMarkdown} />
-        </div>
+        <div className='content' dangerouslySetInnerHTML={{__html: ExamFinalizeMarkdown}} />
         <div className='panel-heading'>
           <label className='label'>Are you sure?</label>
         </div>

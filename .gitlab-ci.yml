@@ -11,11 +11,10 @@ stages:
   # Cache the JS modules that yarn fetches
   cache:
     untracked: true
-    key: "$CI_COMMIT_SHA"
     paths:
-      - node_modules/
+      - .yarn-cache
   before_script:
-  - yarn install
+    - yarn install --cache-folder .yarn-cache
 
 build:
   <<: *node_modules
@@ -36,7 +35,7 @@ build:
 test_py:
   stage: test
   script: yarn test:py
-  
+
 lint_js:
   <<: *node_modules
   stage: test
@@ -47,5 +46,5 @@ lint_js:
 lint_py:
   stage: test
   allow_failure: true
-  script: 
+  script:
     - yarn lint:py

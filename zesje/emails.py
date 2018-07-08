@@ -12,7 +12,7 @@ from email import encoders
 
 from . import statistics
 
-messages = []
+
 def form_email(exam_id, student_id, template, attach=True,
                text_only=True, subject='Your results',
                email_from='no-reply@tudelft.nl'):
@@ -52,21 +52,12 @@ def form_email(exam_id, student_id, template, attach=True,
 def send(messages, recipients=None):
     """Send a list of messages.
 
-    returns the sequential numbers of messages that were not sent due to
-    missing recipient email.
+    returns the sequential numbers of messages that were not sent.
     """
-    try:
-        with open('allowed_domains') as f:
-            domains = f.read()
-    except FileNotFoundError:
-        domains = None
     failed = []
     with smtplib.SMTP('dutmail.tudelft.nl', 25) as s:
         for number, msg in enumerate(messages):
             to = recipients or [msg['To']]
-            if domains is not None:
-                to = list(filter((lambda addr: addr.split('@')[-1] in domains),
-                                 to))
             try:
                 s.sendmail('noreply@tudelft.nl', to, msg.as_string())
             except smtplib.SMTPException:

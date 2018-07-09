@@ -6,8 +6,10 @@ from jinja2 import Template, TemplateSyntaxError
 from flask import current_app as app
 from flask_restful import Resource, reqparse
 
-from .. import emails
+from pony import orm
 
+from .. import emails
+from ..database import Exam
 
 default_email_template = """Dear {{student.first_name.split(' ') | first }} {{student.last_name}},
 
@@ -71,15 +73,36 @@ class Email(Resource):
         with open(template_path(exam_id)) as f:
             template = f.read()
 
+        print(emails.form_email(exam_id, student_id, template, text_only=True))
         try:
             return emails.form_email(exam_id, student_id, template, text_only=True)
         except Exception:
-            return dict(400, "Failed to format email."), 400
+            return dict(status=400, message="Failed to format email."), 400
+
+    post_parser = reqparse.RequestParser()
+    post_parser.add_argument('student_id', type=int, required=False, location='form')
+    post_parser.add_argument('attach', type=bool, required=True, location='form')
 
 
-    def post(self, exam_id, student_id=None):
-        """Send an email."""
-        raise NotImplementedError  # To be continued
+    def post(self, exam_id):
+        """Send an email.
+
+        Returns
+        -------
+        400 error if not all submissions from exam are validated (because we
+        might send wrong emails this way).
+        """
+        args = self.post_parser.parse_args()
+        student_id = args['exam_id']
+        attach = args['attach']
+
+        with orm.db_session:
+            if not all(Exam[exam_id].submissions.signature_validated):
+                return dict(
+                    status=400,
+                    message="All submissions must be validated before sending emails."
+                ), 400
+
         with open(template_path(exam_id)) as f:
             template = f.read()
 

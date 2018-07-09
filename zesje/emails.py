@@ -1,7 +1,7 @@
-import jinja2
 import os
 import mimetypes
 import subprocess
+from io import BytesIO
 
 import smtplib
 
@@ -10,7 +10,30 @@ from email.mime.text import MIMEText
 from email.mime.base import MIMEBase
 from email import encoders
 
+import jinja2
+from wand.image import Image
+from pony import orm
+
+from .database import Submission
 from . import statistics
+
+
+def solution_pdf(exam_id, student_id):
+    with orm.db_session:
+        subs = Submission.select(
+            lambda s: s.exam.id == exam_id and s.student.id == student_id
+        )
+        pages = sorted((p for s in subs for p in s.pages), key=(lambda p: p.number))
+        pages = [p.path for p in pages]
+
+    with Image() as output_pdf:
+       for filepath in pages:
+          with Image(filename=filepath) as page:
+              output_pdf.sequence.append(page)
+
+    result = BytesIO()
+    output_pdf.save(file=result)
+    return result
 
 
 def form_email(exam_id, student_id, template, attach=True,
@@ -18,7 +41,7 @@ def form_email(exam_id, student_id, template, attach=True,
                email_from='no-reply@tudelft.nl'):
     template = jinja2.Template(template)
 
-    student, results, pages = statistics.solution_data(exam_id, student_id)
+    student, results = statistics.solution_data(exam_id, student_id)
     text = template.render(student=student, results=results)
     if text_only:
         return text
@@ -31,21 +54,15 @@ def form_email(exam_id, student_id, template, attach=True,
     msg.attach(MIMEText(text, 'plain'))
 
     if attach:
-        filename = str(student_id) + '.pdf'
-        subprocess.call(['convert', *pages, filename])
-        ctype, encoding = mimetypes.guess_type(filename)
-        if ctype is None or encoding is not None:
-            ctype = 'application/octet-stream'
-        maintype, subtype = ctype.split('/', 1)
-        with open(filename, 'rb') as fp:
-            pdf = MIMEBase(maintype, subtype)
-            pdf.set_payload(fp.read())
+        solution = solution_pdf(exam_id, student_id)
+        maintype, subtype = 'application', 'pdf'
+        pdf = MIMEBase(maintype, subtype)
+        pdf.set_payload(solution.read())
         encoders.encode_base64(pdf)
         # Set the filename parameter
         pdf.add_header('Content-Disposition', 'attachment',
-                       filename=filename)
+                       filename=f"{student_id}.pdf")
         msg.attach(pdf)
-        os.remove(filename)
     return msg
 
 

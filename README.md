@@ -49,7 +49,7 @@ You can run the tests by running
 ### Code style
 
 #### Python
-Adhere to PEP8, but use a column width of 120 characters (instead of 79).
+Adhere to [PEP8](https://www.python.org/dev/peps/pep-0008/), but use a column width of 120 characters (instead of 79).
 
 If you followed the instructions above, the linter `flake8` is installed in your virtual environment. If you use Visual Studio Code, install the [Python](https://marketplace.visualstudio.com/items?itemName=ms-python.python) extension and add the following lines to your workspace settings:
 
@@ -64,6 +64,13 @@ If you use Atom, install the [linter-flake8](https://atom.io/packages/linter-fla
     ".source.python":
       "editor":
         "preferredLineLength": 120
+
+#### Javascript
+Adhere to [StandardJS](https://standardjs.com/).
+
+If you use Visual Studio Code, install the [vscode-standardjs](https://marketplace.visualstudio.com/items?itemName=chenxsan.vscode-standardjs) plugin.
+
+If you use Atom, install the [linter-js-standard-engine](https://atom.io/packages/linter-js-standard-engine) plugin.
 
 ### Adding dependencies
 

@@ -67,6 +67,8 @@ class Exams extends React.Component {
     // This might save the name unnecessary, but better twice than never.
     // We could keep track in state if we need to save the name when the double requests cause issues
     this.saveProblemName()
+    // Force an update of the upper exam state, since this component does not update and use that correctly
+    this.props.updateExam(this.props.examID)
   }
 
   saveProblemName = () => {

@@ -48,7 +48,7 @@ def process_pdf(scan_id, bind=True, app_config=None):
         signal.signal(signal_type, raise_exit)
 
     try:
-        _process_pdf(scan_id, app_config)
+        _process_pdf(scan_id, app_config, bind)
     except BaseException as error:
         # TODO: When #182 is implemented, properly separate user-facing
         #       messages (written to DB) from developer-facing messages,
@@ -56,7 +56,7 @@ def process_pdf(scan_id, bind=True, app_config=None):
         write_pdf_status(scan_id, 'error', "Unexpected error: " + str(error))
 
 
-def _process_pdf(scan_id, app_config):
+def _process_pdf(scan_id, app_config, bind):
     data_directory = app_config.get('DATA_DIRECTORY', 'data')
     if bind:
         # Ensure we are not inheriting a bound database, which is dangerous and

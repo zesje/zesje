@@ -64,9 +64,12 @@ class App extends React.Component {
 
   updateExam = (examID) => {
     api.get('exams/' + examID)
-      .then(ex => this.setState({
-        exam: ex
-      }))
+      .then(ex => {
+        this.setState({
+          exam: ex
+        })
+        window.sessionStorage.setItem('examID', ex.id)
+      })
   }
   updateSubmission = (index, sub) => {
     if (index === undefined) {

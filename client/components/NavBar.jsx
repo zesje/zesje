@@ -62,7 +62,7 @@ const ExportDropdown = (props) => {
   const exportUrl = format => `/api/export/${format}/${props.exam.id}`
 
   return (
-    <div className='navbar-item has-dropdown is-hoverable' style={props.style}>
+    <div className='navbar-item has-dropdown is-hoverable' >
       <div className='navbar-link'>
         Export
       </div>
@@ -158,7 +158,7 @@ class NavBar extends React.Component {
             <Link className='navbar-item' to='/students'>Students</Link>
             <Link className='navbar-item' style={examStyle} to='/grade'><strong><i>Grade</i></strong></Link>
             <Link className='navbar-item' style={statsStyle} to='/statistics'>Statistics</Link>
-            <ExportDropdown className='navbar-item' style={examStyle} exam={this.props.exam} />
+            <ExportDropdown className='navbar-item' exam={this.props.exam} />
           </div>
 
           <div className='navbar-end'>

@@ -63,6 +63,26 @@ class Exams extends React.Component {
     if (this.props.examID !== this.props.exam.id) this.props.updateExam(this.props.examID)
   }
 
+  componentWillUnmount = () => {
+    // This might save the name unnecessary, but better twice than never.
+    // We could keep track in state if we need to save the name when the double requests cause issues
+    this.saveProblemName()
+  }
+
+  saveProblemName = () => {
+    const selectedWidgetId = this.state.selectedWidgetId
+    if (!selectedWidgetId) return
+
+    const selectedWidget = this.state.widgets[selectedWidgetId]
+    if (!selectedWidget) return
+
+    const problem = selectedWidget.problem
+    if (!problem) return
+
+    api.put('problems/' + problem.id + '/name', { name: problem.name })
+      .catch(e => alert('Could not save new problem name: ' + e))
+  }
+
   deleteWidget = (widgetId, prompt = true) => {
     const widget = this.state.widgets[widgetId]
     if (widget) {
@@ -217,10 +237,7 @@ class Exams extends React.Component {
               })
             }))
           }}
-          saveProblemName={newName => {
-            api.put('problems/' + problem.id + '/name', { name: newName })
-              .catch(e => alert('Could not save new problem name: ' + e))
-          }}
+          saveProblemName={this.saveProblemName}
         />
         <this.PanelExamActions />
       </React.Fragment>

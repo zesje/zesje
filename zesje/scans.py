@@ -5,6 +5,7 @@ import os
 import platform
 from collections import namedtuple, Counter
 from io import BytesIO
+import signal
 
 from pony import orm
 
@@ -29,20 +30,33 @@ ExamMetadata = namedtuple('ExamMetadata',
 def process_pdf(scan_id, bind=True, app_config=None):
     """Process a PDF, recording progress to a database
 
-    This *must* be called from a subprocess of the Flask process, so that we
-    inherit the app config.
-
     Parameters
     ----------
     scan_id : int
         The ID in the database of the Scan to process
     app_config : obj
         The Flask app config
-
     """
-    if app_config is None:
-        app_config = {}
 
+    def raise_exit(signo, frame):
+        raise SystemExit('PDF processing was killed by an external signal')
+
+    # We want to trigger an exit from within Python when a signal is received.
+    # The default behaviour for SIGTERM is to terminate the process without
+    # calling 'atexit' handlers, and SIGINT raises keyboard interrupt.
+    for signal_type in (signal.SIGINT, signal.SIGTERM):
+        signal.signal(signal_type, raise_exit)
+
+    try:
+        _process_pdf(scan_id, app_config, bind)
+    except BaseException as error:
+        # TODO: When #182 is implemented, properly separate user-facing
+        #       messages (written to DB) from developer-facing messages,
+        #       which should be written into the log.
+        write_pdf_status(scan_id, 'error', "Unexpected error: " + str(error))
+
+
+def _process_pdf(scan_id, app_config, bind):
     data_directory = app_config.get('DATA_DIRECTORY', 'data')
     if bind:
         # Ensure we are not inheriting a bound database, which is dangerous and

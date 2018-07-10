@@ -1,6 +1,3 @@
-import os
-import mimetypes
-import subprocess
 from io import BytesIO
 
 import smtplib
@@ -27,9 +24,9 @@ def solution_pdf(exam_id, student_id):
         pages = [p.path for p in pages]
 
     with Image() as output_pdf:
-       for filepath in pages:
-          with Image(filename=filepath) as page:
-              output_pdf.sequence.append(page)
+        for filepath in pages:
+            with Image(filename=filepath) as page:
+                output_pdf.sequence.append(page)
 
     result = BytesIO()
     output_pdf.save(file=result)

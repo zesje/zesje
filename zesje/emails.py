@@ -28,8 +28,14 @@ def solution_pdf(exam_id, student_id):
             with Image(filename=filepath) as page:
                 output_pdf.sequence.append(page)
 
-    result = BytesIO()
-    output_pdf.save(file=result)
+        output_pdf.format = 'pdf'
+
+        result = BytesIO()
+
+        output_pdf.save(file=result)
+
+    result.seek(0)
+
     return result
 
 
@@ -63,7 +69,7 @@ def form_email(exam_id, student_id, template, attach=True,
     return msg
 
 
-def send(messages, recipients=None):
+def send(messages):
     """Send a list of messages.
 
     returns the sequential numbers of messages that were not sent.
@@ -71,9 +77,8 @@ def send(messages, recipients=None):
     failed = []
     with smtplib.SMTP('dutmail.tudelft.nl', 25) as s:
         for number, msg in enumerate(messages):
-            to = recipients or [msg['To']]
             try:
-                s.sendmail('noreply@tudelft.nl', to, msg.as_string())
+                s.sendmail('noreply@tudelft.nl', [msg['To']], msg.as_string())
             except smtplib.SMTPException:
                 failed.append(number)
     return failed

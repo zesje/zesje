@@ -70,8 +70,11 @@ class Email(Resource):
 
     def get(self, exam_id, student_id):
         """Get an email text."""
-        with open(template_path(exam_id)) as f:
-            template = f.read()
+        try:
+            with open(template_path(exam_id)) as f:
+                template = f.read()
+        except FileNotFoundError:
+            template = default_email_template
 
         print(emails.form_email(exam_id, student_id, template, text_only=True))
         try:
@@ -80,9 +83,8 @@ class Email(Resource):
             return dict(status=400, message="Failed to format email."), 400
 
     post_parser = reqparse.RequestParser()
-    post_parser.add_argument('student_id', type=int, required=False, location='form')
-    post_parser.add_argument('attach', type=bool, required=True, location='form')
-
+    post_parser.add_argument('student_id', type=int, required=False)
+    post_parser.add_argument('attach', type=bool, required=True)
 
     def post(self, exam_id):
         """Send an email.
@@ -93,7 +95,7 @@ class Email(Resource):
         might send wrong emails this way).
         """
         args = self.post_parser.parse_args()
-        student_id = args['exam_id']
+        student_id = args['student_id']
         attach = args['attach']
 
         with orm.db_session:
@@ -103,8 +105,23 @@ class Email(Resource):
                     message="All submissions must be validated before sending emails."
                 ), 400
 
-        with open(template_path(exam_id)) as f:
-            template = f.read()
+        try:
+            with open(template_path(exam_id)) as f:
+                template = f.read()
+        except FileNotFoundError:
+            template = default_email_template
 
         if student_id is not None:
-            result = emails.form_email(exam_id, student_id, template)
+            messages = [emails.form_email(
+                exam_id, student_id, template, attach=attach, text_only=False
+            )]
+
+        else:
+            with orm.db_session:
+                student_ids = set(Exam[exam_id].submissions.student.id)
+
+            messages = [emails.form_email(
+                exam_id, student_id, template, attach=attach, text_only=False
+            ) for student_id in student_ids]
+
+        emails.send(messages)

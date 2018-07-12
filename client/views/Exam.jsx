@@ -316,9 +316,7 @@ class Exams extends React.Component {
               previewing: true
             })}
           />,
-          <this.Delete
-            onDeleteClicked={() => this.props.deleteExam(this.props.examID)}
-          />
+          <this.Delete />
         </div>
     }
 
@@ -405,7 +403,10 @@ class Exams extends React.Component {
       </section>
       <ConfirmationModal active={this.state.deleting} color='is-danger'
         confirmText='Delete exam' onCancel={() => this.setState({deleting: false})}
-        onConfirm={this.onDeleteClicked} />
+        onConfirm={() => {
+          this.props.deleteExam(this.props.examID).then(this.props.leave)
+        }}
+      />
     </div>
   }
 }

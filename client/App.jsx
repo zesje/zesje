@@ -72,11 +72,11 @@ class App extends React.Component {
   }
 
   deleteExam = (examID) => {
-    api
+    return api
       .del('exams/' + examID)
       .then(() => {
         if (this.menu.current) {
-          return this.menu.current.updateExamList()
+          this.menu.current.updateExamList()
         }
       })
   }
@@ -143,7 +143,8 @@ class App extends React.Component {
                 examID={match.params.examID}
                 updateExam={this.updateExam}
                 deleteExam={this.deleteExam}
-                updateSubmission={this.updateSubmission} />} />
+                updateSubmission={this.updateSubmission}
+                leave={() => history.push('/')} />} />
             <Route path='/exams' render={({ history }) =>
               <AddExam updateExamList={this.menu.current ? this.menu.current.updateExamList : null} changeURL={history.push} />} />
             <Route path='/submissions/:examID' render={({ match }) =>

@@ -4,7 +4,7 @@ import zipfile
 from io import BytesIO
 from tempfile import TemporaryFile
 
-from flask import current_app as app, send_file, request
+from flask import current_app as app, send_file, request, abort
 from flask_restful import Resource, reqparse
 from werkzeug.datastructures import FileStorage
 
@@ -30,6 +30,16 @@ class Exams(Resource):
             return self._get_single(exam_id)
         else:
             return self._get_all()
+
+    @orm.db_session
+    def delete(self, exam_id):
+        exam = Exam.get(id=exam_id)
+        if exam is None:
+            abort(404)
+        elif exam.finalized:
+            return dict(status=409, message='Cannot delete a finalized exam.'), 409
+        else:
+            exam.delete()
 
     @orm.db_session
     def _get_all(self):

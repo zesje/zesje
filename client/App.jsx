@@ -65,10 +65,13 @@ class App extends React.Component {
   }
 
   updateExam = (examID) => {
-    api.get('exams/' + examID)
-      .then(ex => this.setState({
-        exam: ex
-      }))
+    if (examID === null) {
+      this.setState({ exam: nullExam() })
+    } else {
+      api.get('exams/' + examID)
+        .catch(resp => this.setState({ exam: nullExam() }))
+        .then(ex => this.setState({ exam: ex }))
+    }
   }
 
   deleteExam = (examID) => {

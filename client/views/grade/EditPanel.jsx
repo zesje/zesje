@@ -73,7 +73,7 @@ class EditPanel extends React.Component {
     if (this.state.id) {
       fb.id = this.state.id
       api.put(uri, fb)
-        .then(() => this.props.goBack)
+        .then(() => this.props.goBack())
     } else {
       api.post(uri, fb)
         .then(() => {

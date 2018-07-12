@@ -101,7 +101,9 @@ class NavBar extends React.Component {
         this.setState({
           examList: exams
         })
-        if (this.props.exam.id === null && exams.length) this.props.updateExam(exams[exams.length - 1].id)
+        const examIDs = exams.map(exam => exam.id)
+        const examIsValid = this.props.exam.id !== null && examIDs.includes(this.props.exam.id)
+        if (!examIsValid && exams.length) this.props.updateExam(exams[exams.length - 1].id)
       })
   }
 

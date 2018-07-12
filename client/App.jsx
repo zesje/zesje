@@ -48,17 +48,19 @@ const Fail = Loadable({
   loading: Loading
 })
 
+const nullExam = () => ({
+  id: null,
+  name: '',
+  submissions: [],
+  problems: [],
+  widgets: []
+})
+
 class App extends React.Component {
   menu = React.createRef();
 
   state = {
-    exam: {
-      id: null,
-      name: '',
-      submissions: [],
-      problems: [],
-      widgets: []
-    },
+    exam: nullExam(),
     grader: null
   }
 
@@ -68,6 +70,17 @@ class App extends React.Component {
         exam: ex
       }))
   }
+
+  deleteExam = (examID) => {
+    api
+      .del('exams/' + examID)
+      .then(() => {
+        if (this.menu.current) {
+          return this.menu.current.updateExamList()
+        }
+      })
+  }
+
   updateSubmission = (index, sub) => {
     if (index === undefined) {
       api.get('submissions/' + this.state.exam.id)
@@ -129,6 +142,7 @@ class App extends React.Component {
                 exam={exam}
                 examID={match.params.examID}
                 updateExam={this.updateExam}
+                deleteExam={this.deleteExam}
                 updateSubmission={this.updateSubmission} />} />
             <Route path='/exams' render={({ history }) =>
               <AddExam updateExamList={this.menu.current ? this.menu.current.updateExamList : null} changeURL={history.push} />} />

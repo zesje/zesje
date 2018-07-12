@@ -78,6 +78,9 @@ class Exams(Resource):
         """
         exam = Exam[exam_id]
 
+        if exam is None:
+            return dict(status=404, message='Exam does not exist.'), 404
+
         submissions = [
                 {
                     'id': sub.copy_number,

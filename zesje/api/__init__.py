@@ -40,7 +40,9 @@ api.add_resource(Problems,
                  '/problems',
                  '/problems/<int:problem_id>',
                  '/problems/<int:problem_id>/<string:attr>')
-api.add_resource(Feedback, '/feedback/<int:problem_id>')
+api.add_resource(Feedback,
+                 '/feedback/<int:problem_id>',
+                 '/feedback/<int:problem_id>/<int:feedback_id>')
 api.add_resource(Solutions, '/solution/<int:exam_id>/<int:submission_id>/<int:problem_id>')
 api.add_resource(Widgets,
                  '/widgets',

@@ -97,3 +97,27 @@ class Feedback(Resource):
             'description': fb.description,
             'score': fb.score
         }
+
+    @orm.db_session
+    def delete(self, problem_id, feedback_id):
+        """Modify an existing feedback option
+
+        Parameters
+        ----------
+        problem_id : int
+            The id of the problem to which the feedback belongs.
+        feedback_id : int
+            The database id of the feedback option.
+
+        Notes
+        -----
+        We use the problem id for extra safety check that we don't corrupt
+        things accidentally.
+        """
+        fb = FeedbackOption.get(id=feedback_id)
+        if fb is None:
+            return dict(status=404, message="Feedback with this id does not exist"), 404
+        elif fb.problem.id != problem_id:
+            return dict(status=409, message="Feedback does not match the problem."), 409
+        else:
+            fb.delete()

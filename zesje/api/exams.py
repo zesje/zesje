@@ -35,7 +35,7 @@ class Exams(Resource):
     def delete(self, exam_id):
         exam = Exam.get(id=exam_id)
         if exam is None:
-            abort(404)
+            return dict(status=404, message='Exam does not exist.'), 404
         elif exam.finalized:
             return dict(status=409, message='Cannot delete a finalized exam.'), 409
         else:

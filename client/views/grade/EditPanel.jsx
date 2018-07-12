@@ -1,5 +1,6 @@
 import React from 'react'
 
+import ConfirmationModal from '../../components/ConfirmationModal.jsx'
 import * as api from '../../api.jsx'
 
 const BackButton = (props) => (
@@ -20,12 +21,22 @@ const SaveButton = (props) => (
   </button>
 )
 
+const DeleteButton = (props) => (
+  <button className='button is-link is-fullwidth is-danger' disabled={!props.exists} onClick={props.onClick}>
+    <span className='icon is-small'>
+      <i className='fa fa-trash' />
+    </span>
+    <span>{'delete'}</span>
+  </button>
+)
+
 class EditPanel extends React.Component {
   state = {
     id: null,
     name: '',
     description: '',
-    score: ''
+    score: '',
+    deleting: false
   }
 
   static getDerivedStateFromProps (nextProps, prevState) {
@@ -87,6 +98,13 @@ class EditPanel extends React.Component {
     }
   }
 
+  deleteFeedback = () => {
+    if (this.state.id) {
+      api.del('feedback/' + this.props.problemID + '/' + this.state.id)
+        .then(() => this.props.goBack())
+    }
+  }
+
   render () {
     return (
       <nav className='panel'>
@@ -137,6 +155,10 @@ class EditPanel extends React.Component {
           <BackButton onClick={this.props.goBack} />
           <SaveButton onClick={this.saveFeedback} exists={this.props.feedback}
             disabled={!this.state.name || !this.state.score || isNaN(parseInt(this.state.score))} />
+          <DeleteButton onClick={() => { this.setState({deleting: true}) }} exists={this.props.feedback} />
+          <ConfirmationModal contentText='Do you want to irreversibly delete this feedback?'
+            color='is-danger' confirmText='Delete feedback' active={this.state.deleting}
+            onConfirm={this.deleteFeedback} onCancel={() => { this.setState({deleting: false}) }} />
         </div>
       </nav>
     )

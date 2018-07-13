@@ -311,11 +311,7 @@ class Exams extends React.Component {
     } else {
       actionsBody =
         <div className='panel-block field is-grouped'>
-          <this.Finalize
-            onFinalizeClicked={() => this.setState({
-              previewing: true
-            })}
-          />,
+          <this.Finalize />
           <this.Delete />
         </div>
     }
@@ -334,7 +330,7 @@ class Exams extends React.Component {
     return (
       <button
         className='button is-link is-fullwidth'
-        onClick={() => props.onFinalizeClicked()}
+        onClick={() => { this.setState({previewing: true}) }}
       >
         Finalize
       </button>

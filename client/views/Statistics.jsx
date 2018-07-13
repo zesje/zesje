@@ -20,9 +20,9 @@ const ProblemSummary = (props) => (
         {
           props.problem.feedback.map((option, i) => (
             <tr key={i}>
-              <th> {option.name} </th>
-              <th> {option.score} </th>
-              <th> {option.used} </th>
+              <td> {option.name} </td>
+              <td> {option.score} </td>
+              <td> {option.used} </td>
             </tr>
           ))
         }

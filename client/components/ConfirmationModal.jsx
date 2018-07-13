@@ -4,7 +4,7 @@ const ConfirmationModal = (props) => {
   let body = null
   if (props.contentText) {
     body =
-      <section className="modal-card-body">
+      <section className='modal-card-body'>
         { props.contentText}
       </section>
   }

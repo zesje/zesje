@@ -18,7 +18,7 @@ const Tooltip = (props) => {
       className={tooltipClass}
       data-tooltip={props.text}
     >
-      <i className='fa fa-comments' />
+      <i className='fa fa-comment' />
     </span>
   )
 }

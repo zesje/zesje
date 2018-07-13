@@ -156,9 +156,17 @@ class EditPanel extends React.Component {
           <SaveButton onClick={this.saveFeedback} exists={this.props.feedback}
             disabled={!this.state.name || !this.state.score || isNaN(parseInt(this.state.score))} />
           <DeleteButton onClick={() => { this.setState({deleting: true}) }} exists={this.props.feedback} />
-          <ConfirmationModal contentText='Do you want to irreversibly delete this feedback?'
-            color='is-danger' confirmText='Delete feedback' active={this.state.deleting}
-            onConfirm={this.deleteFeedback} onCancel={() => { this.setState({deleting: false}) }} />
+          <ConfirmationModal
+            headerText={`Do you want to irreversibly delete feedback option "${this.state.name}"?`}
+            contentText={
+              'If this feedback option was assigned to any solutions, it will be removed. '
+              + 'This will affect the final grade assigned to each submission.'
+            }
+            color='is-danger' confirmText='Delete feedback'
+            active={this.state.deleting}
+            onConfirm={this.deleteFeedback}
+            onCancel={() => { this.setState({deleting: false}) }}
+          />
         </div>
       </nav>
     )

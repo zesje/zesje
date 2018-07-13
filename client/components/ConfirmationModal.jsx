@@ -6,8 +6,11 @@ const ConfirmationModal = (props) => {
       <div className='modal-background' onClick={props.onCancel} />
       <div className='modal-card'>
         <header className='modal-card-head'>
-          <p className='modal-card-title  '>{props.contentText || 'Are you sure?'}</p>
+          <p className='modal-card-title  '>{props.headerText || 'Are you sure?'}</p>
         </header>
+        <section className="modal-card-body">
+          {props.contentText}
+        </section>
         <footer className='modal-card-footer'>
           <div className='field is-grouped'>
             <button className={'button is-fullwidth ' + (props.color || 'is-success')} onClick={props.onConfirm}>

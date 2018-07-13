@@ -7,6 +7,7 @@ import PanelGenerate from '../components/PanelGenerate.jsx'
 import ExamEditor from './ExamEditor.jsx'
 import update from 'immutability-helper'
 import ExamFinalizeMarkdown from './ExamFinalize.md'
+import ConfirmationModal from '../components/ConfirmationModal.jsx'
 
 import * as api from '../api.jsx'
 
@@ -17,7 +18,8 @@ class Exams extends React.Component {
     numPages: null,
     selectedWidgetId: null,
     widgets: [],
-    previewing: false
+    previewing: false,
+    deleting: false
   }
 
   static getDerivedStateFromProps = (newProps, prevState) => {
@@ -291,32 +293,35 @@ class Exams extends React.Component {
       return <PanelGenerate examID={this.state.examID} />
     }
 
+    let actionsBody
+    if (this.state.previewing) {
+      actionsBody =
+        <this.PanelConfirm
+          onYesClick={() =>
+            api.put(`exams/${this.props.examID}/finalized`, 'true')
+              .then(() => {
+                this.props.updateExam(this.props.examID)
+                this.setState({ previewing: false })
+              })
+          }
+          onNoClick={() => this.setState({
+            previewing: false
+          })}
+        />
+    } else {
+      actionsBody =
+        <div className='panel-block field is-grouped'>
+          <this.Finalize />
+          <this.Delete />
+        </div>
+    }
+
     return (
       <nav className='panel'>
         <p className='panel-heading'>
           Actions
         </p>
-        <div className='panel-block'>
-          {this.state.previewing
-            ? <this.PanelConfirm
-              onYesClick={() =>
-                api.put(`exams/${this.props.examID}/finalized`, 'true')
-                  .then(() => {
-                    this.props.updateExam(this.props.examID)
-                    this.setState({ previewing: false })
-                  })
-              }
-              onNoClick={() => this.setState({
-                previewing: false
-              })}
-            />
-            : <this.Finalize
-              onFinalizeClicked={() => this.setState({
-                previewing: true
-              })}
-            />
-          }
-        </div>
+        {actionsBody}
       </nav>
     )
   }
@@ -325,43 +330,48 @@ class Exams extends React.Component {
     return (
       <button
         className='button is-link is-fullwidth'
-        onClick={() => props.onFinalizeClicked()}
+        onClick={() => { this.setState({previewing: true}) }}
       >
         Finalize
       </button>
     )
   }
 
+  Delete = (props) => {
+    return (
+      <button
+        className='button is-link is-fullwidth is-danger'
+        onClick={() => { this.setState({deleting: true}) }}
+      >
+        Delete
+      </button>
+    )
+  }
+
   PanelConfirm = (props) => {
     return (
-      <nav className='panel'>
-        <div className='content' dangerouslySetInnerHTML={{__html: ExamFinalizeMarkdown}} />
-        <div className='panel-heading'>
+      <div>
+        <div className='panel-block'>
           <label className='label'>Are you sure?</label>
         </div>
-        <div className='panel-block'>
-          <div className='field has-addons'>
-            <div className='control'>
-              <button
-                disabled={props.disabled}
-                className='button is-danger'
-                onClick={() => props.onYesClick()}
-              >
-                Yes
-              </button>
-            </div>
-            <div className='control'>
-              <button
-                disabled={props.disabled}
-                className='button is-link'
-                onClick={() => props.onNoClick()}
-              >
-                No
-              </button>
-            </div>
-          </div>
+        <div className='content panel-block' dangerouslySetInnerHTML={{__html: ExamFinalizeMarkdown}} />
+        <div className='panel-block field is-grouped'>
+          <button
+            disabled={props.disabled}
+            className='button is-danger is-link is-fullwidth'
+            onClick={() => props.onYesClick()}
+          >
+            Yes
+          </button>
+          <button
+            disabled={props.disabled}
+            className='button is-link is-fullwidth'
+            onClick={() => props.onNoClick()}
+          >
+            No
+          </button>
         </div>
-      </nav>
+      </div>
     )
   }
 
@@ -387,6 +397,16 @@ class Exams extends React.Component {
           </div>
         </div>
       </section>
+      <ConfirmationModal
+        active={this.state.deleting}
+        color='is-danger'
+        headerText={`Are you sure you want to delete exam "${this.props.exam.name}"?`}
+        confirmText='Delete exam'
+        onCancel={() => this.setState({deleting: false})}
+        onConfirm={() => {
+          this.props.deleteExam(this.props.examID).then(this.props.leave)
+        }}
+      />
     </div>
   }
 }

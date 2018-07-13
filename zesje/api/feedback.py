@@ -100,7 +100,7 @@ class Feedback(Resource):
 
     @orm.db_session
     def delete(self, problem_id, feedback_id):
-        """Modify an existing feedback option
+        """Delete an existing feedback option
 
         Parameters
         ----------

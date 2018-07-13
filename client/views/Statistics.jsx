@@ -3,15 +3,24 @@ import 'bulma-tooltip/dist/css/bulma-tooltip.min.css'
 
 import Hero from '../components/Hero.jsx'
 
-const tooltipClass = (description) => {
-  let tooltipClass = ''
-  if (description.length > 0) {
-    tooltipClass += 'tooltip is-tooltip-right '
+const Tooltip = (props) => {
+  if (!props.text) {
+    return null
   }
-  if (description.length > 100) {
+
+  let tooltipClass = 'icon tooltip is-tooltip-right '
+  if (props.text.length > 100) {
     tooltipClass += 'is-tooltip-multiline '
   }
-  return tooltipClass
+
+  return (
+    <span
+      className={tooltipClass}
+      data-tooltip={props.text}
+    >
+      <i className='fa fa-comments' />
+    </span>
+  )
 }
 
 const ProblemSummary = (props) => (
@@ -25,18 +34,16 @@ const ProblemSummary = (props) => (
         <tr>
           <th> Feedback </th>
           <th> Score </th>
-          <th> # assigned</th>
+          <th> #&nbsp;assigned</th>
         </tr>
       </thead>
       <tbody>
         {
           props.problem.feedback.map((option, i) => {
             return <tr key={i}>
-              <td
-                className={tooltipClass(option.description)}
-                data-tooltip={option.description}
-              >
+              <td>
                 {option.name}
+                <Tooltip text={option.description} />
               </td>
               <td> {option.score} </td>
               <td> {option.used} </td>

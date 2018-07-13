@@ -1,6 +1,18 @@
 import React from 'react'
+import 'bulma-tooltip/dist/css/bulma-tooltip.min.css'
 
 import Hero from '../components/Hero.jsx'
+
+const tooltipClass = (description) => {
+  let tooltipClass = ''
+  if (description.length > 0) {
+    tooltipClass += 'tooltip is-tooltip-right '
+  }
+  if (description.length > 100) {
+    tooltipClass += 'is-tooltip-multiline '
+  }
+  return tooltipClass
+}
 
 const ProblemSummary = (props) => (
   <React.Fragment>
@@ -18,13 +30,18 @@ const ProblemSummary = (props) => (
       </thead>
       <tbody>
         {
-          props.problem.feedback.map((option, i) => (
-            <tr key={i}>
-              <td> {option.name} </td>
+          props.problem.feedback.map((option, i) => {
+            return <tr key={i}>
+              <td
+                className={tooltipClass(option.description)}
+                data-tooltip={option.description}
+              >
+                {option.name}
+              </td>
               <td> {option.score} </td>
               <td> {option.used} </td>
             </tr>
-          ))
+          })
         }
       </tbody>
     </table>
@@ -32,7 +49,6 @@ const ProblemSummary = (props) => (
 )
 
 class Statistics extends React.Component {
-
   render () {
     return (
       <div>

@@ -119,12 +119,18 @@ class Solutions(Resource):
         if not fb:
             raise orm.core.ObjectNotFound(FeedbackOption)
 
-        solution.graded_at = datetime.now()
-        solution.graded_by = grader
-
         if fb in solution.feedback:
             solution.feedback.remove(fb)
-            return {'state': False}
+            state = False
         else:
             solution.feedback.add(fb)
-            return {'state': True}
+            state = True
+
+        if len(solution.feedback):
+            solution.graded_at = datetime.now()
+            solution.graded_by = grader
+        else:
+            solution.graded_at = None
+            solution.graded_by = None
+
+        return {'state': state}

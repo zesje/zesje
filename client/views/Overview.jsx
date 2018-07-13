@@ -1,8 +1,6 @@
 import React from 'react'
 import 'bulma-tooltip/dist/css/bulma-tooltip.min.css'
 
-import Hero from '../components/Hero.jsx'
-
 const Tooltip = (props) => {
   if (!props.text) {
     return null
@@ -59,8 +57,6 @@ class Overview extends React.Component {
   render () {
     return (
       <div>
-
-        <Hero title='Overview' subtitle='Analyse the exam results' />
 
         <h1 className='is-size-1 has-text-centered'>Exam "{this.props.exam.name}" </h1>
 

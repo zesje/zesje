@@ -1,7 +1,5 @@
 import React from 'react'
 
-import Hero from '../components/Hero.jsx'
-
 import * as api from '../api.jsx'
 
 class Graders extends React.Component {
@@ -47,11 +45,9 @@ class Graders extends React.Component {
 
       <div>
 
-        <Hero title='Manage Graders' subtitle='Many hands make light work' />
-
         <section className='section'>
           <div className='container'>
-            <h1 className='title'>Enter the names</h1>
+            <h1 className='title'>Enter the grader names</h1>
             <h5 className='subtitle'>to add them to the system</h5>
             <hr />
 

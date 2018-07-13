@@ -1,7 +1,6 @@
 import React from 'react'
 import Dropzone from 'react-dropzone'
 
-import Hero from '../components/Hero.jsx'
 import DropzoneContent from '../components/DropzoneContent.jsx'
 
 import * as api from '../api.jsx'
@@ -120,8 +119,6 @@ class Submissions extends React.Component {
     )
 
     return <div>
-
-      <Hero title='Exam details' subtitle={'Selected: ' + this.props.exam.name} />
 
       <section className='section'>
 

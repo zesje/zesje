@@ -1,7 +1,5 @@
 import React from 'react'
 
-import Hero from '../components/Hero.jsx'
-
 import FeedbackPanel from './grade/FeedbackPanel.jsx'
 import ProblemSelector from './grade/ProblemSelector.jsx'
 import EditPanel from './grade/EditPanel.jsx'
@@ -117,8 +115,6 @@ class Grade extends React.Component {
 
     return (
       <div>
-
-        <Hero title='Grade' subtitle='Assign feedback to each solution' />
 
         <section className='section'>
 

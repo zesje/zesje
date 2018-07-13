@@ -3,7 +3,6 @@ import Mousetrap from 'mousetrap'
 
 import * as api from '../api.jsx'
 
-import Hero from '../components/Hero.jsx'
 import ProgressBar from '../components/ProgressBar.jsx'
 
 import SearchPanel from './students/SearchPanel.jsx'
@@ -160,8 +159,6 @@ class CheckStudents extends React.Component {
 
     return (
       <div>
-
-        <Hero title='Match Students' subtitle='Check that all submissions are correctly identified' />
 
         <section className='section'>
 

@@ -3,7 +3,6 @@ import Dropzone from 'react-dropzone'
 import { Document, Page } from 'react-pdf/dist/entry.webpack'
 
 import * as api from '../api.jsx'
-import Hero from '../components/Hero.jsx'
 import DropzoneContent from '../components/DropzoneContent.jsx'
 
 class Exams extends React.Component {
@@ -66,8 +65,6 @@ class Exams extends React.Component {
     })
     return (
       <div>
-
-        <Hero title='Add exam' subtitle='first step' />
 
         <section className='section'>
           <div className='container'>

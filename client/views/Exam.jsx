@@ -1,6 +1,5 @@
 import React from 'react'
 
-import Hero from '../components/Hero.jsx'
 import './Exam.css'
 import GeneratedExamPreview from '../components/GeneratedExamPreview.jsx'
 import PanelGenerate from '../components/PanelGenerate.jsx'
@@ -377,7 +376,6 @@ class Exams extends React.Component {
 
   render () {
     return <div>
-      <Hero />
       <section className='section'>
         <div className='container'>
           <div className='columns is-centered' >

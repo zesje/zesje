@@ -2,6 +2,7 @@ from collections import ChainMap
 
 from pony import orm
 
+import numpy as np
 import pandas
 
 from .database import Exam, Problem, Solution, Student
@@ -18,8 +19,8 @@ def solution_data(exam_id, student_id):
 
         results = []
         for problem in exam.problems.order_by(Problem.id):
-            if not orm.count(problem.solutions.feedback):
-                # Nobody received any grade for this problem
+            if not orm.count(problem.feedback_options):
+                # There is no possible feedback for this problem.
                 continue
             problem_data = {
                 'name': problem.name,
@@ -33,8 +34,11 @@ def solution_data(exam_id, student_id):
                  'description': fo.description}
                 for solution in solutions for fo in solution.feedback
             ]
-            problem_data['score'] = sum(i['score'] or 0
-                                        for i in problem_data['feedback'])
+            problem_data['score'] = (
+                sum(i['score'] or 0 for i in problem_data['feedback'])
+                if problem_data['feedback']
+                else np.nan
+            )
             problem_data['remarks'] = '\n\n'.join(sol.remarks
                                                   for sol in solutions
                                                   if sol.remarks)
@@ -42,7 +46,7 @@ def solution_data(exam_id, student_id):
 
         student = student.to_dict()
 
-    student['total'] = sum(i['score'] for i in results)
+    student['total'] = sum(i['score'] for i in results if not np.isnan(i['score']))
     return student, results
 
 

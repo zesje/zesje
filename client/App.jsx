@@ -39,8 +39,8 @@ const Graders = Loadable({
   loader: () => import('./views/Graders.jsx'),
   loading: Loading
 })
-const Statistics = Loadable({
-  loader: () => import('./views/Statistics.jsx'),
+const Overview = Loadable({
+  loader: () => import('./views/Overview.jsx'),
   loading: Loading
 })
 const Fail = Loadable({
@@ -164,8 +164,8 @@ class App extends React.Component {
                   updateSubmission={this.updateSubmission} updateExam={this.updateExam} />
                 : <Fail message='No exams uploaded or no grader selected. Please do not bookmark URLs' />
             )} />
-            <Route path='/statistics' render={() => (
-              exam.submissions.length ? <Statistics exam={exam} /> : <Fail message='No exams uploaded. Please do not bookmark URLs' />
+            <Route path='/overview' render={() => (
+              exam.submissions.length ? <Overview exam={exam} /> : <Fail message='No exams uploaded. Please do not bookmark URLs' />
             )} />
             <Route path='/graders' render={() =>
               <Graders updateGraderList={this.menu.current ? this.menu.current.updateGraderList : null} />} />

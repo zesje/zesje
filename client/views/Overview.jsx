@@ -55,12 +55,12 @@ const ProblemSummary = (props) => (
   </React.Fragment>
 )
 
-class Statistics extends React.Component {
+class Overview extends React.Component {
   render () {
     return (
       <div>
 
-        <Hero title='Statistics' subtitle='Analyse how the exam was made' />
+        <Hero title='Overview' subtitle='Analyse the exam results' />
 
         <h1 className='is-size-1 has-text-centered'>Exam "{this.props.exam.name}" </h1>
 
@@ -91,4 +91,4 @@ class Statistics extends React.Component {
   }
 }
 
-export default Statistics
+export default Overview

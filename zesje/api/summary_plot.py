@@ -108,6 +108,12 @@ def get(exam_id):
          in problem_scores.columns[:-1]]
         + ['total ' + f'($\\alpha = {alpha:.2f}$)' * (not np.isnan(alpha))]
     )
+
+    # Grey out labels of unfinished problems.
+    for label, column in zip(ax.get_yticklabels(), problem_scores):
+        if problem_scores[column].isnull().sum():
+            label.set_color((0, 0, 0, .5))
+
     ax.set_xlabel('fraction of students')
     ax.set_xlim(-0.025, 1.025)
     sm = matplotlib.cm.ScalarMappable(cmap=cm, norm=norm)

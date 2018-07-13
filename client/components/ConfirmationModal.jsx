@@ -1,6 +1,14 @@
 import React from 'react'
 
 const ConfirmationModal = (props) => {
+  let body = null
+  if (props.contentText) {
+    body =
+      <section className="modal-card-body">
+        { props.contentText}
+      </section>
+  }
+
   return (
     <div className={'modal ' + (props.active ? 'is-active' : '')}>
       <div className='modal-background' onClick={props.onCancel} />
@@ -8,9 +16,7 @@ const ConfirmationModal = (props) => {
         <header className='modal-card-head'>
           <p className='modal-card-title  '>{props.headerText || 'Are you sure?'}</p>
         </header>
-        <section className="modal-card-body">
-          {props.contentText}
-        </section>
+        {body}
         <footer className='modal-card-footer'>
           <div className='field is-grouped'>
             <button className={'button is-fullwidth ' + (props.color || 'is-success')} onClick={props.onConfirm}>

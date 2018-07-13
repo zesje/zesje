@@ -397,8 +397,12 @@ class Exams extends React.Component {
           </div>
         </div>
       </section>
-      <ConfirmationModal active={this.state.deleting} color='is-danger'
-        confirmText='Delete exam' onCancel={() => this.setState({deleting: false})}
+      <ConfirmationModal
+        active={this.state.deleting}
+        color='is-danger'
+        headerText={`Are you sure you want to delete exam "${this.props.exam.name}"?`}
+        confirmText='Delete exam'
+        onCancel={() => this.setState({deleting: false})}
         onConfirm={() => {
           this.props.deleteExam(this.props.examID).then(this.props.leave)
         }}

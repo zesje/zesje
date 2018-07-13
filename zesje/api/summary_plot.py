@@ -81,13 +81,21 @@ def get(exam_id):
     # Information about rectangles to draw.
     data = np.array(
         [
-            (-i, (upper-lower)/n_students, lower/n_students, num/maxes.ix[i])
+            (-i, (upper - lower) / n_students, lower/n_students, num/maxes.ix[i])
             for i, val in enumerate(vals)
             for num, upper, lower in zip(
                 val.index, list(val), [0] + list(val[:-1])
             )
         ]
     ).T
+    text = [
+        (-i, 0.5 * (upper + lower) / n_students, num)
+        for i, val in enumerate(vals[:-1])
+        for num, upper, lower in zip(
+            val.index, list(val), [0] + list(val[:-1])
+        )
+    ]
+
     fig = pyplot.figure(figsize=(12, 9))
     ax = fig.add_subplot(1, 1, 1)
 
@@ -95,6 +103,13 @@ def get(exam_id):
     ax.barh(
         data[0], data[1], 0.5, data[2], color=cm(norm(data[3])), align='center'
     )
+    # Label all grades within a problem.
+    for y, x, num in text:
+        ax.text(
+            x, y, f'{num}',
+            horizontalalignment='center', verticalalignment='center',
+            color=(.5, .5, .5, .5)
+        )
 
     # Draw bars for each problem
     ax.barh(

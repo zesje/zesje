@@ -35,18 +35,72 @@ class TabbedPanel extends React.Component {
 }
 
 class Email extends React.Component {
-  RenderControls () {
-    return (
-      <div className='panel'>
-        <div className='panel-heading has-text-centered'> Render </div>
-        <div className='panel-block'>
-          <div className='field' style={{width: '100%'}}>
-            <div className='control'>
-              <input className='input' type='text' placeholder='student' />
-            </div>
-          </div>
+  constructor (props) {
+    super(props)
 
+    this.EmailControls = this.EmailControls.bind(this)
+    this.EmailIndividualControls = this.EmailIndividualControls.bind(this)
+    this.EmailEveryoneControls = this.EmailEveryoneControls.bind(this)
+    this.RenderControls = this.RenderControls.bind(this)
+    this.TemplateControls = this.TemplateControls.bind(this)
+    this.TemplateEditor = this.TemplateEditor.bind(this)
+
+  }
+
+  EmailIndividualControls () {
+    return (
+      <div style={{width: '100%'}}>
+        <div className='field has-addons'>
+          <div className='control'>
+            <a className='button is-static'>to :</a>
+          </div>
+          <div className='control is-expanded'>
+            <input
+              className='input is-static'
+              type='email'
+              value='student@tudelft.nl'
+              style={{paddingLeft: 'calc(0.625em - 1px)'}}
+            />
+          </div>
         </div>
+        <div className='field has-addons'>
+          <div className='control'>
+            <a className='button is-static'>cc :</a>
+          </div>
+          <div className='control is-expanded'>
+            <input
+              className='input'
+              type='email'
+              placeholder='course-instructor@tudelft.nl'
+            />
+          </div>
+        </div>
+        <div className='field'>
+          <div className='control'>
+            <label className='checkbox'>
+              <input type='checkbox' checked/>
+              Attach PDF
+            </label>
+          </div>
+        </div>
+        <button className='button is-primary is-fullwidth'>Send</button>
+      </div>
+    )
+  }
+
+  EmailEveryoneControls () {
+    return (
+      <div style={{width: '100%'}}>
+        <div className='field'>
+          <div className='control'>
+            <label className='checkbox'>
+              <input type='checkbox' checked/>
+              Attach PDF
+            </label>
+          </div>
+        </div>
+        <button className='button is-primary is-fullwidth'>Send</button>
+
       </div>
     )
   }
@@ -59,45 +113,30 @@ class Email extends React.Component {
           panels={[
             {
               name: 'Individual',
-              panel: (
-                <div style={{width: '100%'}}>
-                  <div className='field'>
-                    <div className='control'>
-                      <input
-                        className='input'
-                        type='text'
-                        placeholder='course-instructor@tudelft.nl'
-                      />
-                    </div>
-                  </div>
-                  <div className='field'>
-                    <div className='control'>
-                      <label className='checkbox'>
-                        <input type='checkbox' />
-                        Attach PDF
-                      </label>
-                    </div>
-                  </div>
-                  <div className='field'>
-                    <div className='control'>
-                      <label className='checkbox'>
-                        <input type='checkbox' />
-                        Also send to student
-                      </label>
-                    </div>
-                  </div>
-
-                  <button className='button is-primary is-fullwidth'>Send</button>
-
-                </div>
-              )
+              panel: <this.EmailIndividualControls />
             },
             {
               name: 'Everyone',
-              panel: <button className='button is-danger is-fullwidth' disabled>Send</button>
+              panel: <this.EmailEveryoneControls />
             }
           ]}
         />
+      </div>
+    )
+  }
+
+  RenderControls () {
+    return (
+      <div className='panel'>
+        <div className='panel-heading has-text-centered'> Render </div>
+        <div className='panel-block'>
+          <div className='field' style={{width: '100%'}}>
+            <div className='control'>
+              <input className='input' type='text' placeholder='student' />
+            </div>
+          </div>
+
+        </div>
       </div>
     )
   }
@@ -148,8 +187,8 @@ class Email extends React.Component {
         <Hero title='Email' subtitle='So the students get their feedback' />
         <section className='section'>
           <div className='container'>
-            <div className='columns is-desktop'>
-              <div className='column is-3-desktop'>
+            <div className='columns is-tablet'>
+              <div className='column is-3-tablet'>
                 <this.TemplateControls />
                 <this.RenderControls />
                 <this.EmailControls />

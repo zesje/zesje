@@ -85,6 +85,7 @@ class Email(Resource):
             return dict(status=400, message="Failed to format email."), 400
 
     post_parser = reqparse.RequestParser()
+    post_parser.add_argument('template', type=str, required=True)
     post_parser.add_argument('attach', type=bool, required=True)
 
     def post(self, exam_id, student_id=None):
@@ -96,6 +97,7 @@ class Email(Resource):
         might send wrong emails this way).
         """
         args = self.post_parser.parse_args()
+        template = args['template']
         attach = args['attach']
 
         with orm.db_session:
@@ -104,12 +106,6 @@ class Email(Resource):
                     status=400,
                     message="All submissions must be validated before sending emails."
                 ), 400
-
-        try:
-            with open(template_path(exam_id)) as f:
-                template = f.read()
-        except FileNotFoundError:
-            template = default_email_template
 
         if student_id is not None:
             student_ids = [student_id]

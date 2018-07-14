@@ -1,6 +1,7 @@
 import React from 'react'
 
 import Hero from '../components/Hero.jsx'
+import * as api from '../api.jsx'
 
 class TabbedPanel extends React.Component {
   constructor (props) {
@@ -38,13 +39,22 @@ class Email extends React.Component {
   constructor (props) {
     super(props)
 
+    this.state = {
+      template: ''
+    }
+
     this.EmailControls = this.EmailControls.bind(this)
     this.EmailIndividualControls = this.EmailIndividualControls.bind(this)
     this.EmailEveryoneControls = this.EmailEveryoneControls.bind(this)
     this.RenderControls = this.RenderControls.bind(this)
     this.TemplateControls = this.TemplateControls.bind(this)
     this.TemplateEditor = this.TemplateEditor.bind(this)
+  }
 
+  componentWillMount () {
+    api
+      .get(`templates/${this.props.exam.id}`)
+      .then(template => this.setState({ template }))
   }
 
   EmailIndividualControls () {
@@ -159,7 +169,8 @@ class Email extends React.Component {
       <textarea
         className='textarea'
         style={{height: '100%'}}
-        placeholder='e.g. Hello world'
+        value={this.state.template}
+        onChange={evt => this.setState({ template: evt.target.value })}
       />
     )
   }

@@ -51,7 +51,8 @@ api.add_resource(Widgets,
 api.add_resource(EmailTemplate,
                  '/templates/<int:exam_id>')
 api.add_resource(Email,
-                 '/email/<int:exam_id>')
+                 '/email/<int:exam_id>',
+                 '/email/<int:exam_id>/<int:student_id>')
 
 
 # Other resources that don't return JSON

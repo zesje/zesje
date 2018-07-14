@@ -85,10 +85,9 @@ class Email(Resource):
             return dict(status=400, message="Failed to format email."), 400
 
     post_parser = reqparse.RequestParser()
-    post_parser.add_argument('student_id', type=int, required=False)
     post_parser.add_argument('attach', type=bool, required=True)
 
-    def post(self, exam_id):
+    def post(self, exam_id, student_id=None):
         """Send an email.
 
         Returns
@@ -97,7 +96,6 @@ class Email(Resource):
         might send wrong emails this way).
         """
         args = self.post_parser.parse_args()
-        student_id = args['student_id']
         attach = args['attach']
 
         with orm.db_session:

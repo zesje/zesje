@@ -40,7 +40,8 @@ class Email extends React.Component {
     super(props)
 
     this.state = {
-      template: ''
+      template: '',
+      templateModified: false
     }
 
     this.EmailControls = this.EmailControls.bind(this)
@@ -156,7 +157,17 @@ class Email extends React.Component {
       <div className='panel'>
         <div className='panel-heading has-text-centered'> Template </div>
         <div className='panel-block'>
-          <button className='button is-success is-fullwidth' disabled>
+          <button
+            className='button is-success is-fullwidth'
+            disabled={!this.state.templateModified}
+            onClick={() => (
+              api
+                .put(`templates/${this.props.exam.id}`, {
+                  template: this.state.template
+                })
+                .then(() => this.setState({ templateModified: false }))
+            )}
+          >
             Save
           </button>
         </div>
@@ -170,7 +181,12 @@ class Email extends React.Component {
         className='textarea'
         style={{height: '100%'}}
         value={this.state.template}
-        onChange={evt => this.setState({ template: evt.target.value })}
+        onChange={evt => (
+          this.setState({
+            template: evt.target.value,
+            templateModified: true
+          })
+        )}
       />
     )
   }

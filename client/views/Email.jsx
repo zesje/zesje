@@ -68,6 +68,18 @@ class Email extends React.Component {
   }
 
   EmailIndividualControls () {
+    let email = ''
+    let disabled = true
+    if (this.state.selectedStudent === null) {
+      disabled = true
+      email = ''
+    } else if (!this.state.selectedStudent.email) {
+      disabled = true
+      email = '<no email provided>'
+    } else {
+      disabled = false
+      email = this.state.selectedStudent.email
+    }
     return (
       <div style={{width: '100%'}}>
         <div className='field has-addons'>
@@ -78,7 +90,8 @@ class Email extends React.Component {
             <input
               className='input is-static'
               type='email'
-              value='student@tudelft.nl'
+              value={email}
+              readOnly
               style={{paddingLeft: 'calc(0.625em - 1px)'}}
             />
           </div>
@@ -103,7 +116,12 @@ class Email extends React.Component {
             </label>
           </div>
         </div>
-        <button className='button is-primary is-fullwidth'>Send</button>
+        <button
+          className='button is-primary is-fullwidth'
+          disabled={disabled}
+        >
+          Send
+        </button>
       </div>
     )
   }

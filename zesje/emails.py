@@ -11,7 +11,7 @@ import jinja2
 from wand.image import Image
 from pony import orm
 
-from .database import Submission
+from .database import Submission, Student
 from . import statistics
 
 
@@ -39,20 +39,24 @@ def solution_pdf(exam_id, student_id):
     return result
 
 
-def form_email(exam_id, student_id, template, attach=True,
-               text_only=True, subject='Your results',
-               email_from='no-reply@tudelft.nl'):
+def render(exam_id, student_id, template):
     template = jinja2.Template(template)
-
     student, results = statistics.solution_data(exam_id, student_id)
-    text = template.render(student=student, results=results)
-    if text_only:
-        return text
+    return template.render(student=student, results=results)
+
+
+def build(exam_id, student_id, template, attach=True,
+          subject='Your results',
+          email_from='no-reply@tudelft.nl'):
+
+    text = render(exam_id, student_id, template)
+    with orm.db_session:
+        student_email = Student[student_id].email
 
     msg = MIMEMultipart()
     msg['Subject'] = subject
     msg['From'] = email_from
-    msg['To'] = student['email']
+    msg['To'] = student_email
     msg['Reply-to'] = email_from
     msg.attach(MIMEText(text, 'plain'))
 

@@ -79,9 +79,8 @@ class Email(Resource):
         except FileNotFoundError:
             template = default_email_template
 
-        print(emails.form_email(exam_id, student_id, template, text_only=True))
         try:
-            return emails.form_email(exam_id, student_id, template, text_only=True)
+            return emails.render(exam_id, student_id, template)
         except Exception:
             return dict(status=400, message="Failed to format email."), 400
 
@@ -115,16 +114,14 @@ class Email(Resource):
             template = default_email_template
 
         if student_id is not None:
-            messages = [emails.form_email(
-                exam_id, student_id, template, attach=attach, text_only=False
-            )]
-
+            student_ids = [student_id]
         else:
             with orm.db_session:
                 student_ids = set(Exam[exam_id].submissions.student.id)
 
-            messages = [emails.form_email(
-                exam_id, student_id, template, attach=attach, text_only=False
-            ) for student_id in student_ids]
+        messages = [
+            emails.build(exam_id, student_id, template, attach=attach)
+            for student_id in student_ids
+        ]
 
         emails.send(messages)

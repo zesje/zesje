@@ -34,7 +34,7 @@ const ProblemSummary = (props) => (
         <tr>
           <th> Feedback </th>
           <th> Score </th>
-          <th> #&nbsp;assigned</th>
+          <th> #&nbsp;Assigned</th>
         </tr>
       </thead>
       <tbody>
@@ -76,7 +76,7 @@ class Overview extends React.Component {
           <div className='columns is-tablet is-multiline'>
             {
               this.props.exam.problems.map((problem, i) => (
-                <div className='column is-one-third-tablet' key={i}>
+                <div className='column is-one-half-tablet is-one-third-desktop' key={i}>
                   <div className='content'>
                     <ProblemSummary problem={problem} />
                   </div>

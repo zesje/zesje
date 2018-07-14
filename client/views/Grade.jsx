@@ -5,7 +5,7 @@ import Hero from '../components/Hero.jsx'
 import FeedbackPanel from './grade/FeedbackPanel.jsx'
 import ProblemSelector from './grade/ProblemSelector.jsx'
 import EditPanel from './grade/EditPanel.jsx'
-import SubmissionField from './grade/SubmissionField.jsx'
+import SearchBox from '../components/SearchBox.jsx'
 import ProgressBar from '../components/ProgressBar.jsx'
 
 class Grade extends React.Component {
@@ -146,10 +146,32 @@ class Grade extends React.Component {
                           onClick={this.prev}>Previous</button>
                       </div>
                       <div className='control'>
-                        <SubmissionField
-                          submission={submission}
-                          submissions={exam.submissions}
-                          setSubmission={this.setSubmission}
+                        <SearchBox
+                          placeholder='Search for a submission'
+                          selected={submission}
+                          options={exam.submissions}
+                          suggestionKeys={[
+                            'student.id',
+                            'student.firstName',
+                            'student.lastName'
+                          ]}
+                          setSelected={this.setSubmission}
+                          renderSelected={({id, student}) => {
+                            if (student) {
+                              return `${student.firstName} ${student.lastName} (${student.id})`
+                            } else {
+                              return `#${id}`
+                            }
+                          }}
+                          renderSuggestion={(submission) => {
+                            const stud = submission.student
+                            return (
+                              <div>
+                                <b>{`${stud.firstName} ${stud.lastName}`}</b>
+                                <i style={{float: 'right'}}>({stud.id})</i>
+                              </div>
+                            )
+                          }}
                         />
                       </div>
                       <div className='control'>

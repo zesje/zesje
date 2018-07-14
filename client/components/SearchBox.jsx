@@ -29,41 +29,18 @@ const theme = {
   }
 }
 
-// When suggestion is clicked, Autosuggest needs to populate the input
-// based on the clicked suggestion. Teach Autosuggest how to calculate the
-// input value for every given suggestion.
-const getSuggestionValue = (submission) => {
-  const stud = submission.student
-  if (stud) {
-    return stud.firstName + ' ' + stud.lastName + ' (' + stud.id + ')'
-  } else {
-    return '#' + submission.id
-  }
-}
-
-// Use your imagination to render suggestions.
-const renderSuggestion = submission => {
-  const stud = submission.student
-  return (
-    <div>
-      <b>{stud.firstName + ' ' + stud.lastName}</b>
-      <i style={{float: 'right'}} > ({stud.id})</i>
-    </div>
-  )
-}
-
-class SubmissionField extends React.Component {
+class SearchBox extends React.Component {
   state = {
     value: '',
     suggestions: [],
-    subID: null
+    selectedID: null
   }
 
   static getDerivedStateFromProps (nextProps, prevState) {
-    if (nextProps.submission.id !== prevState.subID) {
+    if (nextProps.selected.id !== prevState.selectedID) {
       return {
-        value: getSuggestionValue(nextProps.submission),
-        subID: nextProps.submission.id
+        value: nextProps.renderSelected(nextProps.selected),
+        selectedID: nextProps.selected.id
       }
     }
     return null
@@ -76,7 +53,7 @@ class SubmissionField extends React.Component {
   }
   onBlur = () => {
     this.setState({
-      value: getSuggestionValue(this.props.submission)
+      value: this.props.renderSelected(this.props.selected)
     })
   }
   onFocus = () => {
@@ -85,7 +62,7 @@ class SubmissionField extends React.Component {
     })
   }
   onSuggestionSelected = (event, { suggestion }) => {
-    this.props.setSubmission(suggestion.id)
+    this.props.setSelected(suggestion.id)
   }
 
   // Autosuggest will call this function every time you need to update suggestions.
@@ -98,14 +75,10 @@ class SubmissionField extends React.Component {
       distance: 100,
       maxPatternLength: 32,
       minMatchCharLength: 1,
-      keys: [
-        'student.id',
-        'student.firstName',
-        'student.lastName'
-      ]
+      keys: this.props.suggestionKeys
     }
-    const fuse = new Fuse(this.props.submissions, options)
-    const result = fuse.search(value) // .slice(0, 10)
+    const fuse = new Fuse(this.props.options, options)
+    const result = fuse.search(value)
 
     this.setState({
       suggestions: result
@@ -126,7 +99,7 @@ class SubmissionField extends React.Component {
     const inputProps = {
       className: 'input is-rounded has-text-centered is-link',
       type: 'text',
-      placeholder: 'Search for a submission',
+      placeholder: this.props.placeholder,
       value,
       onChange: this.onChange,
       onFocus: this.onFocus,
@@ -139,8 +112,8 @@ class SubmissionField extends React.Component {
         onSuggestionsFetchRequested={this.onSuggestionsFetchRequested}
         onSuggestionsClearRequested={this.onSuggestionsClearRequested}
         onSuggestionSelected={this.onSuggestionSelected}
-        getSuggestionValue={getSuggestionValue}
-        renderSuggestion={renderSuggestion}
+        getSuggestionValue={this.props.renderSelected}
+        renderSuggestion={this.props.renderSuggestion}
         inputProps={inputProps}
         theme={theme}
         focusInputOnSuggestionClick={false}
@@ -150,4 +123,4 @@ class SubmissionField extends React.Component {
   }
 }
 
-export default SubmissionField
+export default SearchBox

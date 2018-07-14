@@ -89,7 +89,7 @@ class Email extends React.Component {
         <div className='field'>
           <div className='control'>
             <label className='checkbox'>
-              <input type='checkbox' checked/>
+              <input type='checkbox' />
               Attach PDF
             </label>
           </div>
@@ -105,7 +105,7 @@ class Email extends React.Component {
         <div className='field'>
           <div className='control'>
             <label className='checkbox'>
-              <input type='checkbox' checked/>
+              <input type='checkbox' />
               Attach PDF
             </label>
           </div>

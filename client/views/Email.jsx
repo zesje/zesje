@@ -2,6 +2,7 @@ import React from 'react'
 
 import Hero from '../components/Hero.jsx'
 import * as api from '../api.jsx'
+import SearchBox from '../components/SearchBox.jsx'
 
 class TabbedPanel extends React.Component {
   constructor (props) {
@@ -41,7 +42,9 @@ class Email extends React.Component {
 
     this.state = {
       template: '',
-      templateModified: false
+      templateModified: false,
+      students: [],
+      selectedStudent: null
     }
 
     this.EmailControls = this.EmailControls.bind(this)
@@ -56,6 +59,12 @@ class Email extends React.Component {
     api
       .get(`templates/${this.props.exam.id}`)
       .then(template => this.setState({ template }))
+    api
+      .get('students')
+      .then(students => this.setState({
+        students,
+        selectedStudent: students[0]
+      }))
   }
 
   EmailIndividualControls () {
@@ -143,7 +152,33 @@ class Email extends React.Component {
         <div className='panel-block'>
           <div className='field' style={{width: '100%'}}>
             <div className='control'>
-              <input className='input' type='text' placeholder='student' />
+              <SearchBox
+                placeholder='Search for a student'
+                selected={this.state.selectedStudent}
+                options={this.state.students}
+                suggestionKeys={[
+                  'id',
+                  'firstName',
+                  'lastName'
+                ]}
+                setSelected={studentID => {
+                  const idx = this.state.students.findIndex(s => s.id === studentID)
+                  this.setState({
+                    selectedStudent: this.state.students[idx]
+                  })
+                }}
+                renderSelected={(student) => (
+                  student !== null
+                    ? `${student.firstName} ${student.lastName} (${student.id})`
+                    : ''
+                )}
+                renderSuggestion={(student) => {
+                  return <div>
+                    <b>{`${student.firstName} ${student.lastName}`}</b>
+                    <i style={{float: 'right'}}>({student.id})</i>
+                  </div>
+                }}
+              />
             </div>
           </div>
 

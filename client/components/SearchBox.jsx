@@ -37,6 +37,12 @@ class SearchBox extends React.Component {
   }
 
   static getDerivedStateFromProps (nextProps, prevState) {
+    if (nextProps.selected === null) {
+      return {
+        value: '',
+        selectedID: null
+      }
+    }
     if (nextProps.selected.id !== prevState.selectedID) {
       return {
         value: nextProps.renderSelected(nextProps.selected),

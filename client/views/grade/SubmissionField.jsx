@@ -129,7 +129,8 @@ class SubmissionField extends React.Component {
       placeholder: 'Search for a submission',
       value,
       onChange: this.onChange,
-      onFocus: this.onFocus
+      onFocus: this.onFocus,
+      onBlur: this.onBlur
     }
 
     return (
@@ -138,7 +139,6 @@ class SubmissionField extends React.Component {
         onSuggestionsFetchRequested={this.onSuggestionsFetchRequested}
         onSuggestionsClearRequested={this.onSuggestionsClearRequested}
         onSuggestionSelected={this.onSuggestionSelected}
-        onBlur={this.onBlur}
         getSuggestionValue={getSuggestionValue}
         renderSuggestion={renderSuggestion}
         inputProps={inputProps}

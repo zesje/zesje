@@ -10,7 +10,7 @@ from .problems import Problems
 from .feedback import Feedback
 from .solutions import Solutions
 from .widgets import Widgets
-from .emails import EmailTemplate, Email
+from .emails import EmailTemplate, RenderedEmailTemplate, Email
 from . import signature
 from . import images
 from . import summary_plot
@@ -50,6 +50,8 @@ api.add_resource(Widgets,
                  '/widgets/<int:widget_id>')
 api.add_resource(EmailTemplate,
                  '/templates/<int:exam_id>')
+api.add_resource(RenderedEmailTemplate,
+                 '/templates/rendered/<int:exam_id>/<int:student_id>')
 api.add_resource(Email,
                  '/email/<int:exam_id>',
                  '/email/<int:exam_id>/<int:student_id>')

@@ -69,20 +69,20 @@ class EmailTemplate(Resource):
             f.write(email_template)
 
 
-class Email(Resource):
+class RenderedEmailTemplate(Resource):
 
-    def get(self, exam_id, student_id):
-        """Get an email text."""
-        try:
-            with open(template_path(exam_id)) as f:
-                template = f.read()
-        except FileNotFoundError:
-            template = default_email_template
+    post_parser = reqparse.RequestParser()
+    post_parser.add_argument('template', type=str, required=True)
 
+    def post(self, exam_id, student_id):
+        template = self.post_parser.parse_args().template
         try:
             return emails.render(exam_id, student_id, template)
         except Exception:
             return dict(status=400, message="Failed to format email."), 400
+
+
+class Email(Resource):
 
     post_parser = reqparse.RequestParser()
     post_parser.add_argument('template', type=str, required=True)

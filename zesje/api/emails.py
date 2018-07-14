@@ -1,5 +1,6 @@
 """ REST api for email templates """
 from pathlib import Path
+import textwrap
 
 from jinja2 import Template, TemplateSyntaxError
 
@@ -11,25 +12,27 @@ from pony import orm
 from .. import emails
 from ..database import Exam
 
-default_email_template = """Dear {{student.first_name.split(' ') | first }} {{student.last_name}},
+default_email_template = textwrap.dedent(str.strip("""
+    Dear {{student.first_name.split(' ') | first }} {{student.last_name}},
 
-Below please find attached the scans of your exam and our feedback.
-If you have any questions, don't hesitate to contant us.
+    Below please find attached the scans of your exam and our feedback.
+    If you have any questions, don't hesitate to contant us.
 
-{% for problem in results | sort(attribute='name') if problem.feedback  -%}
-{{problem.name}} (your score: {{problem.score}} out of {{problem.max_score}}):
-{% for feedback in problem.feedback %}
-    * {{ (feedback.description or feedback.short) | wordwrap | indent(width=6) }}
-{% endfor %}
-{%- if problem.remarks %}
-    * {{ problem.remarks | wordwrap | indent(width=6) }}
-{% endif %}
-{% endfor %}
+    {% for problem in results | sort(attribute='name') if problem.feedback  -%}
+    {{problem.name}} (your score: {{problem.score}} out of {{problem.max_score}}):
+    {% for feedback in problem.feedback %}
+        * {{ (feedback.description or feedback.short) | wordwrap | indent(width=6) }}
+    {% endfor %}
+    {%- if problem.remarks %}
+        * {{ problem.remarks | wordwrap | indent(width=6) }}
+    {% endif %}
+    {% endfor %}
 
-Therefore your grade is {{ student.total }}.
+    Therefore your grade is {{ student.total }}.
 
-Best regards,
-Course team."""
+    Best regards,
+    Course team.
+"""))
 
 
 def template_path(exam_id):

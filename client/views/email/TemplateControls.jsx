@@ -1,6 +1,17 @@
 import React from 'react'
 
+import Notification from 'react-bulma-notification'
+
 import * as api from '../../api.jsx'
+
+const templateSaveError = message => (
+  Notification.error(
+    `Unable to save template: ${message || ''}`,
+    {
+      duration: 3
+    }
+  )
+)
 
 class TemplateControls extends React.Component {
   state = {
@@ -16,12 +27,21 @@ class TemplateControls extends React.Component {
     })
   }
 
-  saveTemplate = () => {
-    return api
-      .put(`templates/${this.props.exam.id}`, {
-        template: this.props.template
-      })
-      .then(() => this.setState({ templateWasModified: false }))
+  saveTemplate = async () => {
+    try {
+      await api.put(
+        `templates/${this.props.exam.id}`,
+        { template: this.props.template }
+      )
+      this.setState({ templateWasModified: false })
+    } catch (response) {
+      if (response.status === 400) {
+        let error = await response.json()
+        templateSaveError(error.message)
+      } else {
+        templateSaveError()
+      }
+    }
   }
 
   render () {

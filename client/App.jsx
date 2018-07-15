@@ -3,6 +3,7 @@ import Loadable from 'react-loadable'
 import { hot } from 'react-hot-loader'
 import { BrowserRouter as Router, Route, Switch } from 'react-router-dom'
 import 'bulma/css/bulma.css'
+import 'react-bulma-notification/build/css/index.css'
 import 'font-awesome/css/font-awesome.css'
 
 import * as api from './api.jsx'

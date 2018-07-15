@@ -5,12 +5,12 @@ import * as api from '../api.jsx'
 
 import EmailControls from './email/EmailControls.jsx'
 import StudentControls from './email/StudentControls.jsx'
+import TemplateControls from './email/TemplateControls.jsx'
 import TemplateEditor from './email/TemplateEditor.jsx'
 
 class Email extends React.Component {
   state = {
     template: null,
-    templateWasModified: false,
     selectedStudent: null
   }
 
@@ -18,31 +18,6 @@ class Email extends React.Component {
     api
       .get(`templates/${this.props.exam.id}`)
       .then(template => this.setState({ template }))
-  }
-
-  saveTemplate = () => {
-    return api
-      .put(`templates/${this.props.exam.id}`, {
-        template: this.state.template
-      })
-      .then(() => this.setState({ templateWasModified: false }))
-  }
-
-  TemplateControls = () => {
-    return (
-      <div className='panel'>
-        <div className='panel-heading has-text-centered'> Template </div>
-        <div className='panel-block'>
-          <button
-            className='button is-success is-fullwidth'
-            disabled={!this.state.templateWasModified}
-            onClick={this.saveTemplate}
-          >
-            Save
-          </button>
-        </div>
-      </div>
-    )
   }
 
   render () {
@@ -53,7 +28,10 @@ class Email extends React.Component {
           <div className='container'>
             <div className='columns is-tablet'>
               <div className='column is-3-tablet'>
-                <this.TemplateControls />
+                <TemplateControls
+                  exam={this.props.exam}
+                  template={this.state.template}
+                />
                 <StudentControls
                   selectedStudent={this.state.selectedStudent}
                   setStudent={student => {
@@ -74,8 +52,7 @@ class Email extends React.Component {
                 template={this.state.template}
                 onTemplateChange={template => {
                   this.setState({
-                    template,
-                    templateWasModified: true
+                    template
                   })
                 }}
               />

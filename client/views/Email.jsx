@@ -37,25 +37,13 @@ class TabbedPanel extends React.Component {
 }
 
 class Email extends React.Component {
-  constructor (props) {
-    super(props)
 
-    this.state = {
-      template: '',
-      templateWasModified: false,
-      renderedTemplate: '',
-      students: [],
-      selectedStudent: null
-    }
-
-    this.EmailControls = this.EmailControls.bind(this)
-    this.EmailIndividualControls = this.EmailIndividualControls.bind(this)
-    this.EmailEveryoneControls = this.EmailEveryoneControls.bind(this)
-    this.RenderControls = this.RenderControls.bind(this)
-    this.TemplateControls = this.TemplateControls.bind(this)
-    this.TemplateEditor = this.TemplateEditor.bind(this)
-    this.RenderedTemplate = this.RenderedTemplate.bind(this)
-    this.renderTemplate = this.renderTemplate.bind(this)
+  state = {
+    template: '',
+    templateWasModified: false,
+    renderedTemplate: '',
+    students: [],
+    selectedStudent: null
   }
 
   componentWillMount () {
@@ -71,7 +59,7 @@ class Email extends React.Component {
       .then(this.renderTemplate)
   }
 
-  renderTemplate () {
+  renderTemplate = () => {
     if (this.state.selectedStudent === null) {
       return
     }
@@ -87,7 +75,7 @@ class Email extends React.Component {
     )
   }
 
-  EmailIndividualControls () {
+  EmailIndividualControls = () => {
     let email = ''
     let disabled = true
     if (this.state.selectedStudent === null) {
@@ -146,7 +134,7 @@ class Email extends React.Component {
     )
   }
 
-  EmailEveryoneControls () {
+  EmailEveryoneControls = () => {
     return (
       <div style={{width: '100%'}}>
         <div className='field'>
@@ -163,7 +151,7 @@ class Email extends React.Component {
     )
   }
 
-  EmailControls () {
+  EmailControls = () => {
     return (
       <div className='panel'>
         <div className='panel-heading has-text-centered'> Email </div>
@@ -183,7 +171,7 @@ class Email extends React.Component {
     )
   }
 
-  RenderControls () {
+  RenderControls = () => {
     return (
       <div className='panel'>
         <div className='panel-heading has-text-centered'> Render </div>
@@ -225,7 +213,7 @@ class Email extends React.Component {
     )
   }
 
-  TemplateControls () {
+  TemplateControls = () => {
     return (
       <div className='panel'>
         <div className='panel-heading has-text-centered'> Template </div>
@@ -248,7 +236,7 @@ class Email extends React.Component {
     )
   }
 
-  TemplateEditor () {
+  TemplateEditor = () => {
     return (
       <textarea
         className='textarea'
@@ -260,12 +248,12 @@ class Email extends React.Component {
             templateWasModified: true
           })
         )}
-        onBlur={() => this.renderTemplate()}
+        onBlur={this.renderTemplate}
       />
     )
   }
 
-  RenderedTemplate () {
+  RenderedTemplate = () => {
     return (
       <textarea
         className='textarea is-unselectable has-background-light'

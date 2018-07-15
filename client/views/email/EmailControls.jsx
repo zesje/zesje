@@ -1,5 +1,7 @@
 import React from 'react'
 
+import * as api from '../../api.jsx'
+
 import TabbedPanel from '../../components/TabbedPanel.jsx'
 
 const AttachPDF = (props) => (
@@ -10,6 +12,7 @@ const AttachPDF = (props) => (
           type='checkbox'
           checked={props.attachPDF}
           onChange={(evt) => props.onChecked(evt.target.checked)}
+          disabled={props.disabled}
         />
         Attach PDF
       </label>
@@ -46,6 +49,7 @@ const CCField = (props) => (
         placeholder='course-instructor@tudelft.nl'
         value={props.email || ''}
         onChange={evt => props.onChange(evt.target.value)}
+        disabled={props.disabled}
       />
     </div>
   </div>
@@ -54,7 +58,21 @@ const CCField = (props) => (
 class EmailIndividualControls extends React.Component {
   state = {
     attachPDF: true,
-    copyTo: null
+    copyTo: null,
+    sending: false
+  }
+
+  sendEmail = () => {
+    this.setState({ sending: true })
+    api
+      .post(
+        `email/${this.props.exam.id}/${this.props.student.id}`,
+        {
+          template: this.props.template,
+          attach: this.state.attachPDF
+        }
+      )
+      .finally(() => this.setState({ sending: false }))
   }
 
   render () {
@@ -71,19 +89,27 @@ class EmailIndividualControls extends React.Component {
       email = this.props.student.email
     }
     return (
-      <div style={{width: '100%'}}>
+      <div
+        style={{width: '100%'}}
+      >
         <ToField email={email} />
         <CCField
           email={this.state.copyTo}
           onChange={copyTo => this.setState({ copyTo: copyTo || null })}
+          disabled={this.state.sending}
         />
         <AttachPDF
           attachPDF={this.state.attachPDF}
           onChecked={attachPDF => this.setState({ attachPDF })}
+          disabled={this.state.sending}
         />
         <button
-          className='button is-primary is-fullwidth'
+          className={
+            'button is-primary is-fullwidth ' +
+            (this.state.sending ? 'is-loading' : null)
+          }
           disabled={disabled}
+          onClick={this.sendEmail}
         >
           Send
         </button>

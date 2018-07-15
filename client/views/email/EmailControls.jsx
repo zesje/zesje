@@ -55,6 +55,19 @@ const CCField = (props) => (
   </div>
 )
 
+const SendButton = (props) => (
+  <button
+    className={
+      'button is-primary is-fullwidth ' +
+      (props.sending ? 'is-loading' : null)
+    }
+    onClick={props.onSend}
+    disabled={props.disabled}
+  >
+    Send
+  </button>
+)
+
 class EmailIndividualControls extends React.Component {
   state = {
     attachPDF: true,
@@ -97,16 +110,11 @@ class EmailIndividualControls extends React.Component {
           onChecked={attachPDF => this.setState({ attachPDF })}
           disabled={this.state.sending}
         />
-        <button
-          className={
-            'button is-primary is-fullwidth ' +
-            (this.state.sending ? 'is-loading' : null)
-          }
+        <SendButton
+          sending={this.state.sending}
+          onSend={this.sendEmail}
           disabled={disabled}
-          onClick={this.sendEmail}
-        >
-          Send
-        </button>
+        />
       </div>
     )
   }

@@ -78,8 +78,10 @@ class RenderedEmailTemplate(Resource):
         template = self.post_parser.parse_args().template
         try:
             return emails.render(exam_id, student_id, template)
+        except TemplateSyntaxError:
+            return dict(status=400, message="Syntax error in the template"), 400
         except Exception:
-            return dict(status=400, message="Failed to format email."), 400
+            return dict(status=400, message="Failed to render the template."), 400
 
 
 class Email(Resource):

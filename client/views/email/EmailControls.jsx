@@ -5,6 +5,7 @@ import Notification from 'react-bulma-notification'
 import * as api from '../../api.jsx'
 
 import TabbedPanel from '../../components/TabbedPanel.jsx'
+import ConfirmationButton from '../../components/ConfirmationButton.jsx'
 
 const AttachPDF = (props) => (
   <div className='field'>
@@ -68,6 +69,20 @@ const SendButton = (props) => (
   >
     Send
   </button>
+)
+
+const SendWithConfirmationButton = (props) => (
+  <ConfirmationButton
+    className={
+      'button is-primary is-fullwidth ' +
+      (props.sending ? 'is-loading' : null)
+    }
+    confirmationText={'You are about to email all the students on the course. Are you sure?'}
+    onConfirm={props.onSend}
+    disabled={props.disabled}
+  >
+    Send
+  </ConfirmationButton>
 )
 
 class EmailIndividualControls extends React.Component {
@@ -165,7 +180,7 @@ class EmailEveryoneControls extends React.Component {
           onChecked={attachPDF => this.setState({ attachPDF })}
           disabled={this.state.sending}
         />
-        <SendButton
+        <SendWithConfirmationButton
           sending={this.state.sending}
           onSend={this.sendEmail}
         />

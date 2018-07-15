@@ -42,7 +42,7 @@ class Email extends React.Component {
 
     this.state = {
       template: '',
-      templateModified: false,
+      templateWasModified: false,
       renderedTemplate: '',
       students: [],
       selectedStudent: null
@@ -232,13 +232,13 @@ class Email extends React.Component {
         <div className='panel-block'>
           <button
             className='button is-success is-fullwidth'
-            disabled={!this.state.templateModified}
+            disabled={!this.state.templateWasModified}
             onClick={() => (
               api
                 .put(`templates/${this.props.exam.id}`, {
                   template: this.state.template
                 })
-                .then(() => this.setState({ templateModified: false }))
+                .then(() => this.setState({ templateWasModified: false }))
             )}
           >
             Save
@@ -257,7 +257,7 @@ class Email extends React.Component {
         onChange={evt => (
           this.setState({
             template: evt.target.value,
-            templateModified: true
+            templateWasModified: true
           })
         )}
         onBlur={() => this.renderTemplate()}

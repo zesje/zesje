@@ -4,7 +4,7 @@ import Hero from '../components/Hero.jsx'
 import * as api from '../api.jsx'
 
 import EmailControls from './email/EmailControls.jsx'
-import RenderControls from './email/RenderControls.jsx'
+import StudentControls from './email/StudentControls.jsx'
 
 class Email extends React.Component {
   state = {
@@ -98,7 +98,7 @@ class Email extends React.Component {
             <div className='columns is-tablet'>
               <div className='column is-3-tablet'>
                 <this.TemplateControls />
-                <RenderControls
+                <StudentControls
                   selectedStudent={this.state.selectedStudent}
                   setStudent={student => {
                     this.setState({

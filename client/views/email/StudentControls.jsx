@@ -4,7 +4,7 @@ import * as api from '../../api.jsx'
 
 import SearchBox from '../../components/SearchBox.jsx'
 
-class RenderControls extends React.Component {
+class StudentControls extends React.Component {
   state = {
     students: []
   }
@@ -21,7 +21,7 @@ class RenderControls extends React.Component {
   render () {
     return (
       <div className='panel'>
-        <div className='panel-heading has-text-centered'> Render </div>
+        <div className='panel-heading has-text-centered'> Student </div>
         <div className='panel-block'>
           <div className='field' style={{width: '100%'}}>
             <div className='control'>
@@ -59,4 +59,4 @@ class RenderControls extends React.Component {
   }
 }
 
-export default RenderControls
+export default StudentControls

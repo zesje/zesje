@@ -41,6 +41,7 @@ class Email extends React.Component {
                   }}
                 />
                 <EmailControls
+                  template={this.state.template}
                   exam={this.props.exam}
                   student={this.state.selectedStudent}
                 />

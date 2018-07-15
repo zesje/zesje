@@ -44,6 +44,8 @@ const CCField = (props) => (
         className='input'
         type='email'
         placeholder='course-instructor@tudelft.nl'
+        value={props.email || ''}
+        onChange={evt => props.onChange(evt.target.value)}
       />
     </div>
   </div>
@@ -51,7 +53,8 @@ const CCField = (props) => (
 
 class EmailIndividualControls extends React.Component {
   state = {
-    attachPDF: true
+    attachPDF: true,
+    copyTo: null
   }
 
   render () {
@@ -70,7 +73,10 @@ class EmailIndividualControls extends React.Component {
     return (
       <div style={{width: '100%'}}>
         <ToField email={email} />
-        <CCField />
+        <CCField
+          email={this.state.copyTo}
+          onChange={copyTo => this.setState({ copyTo: copyTo || null })}
+        />
         <AttachPDF
           attachPDF={this.state.attachPDF}
           onChecked={attachPDF => this.setState({ attachPDF })}

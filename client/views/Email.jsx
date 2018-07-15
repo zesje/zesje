@@ -43,6 +43,7 @@ class Email extends React.Component {
     this.state = {
       template: '',
       templateModified: false,
+      renderedTemplate: '',
       students: [],
       selectedStudent: null
     }
@@ -53,6 +54,8 @@ class Email extends React.Component {
     this.RenderControls = this.RenderControls.bind(this)
     this.TemplateControls = this.TemplateControls.bind(this)
     this.TemplateEditor = this.TemplateEditor.bind(this)
+    this.RenderedTemplate = this.RenderedTemplate.bind(this)
+    this.renderTemplate = this.renderTemplate.bind(this)
   }
 
   componentWillMount () {
@@ -65,6 +68,23 @@ class Email extends React.Component {
         students,
         selectedStudent: students[0]
       }))
+      .then(this.renderTemplate)
+  }
+
+  renderTemplate () {
+    if (this.state.selectedStudent === null) {
+      return
+    }
+    return (
+      api
+        .post(
+          `templates/rendered/${this.props.exam.id}/${this.state.selectedStudent.id}`,
+          { template: this.state.template }
+        )
+        .then(renderedTemplate => (
+          this.setState({ renderedTemplate })
+        ))
+    )
   }
 
   EmailIndividualControls () {
@@ -183,7 +203,7 @@ class Email extends React.Component {
                   const idx = this.state.students.findIndex(s => s.id === studentID)
                   this.setState({
                     selectedStudent: this.state.students[idx]
-                  })
+                  }, this.renderTemplate)
                 }}
                 renderSelected={(student) => (
                   student !== null
@@ -240,6 +260,7 @@ class Email extends React.Component {
             templateModified: true
           })
         )}
+        onBlur={() => this.renderTemplate()}
       />
     )
   }

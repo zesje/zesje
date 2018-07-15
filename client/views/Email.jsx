@@ -5,12 +5,12 @@ import * as api from '../api.jsx'
 
 import EmailControls from './email/EmailControls.jsx'
 import StudentControls from './email/StudentControls.jsx'
+import TemplateEditor from './email/TemplateEditor.jsx'
 
 class Email extends React.Component {
   state = {
-    template: '',
+    template: null,
     templateWasModified: false,
-    renderedTemplate: '',
     selectedStudent: null
   }
 
@@ -18,22 +18,6 @@ class Email extends React.Component {
     api
       .get(`templates/${this.props.exam.id}`)
       .then(template => this.setState({ template }))
-  }
-
-  renderTemplate = () => {
-    if (this.state.selectedStudent === null) {
-      return
-    }
-    return (
-      api
-        .post(
-          `templates/rendered/${this.props.exam.id}/${this.state.selectedStudent.id}`,
-          { template: this.state.template }
-        )
-        .then(renderedTemplate => (
-          this.setState({ renderedTemplate })
-        ))
-    )
   }
 
   saveTemplate = () => {
@@ -61,34 +45,6 @@ class Email extends React.Component {
     )
   }
 
-  TemplateEditor = () => {
-    return (
-      <textarea
-        className='textarea'
-        style={{height: '100%'}}
-        value={this.state.template}
-        onChange={evt => (
-          this.setState({
-            template: evt.target.value,
-            templateWasModified: true
-          })
-        )}
-        onBlur={this.renderTemplate}
-      />
-    )
-  }
-
-  RenderedTemplate = () => {
-    return (
-      <textarea
-        className='textarea is-unselectable has-background-light'
-        style={{height: '100%', borderColor: '#fff'}}
-        value={this.state.renderedTemplate}
-        readOnly
-      />
-    )
-  }
-
   render () {
     return (
       <React.Fragment>
@@ -111,12 +67,18 @@ class Email extends React.Component {
                   student={this.state.selectedStudent}
                 />
               </div>
-              <div className='column'>
-                <this.TemplateEditor />
-              </div>
-              <div className='column'>
-                <this.RenderedTemplate />
-              </div>
+
+              <TemplateEditor
+                exam={this.props.exam}
+                student={this.state.selectedStudent}
+                template={this.state.template}
+                onTemplateChange={template => {
+                  this.setState({
+                    template,
+                    templateWasModified: true
+                  })
+                }}
+              />
             </div>
           </div>
         </section>

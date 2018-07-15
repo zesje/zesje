@@ -33,6 +33,7 @@ class TemplateControls extends React.Component {
         `templates/${this.props.exam.id}`,
         { template: this.props.template }
       )
+      Notification.success('Template saved')
       this.setState({ templateWasModified: false })
     } catch (response) {
       if (response.status === 400) {

@@ -75,6 +75,14 @@ class Email extends React.Component {
     )
   }
 
+  saveTemplate = () => {
+    return api
+      .put(`templates/${this.props.exam.id}`, {
+        template: this.state.template
+      })
+      .then(() => this.setState({ templateWasModified: false }))
+  }
+
   EmailIndividualControls = () => {
     let email = ''
     let disabled = true
@@ -221,13 +229,7 @@ class Email extends React.Component {
           <button
             className='button is-success is-fullwidth'
             disabled={!this.state.templateWasModified}
-            onClick={() => (
-              api
-                .put(`templates/${this.props.exam.id}`, {
-                  template: this.state.template
-                })
-                .then(() => this.setState({ templateWasModified: false }))
-            )}
+            onClick={this.saveTemplate}
           >
             Save
           </button>

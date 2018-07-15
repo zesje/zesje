@@ -1,10 +1,12 @@
 import React from 'react'
 
+import Notification from 'react-bulma-notification'
+
 import * as api from '../../api.jsx'
 
-const renderTemplate = props => {
+const renderTemplate = async (props) => {
   if (props.student === null) {
-    return Promise.reject(new Error('No student selected'))
+    throw new Error('No student selected')
   }
   return api
     .post(
@@ -12,6 +14,15 @@ const renderTemplate = props => {
       { template: props.template }
     )
 }
+
+const templateRenderError = message => (
+  Notification.error(
+    `Unable to render template: ${message || ''}`,
+    {
+      duration: 3
+    }
+  )
+)
 
 const LoadingView = () => (
   <div
@@ -34,16 +45,27 @@ class TemplateEditor extends React.Component {
     renderedTemplate: null
   }
 
+  updateTemplate = async (props) => {
+    try {
+      let renderedTemplate = await renderTemplate(props)
+      this.setState({ renderedTemplate })
+    } catch (response) {
+      if (response.status === 400) {
+        let error = await response.json()
+        templateRenderError(error.message)
+      } else {
+        templateRenderError()
+      }
+    }
+  }
+
   componentWillReceiveProps (nextProps) {
     if (nextProps.student === null) {
       return
     }
     if (this.props.student === null ||
         nextProps.student.id !== this.props.student.id) {
-      renderTemplate(nextProps)
-        .then(renderedTemplate =>
-          this.setState({ renderedTemplate })
-        )
+      this.updateTemplate(nextProps)
     }
   }
 
@@ -54,12 +76,7 @@ class TemplateEditor extends React.Component {
         style={{height: '100%'}}
         value={this.props.template || ''}
         onChange={evt => this.props.onTemplateChange(evt.target.value)}
-        onBlur={() => (
-          renderTemplate(this.props)
-            .then(renderedTemplate =>
-              this.setState({ renderedTemplate })
-            )
-        )}
+        onBlur={() => this.updateTemplate(this.props)}
       />
     )
   }

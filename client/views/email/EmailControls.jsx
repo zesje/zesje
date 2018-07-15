@@ -1,5 +1,7 @@
 import React from 'react'
 
+import Notification from 'react-bulma-notification'
+
 import * as api from '../../api.jsx'
 
 import TabbedPanel from '../../components/TabbedPanel.jsx'
@@ -75,17 +77,25 @@ class EmailIndividualControls extends React.Component {
     sending: false
   }
 
-  sendEmail = () => {
+  sendEmail = async () => {
     this.setState({ sending: true })
-    api
-      .post(
+    try {
+      await api.post(
         `email/${this.props.exam.id}/${this.props.student.id}`,
         {
           template: this.props.template,
           attach: this.state.attachPDF
         }
       )
-      .finally(() => this.setState({ sending: false }))
+      Notification.success(`Sent email to ${this.props.student.email}`)
+    } catch (response) {
+      let error = response.status === 400 ? (await response.json()).message : ''
+      Notification.error(
+        `Failed to send email to ${this.props.student.email}: ${error}`
+      )
+    } finally {
+      this.setState({ sending: false })
+    }
   }
 
   render () {

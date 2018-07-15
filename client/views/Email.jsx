@@ -267,18 +267,12 @@ class Email extends React.Component {
 
   RenderedTemplate () {
     return (
-      <div
-        className='box has-background-light'
-        style={{height: '100%', display: 'flex', justifyContent: 'center'}}
-      >
-        <div className='has-text-centered has-text-grey-light' style={{alignSelf: 'center'}}>
-          <p className='icon is-large' >
-            <i className='fa fa-code fa-3x' />
-          </p>
-          <p>Select a student to render the template</p>
-        </div>
-
-      </div>
+      <textarea
+        className='textarea is-unselectable has-background-light'
+        style={{height: '100%', borderColor: '#fff'}}
+        value={this.state.renderedTemplate}
+        readOnly
+      />
     )
   }
 

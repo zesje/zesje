@@ -136,17 +136,25 @@ class EmailEveryoneControls extends React.Component {
     sending: false
   }
 
-  sendEmail = () => {
+  sendEmail = async () => {
     this.setState({ sending: true })
-    api
-      .post(
+    try {
+      await api.post(
         `email/${this.props.exam.id}`,
         {
           template: this.props.template,
           attach: this.state.attachPDF
         }
       )
-      .finally(() => this.setState({ sending: false }))
+      Notification.success(`Sent emails to everybody`)
+    } catch (response) {
+      let error = response.status === 400 ? (await response.json()).message : ''
+      Notification.error(
+        `Failed to send email to everybody: ${error}`
+      )
+    } finally {
+      this.setState({ sending: false })
+    }
   }
 
   render () {

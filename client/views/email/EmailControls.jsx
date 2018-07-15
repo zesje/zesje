@@ -122,7 +122,21 @@ class EmailIndividualControls extends React.Component {
 
 class EmailEveryoneControls extends React.Component {
   state = {
-    attachPDF: true
+    attachPDF: true,
+    sending: false
+  }
+
+  sendEmail = () => {
+    this.setState({ sending: true })
+    api
+      .post(
+        `email/${this.props.exam.id}`,
+        {
+          template: this.props.template,
+          attach: this.state.attachPDF
+        }
+      )
+      .finally(() => this.setState({ sending: false }))
   }
 
   render () {
@@ -131,12 +145,12 @@ class EmailEveryoneControls extends React.Component {
         <AttachPDF
           attachPDF={this.state.attachPDF}
           onChecked={attachPDF => this.setState({ attachPDF })}
+          disabled={this.state.sending}
         />
-        <button
-          className='button is-primary is-fullwidth'
-        >
-          Send
-        </button>
+        <SendButton
+          sending={this.state.sending}
+          onSend={this.sendEmail}
+        />
       </div>
     )
   }

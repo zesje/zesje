@@ -51,7 +51,7 @@ class TemplateControls extends React.Component {
         <div className='panel-heading has-text-centered'> Template </div>
         <div className='panel-block'>
           <button
-            className='button is-success is-fullwidth'
+            className='button is-primary is-fullwidth'
             disabled={!this.state.templateWasModified}
             onClick={this.saveTemplate}
           >

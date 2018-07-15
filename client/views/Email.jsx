@@ -2,16 +2,15 @@ import React from 'react'
 
 import Hero from '../components/Hero.jsx'
 import * as api from '../api.jsx'
-import SearchBox from '../components/SearchBox.jsx'
 
 import EmailControls from './email/EmailControls.jsx'
+import RenderControls from './email/RenderControls.jsx'
 
 class Email extends React.Component {
   state = {
     template: '',
     templateWasModified: false,
     renderedTemplate: '',
-    students: [],
     selectedStudent: null
   }
 
@@ -19,13 +18,6 @@ class Email extends React.Component {
     api
       .get(`templates/${this.props.exam.id}`)
       .then(template => this.setState({ template }))
-    api
-      .get('students')
-      .then(students => this.setState({
-        students,
-        selectedStudent: students[0]
-      }))
-      .then(this.renderTemplate)
   }
 
   renderTemplate = () => {
@@ -50,48 +42,6 @@ class Email extends React.Component {
         template: this.state.template
       })
       .then(() => this.setState({ templateWasModified: false }))
-  }
-
-  RenderControls = () => {
-    return (
-      <div className='panel'>
-        <div className='panel-heading has-text-centered'> Render </div>
-        <div className='panel-block'>
-          <div className='field' style={{width: '100%'}}>
-            <div className='control'>
-              <SearchBox
-                placeholder='Search for a student'
-                selected={this.state.selectedStudent}
-                options={this.state.students}
-                suggestionKeys={[
-                  'id',
-                  'firstName',
-                  'lastName'
-                ]}
-                setSelected={studentID => {
-                  const idx = this.state.students.findIndex(s => s.id === studentID)
-                  this.setState({
-                    selectedStudent: this.state.students[idx]
-                  }, this.renderTemplate)
-                }}
-                renderSelected={(student) => (
-                  student !== null
-                    ? `${student.firstName} ${student.lastName} (${student.id})`
-                    : ''
-                )}
-                renderSuggestion={(student) => {
-                  return <div>
-                    <b>{`${student.firstName} ${student.lastName}`}</b>
-                    <i style={{float: 'right'}}>({student.id})</i>
-                  </div>
-                }}
-              />
-            </div>
-          </div>
-
-        </div>
-      </div>
-    )
   }
 
   TemplateControls = () => {
@@ -148,7 +98,14 @@ class Email extends React.Component {
             <div className='columns is-tablet'>
               <div className='column is-3-tablet'>
                 <this.TemplateControls />
-                <this.RenderControls />
+                <RenderControls
+                  selectedStudent={this.state.selectedStudent}
+                  setStudent={student => {
+                    this.setState({
+                      selectedStudent: student
+                    }, this.renderTemplate)
+                  }}
+                />
                 <EmailControls
                   exam={this.props.exam}
                   student={this.state.selectedStudent}

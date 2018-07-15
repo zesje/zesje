@@ -78,15 +78,9 @@ class EmailIndividualControls extends React.Component {
   render () {
     let email = ''
     let disabled = true
-    if (this.props.student === null) {
-      disabled = true
-      email = ''
-    } else if (!this.props.student.email) {
-      disabled = true
-      email = '<no email provided>'
-    } else {
-      disabled = false
-      email = this.props.student.email
+    if (this.props.student !== null) {
+      disabled = this.props.student.email === null
+      email = this.props.student.email || '<no email provided>'
     }
     return (
       <div

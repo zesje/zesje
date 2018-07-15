@@ -14,7 +14,7 @@ from .. import emails
 from ..database import Exam, Student
 from ._helpers import abort
 
-default_email_template = textwrap.dedent(str.strip("""
+default_email_template = str.strip(textwrap.dedent("""
     Dear {{student.first_name.split(' ') | first }} {{student.last_name}},
 
     Below please find attached the scans of your exam and our feedback.

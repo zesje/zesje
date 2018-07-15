@@ -49,12 +49,12 @@ const CCField = (props) => (
   </div>
 )
 
-class EmailControls extends React.Component {
+class EmailIndividualControls extends React.Component {
   state = {
-    attachPDF: true,
+    attachPDF: true
   }
 
-  EmailIndividualControls = () => {
+  render () {
     let email = ''
     let disabled = true
     if (this.props.student === null) {
@@ -84,8 +84,14 @@ class EmailControls extends React.Component {
       </div>
     )
   }
+}
 
-  EmailEveryoneControls = () => {
+class EmailEveryoneControls extends React.Component {
+  state = {
+    attachPDF: true
+  }
+
+  render () {
     return (
       <div style={{width: '100%'}}>
         <AttachPDF
@@ -100,7 +106,9 @@ class EmailControls extends React.Component {
       </div>
     )
   }
+}
 
+class EmailControls extends React.Component {
   render () {
     return (
       <div className='panel'>
@@ -109,11 +117,22 @@ class EmailControls extends React.Component {
           panels={[
             {
               name: 'Individual',
-              panel: <this.EmailIndividualControls />
+              panel: (
+                <EmailIndividualControls
+                  exam={this.props.exam}
+                  student={this.props.student}
+                  template={this.props.template}
+                />
+              )
             },
             {
               name: 'Everyone',
-              panel: <this.EmailEveryoneControls />
+              panel: (
+                <EmailEveryoneControls
+                  exam={this.props.exam}
+                  template={this.props.template}
+                />
+              )
             }
           ]}
         />

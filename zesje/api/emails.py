@@ -142,7 +142,7 @@ class Email(Resource):
 
     def _send_single(self, exam_id, student_id, template, attach):
         message = build_email(exam_id, student_id, template, attach)
-        failed = emails.send([message])
+        failed = emails.send({student_id: message})
         if failed:
             abort(
                 500,

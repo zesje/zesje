@@ -4,8 +4,7 @@ import Fuse from 'fuse.js'
 
 const theme = {
   input: {
-    width: '25vw',
-    minWidth: '225px'
+    width: '100%'
   },
   suggestionsContainerOpen: {
     display: 'block',

@@ -17,7 +17,7 @@ const renderTemplate = async (props) => {
 
 const templateRenderError = message => (
   Notification.error(
-    `Unable to render template: ${message || ''}`,
+    message || 'Unable to render template',
     {
       duration: 3
     }
@@ -45,7 +45,7 @@ class TemplateEditor extends React.Component {
     renderedTemplate: null
   }
 
-  updateTemplate = async (props) => {
+  updateRenderedTemplate = async (props) => {
     try {
       let renderedTemplate = await renderTemplate(props)
       this.setState({ renderedTemplate })
@@ -60,23 +60,36 @@ class TemplateEditor extends React.Component {
   }
 
   componentWillReceiveProps (nextProps) {
-    if (nextProps.student === null) {
-      return
-    }
-    if (this.props.student === null ||
-        nextProps.student.id !== this.props.student.id) {
-      this.updateTemplate(nextProps)
+    const isInitialized = (
+      this.props.student !== null &&
+      this.props.template !== null
+    )
+    const willBeInitialized = (
+      nextProps.student !== null &&
+      nextProps.template !== null
+    )
+
+    if (!isInitialized && willBeInitialized) {
+      this.updateRenderedTemplate(nextProps)
+    } else if (isInitialized &&
+               nextProps.student.id !== this.props.student.id) {
+      // Note that we only re-render here whenever the *student* changes.
+      // Updates to the template itself only trigger a re-render for 'onblur'
+      this.updateRenderedTemplate(nextProps)
     }
   }
 
   TemplateEditor = () => {
+    // We call 'onTemplateChange' on every keystroke, as the container
+    // needs to detect whenever anything changes, however we only re-render
+    // due to template changes when we click away (blur) the template editor.
     return (
       <textarea
         className='textarea'
         style={{height: '100%'}}
         value={this.props.template || ''}
         onChange={evt => this.props.onTemplateChange(evt.target.value)}
-        onBlur={() => this.updateTemplate(this.props)}
+        onBlur={() => this.updateRenderedTemplate(this.props)}
       />
     )
   }

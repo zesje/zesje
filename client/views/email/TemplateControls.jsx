@@ -6,7 +6,7 @@ import * as api from '../../api.jsx'
 
 const templateSaveError = message => (
   Notification.error(
-    `Unable to save template: ${message || ''}`,
+    message || 'Unable to save template',
     {
       duration: 3
     }

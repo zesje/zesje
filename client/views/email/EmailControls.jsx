@@ -115,11 +115,12 @@ class EmailIndividualControls extends React.Component {
   }
 
   render () {
+    let p = this.props
     let email = ''
     let disabled = true
-    if (this.props.student !== null) {
-      disabled = this.props.student.email === null
-      email = this.props.student.email || '<no email provided>'
+    if (p.student !== null) {
+      disabled = p.student.email === null || p.template === null
+      email = p.student.email || '<no email provided>'
     }
     return (
       <div
@@ -174,6 +175,7 @@ class EmailEveryoneControls extends React.Component {
   }
 
   render () {
+    let disabled = this.props.template === null
     return (
       <div style={{width: '100%'}}>
         <AttachPDF
@@ -184,6 +186,7 @@ class EmailEveryoneControls extends React.Component {
         <SendWithConfirmationButton
           sending={this.state.sending}
           onSend={this.sendEmail}
+          disabled={disabled}
         />
       </div>
     )

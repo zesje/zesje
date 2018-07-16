@@ -8,6 +8,7 @@ function withoutDuplicates (items, keyFn = (x => x)) {
   for (const item of items) {
     if (!seenKeys.has(keyFn(item))) {
       uniqueItems.push(item)
+      seenKeys.add(keyFn(item))
     }
   }
   return uniqueItems
@@ -21,7 +22,7 @@ class StudentControls extends React.Component {
   componentWillMount () {
     // Need to de-duplicate, as some students
     const students = withoutDuplicates(
-      this.props.exam.submissions.map(s => s.student),
+      this.props.exam.submissions.map(s => s.student).filter(s => s !== null),
       student => student.id
     )
     this.setState({ students })

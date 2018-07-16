@@ -1,8 +1,17 @@
 import React from 'react'
 
-import * as api from '../../api.jsx'
-
 import SearchBox from '../../components/SearchBox.jsx'
+
+function withoutDuplicates (items, keyFn = (x => x)) {
+  let seenKeys = new Set()
+  let uniqueItems = []
+  for (const item of items) {
+    if (!seenKeys.has(keyFn(item))) {
+      uniqueItems.push(item)
+    }
+  }
+  return uniqueItems
+}
 
 class StudentControls extends React.Component {
   state = {
@@ -10,12 +19,13 @@ class StudentControls extends React.Component {
   }
 
   componentWillMount () {
-    api
-      .get('students')
-      .then(students => {
-        this.setState({ students })
-        this.props.setStudent(students[0])
-      })
+    // Need to de-duplicate, as some students
+    const students = withoutDuplicates(
+      this.props.exam.submissions.map(s => s.student),
+      student => student.id
+    )
+    this.setState({ students })
+    this.props.setStudent(students[0])
   }
 
   render () {

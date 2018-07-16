@@ -33,6 +33,7 @@ class Email extends React.Component {
                   template={this.state.template}
                 />
                 <StudentControls
+                  exam={this.props.exam}
                   selectedStudent={this.state.selectedStudent}
                   setStudent={student => {
                     this.setState({

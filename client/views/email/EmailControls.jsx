@@ -104,11 +104,16 @@ class EmailIndividualControls extends React.Component {
         }
       )
       Notification.success(`Sent email to ${this.props.student.email}`)
-    } catch (response) {
-      let error = response.status === 400 ? (await response.json()).message : ''
-      Notification.error(
-        `Failed to send email to ${this.props.student.email}: ${error}`
-      )
+      return
+    } catch (error) {
+      try {
+        const resp = await error.json()
+        Notification.error(resp.message, { duration: 3 })
+      } catch (error) {
+        Notification.error(
+          `Failed to send email to ${this.props.student.email}`
+        )
+      }
     } finally {
       this.setState({ sending: false })
     }

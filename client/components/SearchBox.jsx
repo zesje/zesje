@@ -103,7 +103,7 @@ class SearchBox extends React.Component {
 
     // Autosuggest will pass through all these props to the input.
     const inputProps = {
-      className: 'input is-rounded has-text-centered is-link',
+      className: 'input has-text-centered',
       type: 'text',
       placeholder: this.props.placeholder,
       value,

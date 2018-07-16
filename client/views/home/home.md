@@ -5,24 +5,15 @@
 
 As its name suggests, Zesje has been designed as a **minimal working prototype** during our free time so do not expect any degree of polish. Still it can provide a lot of advantages over manual grading, especially when dealing with large courses.
 
-This notebook is a tutorial and a reference documentation for Zesje. If you want to try out different software features, there is a sandbox deployment available at https://sandbox.grading.quantumtinkerer.tudelft.nl; try it out without fear of breaking things. Because of spam concerns, its email sending capabilities are limited to the [`sharklasers.com`](https://sharklasers.com) domain that provides temporary mailboxes accessible by anyone.
-
-## Benefits of using zesje
-
-+ Moving the grading online: you don't need to deal with paper, updating and processing grades is automated. The grading can take place from anywhere.
-+ Zesje is faster than paper-based grading, especially for large courses
-+ Make grading streamlined by allowing to follow a grading scheme that is both clearly defined and easy to adjust.
-+ Export of grades in various formats for postprocessing.
-+ Quick built-in analysis for a progress overview.
-+ Ability to email students their solutions together with detailed feedback. From the student perspective this is the killer feature.
-+ Fully open source: if you want to modify anything and implemennt new functionality, you are welcome to do so.
+This notebook is a brief reference of Zesje workflow.
 
 ## Limitations and disclaimer
 
-+ **Zesje is a prototype-level software**: it is tested by people using it. It is not developed by professional web developers, and it certainly has many rough edges.
++ **Zesje is a prototype-level software**: it is so far tested by people using it. It is not developed by professional web developers, and it certainly has many rough edges.
 + If something breaks, we are very sorry. Most likely we'd be able to fix your problem, but we do not provide any guarantees.
-+ Fully trusted users: anyone with the login and password for your zesje installation can do anything.
-+ No change history. We do daily backups, but you cannot revert your changes manually.
++ Fully trusted users: anyone with the login and password for your Zesje installation can do anything you can.
++ No change history. When we host Zesje do daily backups, but it does not come out of the box and you cannot revert your changes manually.
++ Zesje was written for use within TU Delft. If you want to use it for outside courses, expect to need to tweak it.
 
 ## Support
 
@@ -40,11 +31,13 @@ Each course will need its own zesje installation, but a single installation can 
 
 ### Adding students
 
-1. Export the student information from Brightspace. To do that go to the course page, select *Grades* → *Enter grades* → *Export grades*. Then choose the options as shown: ![](brightspace_export.png)
+1. Export the student information from Brightspace LMS. To do that go to the course page, select *Grades* → *Enter grades* → *Export grades*. Then choose the options as shown:
+
+![](brightspace_export.png)
+
 2. Browse to [students](/students) and upload the resulting `.csv` file.
 
-You can add more students and edit existing student information at any time. It is currently not possible to remove students from zesje.
-You can also add students manually one by one.
+You can add more students and edit existing student information at any time. It is currently not possible to remove students from Zesje.
 
 ### Adding graders
 
@@ -54,21 +47,23 @@ Go to the [graders page](/graders) and add all the names of the graders. Current
 
 #### Important warnings:
 + Since every copy of an exam should have a unique copy number, you shouldn't print the same copies twice.
-+ Use sufficient space for each answer, and provide an extra answerbox at the end of the exam in case the students run out of space. If that fails, have a student submit **two complete copies of the exam**.
++ Use sufficient space for each answer. If the students do run out of space, they should submit **two complete copies of the exam** (where most problems may be left blank).
 
 ### Create the exam in zesje
 
-1. Upload the pdf of your exam at this [URL (exam selector → Add new)](/exams).
+1. Upload the pdf of your exam at this [URL](/exams) (exam selector → Add new).
 2. Check that the student identification widget and the barcode do not overlap with other text.
 3. Mark the places where the students are supposed to write their answers in the preview and add problem names.
 4. Finalize the exam (do check that everything looks correct!)
 5. Prepare multiple exam copies for printing.
 
+Before finalizing an exam you may delete it if you realize that something is wrong.
+
 ## Scanning and uploading the solutions
 
 ### Find a good scanner
 
-There are two types of scanners in TUD: Ricoh Alficio 3001 and Ricoh Alficio 4501. The 4501 model will take several minutes for a large exam, while 3001 lasts more than an hour. Find the 4501 model and use it (there is one in F183 for example).
+There are two types of scanners in TU Delft: Ricoh Alficio 3001 and Ricoh Alficio 4501. The 4501 model will take several minutes for a large exam, while 3001 lasts more than an hour. Find the 4501 model and use it (there is one in F183 for example).
 
 ### Scanner settings
 
@@ -98,11 +93,12 @@ Finally select the correct exam and upload the files via the submissions tab.
 
 Check that the students are identified correctly in the [students](/students) tab. This is necessary to ensure that all the student numbers are identified correctly.
 
+When a student number is identified automatically from the submission, it is highlighted in blue. Click on it or hit enter to confirm the selection; this will change the highlight color to green.
+
+* If the student was not identified correctly, type their name or student number into the search box and hit enter once you find the right student.
+* If the student information is incorrect, click on the "pencil" icon next to the student name to edit it.
+
 ## Grading an exam
-
-**This section of the documentation is not up to date yet.**
-
-### Video summary:
 
 ### Assiging grades and feedback
 + Select the feedback options
@@ -118,37 +114,33 @@ Check that the students are identified correctly in the [students](/students) ta
 While you are completely free in choosing the grading scheme, and you should choose the workflow that works best for you, there are several things that you may want to follow.
 
 + **Important**: Zesje uses integers for all scores. Ensure that the smallest amount of score differences is 1 point.
-+ Keep one option with 0 points, and one with the maximal score for the problem.
++ Zejse considers solutions graded when at least one feedback is selected. Therefore keep one option with 0 points, and one with the maximal score for the problem.
 + Since the feedback the students see is based on the feedback options you select, for most cases it makes sense to give the students a maximal score and subtract some points for the omissions they made.
 + Choose short and easy to remember names for the feedback options. In the extended description try to outline the part of the solution. The students can see this in an email.
 
-### Modifying a specific student
+### Updating a specific student
 
-If you need to navigate to a specific student, use the "jump to student" text field. Thanks to autocompletion, it allows you to search a student by name or their student number.
+If you need to navigate to a specific student, use the "jump to student" text field. Thanks to auto-completion, it allows you to search a student by name or their student number.
 
 ## Processing results
 
-**UNFINISHED**
+Check the overall results in the [overview](/overview) tab.
 
-Most of the parts should be self-explanatory, however let us list the currently available options:
+Here are some important checks you can perform:
 
-+ **Problem statistics and scores**:
-  Available in the *problem statistics* tab of the [grade](../grade.ipynb) dashboard, it shows a quick-and-dirty summary of the problem grading.
-+ **Exam statistics report**:
-  Available in the *summary & email* tab of the [grade](../grade.ipynb) dashboard. A rendered html summary with the detailed but anonymized data that shows the score distributions, all the feedback options, scores, and clarifications. Depending on your preferences, it may be shared with the students.
-+ **Export grades**
-  Available in the *summary & email* tab of the [grade](../grade.ipynb) dashboard.
-  - **Spreadsheet (detailed)**: an Excel file with full information about the exam.
-  - **Spreadsheet (summary)**: an Excel file containing only scores per problem.
-  - **DafaFrame (detailed)**: a [pandas](https://pandas.pydata.org) dataframe with all information, useful for advanced data analysis.
-  - **Complete database**: the full internal database, can be used to back up the data and restore (albeit the restoring will require our help).
++ The problems that are not completely graded are greyed out; check that the grading is complete.
++ Zesje is not opinionated about the exam design, however we compute two statistical indicators:
+  - the Rir coefficient (the correlation between a question and the rest of the questions). If this correlation becomes low or negative, the question is likely random and does not correlate with learner's success.
+  - [Cronbach's α](https://en.wikipedia.org/wiki/Cronbach%27s_alpha): the measure of whether the exam checks one or multiple skills. A low value may indicate a need to review the learning goals.
++ Further, for each problem Zesje counts how many time each feedback option was assigned, and shows the points and the detailed description for all of those. Verify that these are understandable, and that the overall grading scheme is reasonable.
 
 ## Sending feedback
 
-### Prepare an email template
-In the *Individual email* tab of the [grade](../grade.ipynb) dashboard you can create an template that will be used to send personalized feedback to the students.
+If you wish to notify the students of their results, you may send [email](/email).
 
-**Warning**: templates are currently not saved, copy them externally if you want to edit them afterwards!
+### Prepare an email template
+
+First, you need to prepare the email template. In the [email](/email) tab you see the template edit field with next to it a resulting email shown for a specific student.
 
 The template is written using the [Jinja 2](http://jinja.pocoo.org/docs/2.9/templates/#template-designer-documentation) templating language. This allows you to intermix regular text with special commands that will do things like optionally include some text if a certain condition is satisfied, or print the contents of some variable (such as the student's name or grade).
 
@@ -209,9 +201,12 @@ Within your templates you can use the **`student`** and **`results`** variables.
 
 ### Send feedback to indivdual students or everyone
 
-After composing the template you can press the green *Refresh* button to render the template for the current student. It is a good idea to do this for a few students before sending any feedback by email, to make sure that your template is working.
+It is a good idea check your template by rendering it for a few students before sending any feedback by email, to make sure that your template is working.
 
-From the same tab (*Individual email*) you can also email the rendered template *for the currently selected student*. It is a good idea to do this for several students and email the results to yourself (by supplying your email in the *Recipients* text box) to ensure that the output is satisfactory. By default the email is not sent to the student.
+You can now email the rendered template to the currently selected student, optionally specifying a CC, which could be a course instructor.
 
-To send personalized emails to all students, use the *Email results to everyone* button in the *summary & email* tab in the [grade](../grade.ipynb) dashboard. You must first enable this button by checking the *Yes, email everyone* checkbox. Note that sending the emails to everyone may take some time, and it is impossible to interrupt this process. That being said, do not browse away from the *summary & email* tab until the process is completed; the blue progress bar on the top of the screen will disappear.
-You will see an error message if some emails were not sent.
+To send personalized emails to all students, use the *everyone* tab in the email panel. Sending the emails to everyone may take some time, and it is impossible to interrupt this process. That being said, do not browse away, so that you can see if anything goes wrong. You will see an error message if some emails were not sent.
+
+## Exporting data
+
+Finally, in the "export" drop-down menu of the navigation bar you can export the data in several commonly used formats.

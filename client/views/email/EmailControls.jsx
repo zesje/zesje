@@ -77,7 +77,7 @@ const SendWithConfirmationButton = (props) => (
       'button is-primary is-fullwidth ' +
       (props.sending ? 'is-loading' : null)
     }
-    confirmationText={'You are about to email all the students on the course'}
+    confirmationText={'Email all students who took this exam?'}
     contentText={'This may take some time.'}
     onConfirm={props.onSend}
     disabled={props.disabled}

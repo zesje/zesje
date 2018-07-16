@@ -2,7 +2,7 @@
 from pathlib import Path
 import textwrap
 
-from jinja2 import Template, TemplateSyntaxError
+from jinja2 import Template, TemplateSyntaxError, UndefinedError
 
 from flask import current_app as app
 from flask_restful import Resource, reqparse
@@ -62,8 +62,11 @@ class EmailTemplate(Resource):
         email_template = self.put_parser.parse_args().template
         try:
             Template(email_template)
-        except TemplateSyntaxError:
-            return dict(status=400, message="Syntax error in the template"), 400
+        except TemplateSyntaxError as error:
+            return dict(
+                status=400,
+                message=f"Syntax error in the template: {error.message}"
+            ), 400
 
         with open(template_path(exam_id), 'w') as f:
             f.write(email_template)
@@ -78,10 +81,25 @@ class RenderedEmailTemplate(Resource):
         template = self.post_parser.parse_args().template
         try:
             return emails.render(exam_id, student_id, template)
-        except TemplateSyntaxError:
-            return dict(status=400, message="Syntax error in the template"), 400
-        except Exception:
-            return dict(status=400, message="Failed to render the template."), 400
+        except TemplateSyntaxError as error:
+            return dict(
+                status=400,
+                message=f"Syntax error in the template: {error.message}"
+            ), 400
+        except UndefinedError as error:
+            return dict(
+                status=400,
+                message=f"Undefined variables in the template: {error.message}"
+            ), 400
+        except RuntimeError as error:
+            if 'did not make a submission' in error.message:
+                return dict(
+                    status=400,
+                    message=f"Student #{student_id} did not make a "
+                             "submission for this exam"
+                ), 400
+            else:
+                raise
 
 
 class Email(Resource):

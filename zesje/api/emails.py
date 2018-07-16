@@ -11,6 +11,7 @@ from pony import orm
 
 from .. import emails
 from ..database import Exam
+from ._helpers import abort
 
 default_email_template = textwrap.dedent(str.strip("""
     Dear {{student.first_name.split(' ') | first }} {{student.last_name}},
@@ -39,6 +40,30 @@ def template_path(exam_id):
     data_dir = Path(app.config['DATA_DIRECTORY'])
     template_file = data_dir / f'{exam_id}_data' / 'email_template.j2'
     return template_file
+
+
+def render_email(exam_id, student_id, template):
+    try:
+        return emails.render(exam_id, student_id, template)
+    except TemplateSyntaxError as error:
+        abort(
+            400,
+            message=f"Syntax error in the template: {error.message}",
+        )
+    except UndefinedError as error:
+        abort(
+            400,
+            message=f"Undefined variables in the template: {error.message}",
+        )
+    except RuntimeError as error:
+        if 'did not make a submission' in error.message:
+            abort(
+                400,
+                message=f"Student #{student_id} did not make a "
+                        "submission for this exam"
+            )
+        else:
+            raise
 
 
 class EmailTemplate(Resource):
@@ -79,27 +104,7 @@ class RenderedEmailTemplate(Resource):
 
     def post(self, exam_id, student_id):
         template = self.post_parser.parse_args().template
-        try:
-            return emails.render(exam_id, student_id, template)
-        except TemplateSyntaxError as error:
-            return dict(
-                status=400,
-                message=f"Syntax error in the template: {error.message}"
-            ), 400
-        except UndefinedError as error:
-            return dict(
-                status=400,
-                message=f"Undefined variables in the template: {error.message}"
-            ), 400
-        except RuntimeError as error:
-            if 'did not make a submission' in error.message:
-                return dict(
-                    status=400,
-                    message=f"Student #{student_id} did not make a "
-                             "submission for this exam"
-                ), 400
-            else:
-                raise
+        return render_email(exam_id, student_id, template)
 
 
 class Email(Resource):

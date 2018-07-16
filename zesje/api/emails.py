@@ -135,6 +135,14 @@ class Email(Resource):
         template = args['template']
         attach = args['attach']
 
+        with orm.db_session:
+            if not all(Exam[exam_id].submissions.signature_validated):
+                abort(
+                    409,
+                    message="All submissions must be validated before "
+                            "sending emails."
+                )
+
         if student_id is not None:
             return self._send_single(exam_id, student_id, template, attach)
         else:
@@ -153,12 +161,6 @@ class Email(Resource):
     def _send_all(self, exam_id, template, attach):
         with orm.db_session:
             student_ids = set(Exam[exam_id].submissions.student.id)
-            if not all(Exam[exam_id].submissions.signature_validated):
-                abort(
-                    409,
-                    message="All submissions must be validated before "
-                            "sending mass emails"
-                )
 
         failed_to_build = list()
         to_send = dict()

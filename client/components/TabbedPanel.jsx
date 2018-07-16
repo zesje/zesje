@@ -24,9 +24,21 @@ class TabbedPanel extends React.Component {
             ))
           }
         </div>
-        <div className='panel-block'>
-          {this.props.panels[this.state.selected].panel}
-        </div>
+        {
+          this.props.panels.map(({ panel }, i) => (
+            <div
+              className='panel-block'
+              key={i}
+              style={
+                this.state.selected !== i
+                  ? { display: 'none' }
+                  : null
+              }
+            >
+              {panel}
+            </div>
+          ))
+        }
       </React.Fragment>
     )
   }

@@ -4,13 +4,14 @@ import textwrap
 
 from jinja2 import Template, TemplateSyntaxError, UndefinedError
 
+import werkzeug.exceptions
 from flask import current_app as app
 from flask_restful import Resource, reqparse
 
 from pony import orm
 
 from .. import emails
-from ..database import Exam
+from ..database import Exam, Student
 from ._helpers import abort
 
 default_email_template = textwrap.dedent(str.strip("""
@@ -55,15 +56,24 @@ def render_email(exam_id, student_id, template):
             400,
             message=f"Undefined variables in the template: {error.message}",
         )
-    except RuntimeError as error:
-        if 'did not make a submission' in error.message:
+
+
+def build_email(exam_id, student_id, template, attach):
+        with orm.db_session:
+            student = Student[student_id]
+        if not student.email:
             abort(
-                400,
-                message=f"Student #{student_id} did not make a "
-                        "submission for this exam"
+                409,
+                message=f'Student #{student_id} has no email address'
             )
-        else:
-            raise
+
+        return emails.build(
+            student.email,
+            render_email(exam_id, student_id, template),
+            emails.build_solution_attachment(exam_id, student_id)
+            if attach
+            else None
+        )
 
 
 class EmailTemplate(Resource):
@@ -125,22 +135,76 @@ class Email(Resource):
         template = args['template']
         attach = args['attach']
 
-        with orm.db_session:
-            if not all(Exam[exam_id].submissions.signature_validated):
-                return dict(
-                    status=400,
-                    message="All submissions must be validated before sending emails."
-                ), 400
-
         if student_id is not None:
-            student_ids = [student_id]
+            return self._send_single(exam_id, student_id, template, attach)
         else:
-            with orm.db_session:
-                student_ids = set(Exam[exam_id].submissions.student.id)
+            return self._send_all(exam_id, template, attach)
 
-        messages = [
-            emails.build(exam_id, student_id, template, attach=attach)
-            for student_id in student_ids
-        ]
+    def _send_single(self, exam_id, student_id, template, attach):
+        message = build_email(exam_id, student_id, template, attach)
+        failed = emails.send([message])
+        if failed:
+            abort(
+                500,
+                message=f'Failed to send email to {student.email}'
+            )
+        return dict(status=200)
 
-        emails.send(messages)
+    def _send_all(self, exam_id, template, attach):
+        with orm.db_session:
+            student_ids = set(Exam[exam_id].submissions.student.id)
+            if not all(Exam[exam_id].submissions.signature_validated):
+                abort(
+                    409,
+                    message="All submissions must be validated before "
+                            "sending mass emails"
+                )
+
+        failed_to_build = list()
+        to_send = dict()
+        for student_id in student_ids:
+            try:
+                to_send[student_id] = build_email(exam_id, student_id,
+                                                  template, attach)
+            except werkzeug.exceptions.Conflict as error:
+                # No email address provided. Any other failures are errors,
+                # so we let other exceptions raise.
+                failed_to_build.append(student_id)
+
+        failed_to_send = emails.send(to_send)
+
+        sent = set(student_ids) - (set(failed_to_send) | set(failed_to_build))
+        sent = list(sent)
+
+        if failed_to_build or failed_to_send:
+            if len(sent) > 0:
+                return dict(
+                    status=206,
+                    message='Failed to send some emails',
+                    sent=sent,
+                    failed_to_build=failed_to_build,
+                    failed_to_send=failed_to_send,
+                ), 206
+            elif not failed_to_send:  # all failed to build
+                abort(
+                    409,
+                    message='No students have email addresses specified',
+                ), 409
+            elif not failed_to_build:  # all failed to send
+                abort(
+                    500,
+                    message='Failed to send emails',
+                    failed_to_send=failed_to_send,
+                ), 500
+            else:
+                abort(
+                    500,
+                    message=(
+                        f'Email addresses unspecified for {len(failed_to_build)} students '
+                        f'and {len(failed_to_send)} messages failed to send.'
+                    ),
+                    failed_to_build=failed_to_build,
+                    failed_to_send=failed_to_send,
+                ), 500
+        else:
+            return dict(status=200)

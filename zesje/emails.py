@@ -11,7 +11,7 @@ import jinja2
 from wand.image import Image
 from pony import orm
 
-from .database import Submission, Student
+from .database import Submission
 from . import statistics
 
 
@@ -45,44 +45,52 @@ def render(exam_id, student_id, template):
     return template.render(student=student, results=results)
 
 
-def build(exam_id, student_id, template, attach=True,
+def build_solution_attachment(exam_id, student_id):
+    solution = solution_pdf(exam_id, student_id)
+    maintype, subtype = 'application', 'pdf'
+    pdf = MIMEBase(maintype, subtype)
+    pdf.set_payload(solution.read())
+    encoders.encode_base64(pdf)
+    # Set the filename parameter
+    pdf.add_header('Content-Disposition', 'attachment',
+                   filename=f"{student_id}.pdf")
+    return pdf
+
+
+def build(email_to, content, attachment=None,
           subject='Your results',
           email_from='no-reply@tudelft.nl'):
-
-    text = render(exam_id, student_id, template)
-    with orm.db_session:
-        student_email = Student[student_id].email
 
     msg = MIMEMultipart()
     msg['Subject'] = subject
     msg['From'] = email_from
-    msg['To'] = student_email
+    msg['To'] = email_to
     msg['Reply-to'] = email_from
-    msg.attach(MIMEText(text, 'plain'))
+    msg.attach(MIMEText(content, 'plain'))
 
-    if attach:
-        solution = solution_pdf(exam_id, student_id)
-        maintype, subtype = 'application', 'pdf'
-        pdf = MIMEBase(maintype, subtype)
-        pdf.set_payload(solution.read())
-        encoders.encode_base64(pdf)
-        # Set the filename parameter
-        pdf.add_header('Content-Disposition', 'attachment',
-                       filename=f"{student_id}.pdf")
-        msg.attach(pdf)
+    if attachment:
+        msg.attach(attachment)
+
     return msg
 
 
 def send(messages):
-    """Send a list of messages.
+    """Send a dict of messages
 
-    returns the sequential numbers of messages that were not sent.
+    Takes a dict where the values are the messages to send, and
+    the keys are unique identifiers.
+
+    Returns a list of the identifiers for messages that failed to send.
     """
     failed = []
     with smtplib.SMTP('dutmail.tudelft.nl', 25) as s:
-        for number, msg in enumerate(messages):
+        for identifier, message in messages.items():
             try:
-                s.sendmail('noreply@tudelft.nl', [msg['To']], msg.as_string())
+                s.sendmail(
+                    'noreply@tudelft.nl',
+                    [message['To']],
+                    message.as_string()
+                )
             except smtplib.SMTPException:
-                failed.append(number)
+                failed.append(identifier)
     return failed

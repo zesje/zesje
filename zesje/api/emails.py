@@ -146,7 +146,7 @@ class Email(Resource):
         if failed:
             abort(
                 500,
-                message=f'Failed to send email to {student.email}'
+                message=f'Failed to send email to student #{student_id}'
             )
         return dict(status=200)
 

@@ -3,6 +3,7 @@ import Loadable from 'react-loadable'
 import { hot } from 'react-hot-loader'
 import { BrowserRouter as Router, Route, Switch } from 'react-router-dom'
 import 'bulma/css/bulma.css'
+import 'react-bulma-notification/build/css/index.css'
 import 'font-awesome/css/font-awesome.css'
 
 import * as api from './api.jsx'
@@ -41,6 +42,10 @@ const Graders = Loadable({
 })
 const Overview = Loadable({
   loader: () => import('./views/Overview.jsx'),
+  loading: Loading
+})
+const Email = Loadable({
+  loader: () => import('./views/Email.jsx'),
   loading: Loading
 })
 const Fail = Loadable({
@@ -166,6 +171,9 @@ class App extends React.Component {
             )} />
             <Route path='/overview' render={() => (
               exam.submissions.length ? <Overview exam={exam} /> : <Fail message='No exams uploaded. Please do not bookmark URLs' />
+            )} />
+            <Route path='/email' render={() => (
+              exam.submissions.length ? <Email exam={exam} /> : <Fail message='No exams uploaded. Please do not bookmark URLs' />
             )} />
             <Route path='/graders' render={() =>
               <Graders updateGraderList={this.menu.current ? this.menu.current.updateGraderList : null} />} />

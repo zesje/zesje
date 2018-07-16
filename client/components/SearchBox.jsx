@@ -4,8 +4,7 @@ import Fuse from 'fuse.js'
 
 const theme = {
   input: {
-    width: '25vw',
-    minWidth: '225px'
+    width: '100%'
   },
   suggestionsContainerOpen: {
     display: 'block',
@@ -37,6 +36,12 @@ class SearchBox extends React.Component {
   }
 
   static getDerivedStateFromProps (nextProps, prevState) {
+    if (nextProps.selected === null) {
+      return {
+        value: '',
+        selectedID: null
+      }
+    }
     if (nextProps.selected.id !== prevState.selectedID) {
       return {
         value: nextProps.renderSelected(nextProps.selected),
@@ -97,7 +102,7 @@ class SearchBox extends React.Component {
 
     // Autosuggest will pass through all these props to the input.
     const inputProps = {
-      className: 'input is-rounded has-text-centered is-link',
+      className: 'input has-text-centered',
       type: 'text',
       placeholder: this.props.placeholder,
       value,

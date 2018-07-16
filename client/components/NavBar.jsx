@@ -166,6 +166,7 @@ class NavBar extends React.Component {
             <Link className='navbar-item' to='/students'>Students</Link>
             <Link className='navbar-item' style={examStyle} to='/grade'><strong><i>Grade</i></strong></Link>
             <Link className='navbar-item' style={statsStyle} to='/overview'>Overview</Link>
+            <Link className='navbar-item' style={statsStyle} to='/email'>Email</Link>
             <ExportDropdown className='navbar-item' exam={this.props.exam} />
           </div>
 

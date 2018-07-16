@@ -58,7 +58,7 @@ def render_email(exam_id, student_id, template):
         )
 
 
-def build_email(exam_id, student_id, template, attach):
+def build_email(exam_id, student_id, template, attach, copy_to=None):
         with orm.db_session:
             student = Student[student_id]
         if not student.email:
@@ -72,7 +72,8 @@ def build_email(exam_id, student_id, template, attach):
             render_email(exam_id, student_id, template),
             emails.build_solution_attachment(exam_id, student_id)
             if attach
-            else None
+            else None,
+            copy_to=copy_to,
         )
 
 
@@ -122,6 +123,7 @@ class Email(Resource):
     post_parser = reqparse.RequestParser()
     post_parser.add_argument('template', type=str, required=True)
     post_parser.add_argument('attach', type=bool, required=True)
+    post_parser.add_argument('copy_to', type=str, required=False)
 
     def post(self, exam_id, student_id=None):
         """Send an email.
@@ -134,6 +136,13 @@ class Email(Resource):
         args = self.post_parser.parse_args()
         template = args['template']
         attach = args['attach']
+        copy_to = args['copy_to']
+
+        if student_id is None and copy_to is not None:
+            abort(
+                409,
+                message="Not CC-ing all emails from the exam."
+            )
 
         with orm.db_session:
             if not all(Exam[exam_id].submissions.signature_validated):
@@ -144,12 +153,12 @@ class Email(Resource):
                 )
 
         if student_id is not None:
-            return self._send_single(exam_id, student_id, template, attach)
+            return self._send_single(exam_id, student_id, template, attach, copy_to)
         else:
             return self._send_all(exam_id, template, attach)
 
-    def _send_single(self, exam_id, student_id, template, attach):
-        message = build_email(exam_id, student_id, template, attach)
+    def _send_single(self, exam_id, student_id, template, attach, copy_to):
+        message = build_email(exam_id, student_id, template, attach, copy_to=copy_to)
         failed = emails.send({student_id: message})
         if failed:
             abort(

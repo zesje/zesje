@@ -100,7 +100,8 @@ class EmailIndividualControls extends React.Component {
         `email/${this.props.exam.id}/${this.props.student.id}`,
         {
           template: this.props.template,
-          attach: this.state.attachPDF
+          attach: this.state.attachPDF,
+          copy_to: this.state.copyTo
         }
       )
       Notification.success(`Sent email to ${this.props.student.email}`)

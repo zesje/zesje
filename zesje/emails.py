@@ -57,7 +57,7 @@ def build_solution_attachment(exam_id, student_id):
     return pdf
 
 
-def build(email_to, content, attachment=None,
+def build(email_to, content, attachment=None, copy_to=None,
           subject='Your results',
           email_from='no-reply@tudelft.nl'):
 
@@ -65,6 +65,8 @@ def build(email_to, content, attachment=None,
     msg['Subject'] = subject
     msg['From'] = email_from
     msg['To'] = email_to
+    if copy_to is not None:
+        msg['Cc'] = copy_to
     msg['Reply-to'] = email_from
     msg.attach(MIMEText(content, 'plain'))
 
@@ -88,7 +90,7 @@ def send(messages):
             try:
                 s.sendmail(
                     'noreply@tudelft.nl',
-                    [message['To']],
+                    [message['To'], *message['Cc'].split(',')],
                     message.as_string()
                 )
             except smtplib.SMTPException:

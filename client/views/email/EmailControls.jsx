@@ -110,6 +110,7 @@ class EmailIndividualControls extends React.Component {
         const resp = await error.json()
         Notification.error(resp.message, { duration: 3 })
       } catch (error) {
+        // If we get here there is a bug in the backend
         Notification.error(
           `Failed to send email to ${this.props.student.email}`
         )
@@ -161,19 +162,51 @@ class EmailEveryoneControls extends React.Component {
   sendEmail = async () => {
     this.setState({ sending: true })
     try {
-      await api.post(
+      const response = await api.post(
         `email/${this.props.exam.id}`,
         {
           template: this.props.template,
           attach: this.state.attachPDF
         }
       )
-      Notification.success(`Sent emails to everybody`)
-    } catch (response) {
-      let error = response.status === 400 ? (await response.json()).message : ''
-      Notification.error(
-        `Failed to send email to everybody: ${error}`
-      )
+      if (response.status === 200) {
+        Notification.success(
+          'Sent emails to all students',
+          { duration: 0 }
+        )
+      } else if (response.status === 206) {
+        Notification.success(
+          `Sent emails to ${response.sent.length} students`)
+        if (response.failed_to_send.length > 0) {
+          Notification.error(
+            'Failed to send to the following students: ' +
+            response.failed_to_send.join(', '),
+            { duration: 0 }
+          )
+        }
+        if (response.failed_to_build.length > 0) {
+          Notification.error(
+            'The following students have no email address specified: ' +
+            response.failed_to_build.join(', '),
+            { duration: 0 }
+          )
+        }
+      }
+    } catch (error) {
+      try {
+        let response = await error.json()
+        if (response.status === 400 ||
+            response.status === 409) {
+          Notification.error(
+            'No emails sent: ' + response.message,
+            { duration: 0 })
+        } else if (response.status === 500) {
+          Notification.error(response.message, { duration: 0 })
+        }
+      } catch (error) {
+        // If we get here there is a bug in the backend
+        Notification.error('Failed to send emails')
+      }
     } finally {
       this.setState({ sending: false })
     }

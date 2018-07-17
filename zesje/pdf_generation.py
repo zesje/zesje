@@ -295,7 +295,7 @@ def _add_corner_markers_and_bottom_bar(canv, pagesize):
     ])
 
 
-def page_size(exam_pdf_file):
+def page_is_size(exam_pdf_file, shape, tolerance=0):
     """
     Verify whether all pages of the file have the same shape and return it.
 
@@ -303,11 +303,15 @@ def page_size(exam_pdf_file):
     ----------
     exam_pdf_file : file object or str
         The exam PDF file or its filename.
+    shape : pair of floats
+        Desired page shape in points.
+    tolerance : float
+        Relative tolerance to size differences.
 
     Returns
     -------
-    shape : tuple of floats
-        Page width and height in points.
+    valid : bool
+        If the pdf matches the page sizes
 
     Raises
     ------
@@ -315,11 +319,13 @@ def page_size(exam_pdf_file):
         If the pages have different sizes.
     """
     exam_pdf = PdfReader(exam_pdf_file)
-    mediabox = exam_pdf.pages[0].MediaBox
-    shape = (float(mediabox[2]), float(mediabox[3]))
-    for page in exam_pdf.pages:
-        if (float(page.MediaBox[2]), float(page.MediaBox[3])) != shape:
-            raise ValueError('Exam pages have different sizes.')
+    tol = (shape[0] * tolerance, shape[1] * tolerance)
+
+    def page_is_bad(page):
+        return (abs(float(page.MediaBox[2]) - shape[0]) > tol[0]
+                or abs(float(page.MediaBox[3]) - shape[1]) > tol[1])
+
+    invalid = any(page_is_bad(p) for p in exam_pdf.pages)
 
     # Be considerate and return the caret in the stream to the beginning.
     try:
@@ -328,4 +334,4 @@ def page_size(exam_pdf_file):
         # Not a file
         pass
 
-    return shape
+    return not invalid

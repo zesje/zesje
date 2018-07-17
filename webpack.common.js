@@ -13,7 +13,7 @@ const HtmlWebpackPluginConfig = new HtmlWebpackPlugin({
 })
 
 const zesjeVersion = require('child_process')
-  .execSync('python zesje/_version.py')
+  .execSync('python3 zesje/_version.py')
   .toString()
   .trim()
 

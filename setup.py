@@ -28,6 +28,7 @@ _sdist = cmdclass.pop('sdist')
 class sdist(_sdist):
     def run(self):
         import subprocess
+        subprocess.check_call(['rm', '-r', 'zesje/static'])
         subprocess.check_call(['yarn', 'install'])
         subprocess.check_call(['yarn', 'build'])
         super().run()

@@ -38,7 +38,7 @@ class Email extends React.Component {
                   setStudent={student => {
                     this.setState({
                       selectedStudent: student
-                    }, this.renderTemplate)
+                    }, () => student && this.renderTemplate())
                   }}
                 />
                 <EmailControls

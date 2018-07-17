@@ -73,6 +73,9 @@ zesje/static/
 # Python temporary files
 __pycache__/
 *.pyc
+*.egg-info
+dist/
+build/
 
 # pytest temporary files
 .pytest_cache/

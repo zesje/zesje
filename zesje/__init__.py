@@ -9,7 +9,10 @@ from werkzeug.exceptions import NotFound
 
 from .api import api_bp
 from .database import db
+from ._version import __version__
 
+
+__all__ = ['__version__', 'app']
 
 STATIC_FOLDER_PATH = os.path.join(abspath(dirname(__file__)), 'static')
 

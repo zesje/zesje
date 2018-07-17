@@ -139,6 +139,7 @@ class NavBar extends React.Component {
   render () {
     const gradingEnabled = this.props.exam.submissions.length > 0 && this.props.grader !== null
     const overviewEnabled = this.props.exam.submissions.length > 0
+    const submissionsEnabled = this.props.exam.id !== null
     const exportEnabled = this.props.exam.id !== null
     const emailEnabled = this.props.exam.id !== null
 
@@ -166,7 +167,7 @@ class NavBar extends React.Component {
               : <Link className='navbar-item' to='/exams'>Add exam</Link>
             }
 
-            <Link className='navbar-item' to={'/submissions/' + this.props.exam.id}>Submissions</Link>
+            <Link className='navbar-item' disabled={!submissionsEnabled} to={'/submissions/' + this.props.exam.id}>Submissions</Link>
             <Link className='navbar-item' to='/students'>Students</Link>
             <Link className='navbar-item' disabled={!gradingEnabled} to='/grade'><strong><i>Grade</i></strong></Link>
             <Link className='navbar-item' disabled={!overviewEnabled} to='/overview'>Overview</Link>

@@ -61,6 +61,22 @@ def full_exam_data(exam_id):
         data = [solution_data(exam_id, student_id)
                 for student_id in students]
 
+    if not data:
+        # No students were assigned.
+        with orm.db_session:
+            columns = []
+            for problem in exam.problems.order_by(Problem.id):
+                if not orm.count(problem.feedback_options):
+                    # There is no possible feedback for this problem.
+                    continue
+                for fo in problem.feedback_options.text:
+                    columns.append((problem, fo))
+                columns.append((problem, 'total'))
+            columns.append(('total', 'total'))
+
+        result = pandas.DataFrame(columns=pandas.MultiIndex.from_tuples(columns))
+        return result
+
     students = pandas.DataFrame({i[0]['id']: i[0] for i in data}).T
     del students['id']
 

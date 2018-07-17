@@ -26,7 +26,7 @@ class StudentControls extends React.Component {
       student => student.id
     )
     this.setState({ students })
-    this.props.setStudent(students[0])
+    this.props.setStudent(students[0] || null) // in case 'students' is empty
   }
 
   render () {

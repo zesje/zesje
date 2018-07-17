@@ -2,6 +2,7 @@
     ./webpack.config.js
 */
 const path = require('path')
+const webpack = require('webpack')
 
 const HtmlWebpackPlugin = require('html-webpack-plugin')
 const HtmlWebpackPluginConfig = new HtmlWebpackPlugin({
@@ -10,6 +11,11 @@ const HtmlWebpackPluginConfig = new HtmlWebpackPlugin({
   filename: 'index.html',
   inject: 'body'
 })
+
+const zesjeVersion = require('child_process')
+  .execSync('python zesje/_version.py')
+  .toString()
+  .trim()
 
 module.exports = {
   entry: './client/index.jsx',
@@ -28,5 +34,10 @@ module.exports = {
     ]
   },
 
-  plugins: [HtmlWebpackPluginConfig]
+  plugins: [
+    HtmlWebpackPluginConfig,
+    new webpack.DefinePlugin({
+      __ZESJE_VERSION__: JSON.stringify(zesjeVersion)
+    })
+  ]
 }

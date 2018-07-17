@@ -164,3 +164,6 @@ class _sdist(sdist_orig):
 
 
 cmdclass = dict(sdist=_sdist, build_py=_build_py)
+
+if __name__ == '__main__':
+    print(__version__)

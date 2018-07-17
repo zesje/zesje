@@ -12,12 +12,12 @@ This notebook is a brief reference of Zesje workflow.
 + **Zesje is a prototype-level software**: it is so far tested by people using it. It is not developed by professional web developers, and it certainly has many rough edges.
 + If something breaks, we are very sorry. Most likely we'd be able to fix your problem, but we do not provide any guarantees.
 + Fully trusted users: anyone with the login and password for your Zesje installation can do anything you can.
-+ No change history. When we host Zesje do daily backups, but it does not come out of the box and you cannot revert your changes manually.
-+ Zesje was written for use within TU Delft. If you want to use it for outside courses, expect to need to tweak it.
++ No change history. When we host Zesje there are daily backups, but it does not come out of the box and you cannot revert your changes manually.
++ The current iteration of Zesje assumes that its users are at TU Delft. If you want to use it for outside courses, it will need to be tweaked. We expect to lift this restriction in the future
 
 ## Support
 
-If you want to use zesje in a course, we are happy to host it for you, contact us at [zesje@antonakhmerov.org](mailto:zesje@antonakhmerov.org) or [me@josephweston.org](mailto:me@josephweston.org).
+If you want to use zesje in a course, we are happy to host it for you, contact us at [zesje@antonakhmerov.org](mailto:zesje@antonakhmerov.org) or [zesje@weston.cloud](mailto:zesje@weston.cloud).
 
 We will also sign you up for the zesje support mailing list.
 
@@ -140,7 +140,7 @@ If you wish to notify the students of their results, you may send [email](/email
 
 ### Prepare an email template
 
-First, you need to prepare the email template. In the [email](/email) tab you see the template edit field with next to it a resulting email shown for a specific student.
+First, you need to prepare the email template. In the [email](/email) tab you see the template edit field with next to it a resulting email shown for the selected student.
 
 The template is written using the [Jinja 2](http://jinja.pocoo.org/docs/2.9/templates/#template-designer-documentation) templating language. This allows you to intermix regular text with special commands that will do things like optionally include some text if a certain condition is satisfied, or print the contents of some variable (such as the student's name or grade).
 

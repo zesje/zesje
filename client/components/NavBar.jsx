@@ -181,7 +181,7 @@ class NavBar extends React.Component {
               : <Link className='navbar-item' to='/graders'>Add grader</Link>
             }
             <div className='navbar-item'>
-              <i>Version {__COMMIT_HASH__}</i>
+              <i>Version {__ZESJE_VERSION__}</i>
             </div>
           </div>
         </div>

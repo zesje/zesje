@@ -20,7 +20,7 @@ build:
   <<: *node_modules
   stage: build
   script:
-    - python -m compileall zesje
+    - python3 -m compileall zesje
     - yarn build
   artifacts:
     paths:

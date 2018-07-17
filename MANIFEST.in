@@ -1,1 +1,2 @@
-include-recursive zesje/static/*
+include LICENSE
+recursive-include zesje/static *

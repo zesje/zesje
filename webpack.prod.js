@@ -5,11 +5,6 @@ const OptimizeCssAssetsPlugin = require('optimize-css-assets-webpack-plugin')
 const UglifyJsPlugin = require('uglifyjs-webpack-plugin')
 const common = require('./webpack.common.js')
 
-const commitHash = require('child_process')
-  .execSync('git rev-parse --short HEAD')
-  .toString()
-  .trim()
-
 module.exports = merge(common, {
 
   mode: 'production',
@@ -41,9 +36,6 @@ module.exports = merge(common, {
     new MiniCssExtractPlugin({
       filename: '[name].css',
       chunkFilename: '[id].css'
-    }),
-    new webpack.DefinePlugin({
-      __COMMIT_HASH__: JSON.stringify(commitHash + '-prod')
     })
   ]
 })

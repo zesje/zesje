@@ -1,6 +1,7 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
 
+import './NavBar.css'
 import * as api from '../api.jsx'
 
 const BurgerButton = (props) => (
@@ -70,6 +71,7 @@ const ExportDropdown = (props) => {
         {exportFormats.map((exportFormat, i) =>
           <a className='navbar-item'
             href={exportUrl(exportFormat.format)}
+            disabled={props.disabled}
             key={i}>
             {exportFormat.label}
           </a>
@@ -135,8 +137,10 @@ class NavBar extends React.Component {
   }
 
   render () {
-    const examStyle = this.props.exam.submissions.length && this.props.grader ? {} : { pointerEvents: 'none', opacity: 0.65 }
-    const statsStyle = this.props.exam.submissions.length ? {} : { pointerEvents: 'none', opacity: 0.65 }
+    const gradingEnabled = this.props.exam.submissions.length > 0 && this.props.grader !== null
+    const overviewEnabled = this.props.exam.submissions.length > 0
+    const exportEnabled = this.props.exam.id !== null
+    const emailEnabled = this.props.exam.id !== null
 
     return (
       <nav className='navbar' role='navigation' aria-label='dropdown navigation'>
@@ -164,10 +168,10 @@ class NavBar extends React.Component {
 
             <Link className='navbar-item' to={'/submissions/' + this.props.exam.id}>Submissions</Link>
             <Link className='navbar-item' to='/students'>Students</Link>
-            <Link className='navbar-item' style={examStyle} to='/grade'><strong><i>Grade</i></strong></Link>
-            <Link className='navbar-item' style={statsStyle} to='/overview'>Overview</Link>
-            <Link className='navbar-item' style={statsStyle} to='/email'>Email</Link>
-            <ExportDropdown className='navbar-item' exam={this.props.exam} />
+            <Link className='navbar-item' disabled={!gradingEnabled} to='/grade'><strong><i>Grade</i></strong></Link>
+            <Link className='navbar-item' disabled={!overviewEnabled} to='/overview'>Overview</Link>
+            <Link className='navbar-item' disabled={!emailEnabled} to='/email'>Email</Link>
+            <ExportDropdown className='navbar-item' disabled={!exportEnabled} exam={this.props.exam} />
           </div>
 
           <div className='navbar-end'>

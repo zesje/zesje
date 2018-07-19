@@ -5,28 +5,22 @@ Zesje is an online grading system for written exams.
 ## Development
 
 ### Setting up a development environment
-Make sure you have Yarn and Python 3.6 installed.
 
-Install the necessary Yarn dependencies:
+#### Install Conda
+We highly recommend using [Conda](https://conda.io/docs/) when developing
+Zesje, which will keep all the dependencies isolated. If you already
+have the Anaconda Python distribution then you already have Conda installed,
+otherwise follow the [installation instructions](https://conda.io/docs/user-guide/install/index.html)
 
-    yarn install
+#### Install the dependencies
+To create a Conda environment and install the dependencies simply run
+the following from the project root:
 
-We will keep the Python dependencies in a virtual environment:
+    conda env create  # this will use the 'environment.yml' in the project root
+    conda activate zesje-dev
+    yarn install  # install all the javascript dependencies
 
-    virtualenv venv
-    source venv/bin/activate
-    pip install -r requirements.txt -r requirements-dev.txt
-
-Also install the required native dependencies:
-
-| OS            | Command                      |
-|---------------|------------------------------|
-| macOS         | `brew install libdmtx`       |
-| Debian/Ubuntu | `sudo apt install libdmtx0a` |
-| Arch          | `pacman -S libdmtx`          |
-| Fedora        | `dnf install libdmtx`        |
-| openSUSE      | `zypper install libdmtx0`    |
-| Windows       | *not necessary*              |
+Make sure that you remember to `conda activate zesje-dev` when opening a new terminal window.
 
 ### Running a development server
 Run
@@ -75,11 +69,8 @@ If you use Atom, install the [linter-js-standard-engine](https://atom.io/package
 ### Adding dependencies
 
 #### Server-side
-If you start using a new Python library, be sure to add it to `requirements.txt`. Python libraries for the testing are in `requirements-dev.txt`.
-The packages can be installed and updated in your environment by `pip` using
-
-    pip install -r requirements.txt -r requirements-dev.txt
-
+If you start using a new Python library, be sure to add it to `environment.yml` and run
+`conda env update` to install it.
 
 #### Client-side
 Yarn keeps track of all the client-side dependancies in `package.json` when you install new packages with `yarn add [packageName]`. Yarn will install and update your packages if your run

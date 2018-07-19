@@ -1,0 +1,37 @@
+name: zesje-dev
+channels:
+    - conda-forge
+dependencies:
+    - python=3.6
+    - yarn
+    # Generic computing
+    - numpy
+    - scipy
+    # for testing
+    - pytest
+    - flake8
+    - pyssim
+    # Web stuff
+    - flask
+    - flask_restful
+    - Flask-BasicAuth
+    - pony
+    # For dealing with data
+    - pandas
+    - openpyxl
+    - pyyaml
+    # For dealing with barcodes
+    - libdmtx
+    - pylibdmtx
+    # For dealing with PDFs
+    - reportlab
+    - pyStrich
+    - pdfrw
+    - Pillow
+    - opencv-python
+    - Wand
+    - pip:
+        - git+https://github.com/mstamy2/PyPDF2
+    # For generating reports
+    - matplotlib
+    - seaborn

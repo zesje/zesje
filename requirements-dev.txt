@@ -1,6 +1,0 @@
-# Tests
-pytest
-pyssim
-
-# Linting
-flake8

@@ -4,7 +4,7 @@ from flask_restful import Resource, reqparse
 
 from pony import orm
 
-from ..database import Problem, FeedbackOption
+from ..database import Problem, FeedbackOption, Solution
 
 
 class Feedback(Resource):
@@ -115,9 +115,19 @@ class Feedback(Resource):
         things accidentally.
         """
         fb = FeedbackOption.get(id=feedback_id)
+        problem = fb.problem
         if fb is None:
             return dict(status=404, message="Feedback with this id does not exist"), 404
-        elif fb.problem.id != problem_id:
+        elif problem.id != problem_id:
             return dict(status=409, message="Feedback does not match the problem."), 409
         else:
             fb.delete()
+
+        # If there are submissions with no feedback, we should mark them as
+        # ungraded.
+        to_mark_ungraded = Solution.select(
+            lambda s: s.problem == problem and not len(s.feedback) and
+            s.graded_at is not None
+        )
+        for solution in to_mark_ungraded:
+            solution.graded_at = solution.graded_by = None

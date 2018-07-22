@@ -191,7 +191,8 @@ class CheckStudents extends React.Component {
                           <input className={'input is-rounded has-text-centered' + (subm.validated ? ' is-success' : ' is-link')}
                             value={this.state.input} type='text'
                             onChange={this.setSubInput} onSubmit={this.setSubmission}
-                            onBlur={this.setSubmission} maxLength='4' size='6' style={inputStyle} />
+                            onBlur={this.setSubmission} onFocus={(event) => { event.target.select() }}
+                            maxLength='4' size='6' style={inputStyle} />
                         </div>
                         <div className='control'>
                           <button type='submit' className={'button' + (subm.validated ? ' is-success' : ' is-link')}

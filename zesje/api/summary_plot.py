@@ -101,7 +101,8 @@ def get(exam_id):
 
     # Draw actual percentages
     ax.barh(
-        data[0], data[1], 0.5, data[2], color=cm(norm(data[3])), align='center'
+        data[0], data[1], 0.5, data[2], color=cm(norm(data[3])), align='center',
+        linewidth=0,
     )
     # Label all grades within a problem.
     for y, x, num in text:

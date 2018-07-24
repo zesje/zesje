@@ -307,15 +307,17 @@ def decode_barcode(image, exam_config):
         get_box(rotated, barcode_area_in, padding=0.3)[::step, ::step]
     ).convert(mode='L')
 
-    # Use a generator to attemt multiple strategies for decoding
-    def image_generator():
-        yield image_crop, False
-        yield image_crop_rotated, True
-        yield image_crop.point(lambda p: p > 100 and 255), False
-        yield image_crop_rotated.point(lambda p: p > 100 and 255), True
-
-    for image, upside_down in image_generator():
-        results = pylibdmtx.decode(image)
+    # Transformations we apply to images in order to increase a chance of succsess.
+    methods = [
+        (lambda img: img),
+        (lambda img: img.point(lambda p: p > 100 and 255)),
+        (lambda img: Image.fromarray(cv2.blur(np.array(img), (3, 3)))),
+        (lambda img: (Image.fromarray(cv2.blur(np.array(img), (3, 3)))
+                           .point(lambda p: p > 100 and 255))),
+    ]
+    images = [(image_crop, False), (image_crop_rotated, True)]
+    for (image, upside_down), method in itertools.product(images, methods):
+        results = pylibdmtx.decode(method(image))
         if len(results) == 1:
             try:
                 data = results[0].data

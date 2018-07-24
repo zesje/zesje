@@ -99,12 +99,15 @@ def _process_pdf(scan_id, app_config, bind):
 
     if failures:
         processed = total - len(failures)
-        report_error(
-            f'Processed {processed} / {total} pages. '
-            f'Failed on pages: {failures}'
-        )
+        if processed:
+            report_error(
+                f'Processed {processed} / {total} pages. '
+                f'Failed on pages: {failures}'
+            )
+        else:
+            report_error(f'Failed on all {total} pages.')
     else:
-        report_success(f'processed {total} pages')
+        report_success(f'Processed {total} pages.')
 
 
 @orm.db_session

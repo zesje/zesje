@@ -206,7 +206,9 @@ class EmailEveryoneControls extends React.Component {
         }
       } catch (error) {
         // If we get here there is a bug in the backend
-        Notification.error('Failed to send emails')
+        Notification.error(
+            'Failed to send emails',
+            { duration: 0 })
       }
     } finally {
       this.setState({ sending: false })

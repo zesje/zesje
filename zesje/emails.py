@@ -87,10 +87,14 @@ def send(messages):
     failed = []
     with smtplib.SMTP('dutmail.tudelft.nl', 25) as s:
         for identifier, message in messages.items():
+            recipients = [
+                *message['To'].split(','),
+                *(message['Cc'].split(',') if 'Cc' in message else [])
+            ]
             try:
                 s.sendmail(
                     'noreply@tudelft.nl',
-                    [message['To'], *message['Cc'].split(',')],
+                    recipients,
                     message.as_string()
                 )
             except smtplib.SMTPException:

@@ -76,16 +76,37 @@ def build(email_to, content, attachment=None, copy_to=None,
     return msg
 
 
-def send(messages):
+def send(
+    messages,
+    from_address,
+    server, port=0, user=None, password=None, use_ssl=None,
+):
     """Send a dict of messages
 
-    Takes a dict where the values are the messages to send, and
-    the keys are unique identifiers.
+    Parameters
+    ----------
+    messages : dictionary
+        A dict where the values are the messages to send, and
+        the keys are unique message identifiers.
+    server : string
+        SMTP server domain name or IP address.
+    port : int, optional
+        STMP port.
+    user, password : string, optional
+        Login credentials.
+    use_ssl : bool or None
+        Whether to use SSL connection. If not provided, it is inferred from the
+        port.
 
     Returns a list of the identifiers for messages that failed to send.
     """
     failed = []
-    with smtplib.SMTP('dutmail.tudelft.nl', 25) as s:
+    if use_ssl is None:
+        use_ssl = port == 465
+    server_type = smtplib.SMTP_SSL if use_ssl else smtplib.SMTP
+    with server_type(server, port) as s:
+        if user and password:
+                s.login(user, password)
         for identifier, message in messages.items():
             recipients = [
                 *message['To'].split(','),
@@ -93,7 +114,7 @@ def send(messages):
             ]
             try:
                 s.sendmail(
-                    'noreply@tudelft.nl',
+                    from_address,
                     recipients,
                     message.as_string()
                 )

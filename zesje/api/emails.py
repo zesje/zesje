@@ -74,6 +74,7 @@ def build_email(exam_id, student_id, template, attach, copy_to=None):
             if attach
             else None,
             copy_to=copy_to,
+            email_from=app.config['FROM_ADDRESS'],
         )
 
 
@@ -158,8 +159,23 @@ class Email(Resource):
             return self._send_all(exam_id, template, attach)
 
     def _send_single(self, exam_id, student_id, template, attach, copy_to):
-        message = build_email(exam_id, student_id, template, attach, copy_to=copy_to)
-        failed = emails.send({student_id: message})
+        if not app.config.get('SMTP_SERVER'):
+            abort(
+                500,
+                message='Sending email not configured'
+            )
+        message = build_email(
+            exam_id, student_id, template, attach, copy_to=copy_to
+        )
+        failed = emails.send(
+            {student_id: message},
+            server=app.config['SMTP_SERVER'],
+            from_address=app.config['FROM_ADDRESS'],
+            port=app.config.get('SMTP_PORT'),
+            user=app.config.get('SMTP_USERNAME'),
+            password=app.config.get('SMTP_PASSWORD'),
+            use_ssl=app.config.get('USE_SSL'),
+        )
         if failed:
             abort(
                 500,
@@ -168,6 +184,11 @@ class Email(Resource):
         return dict(status=200)
 
     def _send_all(self, exam_id, template, attach):
+        if not app.config.get('SMTP_SERVER'):
+            abort(
+                500,
+                message='Sending email not configured'
+            )
         with orm.db_session:
             student_ids = set(Exam[exam_id].submissions.student.id)
 
@@ -182,7 +203,15 @@ class Email(Resource):
                 # so we let other exceptions raise.
                 failed_to_build.append(student_id)
 
-        failed_to_send = emails.send(to_send)
+        failed_to_send = emails.send(
+            to_send,
+            server=app.config['SMTP_SERVER'],
+            from_address=app.config['FROM_ADDRESS'],
+            port=app.config.get('SMTP_PORT'),
+            user=app.config.get('SMTP_USERNAME'),
+            password=app.config.get('SMTP_PASSWORD'),
+            use_ssl=app.config.get('USE_SSL'),
+        )
 
         sent = set(student_ids) - (set(failed_to_send) | set(failed_to_build))
         sent = list(sent)

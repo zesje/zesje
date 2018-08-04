@@ -27,6 +27,9 @@ if 'ZESJE_SETTINGS' in os.environ:
 app.config.update(
     DATA_DIRECTORY=abspath(app.config.get('DATA_DIRECTORY', 'data')),
 )
+app.config.update(
+    FROM_ADDRESS=app.config.get('FROM_ADDRESS', 'no-reply@example.com'),
+)
 
 # These reference DATA_DIRECTORY, so they need to be in a separate update
 app.config.update(

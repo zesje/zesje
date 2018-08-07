@@ -58,7 +58,7 @@ def render_email(exam_id, student_id, template):
         )
 
 
-def build_email(exam_id, student_id, template, attach, copy_to=None):
+def build_email(exam_id, student_id, template, attach, from_address, copy_to=None):
         with orm.db_session:
             student = Student[student_id]
         if not student.email:
@@ -74,7 +74,7 @@ def build_email(exam_id, student_id, template, attach, copy_to=None):
             if attach
             else None,
             copy_to=copy_to,
-            email_from=app.config['FROM_ADDRESS'],
+            email_from=from_address,
         )
 
 
@@ -159,13 +159,14 @@ class Email(Resource):
             return self._send_all(exam_id, template, attach)
 
     def _send_single(self, exam_id, student_id, template, attach, copy_to):
-        if not app.config.get('SMTP_SERVER'):
+        if not (app.config.get('SMTP_SERVER') and app.config.get('FROM_ADDRESS')):
             abort(
                 500,
-                message='Sending email not configured'
+                message='Sending email is not configured'
             )
         message = build_email(
-            exam_id, student_id, template, attach, copy_to=copy_to
+            exam_id, student_id, template,
+            attach, app.config['FROM_ADDRESS'], copy_to,
         )
         failed = emails.send(
             {student_id: message},
@@ -184,10 +185,10 @@ class Email(Resource):
         return dict(status=200)
 
     def _send_all(self, exam_id, template, attach):
-        if not app.config.get('SMTP_SERVER'):
+        if not (app.config.get('SMTP_SERVER') and app.config.get('FROM_ADDRESS')):
             abort(
                 500,
-                message='Sending email not configured'
+                message='Sending email is not configured'
             )
         with orm.db_session:
             student_ids = set(Exam[exam_id].submissions.student.id)
@@ -196,8 +197,10 @@ class Email(Resource):
         to_send = dict()
         for student_id in student_ids:
             try:
-                to_send[student_id] = build_email(exam_id, student_id,
-                                                  template, attach)
+                to_send[student_id] = build_email(
+                    exam_id, student_id, template,
+                    attach, app.config['FROM_ADDRESS'],
+                )
             except werkzeug.exceptions.Conflict as error:
                 # No email address provided. Any other failures are errors,
                 # so we let other exceptions raise.

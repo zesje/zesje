@@ -21,7 +21,7 @@ class Grade extends React.Component {
   /*
    * This updates the submission to a new one.
    */
-  changeIndexTo = (newIndex) => {
+  setSubmissionIndex = (newIndex) => {
     if (newIndex >= 0 && newIndex < this.props.exam.submissions.length) {
       this.setState({
         sIndex: newIndex
@@ -34,17 +34,17 @@ class Grade extends React.Component {
 
   prev = () => {
     const newIndex = this.state.sIndex - 1
-    this.changeIndexTo(newIndex)
+    this.setSubmissionIndex(newIndex)
   }
   next = () => {
     const newIndex = this.state.sIndex + 1
-    this.changeIndexTo(newIndex)
+    this.setSubmissionIndex(newIndex)
   }
 
   prevUngraded = () => {
     for (let i = this.state.sIndex - 1; i >= 0; i--) {
       if (this.props.exam.submissions[i].problems[this.state.pIndex].graded_by === null) {
-        this.changeIndexTo(i)
+        this.setSubmissionIndex(i)
         return
       }
     }
@@ -53,7 +53,7 @@ class Grade extends React.Component {
   nextUngraded = () => {
     for (let i = this.state.sIndex + 1; i < this.props.exam.submissions.length; i++) {
       if (this.props.exam.submissions[i].problems[this.state.pIndex].graded_by === null) {
-        this.changeIndexTo(i)
+        this.setSubmissionIndex(i)
         return
       }
     }
@@ -74,13 +74,7 @@ class Grade extends React.Component {
 
   setSubmission = (id) => {
     const i = this.props.exam.submissions.findIndex(sub => sub.id === id)
-
-    if (i >= 0) {
-      this.props.updateSubmission(i)
-      this.setState({
-        sIndex: i
-      })
-    }
+    this.setSubmissionIndex(i)
   }
   changeProblem = (event) => {
     this.setState({

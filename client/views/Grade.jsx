@@ -18,45 +18,42 @@ class Grade extends React.Component {
     fullPage: false
   }
 
-  prev = () => {
-    const newIndex = this.state.sIndex - 1
-
+  /*
+   * This updates the submission to a new one.
+   */
+  setSubmissionIndex = (newIndex) => {
     if (newIndex >= 0 && newIndex < this.props.exam.submissions.length) {
       this.setState({
         sIndex: newIndex
       })
       this.props.updateSubmission(newIndex)
+      // Also update the exam to get an update of the rubric if there is one.
+      this.props.updateExam(this.props.exam.id)
     }
+  }
+
+  prev = () => {
+    const newIndex = this.state.sIndex - 1
+    this.setSubmissionIndex(newIndex)
   }
   next = () => {
     const newIndex = this.state.sIndex + 1
-
-    if (newIndex >= 0 && newIndex < this.props.exam.submissions.length) {
-      this.setState({
-        sIndex: newIndex
-      })
-      this.props.updateSubmission(newIndex)
-    }
+    this.setSubmissionIndex(newIndex)
   }
 
   prevUngraded = () => {
     for (let i = this.state.sIndex - 1; i >= 0; i--) {
       if (this.props.exam.submissions[i].problems[this.state.pIndex].graded_by === null) {
-        this.setState({
-          sIndex: i
-        })
-        this.props.updateSubmission(i)
+        this.setSubmissionIndex(i)
         return
       }
     }
   }
+
   nextUngraded = () => {
     for (let i = this.state.sIndex + 1; i < this.props.exam.submissions.length; i++) {
       if (this.props.exam.submissions[i].problems[this.state.pIndex].graded_by === null) {
-        this.setState({
-          sIndex: i
-        })
-        this.props.updateSubmission(i)
+        this.setSubmissionIndex(i)
         return
       }
     }
@@ -77,13 +74,7 @@ class Grade extends React.Component {
 
   setSubmission = (id) => {
     const i = this.props.exam.submissions.findIndex(sub => sub.id === id)
-
-    if (i >= 0) {
-      this.props.updateSubmission(i)
-      this.setState({
-        sIndex: i
-      })
-    }
+    this.setSubmissionIndex(i)
   }
   changeProblem = (event) => {
     this.setState({
@@ -131,7 +122,12 @@ class Grade extends React.Component {
                     goBack={this.backToFeedback} />
                   : <FeedbackPanel examID={exam.id} submissionID={submission.id}
                     problem={problem} solution={solution} graderID={this.props.graderID}
-                    editFeedback={this.editFeedback} updateSubmission={() => this.props.updateSubmission(this.state.sIndex)} />
+                    editFeedback={this.editFeedback}
+                    updateSubmission={() => {
+                      this.props.updateSubmission(this.state.sIndex)
+                      this.props.updateExam(this.props.exam.id)
+                    }
+                    } />
                 }
               </div>
 

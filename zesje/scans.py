@@ -15,16 +15,14 @@ import PyPDF2
 from PIL import Image
 from pylibdmtx import pylibdmtx
 
-from .database import db, Scan, Exam, Problem, Page, Student, Submission, Solution, ExamWidget
+from .database import db, Scan, Exam, Page, Student, Submission, Solution, ExamWidget
 from .datamatrix import decode_raw_datamatrix
 from .images import guess_dpi, get_box
 
 
-ExtractedBarcode = namedtuple('ExtractedBarcode',
-                              ['token', 'copy', 'page'])
+ExtractedBarcode = namedtuple('ExtractedBarcode', ['token', 'copy', 'page'])
 
-ExamMetadata = namedtuple('ExamMetadata',
-                          ['token', 'barcode_area', 'student_id_widget_area', 'problem_ids'])
+ExamMetadata = namedtuple('ExamMetadata', ['token', 'barcode_coords'])
 
 
 def process_pdf(scan_id, bind=True, app_config=None):
@@ -86,9 +84,11 @@ def _process_pdf(scan_id, app_config, bind):
         for image, page in extract_images(pdf_path):
             report_progress(f'Processing page {page} / {total}')
             try:
-                success, reason = process_page(image, exam_config, output_directory)
+                success, description = process_page(
+                    image, exam_config, output_directory
+                )
                 if not success:
-                    print(reason)
+                    print(description)
                     failures.append(page)
             except Exception as e:
                 report_error(f'Error processing page {page}: {e}')
@@ -111,34 +111,20 @@ def _process_pdf(scan_id, app_config, bind):
 
 
 @orm.db_session
-def exam_metadata(exam_id, app_config=None):
-    """Read off widget coordinates and problems from the database."""
+def exam_metadata(exam_id):
+    """Read off exam token and barcode coordinates from the database."""
     exam = Exam[exam_id]
-    if app_config is None:
-        app_config = {}
-
-    student_id_widget = ExamWidget.get(exam=exam, name="student_id_widget")
     barcode_widget = ExamWidget.get(exam=exam, name="barcode_widget")
 
-    config = ExamMetadata(
-        token=exam.token,
-        barcode_area=[
-            max(0, barcode_widget.y),
-            max(0, barcode_widget.y + 50),
-            max(0, barcode_widget.x),
-            max(0, barcode_widget.x + 50),
-        ],
-        student_id_widget_area=[
-            student_id_widget.y,  # top
-            student_id_widget.y + app_config.get('ID_GRID_HEIGHT', 181),  # bottom
-            student_id_widget.x,  # left
-            student_id_widget.x + app_config.get('ID_GRID_WIDTH', 313),  # right
-        ],
-        problem_ids=[
-            problem.id for problem in exam.problems
-        ]
-    )
-    return config
+    return ExamMetadata(
+            token=exam.token,
+            barcode_coords=[
+                max(0, barcode_widget.y),
+                max(0, barcode_widget.y + 50),
+                max(0, barcode_widget.x),
+                max(0, barcode_widget.x + 50),
+            ],
+        )
 
 
 def extract_images(filename):
@@ -204,8 +190,9 @@ def process_page(image_data, exam_config, output_dir=None, strict=False):
     image_data : PIL Image
     exam_config : ExamMetadata instance
         Information about the exam to which this page should belong
-    output_dir : string
-        Path to save the processed image must be stored.
+    output_dir : string, optional
+        Path where the processed image must be stored. If not provided, don't
+        save the result and don't modify the database.
     strict : bool
         Whether to stop trying if we did not find corner markers.
         This spoils page positioning, but may increase the success rate.
@@ -213,8 +200,8 @@ def process_page(image_data, exam_config, output_dir=None, strict=False):
     Returns
     -------
     success : bool
-    reason : string
-        Reason for failure
+    description : string
+        What has happened.
 
     Raises
     ------
@@ -242,72 +229,102 @@ def process_page(image_data, exam_config, output_dir=None, strict=False):
         image_array = shift_image(image_array, new_keypoints)
 
     try:
-        barcode_data, upside_down = decode_barcode(image_array, exam_config)
+        barcode, upside_down = decode_barcode(image_array, exam_config)
         if upside_down:
             # TODO: check if view errors appear
             image_array = np.array(image_array[::-1, ::-1])
     except RuntimeError:
         return False, "Reading barcode failed"
 
-    if barcode_data.token != exam_config.token:
-        # If we have one page from a wrong exam, chances are they all are from
-        # a wrong exam and we should therefore stop processing.
-        raise ValueError('PDF is not from this exam')
+    if barcode.token != exam_config.token:
+        raise ValueError("PDF is not from this exam")
 
     if output_dir is not None:
-        target = os.path.join(output_dir, 'submissions', f'{barcode_data.copy}')
-        os.makedirs(target, exist_ok=True)
-        target_image = os.path.join(target, f'page{barcode_data.page:02d}.jpg')
-        Image.fromarray(image_array).save(target_image)
+        image_path = save_image(image_data, barcode=barcode, base_path=output_dir)
+    else:
+        return True, "Testing, image not saved and database not updated."
 
-    with orm.db_session:
-        exam = Exam.get(token=barcode_data.token)
-        sub = Submission.get(copy_number=barcode_data.copy, exam=exam)
+    update_database(image_path, barcode)
 
-        if sub is None:
-            sub = Submission(copy_number=barcode_data.copy, exam=exam)
+    if barcode.page == 0:
+        description = guess_student(
+            exam_token=barcode.token, copy_number=barcode.copy
+        )
+    else:
+        description = "Scanned page doesn't contain student number."
 
-            for problem_id in exam_config.problem_ids:
-                prob = Problem.get(id=problem_id)
-                Solution(problem=prob, submission=sub)
+    return True, description
 
-        # We may have added this page in previous uploads; the above then
-        # overwrites the previosly uploaded page, but we only want a single
-        # 'Page' entry.
-        if Page.get(path=target_image, submission=sub) is None:
-            Page(path=target_image, submission=sub, number=barcode_data.page)
 
-        if sub.signature_validated:
-            # Nothing to update in the db
-            return True, ''
+def save_image(image, barcode, base_path):
+    """Save an image at an appropriate location.
 
-    if barcode_data.page == 0:
-        try:
-            number = get_student_number(target_image, exam_config)
-        except Exception:
-            return True, ''  # could not extract student name
+    Parameters
+    ----------
+    image : numpy array
+        Image data.
+    barcode : ExtractedBarcode
+        The barcode identifying the page.
+    base_path : string
+        The folder corresponding to a correct exam.
 
-        with orm.db_session:
-            exam = Exam.get(token=barcode_data.token)
-            sub = Submission.get(copy_number=barcode_data.copy, exam=exam)
-            student = Student.get(id=int(number))
-            sub.student = student
+    Returns
+    -------
+    image_path : string
+        Location of the image.
+    """
+    submission_path = os.path.join(base_path, 'submissions', f'{barcode.copy}')
+    os.makedirs(submission_path, exist_ok=True)
+    image_path = os.path.join(submission_path, f'page{barcode.page:02d}.jpg')
+    Image.fromarray(image).save(image_path)
+    return image_path
 
-    return True, ''
+
+@orm.db_session
+def update_database(image_path, barcode):
+    """Add a database entry for the new image or update an existing one.
+
+    Parameters
+    ----------
+    image_path : string
+        Path to the image.
+    barcode : ExtractedBarcode
+        The data from the image barcode.
+
+    Returns
+    -------
+    signature_validated : bool
+        If the corresponding submission has a validated signature.
+    """
+    exam = Exam.get(token=barcode.token)
+    if exam is None:
+        raise RuntimeError('Invalid exam token.')
+    sub = Submission.get(copy_number=barcode.copy, exam=exam)
+
+    if sub is None:
+        sub = Submission(copy_number=barcode.copy, exam=exam)
+
+        for problem in exam.problems:
+            Solution(problem=problem, submission=sub)
+
+    # We may have added this page in previous uploads but we only want a single
+    # 'Page' entry regardless
+    if Page.get(submission=sub, number=barcode.page) is None:
+        Page(path=image_path, submission=sub, number=barcode.page)
 
 
 def decode_barcode(image, exam_config):
     """Extract a barcode from a PIL Image."""
 
-    barcode_area = exam_config.barcode_area
+    barcode_coords = exam_config.barcode_coords
 
     # TODO: use points as base unit
-    barcode_area_in = np.asarray(barcode_area) / 72
+    barcode_coords_in = np.asarray(barcode_coords) / 72
     rotated = np.rot90(image, k=2)
     step = 2 if guess_dpi(image) >= 200 else 1
-    image_crop = Image.fromarray(get_box(image, barcode_area_in, padding=0.3)[::step, ::step]).convert(mode='L')
+    image_crop = Image.fromarray(get_box(image, barcode_coords_in, padding=0.3)[::step, ::step]).convert(mode='L')
     image_crop_rotated = Image.fromarray(
-        get_box(rotated, barcode_area_in, padding=0.3)[::step, ::step]
+        get_box(rotated, barcode_coords_in, padding=0.3)[::step, ::step]
     ).convert(mode='L')
 
     # Transformations we apply to images in order to increase a chance of succsess.
@@ -439,7 +456,62 @@ def shift_image(image, corner_keypoints):
     return shifted_image
 
 
-def get_student_number(image_path, exam_config):
+def guess_student(exam_token, copy_number, app_config=None, force=False):
+    """Update a submission with a guessed student number.
+
+    Parameters
+    ----------
+    exam_token : string
+        Unique exam identifier (see database schema).
+    copy_number : int
+        The copy number of the submission.
+    app_config : Flask config
+        Optional.
+    force : bool
+        Whether to update the student number of a submission with a validated
+        signature, default False.
+
+    Returns
+    -------
+    description : string
+        Description of the outcome.
+    """
+    if app_config is None:
+        app_config = {}
+
+    with orm.db_session:
+        exam = Exam.get(token=exam_token)
+        sub = Submission.get(copy_number=copy_number, exam=exam)
+        image_path = Page.get(submission=sub, number=0)
+
+        student_id_widget = ExamWidget.get(exam=exam, name="student_id_widget")
+        student_id_widget_coords = [
+            student_id_widget.y,  # top
+            student_id_widget.y + app_config.get('ID_GRID_HEIGHT', 181),  # bottom
+            student_id_widget.x,  # left
+            student_id_widget.x + app_config.get('ID_GRID_WIDTH', 313),  # right
+        ],
+
+        if sub.signature_validated and not force:
+            return "Signature already validated"
+
+    try:
+        number = get_student_number(image_path, student_id_widget_coords)
+    except Exception:
+        return "Failed to extract student name"
+
+    with orm.db_session:
+        student = Student.get(id=int(number))
+        if student is not None:
+            exam = Exam.get(token=exam_token)
+            sub = Submission.get(copy_number=copy_number, exam=exam)
+            sub.student = student
+            return "Successfully extracted student number"
+        else:
+            return f"Student number {number} not in the database"
+
+
+def get_student_number(image_path, student_id_widget_coords):
     """Extract the student number from the image path with the scanned number.
 
     TODO: all the numerical parameters are guessed and work well on the first
@@ -447,8 +519,8 @@ def get_student_number(image_path, exam_config):
     """
     image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
     # TODO: use points as base unit
-    student_id_widget_area_in = np.asarray(exam_config.student_id_widget_area) / 72
-    image = get_box(image, student_id_widget_area_in, padding=0.0)
+    student_id_widget_coords_in = np.asarray(student_id_widget_coords) / 72
+    image = get_box(image, student_id_widget_coords_in, padding=0.0)
     _, thresholded = cv2.threshold(image, 150, 255, cv2.THRESH_BINARY)
     thresholded = cv2.bitwise_not(thresholded)
 

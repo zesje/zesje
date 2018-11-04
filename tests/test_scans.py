@@ -28,9 +28,7 @@ def test_decode_barcode(datadir, image_filename, token, expected, mock_get_box_r
 
     exam_config = ExamMetadata(
         token=token,
-        barcode_area=[0],
-        student_id_widget_area=None,
-        problem_ids=None
+        barcode_coords=[0],
     )
 
     image = np.array(Image.open(image_path))

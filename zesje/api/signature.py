@@ -49,9 +49,10 @@ def get(exam_id, submission_id):
     # TODO: use points as base unit
     widget_area_in = widget_area / 72
 
-    #  get first page
-    #  TODO: is this a reliable way to get the first page?
-    first_page_path = next(p.path for p in sub.pages if 'page00.jpg' in p.path)
+    try:
+        first_page_path = next(p.path for p in sub.pages if p.number == 0)
+    except StopIteration:
+        abort(404)
     first_page_im = cv2.imread(first_page_path)
 
     raw_image = get_box(first_page_im, widget_area_in, padding=0.3)

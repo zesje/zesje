@@ -190,12 +190,12 @@ def process_page(image_data, exam_config, output_dir=None, strict=False):
     """Incorporate a scanned image in the data structure.
 
     For each page perform the following steps:
-    1. Extract the page barcode
-    2. Verify it satisfies the format required by zesje
-    3. Verify it belongs to the correct exam
-    4. Correct the image, using the corner markers to align:
-        4.1. deskew
-        4.2. shift
+    1. Correct the image, using the corner markers to align:
+        1.1. deskew
+        2.2. shift
+    2. Extract the page barcode
+    3. Verify it satisfies the format required by zesje
+    4. Verify it belongs to the correct exam
     5. Incorporate the page in the database
     6. If the page contains student number, try to read it off the page
 
@@ -218,12 +218,12 @@ def process_page(image_data, exam_config, output_dir=None, strict=False):
 
     Raises
     ------
-    RuntimeError if any of the steps 1-3 fail.
+    ValueError if the page is from a wrong exam.
 
     Notes
     -----
-    Because the failure of steps 1-3 likely means we're reading a wrong pdf, we
-    should stop processing any other pages if this function raises.
+    A page from a wrong exam likely means we're reading a wrong pdf, and
+    therefore should stop processing any other pages if this function raises.
     """
     image_array = np.array(image_data)
     shape = image_array.shape

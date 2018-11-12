@@ -322,7 +322,9 @@ def decode_barcode(image, exam_config):
     barcode_coords_in = np.asarray(barcode_coords) / 72
     rotated = np.rot90(image, k=2)
     step = 2 if guess_dpi(image) >= 200 else 1
-    image_crop = Image.fromarray(get_box(image, barcode_coords_in, padding=0.3)[::step, ::step]).convert(mode='L')
+    image_crop = Image.fromarray(
+        get_box(image, barcode_coords_in, padding=0.3)[::step, ::step]
+    ).convert(mode='L')
     image_crop_rotated = Image.fromarray(
         get_box(rotated, barcode_coords_in, padding=0.3)[::step, ::step]
     ).convert(mode='L')
@@ -339,18 +341,17 @@ def decode_barcode(image, exam_config):
     for (image, upside_down), method in itertools.product(images, methods):
         results = pylibdmtx.decode(method(image))
         if len(results) == 1:
+            data = results[0].data
+            # See https://github.com/NaturalHistoryMuseum/pylibdmtx/issues/24
             try:
-                data = results[0].data
-                #  See https://github.com/NaturalHistoryMuseum/pylibdmtx/issues/24
-                if 'Darwin' == platform.system():
-                    data = decode_raw_datamatrix(data)
-                else:
-                    data = data.decode('utf-8')
+                data = data.decode('utf-8')
+            except UnicodeDecodeError:
+                data = decode_raw_datamatrix(data)
 
+            try:
                 token, copy, page = data.split('/')
                 copy = int(copy)
                 page = int(page)
-
                 return ExtractedBarcode(token, copy, page), upside_down
             except ValueError:
                 pass

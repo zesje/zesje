@@ -240,7 +240,7 @@ def process_page(image_data, exam_config, output_dir=None, strict=False):
         raise ValueError("PDF is not from this exam")
 
     if output_dir is not None:
-        image_path = save_image(image_data, barcode=barcode, base_path=output_dir)
+        image_path = save_image(image_array, barcode=barcode, base_path=output_dir)
     else:
         return True, "Testing, image not saved and database not updated."
 

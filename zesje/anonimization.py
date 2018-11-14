@@ -15,6 +15,10 @@ from PIL import ImageFilter
 import PyPDF2
 image = Image.open("1.jpeg")
 
+straight_line = np.array(([1,5,1],
+                        [1,5,1],
+                        [1,5,1]), dtype="int")
+
 #function to filter out color values above a certain threshold
 def remove_colorvalues(img, threshold):
     #img = img.filter(ImageFilter.BLUR)
@@ -27,6 +31,12 @@ def remove_colorvalues(img, threshold):
         for y in range(0,height):
             if(sum(px[x,y])>threshold or max(px[x,y])>80):
                 px[x,y]=(255,255,255)
+
+#function to filter out unstraight lines
+def conv(img, kernel):
+    return np.convolve(img,kernel)
+
+
 
 #Function to extract images out of a pdf (similar to extract_images from the zesje project)
 def extract_images(filename):

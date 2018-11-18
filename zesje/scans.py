@@ -321,23 +321,24 @@ def decode_barcode(image, exam_config):
     # TODO: use points as base unit
     barcode_coords_in = np.asarray(barcode_coords) / 72
     rotated = np.rot90(image, k=2)
-    step = 2 if guess_dpi(image) >= 200 else 1
-    image_crop = Image.fromarray(
-        get_box(image, barcode_coords_in, padding=0.3)[::step, ::step]
-    ).convert(mode='L')
-    image_crop_rotated = Image.fromarray(
-        get_box(rotated, barcode_coords_in, padding=0.3)[::step, ::step]
-    ).convert(mode='L')
+    step_sizes = (1, 2)
+    image_crop = get_box(image, barcode_coords_in, padding=1.3)
+    image_crop_rotated = get_box(rotated, barcode_coords_in, padding=1.3)
+
+    images = [(image[::step, ::step], ud)
+        for step in step_sizes
+        for (image, ud) in ((image_crop, False), (image_crop_rotated, True))
+    ]
 
     # Transformations we apply to images in order to increase a chance of succsess.
     methods = [
-        (lambda img: img),
-        (lambda img: img.point(lambda p: p > 100 and 255)),
-        (lambda img: Image.fromarray(cv2.blur(np.array(img), (3, 3)))),
-        (lambda img: (Image.fromarray(cv2.blur(np.array(img), (3, 3)))
+        (lambda img: Image.fromarray(img)),
+        (lambda img: Image.fromarray(img).point(lambda p: p > 100 and 255)),
+        (lambda img: Image.fromarray(cv2.blur(img, (3, 3)))),
+        (lambda img: (Image.fromarray(cv2.blur(img, (3, 3)))
                            .point(lambda p: p > 100 and 255))),
     ]
-    images = [(image_crop, False), (image_crop_rotated, True)]
+
     for (image, upside_down), method in itertools.product(images, methods):
         results = pylibdmtx.decode(method(image))
         if len(results) == 1:
@@ -499,7 +500,7 @@ def guess_student(exam_token, copy_number, app_config=None, force=False):
     try:
         number = get_student_number(image_path, student_id_widget_coords)
     except Exception:
-        return "Failed to extract student name"
+        return "Failed to extract student number"
 
     with orm.db_session:
         student = Student.get(id=int(number))

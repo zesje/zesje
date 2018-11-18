@@ -19,7 +19,7 @@ This notebook is a brief reference of Zesje workflow.
 
 If you want to use zesje in a course, we are happy to host it for you, contact us at [zesje@antonakhmerov.org](mailto:zesje@antonakhmerov.org) or [zesje@weston.cloud](mailto:zesje@weston.cloud).
 
-We will also sign you up for the zesje support mailing list.
+We also ask you to sign up for the zesje [support mailing list](https://listserv.tudelft.nl/mailman/listinfo/zesje-tnw) (available from TUD network).
 
 If you have questions about using zesje, please use the following channels:
 * if you have a question, use the zesje support chat at https://chat.quantumtinkerer.tudelft.nl/external/channels/zesje (you'll need to create an account and join the **external** team after creating it).

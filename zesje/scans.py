@@ -484,7 +484,7 @@ def guess_student(exam_token, copy_number, app_config=None, force=False):
     with orm.db_session:
         exam = Exam.get(token=exam_token)
         sub = Submission.get(copy_number=copy_number, exam=exam)
-        image_path = Page.get(submission=sub, number=0)
+        image_path = Page.get(submission=sub, number=0).path
 
         student_id_widget = ExamWidget.get(exam=exam, name="student_id_widget")
         student_id_widget_coords = [
@@ -492,7 +492,7 @@ def guess_student(exam_token, copy_number, app_config=None, force=False):
             student_id_widget.y + app_config.get('ID_GRID_HEIGHT', 181),  # bottom
             student_id_widget.x,  # left
             student_id_widget.x + app_config.get('ID_GRID_WIDTH', 313),  # right
-        ],
+        ]
 
         if sub.signature_validated and not force:
             return "Signature already validated"
@@ -522,7 +522,7 @@ def get_student_number(image_path, student_id_widget_coords):
     image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
     # TODO: use points as base unit
     student_id_widget_coords_in = np.asarray(student_id_widget_coords) / 72
-    image = get_box(image, student_id_widget_coords_in, padding=0.0)
+    image = get_box(image, student_id_widget_coords_in, padding=0.3)
     _, thresholded = cv2.threshold(image, 150, 255, cv2.THRESH_BINARY)
     thresholded = cv2.bitwise_not(thresholded)
 

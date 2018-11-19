@@ -547,11 +547,9 @@ def get_student_number(image_path, student_id_widget_coords):
 
     params = cv2.SimpleBlobDetector_Params()
     params.filterByArea = True
-    params.minArea = min_box_size
+    params.minArea = min_box_size * 0.7
     params.maxArea = min_box_size * 2
-    params.filterByCircularity = True
-    params.minCircularity = 0.1
-    params.maxCircularity = 0.8
+    params.filterByCircularity = False
     params.filterByConvexity = True
     params.minConvexity = 0.87
     params.filterByInertia = True

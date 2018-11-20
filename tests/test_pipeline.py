@@ -6,62 +6,24 @@ from PIL import Image
 from reportlab.pdfgen import canvas
 from pdfrw import PdfReader, PdfWriter, PageMerge
 from tempfile import NamedTemporaryFile
+from random import *
 
 from zesje.scans import decode_barcode, ExamMetadata, ExtractedBarcode
 from zesje import scans
-
-
-# Returns the original image instead of retrieving a box from it
-@pytest.fixture
-def mock_get_box_return_original(monkeypatch, datadir):
-    def mock_return(image, widget, padding):
-        return image
-    monkeypatch.setattr(scans, 'get_box', mock_return)
-
-
-# Tests whether the output of calc angle is correct
-@pytest.mark.parametrize('image_filename, token, expected', [
-    ('COOLTOKEN_0005_01.png', 'COOLTOKEN', ExtractedBarcode('COOLTOKEN',   5,   1)),
-    ('COOLTOKEN_0050_10.png', 'COOLTOKEN', ExtractedBarcode('COOLTOKEN',   50, 10)),
-    ('TOKENCOOL_9999_99.png', 'TOKENCOOL', ExtractedBarcode('TOKENCOOL', 9999, 99))],
-    ids=['Simple test 1', 'Simple test 2', 'High numbers'])
-def test_decode_barcode(datadir, image_filename, token, expected, mock_get_box_return_original):
-
-    image_path = os.path.join(datadir, 'datamatrices', image_filename)
-
-    exam_config = ExamMetadata(
-        token=token,
-        barcode_area=[0],
-        student_id_widget_area=None,
-        problem_ids=None
-    )
-
-    image = np.array(Image.open(image_path))
-
-    assert decode_barcode(image, exam_config) == (expected, False)
-
+from zesje import pdf_generation
 
 def generate_page(width = 827, height = 1169):
-    """
-    Generate blank page with the specified width and height
-    """
     pdf = np.zeros((height, width))
     pdf.fill(255)
     return Image.fromarray(pdf).convert("RGB")
 
 def generate_multiple_pages(pages=5):
-    """
-    generate multiple white pages
-    """
     images=[]
     for i in range(0, pages):
         images = images + [generate_page()]
     return images
 
 def apply_whitenoise(data, threshold =0.98):
-    """
-    Apply white noise to the image
-    """
     shape = data.shape
     for i in range(0,shape[0]):
         for j in range(0,shape[1]):
@@ -71,9 +33,6 @@ def apply_whitenoise(data, threshold =0.98):
     return data
 
 def apply_tranformation(pdf):
-    """
-    General structure for applying a transformation to the picture
-    """
     images = []
     for image, page in scans.extract_images(pdf):
         image.load()
@@ -112,7 +71,7 @@ def test_pipeline():
 
     for image, page in scans.extract_images("/home/lenty/Documents/zesje/debug/1.pdf"):
         success, reason = scans.process_page(image, exam_config, "/home/lenty/Documents/zesje/debug")
-        #print(reason)
+        print(reason)
         assert success == True
 
 
@@ -171,17 +130,3 @@ def mock_pdf_generation(exam_config):
     #delete PDF
 
 test_pipeline()
-test_blank_pipeline()
-
-
-
-# Untested:
-# - def process_pdf()
-# - def extract_images()
-# - def write_pdf_status()
-# - def process_page()
-# - def guess_dpi()
-# - def rotate_image()
-# - def shift_image()
-# - get_student_number()
-#   Not tested in this file. See: test_get_studentnumber_precision.py

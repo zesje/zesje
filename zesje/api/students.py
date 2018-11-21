@@ -153,7 +153,7 @@ def _add_or_update_student(row):
     (False if the student was already present, or
     if there was an error processing the row).
     """
-    content = dict(id=row['OrgDefinedId'][1:],
+    content = dict(id=row['OrgDefinedId'].replace('#', ''),
                    first_name=row['First Name'],
                    last_name=row['Last Name'],
                    email=row['Email'] or None)

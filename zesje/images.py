@@ -5,7 +5,7 @@ import numpy as np
 
 def guess_dpi(image_array):
     h, *_ = image_array.shape
-    resolutions = np.array([1200, 600, 300, 200, 150, 120, 100, 75, 60, 50, 40])
+    resolutions = np.array([1200, 600, 400, 300, 200, 150, 120, 100, 75, 60, 50, 40])
     return resolutions[np.argmin(abs(resolutions - 25.4 * h / 297))]
 
 

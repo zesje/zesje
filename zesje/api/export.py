@@ -1,7 +1,6 @@
-import os
 from io import BytesIO
 
-from flask import abort, Response, current_app as app
+from flask import abort, send_file, send_from_directory, current_app as app
 
 from ..statistics import full_exam_data
 
@@ -11,16 +10,15 @@ def full():
 
     Returns
     -------
-    course.sqlite
+    response : flask Response
+        response containing the ``course.sqlite``
     """
-    data_dir = app.config['DATA_DIRECTORY']
-
-    with open(os.path.join(data_dir, 'course.sqlite'), 'rb') as f:
-        data = f.read()
-    resp = Response(data, 200)
-    resp.headers.set('Content-Disposition', 'attachment',
-                     filename='course.sqlite')
-    return resp
+    return send_from_directory(
+        app.config['DATA_DIRECTORY'],
+        'course.sqlite',
+        as_attachment=True,
+        mimetype="application/x-sqlite3"
+    )
 
 
 def exam(file_format, exam_id):
@@ -40,19 +38,32 @@ def exam(file_format, exam_id):
         data = full_exam_data(exam_id)
     except KeyError:
         abort(404)
+
+    if file_format not in ('dataframe', 'xlsx', 'xlsx_detailed'):
+        abort(404)
+
     serialized = BytesIO()
-    extension = "pd" if file_format == 'dataframe' else "xlsx"
-    if file_format == 'dataframe':
-        data.to_pickle(serialized)
-    elif file_format == 'xlsx':
+
+    if file_format == 'xlsx':
         data = data.iloc[:, data.columns.get_level_values(1) == 'total']
         data.columns = data.columns.get_level_values(0)
-        data.to_excel(serialized)
-    elif file_format == 'xlsx_detailed':
-        data.to_excel(serialized)
+
+    if file_format == 'dataframe':
+        extension = 'pd'
+        mimetype = 'application/python-pickle'
+        data.to_pickle(serialized)
     else:
-        abort(404)
-    resp = Response(serialized.getvalue(), 200)
-    resp.headers.set('Content-Disposition', 'attachment',
-                     filename=f'exam{exam_id}.{extension}')
-    return resp
+        extension = 'xlsx'
+        mimetype = (
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+        data.to_excel(serialized)
+
+    serialized.seek(0)
+
+    return send_file(
+        serialized,
+        as_attachment=True,
+        attachment_filename=f'exam{exam_id}.{extension}',
+        mimetype=mimetype,
+    )

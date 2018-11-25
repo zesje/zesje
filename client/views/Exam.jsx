@@ -280,7 +280,7 @@ class Exams extends React.Component {
             className='button is-danger is-fullwidth'
             onClick={() => props.onDeleteClick()}
           >
-            Delete
+            Delete problem
           </button>
         </div>
 
@@ -343,7 +343,7 @@ class Exams extends React.Component {
         className='button is-link is-fullwidth is-danger'
         onClick={() => { this.setState({deleting: true}) }}
       >
-        Delete
+        Delete exam
       </button>
     )
   }

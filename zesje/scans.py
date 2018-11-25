@@ -2,7 +2,6 @@ import functools
 import itertools
 import math
 import os
-import platform
 from collections import namedtuple, Counter
 from io import BytesIO
 import signal
@@ -325,7 +324,8 @@ def decode_barcode(image, exam_config):
     image_crop = get_box(image, barcode_coords_in, padding=1.3)
     image_crop_rotated = get_box(rotated, barcode_coords_in, padding=1.3)
 
-    images = [(image[::step, ::step], ud)
+    images = [
+        (image[::step, ::step], ud)
         for step in step_sizes
         for (image, ud) in ((image_crop, False), (image_crop_rotated, True))
     ]

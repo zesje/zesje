@@ -1,5 +1,6 @@
 import React from 'react'
 import Dropzone from 'react-dropzone'
+import Notification from 'react-bulma-notification'
 import { Document, Page } from 'react-pdf/dist/entry.webpack'
 
 import * as api from '../api.jsx'
@@ -15,7 +16,7 @@ class Exams extends React.Component {
 
   onDropPDF = (accepted, rejected) => {
     if (rejected.length > 0) {
-      alert('Please upload a PDF..')
+      Notification.error('Please upload a PDF.')
       return
     }
 
@@ -38,11 +39,11 @@ class Exams extends React.Component {
 
   onUploadPDF = (event) => {
     if (!this.state.exam_name) {
-      alert('Please enter exam name.')
+      Notification.error('Please enter exam name.')
       return
     }
     if (!this.state.pdf) {
-      alert('Please upload a PDF.')
+      Notification.error('Please upload a PDF.')
       return
     }
     const data = new window.FormData()
@@ -54,7 +55,7 @@ class Exams extends React.Component {
         this.props.changeURL('/exams/' + exam.id)
       })
       .catch(resp => {
-        resp.json().then(body => alert(body.message))
+        resp.json().then(body => Notification.error(body.message))
       })
   }
 

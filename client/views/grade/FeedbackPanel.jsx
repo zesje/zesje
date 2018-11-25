@@ -1,5 +1,7 @@
 import React from 'react'
 
+import Notification from 'react-bulma-notification'
+
 import * as api from '../../api.jsx'
 
 import FeedbackBlock from './FeedbackBlock.jsx'
@@ -27,7 +29,7 @@ class FeedbackPanel extends React.Component {
       graderID: this.props.graderID
     })
       .then(sucess => {
-        if (!sucess) alert('Remark not saved!')
+        if (!sucess) Notification.error('Remark not saved!')
       })
   }
 

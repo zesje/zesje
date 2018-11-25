@@ -1,5 +1,7 @@
 import React from 'react'
 
+import Notification from 'react-bulma-notification'
+
 import Hero from '../components/Hero.jsx'
 import './Exam.css'
 import GeneratedExamPreview from '../components/GeneratedExamPreview.jsx'
@@ -84,7 +86,7 @@ class Exams extends React.Component {
     if (!problem) return
 
     api.put('problems/' + problem.id + '/name', { name: problem.name })
-      .catch(e => alert('Could not save new problem name: ' + e))
+      .catch(e => Notification.error('Could not save new problem name: ' + e))
   }
 
   deleteWidget = (widgetId, prompt = true) => {

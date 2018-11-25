@@ -1,5 +1,7 @@
 import React from 'react'
 
+import Notification from 'react-bulma-notification'
+
 import Hero from '../components/Hero.jsx'
 
 import * as api from '../api.jsx'
@@ -24,7 +26,7 @@ class Graders extends React.Component {
         this.props.updateGraderList()
       })
       .catch(resp => {
-        alert('Could not save grader (see Javascript console for details)')
+        Notification.error('Could not save grader (see Javascript console for details)')
         console.error('Error saving grader:', resp)
       })
 
@@ -37,7 +39,7 @@ class Graders extends React.Component {
         this.setState({ graders: graders })
       })
       .catch(resp => {
-        alert('could not fetch graders (see Javascript console for details)')
+        Notification.error('could not fetch graders (see Javascript console for details)')
         console.error('Error fetching graders:', resp)
       })
   }

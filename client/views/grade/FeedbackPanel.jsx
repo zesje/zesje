@@ -28,8 +28,8 @@ class FeedbackPanel extends React.Component {
       remark: this.state.remark,
       graderID: this.props.graderID
     })
-      .then(sucess => {
-        if (!sucess) Notification.error('Remark not saved!')
+      .then(success => {
+        if (!success) Notification.error('Remark not saved!')
       })
   }
 

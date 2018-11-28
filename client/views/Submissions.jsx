@@ -1,4 +1,6 @@
 import React from 'react'
+
+import Notification from 'react-bulma-notification'
 import Dropzone from 'react-dropzone'
 
 import Hero from '../components/Hero.jsx'
@@ -61,7 +63,7 @@ class Submissions extends React.Component {
 
   onDropPDF = (accepted, rejected) => {
     if (rejected.length > 0) {
-      alert('Please upload a scan PDF.')
+      Notification.error('Please upload a scan PDF.')
       return
     }
     accepted.map(file => {
@@ -72,7 +74,7 @@ class Submissions extends React.Component {
           this.updateScans()
         })
         .catch(resp => {
-          alert('failed to upload pdf (see javascript console for details)')
+          Notification.error('failed to upload pdf (see javascript console for details)')
           console.error('failed to upload PDF:', resp)
         })
     })
@@ -86,10 +88,13 @@ class Submissions extends React.Component {
     api.get('students')
       .then(students => {
         if (students.length === 0) {
-          alert('You have not yet uploaded any students. ' +
+          Notification.info(
+            'You have not yet uploaded any students. ' +
             "If you don't upload students before the scans " +
             "then we can't automatically assign students " +
-            'to their submissions')
+            'to their submissions',
+            { 'duration': 5 }
+          )
         }
       })
   }

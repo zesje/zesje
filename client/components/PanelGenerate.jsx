@@ -1,5 +1,7 @@
 import React from 'react'
 
+import Notification from 'react-bulma-notification'
+
 import * as api from '../api.jsx'
 
 class PanelGenerate extends React.Component {
@@ -62,7 +64,7 @@ class PanelGenerate extends React.Component {
           })
       })
     } else {
-      alert('Insert proper range')
+      Notification.error('Insert proper range')
     }
   }
 

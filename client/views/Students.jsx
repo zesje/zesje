@@ -1,6 +1,8 @@
 import React from 'react'
 import Mousetrap from 'mousetrap'
 
+import Notification from 'react-bulma-notification'
+
 import * as api from '../api.jsx'
 
 import Hero from '../components/Hero.jsx'
@@ -110,7 +112,7 @@ class CheckStudents extends React.Component {
       this.setState({
         input: this.props.submissions[this.state.index].id
       })
-      alert('Could not find that submission number :(\nSorry!')
+      Notification.error('Could not find that submission number :(\nSorry!')
     }
   }
 
@@ -131,7 +133,7 @@ class CheckStudents extends React.Component {
         this.nextUnchecked()
       })
       .catch(err => {
-        alert('failed to put submission (see javascript console for details)')
+        Notification.error('failed to put submission (see javascript console for details)')
         console.error('failed to put submission:', err)
         throw err
       })

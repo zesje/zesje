@@ -1,4 +1,6 @@
 import React from 'react'
+
+import Notification from 'react-bulma-notification'
 import Dropzone from 'react-dropzone'
 
 import * as api from '../../api.jsx'
@@ -111,7 +113,7 @@ class EditPanel extends React.Component {
 
   uploadStudent = (accepted, rejected) => {
     if (rejected.length > 0) {
-      alert('Please upload a CSV file')
+      Notification.error('Please upload a CSV file')
       return
     }
     accepted.map(file => {
@@ -119,11 +121,11 @@ class EditPanel extends React.Component {
       data.append('csv', file)
       api.post('students', data)
         .then(newStudentCount => {
-          alert('successfully added ' + newStudentCount + ' students')
+          Notification.success('successfully added ' + newStudentCount + ' students', { 'duration': 5 })
         })
         .catch(resp => {
           console.error('failed to upload student CSV file')
-          resp.json().then(r => alert(r.message))
+          resp.json().then(r => Notification.error(r.message))
         })
     })
   }

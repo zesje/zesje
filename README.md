@@ -16,7 +16,7 @@ https://conda.io/miniconda.html
 Create a Conda environment that you will use for installing all
 of zesje's dependencies:
 
-    conda create -n zesje-dev python=3.6 yarn
+    conda create -c conda-forge -n zesje-dev python=3.6 yarn
 
 Then, *activate* the conda environment:
 

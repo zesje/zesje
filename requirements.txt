@@ -1,5 +1,4 @@
 flask
-Flask-BasicAuth
 flask_restful
 pony
 Pillow

@@ -4,7 +4,6 @@ import os
 from os.path import abspath, dirname
 
 from flask import Flask
-from flask_basicauth import BasicAuth
 from werkzeug.exceptions import NotFound
 
 from .api import api_bp
@@ -18,7 +17,6 @@ STATIC_FOLDER_PATH = os.path.join(abspath(dirname(__file__)), 'static')
 
 app = Flask(__name__, static_folder=STATIC_FOLDER_PATH)
 app.register_blueprint(api_bp, url_prefix='/api')
-auth = BasicAuth()  # don't pass 'app', as its not yet configured
 
 if 'ZESJE_SETTINGS' in os.environ:
     app.config.from_envvar('ZESJE_SETTINGS')
@@ -37,8 +35,6 @@ app.config.update(
 
 @app.before_first_request
 def setup():
-    auth.init_app(app)
-
     os.makedirs(app.config['DATA_DIRECTORY'], exist_ok=True)
     os.makedirs(app.config['SCAN_DIRECTORY'], exist_ok=True)
 

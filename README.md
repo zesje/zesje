@@ -5,19 +5,38 @@ Zesje is an online grading system for written exams.
 ## Development
 
 ### Setting up a development environment
-Make sure you have Yarn and Python 3.6 installed.
+We recommend using the Conda tool for managing your development
+environment. If you already have Anaconda or Miniconda installed,
+you may skip this step.
 
-Install the necessary Yarn dependencies:
+Install Miniconda by following the instructions on this page:
+
+https://conda.io/miniconda.html
+
+Create a Conda environment that you will use for installing all
+of zesje's dependencies:
+
+    conda create -n zesje-dev python=3.6 yarn
+
+Then, *activate* the conda environment:
+
+    conda activate zesje-dev
+
+You should see `(zesje-dev)` inserted into your shell prompt.
+This tells you that the environment is activated.
+
+Install all of the Javascript dependencies:
 
     yarn install
 
-We will keep the Python dependencies in a virtual environment:
+Install all of the Python dependencies:
 
-    virtualenv venv
-    source venv/bin/activate
     pip install -r requirements.txt -r requirements-dev.txt
 
-Also install the required native dependencies:
+Unfortunately there is also another dependency that must be installed
+manually for now (we are working to bring this dependency into the
+Conda ecosystem). You can install this dependency in the following way
+on different platforms:
 
 | OS            | Command                      |
 |---------------|------------------------------|
@@ -28,8 +47,10 @@ Also install the required native dependencies:
 | openSUSE      | `zypper install libdmtx0`    |
 | Windows       | *not necessary*              |
 
+
+
 ### Running a development server
-Run
+Activate your zesje development environment and run
 
     yarn dev
 

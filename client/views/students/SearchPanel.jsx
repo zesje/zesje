@@ -24,6 +24,8 @@ class SearchPanel extends React.Component {
     subIndex: null
   }
 
+  _input: ?HTMLInputElement;
+
   componentDidMount = () => {
     api.get('students')
       .then(students => {
@@ -34,6 +36,10 @@ class SearchPanel extends React.Component {
         console.error('failed to get students:', err)
         throw err
       })
+  }
+
+  componentDidUpdate (prevProps, prevState) {
+    this._input.focus()
   }
 
   search = (event) => {
@@ -113,7 +119,7 @@ class SearchPanel extends React.Component {
         </p>
         <div className='panel-block'>
           <p className='control has-icons-left'>
-            <input className='input' type='text'
+            <input className='input' type='text' autofocus='true' ref={c => (this._input = c)}
               value={this.state.input} onChange={this.search} onKeyDown={this.specialKey} />
 
             <span className='icon is-left'>

@@ -21,7 +21,8 @@ class Exams extends React.Component {
     selectedWidgetId: null,
     widgets: [],
     previewing: false,
-    deleting: false
+    deletingExam: false,
+    deletingWidget: false
   }
 
   static getDerivedStateFromProps = (newProps, prevState) => {
@@ -89,27 +90,26 @@ class Exams extends React.Component {
       .catch(e => Notification.error('Could not save new problem name: ' + e))
   }
 
-  deleteWidget = (widgetId, prompt = true) => {
+  deleteWidget = (widgetId) => {
     const widget = this.state.widgets[widgetId]
     if (widget) {
-      if (prompt && confirm('Are you sure you want to delete this widget?')) {
-        api.del('problems/' + widget.problem.id)
-          .then(() => {
-            this.setState((prevState) => {
-              return {
-                selectedWidgetId: null,
-                widgets: update(prevState.widgets, {
-                  $unset: [widgetId]
-                })
-              }
-            })
+      api.del('problems/' + widget.problem.id)
+        .then(() => {
+          this.setState((prevState) => {
+            return {
+              selectedWidgetId: null,
+              deletingWidget: false,
+              widgets: update(prevState.widgets, {
+                $unset: [widgetId]
+              })
+            }
           })
-          .catch(err => {
-            console.log(err)
-            // update to try and get a consistent state
-            this.updateExam()
-          })
-      }
+        })
+        .catch(err => {
+          console.log(err)
+          // update to try and get a consistent state
+          this.updateExam()
+        })
     }
   }
 
@@ -227,7 +227,7 @@ class Exams extends React.Component {
         <this.PanelEdit
           disabled={widgetEditDisabled}
           onDeleteClick={() => {
-            this.deleteWidget(selectedWidgetId)
+            this.setState({deletingWidget: true})
           }}
           problem={problem}
           changeProblemName={newName => {
@@ -343,7 +343,7 @@ class Exams extends React.Component {
     return (
       <button
         className='button is-link is-fullwidth is-danger'
-        onClick={() => { this.setState({deleting: true}) }}
+        onClick={() => { this.setState({deletingExam: true}) }}
       >
         Delete exam
       </button>
@@ -400,14 +400,26 @@ class Exams extends React.Component {
         </div>
       </section>
       <ConfirmationModal
-        active={this.state.deleting}
+        active={this.state.deletingExam}
         color='is-danger'
         headerText={`Are you sure you want to delete exam "${this.props.exam.name}"?`}
         confirmText='Delete exam'
-        onCancel={() => this.setState({deleting: false})}
+        onCancel={() => this.setState({deletingExam: false})}
         onConfirm={() => {
           this.props.deleteExam(this.props.examID).then(this.props.leave)
         }}
+      />
+      <ConfirmationModal
+        active={this.state.deletingWidget && this.state.selectedWidgetId != null}
+        color='is-danger'
+        headerText={`Are you sure you want to delete problem "${
+          this.state.selectedWidgetId &&
+          this.state.widgets[this.state.selectedWidgetId] &&
+          this.state.widgets[this.state.selectedWidgetId].problem &&
+          this.state.widgets[this.state.selectedWidgetId].problem.name}"`}
+        confirmText='Delete problem'
+        onCancel={() => this.setState({deletingWidget: false})}
+        onConfirm={() => this.deleteWidget(this.state.selectedWidgetId)}
       />
     </div>
   }

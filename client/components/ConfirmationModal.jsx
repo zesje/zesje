@@ -1,5 +1,7 @@
 import React from 'react'
 
+import './ConfirmationModal.css'
+
 const ConfirmationModal = (props) => {
   let body = null
   if (props.contentText) {

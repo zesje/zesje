@@ -221,11 +221,13 @@ class Exams extends React.Component {
     let selectedWidget = selectedWidgetId && this.state.widgets[selectedWidgetId]
     let problem = selectedWidget && selectedWidget.problem
     let widgetEditDisabled = this.state.previewing || !problem
+    let widgetDeleteDisabled = widgetEditDisabled || this.props.exam.finalized
 
     return (
       <React.Fragment>
         <this.PanelEdit
-          disabled={widgetEditDisabled}
+          disabledEdit={widgetEditDisabled}
+          disabledDelete={widgetDeleteDisabled}
           onDeleteClick={() => {
             this.setState({deletingWidget: true})
           }}
@@ -261,7 +263,7 @@ class Exams extends React.Component {
             <label className='label'>Name</label>
             <div className='control'>
               <input
-                disabled={props.disabled}
+                disabled={props.disabledEdit}
                 className='input'
                 placeholder='Problem name'
                 value={props.problem ? props.problem.name : ''}
@@ -278,7 +280,7 @@ class Exams extends React.Component {
         </div>
         <div className='panel-block'>
           <button
-            disabled={props.disabled}
+            disabled={props.disabledDelete}
             className='button is-danger is-fullwidth'
             onClick={() => props.onDeleteClick()}
           >

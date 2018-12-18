@@ -19,6 +19,7 @@ class Exams extends React.Component {
     page: 0,
     numPages: null,
     selectedWidgetId: null,
+    changedWidgetId: null,
     widgets: [],
     previewing: false,
     deletingExam: false,
@@ -50,6 +51,7 @@ class Exams extends React.Component {
         page: 0,
         numPages: null,
         selectedWidgetId: null,
+        changedWidgetId: null,
         widgets: widgets,
         previewing: false
       }
@@ -58,9 +60,14 @@ class Exams extends React.Component {
     return null
   }
 
-  componentDidUpdate = (prevProps) => {
+  componentDidUpdate = (prevProps, prevState) => {
     if (prevProps.examID !== this.props.examID) {
       this.props.updateExam(this.props.examID)
+    }
+    // This saves the problem name when switching to non-problem widgets
+    // The onBlur event is not fired when the input field is being disabled
+    if (prevState.selectedWidgetId !== this.state.selectedWidgetId) {
+      this.saveProblemName()
     }
   }
 
@@ -69,25 +76,27 @@ class Exams extends React.Component {
   }
 
   componentWillUnmount = () => {
-    // This might save the name unnecessary, but better twice than never.
-    // We could keep track in state if we need to save the name when the double requests cause issues
+    // This might try to save the name unnecessary, but better twice than never.
     this.saveProblemName()
     // Force an update of the upper exam state, since this component does not update and use that correctly
     this.props.updateExam(this.props.examID)
   }
 
   saveProblemName = () => {
-    const selectedWidgetId = this.state.selectedWidgetId
-    if (!selectedWidgetId) return
+    const changedWidgetId = this.state.changedWidgetId
+    if (!changedWidgetId) return
 
-    const selectedWidget = this.state.widgets[selectedWidgetId]
-    if (!selectedWidget) return
+    const changedWidget = this.state.widgets[changedWidgetId]
+    if (!changedWidget) return
 
-    const problem = selectedWidget.problem
+    const problem = changedWidget.problem
     if (!problem) return
 
     api.put('problems/' + problem.id + '/name', { name: problem.name })
       .catch(e => Notification.error('Could not save new problem name: ' + e))
+      .then(this.setState({
+        changedWidgetId: null
+      }))
   }
 
   deleteWidget = (widgetId) => {
@@ -98,6 +107,7 @@ class Exams extends React.Component {
           this.setState((prevState) => {
             return {
               selectedWidgetId: null,
+              changedWidgetId: null,
               deletingWidget: false,
               widgets: update(prevState.widgets, {
                 $unset: [widgetId]
@@ -242,7 +252,8 @@ class Exams extends React.Component {
                     }
                   }
                 }
-              })
+              }),
+              changedWidgetId: selectedWidgetId
             }))
           }}
           saveProblemName={this.saveProblemName}
@@ -268,11 +279,9 @@ class Exams extends React.Component {
                 placeholder='Problem name'
                 value={props.problem ? props.problem.name : ''}
                 onChange={(e) => {
-                  console.log('onChange')
                   props.changeProblemName(e.target.value)
                 }}
                 onBlur={(e) => {
-                  console.log('onBlur')
                   props.saveProblemName(e.target.value)
                 }} />
             </div>

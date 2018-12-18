@@ -244,6 +244,7 @@ class Exams extends React.Component {
           problem={problem}
           changeProblemName={newName => {
             this.setState(prevState => ({
+              changedWidgetId: selectedWidgetId,
               widgets: update(prevState.widgets, {
                 [selectedWidgetId]: {
                   problem: {
@@ -252,8 +253,7 @@ class Exams extends React.Component {
                     }
                   }
                 }
-              }),
-              changedWidgetId: selectedWidgetId
+              })
             }))
           }}
           saveProblemName={this.saveProblemName}

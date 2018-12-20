@@ -4,7 +4,7 @@ from flask_restful import Resource, reqparse
 
 from pony import orm
 
-from ..database import db, Exam, Problem, ProblemWidget
+from ..database import db, Exam, Problem, ProblemWidget, Solution
 
 
 class Problems(Resource):
@@ -24,7 +24,6 @@ class Problems(Resource):
         """Add a new problem.
 
         Will error if exam for given id does not exist
-        Will 403 if exam is finalized
 
         """
 
@@ -38,8 +37,6 @@ class Problems(Resource):
             msg = f"Exam with id {exam_id} doesn't exist"
             return dict(status=400, message=msg), 400
         else:
-            if exam.finalized:
-                return dict(status=403, message=f'Exam is finalized'), 403
             widget = ProblemWidget(
                 x=args['x'],
                 y=args['y'],
@@ -53,6 +50,10 @@ class Problems(Resource):
                 name=args['name'],
                 widget=widget,
             )
+
+            # Add solutions for each already existing submission
+            for sub in exam.submissions:
+                Solution(problem=problem, submission=sub)
 
             db.commit()
 
@@ -97,9 +98,11 @@ class Problems(Resource):
         if problem is None:
             msg = f"Problem with id {problem_id} doesn't exist"
             return dict(status=404, message=msg), 404
-        if problem.exam.finalized:
-            return dict(status=403, message=f'Exam is finalized'), 403
+        if any([sol.graded_by is not None for sol in problem.solutions]):
+            return dict(status=403, message=f'Problem has already been graded'), 403
         else:
+            for sol in problem.solutions:
+                sol.delete()
             problem.delete()
             problem.widget.delete()
             db.commit()

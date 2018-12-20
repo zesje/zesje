@@ -156,6 +156,7 @@ class Exams(Resource):
                         'width': prob.widget.width,
                         'height': prob.widget.height,
                     },
+                    'graded': any([sol.graded_by is not None for sol in prob.solutions])
                 } for prob in exam.problems.order_by(lambda p: p.id)
             ],
             'widgets': [

@@ -37,7 +37,8 @@ class Exams extends React.Component {
           problem: {
             id: problem.id,
             page: problem.page,
-            name: problem.name
+            name: problem.name,
+            graded: problem.graded
           }
         }
       })
@@ -231,7 +232,8 @@ class Exams extends React.Component {
     let selectedWidget = selectedWidgetId && this.state.widgets[selectedWidgetId]
     let problem = selectedWidget && selectedWidget.problem
     let widgetEditDisabled = this.state.previewing || !problem
-    let widgetDeleteDisabled = widgetEditDisabled || this.props.exam.finalized
+    let isGraded = problem && problem.graded
+    let widgetDeleteDisabled = widgetEditDisabled || isGraded
 
     return (
       <React.Fragment>

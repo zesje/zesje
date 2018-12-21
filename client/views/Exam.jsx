@@ -118,8 +118,15 @@ class Exams extends React.Component {
         })
         .catch(err => {
           console.log(err)
-          // update to try and get a consistent state
-          this.updateExam()
+          err.json().then(res => {
+            this.setState({
+              deletingWidget: false
+            })
+            Notification.error('Could not delete problem' +
+              (res.message ? ': ' + res.message : ''))
+            // update to try and get a consistent state
+            this.props.updateExam(this.props.examID)
+          })
         })
     }
   }

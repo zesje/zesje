@@ -101,8 +101,6 @@ class Problems(Resource):
         if any([sol.graded_by is not None for sol in problem.solutions]):
             return dict(status=403, message=f'Problem has already been graded'), 403
         else:
-            for sol in problem.solutions:
-                sol.delete()
             problem.delete()
             problem.widget.delete()
             db.commit()

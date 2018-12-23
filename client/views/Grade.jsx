@@ -90,14 +90,15 @@ class Grade extends React.Component {
 
   getLocationHash = (problem) => {
     var wid = problem.widget
-    var hash_str = wid.x + '.' + wid.y + '.' + wid.width + '.' + wid.height
+    var hashStr = wid.x + '.' + wid.y + '.' + wid.width + '.' + wid.height
     // Function to calculate hash from a string, from:
     // https://stackoverflow.com/questions/7616461/generate-a-hash-from-string-in-javascript
-    var hash = 0, i, chr
-    if (hash_str.length === 0) return hash
-    for (i = 0; i < hash_str.length; i++) {
-      chr   = hash_str.charCodeAt(i)
-      hash  = ((hash << 5) - hash) + chr
+    var hash = 0
+    if (hashStr.length === 0) return hash
+    var chr
+    for (var i = 0; i < hashStr.length; i++) {
+      chr = hashStr.charCodeAt(i)
+      hash = ((hash << 5) - hash) + chr
       hash |= 0 // Convert to 32bit integer
     }
     return Math.abs(hash)

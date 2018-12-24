@@ -282,26 +282,28 @@ class Exams extends React.Component {
         </p>
         <div className='panel-block'>
           <div className='field'>
-          {selectedWidgetId === null ? (
-            <p className='problem-help'>To create a problem, draw a rectangle on the exam.</p>
-          ) : (
-            <React.Fragment>
-              <label className='label'>Name</label>
-              <div className='control'>
-                <input
-                  disabled={props.disabledEdit}
-                  className='input'
-                  placeholder='Problem name'
-                  value={props.problem ? props.problem.name : ''}
-                  onChange={(e) => {
-                    props.changeProblemName(e.target.value)
-                  }}
-                  onBlur={(e) => {
-                    props.saveProblemName(e.target.value)
-                  }} />
-              </div>
-            </React.Fragment>
-          )}
+            {selectedWidgetId === null ? (
+              <p style={{margin: '0.625em 0', minHeight: '3em'}}>
+                To create a problem, draw a rectangle on the exam.
+              </p>
+            ) : (
+              <React.Fragment>
+                <label className='label'>Name</label>
+                <div className='control'>
+                  <input
+                    disabled={props.disabledEdit}
+                    className='input'
+                    placeholder='Problem name'
+                    value={props.problem ? props.problem.name : ''}
+                    onChange={(e) => {
+                      props.changeProblemName(e.target.value)
+                    }}
+                    onBlur={(e) => {
+                      props.saveProblemName(e.target.value)
+                    }} />
+                </div>
+              </React.Fragment>
+            )}
           </div>
         </div>
         <div className='panel-block'>

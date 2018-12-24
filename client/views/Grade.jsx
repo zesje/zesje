@@ -88,6 +88,22 @@ class Grade extends React.Component {
     })
   }
 
+  getLocationHash = (problem) => {
+    var wid = problem.widget
+    var hashStr = wid.x + '.' + wid.y + '.' + wid.width + '.' + wid.height
+    // Function to calculate hash from a string, from:
+    // https://stackoverflow.com/questions/7616461/generate-a-hash-from-string-in-javascript
+    var hash = 0
+    if (hashStr.length === 0) return hash
+    var chr
+    for (var i = 0; i < hashStr.length; i++) {
+      chr = hashStr.charCodeAt(i)
+      hash = ((hash << 5) - hash) + chr
+      hash |= 0 // Convert to 32bit integer
+    }
+    return Math.abs(hash)
+  }
+
   static getDerivedStateFromProps = (newProps, prevState) => {
     if (newProps.exam.id !== prevState.examID && newProps.exam.submissions.length) {
       return {
@@ -184,7 +200,8 @@ class Grade extends React.Component {
 
                 <p className='box'>
                   <img src={exam.id ? ('api/images/solutions/' + exam.id + '/' +
-                    problem.id + '/' + submission.id + '/' + (this.state.fullPage ? '1' : '0')) : ''} alt='' />
+                    problem.id + '/' + submission.id + '/' + (this.state.fullPage ? '1' : '0')) + '?' +
+                    this.getLocationHash(problem) : ''} alt='' />
                 </p>
 
                 {solution.graded_at

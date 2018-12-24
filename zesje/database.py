@@ -83,10 +83,7 @@ class Problem(db.Entity):
 
 
 class FeedbackOption(db.Entity):
-    """feedback option -- can be shared by multiple problems.
-    this means non-duplicate rows for things like 'all correct',
-    but means that care must be taken when "updating" and "deleting"
-    options from the UI (not yet supported)"""
+    """feedback option"""
     problem = Required(Problem)
     text = Required(str)
     description = Optional(str)

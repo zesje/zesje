@@ -37,7 +37,8 @@ class Exams extends React.Component {
           problem: {
             id: problem.id,
             page: problem.page,
-            name: problem.name
+            name: problem.name,
+            graded: problem.graded
           }
         }
       })
@@ -117,8 +118,15 @@ class Exams extends React.Component {
         })
         .catch(err => {
           console.log(err)
-          // update to try and get a consistent state
-          this.updateExam()
+          err.json().then(res => {
+            this.setState({
+              deletingWidget: false
+            })
+            Notification.error('Could not delete problem' +
+              (res.message ? ': ' + res.message : ''))
+            // update to try and get a consistent state
+            this.props.updateExam(this.props.examID)
+          })
         })
     }
   }
@@ -231,7 +239,8 @@ class Exams extends React.Component {
     let selectedWidget = selectedWidgetId && this.state.widgets[selectedWidgetId]
     let problem = selectedWidget && selectedWidget.problem
     let widgetEditDisabled = this.state.previewing || !problem
-    let widgetDeleteDisabled = widgetEditDisabled || this.props.exam.finalized
+    let isGraded = problem && problem.graded
+    let widgetDeleteDisabled = widgetEditDisabled || isGraded
 
     return (
       <React.Fragment>
@@ -264,6 +273,8 @@ class Exams extends React.Component {
   }
 
   PanelEdit = (props) => {
+    const selectedWidgetId = this.state.selectedWidgetId
+
     return (
       <nav className='panel'>
         <p className='panel-heading'>
@@ -271,20 +282,28 @@ class Exams extends React.Component {
         </p>
         <div className='panel-block'>
           <div className='field'>
-            <label className='label'>Name</label>
-            <div className='control'>
-              <input
-                disabled={props.disabledEdit}
-                className='input'
-                placeholder='Problem name'
-                value={props.problem ? props.problem.name : ''}
-                onChange={(e) => {
-                  props.changeProblemName(e.target.value)
-                }}
-                onBlur={(e) => {
-                  props.saveProblemName(e.target.value)
-                }} />
-            </div>
+            {selectedWidgetId === null ? (
+              <p style={{margin: '0.625em 0', minHeight: '3em'}}>
+                To create a problem, draw a rectangle on the exam.
+              </p>
+            ) : (
+              <React.Fragment>
+                <label className='label'>Name</label>
+                <div className='control'>
+                  <input
+                    disabled={props.disabledEdit}
+                    className='input'
+                    placeholder='Problem name'
+                    value={props.problem ? props.problem.name : ''}
+                    onChange={(e) => {
+                      props.changeProblemName(e.target.value)
+                    }}
+                    onBlur={(e) => {
+                      props.saveProblemName(e.target.value)
+                    }} />
+                </div>
+              </React.Fragment>
+            )}
           </div>
         </div>
         <div className='panel-block'>

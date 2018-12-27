@@ -18,17 +18,17 @@ class FeedbackPanel extends React.Component {
   }
 
   componentWillUnmount = () => {
-    Mousetrap.unbind(['up', 'i'])
-    Mousetrap.unbind(['down', 'k'])
+    Mousetrap.unbind(['up', 'k'])
+    Mousetrap.unbind(['down', 'j'])
     Mousetrap.unbind(['space'])
   }
 
   componentDidMount = () => {
-    Mousetrap.bind(['up', 'i'], (event) => {
+    Mousetrap.bind(['up', 'k'], (event) => {
       event.preventDefault()
       this.prevOption()
     })
-    Mousetrap.bind(['down', 'k'], (event) => {
+    Mousetrap.bind(['down', 'j'], (event) => {
       event.preventDefault()
       this.nextOption()
     })

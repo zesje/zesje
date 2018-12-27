@@ -20,18 +20,18 @@ class Grade extends React.Component {
   }
 
   componentWillUnmount = () => {
-    Mousetrap.unbind(['left', 'j'])
+    Mousetrap.unbind(['left', 'h'])
     Mousetrap.unbind(['right', 'l'])
-    Mousetrap.unbind(['shift+left', 'shift+j'])
+    Mousetrap.unbind(['shift+left', 'shift+h'])
     Mousetrap.unbind(['shift+right', 'shift+l'])
-    Mousetrap.unbind(['shift+up', 'shift+i'])
-    Mousetrap.unbind(['shift+down', 'shift+k'])
+    Mousetrap.unbind(['shift+up', 'shift+k'])
+    Mousetrap.unbind(['shift+down', 'shift+j'])
   }
 
   componentDidMount = () => {
-    Mousetrap.bind(['left', 'j'], this.prev)
+    Mousetrap.bind(['left', 'h'], this.prev)
     Mousetrap.bind(['right', 'l'], this.next)
-    Mousetrap.bind(['shift+left', 'shift+j'], (event) => {
+    Mousetrap.bind(['shift+left', 'shift+h'], (event) => {
       event.preventDefault()
       this.prevUngraded()
     })
@@ -39,11 +39,11 @@ class Grade extends React.Component {
       event.preventDefault()
       this.nextUngraded()
     })
-    Mousetrap.bind(['shift+up', 'shift+i'], (event) => {
+    Mousetrap.bind(['shift+up', 'shift+k'], (event) => {
       event.preventDefault()
       this.prevProblem()
     })
-    Mousetrap.bind(['shift+down', 'shift+k'], (event) => {
+    Mousetrap.bind(['shift+down', 'shift+j'], (event) => {
       event.preventDefault()
       this.nextProblem()
     })

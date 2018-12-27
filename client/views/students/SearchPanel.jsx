@@ -119,7 +119,7 @@ class SearchPanel extends React.Component {
         </p>
         <div className='panel-block'>
           <p className='control has-icons-left'>
-            <input className='input' type='text' autofocus='true' ref={c => (this._input = c)}
+            <input id="panel-input" className='input' type='text' autoFocus={true} ref={c => (this._input = c)}
               value={this.state.input} onChange={this.search} onKeyDown={this.specialKey} />
 
             <span className='icon is-left'>

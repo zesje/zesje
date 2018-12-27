@@ -31,7 +31,9 @@ class FeedbackBlock extends React.Component {
 
   render () {
     return (
-      <a className='panel-block is-active' onClick={this.toggle} >
+      <a className='panel-block is-active' onClick={this.toggle}
+        style={this.props.selected ? {backgroundColor: '#209cee'} : {}}
+      >
         <span className='panel-icon'>
           <i className={'fa fa-' + (this.props.checked ? 'check-square-o' : 'square-o')} />
         </span>

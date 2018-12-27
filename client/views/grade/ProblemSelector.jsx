@@ -10,7 +10,7 @@ class ProblemSelector extends React.Component {
             <select
               onChange={this.props.changeProblem}>
               {this.props.problems.map((problem, i) =>
-                <option key={problem.id} value={i}>{problem.name}</option>
+                <option key={problem.id} value={i} selected={this.props.current === i}>{problem.name}</option>
               )}
             </select>
           </div>

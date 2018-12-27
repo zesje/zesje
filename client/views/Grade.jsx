@@ -1,4 +1,5 @@
 import React from 'react'
+import Mousetrap from 'mousetrap'
 
 import Hero from '../components/Hero.jsx'
 
@@ -16,6 +17,36 @@ class Grade extends React.Component {
     pIndex: 0,
     examID: null,
     fullPage: false
+  }
+
+  componentWillUnmount = () => {
+    Mousetrap.unbind(['left', 'j'])
+    Mousetrap.unbind(['right', 'l'])
+    Mousetrap.unbind(['shift+left', 'shift+j'])
+    Mousetrap.unbind(['shift+right', 'shift+l'])
+    Mousetrap.unbind(['shift+up', 'shift+i'])
+    Mousetrap.unbind(['shift+down', 'shift+k'])
+  }
+
+  componentDidMount = () => {
+    Mousetrap.bind(['left', 'j'], this.prev)
+    Mousetrap.bind(['right', 'l'], this.next)
+    Mousetrap.bind(['shift+left', 'shift+j'], (event) => {
+      event.preventDefault()
+      this.prevUngraded()
+    })
+    Mousetrap.bind(['shift+right', 'shift+l'], (event) => {
+      event.preventDefault()
+      this.nextUngraded()
+    })
+    Mousetrap.bind(['shift+up', 'shift+i'], (event) => {
+      event.preventDefault()
+      this.prevProblem()
+    })
+    Mousetrap.bind(['shift+down', 'shift+k'], (event) => {
+      event.preventDefault()
+      this.nextProblem()
+    })
   }
 
   /*
@@ -82,6 +113,23 @@ class Grade extends React.Component {
     })
   }
 
+  setProblemIndex = (newIndex) => {
+    if (newIndex >= 0 && newIndex < this.props.exam.problems.length) {
+      this.setState({
+        pIndex: newIndex
+      })
+    }
+  }
+
+  prevProblem = () => {
+    const newIndex = this.state.pIndex - 1
+    this.setProblemIndex(newIndex)
+  }
+  nextProblem = () => {
+    const newIndex = this.state.pIndex + 1
+    this.setProblemIndex(newIndex)
+  }
+
   toggleFullPage = (event) => {
     this.setState({
       fullPage: event.target.checked
@@ -135,7 +183,8 @@ class Grade extends React.Component {
           <div className='container'>
             <div className='columns'>
               <div className='column is-one-quarter-desktop is-one-third-tablet'>
-                <ProblemSelector problems={exam.problems} changeProblem={this.changeProblem} />
+                <ProblemSelector problems={exam.problems} changeProblem={this.changeProblem}
+                  current={this.state.pIndex} />
                 {this.state.editActive
                   ? <EditPanel problemID={problem.id} feedback={this.state.feedbackToEdit}
                     goBack={this.backToFeedback} />

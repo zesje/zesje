@@ -4,6 +4,9 @@ import { Link } from 'react-router-dom'
 import './NavBar.css'
 import * as api from '../api.jsx'
 
+import HelpModal from './help/HelpModal.jsx'
+import shortcutsMarkdown from './help/ShortcutsHelp.md'
+
 const BurgerButton = (props) => (
   <button className={'button navbar-burger' + (props.foldOut ? ' is-active' : '')}
     onClick={props.burgerClick}>
@@ -85,11 +88,35 @@ const ExportDropdown = (props) => {
   )
 }
 
+const HelpDropdown = (props) => {
+  return (
+    <React.Fragment>
+      <div className='navbar-item has-dropdown is-hoverable' >
+        <div className='navbar-link'>
+          Help
+        </div>
+        <div className='navbar-dropdown'>
+          {Object.keys(props.pages).map((key) =>
+            <a className='navbar-item' key={key} onClick={() => props.setPage(key)}>
+              {props.pages[key].title}
+            </a>
+          )}
+        </div>
+      </div>
+    </React.Fragment>
+  )
+}
+
 class NavBar extends React.Component {
+  pages = {
+    shortcuts: { title: 'Shortcuts', content: shortcutsMarkdown }
+  }
+
   state = {
     foldOut: false,
     examList: [],
-    graderList: []
+    graderList: [],
+    helpPage: null
   }
 
   componentDidMount = () => {
@@ -136,6 +163,14 @@ class NavBar extends React.Component {
     })
   }
 
+  closeFoldout = () => {
+    if (this.state.foldOut) {
+      this.setState({
+        foldOut: false
+      })
+    }
+  }
+
   render () {
     const gradingEnabled = this.props.exam.submissions.length > 0 && this.props.grader !== null
     const overviewEnabled = this.props.exam.submissions.length > 0
@@ -173,6 +208,8 @@ class NavBar extends React.Component {
             <Link className='navbar-item' disabled={!overviewEnabled} to='/overview'>Overview</Link>
             <Link className='navbar-item' disabled={!emailEnabled} to='/email'>Email</Link>
             <ExportDropdown className='navbar-item' disabled={!exportEnabled} exam={this.props.exam} />
+            <HelpDropdown className='navbar-item' pages={this.pages}
+              setPage={(page) => this.setState({ helpPage: page })} />
           </div>
 
           <div className='navbar-end'>
@@ -185,6 +222,8 @@ class NavBar extends React.Component {
             </div>
           </div>
         </div>
+        <HelpModal page={this.state.helpPage} pages={this.pages}
+          closeHelp={() => this.setState({ helpPage: null })} />
       </nav>
     )
   }

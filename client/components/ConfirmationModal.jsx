@@ -1,6 +1,6 @@
 import React from 'react'
 
-import './ConfirmationModal.css'
+import './Modal.css'
 
 const ConfirmationModal = (props) => {
   let body = null
@@ -21,10 +21,11 @@ const ConfirmationModal = (props) => {
         {body}
         <footer className='modal-card-footer'>
           <div className='field is-grouped'>
-            <button className={'button is-fullwidth ' + (props.color || 'is-success')} onClick={props.onConfirm}>
+            <button className={'button is-fullwidth is-footer is-left ' +
+              (props.color || 'is-success')} onClick={props.onConfirm}>
               {props.confirmText || 'Save changes'}
             </button>
-            <button className='button is-fullwidth' onClick={props.onCancel}>
+            <button className='button is-fullwidth is-footer is-right' onClick={props.onCancel}>
               {props.cancelText || 'Cancel'}
             </button>
           </div>

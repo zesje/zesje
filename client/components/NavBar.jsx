@@ -88,25 +88,6 @@ const ExportDropdown = (props) => {
   )
 }
 
-const HelpDropdown = (props) => {
-  return (
-    <React.Fragment>
-      <div className='navbar-item has-dropdown is-hoverable' >
-        <div className='navbar-link'>
-          Help
-        </div>
-        <div className='navbar-dropdown'>
-          {Object.keys(props.pages).map((key) =>
-            <a className='navbar-item' key={key} onClick={() => props.setPage(key)}>
-              {props.pages[key].title}
-            </a>
-          )}
-        </div>
-      </div>
-    </React.Fragment>
-  )
-}
-
 class NavBar extends React.Component {
   pages = {
     shortcuts: { title: 'Shortcuts', content: shortcutsMarkdown }
@@ -200,8 +181,9 @@ class NavBar extends React.Component {
             <Link className='navbar-item' disabled={!overviewEnabled} to='/overview'>Overview</Link>
             <Link className='navbar-item' disabled={!emailEnabled} to='/email'>Email</Link>
             <ExportDropdown className='navbar-item' disabled={!exportEnabled} exam={this.props.exam} />
-            <HelpDropdown className='navbar-item' pages={this.pages}
-              setPage={(page) => this.setState({ helpPage: page })} />
+            <a className='navbar-item' onClick={() => this.setState({ helpPage: 'shortcuts' })}>
+              {this.pages['shortcuts'].title}
+            </a>
           </div>
 
           <div className='navbar-end'>

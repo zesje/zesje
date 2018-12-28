@@ -32,8 +32,12 @@ class Grade extends React.Component {
     Mousetrap.unbind(['shift+up', 'shift+k'])
     Mousetrap.unbind(['shift+down', 'shift+j'])
     Mousetrap.unbind('ctrl')
-    for (let i = 0; i < 10; i++) {
-      Mousetrap.unbind(i.toString())
+    let key = 0
+    let prefix = ''
+    for (let i = 0; i < 20; i++) {
+      key = i % 10
+      prefix = i > 9 ? 'shift+' : ''
+      Mousetrap.unbind(prefix + key)
     }
   }
 
@@ -59,9 +63,11 @@ class Grade extends React.Component {
     Mousetrap.bind('ctrl', () => this.setState({showTooltips: true}), 'keydown')
     Mousetrap.bind('ctrl', () => this.setState({showTooltips: false}), 'keyup')
     let key = 0
-    for (let i = 1; i < 11; i++) {
+    let prefix = ''
+    for (let i = 1; i < 21; i++) {
       key = i % 10
-      Mousetrap.bind(key.toString(), () => this.toggleOption(i - 1))
+      prefix = i > 10 ? 'shift+' : ''
+      Mousetrap.bind(prefix + key, () => this.toggleOption(i - 1))
     }
   }
 

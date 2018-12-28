@@ -30,14 +30,15 @@ class FeedbackBlock extends React.Component {
   }
 
   render () {
+    const shortcut = (this.props.index < 11 ? '' : 'shift + ') + this.props.index % 10
     return (
       <a className='panel-block is-active' onClick={this.toggle}
         style={this.props.selected ? {backgroundColor: '#209cee'} : {}}
       >
         <span
-          className={'panel-icon' + ((this.props.showIndex && this.props.index <= 10)
+          className={'panel-icon' + ((this.props.showIndex && this.props.index <= 20)
             ? ' tooltip is-tooltip-active is-tooltip-left' : '')}
-          data-tooltip={this.props.index % 10}
+          data-tooltip={shortcut}
         >
           <i className={'fa fa-' + (this.props.checked ? 'check-square-o' : 'square-o')} />
         </span>

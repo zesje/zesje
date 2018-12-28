@@ -34,7 +34,11 @@ class FeedbackBlock extends React.Component {
       <a className='panel-block is-active' onClick={this.toggle}
         style={this.props.selected ? {backgroundColor: '#209cee'} : {}}
       >
-        <span className='panel-icon'>
+        <span
+          className={'panel-icon' + ((this.props.showIndex && this.props.index <= 10)
+            ? ' tooltip is-tooltip-active is-tooltip-left' : '')}
+          data-tooltip={this.props.index % 10}
+        >
           <i className={'fa fa-' + (this.props.checked ? 'check-square-o' : 'square-o')} />
         </span>
         <span style={{ width: '80%' }}>

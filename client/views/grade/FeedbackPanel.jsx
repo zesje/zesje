@@ -112,12 +112,12 @@ class FeedbackPanel extends React.Component {
         <p className='panel-heading'>
           Total:&nbsp;<b>{totalScore}</b>
         </p>
-        {this.props.problem.feedback.map(feedback =>
+        {this.props.problem.feedback.map((feedback, index) =>
           <FeedbackBlock key={feedback.id} uri={blockURI} graderID={this.props.graderID}
             feedback={feedback} checked={this.props.solution.feedback.includes(feedback.id)}
             editFeedback={() => this.props.editFeedback(feedback)} updateSubmission={this.props.updateSubmission}
             ref={(selectedFeedbackId === feedback.id) ? this.feedbackBlock : null}
-            selected={selectedFeedbackId === feedback.id} />
+            selected={selectedFeedbackId === feedback.id} showIndex={this.props.showTooltips} index={index + 1} />
         )}
         <div className='panel-block'>
           <textarea className='textarea' rows='2' placeholder='remark' value={this.state.remark} onBlur={this.saveRemark} onChange={this.changeRemark} />

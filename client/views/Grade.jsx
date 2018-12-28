@@ -9,6 +9,10 @@ import EditPanel from './grade/EditPanel.jsx'
 import SearchBox from '../components/SearchBox.jsx'
 import ProgressBar from '../components/ProgressBar.jsx'
 
+import * as api from '../api.jsx'
+
+import 'bulma-tooltip/dist/css/bulma-tooltip.min.css'
+
 class Grade extends React.Component {
   state = {
     editActive: false,
@@ -16,7 +20,8 @@ class Grade extends React.Component {
     sIndex: 0,
     pIndex: 0,
     examID: null,
-    fullPage: false
+    fullPage: false,
+    showTooltips: false
   }
 
   componentWillUnmount = () => {
@@ -26,6 +31,10 @@ class Grade extends React.Component {
     Mousetrap.unbind(['shift+right', 'shift+l'])
     Mousetrap.unbind(['shift+up', 'shift+k'])
     Mousetrap.unbind(['shift+down', 'shift+j'])
+    Mousetrap.unbind('ctrl')
+    for (let i = 0; i < 10; i++) {
+      Mousetrap.unbind(i.toString())
+    }
   }
 
   componentDidMount = () => {
@@ -47,6 +56,13 @@ class Grade extends React.Component {
       event.preventDefault()
       this.nextProblem()
     })
+    Mousetrap.bind('ctrl', () => this.setState({showTooltips: true}), 'keydown')
+    Mousetrap.bind('ctrl', () => this.setState({showTooltips: false}), 'keyup')
+    let key = 0
+    for (let i = 1; i < 11; i++) {
+      key = i % 10
+      Mousetrap.bind(key.toString(), () => this.toggleOption(i - 1))
+    }
   }
 
   /*
@@ -130,6 +146,23 @@ class Grade extends React.Component {
     this.setProblemIndex(newIndex)
   }
 
+  toggleOption = (index) => {
+    const exam = this.props.exam
+    const problem = exam.problems[this.state.pIndex]
+    if (index + 1 > problem.feedback.length) return
+
+    const optionURI = this.state.examID + '/' +
+      exam.submissions[this.state.sIndex].id + '/' +
+      problem.id
+    api.put('solution/' + optionURI, {
+      id: problem.feedback[index].id,
+      graderID: this.props.graderID
+    })
+      .then(result => {
+        this.props.updateSubmission(this.state.sIndex)
+      })
+  }
+
   toggleFullPage = (event) => {
     this.setState({
       fullPage: event.target.checked
@@ -184,13 +217,13 @@ class Grade extends React.Component {
             <div className='columns'>
               <div className='column is-one-quarter-desktop is-one-third-tablet'>
                 <ProblemSelector problems={exam.problems} changeProblem={this.changeProblem}
-                  current={this.state.pIndex} />
+                  current={this.state.pIndex} showTooltips={this.state.showTooltips} />
                 {this.state.editActive
                   ? <EditPanel problemID={problem.id} feedback={this.state.feedbackToEdit}
                     goBack={this.backToFeedback} />
                   : <FeedbackPanel examID={exam.id} submissionID={submission.id}
                     problem={problem} solution={solution} graderID={this.props.graderID}
-                    editFeedback={this.editFeedback}
+                    editFeedback={this.editFeedback} showTooltips={this.state.showTooltips}
                     updateSubmission={() => {
                       this.props.updateSubmission(this.state.sIndex)
                       this.props.updateExam(this.props.exam.id)
@@ -204,9 +237,15 @@ class Grade extends React.Component {
                   <div className='level-item'>
                     <div className='field has-addons is-mobile'>
                       <div className='control'>
-                        <button type='submit' className='button is-info is-rounded is-hidden-mobile'
+                        <button type='submit'
+                          className={'button is-info is-rounded is-hidden-mobile' +
+                            (this.state.showTooltips ? ' tooltip is-tooltip-active' : '')}
+                          data-tooltip='shift + ←'
                           onClick={this.prevUngraded}>ungraded</button>
-                        <button type='submit' className='button is-link'
+                        <button type='submit'
+                          className={'button is-link' +
+                            (this.state.showTooltips ? ' tooltip is-tooltip-active' : '')}
+                          data-tooltip='←'
                           onClick={this.prev}>Previous</button>
                       </div>
                       <div className='control'>
@@ -239,9 +278,15 @@ class Grade extends React.Component {
                         />
                       </div>
                       <div className='control'>
-                        <button type='submit' className='button is-link'
+                        <button type='submit'
+                          className={'button is-link' +
+                            (this.state.showTooltips ? ' tooltip is-tooltip-active' : '')}
+                          data-tooltip='→'
                           onClick={this.next}>Next</button>
-                        <button type='submit' className='button is-info is-rounded is-hidden-mobile'
+                        <button type='submit'
+                          className={'button is-info is-rounded is-hidden-mobile' +
+                            (this.state.showTooltips ? ' tooltip is-tooltip-active' : '')}
+                          data-tooltip='shift + →'
                           onClick={this.nextUngraded}>ungraded</button>
                       </div>
                     </div>

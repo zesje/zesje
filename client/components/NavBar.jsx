@@ -163,14 +163,6 @@ class NavBar extends React.Component {
     })
   }
 
-  closeFoldout = () => {
-    if (this.state.foldOut) {
-      this.setState({
-        foldOut: false
-      })
-    }
-  }
-
   render () {
     const gradingEnabled = this.props.exam.submissions.length > 0 && this.props.grader !== null
     const overviewEnabled = this.props.exam.submissions.length > 0

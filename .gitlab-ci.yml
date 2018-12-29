@@ -30,7 +30,7 @@ build:
 test_js:
   <<: *node_modules
   stage: test
-  script: yarn --no-cache test:js
+  script: yarn test:js --no-cache
 
 test_py:
   stage: test

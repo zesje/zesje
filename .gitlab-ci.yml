@@ -30,6 +30,10 @@ build:
 test_js:
   <<: *node_modules
   stage: test
+  # Not removing the cache causes there to be duplicate modules
+  before_script:
+  - rm -rf .yarn
+  - yarn install
   script: yarn test:js
 
 test_py:

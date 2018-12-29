@@ -1,4 +1,5 @@
 import React from 'react'
+import ReactDOM from 'react-dom'
 
 import Notification from 'react-bulma-notification'
 import Fuse from 'fuse.js'
@@ -34,6 +35,10 @@ class SearchPanel extends React.Component {
         console.error('failed to get students:', err)
         throw err
       })
+  }
+
+  componentDidUpdate (prevProps, prevState) {
+    ReactDOM.findDOMNode(this).getElementById('panel-input').focus()
   }
 
   search = (event) => {
@@ -113,7 +118,7 @@ class SearchPanel extends React.Component {
         </p>
         <div className='panel-block'>
           <p className='control has-icons-left'>
-            <input className='input' type='text'
+            <input id='panel-input' className='input' type='text' autoFocus
               value={this.state.input} onChange={this.search} onKeyDown={this.specialKey} />
 
             <span className='icon is-left'>

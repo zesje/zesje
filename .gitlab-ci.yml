@@ -27,10 +27,10 @@ build:
       - zesje/static
     expire_in: 1 week
 
-# test_js:
-#   <<: *node_modules
-#   stage: test
-#   script: yarn test:js
+test_js:
+  <<: *node_modules
+  stage: test
+  script: yarn test:js --no-cache
 
 test_py:
   stage: test

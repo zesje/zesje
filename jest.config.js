@@ -2,5 +2,6 @@ module.exports = {
   'moduleNameMapper': {
     '\\.(css|md)$': 'identity-obj-proxy'
   },
-        "setupTestFrameworkScriptFile": "<rootDir>testSetup.js"
+  'testPathIgnorePatterns': ['/node_modules/', '/.yarn-cache/'],
+  'setupTestFrameworkScriptFile': '<rootDir>testSetup.js'
 }

@@ -17,7 +17,7 @@ This notebook is a brief reference of Zesje workflow.
 
 ## Support
 
-If you want to use zesje in a course, we are happy to host it for you, contact us at [zesje@antonakhmerov.org](mailto:zesje@antonakhmerov.org) or [zesje@weston.cloud](mailto:zesje@weston.cloud).
+If you want to use zesje in a course, we are happy to host it for you, just fill out a [form](https://goo.gl/forms/Q6EGv8i5RJWlEaaB3).
 
 We also ask you to sign up for the zesje [support mailing list](https://listserv.tudelft.nl/mailman/listinfo/zesje-tnw) (available from TUD network).
 

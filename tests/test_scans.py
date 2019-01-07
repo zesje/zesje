@@ -89,8 +89,8 @@ def generate_multiple_pages(pages=5):
 # Helper functions
 
 
-
-def make_db_entry():
+@pytest.fixture
+def new_exam(db_empty):
     """
     Default code for generating a database entry
     This needs to be ran at the start of every pipeline test
@@ -184,11 +184,10 @@ def apply_scan(img, rotation=0, scale=1, skew=(0, 0)):
 #     6. Verify scans can be read (or not)
 
 
-def test_pipeline(db_empty, datadir):
-    exam_config = make_db_entry()
-    genPDF = generate_pdf(exam_config, 5)
+def test_pipeline(new_exam, datadir):
+    genPDF = generate_pdf(new_exam, 5)
     for image in makeImage(genPDF):
-        success, reason = scans.process_page(image, exam_config, datadir)
+        success, reason = scans.process_page(image, new_exam, datadir)
         assert success is True, reason
 
 
@@ -197,12 +196,11 @@ def test_pipeline(db_empty, datadir):
     (0.12, True),
     (0.92, False)],
     ids=['Low noise', 'Medium noise', 'High noise'])
-def test_noise(db_empty, datadir, threshold, expected):
-    exam_config = make_db_entry()
-    genPDF = generate_pdf(exam_config, 1)
+def test_noise(new_exam, datadir, threshold, expected):
+    genPDF = generate_pdf(new_exam, 1)
     for image in makeImage(genPDF):
         image = apply_whitenoise(image, threshold)
-        success, reason = scans.process_page(image, exam_config, datadir)
+        success, reason = scans.process_page(image, new_exam, datadir)
         assert success is expected, reason
 
 
@@ -212,13 +210,12 @@ def test_noise(db_empty, datadir, threshold, expected):
     (0.8, True),
     (2, False)],
     ids=['Large rot', 'Small rot', 'Medium rot', 'failing rot'])
-def test_rotate(db_empty, datadir, rotation, expected):
-    exam_config = make_db_entry()
-    genPDF = generate_pdf(exam_config, 1)
+def test_rotate(new_exam, datadir, rotation, expected):
+    genPDF = generate_pdf(new_exam, 1)
     for image in makeImage(genPDF):
         image = apply_scan(img=image, rotation=rotation)
         #  image.show()
-        success, reason = scans.process_page(image, exam_config, datadir)
+        success, reason = scans.process_page(image, new_exam, datadir)
         assert success is expected, reason
 
 
@@ -226,13 +223,12 @@ def test_rotate(db_empty, datadir, rotation, expected):
     (0.99, True),
     (1.1, False)],
     ids=['smaller scale', 'larger scale'])
-def test_scale(db_empty, datadir, scale, expected):
-    exam_config = make_db_entry()
-    genPDF = generate_pdf(exam_config, 1)
+def test_scale(new_exam, datadir, scale, expected):
+    genPDF = generate_pdf(new_exam, 1)
     for image in makeImage(genPDF):
         image = apply_scan(img=image, scale=scale)
         #  image.show()
-        success, reason = scans.process_page(image, exam_config, datadir)
+        success, reason = scans.process_page(image, new_exam, datadir)
         assert success is expected, reason
 
 
@@ -240,13 +236,12 @@ def test_scale(db_empty, datadir, scale, expected):
     ((10, 10), True),
     ((-10, -5), True)],
     ids=['small skew', 'larger skew'])
-def test_skew(db_empty, datadir, skew, expected):
-    exam_config = make_db_entry()
-    genPDF = generate_pdf(exam_config, 1)
+def test_skew(new_exam, datadir, skew, expected):
+    genPDF = generate_pdf(new_exam, 1)
     for image in makeImage(genPDF):
         image = apply_scan(img=image, skew=skew)
         #  image.show()
-        success, reason = scans.process_page(image, exam_config, datadir)
+        success, reason = scans.process_page(image, new_exam, datadir)
         assert success is expected, reason
 
 
@@ -255,13 +250,12 @@ def test_skew(db_empty, datadir, skew, expected):
     (0.5, 1.01, (-10, -5), True)],
     ids=['1st full test', 'second full test'])
 def test_all_effects(
-        db_empty, datadir, rotation,
+        new_exam, datadir, rotation,
         scale, skew, expected):
-    exam_config = make_db_entry()
-    genPDF = generate_pdf(exam_config, 1)
+    genPDF = generate_pdf(new_exam, 1)
     for image in makeImage(genPDF):
         image = apply_scan(
             img=image, rotation=rotation, scale=scale, skew=skew)
         #  image.show()
-        success, reason = scans.process_page(image, exam_config, datadir)
+        success, reason = scans.process_page(image, new_exam, datadir)
         assert success is expected, reason

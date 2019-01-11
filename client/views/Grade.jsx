@@ -1,5 +1,4 @@
 import React from 'react'
-import Mousetrap from 'mousetrap'
 
 import Hero from '../components/Hero.jsx'
 
@@ -8,6 +7,7 @@ import ProblemSelector from './grade/ProblemSelector.jsx'
 import EditPanel from './grade/EditPanel.jsx'
 import SearchBox from '../components/SearchBox.jsx'
 import ProgressBar from '../components/ProgressBar.jsx'
+import withShortcuts from '../components/ShortcutBinder.jsx'
 
 import * as api from '../api.jsx'
 
@@ -24,50 +24,33 @@ class Grade extends React.Component {
     showTooltips: false
   }
 
-  componentWillUnmount = () => {
-    Mousetrap.unbind(['left', 'h'])
-    Mousetrap.unbind(['right', 'l'])
-    Mousetrap.unbind(['shift+left', 'shift+h'])
-    Mousetrap.unbind(['shift+right', 'shift+l'])
-    Mousetrap.unbind(['shift+up', 'shift+k'])
-    Mousetrap.unbind(['shift+down', 'shift+j'])
-    Mousetrap.unbind('ctrl')
-    let key = 0
-    let prefix = ''
-    for (let i = 0; i < 20; i++) {
-      key = i % 10
-      prefix = i > 9 ? 'shift+' : ''
-      Mousetrap.unbind(prefix + key)
-    }
-  }
-
   componentDidMount = () => {
-    Mousetrap.bind(['left', 'h'], this.prev)
-    Mousetrap.bind(['right', 'l'], this.next)
-    Mousetrap.bind(['shift+left', 'shift+h'], (event) => {
+    this.props.bindShortcut(['left', 'h'], this.prev)
+    this.props.bindShortcut(['right', 'l'], this.next)
+    this.props.bindShortcut(['shift+left', 'shift+h'], (event) => {
       event.preventDefault()
       this.prevUngraded()
     })
-    Mousetrap.bind(['shift+right', 'shift+l'], (event) => {
+    this.props.bindShortcut(['shift+right', 'shift+l'], (event) => {
       event.preventDefault()
       this.nextUngraded()
     })
-    Mousetrap.bind(['shift+up', 'shift+k'], (event) => {
+    this.props.bindShortcut(['shift+up', 'shift+k'], (event) => {
       event.preventDefault()
       this.prevProblem()
     })
-    Mousetrap.bind(['shift+down', 'shift+j'], (event) => {
+    this.props.bindShortcut(['shift+down', 'shift+j'], (event) => {
       event.preventDefault()
       this.nextProblem()
     })
-    Mousetrap.bind('ctrl', () => this.setState({showTooltips: true}), 'keydown')
-    Mousetrap.bind('ctrl', () => this.setState({showTooltips: false}), 'keyup')
+    this.props.bindShortcut('ctrl', () => this.setState({showTooltips: true}), 'keydown')
+    this.props.bindShortcut('ctrl', () => this.setState({showTooltips: false}), 'keyup')
     let key = 0
     let prefix = ''
     for (let i = 1; i < 21; i++) {
       key = i % 10
       prefix = i > 10 ? 'shift+' : ''
-      Mousetrap.bind(prefix + key, () => this.toggleOption(i - 1))
+      this.props.bindShortcut(prefix + key, () => this.toggleOption(i - 1))
     }
   }
 
@@ -336,4 +319,4 @@ class Grade extends React.Component {
   }
 }
 
-export default Grade
+export default withShortcuts(Grade)

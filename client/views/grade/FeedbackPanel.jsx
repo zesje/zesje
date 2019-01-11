@@ -1,10 +1,10 @@
 import React from 'react'
-import Mousetrap from 'mousetrap'
 
 import Notification from 'react-bulma-notification'
 
 import * as api from '../../api.jsx'
 
+import withShortcuts from '../../components/ShortcutBinder.jsx'
 import FeedbackBlock from './FeedbackBlock.jsx'
 
 class FeedbackPanel extends React.Component {
@@ -17,22 +17,16 @@ class FeedbackPanel extends React.Component {
     selectedFeedbackIndex: null
   }
 
-  componentWillUnmount = () => {
-    Mousetrap.unbind(['up', 'k'])
-    Mousetrap.unbind(['down', 'j'])
-    Mousetrap.unbind(['space'])
-  }
-
   componentDidMount = () => {
-    Mousetrap.bind(['up', 'k'], (event) => {
+    this.props.bindShortcut(['up', 'k'], (event) => {
       event.preventDefault()
       this.prevOption()
     })
-    Mousetrap.bind(['down', 'j'], (event) => {
+    this.props.bindShortcut(['down', 'j'], (event) => {
       event.preventDefault()
       this.nextOption()
     })
-    Mousetrap.bind(['space'], (event) => {
+    this.props.bindShortcut(['space'], (event) => {
       event.preventDefault()
       this.toggleSelectedOption()
     })
@@ -134,4 +128,4 @@ class FeedbackPanel extends React.Component {
     )
   }
 }
-export default FeedbackPanel
+export default withShortcuts(FeedbackPanel)

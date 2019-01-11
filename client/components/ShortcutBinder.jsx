@@ -1,8 +1,7 @@
 import React from 'react'
 import Mousetrap from 'mousetrap'
 
-function withShortcuts(WrappedComponent) {
-
+function withShortcuts (WrappedComponent) {
   return class extends React.Component {
     boundShortcuts = []
 
@@ -20,7 +19,7 @@ function withShortcuts(WrappedComponent) {
       this.boundShortcuts = []
     }
 
-    render() {
+    render () {
       return <WrappedComponent bindShortcut={this.bindShortcut} {...this.props} />
     }
   }

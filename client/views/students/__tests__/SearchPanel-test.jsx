@@ -4,8 +4,8 @@ import {mount} from 'enzyme'
 import SearchPanel from '../SearchPanel'
 
 test('Student id searchfield has focus on loading component', () => {
-  mount(<SearchPanel />)
+  var panel = mount(<SearchPanel />)
   const focusedElem = document.activeElement
 
-  expect(focusedElem.id).toEqual('panel-input')
+  expect(focusedElem).toEqual(panel.instance().searchInput.current)
 })

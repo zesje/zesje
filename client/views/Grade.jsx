@@ -121,6 +121,9 @@ class Grade extends React.Component {
     const solution = submission.problems[this.state.pIndex]
     const problem = exam.problems[this.state.pIndex]
     const progress = exam.submissions.map(sub => sub.problems[this.state.pIndex])
+    const multiple = submission.student && exam.submissions.some(sub =>
+      (sub.id !== submission.id && sub.student && sub.student.id === submission.student.id)
+    )
 
     return (
       <div>
@@ -197,6 +200,15 @@ class Grade extends React.Component {
                 </div>
 
                 <ProgressBar progress={progress} value={'graded_by'} />
+
+                {multiple
+                  ? <article className='message is-info'>
+                    <div className='message-body'>
+                      This student has multiple submissions!
+                      Make sure that each applicable feedback option is only selected once.
+                    </div>
+                  </article> : null
+                }
 
                 <p className='box'>
                   <img src={exam.id ? ('api/images/solutions/' + exam.id + '/' +

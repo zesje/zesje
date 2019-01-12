@@ -43,27 +43,23 @@ class FeedbackPanel extends React.Component {
     } else return null
   }
 
-  prevOption = () => {
+  setOptionIndex = (newIndex) => {
     if (this.props.problem.feedback.length === 0) return
-    let newIndex = this.props.problem.feedback.length - 1
-    if (this.state.selectedFeedbackIndex !== null && this.state.selectedFeedbackIndex !== 0) {
-      newIndex = this.state.selectedFeedbackIndex - 1
-    }
+    let length = this.props.problem.feedback.length
+    newIndex = ((newIndex % length) + length) % length
     this.setState({
       selectedFeedbackIndex: newIndex
     })
   }
 
+  prevOption = () => {
+    let index = this.state.selectedFeedbackIndex !== null ? this.state.selectedFeedbackIndex : 0
+    this.setOptionIndex(index - 1)
+  }
+
   nextOption = () => {
-    if (this.props.problem.feedback.length === 0) return
-    let newIndex = 0
-    if (this.state.selectedFeedbackIndex !== null &&
-      this.state.selectedFeedbackIndex + 1 < this.props.problem.feedback.length) {
-      newIndex = this.state.selectedFeedbackIndex + 1
-    }
-    this.setState({
-      selectedFeedbackIndex: newIndex
-    })
+    let index = this.state.selectedFeedbackIndex !== null ? this.state.selectedFeedbackIndex : -1
+    this.setOptionIndex(index + 1)
   }
 
   toggleSelectedOption = () => {

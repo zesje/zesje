@@ -196,7 +196,7 @@ class NavBar extends React.Component {
             </div>
           </div>
         </div>
-        <HelpModal page={this.state.helpPage} pages={this.pages}
+        <HelpModal page={this.pages[this.state.helpPage] || {content: null, title: null}}
           closeHelp={() => this.setState({ helpPage: null })} />
       </nav>
     )

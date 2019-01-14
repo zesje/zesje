@@ -78,9 +78,15 @@ class Solutions(Resource):
         if not solution:
             raise orm.core.ObjectNotFound(Solution)
 
-        solution.graded_at = datetime.now()
+        graded = len(solution.feedback) + len(args.remark)
+
         solution.remarks = args.remark
-        solution.graded_by = grader
+        if graded:
+            solution.graded_at = datetime.now()
+            solution.graded_by = grader
+        else:
+            solution.graded_at = None
+            solution.graded_by = None
 
         return True
 
@@ -126,7 +132,9 @@ class Solutions(Resource):
             solution.feedback.add(fb)
             state = True
 
-        if len(solution.feedback):
+        graded = len(solution.feedback) + len(solution.remarks)
+
+        if graded:
             solution.graded_at = datetime.now()
             solution.graded_by = grader
         else:

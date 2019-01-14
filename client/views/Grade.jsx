@@ -25,6 +25,8 @@ class Grade extends React.Component {
   }
 
   componentDidMount = () => {
+    // If we change the keybindings here we should also remember to
+    // update the tooltips for the associated widgets (in render()).
     this.props.bindShortcut(['left', 'h'], this.prev)
     this.props.bindShortcut(['right', 'l'], this.next)
     this.props.bindShortcut(['shift+left', 'shift+h'], (event) => {

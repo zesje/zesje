@@ -4,6 +4,9 @@ import { Link } from 'react-router-dom'
 import './NavBar.css'
 import * as api from '../api.jsx'
 
+import HelpModal from './help/HelpModal.jsx'
+import shortcutsMarkdown from './help/ShortcutsHelp.md'
+
 const BurgerButton = (props) => (
   <button className={'button navbar-burger' + (props.foldOut ? ' is-active' : '')}
     onClick={props.burgerClick}>
@@ -86,10 +89,15 @@ const ExportDropdown = (props) => {
 }
 
 class NavBar extends React.Component {
+  pages = {
+    shortcuts: { title: 'Shortcuts', content: shortcutsMarkdown }
+  }
+
   state = {
     foldOut: false,
     examList: [],
-    graderList: []
+    graderList: [],
+    helpPage: null
   }
 
   componentDidMount = () => {
@@ -173,6 +181,9 @@ class NavBar extends React.Component {
             <Link className='navbar-item' disabled={!overviewEnabled} to='/overview'>Overview</Link>
             <Link className='navbar-item' disabled={!emailEnabled} to='/email'>Email</Link>
             <ExportDropdown className='navbar-item' disabled={!exportEnabled} exam={this.props.exam} />
+            <a className='navbar-item' onClick={() => this.setState({ helpPage: 'shortcuts' })}>
+              {this.pages['shortcuts'].title}
+            </a>
           </div>
 
           <div className='navbar-end'>
@@ -185,6 +196,8 @@ class NavBar extends React.Component {
             </div>
           </div>
         </div>
+        <HelpModal page={this.pages[this.state.helpPage] || {content: null, title: null}}
+          closeHelp={() => this.setState({ helpPage: null })} />
       </nav>
     )
   }

@@ -7,6 +7,11 @@ import ProblemSelector from './grade/ProblemSelector.jsx'
 import EditPanel from './grade/EditPanel.jsx'
 import SearchBox from '../components/SearchBox.jsx'
 import ProgressBar from '../components/ProgressBar.jsx'
+import withShortcuts from '../components/ShortcutBinder.jsx'
+
+import * as api from '../api.jsx'
+
+import 'bulma-tooltip/dist/css/bulma-tooltip.min.css'
 
 class Grade extends React.Component {
   state = {
@@ -15,7 +20,40 @@ class Grade extends React.Component {
     sIndex: 0,
     pIndex: 0,
     examID: null,
-    fullPage: false
+    fullPage: false,
+    showTooltips: false
+  }
+
+  componentDidMount = () => {
+    // If we change the keybindings here we should also remember to
+    // update the tooltips for the associated widgets (in render()).
+    this.props.bindShortcut(['left', 'h'], this.prev)
+    this.props.bindShortcut(['right', 'l'], this.next)
+    this.props.bindShortcut(['shift+left', 'shift+h'], (event) => {
+      event.preventDefault()
+      this.prevUngraded()
+    })
+    this.props.bindShortcut(['shift+right', 'shift+l'], (event) => {
+      event.preventDefault()
+      this.nextUngraded()
+    })
+    this.props.bindShortcut(['shift+up', 'shift+k'], (event) => {
+      event.preventDefault()
+      this.prevProblem()
+    })
+    this.props.bindShortcut(['shift+down', 'shift+j'], (event) => {
+      event.preventDefault()
+      this.nextProblem()
+    })
+    this.props.bindShortcut('ctrl', () => this.setState({showTooltips: true}), 'keydown')
+    this.props.bindShortcut('ctrl', () => this.setState({showTooltips: false}), 'keyup')
+    let key = 0
+    let prefix = ''
+    for (let i = 1; i < 21; i++) {
+      key = i % 10
+      prefix = i > 10 ? 'shift+' : ''
+      this.props.bindShortcut(prefix + key, () => this.toggleOption(i - 1))
+    }
   }
 
   /*
@@ -82,6 +120,40 @@ class Grade extends React.Component {
     })
   }
 
+  setProblemIndex = (newIndex) => {
+    if (newIndex >= 0 && newIndex < this.props.exam.problems.length) {
+      this.setState({
+        pIndex: newIndex
+      })
+    }
+  }
+
+  prevProblem = () => {
+    const newIndex = this.state.pIndex - 1
+    this.setProblemIndex(newIndex)
+  }
+  nextProblem = () => {
+    const newIndex = this.state.pIndex + 1
+    this.setProblemIndex(newIndex)
+  }
+
+  toggleOption = (index) => {
+    const exam = this.props.exam
+    const problem = exam.problems[this.state.pIndex]
+    if (index + 1 > problem.feedback.length) return
+
+    const optionURI = this.state.examID + '/' +
+      exam.submissions[this.state.sIndex].id + '/' +
+      problem.id
+    api.put('solution/' + optionURI, {
+      id: problem.feedback[index].id,
+      graderID: this.props.graderID
+    })
+      .then(result => {
+        this.props.updateSubmission(this.state.sIndex)
+      })
+  }
+
   toggleFullPage = (event) => {
     this.setState({
       fullPage: event.target.checked
@@ -135,13 +207,14 @@ class Grade extends React.Component {
           <div className='container'>
             <div className='columns'>
               <div className='column is-one-quarter-desktop is-one-third-tablet'>
-                <ProblemSelector problems={exam.problems} changeProblem={this.changeProblem} />
+                <ProblemSelector problems={exam.problems} changeProblem={this.changeProblem}
+                  current={this.state.pIndex} showTooltips={this.state.showTooltips} />
                 {this.state.editActive
                   ? <EditPanel problemID={problem.id} feedback={this.state.feedbackToEdit}
                     goBack={this.backToFeedback} />
                   : <FeedbackPanel examID={exam.id} submissionID={submission.id}
                     problem={problem} solution={solution} graderID={this.props.graderID}
-                    editFeedback={this.editFeedback}
+                    editFeedback={this.editFeedback} showTooltips={this.state.showTooltips}
                     updateSubmission={() => {
                       this.props.updateSubmission(this.state.sIndex)
                       this.props.updateExam(this.props.exam.id)
@@ -155,9 +228,15 @@ class Grade extends React.Component {
                   <div className='level-item'>
                     <div className='field has-addons is-mobile'>
                       <div className='control'>
-                        <button type='submit' className='button is-info is-rounded is-hidden-mobile'
+                        <button type='submit'
+                          className={'button is-info is-rounded is-hidden-mobile' +
+                            (this.state.showTooltips ? ' tooltip is-tooltip-active' : '')}
+                          data-tooltip='shift + ←'
                           onClick={this.prevUngraded}>ungraded</button>
-                        <button type='submit' className='button is-link'
+                        <button type='submit'
+                          className={'button is-link' +
+                            (this.state.showTooltips ? ' tooltip is-tooltip-active' : '')}
+                          data-tooltip='←'
                           onClick={this.prev}>Previous</button>
                       </div>
                       <div className='control'>
@@ -190,9 +269,15 @@ class Grade extends React.Component {
                         />
                       </div>
                       <div className='control'>
-                        <button type='submit' className='button is-link'
+                        <button type='submit'
+                          className={'button is-link' +
+                            (this.state.showTooltips ? ' tooltip is-tooltip-active' : '')}
+                          data-tooltip='→'
                           onClick={this.next}>Next</button>
-                        <button type='submit' className='button is-info is-rounded is-hidden-mobile'
+                        <button type='submit'
+                          className={'button is-info is-rounded is-hidden-mobile' +
+                            (this.state.showTooltips ? ' tooltip is-tooltip-active' : '')}
+                          data-tooltip='shift + →'
                           onClick={this.nextUngraded}>ungraded</button>
                       </div>
                     </div>
@@ -236,4 +321,4 @@ class Grade extends React.Component {
   }
 }
 
-export default Grade
+export default withShortcuts(Grade)

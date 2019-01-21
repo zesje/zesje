@@ -50,14 +50,6 @@ def setup():
     db.session.commit()
 
 
-# Creates a new Flask app for subprocesses which require access to flask-sqlalchemy
-def create_new_app():
-    app_new = Flask(__name__)
-    app_new.config.update(app.config)
-    db.init_app(app_new)
-    return app_new
-
-
 @app.route('/')
 @app.route('/<path:path>')
 def index(path='index.html'):

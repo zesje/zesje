@@ -5,16 +5,13 @@ from flask import current_app as app
 from flask_restful import Resource, reqparse
 from werkzeug.datastructures import FileStorage
 
-from pony import orm
-
 from ..scans import process_pdf
-from ..database import Exam, Scan
+from ..database import db, Exam, Scan
 
 
 class Scans(Resource):
     """Getting a list of uploaded scans, and uploading new ones."""
 
-    @orm.db_session
     def get(self, exam_id):
         """get all uploaded scans for a particular exam.
 
@@ -28,6 +25,11 @@ class Scans(Resource):
             name: str
                 filename of the uploaded PDF
         """
+
+        exam = Exam.query.get(exam_id)
+        if exam is None:
+            return dict(status=404, message='Exam does not exist.'), 404
+
         return [
             {
                 'id': scan.id,
@@ -35,7 +37,7 @@ class Scans(Resource):
                 'status': scan.status,
                 'message': scan.message,
             }
-            for scan in Scan.select(lambda scan: scan.exam.id == exam_id)
+            for scan in exam.scans
         ]
 
     post_parser = reqparse.RequestParser()
@@ -61,17 +63,23 @@ class Scans(Resource):
         if args['pdf'].mimetype != 'application/pdf':
             return dict(message='Uploaded file is not a PDF'), 400
 
-        with orm.db_session:
-            scan = Scan(exam=Exam[exam_id], name=args['pdf'].filename,
-                        status='processing', message='importing PDF')
+        exam = Exam.query.get(exam_id)
+        if exam is None:
+            return dict(status=404, message='Exam does not exist.'), 404
+
+        scan = Scan(exam=exam, name=args['pdf'].filename,
+                    status='processing', message='importing PDF')
+        db.session.add(scan)
+        db.session.commit()
 
         try:
             path = os.path.join(app.config['SCAN_DIRECTORY'], f'{scan.id}.pdf')
             args['pdf'].save(path)
         except Exception:
-            with orm.db_session:
-                scan = Scan[scan.id]
-                scan.delete()
+            scan = Scan.query.get(scan.id)
+            if scan is not None:
+                db.session.delete(scan)
+                db.session.commit()
             raise
 
         # Fire off a background process

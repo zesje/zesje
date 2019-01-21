@@ -4,15 +4,12 @@ from datetime import datetime
 
 from flask_restful import Resource, reqparse
 
-from pony import orm
-
-from ..database import Exam, Submission, Problem, Solution, FeedbackOption, Grader
+from ..database import db, Exam, Submission, Problem, Solution, FeedbackOption, Grader
 
 
 class Solutions(Resource):
     """ Solution provided on a specific problem and exam """
 
-    @orm.db_session
     def get(self, exam_id, submission_id, problem_id):
         """get solution to problem
 
@@ -25,16 +22,23 @@ class Solutions(Resource):
             remarks: string
         """
 
-        problem = Problem[problem_id]
-        exam = Exam[exam_id]
+        problem = Problem.query.get(problem_id)
+        if problem is None:
+            return dict(status=404, message='Problem does not exist.'), 404
 
-        sub = Submission.get(exam=exam, copy_number=submission_id)
-        if not sub:
-            raise orm.core.ObjectNotFound(Submission)
+        exam = Exam.query.get(exam_id)
+        if exam is None:
+            return dict(status=404, message='Exam does not exist.'), 404
 
-        solution = Solution.get(submission=sub, problem=problem)
-        if not solution:
-            raise orm.core.ObjectNotFound(Solution)
+        sub = Submission.query.filter(Submission.exam_id == exam.id,
+                                      Submission.copy_number == submission_id).one_or_none()
+        if sub is None:
+            return dict(status=404, message=f'Submission does not exist.'), 404
+
+        solution = Solution.query.filter(Solution.submission_id == sub.id,
+                                         Solution.problem_id == problem.id).one_or_none()
+        if solution is None:
+            return dict(status=404, message=f'Solution does not exist.'), 404
 
         return {
             'feedback': [fb.id for fb in solution.feedback],
@@ -50,7 +54,6 @@ class Solutions(Resource):
     post_parser.add_argument('remark', type=str, required=True)
     post_parser.add_argument('graderID', type=int, required=True)
 
-    @orm.db_session
     def post(self, exam_id, submission_id, problem_id):
         """Change the remark of a solution
 
@@ -66,19 +69,29 @@ class Solutions(Resource):
 
         args = self.post_parser.parse_args()
 
-        problem = Problem[problem_id]
-        exam = Exam[exam_id]
-        grader = Grader[args.graderID]
+        problem = Problem.query.get(problem_id)
+        if problem is None:
+            return dict(status=404, message='Problem does not exist.'), 404
 
-        sub = Submission.get(exam=exam, copy_number=submission_id)
-        if not sub:
-            raise orm.core.ObjectNotFound(Submission)
+        exam = Exam.query.get(exam_id)
+        if exam is None:
+            return dict(status=404, message='Exam does not exist.'), 404
 
-        solution = Solution.get(submission=sub, problem=problem)
-        if not solution:
-            raise orm.core.ObjectNotFound(Solution)
+        grader = Grader.query.get(args.graderID)
+        if grader is None:
+            return dict(status=404, message='Grader does not exist.'), 404
 
-        graded = len(solution.feedback) + len(args.remark)
+        sub = Submission.query.filter(Submission.exam_id == exam.id,
+                                      Submission.copy_number == submission_id).one_or_none()
+        if sub is None:
+            return dict(status=404, message='Submission does not exist.'), 404
+
+        solution = Solution.query.filter(Solution.submission_id == sub.id,
+                                         Solution.problem_id == problem.id).one_or_none()
+        if solution is None:
+            return dict(status=404, message='Solution does not exist.'), 404
+
+        graded = len(solution.feedback) + len(args.remark if args.remark else "")
 
         solution.remarks = args.remark
         if graded:
@@ -88,13 +101,13 @@ class Solutions(Resource):
             solution.graded_at = None
             solution.graded_by = None
 
+        db.session.commit()
         return True
 
     put_parser = reqparse.RequestParser()
     put_parser.add_argument('id', type=int, required=True)
     put_parser.add_argument('graderID', type=int, required=True)
 
-    @orm.db_session
     def put(self, exam_id, submission_id, problem_id):
         """Toggles an existing feedback option
 
@@ -109,30 +122,32 @@ class Solutions(Resource):
         """
         args = self.put_parser.parse_args()
 
-        problem = Problem[problem_id]
-        exam = Exam[exam_id]
-        grader = Grader[args.graderID]
+        grader = Grader.query.get(args.graderID)
+        if grader is None:
+            return dict(status=404, message='Grader does not exist.'), 404
 
-        sub = Submission.get(exam=exam, copy_number=submission_id)
-        if not sub:
-            raise orm.core.ObjectNotFound(Submission)
+        sub = Submission.query.filter(Submission.exam_id == exam_id,
+                                      Submission.copy_number == submission_id).one_or_none()
+        if sub is None:
+            return dict(status=404, message='Submission does not exist.'), 404
 
-        solution = Solution.get(submission=sub, problem=problem)
-        if not solution:
-            raise orm.core.ObjectNotFound(Solution)
+        solution = Solution.query.filter(Solution.submission_id == sub.id,
+                                         Solution.problem_id == problem_id).one_or_none()
+        if solution is None:
+            return dict(status=404, message='Solution does not exist.'), 404
 
-        fb = FeedbackOption.get(id=args.id)
-        if not fb:
-            raise orm.core.ObjectNotFound(FeedbackOption)
+        fb = FeedbackOption.query.get(args.id)
+        if fb is None:
+            return dict(status=404, message='Feedback Option does not exist.'), 404
 
         if fb in solution.feedback:
             solution.feedback.remove(fb)
             state = False
         else:
-            solution.feedback.add(fb)
+            solution.feedback.append(fb)
             state = True
 
-        graded = len(solution.feedback) + len(solution.remarks)
+        graded = len(solution.feedback) + len(solution.remarks if solution.remarks else "")
 
         if graded:
             solution.graded_at = datetime.now()
@@ -140,5 +155,7 @@ class Solutions(Resource):
         else:
             solution.graded_at = None
             solution.graded_by = None
+
+        db.session.commit()
 
         return {'state': state}

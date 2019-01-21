@@ -1,8 +1,6 @@
 from flask_restful import Resource, reqparse
 
-from pony import orm
-
-from ..database import Exam, Submission, Student
+from ..database import db, Exam, Submission, Student, Page
 
 
 def sub_to_data(sub, all_pages):
@@ -27,17 +25,16 @@ def sub_to_data(sub, all_pages):
                 'feedback': [
                     fb.id for fb in sol.feedback
                 ],
-                'remark': sol.remarks
-            } for sol in sub.solutions.order_by(lambda s: s.problem.id)
+                'remark': sol.remarks if sol.remarks else ""
+            } for sol in sub.solutions  # Sorted by sol.problem_id
         ],
-        'missing_pages': sorted(all_pages - set(sub.pages.number)),
+        'missing_pages': sorted(all_pages - set(page.number for page in sub.pages)),
     }
 
 
 class Submissions(Resource):
     """Getting a list of submissions, and assigning students to them."""
 
-    @orm.db_session
     def get(self, exam_id, submission_id=None):
         """get submissions for the given exam, ordered by copy number.
 
@@ -61,31 +58,37 @@ class Submissions(Resource):
             missing_pages: list of int
                 pages that are missing from submission
         """
-        # This makes sure we raise ObjectNotFound if the exam does not exist
-        exam = Exam[exam_id]
 
+        exam = Exam.query.get(exam_id)
+        if exam is None:
+            return dict(status=404, message='Exam does not exist.'), 404
+
+        #
         # Some pages might not have a problem widget (e.g. title page) and some
         # pages might not have been uploaded yet.
-        all_pages = set(exam.problems.widget.page).union(exam.submissions.pages.number)
+        # TODO Test this thoroughly
+        all_pages = set(prob.widget.page for prob in exam.problems)\
+            .union(page.number for page in Page.query.join(Submission, isouter=True)
+                                                     .join(Exam, isouter=True)
+                                                     .distinct(Page.number).all())
 
         if submission_id is not None:
-            sub = Submission.get(exam=exam, copy_number=submission_id)
-            if not sub:
-                raise orm.core.ObjectNotFound(Submission)
+            # Raises exception if zero or more than one found
+            sub = Submission.query.filter(Submission.exam_id == exam.id,
+                                          Submission.copy_number == submission_id).one()
 
             return sub_to_data(sub, all_pages)
 
         return [
             sub_to_data(sub, all_pages) for sub
-            in (Submission
-                .select(lambda s: s.exam == exam)
-                .order_by(lambda s: s.copy_number))
+            in (Submission.query
+                .filter(Submission.exam == exam)
+                .order_by(Submission.copy_number).all())
         ]
 
     put_parser = reqparse.RequestParser()
     put_parser.add_argument('studentID', type=int, required=True)
 
-    @orm.db_session
     def put(self, exam_id, submission_id=None):
         """Assign a student to the given submission.
 
@@ -110,18 +113,22 @@ class Submissions(Resource):
 
         args = self.put_parser.parse_args()
 
-        exam = Exam[exam_id]
-        sub = Submission.get(exam=exam, copy_number=submission_id)
-        if not sub:
-            raise orm.core.ObjectNotFound(Submission)
+        exam = Exam.query.get(exam_id)
+        if exam is None:
+            return dict(status=404, message='Exam does not exist.'), 404
 
-        student = Student.get(id=args.studentID)
-        if not student:
+        # Raises exception if zero or more than one found
+        sub = Submission.query.filter(Submission.exam_id == exam.id,
+                                      Submission.copy_number == submission_id).one()
+
+        student = Student.query.get(args.studentID)
+        if student is None:
             msg = f'Student {args.studentID} does not exist'
             return dict(status=404, message=msg), 404
 
         sub.student = student
         sub.signature_validated = True
+        db.session.commit()
         return {
             'id': sub.copy_number,
             'student':
@@ -144,6 +151,6 @@ class Submissions(Resource):
                             fb.id for fb in sol.feedback
                         ],
                         'remark': sol.remarks
-                    } for sol in sub.solutions.order_by(lambda s: s.problem.id)
+                    } for sol in sub.solutions  # Sorted by sol.problem_id
                     ]
         }

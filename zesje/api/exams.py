@@ -8,8 +8,6 @@ from flask import current_app as app, send_file, request
 from flask_restful import Resource, reqparse
 from werkzeug.datastructures import FileStorage
 
-from pony import orm
-
 from ..pdf_generation import generate_pdfs, output_pdf_filename_format, join_pdfs, page_is_size
 from ..database import db, Exam, ExamWidget
 
@@ -34,9 +32,8 @@ class Exams(Resource):
         else:
             return self._get_all()
 
-    @orm.db_session
     def delete(self, exam_id):
-        exam = Exam.get(id=exam_id)
+        exam = Exam.query.get(exam_id)
         if exam is None:
             return dict(status=404, message='Exam does not exist.'), 404
         elif exam.finalized:
@@ -44,7 +41,6 @@ class Exams(Resource):
         else:
             exam.delete()
 
-    @orm.db_session
     def _get_all(self):
         """get list of uploaded exams.
 
@@ -62,12 +58,11 @@ class Exams(Resource):
             {
                 'id': ex.id,
                 'name': ex.name,
-                'submissions': ex.submissions.count()
+                'submissions': len(ex.submissions)
             }
-            for ex in Exam.select().order_by(Exam.id)
+            for ex in Exam.query.order_by(Exam.id).all()
         ]
 
-    @orm.db_session
     def _get_single(self, exam_id):
         """Get detailed information about a single exam
 
@@ -89,7 +84,7 @@ class Exams(Resource):
         widgets
             list of widgets in this exam
         """
-        exam = Exam[exam_id]
+        exam = Exam.query.get(exam_id)
 
         if exam is None:
             return dict(status=404, message='Exam does not exist.'), 404
@@ -115,8 +110,8 @@ class Exams(Resource):
                             'feedback': [
                                 fb.id for fb in sol.feedback
                             ],
-                            'remark': sol.remarks
-                        } for sol in sub.solutions.order_by(lambda s: s.problem.id)
+                            'remark': sol.remarks if sol.remarks else ""
+                        } for sol in sub.solutions  # Sorted by sol.problem_id
                     ],
                 } for sub in exam.submissions
         ]
@@ -142,10 +137,10 @@ class Exams(Resource):
                             'name': fb.text,
                             'description': fb.description,
                             'score': fb.score,
-                            'used': fb.solutions.count()
+                            'used': len(fb.solutions)
                         }
                         for fb
-                        in prob.feedback_options.order_by(lambda f: f.id)
+                        in prob.feedback_options  # Sorted by fb.id
                     ],
                     'page': prob.widget.page,
                     'widget': {
@@ -157,7 +152,7 @@ class Exams(Resource):
                         'height': prob.widget.height,
                     },
                     'graded': any([sol.graded_by is not None for sol in prob.solutions])
-                } for prob in exam.problems.order_by(lambda p: p.id)
+                } for prob in exam.problems  # Sorted by prob.id
             ],
             'widgets': [
                 {
@@ -165,7 +160,7 @@ class Exams(Resource):
                     'name': widget.name,
                     'x': widget.x,
                     'y': widget.y,
-                } for widget in exam.widgets.order_by(lambda w: w.id)
+                } for widget in exam.widgets  # Sorted by widget.id
             ],
             'finalized': exam.finalized,
         }
@@ -174,7 +169,6 @@ class Exams(Resource):
     post_parser.add_argument('pdf', type=FileStorage, required=True, location='files')
     post_parser.add_argument('exam_name', type=str, required=True, location='form')
 
-    @orm.db_session
     def post(self):
         """Add a new exam.
 
@@ -223,7 +217,8 @@ class Exams(Resource):
             ),
         ]
 
-        db.commit()  # so exam gets an id
+        db.session.add(exam)
+        db.session.commit()  # so exam gets an id
 
         exam_dir = _get_exam_dir(exam.id)
         pdf_path = os.path.join(exam_dir, 'exam.pdf')
@@ -238,13 +233,16 @@ class Exams(Resource):
             'id': exam.id
         }
 
-    @orm.db_session
     def put(self, exam_id, attr):
         if attr == 'finalized':
-            exam = Exam[exam_id]
+            exam = Exam.query.get(exam_id)
+            if exam is None:
+                return dict(status=404, message='Exam does not exist.'), 404
+
             bodyStr = request.data.decode('utf-8')
             if bodyStr == 'true':
                 exam.finalized = True
+                db.session.commit()
             elif bodyStr == 'false':
                 if exam.finalized:
                     return dict(status=403, message=f'Exam already finalized'), 403
@@ -257,10 +255,12 @@ class Exams(Resource):
 
 class ExamSource(Resource):
 
-    @orm.db_session
     def get(self, exam_id):
 
-        exam = Exam[exam_id]
+        exam = Exam.query.get(exam_id)
+
+        if exam is None:
+            return dict(status=404, message='Exam does not exist.'), 404
 
         exam_dir = _get_exam_dir(exam.id)
 
@@ -323,7 +323,6 @@ class ExamGeneratedPdfs(Resource):
     post_parser.add_argument('copies_start', type=int, required=True)
     post_parser.add_argument('copies_end', type=int, required=True)
 
-    @orm.db_session
     def post(self, exam_id):
         """Generates the exams with corner markers and Widgets.
 
@@ -351,10 +350,9 @@ class ExamGeneratedPdfs(Resource):
         copies_start = args.get('copies_start')
         copies_end = args.get('copies_end')
 
-        try:
-            exam = Exam[exam_id]
-        except orm.ObjectNotFound:
-            return dict(status=404, message=f'Exam not found'), 404
+        exam = Exam.query.get(exam_id)
+        if exam is None:
+            return dict(status=404, message='Exam does not exist.'), 404
 
         exam_dir = _get_exam_dir(exam_id)
         generated_pdfs_dir = self._get_generated_exam_dir(exam_dir)
@@ -389,17 +387,15 @@ class ExamGeneratedPdfs(Resource):
     get_parser.add_argument('copies_end', type=int, required=True)
     get_parser.add_argument('type', type=str, required=True)
 
-    @orm.db_session
     def get(self, exam_id):
         args = self.get_parser.parse_args()
 
         copies_start = args['copies_start']
         copies_end = args['copies_end']
 
-        try:
-            exam = Exam[exam_id]
-        except orm.ObjectNotFound:
-            return dict(status=404, message=f'Exam not found'), 404
+        exam = Exam.query.get(exam_id)
+        if exam is None:
+            return dict(status=404, message='Exam does not exist.'), 404
 
         exam_dir = _get_exam_dir(exam_id)
         generated_pdfs_dir = self._get_generated_exam_dir(exam_dir)
@@ -445,12 +441,10 @@ class ExamGeneratedPdfs(Resource):
 
 class ExamPreview(Resource):
 
-    @orm.db_session
     def get(self, exam_id):
-        try:
-            exam = Exam[exam_id]
-        except orm.ObjectNotFound:
-            return dict(status=404, message=f'Exam not found'), 404
+        exam = Exam.query.get(exam_id)
+        if exam is None:
+            return dict(status=404, message='Exam does not exist.'), 404
 
         output_file = BytesIO()
 

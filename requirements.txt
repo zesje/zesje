@@ -1,7 +1,8 @@
 # Core components
 flask
 flask_restful
-pony
+flask_sqlalchemy
+sqlalchemy
 pyyaml
 
 # General utilities

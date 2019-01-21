@@ -7,7 +7,9 @@ from flask import Flask
 from werkzeug.exceptions import NotFound
 
 from .api import api_bp
+
 from .database import db
+
 from ._version import __version__
 
 
@@ -29,7 +31,12 @@ app.config.update(
 # These reference DATA_DIRECTORY, so they need to be in a separate update
 app.config.update(
     SCAN_DIRECTORY=os.path.join(app.config['DATA_DIRECTORY'], 'scans'),
-    DB_PATH=os.path.join(app.config['DATA_DIRECTORY'], 'course.sqlite'),
+    DB_PATH=os.path.join(app.config['DATA_DIRECTORY'], 'database.sqlite'),
+)
+
+app.config.update(
+    SQLALCHEMY_DATABASE_URI='sqlite:///' + app.config['DB_PATH'],
+    SQLALCHEMY_TRACK_MODIFICATIONS=False  # Suppress future deprecation warning
 )
 
 
@@ -38,8 +45,17 @@ def setup():
     os.makedirs(app.config['DATA_DIRECTORY'], exist_ok=True)
     os.makedirs(app.config['SCAN_DIRECTORY'], exist_ok=True)
 
-    db.bind('sqlite', app.config['DB_PATH'], create_db=True)
-    db.generate_mapping(create_tables=True)
+    db.init_app(app)
+    db.create_all()
+    db.session.commit()
+
+
+# Creates a new Flask app for subprocesses which require access to flask-sqlalchemy
+def create_new_app():
+    app_new = Flask(__name__)
+    app_new.config.update(app.config)
+    db.init_app(app_new)
+    return app_new
 
 
 @app.route('/')

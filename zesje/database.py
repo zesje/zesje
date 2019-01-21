@@ -1,129 +1,184 @@
-""" Models used in the db """
+""" db.Models used in the db """
 
-from datetime import datetime
 import random
 import string
 
-from pony.orm import db_session, Database, Required, Optional, PrimaryKey, Set
+from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean, ForeignKey
+from flask_sqlalchemy.model import BindMetaMixin, Model
+from sqlalchemy.ext.declarative import DeclarativeMeta, declarative_base
 
-# from https://editor.ponyorm.com/user/zesje/zesje/python
 
-db = Database()
+# Class for NOT automatically determining table names
+class NoNameMeta(BindMetaMixin, DeclarativeMeta):
+    pass
 
+
+# Class used as Model for the database with a set function like Pony
+class SetModel(Model):
+    def set(self, **kwargs):
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+
+
+db = SQLAlchemy(model_class=declarative_base(
+    cls=SetModel, metaclass=NoNameMeta, name='Model'))
+
+token_length = 12
 
 # Helper functions #
-# Have to appear at the top of the file, because otherwise they won't be defined when the models are defined
+# Have to appear at the top of the file, because otherwise they won't be defined when the db.Models are defined
+
 
 def _generate_exam_token():
     """Generate an exam token which is not already present in the database. The token consists of 12 randomly generated
     uppercase letters."""
-    length = 12
     chars = string.ascii_uppercase
 
     while True:
-        rand_string = ''.join(random.choices(chars, k=length))
+        rand_string = ''.join(random.choices(chars, k=token_length))
 
-        with db_session:
-            if not Exam.select(lambda e: e.token == rand_string).exists():  # no collision
-                return rand_string
+        if Exam.query.filter(Exam.token == rand_string).first() is None:  # no collision
+            return rand_string
+
+# db.Models #
 
 
-# Models #
-
-class Student(db.Entity):
+class Student(db.Model):
     """New students may be added throughout the course."""
-    id = PrimaryKey(int)
-    first_name = Required(str)
-    last_name = Required(str)
-    email = Optional(str, unique=True)
-    submissions = Set('Submission')
+    __tablename__ = 'student'
+    id = Column(Integer, primary_key=True)
+    first_name = Column(String(120), nullable=False)
+    last_name = Column(String(120), nullable=False)
+    email = Column(String(120), unique=True)
+    submissions = db.relationship('Submission', backref='student', lazy=True)
 
 
-class Grader(db.Entity):
+class Grader(db.Model):
     """Graders can be created by any user at any time, but are immutable once they are created"""
-    name = Required(str)
-    graded_solutions = Set('Solution')
+    __tablename__ = 'grader'
+    id = Column(Integer, primary_key=True)
+    name = Column(String(120), nullable=False)
+    graded_solutions = db.relationship('Solution', backref='graded_by', lazy=True)
 
 
-class Exam(db.Entity):
+class Exam(db.Model):
     """ New instances are created when providing a new exam. """
-    name = Required(str)
-    token = Required(str, unique=True, default=_generate_exam_token)
-    submissions = Set('Submission')
-    problems = Set('Problem')
-    scans = Set('Scan')
-    widgets = Set('ExamWidget')
-    finalized = Required(bool, default=False)
+    __tablename__ = 'exam'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    name = Column(String(120), nullable=False)
+    token = Column(String(token_length), unique=True, default=_generate_exam_token)
+    submissions = db.relationship('Submission', backref='exam', lazy=True)
+    problems = db.relationship('Problem', backref='exam', order_by='Problem.id', lazy=True)
+    scans = db.relationship('Scan', backref='exam', lazy=True)
+    widgets = db.relationship('ExamWidget', backref='exam', order_by='ExamWidget.id', lazy=True)
+    finalized = Column(Boolean, default=False, server_default='f')
 
 
-class Submission(db.Entity):
+class Submission(db.Model):
     """Typically created when adding a new exam."""
-    copy_number = Required(int)
-    exam = Required(Exam)
-    solutions = Set('Solution')
-    pages = Set('Page')
-    student = Optional(Student)
-    signature_validated = Required(bool, default=False)
+    __tablename__ = 'submission'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    copy_number = Column(Integer)
+    exam_id = Column(Integer, ForeignKey('exam.id'), nullable=False)
+    solutions = db.relationship('Solution', backref='submission', order_by='Solution.problem_id', lazy=True)
+    pages = db.relationship('Page', backref='submission', lazy=True)
+    student_id = Column(Integer, ForeignKey('student.id'), nullable=True)
+    signature_validated = Column(Boolean, default=False, server_default='f', nullable=False)
 
 
-class Page(db.Entity):
+class Page(db.Model):
     """Page of an exam"""
-    path = Required(str)
-    submission = Required(Submission)
-    number = Required(int)
+    __tablename__ = 'page'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    path = Column(String(120), nullable=False)
+    submission_id = Column(Integer, ForeignKey('submission.id'), nullable=True)
+    number = Column(Integer, nullable=False)
 
 
-class Problem(db.Entity):
+class Problem(db.Model):
     """this will be initialized @ app initialization and immutable from then on."""
-    name = Required(str)
-    exam = Required(Exam)
-    feedback_options = Set('FeedbackOption')
-    solutions = Set('Solution')
-    widget = Required('ProblemWidget')
+    __tablename__ = 'problem'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    name = Column(String(120), nullable=False)
+    exam_id = Column(Integer, ForeignKey('exam.id'), nullable=False)
+    feedback_options = db.relationship('FeedbackOption', backref='problem', order_by='FeedbackOption.id', lazy=True)
+    solutions = db.relationship('Solution', backref='problem', lazy=True)
+    widget = db.relationship('ProblemWidget', backref='problem', uselist=False, lazy=True)
 
 
-class FeedbackOption(db.Entity):
+class FeedbackOption(db.Model):
     """feedback option"""
-    problem = Required(Problem)
-    text = Required(str)
-    description = Optional(str)
-    score = Optional(int)
-    solutions = Set('Solution')
+    __tablename__ = 'feedback_option'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    problem_id = Column(Integer, ForeignKey('problem.id'))
+    text = Column(String(120), nullable=False)
+    description = Column(Text, nullable=True)
+    score = Column(Integer, nullable=True)
 
 
-class Solution(db.Entity):
+# Table for many to many relationship of FeedbackOption and Solution
+solution_feedback = db.Table('solution_feedback',
+                             Column('solution_id', Integer, ForeignKey('solution.id'), primary_key=True),
+                             Column('feedback_option_id', Integer, ForeignKey('feedback_option.id'), primary_key=True))
+
+
+class Solution(db.Model):
     """solution to a single problem"""
-    submission = Required(Submission)
-    problem = Required(Problem)
-    graded_by = Optional(Grader)  # if null, this has not yet been graded
-    graded_at = Optional(datetime)
-    feedback = Set(FeedbackOption)
-    remarks = Optional(str)
-    PrimaryKey(submission, problem)
+    __tablename__ = 'solution'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    submission_id = Column(Integer, ForeignKey('submission.id'), nullable=False)  # backref submission
+    problem_id = Column(Integer, ForeignKey('problem.id'), nullable=False)  # backref problem
+    # if grader_id, and thus graded_by, is null, this has not yet been graded
+    grader_id = Column(Integer, ForeignKey('grader.id'), nullable=True)  # backref graded_by
+    graded_at = Column(DateTime, nullable=True)
+    feedback = db.relationship('FeedbackOption', secondary=solution_feedback, backref='solutions', lazy='subquery')
+    remarks = Column(Text)
 
 
-class Scan(db.Entity):
+class Scan(db.Model):
     """Metadata on uploaded PDFs"""
-    exam = Required(Exam)
-    name = Required(str)
-    status = Required(str)
-    message = Optional(str)
+    __tablename__ = 'scan'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    exam_id = Column(String, ForeignKey('exam.id'), nullable=False)
+    name = Column(String(120), nullable=False)
+    status = Column(String(120), nullable=False)
+    message = Column(String(120))
 
 
-class Widget(db.Entity):
-    id = PrimaryKey(int, auto=True)
+class Widget(db.Model):
+    __tablename__ = 'widget'
+    id = Column(Integer, primary_key=True, autoincrement=True)
     # Can be used to distinguish widgets for barcodes, student_id and problems
-    name = Optional(str)
-    x = Required(int)
-    y = Required(int)
+    name = Column(String(120))
+    x = Column(Integer, nullable=False)
+    y = Column(Integer, nullable=False)
+    type = Column(String(20))
+
+    __mapper_args__ = {
+        'polymorphic_identity': 'widget',
+        'polymorphic_on': type
+    }
 
 
 class ExamWidget(Widget):
-    exam = Required(Exam)
+    __tablename__ = 'exam_widget'
+    id = Column(Integer, ForeignKey('widget.id'), primary_key=True, nullable=False)
+    exam_id = Column(Integer, ForeignKey('exam.id'), nullable=False)
+
+    __mapper_args__ = {
+        'polymorphic_identity': 'exam_widget'
+    }
 
 
 class ProblemWidget(Widget):
-    problem = Optional(Problem)
-    page = Required(int)
-    width = Required(int)
-    height = Required(int)
+    __tablename__ = 'problem_widget'
+    id = Column(Integer, ForeignKey('widget.id'), primary_key=True, nullable=False)
+    problem_id = Column(Integer, ForeignKey('problem.id'), nullable=True)
+    page = Column(Integer)
+    width = Column(Integer)
+    height = Column(Integer)
+
+    __mapper_args__ = {
+        'polymorphic_identity': 'problem_widget'
+    }

@@ -6,13 +6,12 @@ from collections import namedtuple, Counter
 from io import BytesIO
 import signal
 
-from pony import orm
-
 import cv2
 import numpy as np
 import PyPDF2
 from PIL import Image
 from pylibdmtx import pylibdmtx
+from flask import Flask
 
 from .database import db, Scan, Exam, Page, Student, Submission, Solution, ExamWidget
 from .datamatrix import decode_raw_datamatrix
@@ -24,7 +23,7 @@ ExtractedBarcode = namedtuple('ExtractedBarcode', ['token', 'copy', 'page'])
 ExamMetadata = namedtuple('ExamMetadata', ['token', 'barcode_coords'])
 
 
-def process_pdf(scan_id, bind=True, app_config=None):
+def process_pdf(scan_id, app_config=None):
     """Process a PDF, recording progress to a database
 
     Parameters
@@ -45,7 +44,7 @@ def process_pdf(scan_id, bind=True, app_config=None):
         signal.signal(signal_type, raise_exit)
 
     try:
-        _process_pdf(scan_id, app_config, bind)
+        _process_pdf(scan_id, app_config)
     except BaseException as error:
         # TODO: When #182 is implemented, properly separate user-facing
         #       messages (written to DB) from developer-facing messages,
@@ -53,20 +52,22 @@ def process_pdf(scan_id, bind=True, app_config=None):
         write_pdf_status(scan_id, 'error', "Unexpected error: " + str(error))
 
 
-def _process_pdf(scan_id, app_config, bind):
+def _process_pdf(scan_id, app_config):
     data_directory = app_config.get('DATA_DIRECTORY', 'data')
-    if bind:
-        # Ensure we are not inheriting a bound database, which is dangerous and
-        # might be locked.
-        db.bind('sqlite', os.path.join(data_directory, 'course.sqlite'))
-        db.generate_mapping(create_tables=True)
 
     report_error = functools.partial(write_pdf_status, scan_id, 'error')
     report_progress = functools.partial(write_pdf_status, scan_id, 'processing')
     report_success = functools.partial(write_pdf_status, scan_id, 'success')
 
-    with orm.db_session:
-        scan = Scan[scan_id]
+    app = Flask(__name__)
+    app.config.update(app_config)
+    db.init_app(app)
+
+    with app.app_context():
+        db.create_all()
+
+        # Raises exception if zero or more than one scans found
+        scan = Scan.query.filter(Scan.id == scan_id).one()
 
         pdf_path = os.path.join(data_directory, 'scans', f'{scan.id}.pdf')
         output_directory = os.path.join(data_directory, f'{scan.exam.id}_data')
@@ -77,46 +78,45 @@ def _process_pdf(scan_id, app_config, bind):
             report_error(f'Error while reading Exam metadata: {e}')
             raise
 
-    total = PyPDF2.PdfFileReader(open(pdf_path, "rb")).getNumPages()
-    failures = []
-    try:
-        for image, page in extract_images(pdf_path):
-            report_progress(f'Processing page {page} / {total}')
-            try:
-                success, description = process_page(
-                    image, exam_config, output_directory
+        total = PyPDF2.PdfFileReader(open(pdf_path, "rb")).getNumPages()
+        failures = []
+        try:
+            for image, page in extract_images(pdf_path):
+                report_progress(f'Processing page {page} / {total}')
+                try:
+                    success, description = process_page(
+                        image, exam_config, output_directory
+                    )
+                    if not success:
+                        print(description)
+                        failures.append(page)
+                except Exception as e:
+                    report_error(f'Error processing page {page}: {e}')
+                    return
+        except Exception as e:
+            report_error(f"Failed to read pdf: {e}")
+            raise
+
+        if failures:
+            processed = total - len(failures)
+            if processed:
+                report_error(
+                    f'Processed {processed} / {total} pages. '
+                    f'Failed on pages: {failures}'
                 )
-                if not success:
-                    print(description)
-                    failures.append(page)
-            except Exception as e:
-                report_error(f'Error processing page {page}: {e}')
-                return
-    except Exception as e:
-        report_error(f"Failed to read pdf: {e}")
-        raise
-
-    if failures:
-        processed = total - len(failures)
-        if processed:
-            report_error(
-                f'Processed {processed} / {total} pages. '
-                f'Failed on pages: {failures}'
-            )
+            else:
+                report_error(f'Failed on all {total} pages.')
         else:
-            report_error(f'Failed on all {total} pages.')
-    else:
-        report_success(f'Processed {total} pages.')
+            report_success(f'Processed {total} pages.')
 
 
-@orm.db_session
 def exam_metadata(exam_id):
     """Read off exam token and barcode coordinates from the database."""
-    exam = Exam[exam_id]
-    barcode_widget = ExamWidget.get(exam=exam, name="barcode_widget")
+    # Raises exception if zero or more than one barcode widgets found
+    barcode_widget = ExamWidget.query.filter(ExamWidget.exam_id == exam_id, ExamWidget.name == "barcode_widget").one()
 
     return ExamMetadata(
-            token=exam.token,
+            token=barcode_widget.exam.token,
             barcode_coords=[
                 max(0, barcode_widget.y),
                 max(0, barcode_widget.y + 50),
@@ -165,10 +165,10 @@ def extract_images(filename):
 
 
 def write_pdf_status(scan_id, status, message):
-    with orm.db_session:
-        scan = Scan[scan_id]
-        scan.status = status
-        scan.message = message
+    scan = Scan.query.filter(Scan.id == scan_id).one()
+    scan.status = status
+    scan.message = message
+    db.session.commit()
 
 
 def process_page(image_data, exam_config, output_dir=None, strict=False):
@@ -279,7 +279,6 @@ def save_image(image, barcode, base_path):
     return image_path
 
 
-@orm.db_session
 def update_database(image_path, barcode):
     """Add a database entry for the new image or update an existing one.
 
@@ -295,21 +294,23 @@ def update_database(image_path, barcode):
     signature_validated : bool
         If the corresponding submission has a validated signature.
     """
-    exam = Exam.get(token=barcode.token)
+    exam = Exam.query.filter(Exam.token == barcode.token).first()
     if exam is None:
         raise RuntimeError('Invalid exam token.')
-    sub = Submission.get(copy_number=barcode.copy, exam=exam)
 
+    sub = Submission.query.filter(Submission.copy_number == barcode.copy, Submission.exam_id == exam.id).one_or_none()
     if sub is None:
         sub = Submission(copy_number=barcode.copy, exam=exam)
-
+        db.session.add(sub)
         for problem in exam.problems:
-            Solution(problem=problem, submission=sub)
+            db.session.add(Solution(problem=problem, submission=sub))
 
     # We may have added this page in previous uploads but we only want a single
     # 'Page' entry regardless
-    if Page.get(submission=sub, number=barcode.page) is None:
-        Page(path=image_path, submission=sub, number=barcode.page)
+    if Page.query.filter(Page.submission == sub, Page.number == barcode.page).one_or_none() is None:
+        db.session.add(Page(path=image_path, submission=sub, number=barcode.page))
+
+    db.session.commit()
 
 
 def decode_barcode(image, exam_config):
@@ -481,36 +482,39 @@ def guess_student(exam_token, copy_number, app_config=None, force=False):
     if app_config is None:
         app_config = {}
 
-    with orm.db_session:
-        exam = Exam.get(token=exam_token)
-        sub = Submission.get(copy_number=copy_number, exam=exam)
-        image_path = Page.get(submission=sub, number=0).path
+    # Throws exception if zero or more than one of Exam, Submission or Page found
+    exam = Exam.query.filter(Exam.token == exam_token).one()
+    sub = Submission.query.filter(Submission.copy_number == copy_number,
+                                  Submission.exam_id == exam.id).one()
+    image_path = Page.query.filter(Page.submission_id == sub.id,
+                                   Page.number == 0).one().path
 
-        student_id_widget = ExamWidget.get(exam=exam, name="student_id_widget")
-        student_id_widget_coords = [
+    student_id_widget = ExamWidget.query.filter(ExamWidget.exam_id == exam.id,
+                                                ExamWidget.name == "student_id_widget").one()
+    student_id_widget_coords = [
             student_id_widget.y,  # top
             student_id_widget.y + app_config.get('ID_GRID_HEIGHT', 181),  # bottom
             student_id_widget.x,  # left
             student_id_widget.x + app_config.get('ID_GRID_WIDTH', 313),  # right
         ]
 
-        if sub.signature_validated and not force:
-            return "Signature already validated"
+    if sub.signature_validated and not force:
+        return "Signature already validated"
 
     try:
         number = get_student_number(image_path, student_id_widget_coords)
     except Exception:
         return "Failed to extract student number"
 
-    with orm.db_session:
-        student = Student.get(id=int(number))
-        if student is not None:
-            exam = Exam.get(token=exam_token)
-            sub = Submission.get(copy_number=copy_number, exam=exam)
-            sub.student = student
-            return "Successfully extracted student number"
-        else:
-            return f"Student number {number} not in the database"
+    student = Student.query.get(int(number))
+    if student is not None:
+        exam = Exam.query.filter(Exam.token == exam_token).one()
+        sub = Submission.query.filter(Submission.copy_number == copy_number, Submission.exam_id == exam.id).one()
+        sub.student = student
+        db.session.commit()
+        return "Successfully extracted student number"
+    else:
+        return f"Student number {number} not in the database"
 
 
 def get_student_number(image_path, student_id_widget_coords):

@@ -4,7 +4,7 @@ import pytest
 import numpy as np
 import PIL.Image
 from tempfile import NamedTemporaryFile
-from pony.orm import db_session
+from flask import Flask
 from io import BytesIO
 import wand.image
 
@@ -27,21 +27,22 @@ def mock_get_box_return_original(monkeypatch, datadir):
 # Module scope ensures it is ran only once
 @pytest.fixture(scope="module")
 def db_setup():
-    try:
-        db.bind('sqlite', ':memory:')
-    except TypeError:
-        pass
-    else:
-        db.generate_mapping(check_tables=False)
-    db.drop_all_tables(with_all_data=True)
-    db.create_tables()
+    app = Flask(__name__, static_folder=None)
+    app.config.update(
+        SQLALCHEMY_DATABASE_URI='sqlite:///:memory:',
+        SQLALCHEMY_TRACK_MODIFICATIONS=False  # Suppress future deprecation warning
+    )
+    db.init_app(app)
+    return app
 
 
 # Fixture which empties the database
 @pytest.fixture
 def db_empty(db_setup):
-    db.drop_all_tables(with_all_data=True)
-    db.create_tables()
+    with db_setup.app_context():
+        db.drop_all()
+        db.create_all()
+    return db_setup
 
 
 # Tests whether the output of calc angle is correct
@@ -96,15 +97,20 @@ def new_exam(db_empty):
     This needs to be ran at the start of every pipeline test
     TODO: rewrite to a fixture
     """
-    with db_session:
+    with db_empty.app_context():
         token = _generate_exam_token()
         e = Exam(name="testExam", token=token)
-        Submission(copy_number=145, exam=e)
-        ExamWidget(exam=e, name='student_id_widget', x=0, y=0)
+        sub = Submission(copy_number=145, exam=e)
+        widget = ExamWidget(exam=e, name='student_id_widget', x=0, y=0)
         exam_config = ExamMetadata(
             token=token,
             barcode_coords=[40, 90, 510, 560],  # in points (not pixels!)
         )
+        db.session.add_all([e, sub, widget])
+        db.session.commit()
+
+    # Push the current app context for all tests so the database can be used
+    db_empty.app_context().push()
     return exam_config
 
 

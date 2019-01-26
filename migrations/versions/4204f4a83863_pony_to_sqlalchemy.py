@@ -1,4 +1,4 @@
-""" Pony to SQLAlchemy
+""" Pony or empty database to SQLAlchemy
 
 Revision ID: 4204f4a83863
 Revises:
@@ -17,39 +17,44 @@ depends_on = None
 
 
 def upgrade():
-    # Make backup of sqlite file since no downgrade is supported
-    db_path = current_app.config.get('SQLALCHEMY_DATABASE_URI').replace('sqlite:///', '')
-    shutil.copy2(db_path, db_path + '.pony')
+    db_url = current_app.config.get('SQLALCHEMY_DATABASE_URI')
+    engine = sa.create_engine(db_url)
+    empty_database = not engine.dialect.has_table(engine, 'Exam')
 
-    # Remove old indices
-    op.drop_index('idx_scan__exam', table_name='Scan')
-    op.drop_index('idx_feedbackoption__problem', table_name='FeedbackOption')
-    op.drop_index('idx_submission__exam', table_name='Submission')
-    op.drop_index('idx_submission__student', table_name='Submission')
-    op.drop_index('idx_problem__exam', table_name='Problem')
-    op.drop_index('idx_problem__widget', table_name='Problem')
-    op.drop_index('idx_page__submission', table_name='Page')
-    op.drop_index('idx_widget__exam', table_name='Widget')
-    op.drop_index('idx_solution__graded_by', table_name='Solution')
-    op.drop_index('idx_solution__problem', table_name='Solution')
-    op.drop_index('idx_feedbackoption_solution', table_name='FeedbackOption_Solution')
+    if not empty_database:
+        # Make backup of sqlite file since no downgrade is supported
+        db_path = db_url.replace('sqlite:///', '')
+        shutil.copy2(db_path, db_path + '.pony')
 
-    # Temporarily prefix old table names with 'Pony'
-    table_names = [
-        'Exam',
-        'FeedbackOption',
-        'FeedbackOption_Solution',
-        'Grader',
-        'Page',
-        'Problem',
-        'Scan',
-        'Solution',
-        'Student',
-        'Submission',
-        'Widget',
-    ]
-    for table_name in table_names:
-        op.rename_table(table_name, 'Pony' + table_name)
+        # Remove old indices
+        op.drop_index('idx_scan__exam', table_name='Scan')
+        op.drop_index('idx_feedbackoption__problem', table_name='FeedbackOption')
+        op.drop_index('idx_submission__exam', table_name='Submission')
+        op.drop_index('idx_submission__student', table_name='Submission')
+        op.drop_index('idx_problem__exam', table_name='Problem')
+        op.drop_index('idx_problem__widget', table_name='Problem')
+        op.drop_index('idx_page__submission', table_name='Page')
+        op.drop_index('idx_widget__exam', table_name='Widget')
+        op.drop_index('idx_solution__graded_by', table_name='Solution')
+        op.drop_index('idx_solution__problem', table_name='Solution')
+        op.drop_index('idx_feedbackoption_solution', table_name='FeedbackOption_Solution')
+
+        # Temporarily prefix old table names with 'Pony'
+        table_names = [
+            'Exam',
+            'FeedbackOption',
+            'FeedbackOption_Solution',
+            'Grader',
+            'Page',
+            'Problem',
+            'Scan',
+            'Solution',
+            'Student',
+            'Submission',
+            'Widget',
+        ]
+        for table_name in table_names:
+            op.rename_table(table_name, 'Pony' + table_name)
 
     # Create new tables
     op.create_table(
@@ -174,69 +179,70 @@ def upgrade():
         sa.PrimaryKeyConstraint('solution_id', 'feedback_option_id')
     )
 
-    # Move data from old tables to new tables
-    # exam
-    op.execute('INSERT INTO exam (id, name, token, finalized) ' +
-               'SELECT id, name, token, finalized FROM PonyExam;')
+    if not empty_database:
+        # Move data from old tables to new tables
+        # exam
+        op.execute('INSERT INTO exam (id, name, token, finalized) ' +
+                   'SELECT id, name, token, finalized FROM PonyExam;')
 
-    # widget
-    op.execute('INSERT INTO widget (id, name, x, y, type) ' +
-               'SELECT id, name, x, y, CASE ' +
-               'WHEN classtype = "ExamWidget" THEN "exam_widget" ' +
-               'WHEN classtype = "ProblemWidget" THEN "problem_widget" ' +
-               'END AS type FROM PonyWidget;')
+        # widget
+        op.execute('INSERT INTO widget (id, name, x, y, type) ' +
+                   'SELECT id, name, x, y, CASE ' +
+                   'WHEN classtype = "ExamWidget" THEN "exam_widget" ' +
+                   'WHEN classtype = "ProblemWidget" THEN "problem_widget" ' +
+                   'END AS type FROM PonyWidget;')
 
-    # exam_widget
-    op.execute('INSERT INTO exam_widget (id, exam_id) ' +
-               'SELECT id, exam FROM PonyWidget WHERE classtype = "ExamWidget"')
+        # exam_widget
+        op.execute('INSERT INTO exam_widget (id, exam_id) ' +
+                   'SELECT id, exam FROM PonyWidget WHERE classtype = "ExamWidget"')
 
-    # problem_widget
-    op.execute('INSERT INTO problem_widget (id, problem_id, page, width, height) ' +
-               'SELECT PonyWidget.id, PonyProblem.id, page, width, height FROM PonyWidget ' +
-               'JOIN PonyProblem ON PonyWidget.id = PonyProblem.widget WHERE classtype = "ProblemWidget"')
+        # problem_widget
+        op.execute('INSERT INTO problem_widget (id, problem_id, page, width, height) ' +
+                   'SELECT PonyWidget.id, PonyProblem.id, page, width, height FROM PonyWidget ' +
+                   'JOIN PonyProblem ON PonyWidget.id = PonyProblem.widget WHERE classtype = "ProblemWidget"')
 
-    # feedback_option
-    op.execute('INSERT INTO feedback_option (id, problem_id, text, description, score) ' +
-               'SELECT id, problem, text, description, score FROM PonyFeedbackOption')
+        # feedback_option
+        op.execute('INSERT INTO feedback_option (id, problem_id, text, description, score) ' +
+                   'SELECT id, problem, text, description, score FROM PonyFeedbackOption')
 
-    # grader
-    op.execute('INSERT INTO grader (id, name) ' +
-               'SELECT id, name FROM PonyGrader')
+        # grader
+        op.execute('INSERT INTO grader (id, name) ' +
+                   'SELECT id, name FROM PonyGrader')
 
-    # page
-    op.execute('INSERT INTO page (id, path, submission_id, number) ' +
-               'SELECT id, path, submission, number FROM PonyPage')
+        # page
+        op.execute('INSERT INTO page (id, path, submission_id, number) ' +
+                   'SELECT id, path, submission, number FROM PonyPage')
 
-    # problem
-    op.execute('INSERT INTO problem (id, name, exam_id) ' +
-               'SELECT id, name, exam FROM PonyProblem')
+        # problem
+        op.execute('INSERT INTO problem (id, name, exam_id) ' +
+                   'SELECT id, name, exam FROM PonyProblem')
 
-    # scan
-    op.execute('INSERT INTO scan (id, exam_id, name, status, message)  ' +
-               'SELECT id, exam, name, status, message FROM PonyScan')
+        # scan
+        op.execute('INSERT INTO scan (id, exam_id, name, status, message)  ' +
+                   'SELECT id, exam, name, status, message FROM PonyScan')
 
-    # solution
-    op.execute('INSERT INTO solution (submission_id, problem_id, grader_id, graded_at, remarks) ' +
-               'SELECT submission, problem, graded_by, graded_at, remarks FROM PonySolution')
+        # solution
+        op.execute('INSERT INTO solution (submission_id, problem_id, grader_id, graded_at, remarks) ' +
+                   'SELECT submission, problem, graded_by, graded_at, remarks FROM PonySolution')
 
-    # student
-    op.execute('INSERT INTO student (id, first_name, last_name, email) ' +
-               'SELECT id, first_name, last_name, email FROM PonyStudent')
+        # student
+        op.execute('INSERT INTO student (id, first_name, last_name, email) ' +
+                   'SELECT id, first_name, last_name, email FROM PonyStudent')
 
-    # submission
-    op.execute('INSERT INTO submission (id, copy_number, exam_id, student_id, signature_validated) ' +
-               'SELECT id, copy_number, exam, student, signature_validated FROM PonySubmission')
+        # submission
+        op.execute('INSERT INTO submission (id, copy_number, exam_id, student_id, signature_validated) ' +
+                   'SELECT id, copy_number, exam, student, signature_validated FROM PonySubmission')
 
-    # solution_feedback
-    op.execute('INSERT INTO solution_feedback (solution_id, feedback_option_id) ' +
-               'SELECT solution.id, PonyFeedbackOption_Solution.feedbackoption ' +
-               'FROM PonyFeedbackOption_Solution JOIN solution ON ' +
-               'solution.submission_id = PonyFeedbackOption_Solution.solution_submission AND ' +
-               'solution.problem_id = PonyFeedbackOption_Solution.solution_problem')
+        # solution_feedback
+        op.execute('INSERT INTO solution_feedback (solution_id, feedback_option_id) ' +
+                   'SELECT solution.id, PonyFeedbackOption_Solution.feedbackoption ' +
+                   'FROM PonyFeedbackOption_Solution JOIN solution ON ' +
+                   'solution.submission_id = PonyFeedbackOption_Solution.solution_submission AND ' +
+                   'solution.problem_id = PonyFeedbackOption_Solution.solution_problem')
 
-    # Remove old tables
-    for table_name in table_names:
-        op.drop_table('Pony' + table_name)
+        # Remove old tables
+        for table_name in table_names:
+            op.drop_table('Pony' + table_name)
 
 
 def downgrade():

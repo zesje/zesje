@@ -14,8 +14,8 @@
     "test:py": "python3 -m pytest -v -W error::RuntimeWarning",
     "start": "ZESJE_SETTINGS=$(pwd)/zesje.dev.cfg python3 zesje",
     "analyze": "webpack --config webpack.prod.js --profile --json > stats.json; webpack-bundle-analyzer stats.json zesje/static",
-    "migrate:dev": "ZESJE_SETTINGS=$(pwd)/zesje.dev.cfg flask db upgrade",
-    "migrate": "flask db upgrade"
+    "migrate:dev": "ZESJE_SETTINGS=$(pwd)/zesje.dev.cfg FLASK_APP=zesje/__init__.py flask db upgrade",
+    "migrate": "FLASK_APP=zesje/__init__.py flask db upgrade"
   },
   "standard": {
     "parser": "babel-eslint",

@@ -4,6 +4,7 @@ import os
 from os.path import abspath, dirname
 
 from flask import Flask
+from flask_migrate import Migrate
 from werkzeug.exceptions import NotFound
 
 from .api import api_bp
@@ -31,7 +32,7 @@ app.config.update(
 # These reference DATA_DIRECTORY, so they need to be in a separate update
 app.config.update(
     SCAN_DIRECTORY=os.path.join(app.config['DATA_DIRECTORY'], 'scans'),
-    DB_PATH=os.path.join(app.config['DATA_DIRECTORY'], 'database.sqlite'),
+    DB_PATH=os.path.join(app.config['DATA_DIRECTORY'], 'course.sqlite'),
 )
 
 app.config.update(
@@ -39,15 +40,11 @@ app.config.update(
     SQLALCHEMY_TRACK_MODIFICATIONS=False  # Suppress future deprecation warning
 )
 
+os.makedirs(app.config['DATA_DIRECTORY'], exist_ok=True)
+os.makedirs(app.config['SCAN_DIRECTORY'], exist_ok=True)
 
-@app.before_first_request
-def setup():
-    os.makedirs(app.config['DATA_DIRECTORY'], exist_ok=True)
-    os.makedirs(app.config['SCAN_DIRECTORY'], exist_ok=True)
-
-    db.init_app(app)
-    db.create_all()
-    db.session.commit()
+db.init_app(app)
+migrate = Migrate(app, db)
 
 
 @app.route('/')

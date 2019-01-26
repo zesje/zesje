@@ -3,6 +3,8 @@ flask
 flask_restful
 flask_sqlalchemy
 sqlalchemy
+Flask-Migrate
+alembic
 pyyaml
 
 # General utilities

@@ -229,7 +229,7 @@ def upgrade():
 
     # solution_feedback
     op.execute('INSERT INTO solution_feedback (solution_id, feedback_option_id) ' +
-               'SELECT PonyFeedbackOption_Solution.feedbackoption, solution.id ' +
+               'SELECT solution.id, PonyFeedbackOption_Solution.feedbackoption ' +
                'FROM PonyFeedbackOption_Solution JOIN solution ON ' +
                'solution.submission_id = PonyFeedbackOption_Solution.solution_submission AND ' +
                'solution.problem_id = PonyFeedbackOption_Solution.solution_problem')

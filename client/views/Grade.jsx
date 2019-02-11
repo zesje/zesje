@@ -197,6 +197,8 @@ class Grade extends React.Component {
       (sub.id !== submission.id && sub.student && sub.student.id === submission.student.id)
     )
 
+    const gradedTime = new Date(solution.graded_at)
+
     return (
       <div>
 
@@ -302,7 +304,7 @@ class Grade extends React.Component {
                 </p>
 
                 {solution.graded_at
-                  ? <div>Graded by: {solution.graded_by.name} <i>({solution.graded_at})</i></div>
+                  ? <div>Graded by: {solution.graded_by.name} <i>({gradedTime.toLocaleString()})</i></div>
                   : <div>Ungraded</div>
                 }
 

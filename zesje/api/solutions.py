@@ -68,7 +68,6 @@ class Solutions(Resource):
 
         problem = Problem[problem_id]
         exam = Exam[exam_id]
-        grader = Grader[args.graderID]
 
         sub = Submission.get(exam=exam, copy_number=submission_id)
         if not sub:
@@ -78,14 +77,7 @@ class Solutions(Resource):
         if not solution:
             raise orm.core.ObjectNotFound(Solution)
 
-        graded = len(solution.feedback)
-
         solution.remarks = args.remark
-
-        # Only update the grader and timestamp if the problem was already graded
-        if graded:
-            solution.graded_at = datetime.now()
-            solution.graded_by = grader
 
         return True
 

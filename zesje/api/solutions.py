@@ -68,7 +68,6 @@ class Solutions(Resource):
 
         problem = Problem[problem_id]
         exam = Exam[exam_id]
-        grader = Grader[args.graderID]
 
         sub = Submission.get(exam=exam, copy_number=submission_id)
         if not sub:
@@ -78,15 +77,7 @@ class Solutions(Resource):
         if not solution:
             raise orm.core.ObjectNotFound(Solution)
 
-        graded = len(solution.feedback) + len(args.remark)
-
         solution.remarks = args.remark
-        if graded:
-            solution.graded_at = datetime.now()
-            solution.graded_by = grader
-        else:
-            solution.graded_at = None
-            solution.graded_by = None
 
         return True
 
@@ -132,7 +123,7 @@ class Solutions(Resource):
             solution.feedback.add(fb)
             state = True
 
-        graded = len(solution.feedback) + len(solution.remarks)
+        graded = len(solution.feedback)
 
         if graded:
             solution.graded_at = datetime.now()

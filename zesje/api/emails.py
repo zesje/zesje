@@ -18,7 +18,7 @@ default_email_template = str.strip(textwrap.dedent("""
     Dear {{student.first_name.split(' ') | first }} {{student.last_name}},
 
     Below please find attached the scans of your exam and our feedback.
-    If you have any questions, don't hesitate to contant us.
+    If you have any questions, don't hesitate to contact us.
 
     {% for problem in results | sort(attribute='name') if problem.feedback  -%}
     {{problem.name}} (your score: {{problem.score}} out of {{problem.max_score}}):

@@ -6,6 +6,8 @@ sqlalchemy
 Flask-Migrate
 alembic
 pyyaml
+celery
+redis
 
 # General utilities
 numpy

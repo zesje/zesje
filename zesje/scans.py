@@ -11,18 +11,21 @@ import numpy as np
 import PyPDF2
 from PIL import Image
 from pylibdmtx import pylibdmtx
-from flask import Flask
 
 from .database import db, Scan, Exam, Page, Student, Submission, Solution, ExamWidget
 from .datamatrix import decode_raw_datamatrix
 from .images import guess_dpi, get_box
+from .factory import make_celery
 
 
 ExtractedBarcode = namedtuple('ExtractedBarcode', ['token', 'copy', 'page'])
 
 ExamMetadata = namedtuple('ExamMetadata', ['token', 'barcode_coords'])
 
+celery = make_celery()
 
+
+@celery.task()
 def process_pdf(scan_id, app_config=None):
     """Process a PDF, recording progress to a database
 
@@ -36,6 +39,10 @@ def process_pdf(scan_id, app_config=None):
 
     def raise_exit(signo, frame):
         raise SystemExit('PDF processing was killed by an external signal')
+
+    if app_config is None:
+        from flask import current_app
+        app_config = current_app.config
 
     # We want to trigger an exit from within Python when a signal is received.
     # The default behaviour for SIGTERM is to terminate the process without
@@ -59,55 +66,48 @@ def _process_pdf(scan_id, app_config):
     report_progress = functools.partial(write_pdf_status, scan_id, 'processing')
     report_success = functools.partial(write_pdf_status, scan_id, 'success')
 
-    app = Flask(__name__)
-    app.config.update(app_config)
-    db.init_app(app)
+    # Raises exception if zero or more than one scans found
+    scan = Scan.query.filter(Scan.id == scan_id).one()
 
-    with app.app_context():
-        db.create_all()
+    pdf_path = os.path.join(data_directory, 'scans', f'{scan.id}.pdf')
+    output_directory = os.path.join(data_directory, f'{scan.exam.id}_data')
 
-        # Raises exception if zero or more than one scans found
-        scan = Scan.query.filter(Scan.id == scan_id).one()
+    try:
+        exam_config = exam_metadata(scan.exam.id)
+    except Exception as e:
+        report_error(f'Error while reading Exam metadata: {e}')
+        raise
 
-        pdf_path = os.path.join(data_directory, 'scans', f'{scan.id}.pdf')
-        output_directory = os.path.join(data_directory, f'{scan.exam.id}_data')
-
-        try:
-            exam_config = exam_metadata(scan.exam.id)
-        except Exception as e:
-            report_error(f'Error while reading Exam metadata: {e}')
-            raise
-
-        total = PyPDF2.PdfFileReader(open(pdf_path, "rb")).getNumPages()
-        failures = []
-        try:
-            for image, page in extract_images(pdf_path):
-                report_progress(f'Processing page {page} / {total}')
-                try:
-                    success, description = process_page(
-                        image, exam_config, output_directory
-                    )
-                    if not success:
-                        print(description)
-                        failures.append(page)
-                except Exception as e:
-                    report_error(f'Error processing page {page}: {e}')
-                    return
-        except Exception as e:
-            report_error(f"Failed to read pdf: {e}")
-            raise
-
-        if failures:
-            processed = total - len(failures)
-            if processed:
-                report_error(
-                    f'Processed {processed} / {total} pages. '
-                    f'Failed on pages: {failures}'
+    total = PyPDF2.PdfFileReader(open(pdf_path, "rb")).getNumPages()
+    failures = []
+    try:
+        for image, page in extract_images(pdf_path):
+            report_progress(f'Processing page {page} / {total}')
+            try:
+                success, description = process_page(
+                    image, exam_config, output_directory
                 )
-            else:
-                report_error(f'Failed on all {total} pages.')
+                if not success:
+                    print(description)
+                    failures.append(page)
+            except Exception as e:
+                report_error(f'Error processing page {page}: {e}')
+                return
+    except Exception as e:
+        report_error(f"Failed to read pdf: {e}")
+        raise
+
+    if failures:
+        processed = total - len(failures)
+        if processed:
+            report_error(
+                f'Processed {processed} / {total} pages. '
+                f'Failed on pages: {failures}'
+            )
         else:
-            report_success(f'Processed {total} pages.')
+            report_error(f'Failed on all {total} pages.')
+    else:
+        report_success(f'Processed {total} pages.')
 
 
 def exam_metadata(exam_id):

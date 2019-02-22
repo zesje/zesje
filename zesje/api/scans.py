@@ -1,4 +1,3 @@
-import multiprocessing
 import os
 
 from flask import current_app as app
@@ -86,13 +85,7 @@ class Scans(Resource):
         # TODO: save these into a process-local datastructure, or save
         # it into the DB as well so that we can cull 'processing' tasks
         # that are actually dead.
-
-        # Because sharing a database connection with a subprocess is dangerous,
-        # we use the slower "spawn" method that fires up a new process instead
-        # of forking.
-        kwargs = {'scan_id': scan.id, 'app_config': app.config}
-        ctx = multiprocessing.get_context('spawn')
-        ctx.Process(target=process_pdf, kwargs=kwargs).start()
+        process_pdf.delay(scan_id=scan.id)
 
         return {
             'id': scan.id,

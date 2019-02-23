@@ -130,8 +130,11 @@ class Feedback(Resource):
 
         # If there are submissions with no feedback, we should mark them as
         # ungraded.
-        Solution.query.filter(lambda s:
-                              s.problem == problem and
-                              not len(s.feedback) and
-                              s.graded_at is not None)\
-            .update({"graded_at": None, "graded_by": None})
+        solutions = Solution.query.filter(Solution.problem_id == problem_id,
+                                          Solution.grader_id is not None).all()
+        for solution in solutions:
+            if solution.feedback_count == 0:
+                solution.grader_id = None
+                solution.graded_at = None
+
+        db.session.commit()

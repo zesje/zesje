@@ -7,6 +7,7 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean, ForeignKey
 from flask_sqlalchemy.model import BindMetaMixin, Model
 from sqlalchemy.ext.declarative import DeclarativeMeta, declarative_base
+from sqlalchemy.orm.session import object_session
 
 
 # Class for NOT automatically determining table names
@@ -134,6 +135,11 @@ class Solution(db.Model):
     graded_at = Column(DateTime, nullable=True)
     feedback = db.relationship('FeedbackOption', secondary=solution_feedback, backref='solutions', lazy='subquery')
     remarks = Column(Text)
+
+    @property
+    def feedback_count(self):
+        return object_session(self).query(solution_feedback)\
+            .filter(db.text('solution_id == ' + str(self.id))).count()
 
 
 class Scan(db.Model):

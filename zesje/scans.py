@@ -165,7 +165,7 @@ def extract_images(filename):
 
 
 def write_pdf_status(scan_id, status, message):
-    scan = Scan.query.filter(Scan.id == scan_id).one()
+    scan = Scan.query.get(scan_id)
     scan.status = status
     scan.message = message
     db.session.commit()

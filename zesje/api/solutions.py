@@ -77,10 +77,6 @@ class Solutions(Resource):
         if exam is None:
             return dict(status=404, message='Exam does not exist.'), 404
 
-        grader = Grader.query.get(args.graderID)
-        if grader is None:
-            return dict(status=404, message='Grader does not exist.'), 404
-
         sub = Submission.query.filter(Submission.exam_id == exam.id,
                                       Submission.copy_number == submission_id).one_or_none()
         if sub is None:
@@ -91,15 +87,7 @@ class Solutions(Resource):
         if solution is None:
             return dict(status=404, message='Solution does not exist.'), 404
 
-        graded = len(solution.feedback) + len(args.remark if args.remark else "")
-
         solution.remarks = args.remark
-        if graded:
-            solution.graded_at = datetime.now()
-            solution.graded_by = grader
-        else:
-            solution.graded_at = None
-            solution.graded_by = None
 
         db.session.commit()
         return True
@@ -147,7 +135,7 @@ class Solutions(Resource):
             solution.feedback.append(fb)
             state = True
 
-        graded = len(solution.feedback) + len(solution.remarks if solution.remarks else "")
+        graded = len(solution.feedback)
 
         if graded:
             solution.graded_at = datetime.now()

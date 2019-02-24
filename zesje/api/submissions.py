@@ -66,10 +66,10 @@ class Submissions(Resource):
         #
         # Some pages might not have a problem widget (e.g. title page) and some
         # pages might not have been uploaded yet.
-        # TODO Test this thoroughly
         all_pages = set(prob.widget.page for prob in exam.problems)\
             .union(page.number for page in Page.query.join(Submission, isouter=True)
                                                      .join(Exam, isouter=True)
+                                                     .filter(Exam.id == exam.id)
                                                      .distinct(Page.number).all())
 
         if submission_id is not None:

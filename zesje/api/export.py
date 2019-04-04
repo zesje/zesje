@@ -17,7 +17,8 @@ def full():
         app.config['DATA_DIRECTORY'],
         'course.sqlite',
         as_attachment=True,
-        mimetype="application/x-sqlite3"
+        mimetype="application/x-sqlite3",
+        cache_timeout=0,
     )
 
 
@@ -66,4 +67,5 @@ def exam(file_format, exam_id):
         as_attachment=True,
         attachment_filename=f'exam{exam_id}.{extension}',
         mimetype=mimetype,
+        cache_timeout=0,
     )

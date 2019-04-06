@@ -65,8 +65,6 @@ class Grade extends React.Component {
         sIndex: newIndex
       })
       this.props.updateSubmission(newIndex)
-      // Also update the exam to get an update of the rubric if there is one.
-      this.props.updateExam(this.props.exam.id)
     }
   }
 
@@ -219,7 +217,6 @@ class Grade extends React.Component {
                     editFeedback={this.editFeedback} showTooltips={this.state.showTooltips}
                     updateSubmission={() => {
                       this.props.updateSubmission(this.state.sIndex)
-                      this.props.updateExam(this.props.exam.id)
                     }
                     } />
                 }

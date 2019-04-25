@@ -64,6 +64,14 @@ You can run the tests by running
 
     yarn test
 
+#### Policy errors
+
+If you encounter PolicyErrors related to ImageMagick in any of the previous steps, please
+try the instructions listed
+[here](https://alexvanderbist.com/posts/2018/fixing-imagick-error-unauthorized) as
+a first resort.
+
+
 ### Building and running the production version
 
 

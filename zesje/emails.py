@@ -106,7 +106,7 @@ def send(
     server_type = smtplib.SMTP_SSL if use_ssl else smtplib.SMTP
     with server_type(server, port) as s:
         if user and password:
-                s.login(user, password)
+            s.login(user, password)
         for identifier, message in messages.items():
             recipients = [
                 *message['To'].split(','),

@@ -59,23 +59,23 @@ def render_email(exam_id, student_id, template):
 
 
 def build_email(exam_id, student_id, template, attach, from_address, copy_to=None):
-        with orm.db_session:
-            student = Student[student_id]
-        if not student.email:
-            abort(
-                409,
-                message=f'Student #{student_id} has no email address'
-            )
-
-        return emails.build(
-            student.email,
-            render_email(exam_id, student_id, template),
-            emails.build_solution_attachment(exam_id, student_id)
-            if attach
-            else None,
-            copy_to=copy_to,
-            email_from=from_address,
+    with orm.db_session:
+        student = Student[student_id]
+    if not student.email:
+        abort(
+            409,
+            message=f'Student #{student_id} has no email address'
         )
+
+    return emails.build(
+        student.email,
+        render_email(exam_id, student_id, template),
+        emails.build_solution_attachment(exam_id, student_id)
+        if attach
+        else None,
+        copy_to=copy_to,
+        email_from=from_address,
+    )
 
 
 class EmailTemplate(Resource):
@@ -201,7 +201,7 @@ class Email(Resource):
                     exam_id, student_id, template,
                     attach, app.config['FROM_ADDRESS'],
                 )
-            except werkzeug.exceptions.Conflict as error:
+            except werkzeug.exceptions.Conflict:
                 # No email address provided. Any other failures are errors,
                 # so we let other exceptions raise.
                 failed_to_build.append(student_id)

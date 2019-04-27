@@ -47,6 +47,7 @@ class Problems(Resource):
                 widget=widget,
             )
 
+            # Widget is also added because it is used in problem
             db.session.add(problem)
 
             # Add solutions for each already existing submission

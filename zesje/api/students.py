@@ -136,6 +136,7 @@ class Students(Resource):
             added_students = sum(_add_or_update_student(row)
                                  for _, row in df.iterrows())
         except Exception as e:
+            print(e)
             message = ('Uploaded CSV is not in the correct format: '
                        'did you export it from Brightspace? '
                        'The error was: ' + str(type(e)) + ": " + str(e))
@@ -153,7 +154,7 @@ def _add_or_update_student(row):
     (False if the student was already present, or
     if there was an error processing the row).
     """
-    content = dict(id=row['OrgDefinedId'],
+    content = dict(id=row['OrgDefinedId'].replace('#', ''),
                    first_name=row['First Name'],
                    last_name=row['Last Name'],
                    email=row['Email'] or None)

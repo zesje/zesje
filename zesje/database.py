@@ -15,15 +15,8 @@ class NoNameMeta(BindMetaMixin, DeclarativeMeta):
     pass
 
 
-# Class used as Model for the database with a set function like Pony
-class SetModel(Model):
-    def set(self, **kwargs):
-        for key, value in kwargs.items():
-            setattr(self, key, value)
-
-
 db = SQLAlchemy(model_class=declarative_base(
-    cls=SetModel, metaclass=NoNameMeta, name='Model'))
+    cls=Model, metaclass=NoNameMeta, name='Model'))
 
 token_length = 12
 

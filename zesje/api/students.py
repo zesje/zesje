@@ -92,10 +92,10 @@ class Students(Resource):
                               email=args.email or None)
             db.session.add(student)
         else:
-            student.set(id=args.studentID,
-                        first_name=args.firstName,
-                        last_name=args.lastName,
-                        email=args.email or None)
+            student.id = args.studentID
+            student.first_name = args.firstName
+            student.last_name = args.lastName
+            student.email = args.email or None
 
         db.session.commit()
 
@@ -170,5 +170,8 @@ def _add_or_update_student(row):
         db.session.add(Student(**content))
         return True
     else:
-        student.set(**content)
+        student.id = content['id']
+        student.first_name = content['first_name']
+        student.last_name = content['last_name']
+        student.email = content['email']
         return False

@@ -26,23 +26,20 @@ celery = make_celery()
 
 
 @celery.task()
-def process_pdf(scan_id, app_config=None):
+def process_pdf(scan_id):
     """Process a PDF, recording progress to a database
 
     Parameters
     ----------
     scan_id : int
         The ID in the database of the Scan to process
-    app_config : obj
-        The Flask app config
     """
 
     def raise_exit(signo, frame):
         raise SystemExit('PDF processing was killed by an external signal')
 
-    if app_config is None:
-        from flask import current_app
-        app_config = current_app.config
+    from flask import current_app
+    app_config = current_app.config
 
     # We want to trigger an exit from within Python when a signal is received.
     # The default behaviour for SIGTERM is to terminate the process without

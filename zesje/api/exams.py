@@ -7,9 +7,10 @@ from tempfile import TemporaryFile
 from flask import current_app as app, send_file, request
 from flask_restful import Resource, reqparse
 from werkzeug.datastructures import FileStorage
+from sqlalchemy.orm import selectinload
 
 from ..pdf_generation import generate_pdfs, output_pdf_filename_format, join_pdfs, page_is_size
-from ..database import db, Exam, ExamWidget
+from ..database import db, Exam, ExamWidget, Submission
 
 PAGE_FORMATS = {
     "A4": (595.276, 841.89),
@@ -84,7 +85,9 @@ class Exams(Resource):
         widgets
             list of widgets in this exam
         """
-        exam = Exam.query.get(exam_id)
+        # Load exam using the following most efficient strategy
+        exam = Exam.query.options(selectinload(Exam.submissions).
+                                  subqueryload(Submission.solutions)).get(exam_id)
 
         if exam is None:
             return dict(status=404, message='Exam does not exist.'), 404

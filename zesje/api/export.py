@@ -52,7 +52,7 @@ def exam(file_format, exam_id):
     if file_format == 'dataframe':
         extension = 'pd'
         mimetype = 'application/python-pickle'
-        data.to_pickle(serialized)
+        data.to_pickle(serialized, compression=None)
     else:
         extension = 'xlsx'
         mimetype = (

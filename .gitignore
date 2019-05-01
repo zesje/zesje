@@ -92,5 +92,5 @@ data-dev
 # webpack analyze data
 stats.json
 
-# IntelliJ folders
+# JetBrains IDE folders
 .idea/

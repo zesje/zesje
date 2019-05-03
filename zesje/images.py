@@ -6,6 +6,7 @@ import numpy as np
 def guess_dpi(image_array):
     h, *_ = image_array.shape
     resolutions = np.array([1200, 600, 400, 300, 200, 150, 120, 100, 75, 60, 50, 40])
+
     return resolutions[np.argmin(abs(resolutions - 25.4 * h / 297))]
 
 
@@ -34,3 +35,36 @@ def get_box(image_array, box, padding=0.3):
     top, bottom = max(0, min(box[0], h)), max(1, min(box[1], h))
     left, right = max(0, min(box[2], w)), max(1, min(box[3], w))
     return image_array[top:bottom, left:right]
+
+
+def box_is_filled(image_array, box_coords, padding=0.3, threshold=50, pixels=False):
+    """
+    Determines if a box is filled
+
+    Parameters:
+    -----------
+    image_array : 2D or 3D array
+        The image source.
+    box_coords : 4 floats (top, bottom, left, right)
+        Coordinates of the bounding box in inches. By due to differing
+        traditions, box coordinates are counted from the bottom left of the
+        image, while image array coordinates are from the top left.
+    padding : float
+        Padding around box borders in inches.
+    threshold : int
+        Optional threshold value to determine minimal 'darkness'
+        needed to consider a box to be filled in
+    """
+
+    # Divide by DPI if pixel coordinates are used
+    if pixels:
+        box_coords /= guess_dpi(image_array)
+
+    box_img = get_box(image_array, box_coords, padding)
+
+    if box_img.size == 0:
+        raise RuntimeError("Coordinates are outside of image")
+
+    avg = np.average(box_img)
+
+    return avg < threshold

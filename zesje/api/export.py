@@ -1,6 +1,6 @@
 from io import BytesIO
 
-from flask import abort, send_file, send_from_directory, current_app as app
+from flask import abort, send_file, current_app as app
 
 from ..statistics import full_exam_data
 
@@ -13,9 +13,8 @@ def full():
     response : flask Response
         response containing the ``course.sqlite``
     """
-    return send_from_directory(
-        app.config['DATA_DIRECTORY'],
-        'course.sqlite',
+    return send_file(
+        app.config['DB_PATH'],
         as_attachment=True,
         mimetype="application/x-sqlite3",
         cache_timeout=0,

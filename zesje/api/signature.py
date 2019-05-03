@@ -1,6 +1,5 @@
 from flask import abort, Response, current_app as app
 
-from pony import orm
 import numpy as np
 import cv2
 
@@ -8,7 +7,6 @@ from ..images import get_box
 from ..database import Exam, Submission
 
 
-@orm.db_session
 def get(exam_id, submission_id):
     """get student signature for the given submission.
 
@@ -25,12 +23,14 @@ def get(exam_id, submission_id):
     """
     # We could register an app-global error handler for this,
     # but it would add more code then it removes.
-    exam = Exam.get(id=exam_id)
-    if not exam:
-        abort(404)
-    sub = Submission.get(exam=exam, copy_number=submission_id)
-    if not sub:
-        abort(404)
+    exam = Exam.query.get(exam_id)
+    if exam is None:
+        return dict(status=404, message='Exam does not exist.'), 404
+
+    sub = Submission.query.filter(Submission.exam_id == exam.id,
+                                  Submission.copy_number == submission_id).one_or_none()
+    if sub is None:
+        return dict(status=404, message=f'Submission with id #{submission_id} not found'), 404
 
     student_id_widget = next(
         widget

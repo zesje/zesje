@@ -160,6 +160,19 @@ class Widget(db.Model):
     }
 
 
+class MultipleChoiceOption(db.Model):
+    __tablename__ = 'mc_option'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+
+    x = Column(Integer, nullable=False)
+    y = Column(Integer, nullable=False)
+
+    label = Column(String, nullable=False)
+
+    problem_id = Column(Integer, ForeignKey('solution.id'))
+    feedback_id = Column(Integer, ForeignKey('feedback.id'))
+
+
 class ExamWidget(Widget):
     __tablename__ = 'exam_widget'
     id = Column(Integer, ForeignKey('widget.id'), primary_key=True, nullable=False)

@@ -170,7 +170,7 @@ class MultipleChoiceOption(db.Model):
     label = Column(String, nullable=False)
 
     problem_id = Column(Integer, ForeignKey('solution.id'))
-    feedback_id = Column(Integer, ForeignKey('feedback.id'))
+    feedback_id = Column(Integer, ForeignKey('feedback_option.id'))
 
 
 class ExamWidget(Widget):

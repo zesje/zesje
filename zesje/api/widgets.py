@@ -1,17 +1,14 @@
 from flask_restful import Resource
 from flask import request
 
-from pony import orm
-
 from ..database import db, Widget, ExamWidget
 
 
 class Widgets(Resource):
 
-    @orm.db_session
     def patch(self, widget_id):
 
-        widget = Widget.get(id=widget_id)
+        widget = Widget.query.get(widget_id)
 
         if widget is None:
             msg = f"Widget with id {widget_id} doesn't exist"
@@ -31,6 +28,6 @@ class Widgets(Resource):
             except (TypeError, ValueError) as error:
                 return dict(status=400, message=str(error)), 400
 
-        db.commit()
+        db.session.commit()
 
         return dict(status=200, message="ok"), 200

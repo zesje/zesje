@@ -2,15 +2,12 @@
 
 from flask_restful import Resource, reqparse
 
-from pony import orm
-
-from ..database import Problem, FeedbackOption, Solution
+from ..database import db, Problem, FeedbackOption, Solution
 
 
 class Feedback(Resource):
     """ List of feedback options of a problem """
 
-    @orm.db_session
     def get(self, problem_id):
         """get list of feedback connected to a specific problem
 
@@ -24,7 +21,9 @@ class Feedback(Resource):
             used: int
         """
 
-        problem = Problem[problem_id]
+        problem = Problem.query.get(problem_id)
+        if problem is None:
+            return dict(status=404, message=f"Problem with id #{problem_id} does not exist"), 404
 
         return [
             {
@@ -32,9 +31,9 @@ class Feedback(Resource):
                 'name': fb.text,
                 'description': fb.description,
                 'score': fb.score,
-                'used': fb.solutions.count()
+                'used': len(fb.solutions)
             }
-            for fb in FeedbackOption.select(lambda fb: fb.problem == problem)
+            for fb in FeedbackOption.query.filter(FeedbackOption.problem == problem)
         ]
 
     post_parser = reqparse.RequestParser()
@@ -42,7 +41,6 @@ class Feedback(Resource):
     post_parser.add_argument('description', type=str, required=False)
     post_parser.add_argument('score', type=int, required=False)
 
-    @orm.db_session
     def post(self, problem_id):
         """Post a new feedback option
 
@@ -53,12 +51,15 @@ class Feedback(Resource):
             score: int
         """
 
-        problem = Problem[problem_id]
+        problem = Problem.query.get(problem_id)
+        if problem is None:
+            return dict(status=404, message=f"Problem with id #{problem_id} does not exist"), 404
 
         args = self.post_parser.parse_args()
 
         fb = FeedbackOption(problem=problem, text=args.name, description=args.description, score=args.score)
-        orm.commit()
+        db.session.add(fb)
+        db.session.commit()
 
         return {
             'id': fb.id,
@@ -73,7 +74,6 @@ class Feedback(Resource):
     put_parser.add_argument('description', type=str, required=False)
     put_parser.add_argument('score', type=int, required=False)
 
-    @orm.db_session
     def put(self, problem_id):
         """Modify an existing feedback option
 
@@ -87,9 +87,15 @@ class Feedback(Resource):
 
         args = self.put_parser.parse_args()
 
-        fb = FeedbackOption.get(id=args.id)
-        if fb:
-            fb.set(text=args.name, description=args.description, score=args.score)
+        fb = FeedbackOption.query.get(args.id)
+        if fb is None:
+            return dict(status=404, message=f"Feedback option with id #{args.id} does not exist"), 404
+
+        fb.text = args.name
+        fb.description = args.description
+        fb.score = args.score
+
+        db.session.commit()
 
         return {
             'id': fb.id,
@@ -98,7 +104,6 @@ class Feedback(Resource):
             'score': fb.score
         }
 
-    @orm.db_session
     def delete(self, problem_id, feedback_id):
         """Delete an existing feedback option
 
@@ -114,20 +119,22 @@ class Feedback(Resource):
         We use the problem id for extra safety check that we don't corrupt
         things accidentally.
         """
-        fb = FeedbackOption.get(id=feedback_id)
-        problem = fb.problem
+        fb = FeedbackOption.query.get(feedback_id)
         if fb is None:
-            return dict(status=404, message="Feedback with this id does not exist"), 404
-        elif problem.id != problem_id:
+            return dict(status=404, message=f"Feedback option with id #{feedback_id} does not exist"), 404
+        problem = fb.problem
+        if problem.id != problem_id:
             return dict(status=409, message="Feedback does not match the problem."), 409
-        else:
-            fb.delete()
+
+        db.session.delete(fb)
 
         # If there are submissions with no feedback, we should mark them as
         # ungraded.
-        to_mark_ungraded = Solution.select(
-            lambda s: s.problem == problem and not len(s.feedback) and
-            s.graded_at is not None
-        )
-        for solution in to_mark_ungraded:
-            solution.graded_at = solution.graded_by = None
+        solutions = Solution.query.filter(Solution.problem_id == problem_id,
+                                          Solution.grader_id is not None).all()
+        for solution in solutions:
+            if solution.feedback_count == 0:
+                solution.grader_id = None
+                solution.graded_at = None
+
+        db.session.commit()

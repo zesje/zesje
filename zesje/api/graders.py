@@ -3,7 +3,7 @@
 from flask import abort
 from flask_restful import Resource, reqparse
 
-from pony import orm
+from ..database import db
 
 from ._helpers import required_string
 from ..database import Grader
@@ -15,7 +15,6 @@ from ..database import Grader
 class Graders(Resource):
     """ Graders that are able to use the software, also logged during grading """
 
-    @orm.db_session
     def get(self):
         """get all graders.
 
@@ -30,13 +29,12 @@ class Graders(Resource):
                 'id': g.id,
                 'name': g.name
             }
-            for g in Grader.select()
+            for g in Grader.query.all()
         ]
 
     post_parser = reqparse.RequestParser()
     required_string(post_parser, 'name')
 
-    @orm.db_session
     def post(self):
         """add a grader.
 
@@ -53,8 +51,8 @@ class Graders(Resource):
         args = self.post_parser.parse_args()
 
         try:
-            Grader(name=args['name'])
-            orm.commit()
+            db.session.add(Grader(name=args['name']))
+            db.session.commit()
         except KeyError as error:
             abort(400, error)
 

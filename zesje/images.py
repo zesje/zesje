@@ -36,7 +36,7 @@ def get_box(image_array, box, padding=0.3):
     return image_array[top:bottom, left:right]
 
 
-def box_is_filled(image_array, box_coords, padding=0.3, threshold=50, pixels=False):
+def box_is_filled(image_array, box_coords, padding=0.3, threshold=150, pixels=False):
     """
     Determines if a box is filled
 
@@ -45,14 +45,16 @@ def box_is_filled(image_array, box_coords, padding=0.3, threshold=50, pixels=Fal
     image_array : 2D or 3D array
         The image source.
     box_coords : 4 floats (top, bottom, left, right)
-        Coordinates of the bounding box in inches. By due to differing
+        Coordinates of the bounding box in inches or pixels. By due to differing
         traditions, box coordinates are counted from the bottom left of the
         image, while image array coordinates are from the top left.
     padding : float
         Padding around box borders in inches.
     threshold : int
         Optional threshold value to determine minimal 'darkness'
-        needed to consider a box to be filled in
+        to consider a box to be filled in
+    pixels : boolean
+        Whether the box coordinates are entered as pixels instead of inches.
     """
 
     # Divide by DPI if pixel coordinates are used
@@ -61,8 +63,9 @@ def box_is_filled(image_array, box_coords, padding=0.3, threshold=50, pixels=Fal
 
     box_img = get_box(image_array, box_coords, padding)
 
+    # Check if the coordinates are outside of the image
     if box_img.size == 0:
-        raise RuntimeError("Coordinates are outside of image")
+        raise RuntimeError("Box coordinates are outside of image")
 
     avg = np.average(box_img)
 

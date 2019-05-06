@@ -335,3 +335,18 @@ def page_is_size(exam_pdf_file, shape, tolerance=0):
         pass
 
     return not invalid
+
+
+def make_pages_even(output_filename, exam_pdf_file):
+    exam_pdf = PdfReader(exam_pdf_file)
+    new = PdfWriter()
+    blank = PageMerge()
+    blank.mbox = [0, 0, 595.276, 841.89]  # A4
+    blank = blank.render()
+
+    new.addpages(exam_pdf.pages)
+    pagecount = len(exam_pdf.pages)
+    if (pagecount % 2 == 1):
+        new.addpage(blank)
+
+    new.write(output_filename)

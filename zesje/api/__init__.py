@@ -18,14 +18,7 @@ from . import export
 
 api_bp = Blueprint(__name__, __name__)
 
-errors = {
-    'ObjectNotFound': {
-        'status': 404,
-        'message': 'Resource with that ID does not exist',
-     },
-}
-
-api = Api(api_bp, errors=errors)
+api = Api(api_bp)
 
 api.add_resource(Graders, '/graders')
 api.add_resource(Exams, '/exams', '/exams/<int:exam_id>', '/exams/<int:exam_id>/<string:attr>')

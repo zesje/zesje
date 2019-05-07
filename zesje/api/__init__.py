@@ -11,6 +11,7 @@ from .feedback import Feedback
 from .solutions import Solutions
 from .widgets import Widgets
 from .emails import EmailTemplate, RenderedEmailTemplate, Email
+from .mult_choice import MultipleChoice
 from . import signature
 from . import images
 from . import summary_plot
@@ -55,6 +56,8 @@ api.add_resource(RenderedEmailTemplate,
 api.add_resource(Email,
                  '/email/<int:exam_id>',
                  '/email/<int:exam_id>/<int:student_id>')
+api.add_resource(MultipleChoice,
+                 '/mult-choice/<int:id>/<int:x>/<int:y>/<string:label>/<int:problem_id>/<int:feedback_id>')
 
 
 # Other resources that don't return JSON

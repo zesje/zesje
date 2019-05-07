@@ -57,7 +57,8 @@ api.add_resource(Email,
                  '/email/<int:exam_id>',
                  '/email/<int:exam_id>/<int:student_id>')
 api.add_resource(MultipleChoice,
-                 '/mult-choice/<int:id>/<int:x>/<int:y>/<string:label>/<int:problem_id>/<int:feedback_id>')
+                 '/mult-choice/<int:id>/<int:x>/<int:y>/<string:label>/<int:problem_id>/<int:feedback_id>',
+                 '/mult-choice/<int:id>')
 
 
 # Other resources that don't return JSON

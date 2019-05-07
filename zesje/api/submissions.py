@@ -76,9 +76,10 @@ class Submissions(Resource):
                                                      .distinct(Page.number).all())
 
         if submission_id is not None:
-            # Raises exception if zero or more than one found
             sub = Submission.query.filter(Submission.exam_id == exam.id,
-                                          Submission.copy_number == submission_id).one()
+                                          Submission.copy_number == submission_id).one_or_none()
+            if sub is None:
+                return dict(status=404, message='Submission does not exist.'), 404
 
             return sub_to_data(sub, all_pages)
 
@@ -120,9 +121,10 @@ class Submissions(Resource):
         if exam is None:
             return dict(status=404, message='Exam does not exist.'), 404
 
-        # Raises exception if zero or more than one found
         sub = Submission.query.filter(Submission.exam_id == exam.id,
-                                      Submission.copy_number == submission_id).one()
+                                      Submission.copy_number == submission_id).one_or_none()
+        if sub is None:
+            return dict(status=404, message='Submission does not exist.'), 404
 
         student = Student.query.get(args.studentID)
         if student is None:

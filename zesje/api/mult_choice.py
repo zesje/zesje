@@ -1,28 +1,65 @@
-from flask_restful import Resource
+from flask_restful import Resource, reqparse
 
 from ..database import db, MultipleChoiceOption
 
 
 class MultipleChoice(Resource):
 
-    def put(self, id, x, y, label, problem_id, feedback_id):
-        """Adds a multiple choice option to the database
+    put_parser = reqparse.RequestParser()
+
+    # Arguments that have to be supplied in the request body
+    put_parser.add_argument('x', type=int, required=True)
+    put_parser.add_argument('y', type=int, required=True)
+    put_parser.add_argument('label', type=str, required=True)
+    put_parser.add_argument('problem_id', type=int, required=True)
+    put_parser.add_argument('feedback_id', type=int, required=True)
+
+    def put(self, id):
+        """Puts a multiple choice option to the database
+
+        If the specified ID is already present, the current option will be updated.
 
         Parameters
         ----------
-            id: The id of the option
-            x: the x-location of the the option in pixels
-            y: the y-location of the the option in pixels
-            label: The label of the option, this is a single char
-            problem_id: Question to which this option is linked
-            feedback_id: Feedback to which this option is linked
+            id: The id of the multiple choice option
         """
-        mc_entry = MultipleChoiceOption(id=id, x=x, y=y, label=label, problem_id=problem_id, feedback_id=feedback_id)
-        db.session.add(mc_entry)
+
+        args = self.put_parser.parse_args()
+
+        x = args['x']
+        y = args['y']
+        label = args['label']
+        problem_id = args['problem_id']
+        feedback_id = args['feedback_id']
+
+        mc_entry = MultipleChoiceOption.query.get(id)
+
+        # If entry is not present insert
+        if not mc_entry:
+            mc_entry = MultipleChoiceOption(
+                id=id,
+                x=x,
+                y=y,
+                label=label,
+                problem_id=problem_id,
+                feedback_id=feedback_id
+            )
+
+            db.session.add(mc_entry)
+            db.session.commit()
+
+            return dict(status=200, message='Multiple choice question inserted'), 200
+
+        # Otherwise, update current entry
+        mc_entry.x = x
+        mc_entry.y = y
+        mc_entry.label = label
+        mc_entry.problem_id = problem_id
+        mc_entry.feedback_id = feedback_id
 
         db.session.commit()
 
-        return dict(status=200, message="ok"), 200
+        return dict(status=200, message='Multiple choice question updated'), 200
 
     def get(self, id):
         """Fetches multiple choice option from the database

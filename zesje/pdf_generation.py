@@ -151,6 +151,32 @@ def generate_id_grid(canv, x, y):
               textboxwidth, textboxheight)
 
 
+def generate_checkbox(canvas, x, y, label):
+    """
+    draw a checkbox and draw a  singel character label ontop of the checkbox
+
+    Parameters
+    ----------
+    canvas : reportlab canvas object
+
+    x : int
+        the x coordinate of the top left corner of the box in pixels
+    y : int
+        the y coordinate of the top left corner of the box in pixels
+    label: str
+        A string representing the label that is drawn on top of the box, will only take the first character
+
+    """
+    fontsize = 11  # Size of font
+    margin = 5  # Margin between elements and sides
+    markboxsize = fontsize - 2  # Size of student number boxes
+    x_label = x
+    y_label = y - margin - fontsize
+
+    canvas.drawString(x_label, y_label, label[0])
+    canvas.rect(x, y, markboxsize, markboxsize)
+
+
 def generate_datamatrix(exam_id, page_num, copy_num):
     """
     Generates a DataMatrix code to be used on a page.

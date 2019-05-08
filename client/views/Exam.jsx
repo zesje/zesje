@@ -11,7 +11,6 @@ import update from 'immutability-helper'
 import ExamFinalizeMarkdown from './ExamFinalize.md'
 import ConfirmationModal from '../components/ConfirmationModal.jsx'
 import FeedbackPanel from './grade/FeedbackPanel.jsx'
-// import ProblemSelector from './grade/ProblemSelector.jsx'
 import EditPanel from './grade/EditPanel.jsx'
 
 import * as api from '../api.jsx'

@@ -234,11 +234,14 @@ def generate_checkbox(canvas, x, y, label):
     fontsize = 11  # Size of font
     margin = 5  # Margin between elements and sides
     markboxsize = fontsize - 2  # Size of student number boxes
-    x_label = x
+    x_label = x + 1
     y_label = y + margin + fontsize
 
-    canvas.setFont('Helvetica', fontsize)
-    canvas.drawString(x_label, y_label, label[0])
+    # check that there is a label to print
+    if (not (label is None) or not (len(label) == 0)):
+        canvas.setFont('Helvetica', fontsize)
+        canvas.drawString(x_label, y_label, label[0])
+
     canvas.rect(x, y, markboxsize, markboxsize)
 
 

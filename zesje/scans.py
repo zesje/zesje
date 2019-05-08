@@ -177,8 +177,8 @@ def extract_image_pypdf(pagenr, reader):
     This method uses PyPDF2 to extract the image and only works
     when there is a single image present on the page.
 
-    Returns `None` if not exactly one image is found on the page
-    or the image filter is not `FlateDecode` or on any exception
+    Raises an error if not exactly one image is found on the page
+    or the image filter is not `FlateDecode`.
 
     Adapted from https://stackoverflow.com/a/34116472/2217463
 
@@ -193,6 +193,12 @@ def extract_image_pypdf(pagenr, reader):
     -------
     img_array : PIL Image
         The extracted image data
+
+    Raises
+    ------
+    ValueError if not exactly one image is found on the page
+    
+    NotImplementedError if the image filter is not `FlateDecode`
     """
 
     page = reader.getPage(pagenr)

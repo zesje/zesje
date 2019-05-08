@@ -142,10 +142,8 @@ def extract_images(filename):
             pypdf_reader = PyPDF2.PdfFileReader(file)
             total = pypdf_reader.getNumPages()
         except Exception:
+            # Fallback to Wand if opening the PDF with PyPDF2 failed
             use_wand = True
-
-        # Fallback to Wand if opening the PDF with PyPDF2 failed
-        use_wand = use_wand or pypdf_reader is None or total == 0
 
         if use_wand:
             # If PyPDF2 failed we need Wand to count the number of pages

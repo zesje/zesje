@@ -166,6 +166,7 @@ class MultipleChoiceOption(db.Model):
 
     x = Column(Integer, nullable=False)
     y = Column(Integer, nullable=False)
+    page = Column(Integer, nullable=False)
 
     label = Column(String, nullable=False)
 

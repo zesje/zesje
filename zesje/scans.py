@@ -10,6 +10,7 @@ import cv2
 import numpy as np
 import PyPDF2
 from PIL import Image
+from wand.image import Image as WandImage
 from pylibdmtx import pylibdmtx
 
 from .database import db, Scan, Exam, Page, Student, Submission, Solution, ExamWidget
@@ -126,20 +127,77 @@ def exam_metadata(exam_id):
 def extract_images(filename):
     """Yield all images from a PDF file.
 
+    Tries to use PyPDF2 to extract the images from the given PDF.
+    If PyPDF2 fails to open to PDF or any page PyPDF2 is not able to extract a page, it continues
+    to use Wand for the rest of the pages.
+    """
+
+    with open(filename, "rb") as file:
+        use_wand = False
+        pypdf_reader = None
+        wand_image = None
+        total = 0
+
+        try:
+            pypdf_reader = PyPDF2.PdfFileReader(file)
+            total = pypdf_reader.getNumPages()
+        except Exception:
+            use_wand = True
+
+        # Fallback to Wand if opening the PDF with PyPDF2 failed
+        use_wand = use_wand or pypdf_reader is None or total == 0
+
+        if use_wand:
+            # If PyPDF2 failed we need Wand to count the number of pages
+            wand_image = WandImage(filename=filename, resolution=300)
+            total = len(wand_image.sequence)
+
+        for pagenr in range(total):
+            if not use_wand:
+                img = extract_image_pypdf(pagenr, pypdf_reader)
+
+                # Fallback to wand If PyPDF2 is unable to extract an image
+                if img is None:
+                    use_wand = True
+                else:
+                    yield img, pagenr+1
+            if use_wand:
+                if wand_image is None:
+                    wand_image = WandImage(filename=filename, resolution=300)
+                img = extract_image_wand(pagenr, wand_image)
+                yield img, pagenr+1
+
+
+def extract_image_pypdf(pagenr, reader):
+    """Extracts an image as an array from the designated page
+
+    This method uses PyPDF2 to extract the image and only works
+    when there is a single image present on the page.
+
+    Returns `None` if not exactly one image is found on the page
+    or the image filter is not `FlateDecode` or on any exception
+
     Adapted from https://stackoverflow.com/a/34116472/2217463
 
-    We raise if there are > 1 images / page
+    Parameters
+    ----------
+    pagenr : int
+        Page number to extract
+    reader : PyPDF2.PdfFileReader instance
+        The reader to read the page from
+
+    Returns
+    -------
+    img_array : PIL Image
+        The extracted image data
     """
-    reader = PyPDF2.PdfFileReader(open(filename, "rb"))
-    total = reader.getNumPages()
-    for pagenr in range(total):
+    try:
         page = reader.getPage(pagenr)
         xObject = page['/Resources']['/XObject'].getObject()
 
         if sum((xObject[obj]['/Subtype'] == '/Image')
-               for obj in xObject) > 1:
-            raise RuntimeError(f'Page {pagenr + 1} contains more than 1 image,'
-                               'likely not a scan')
+                for obj in xObject) > 1:
+            return None
 
         for obj in xObject:
             if xObject[obj]['/Subtype'] == '/Image':
@@ -154,11 +212,43 @@ def extract_images(filename):
                         mode = "P"
                     img = Image.frombytes(mode, size, data)
                 else:
-                    img = Image.open(BytesIO(data))
+                    # Don't dare to open this image, and return None
+                    return None
 
                 if img.mode == 'L':
                     img = img.convert('RGB')
-                yield img, pagenr+1
+
+                return img
+
+    except Exception:
+        return None
+
+
+def extract_image_wand(pagenr, wand_image):
+    """Flattens a page from a PDF to an image array
+
+    This method uses Wand to flatten the page and extract the image.
+
+    Parameters
+    ----------
+    pagenr : int
+        Page number to extract, starting at 0
+    wand_image : Wand Image instance
+        The Wand Image to read from
+
+    Returns
+    -------
+    img_array : PIL Image
+        The extracted image data
+    """
+
+    single_page = WandImage(wand_image.sequence[pagenr])
+    single_page.format = 'jpg'
+    img_array = np.asarray(bytearray(single_page.make_blob(format="jpg")), dtype=np.uint8)
+    img = Image.open(BytesIO(img_array))
+    if img.mode == 'L':
+        img = img.convert('RGB')
+    return img
 
 
 def write_pdf_status(scan_id, status, message):

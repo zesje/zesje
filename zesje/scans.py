@@ -156,9 +156,6 @@ def extract_images(filename):
                     # Try to use PyPDF2, but catch any error it raises
                     img = extract_image_pypdf(pagenr, pypdf_reader)
 
-                    if img is None:
-                        raise ValueError
-
                 except Exception:
                     # Fallback to Wand if extracting with PyPDF2 failed
                     use_wand = True
@@ -202,8 +199,8 @@ def extract_image_pypdf(pagenr, reader):
     xObject = page['/Resources']['/XObject'].getObject()
 
     if sum((xObject[obj]['/Subtype'] == '/Image')
-            for obj in xObject) > 1:
-        return None
+            for obj in xObject) != 1:
+        raise ValueError
 
     for obj in xObject:
         if xObject[obj]['/Subtype'] == '/Image':
@@ -218,8 +215,7 @@ def extract_image_pypdf(pagenr, reader):
                     mode = "P"
                 img = Image.frombytes(mode, size, data)
             else:
-                # Don't dare to open this image, and return None
-                return None
+                raise NotImplementedError
 
             return img
 

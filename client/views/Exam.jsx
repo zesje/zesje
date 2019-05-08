@@ -241,6 +241,8 @@ class Exams extends React.Component {
     let widgetEditDisabled = this.state.previewing || !problem
     let isGraded = problem && problem.graded
     let widgetDeleteDisabled = widgetEditDisabled || isGraded
+    let totalNrAnswers = 20 // the upper limit for the nr of possible answer boxes
+    let disabledGenerateBoxes = false
 
     return (
       <React.Fragment>
@@ -266,6 +268,14 @@ class Exams extends React.Component {
             }))
           }}
           saveProblemName={this.saveProblemName}
+        />
+        <this.PanelMCQ
+          totalNrAnswers={totalNrAnswers}
+          disabledGenerateBoxes={disabledGenerateBoxes}
+          problem={problem}
+          onGenerateBoxesClick={() => {
+            console.log('Generating boxes')
+          }}
         />
         <this.PanelExamActions />
       </React.Fragment>
@@ -313,6 +323,46 @@ class Exams extends React.Component {
             onClick={() => props.onDeleteClick()}
           >
             Delete problem
+          </button>
+        </div>
+
+      </nav>
+    )
+  }
+
+  PanelMCQ = (props) => {
+    const selectedWidgetId = this.state.selectedWidgetId
+    return selectedWidgetId == null ? null : (
+      <nav className='panel'>
+        <p className='panel-heading'>
+          Multiple Choice Question
+        </p>
+        <div className='panel-block'>
+          <div className='field'>
+            <React.Fragment>
+              <label className='label'>Number possible answers</label>
+              <div className='control'>
+                {(function () {
+                  var optionList = []
+                  for (var i = 1; i <= props.totalNrAnswers; i++) {
+                    const optionElement = <option value={String(i)}>{i}</option>
+                    optionList.push(optionElement)
+                  }
+                  return (<div className='select is-info is-fullwidth'>
+                    <select>{optionList}</select>
+                  </div>)
+                }())}
+              </div>
+            </React.Fragment>
+          </div>
+        </div>
+        <div className='panel-block'>
+          <button
+            disabled={props.disabledGenerateBoxes}
+            className='button is-info is-fullwidth'
+            onClick={() => props.onGenerateBoxesClick()}
+          >
+            Generate boxes
           </button>
         </div>
 

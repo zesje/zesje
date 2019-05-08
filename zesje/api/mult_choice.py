@@ -11,7 +11,7 @@ class MultipleChoice(Resource):
     put_parser.add_argument('x', type=int, required=True)
     put_parser.add_argument('y', type=int, required=True)
     put_parser.add_argument('page', type=int, required=True)
-    put_parser.add_argument('label', type=str, required=True)
+    put_parser.add_argument('label', type=str, required=False)
     put_parser.add_argument('problem_id', type=int, required=True)
     put_parser.add_argument('feedback_id', type=int, required=True)
 
@@ -81,11 +81,15 @@ class MultipleChoice(Resource):
         if not mult_choice:
             return dict(status=404, message='Multiple choice question does not exist.'), 404
 
-        return {
+        json = {
             "id": mult_choice.id,
             "x": mult_choice.x,
             "y": mult_choice.y,
-            "label": mult_choice.label,
             "problem_id": mult_choice.problem_id,
             "feedback_id": mult_choice.feedback_id
         }
+
+        if mult_choice.label:
+            json['label'] = mult_choice.label
+
+        return json

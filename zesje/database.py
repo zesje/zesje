@@ -168,10 +168,10 @@ class MultipleChoiceOption(db.Model):
     y = Column(Integer, nullable=False)
     page = Column(Integer, nullable=False)
 
-    label = Column(String, nullable=False)
+    label = Column(String, nullable=True)
 
-    problem_id = Column(Integer, ForeignKey('solution.id'))
-    feedback_id = Column(Integer, ForeignKey('feedback_option.id'))
+    problem_id = Column(Integer, ForeignKey('solution.id'), nullable=False)
+    feedback_id = Column(Integer, ForeignKey('feedback_option.id'), nullable=True)
 
 
 class ExamWidget(Widget):

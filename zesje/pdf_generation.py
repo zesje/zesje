@@ -81,6 +81,70 @@ def generate_pdfs(exam_pdf_file, exam_id, copy_nums, output_paths, id_grid_x,
             PdfWriter(output_path, trailer=exam_pdf).write()
 
 
+def generate_pdfs(exam_pdf_file, exam_id, copy_nums, output_paths, id_grid_x,
+                  id_grid_y, datamatrix_x, datamatrix_y, cb_data):
+    """
+    extends the normal generate_pdfs function to also include a list of checkbox coords and labels
+
+    Parameters
+    ----------
+    exam_pdf_file : file object or str
+        The exam PDF file or its filename
+    exam_id : str
+        The identifier of the exam
+    copy_nums : [int]
+        copy numbers of the generated pdfs. These are integers greater than 1
+    output_paths : [str]
+        Output file paths of the generated pdfs
+    id_grid_x : int
+        The x coordinate where the student ID grid should be placed
+    id_grid_y : int
+        The y coordinate where the student ID grid should be placed
+    datamatrix_x : int
+        The x coordinate where the DataMatrix code should be placed
+    datamatrix_y : int
+        The y coordinate where the DataMatrix code should be placed
+    cb_data : list[ (int, int, int, str)]
+        The data needed for drawing a checkbox, namely: the x coordinate; y coordinate; page number and label
+
+    """
+    exam_pdf = PdfReader(exam_pdf_file)
+    mediabox = exam_pdf.pages[0].MediaBox
+    pagesize = (float(mediabox[2]), float(mediabox[3]))
+
+    for copy_num, output_path in zip(copy_nums, output_paths):
+        # ReportLab can't deal with file handles, but only with file names,
+        # so we have to use a named file
+        with NamedTemporaryFile() as overlay_file:
+            # Generate overlay
+            overlay_canv = canvas.Canvas(overlay_file.name, pagesize=pagesize)
+            _generate_overlay(overlay_canv, pagesize, exam_id, copy_num,
+                              len(exam_pdf.pages), id_grid_x, id_grid_y,
+                              datamatrix_x, datamatrix_y, cb_data)
+            overlay_canv.save()
+
+            # Merge overlay and exam
+            try:
+                exam_pdf_file.seek(0)  # go back to the start of the file object
+            except AttributeError:
+                # exam_pdf_file is the filename instead of the file object, so we don't have to seek to the start of it
+                pass
+
+            exam_pdf = PdfReader(exam_pdf_file)
+            overlay_pdf = PdfReader(overlay_file)
+
+            for page_idx, exam_page in enumerate(exam_pdf.pages):
+                # First prepare the overlay merge, and then add it to the exam merge.
+                # It might seem more efficient to do it the other way around, because then we only need to load the exam
+                # PDF once. However, if there are elements in the exam PDF at the same place as the overlay, that would
+                # mean that the overlay ends up on the bottom, which is not good.
+                overlay_merge = PageMerge().add(overlay_pdf.pages[page_idx])[0]
+                exam_merge = PageMerge(exam_page).add(overlay_merge)
+                exam_merge.render()
+
+            PdfWriter(output_path, trailer=exam_pdf).write()
+
+
 def join_pdfs(output_filename, pdf_paths):
     """
     Join all the final PDFs into a single big PDF.
@@ -171,8 +235,9 @@ def generate_checkbox(canvas, x, y, label):
     margin = 5  # Margin between elements and sides
     markboxsize = fontsize - 2  # Size of student number boxes
     x_label = x
-    y_label = y - margin - fontsize
+    y_label = y + margin + fontsize
 
+    canvas.setFont('Helvetica', fontsize)
     canvas.drawString(x_label, y_label, label[0])
     canvas.rect(x, y, markboxsize, markboxsize)
 
@@ -272,6 +337,84 @@ def _generate_overlay(canv, pagesize, exam_id, copy_num, num_pages, id_grid_x,
             datamatrix_x, datamatrix_y_adjusted - fontsize,
             f" # {copy_num}"
         )
+        canv.showPage()
+        
+        
+def _generate_overlay(canv, pagesize, exam_id, copy_num, num_pages, id_grid_x,
+                      id_grid_y, datamatrix_x, datamatrix_y, cb_data):
+    """
+    Generates an overlay ('watermark') PDF, which can then be overlaid onto
+    the exam PDF.
+
+    To maintain a consistent size of the DataMatrix codes in the overlay,
+    adhere to (# of letters in exam ID) + 2 * (# of digits in exam ID) = C for
+    a certain constant C. The reason for this is that pyStrich encodes two
+    digits in as much space as one letter.
+
+    If maximum interchangeability with version 1 QR codes is desired (error
+    correction level M), use exam IDs composed of only uppercase letters, and
+    composed of at most 12 letters.
+
+    Parameters
+    ----------
+    canv : ReportLab Canvas object
+        The empty ReportLab canvas on which the overlay should be generated
+    pagesize : (float, float)
+        The ReportLab-style (i.e. (width, height)) page size of the canvas
+    exam_id : str
+        The identifier of the exam
+    copy_num : int
+        The copy number for which the overlay is being generated
+    num_pages : int
+        The amount of pages that the generated overlay should count
+    id_grid_x : int
+        The x coordinate where the student ID grid should be placed
+    id_grid_y : int
+        The y coordinate where the student ID grid should be placed
+    datamatrix_x : int
+        The x coordinate where the DataMatrix codes should be placed
+    datamatrix_y : int
+        The y coordinate where the DataMatrix codes should be placed
+    cb_data : list[ (int, int, int, str)]
+        The data needed for drawing a checkbox, namely: the x coordinate; y coordinate; page number and label
+
+    """
+
+    # Font settings for the copy number (printed under the datamatrix)
+    fontsize = 8
+    canv.setFont('Helvetica', fontsize)
+
+    # transform y-cooridate to different origin location
+    id_grid_y = pagesize[1] - id_grid_y
+
+    # ID grid on first page only
+    generate_id_grid(canv, id_grid_x, id_grid_y)
+
+    # create index for list of checkbox data and sort the data on page
+    index = 0
+    max_index = len(cb_data)
+    cb_data = sorted(cb_data, key=lambda tup: tup[2])
+
+    for page_num in range(num_pages):
+        _add_corner_markers_and_bottom_bar(canv, pagesize)
+
+        datamatrix = generate_datamatrix(exam_id, page_num, copy_num)
+
+        # transform y-cooridate to different origin location
+        datamatrix_y_adjusted = pagesize[1] - datamatrix_y - datamatrix.height
+
+        canv.drawInlineImage(datamatrix, datamatrix_x, datamatrix_y_adjusted)
+        canv.drawString(
+            datamatrix_x, datamatrix_y_adjusted - fontsize,
+            f" # {copy_num}"
+        )
+
+        # call generate for all checkboxes that belong to the current page
+        while index < max_index and cb_data[index][2] <= page_num:
+            x, y, _, label = cb_data[index]
+            generate_checkbox(canv, x, y, label)
+            index += 1
+
         canv.showPage()
 
 

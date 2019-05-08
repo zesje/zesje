@@ -128,8 +128,8 @@ def extract_images(filename):
     """Yield all images from a PDF file.
 
     Tries to use PyPDF2 to extract the images from the given PDF.
-    If PyPDF2 fails to open to PDF or any page PyPDF2 is not able to extract a page, it continues
-    to use Wand for the rest of the pages.
+    If PyPDF2 fails to open the PDF or PyPDF2 is not able to extract
+    a page, it continues to use Wand for the rest of the pages.
     """
 
     with open(filename, "rb") as file:

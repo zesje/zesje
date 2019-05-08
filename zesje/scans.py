@@ -159,7 +159,6 @@ def extract_images(filename):
                     if img is None:
                         raise ValueError
 
-                    yield img, pagenr+1
                 except Exception:
                     # Fallback to Wand if extracting with PyPDF2 failed
                     use_wand = True
@@ -168,7 +167,11 @@ def extract_images(filename):
                 if wand_image is None:
                     wand_image = WandImage(filename=filename, resolution=300)
                 img = extract_image_wand(pagenr, wand_image)
-                yield img, pagenr+1
+
+            if img.mode == 'L':
+                img = img.convert('RGB')
+
+            yield img, pagenr+1
 
 
 def extract_image_pypdf(pagenr, reader):
@@ -218,9 +221,6 @@ def extract_image_pypdf(pagenr, reader):
                 # Don't dare to open this image, and return None
                 return None
 
-            if img.mode == 'L':
-                img = img.convert('RGB')
-
             return img
 
 
@@ -246,8 +246,6 @@ def extract_image_wand(pagenr, wand_image):
     single_page.format = 'jpg'
     img_array = np.asarray(bytearray(single_page.make_blob(format="jpg")), dtype=np.uint8)
     img = Image.open(BytesIO(img_array))
-    if img.mode == 'L':
-        img = img.convert('RGB')
     return img
 
 

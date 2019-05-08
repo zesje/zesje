@@ -60,7 +60,7 @@ def upgrade():
     op.create_table(
         'exam',
         sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
-        sa.Column('name', sa.String(length=120), nullable=False),
+        sa.Column('name', sa.Text(), nullable=False),
         sa.Column('token', sa.String(length=12), nullable=True),
         sa.Column('finalized', sa.Boolean(), server_default='f', nullable=True),
         sa.PrimaryKeyConstraint('id'),
@@ -69,22 +69,22 @@ def upgrade():
     op.create_table(
         'grader',
         sa.Column('id', sa.Integer(), nullable=False),
-        sa.Column('name', sa.String(length=120), nullable=False),
+        sa.Column('name', sa.Text(), nullable=False),
         sa.PrimaryKeyConstraint('id')
     )
     op.create_table(
         'student',
         sa.Column('id', sa.Integer(), nullable=False),
-        sa.Column('first_name', sa.String(length=120), nullable=False),
-        sa.Column('last_name', sa.String(length=120), nullable=False),
-        sa.Column('email', sa.String(length=120), nullable=True),
+        sa.Column('first_name', sa.Text(), nullable=False),
+        sa.Column('last_name', sa.Text(), nullable=False),
+        sa.Column('email', sa.Text(), nullable=True),
         sa.PrimaryKeyConstraint('id'),
         sa.UniqueConstraint('email')
     )
     op.create_table(
         'widget',
         sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
-        sa.Column('name', sa.String(length=120), nullable=True),
+        sa.Column('name', sa.Text(), nullable=True),
         sa.Column('x', sa.Integer(), nullable=False),
         sa.Column('y', sa.Integer(), nullable=False),
         sa.Column('type', sa.String(length=20), nullable=True),
@@ -101,7 +101,7 @@ def upgrade():
     op.create_table(
         'problem',
         sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
-        sa.Column('name', sa.String(length=120), nullable=False),
+        sa.Column('name', sa.Text(), nullable=False),
         sa.Column('exam_id', sa.Integer(), nullable=False),
         sa.ForeignKeyConstraint(['exam_id'], ['exam.id'], ),
         sa.PrimaryKeyConstraint('id')
@@ -109,17 +109,17 @@ def upgrade():
     op.create_table(
         'scan',
         sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
-        sa.Column('exam_id', sa.String(), nullable=False),
-        sa.Column('name', sa.String(length=120), nullable=False),
-        sa.Column('status', sa.String(length=120), nullable=False),
-        sa.Column('message', sa.String(length=120), nullable=True),
+        sa.Column('exam_id', sa.Integer(), nullable=False),
+        sa.Column('name', sa.Text(), nullable=False),
+        sa.Column('status', sa.Text(), nullable=False),
+        sa.Column('message', sa.Text(), nullable=True),
         sa.ForeignKeyConstraint(['exam_id'], ['exam.id'], ),
         sa.PrimaryKeyConstraint('id')
     )
     op.create_table(
         'submission',
         sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
-        sa.Column('copy_number', sa.Integer(), nullable=True),
+        sa.Column('copy_number', sa.Integer(), nullable=False),
         sa.Column('exam_id', sa.Integer(), nullable=False),
         sa.Column('student_id', sa.Integer(), nullable=True),
         sa.Column('signature_validated', sa.Boolean(), server_default='f', nullable=False),
@@ -131,7 +131,7 @@ def upgrade():
         'feedback_option',
         sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
         sa.Column('problem_id', sa.Integer(), nullable=True),
-        sa.Column('text', sa.String(length=120), nullable=False),
+        sa.Column('text', sa.Text(), nullable=False),
         sa.Column('description', sa.Text(), nullable=True),
         sa.Column('score', sa.Integer(), nullable=True),
         sa.ForeignKeyConstraint(['problem_id'], ['problem.id'], ),
@@ -140,7 +140,7 @@ def upgrade():
     op.create_table(
         'page',
         sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
-        sa.Column('path', sa.String(length=120), nullable=False),
+        sa.Column('path', sa.Text(), nullable=False),
         sa.Column('submission_id', sa.Integer(), nullable=True),
         sa.Column('number', sa.Integer(), nullable=False),
         sa.ForeignKeyConstraint(['submission_id'], ['submission.id'], ),
@@ -149,7 +149,7 @@ def upgrade():
     op.create_table(
         'problem_widget',
         sa.Column('id', sa.Integer(), nullable=False),
-        sa.Column('problem_id', sa.Integer(), nullable=True),
+        sa.Column('problem_id', sa.Integer(), nullable=False),
         sa.Column('page', sa.Integer(), nullable=True),
         sa.Column('width', sa.Integer(), nullable=True),
         sa.Column('height', sa.Integer(), nullable=True),

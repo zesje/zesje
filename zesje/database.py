@@ -42,9 +42,9 @@ class Student(db.Model):
     """New students may be added throughout the course."""
     __tablename__ = 'student'
     id = Column(Integer, primary_key=True)
-    first_name = Column(String, nullable=False)
-    last_name = Column(String, nullable=False)
-    email = Column(String, unique=True)
+    first_name = Column(Text, nullable=False)
+    last_name = Column(Text, nullable=False)
+    email = Column(Text, unique=True)
     submissions = db.relationship('Submission', backref='student', lazy=True)
 
 
@@ -52,7 +52,7 @@ class Grader(db.Model):
     """Graders can be created by any user at any time, but are immutable once they are created"""
     __tablename__ = 'grader'
     id = Column(Integer, primary_key=True, autoincrement=True)
-    name = Column(String, nullable=False)
+    name = Column(Text, nullable=False)
     graded_solutions = db.relationship('Solution', backref='graded_by', lazy=True)
 
 
@@ -60,7 +60,7 @@ class Exam(db.Model):
     """ New instances are created when providing a new exam. """
     __tablename__ = 'exam'
     id = Column(Integer, primary_key=True, autoincrement=True)
-    name = Column(String, nullable=False)
+    name = Column(Text, nullable=False)
     token = Column(String(token_length), unique=True, default=_generate_exam_token)
     submissions = db.relationship('Submission', backref='exam', lazy=True)
     problems = db.relationship('Problem', backref='exam', order_by='Problem.id', lazy=True)
@@ -73,7 +73,7 @@ class Submission(db.Model):
     """Typically created when adding a new exam."""
     __tablename__ = 'submission'
     id = Column(Integer, primary_key=True, autoincrement=True)
-    copy_number = Column(Integer)
+    copy_number = Column(Integer, nullable=False)
     exam_id = Column(Integer, ForeignKey('exam.id'), nullable=False)
     solutions = db.relationship('Solution', backref='submission', order_by='Solution.problem_id', lazy=True)
     pages = db.relationship('Page', backref='submission', lazy=True)
@@ -85,7 +85,7 @@ class Page(db.Model):
     """Page of an exam"""
     __tablename__ = 'page'
     id = Column(Integer, primary_key=True, autoincrement=True)
-    path = Column(String, nullable=False)
+    path = Column(Text, nullable=False)
     submission_id = Column(Integer, ForeignKey('submission.id'), nullable=True)
     number = Column(Integer, nullable=False)
 
@@ -94,7 +94,7 @@ class Problem(db.Model):
     """this will be initialized @ app initialization and immutable from then on."""
     __tablename__ = 'problem'
     id = Column(Integer, primary_key=True, autoincrement=True)
-    name = Column(String, nullable=False)
+    name = Column(Text, nullable=False)
     exam_id = Column(Integer, ForeignKey('exam.id'), nullable=False)
     feedback_options = db.relationship('FeedbackOption', backref='problem', order_by='FeedbackOption.id', lazy=True)
     solutions = db.relationship('Solution', backref='problem', lazy=True)
@@ -106,7 +106,7 @@ class FeedbackOption(db.Model):
     __tablename__ = 'feedback_option'
     id = Column(Integer, primary_key=True, autoincrement=True)
     problem_id = Column(Integer, ForeignKey('problem.id'))
-    text = Column(String, nullable=False)
+    text = Column(Text, nullable=False)
     description = Column(Text, nullable=True)
     score = Column(Integer, nullable=True)
 
@@ -139,17 +139,17 @@ class Scan(db.Model):
     """Metadata on uploaded PDFs"""
     __tablename__ = 'scan'
     id = Column(Integer, primary_key=True, autoincrement=True)
-    exam_id = Column(String, ForeignKey('exam.id'), nullable=False)
-    name = Column(String, nullable=False)
-    status = Column(String, nullable=False)
-    message = Column(String)
+    exam_id = Column(Integer, ForeignKey('exam.id'), nullable=False)
+    name = Column(Text, nullable=False)
+    status = Column(Text, nullable=False)
+    message = Column(Text)
 
 
 class Widget(db.Model):
     __tablename__ = 'widget'
     id = Column(Integer, primary_key=True, autoincrement=True)
     # Can be used to distinguish widgets for barcodes, student_id and problems
-    name = Column(String)
+    name = Column(Text)
     x = Column(Integer, nullable=False)
     y = Column(Integer, nullable=False)
     type = Column(String(20))
@@ -187,7 +187,7 @@ class ExamWidget(Widget):
 class ProblemWidget(Widget):
     __tablename__ = 'problem_widget'
     id = Column(Integer, ForeignKey('widget.id'), primary_key=True, nullable=False)
-    problem_id = Column(Integer, ForeignKey('problem.id'), nullable=True)
+    problem_id = Column(Integer, ForeignKey('problem.id'), nullable=False)
     page = Column(Integer)
     width = Column(Integer)
     height = Column(Integer)

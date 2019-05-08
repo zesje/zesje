@@ -71,6 +71,18 @@ try the instructions listed
 [here](https://alexvanderbist.com/posts/2018/fixing-imagick-error-unauthorized) as
 a first resort.
 
+### Database modifications
+
+Zesje uses Flask-Migrate and Alembic for database versioning and migration. Flask-Migrate is an extension that handles SQLAlchemy database migrations for Flask applications using Alembic. 
+
+To change something in the database schema, simply add this change to `zesje/database.py`. After that run the following command to prepare a new migration:
+
+    yarn prepare-migration
+
+This uses Flask-Migrate to make a new migration script in `migrations/versions` which needs to be reviewed and edited. Please suffix the name of this file with something distinctive and add a short description at the top of the file. To apply the database migration run:
+
+    yarn migrate:dev # (for the development database)
+    yarn migrate # (for the production database)
 
 ### Building and running the production version
 

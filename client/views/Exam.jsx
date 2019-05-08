@@ -83,6 +83,19 @@ class Exams extends React.Component {
     }
   }
 
+  editFeedback = (feedback) => {
+    this.setState({
+      editActive: true,
+      feedbackToEdit: feedback
+    })
+  }
+  backToFeedback = () => {
+    this.props.updateExam(this.props.exam.id)
+    this.setState({
+      editActive: false
+    })
+  }
+
   saveProblemName = () => {
     const changedWidgetId = this.state.changedWidgetId
     if (!changedWidgetId) return
@@ -301,32 +314,16 @@ class Exams extends React.Component {
                     onBlur={(e) => {
                       props.saveProblemName(e.target.value)
                     }} />
-                  {/*  Here the feedback options should be added. */}
-                  {/* console.log(props.problem) */}
-                  {/* {this.state.editActive
-                  ? <EditPanel problemID={problem.id} feedback={this.state.feedbackToEdit}
-                    goBack={this.backToFeedback} />
-                  : <FeedbackPanel problem={problem}
-                    editFeedback={this.editFeedback} showTooltips={this.state.showTooltips}
-                    />
-                  } */}
-                  {/* <nav className="panel">
-                    {this.props.problem.feedback.map((feedback, index) =>
-                      <FeedbackBlock key={feedback.id} uri={blockURI} graderID={this.props.graderID}
-                        feedback={feedback} checked={this.props.solution.feedback.includes(feedback.id)}
-                        editFeedback={() => this.props.editFeedback(feedback)} updateSubmission={this.props.updateSubmission}
-                        ref={(selectedFeedbackId === feedback.id) ? this.feedbackBlock : null}
-                        selected={selectedFeedbackId === feedback.id} showIndex={this.props.showTooltips} index={index + 1} />
-                    )}
-                  </nav> */}
-                  <FeedbackPanel examID={this.props.examID} problem={props.problem}
-                    editFeedback={this.editFeedback} showTooltips={this.state.showTooltips}
-                    grading={false} updateSubmission={() => {
-                      this.props.updateSubmission(this.state.sIndex)
-                    }
-                    } />
-                  {/* { console.log(this.props.problem)} */}
-                  {/* { console.log(this.props.exam)} */}
+
+                  {this.state.editActive
+                    ? <EditPanel problemID={props.problem.id} feedback={this.state.feedbackToEdit}
+                      goBack={this.backToFeedback} />
+                    : <FeedbackPanel examID={this.props.examID} problem={props.problem}
+                      editFeedback={this.editFeedback} showTooltips={this.state.showTooltips}
+                      grading={false} updateSubmission={() => {
+                        this.props.updateSubmission(this.state.sIndex)
+                      }
+                      } />}
                   {console.log(props.problem)}
                 </div>
               </React.Fragment>

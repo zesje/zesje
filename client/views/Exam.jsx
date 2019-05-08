@@ -10,6 +10,9 @@ import ExamEditor from './ExamEditor.jsx'
 import update from 'immutability-helper'
 import ExamFinalizeMarkdown from './ExamFinalize.md'
 import ConfirmationModal from '../components/ConfirmationModal.jsx'
+import FeedbackPanel from './grade/FeedbackPanel.jsx'
+// import ProblemSelector from './grade/ProblemSelector.jsx'
+import EditPanel from './grade/EditPanel.jsx'
 
 import * as api from '../api.jsx'
 
@@ -34,12 +37,7 @@ class Exams extends React.Component {
         // keep page and name of problem as widget.problem object
         widgets[problem.widget.id] = {
           ...problem.widget,
-          problem: {
-            id: problem.id,
-            page: problem.page,
-            name: problem.name,
-            graded: problem.graded
-          }
+          problem : problem
         }
       })
 
@@ -303,6 +301,33 @@ class Exams extends React.Component {
                     onBlur={(e) => {
                       props.saveProblemName(e.target.value)
                     }} />
+                  {/*  Here the feedback options should be added. */}
+                  {/* console.log(props.problem) */}
+                  {/* {this.state.editActive
+                  ? <EditPanel problemID={problem.id} feedback={this.state.feedbackToEdit}
+                    goBack={this.backToFeedback} />
+                  : <FeedbackPanel problem={problem}
+                    editFeedback={this.editFeedback} showTooltips={this.state.showTooltips}
+                    />
+                  } */}
+                  {/* <nav className="panel">
+                    {this.props.problem.feedback.map((feedback, index) =>
+                      <FeedbackBlock key={feedback.id} uri={blockURI} graderID={this.props.graderID}
+                        feedback={feedback} checked={this.props.solution.feedback.includes(feedback.id)}
+                        editFeedback={() => this.props.editFeedback(feedback)} updateSubmission={this.props.updateSubmission}
+                        ref={(selectedFeedbackId === feedback.id) ? this.feedbackBlock : null}
+                        selected={selectedFeedbackId === feedback.id} showIndex={this.props.showTooltips} index={index + 1} />
+                    )}
+                  </nav> */}
+                  <FeedbackPanel examID={this.props.examID} problem={props.problem}
+                    editFeedback={this.editFeedback} showTooltips={this.state.showTooltips}
+                    grading={false} updateSubmission={() => {
+                      this.props.updateSubmission(this.state.sIndex)
+                    }
+                    } />
+                  {/* { console.log(this.props.problem)} */}
+                  {/* { console.log(this.props.exam)} */}
+                  {console.log(props.problem)}
                 </div>
               </React.Fragment>
             )}

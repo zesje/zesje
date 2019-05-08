@@ -35,7 +35,7 @@ class FeedbackPanel extends React.Component {
   static getDerivedStateFromProps (nextProps, prevState) {
     if (prevState.problemID !== nextProps.problem.id || prevState.submissionID !== nextProps.submissionID) {
       return {
-        remark: nextProps.solution.remark,
+        remark: nextProps.grading && nextProps.solution.remark,
         problemID: nextProps.problem.id,
         submissionID: nextProps.submissionID,
         selectedFeedbackIndex: null
@@ -90,9 +90,11 @@ class FeedbackPanel extends React.Component {
     const blockURI = this.props.examID + '/' + this.props.submissionID + '/' + this.props.problem.id
 
     let totalScore = 0
-    for (let i = 0; i < this.props.solution.feedback.length; i++) {
-      const probIndex = this.props.problem.feedback.findIndex(fb => fb.id === this.props.solution.feedback[i])
-      if (probIndex >= 0) totalScore += this.props.problem.feedback[probIndex].score
+    if(this.props.grading) {
+      for (let i = 0; i < this.props.solution.feedback.length; i++) {
+        const probIndex = this.props.problem.feedback.findIndex(fb => fb.id === this.props.solution.feedback[i])
+        if (probIndex >= 0) totalScore += this.props.problem.feedback[probIndex].score
+      }
     }
 
     let selectedFeedbackId = this.state.selectedFeedbackIndex !== null &&
@@ -100,19 +102,22 @@ class FeedbackPanel extends React.Component {
 
     return (
       <nav className='panel'>
-        <p className='panel-heading'>
-          Total:&nbsp;<b>{totalScore}</b>
-        </p>
+        {this.props.grading &&
+          <p className='panel-heading'>
+            Total:&nbsp;<b>{totalScore}</b>
+          </p>}
         {this.props.problem.feedback.map((feedback, index) =>
           <FeedbackBlock key={feedback.id} uri={blockURI} graderID={this.props.graderID}
-            feedback={feedback} checked={this.props.solution.feedback.includes(feedback.id)}
+            feedback={feedback} checked={this.props.grading && this.props.solution.feedback.includes(feedback.id)}
             editFeedback={() => this.props.editFeedback(feedback)} updateSubmission={this.props.updateSubmission}
-            ref={(selectedFeedbackId === feedback.id) ? this.feedbackBlock : null}
+            ref={(selectedFeedbackId === feedback.id) ? this.feedbackBlock : null} grading={this.props.grading}
             selected={selectedFeedbackId === feedback.id} showIndex={this.props.showTooltips} index={index + 1} />
         )}
-        <div className='panel-block'>
-          <textarea className='textarea' rows='2' placeholder='remark' value={this.state.remark} onBlur={this.saveRemark} onChange={this.changeRemark} />
-        </div>
+        {this.props.grading &&
+          <div className='panel-block'>
+            <textarea className='textarea' rows='2' placeholder='remark' value={this.state.remark} onBlur={this.saveRemark} onChange={this.changeRemark} />
+          </div>
+        }
         <div className='panel-block'>
           <button className='button is-link is-outlined is-fullwidth' onClick={() => this.props.editFeedback()}>
             <span className='icon is-small'>

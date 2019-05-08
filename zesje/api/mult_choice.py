@@ -10,6 +10,7 @@ class MultipleChoice(Resource):
     # Arguments that have to be supplied in the request body
     put_parser.add_argument('x', type=int, required=True)
     put_parser.add_argument('y', type=int, required=True)
+    put_parser.add_argument('page', type=int, required=True)
     put_parser.add_argument('label', type=str, required=True)
     put_parser.add_argument('problem_id', type=int, required=True)
     put_parser.add_argument('feedback_id', type=int, required=True)
@@ -31,6 +32,7 @@ class MultipleChoice(Resource):
         label = args['label']
         problem_id = args['problem_id']
         feedback_id = args['feedback_id']
+        page = args['page']
 
         mc_entry = MultipleChoiceOption.query.get(id)
 
@@ -40,6 +42,7 @@ class MultipleChoice(Resource):
                 id=id,
                 x=x,
                 y=y,
+                page=page,
                 label=label,
                 problem_id=problem_id,
                 feedback_id=feedback_id
@@ -56,6 +59,7 @@ class MultipleChoice(Resource):
         mc_entry.label = label
         mc_entry.problem_id = problem_id
         mc_entry.feedback_id = feedback_id
+        mc_entry.page = page
 
         db.session.commit()
 

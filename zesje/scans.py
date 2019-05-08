@@ -197,7 +197,7 @@ def extract_image_pypdf(pagenr, reader):
     Raises
     ------
     ValueError if not exactly one image is found on the page
-    
+
     NotImplementedError if the image filter is not `FlateDecode`
     """
 

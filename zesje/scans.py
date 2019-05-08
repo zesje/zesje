@@ -152,13 +152,18 @@ def extract_images(filename):
 
         for pagenr in range(total):
             if not use_wand:
-                img = extract_image_pypdf(pagenr, pypdf_reader)
+                try:
+                    # Try to use PyPDF2, but catch any error it raises
+                    img = extract_image_pypdf(pagenr, pypdf_reader)
 
-                # Fallback to wand If PyPDF2 is unable to extract an image
-                if img is None:
-                    use_wand = True
-                else:
+                    if img is None:
+                        raise ValueError
+
                     yield img, pagenr+1
+                except Exception:
+                    # Fallback to Wand if extracting with PyPDF2 failed
+                    use_wand = True
+
             if use_wand:
                 if wand_image is None:
                     wand_image = WandImage(filename=filename, resolution=300)
@@ -189,37 +194,34 @@ def extract_image_pypdf(pagenr, reader):
     img_array : PIL Image
         The extracted image data
     """
-    try:
-        page = reader.getPage(pagenr)
-        xObject = page['/Resources']['/XObject'].getObject()
 
-        if sum((xObject[obj]['/Subtype'] == '/Image')
-                for obj in xObject) > 1:
-            return None
+    page = reader.getPage(pagenr)
+    xObject = page['/Resources']['/XObject'].getObject()
 
-        for obj in xObject:
-            if xObject[obj]['/Subtype'] == '/Image':
-                data = xObject[obj].getData()
-                filter = xObject[obj]['/Filter']
-
-                if filter == '/FlateDecode':
-                    size = (xObject[obj]['/Width'], xObject[obj]['/Height'])
-                    if xObject[obj]['/ColorSpace'] == '/DeviceRGB':
-                        mode = "RGB"
-                    else:
-                        mode = "P"
-                    img = Image.frombytes(mode, size, data)
-                else:
-                    # Don't dare to open this image, and return None
-                    return None
-
-                if img.mode == 'L':
-                    img = img.convert('RGB')
-
-                return img
-
-    except Exception:
+    if sum((xObject[obj]['/Subtype'] == '/Image')
+            for obj in xObject) > 1:
         return None
+
+    for obj in xObject:
+        if xObject[obj]['/Subtype'] == '/Image':
+            data = xObject[obj].getData()
+            filter = xObject[obj]['/Filter']
+
+            if filter == '/FlateDecode':
+                size = (xObject[obj]['/Width'], xObject[obj]['/Height'])
+                if xObject[obj]['/ColorSpace'] == '/DeviceRGB':
+                    mode = "RGB"
+                else:
+                    mode = "P"
+                img = Image.frombytes(mode, size, data)
+            else:
+                # Don't dare to open this image, and return None
+                return None
+
+            if img.mode == 'L':
+                img = img.convert('RGB')
+
+            return img
 
 
 def extract_image_wand(pagenr, wand_image):

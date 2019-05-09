@@ -12,6 +12,7 @@ from .solutions import Solutions
 from .widgets import Widgets
 from .emails import EmailTemplate, RenderedEmailTemplate, Email
 from .mult_choice import MultipleChoice
+
 from . import signature
 from . import images
 from . import summary_plot

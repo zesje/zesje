@@ -10,7 +10,7 @@ from werkzeug.datastructures import FileStorage
 from sqlalchemy.orm import selectinload
 
 from ..pdf_generation import generate_pdfs, output_pdf_filename_format, join_pdfs, page_is_size
-from ..database import db, Exam, ExamWidget, Submission
+from ..database import db, Exam, ExamWidget, Submission, MultipleChoiceOption
 
 PAGE_FORMATS = {
     "A4": (595.276, 841.89),
@@ -313,14 +313,26 @@ class ExamGeneratedPdfs(Resource):
         generated_pdfs_dir = self._get_generated_exam_dir(exam_dir)
         os.makedirs(generated_pdfs_dir, exist_ok=True)
 
+        cb_data = self.get_cb_data_for_exam(exam)
+
         generate_pdfs(
             exam_path,
             exam.token,
             copy_nums,
             pdf_paths,
             student_id_widget.x, student_id_widget.y,
-            barcode_widget.x, barcode_widget.y
+            barcode_widget.x, barcode_widget.y,
+            cb_data=cb_data
         )
+
+    def get_cb_data_for_exam(self, exam):
+        problem_ids = [problem.id for problem in exam.problems]
+
+        cb_data = MultipleChoiceOption.query.filter(MultipleChoiceOption.id in problem_ids).all()
+        return cb_data
+
+    def get_id(problem):
+        return problem.id
 
     post_parser = reqparse.RequestParser()
     post_parser.add_argument('copies_start', type=int, required=True)

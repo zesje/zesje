@@ -105,6 +105,7 @@ def test_generate_pdfs_num_files(datadir, tmpdir):
 
     assert len(tmpdir.listdir()) == num_copies
 
+
 @pytest.mark.parametrize('checkboxes', [[(300, 100, 1, 'c'), (500, 50, 0, 'd'), (500, 500, 0, 'a'), (250, 200, 1, 'b')],
                          [], [(250, 100, 0, None)]])
 def test_generate_checkboxes(datadir, tmpdir, checkboxes):

@@ -25,6 +25,13 @@ def _get_exam_dir(exam_id):
     )
 
 
+def get_cb_data_for_exam(exam):
+    problem_ids = [problem.id for problem in exam.problems]
+
+    cb_data = MultipleChoiceOption.query.filter(MultipleChoiceOption.id in problem_ids).all()
+    return cb_data
+
+
 class Exams(Resource):
 
     def get(self, exam_id=None):
@@ -325,15 +332,6 @@ class ExamGeneratedPdfs(Resource):
             cb_data=cb_data
         )
 
-    def get_cb_data_for_exam(self, exam):
-        problem_ids = [problem.id for problem in exam.problems]
-
-        cb_data = MultipleChoiceOption.query.filter(MultipleChoiceOption.id in problem_ids).all()
-        return cb_data
-
-    def get_id(problem):
-        return problem.id
-
     post_parser = reqparse.RequestParser()
     post_parser.add_argument('copies_start', type=int, required=True)
     post_parser.add_argument('copies_end', type=int, required=True)
@@ -480,7 +478,7 @@ class ExamPreview(Resource):
         )
 
         exam_path = os.path.join(exam_dir, 'exam.pdf')
-
+           
         generate_pdfs(
             exam_path,
             exam.token[:5] + 'PREVIEW',

@@ -326,6 +326,17 @@ class ExamGeneratedPdfs(Resource):
         )
 
     def get_cb_data_for_exam(self, exam):
+        """
+        Returns all multiple choice question check boxes for one specific exam
+
+        Parameters
+        ----------
+            exam: the exam
+
+        Returns
+        -------
+            A list of MultipleChoiceQuestion objects that belong to the specified exam
+        """
         problem_ids = [problem.id for problem in exam.problems]
 
         cb_data = MultipleChoiceOption.query.filter(MultipleChoiceOption.id in problem_ids).all()

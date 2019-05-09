@@ -8,6 +8,10 @@ import studentIdExampleImage from '../components/student_id_example.png'
 // FIXME!
 // eslint-disable-next-line import/no-webpack-loader-syntax
 import studentIdExampleImageSize from '!image-dimensions-loader!../components/student_id_example.png'
+import answerBoxImage from '../components/answer_box.png'
+// FIXME!
+// eslint-disable-next-line import/no-webpack-loader-syntax
+import answerBoxImageSize from '!image-dimensions-loader!../components/answer_box.png'
 import EmptyPDF from '../components/EmptyPDF.jsx'
 import PDFOverlay from '../components/PDFOverlay.jsx'
 
@@ -169,12 +173,34 @@ class ExamEditor extends React.Component {
     }
   }
 
+  renderMCWidget(labels) {
+    const element = (
+      <div>
+
+      </div>
+    )
+  }
+
+  renderMCOption (label) {
+    const element = (
+      <div className='mc_option widget selected'>
+        <div className='mc_option_label'>
+          {label}
+        </div>
+        <img src={answerBoxImage} />
+      </div>
+    )
+
+    return element
+  }
+
   renderWidgets = () => {
     // Only render when numPage is set
     if (this.props.numPages !== null && this.props.widgets) {
       const widgets = this.props.widgets.filter(widget => {
         if (widget.name === 'student_id_widget' ||
-          widget.name === 'barcode_widget') {
+          widget.name === 'barcode_widget' ||
+          widget.name === 'mcq_widget') {
           return !this.props.finalized
         } else if (widget.problem) {
           return widget.problem.page === this.props.page
@@ -199,6 +225,9 @@ class ExamEditor extends React.Component {
             />
           )
           enableResizing = true
+        } else if (widget.name === 'mcq_widget') {
+          enableResizing = false
+          view = this.renderMCWidget(widget.labels)
         } else {
           let image
           if (widget.name === 'barcode_widget') {

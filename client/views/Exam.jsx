@@ -6,10 +6,14 @@ import Hero from '../components/Hero.jsx'
 import './Exam.css'
 import GeneratedExamPreview from '../components/GeneratedExamPreview.jsx'
 import PanelGenerate from '../components/PanelGenerate.jsx'
+import PanelMCQ from '../components/PaneMCQ.jsx'
 import ExamEditor from './ExamEditor.jsx'
 import update from 'immutability-helper'
 import ExamFinalizeMarkdown from './ExamFinalize.md'
 import ConfirmationModal from '../components/ConfirmationModal.jsx'
+// FIXME!
+// eslint-disable-next-line import/no-webpack-loader-syntax
+import answerBoxImageSize from '!image-dimensions-loader!../components/answer_box.png'
 
 import * as api from '../api.jsx'
 
@@ -100,6 +104,19 @@ class Exams extends React.Component {
       }))
   }
 
+  createNewWidget = (widgetData) => {
+    this.setState((prevState) => {
+      return {
+        selectedWidgetId: widgetData.id,
+        widgets: update(prevState.widgets, {
+          [widgetData.id]: {
+            $set: widgetData
+          }
+        })
+      }
+    })
+  }
+
   deleteWidget = (widgetId) => {
     const widget = this.state.widgets[widgetId]
     if (widget) {
@@ -164,18 +181,7 @@ class Exams extends React.Component {
               selectedWidgetId: widgetId
             })
           }}
-          createNewWidget={(widgetData) => {
-            this.setState((prevState) => {
-              return {
-                selectedWidgetId: widgetData.id,
-                widgets: update(prevState.widgets, {
-                  [widgetData.id]: {
-                    $set: widgetData
-                  }
-                })
-              }
-            })
-          }}
+          createNewWidget={this.createNewWidget}
         />
       )
     }
@@ -234,6 +240,18 @@ class Exams extends React.Component {
     })
   }
 
+  generateAnswerBoxes = () => {
+    // const widgetData = {
+    //   x: 50,
+    //   y: 50,
+    //   id: 50,
+    //   page: 0,
+    //   name: 'mcq_widget',
+    //   label: 'A'
+    // }
+    // this.createNewWidget(widgetData)
+  }
+
   SidePanel = (props) => {
     const selectedWidgetId = this.state.selectedWidgetId
     let selectedWidget = selectedWidgetId && this.state.widgets[selectedWidgetId]
@@ -241,7 +259,7 @@ class Exams extends React.Component {
     let widgetEditDisabled = this.state.previewing || !problem
     let isGraded = problem && problem.graded
     let widgetDeleteDisabled = widgetEditDisabled || isGraded
-    let totalNrAnswers = 20 // the upper limit for the nr of possible answer boxes
+    let totalNrAnswers = 12 // the upper limit for the nr of possible answer boxes
     let disabledGenerateBoxes = false
 
     return (
@@ -269,14 +287,14 @@ class Exams extends React.Component {
           }}
           saveProblemName={this.saveProblemName}
         />
-        <this.PanelMCQ
-          totalNrAnswers={totalNrAnswers}
-          disabledGenerateBoxes={disabledGenerateBoxes}
-          problem={problem}
-          onGenerateBoxesClick={() => {
-            console.log('Generating boxes')
-          }}
-        />
+        { this.state.selectedWidgetId == null ? null : (
+          <PanelMCQ
+            totalNrAnswers={totalNrAnswers}
+            disabledGenerateBoxes={disabledGenerateBoxes}
+            problem={problem}
+            onGenerateBoxesClick={this.generateAnswerBoxes}
+          />
+        )}
         <this.PanelExamActions />
       </React.Fragment>
     )
@@ -293,7 +311,7 @@ class Exams extends React.Component {
         <div className='panel-block'>
           <div className='field'>
             {selectedWidgetId === null ? (
-              <p style={{margin: '0.625em 0', minHeight: '3em'}}>
+              <p style={{ margin: '0.625em 0', minHeight: '3em' }}>
                 To create a problem, draw a rectangle on the exam.
               </p>
             ) : (
@@ -310,7 +328,8 @@ class Exams extends React.Component {
                     }}
                     onBlur={(e) => {
                       props.saveProblemName(e.target.value)
-                    }} />
+                    }}
+                  />
                 </div>
               </React.Fragment>
             )}
@@ -323,46 +342,6 @@ class Exams extends React.Component {
             onClick={() => props.onDeleteClick()}
           >
             Delete problem
-          </button>
-        </div>
-
-      </nav>
-    )
-  }
-
-  PanelMCQ = (props) => {
-    const selectedWidgetId = this.state.selectedWidgetId
-    return selectedWidgetId == null ? null : (
-      <nav className='panel'>
-        <p className='panel-heading'>
-          Multiple Choice Question
-        </p>
-        <div className='panel-block'>
-          <div className='field'>
-            <React.Fragment>
-              <label className='label'>Number possible answers</label>
-              <div className='control'>
-                {(function () {
-                  var optionList = []
-                  for (var i = 1; i <= props.totalNrAnswers; i++) {
-                    const optionElement = <option value={String(i)}>{i}</option>
-                    optionList.push(optionElement)
-                  }
-                  return (<div className='select is-info is-fullwidth'>
-                    <select>{optionList}</select>
-                  </div>)
-                }())}
-              </div>
-            </React.Fragment>
-          </div>
-        </div>
-        <div className='panel-block'>
-          <button
-            disabled={props.disabledGenerateBoxes}
-            className='button is-info is-fullwidth'
-            onClick={() => props.onGenerateBoxesClick()}
-          >
-            Generate boxes
           </button>
         </div>
 

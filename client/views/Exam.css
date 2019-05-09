@@ -1,3 +1,23 @@
+:root {
+    --option-width:13px;
+    --label-font-size:15px;
+}
+
+div.mc_option {
+    display: flex;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    justify-content: center;
+    align-items:center;
+    width:var(--option-width, 13px);
+}
+
+div.mc_option_label {
+    font-size: var(--label-font-size, 15px);
+    font-family: 'Helvetica', 'Arial', sans-serif;
+}
+
+
 .editor-content {
   background-color: #ddd;
   border-radius: 10px

@@ -1,7 +1,5 @@
 from flask import abort, Response
 
-from pony import orm
-
 import numpy as np
 import cv2
 
@@ -9,7 +7,6 @@ from ..images import get_box
 from ..database import Exam, Submission, Problem, Page
 
 
-@orm.db_session
 def get(exam_id, problem_id, submission_id, full_page=False):
     """get image for the given problem.
 
@@ -27,12 +24,18 @@ def get(exam_id, problem_id, submission_id, full_page=False):
     -------
     Image (JPEG mimetype)
     """
-    try:
-        exam = Exam[exam_id]
-        submission = Submission.get(exam=exam, copy_number=submission_id)
-        problem = Problem[problem_id]
-    except (KeyError, ValueError):
-        abort(404)
+    exam = Exam.query.get(exam_id)
+    if exam is None:
+        abort(404, 'Exam does not exist.')
+
+    problem = Problem.query.get(problem_id)
+    if problem is None:
+        abort(404, 'Problem does not exist.')
+
+    sub = Submission.query.filter(Submission.exam_id == exam.id,
+                                  Submission.copy_number == submission_id).one_or_none()
+    if sub is None:
+        abort(404, 'Submission does not exist.')
 
     widget_area = np.asarray([
         problem.widget.y,  # top
@@ -45,7 +48,12 @@ def get(exam_id, problem_id, submission_id, full_page=False):
     widget_area_in = widget_area / 72
 
     #  get the page
-    page_path = Page.get(submission=submission, number=problem.widget.page).path
+    page = Page.query.filter(Page.submission_id == sub.id, Page.number == problem.widget.page).first()
+
+    if page is None:
+        abort(404, f'Page #{problem.widget.page} is missing for copy #{submission_id}.')
+
+    page_path = page.path
 
     page_im = cv2.imread(page_path)
     if not full_page:

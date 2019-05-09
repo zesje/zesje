@@ -1,17 +1,15 @@
 from flask_restful import Resource, reqparse
 
-from pony import orm
 from werkzeug.datastructures import FileStorage
 import pandas as pd
 from io import BytesIO
 
-from ..database import Student
+from ..database import db, Student
 
 
 class Students(Resource):
     """Getting a list of students."""
 
-    @orm.db_session
     def get(self, student_id=None):
         """get all students for the course.
 
@@ -32,8 +30,8 @@ class Students(Resource):
         """
 
         if student_id is not None:
-            s = Student.get(id=student_id)
-            if not s:
+            s = Student.query.get(student_id)
+            if s is None:
                 return dict(status=404, message='Student not found'), 404
             return {
                 'id': s.id,
@@ -49,7 +47,7 @@ class Students(Resource):
                 'lastName': s.last_name,
                 'email': s.email,
             }
-            for s in Student.select()
+            for s in Student.query.all()
         ]
 
     put_parser = reqparse.RequestParser()
@@ -58,7 +56,6 @@ class Students(Resource):
     put_parser.add_argument('lastName', type=str, required=True)
     put_parser.add_argument('email', type=str, required=False)
 
-    @orm.db_session
     def put(self, student_id=None):
         """Insert or update an existing student
 
@@ -87,18 +84,20 @@ class Students(Resource):
 
         args = self.put_parser.parse_args()
 
-        student = Student.get(id=args.studentID)
-        if not student:
+        student = Student.query.get(args.studentID)
+        if student is None:
             student = Student(id=args.studentID,
                               first_name=args.firstName,
                               last_name=args.lastName,
                               email=args.email or None)
+            db.session.add(student)
         else:
-            student.set(id=args.studentID,
-                        first_name=args.firstName,
-                        last_name=args.lastName,
-                        email=args.email or None)
-        orm.commit()
+            student.id = args.studentID
+            student.first_name = args.firstName
+            student.last_name = args.lastName
+            student.email = args.email or None
+
+        db.session.commit()
 
         return {
             'studentID': student.id,
@@ -111,7 +110,6 @@ class Students(Resource):
     post_parser.add_argument('csv', type=FileStorage, required=True,
                              location='files')
 
-    @orm.db_session
     def post(self):
         """Upload a CSV file and add/update the students.
 
@@ -138,10 +136,13 @@ class Students(Resource):
             added_students = sum(_add_or_update_student(row)
                                  for _, row in df.iterrows())
         except Exception as e:
+            print(e)
             message = ('Uploaded CSV is not in the correct format: '
                        'did you export it from Brightspace? '
-                       'The error was: ' + str(e))
+                       'The error was: ' + str(type(e)) + ": " + str(e))
             return dict(message=message), 400
+
+        db.session.commit()
 
         return added_students
 
@@ -161,12 +162,16 @@ def _add_or_update_student(row):
         # Brightspace includes instructors in the course list,
         # and these might not have student numbers. (If they
         # do then they will be added to the student list).
-        student = Student.get(id=content['id'])
+        content['id'] = int(str(content['id']).replace('#', ''))
+        student = Student.query.get(content['id'])
     except ValueError:
         return False
-    if not student:
-        Student(**content)
+    if student is None:
+        db.session.add(Student(**content))
         return True
     else:
-        student.set(**content)
+        student.id = content['id']
+        student.first_name = content['first_name']
+        student.last_name = content['last_name']
+        student.email = content['email']
         return False

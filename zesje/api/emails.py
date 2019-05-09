@@ -8,8 +8,6 @@ import werkzeug.exceptions
 from flask import current_app as app
 from flask_restful import Resource, reqparse
 
-from pony import orm
-
 from .. import emails
 from ..database import Exam, Student
 from ._helpers import abort
@@ -59,8 +57,12 @@ def render_email(exam_id, student_id, template):
 
 
 def build_email(exam_id, student_id, template, attach, from_address, copy_to=None):
-    with orm.db_session:
-        student = Student[student_id]
+    student = Student.query.get(student_id)
+    if student is None:
+        abort(
+            404,
+            message=f"Student #{student_id} does not exist"
+        )
     if not student.email:
         abort(
             409,
@@ -145,13 +147,19 @@ class Email(Resource):
                 message="Not CC-ing all emails from the exam."
             )
 
-        with orm.db_session:
-            if not all(Exam[exam_id].submissions.signature_validated):
-                abort(
-                    409,
-                    message="All submissions must be validated before "
-                            "sending emails."
-                )
+        exam = Exam.query.get(exam_id)
+        if exam is None:
+            abort(
+                404,
+                message="Exam does not exist"
+            )
+
+        if not all(sub.signature_validated for sub in exam.submissions):
+            abort(
+                409,
+                message="All submissions must be validated before "
+                        "sending emails."
+            )
 
         if student_id is not None:
             return self._send_single(exam_id, student_id, template, attach, copy_to)
@@ -190,8 +198,13 @@ class Email(Resource):
                 500,
                 message='Sending email is not configured'
             )
-        with orm.db_session:
-            student_ids = set(Exam[exam_id].submissions.student.id)
+        exam = Exam.query.get(exam_id)
+        if exam is None:
+            abort(
+                404,
+                message="Exam does not exist"
+            )
+        student_ids = set(sub.student.id for sub in exam.submissions if sub.student)
 
         failed_to_build = list()
         to_send = dict()

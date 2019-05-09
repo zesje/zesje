@@ -11,6 +11,7 @@ from .feedback import Feedback
 from .solutions import Solutions
 from .widgets import Widgets
 from .emails import EmailTemplate, RenderedEmailTemplate, Email
+from .mult_choice import MultipleChoice
 from . import signature
 from . import images
 from . import summary_plot
@@ -18,14 +19,7 @@ from . import export
 
 api_bp = Blueprint(__name__, __name__)
 
-errors = {
-    'ObjectNotFound': {
-        'status': 404,
-        'message': 'Resource with that ID does not exist',
-     },
-}
-
-api = Api(api_bp, errors=errors)
+api = Api(api_bp)
 
 api.add_resource(Graders, '/graders')
 api.add_resource(Exams, '/exams', '/exams/<int:exam_id>', '/exams/<int:exam_id>/<string:attr>')
@@ -55,6 +49,7 @@ api.add_resource(RenderedEmailTemplate,
 api.add_resource(Email,
                  '/email/<int:exam_id>',
                  '/email/<int:exam_id>/<int:student_id>')
+api.add_resource(MultipleChoice, '/mult-choice/<int:id>')
 
 
 # Other resources that don't return JSON

@@ -16,6 +16,10 @@ stages:
   before_script:
     - yarn install --cache-folder .yarn-cache
 
+.python_packages: &python_packages
+  before_script:
+    - pip install --no-cache-dir -r requirements.txt -r requirements-dev.txt
+
 build:
   <<: *node_modules
   stage: build
@@ -33,6 +37,7 @@ test_js:
   script: yarn test:js
 
 test_py:
+  <<: *python_packages
   stage: test
   script: yarn test:py
 
@@ -44,6 +49,7 @@ lint_js:
     - yarn lint:js
 
 lint_py:
+  <<: *python_packages
   stage: test
   allow_failure: true
   script:

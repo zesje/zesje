@@ -113,7 +113,6 @@ def test_generate_checkboxes(datadir, tmpdir, checkboxes):
     num_copies = 1
     copy_nums = range(num_copies)
     paths = map(lambda copy_num: os.path.join(tmpdir, f'{copy_num}.pdf'), copy_nums)
-    # checkboxes = [(300, 100, 1, 'c'), (500, 50, 0, 'd'), (500, 500, 0, 'a'), (250, 200, 1, 'b')]
     pdf_generation.generate_pdfs(blank_pdf, 'ABCDEFGHIJKL', copy_nums, paths, 25, 270, 150, 270, checkboxes)
 
     assert len(tmpdir.listdir()) == num_copies

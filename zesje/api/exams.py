@@ -26,9 +26,31 @@ def _get_exam_dir(exam_id):
 
 
 def get_cb_data_for_exam(exam):
+    """
+    Returns all multiple choice question check boxes for one specific exam
+
+    Parameters
+    ----------
+        exam: the exam
+
+    Returns
+    -------
+        A list of tuples with checkbox data.
+        Each tuple is represented as (x, y, page, label)
+
+        Where
+        x: x position
+        y: y position
+        page: page number
+        label: checkbox label
+    """
     problem_ids = [problem.id for problem in exam.problems]
 
-    cb_data = MultipleChoiceOption.query.filter(MultipleChoiceOption.id in problem_ids).all()
+    cb_data = MultipleChoiceOption.query.filter(MultipleChoiceOption.problem_id.in_(problem_ids)).all()
+
+    # Map to tuples with (x pos, y pos, page number, label)
+    cb_data = [(cb.x, cb.y, cb.page, cb.label) for cb in cb_data]
+
     return cb_data
 
 
@@ -100,30 +122,30 @@ class Exams(Resource):
             return dict(status=404, message='Exam does not exist.'), 404
 
         submissions = [
-                {
-                    'id': sub.copy_number,
-                    'student': {
-                            'id': sub.student.id,
-                            'firstName': sub.student.first_name,
-                            'lastName': sub.student.last_name,
-                            'email': sub.student.email
-                    } if sub.student else None,
-                    'validated': sub.signature_validated,
-                    'problems': [
-                        {
-                            'id': sol.problem.id,
-                            'graded_by': {
-                                'id': sol.graded_by.id,
-                                'name': sol.graded_by.name
-                            } if sol.graded_by else None,
-                            'graded_at': sol.graded_at.isoformat() if sol.graded_at else None,
-                            'feedback': [
-                                fb.id for fb in sol.feedback
-                            ],
-                            'remark': sol.remarks if sol.remarks else ""
-                        } for sol in sub.solutions  # Sorted by sol.problem_id
-                    ],
-                } for sub in exam.submissions
+            {
+                'id': sub.copy_number,
+                'student': {
+                    'id': sub.student.id,
+                    'firstName': sub.student.first_name,
+                    'lastName': sub.student.last_name,
+                    'email': sub.student.email
+                } if sub.student else None,
+                'validated': sub.signature_validated,
+                'problems': [
+                    {
+                        'id': sol.problem.id,
+                        'graded_by': {
+                            'id': sol.graded_by.id,
+                            'name': sol.graded_by.name
+                        } if sol.graded_by else None,
+                        'graded_at': sol.graded_at.isoformat() if sol.graded_at else None,
+                        'feedback': [
+                            fb.id for fb in sol.feedback
+                        ],
+                        'remark': sol.remarks if sol.remarks else ""
+                    } for sol in sub.solutions  # Sorted by sol.problem_id
+                ],
+            } for sub in exam.submissions
         ]
         # Sort submissions by selecting those with students assigned, then by
         # student number, then by copy number.
@@ -478,7 +500,6 @@ class ExamPreview(Resource):
         )
 
         exam_path = os.path.join(exam_dir, 'exam.pdf')
-           
         generate_pdfs(
             exam_path,
             exam.token[:5] + 'PREVIEW',

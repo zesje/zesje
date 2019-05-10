@@ -15,6 +15,9 @@ class PanelMCQ extends React.Component {
   onChangeNPA (e) {
     let value = parseInt(e.target.value)
     if (!isNaN(value)) {
+      if (this.state.chosenLabelType === 1) {
+        value = 2
+      }
       this.setState({
         nrPossibleAnswers: value
       })
@@ -40,7 +43,7 @@ class PanelMCQ extends React.Component {
 
     switch (type) {
       case 1:
-        return ['True', 'False']
+        return ['T', 'F']
       case 2:
         return Array.from(Array(nrLabels).keys()).map((e) => String.fromCharCode(e + 65))
       case 3:
@@ -98,17 +101,26 @@ class PanelMCQ extends React.Component {
             </React.Fragment>
           </div>
         </div>
-        <div className='panel-block'>
+        <div className='panel-block field is-grouped'>
           <button
             disabled={this.props.disabledGenerateBoxes}
-            className='button is-info is-fullwidth'
+            className='button is-link is-fullwidth'
             onClick={() => {
               let npa = this.state.nrPossibleAnswers
               let labels = this.generateLabels(npa)
               this.props.onGenerateBoxesClick(npa, labels)
             }}
           >
-            Generate boxes
+            Generate
+          </button>
+          <button
+            disabled={this.props.disabledDeleteBoxes}
+            className='button is-danger is-fullwidth'
+            onClick={() => {
+              alert('Not yet implemented.')
+            }}
+          >
+            Delete
           </button>
         </div>
       </nav>

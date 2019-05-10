@@ -1,20 +1,30 @@
 :root {
-    --option-width:13px;
-    --label-font-size:15px;
+    --option-width:20px;
+    --label-font-size:14px;
 }
 
-div.mc_option {
-    display: flex;
-    flex-direction: column;
-    flex-wrap: nowrap;
-    justify-content: center;
-    align-items:center;
-    width:var(--option-width, 13px);
+div.mcq-widget {
+    display:inline-block;
 }
 
-div.mc_option_label {
-    font-size: var(--label-font-size, 15px);
-    font-family: 'Helvetica', 'Arial', sans-serif;
+div.mcq-option {
+    display: block;
+    width: var(--option-width);
+    padding:2px;
+    box-sizing: content-box;
+    height: auto;
+}
+
+div.mcq-option div.mcq-option-label {
+    display:block;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: var(--label-font-size);
+    text-align: center;
+}
+
+div.mcq-option img.mcq-box {
+    display: block;
+    margin:auto;
 }
 
 

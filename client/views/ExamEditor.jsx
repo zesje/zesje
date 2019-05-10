@@ -9,9 +9,6 @@ import studentIdExampleImage from '../components/student_id_example.png'
 // eslint-disable-next-line import/no-webpack-loader-syntax
 import studentIdExampleImageSize from '!image-dimensions-loader!../components/student_id_example.png'
 import answerBoxImage from '../components/answer_box.png'
-// FIXME!
-// eslint-disable-next-line import/no-webpack-loader-syntax
-import answerBoxImageSize from '!image-dimensions-loader!../components/answer_box.png'
 import EmptyPDF from '../components/EmptyPDF.jsx'
 import PDFOverlay from '../components/PDFOverlay.jsx'
 
@@ -173,21 +170,21 @@ class ExamEditor extends React.Component {
     }
   }
 
-  renderMCWidget(labels) {
-    const element = (
-      <div>
-
-      </div>
-    )
-  }
+  // renderMCWidget(labels) {
+  //   const element = (
+  //     <div>
+  //
+  //     </div>
+  //   )
+  // }
 
   renderMCOption (label) {
     const element = (
-      <div className='mc_option widget selected'>
-        <div className='mc_option_label'>
+      <div className='mcq-option widget selected'>
+        <div className='mcq-option-label'>
           {label}
         </div>
-        <img src={answerBoxImage} />
+        <img className='mcq-box' src={answerBoxImage} />
       </div>
     )
 
@@ -216,7 +213,12 @@ class ExamEditor extends React.Component {
       return widgets.map((widget) => {
         const isSelected = widget.id === this.props.selectedWidgetId
 
-        if (widget.problem) {
+        if (widget.name === 'mcq_widget') {
+          enableResizing = false
+          minHeight = widget.height
+          minWidth = widget.width
+          view = this.renderMCOption(widget.label)
+        } else if (widget.problem) {
           minWidth = this.props.problemMinWidth
           minHeight = this.props.problemMinHeight
           view = (
@@ -225,9 +227,6 @@ class ExamEditor extends React.Component {
             />
           )
           enableResizing = true
-        } else if (widget.name === 'mcq_widget') {
-          enableResizing = false
-          view = this.renderMCWidget(widget.labels)
         } else {
           let image
           if (widget.name === 'barcode_widget') {

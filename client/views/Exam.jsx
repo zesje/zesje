@@ -11,9 +11,6 @@ import ExamEditor from './ExamEditor.jsx'
 import update from 'immutability-helper'
 import ExamFinalizeMarkdown from './ExamFinalize.md'
 import ConfirmationModal from '../components/ConfirmationModal.jsx'
-// FIXME!
-// eslint-disable-next-line import/no-webpack-loader-syntax
-import answerBoxImageSize from '!image-dimensions-loader!../components/answer_box.png'
 
 import * as api from '../api.jsx'
 
@@ -240,16 +237,28 @@ class Exams extends React.Component {
     })
   }
 
-  generateAnswerBoxes = () => {
-    // const widgetData = {
-    //   x: 50,
-    //   y: 50,
-    //   id: 50,
-    //   page: 0,
-    //   name: 'mcq_widget',
-    //   label: 'A'
-    // }
-    // this.createNewWidget(widgetData)
+  generateAnswerBoxes = (nrPossibleAnswers, labels) => {
+    let width = 26
+    let height = 38
+    let xPos = 50
+    let yPos = 50
+    return labels.map((label, i) => {
+      const problemData = {
+        page: this.state.page,
+        problemID: 10
+      }
+      const widgetData = {
+        x: xPos + i * width,
+        y: yPos,
+        id: 50 + i,
+        name: 'mcq_widget',
+        label: label,
+        width: width,
+        height: height,
+        problem: problemData
+      }
+      this.createNewWidget(widgetData)
+    })
   }
 
   SidePanel = (props) => {
@@ -261,6 +270,7 @@ class Exams extends React.Component {
     let widgetDeleteDisabled = widgetEditDisabled || isGraded
     let totalNrAnswers = 12 // the upper limit for the nr of possible answer boxes
     let disabledGenerateBoxes = false
+    let disabledDeleteBoxes = true
 
     return (
       <React.Fragment>
@@ -291,6 +301,7 @@ class Exams extends React.Component {
           <PanelMCQ
             totalNrAnswers={totalNrAnswers}
             disabledGenerateBoxes={disabledGenerateBoxes}
+            disabledDeleteBoxes={disabledDeleteBoxes}
             problem={problem}
             onGenerateBoxesClick={this.generateAnswerBoxes}
           />

@@ -1,45 +1,25 @@
 """ Init file that starts a Flask dev server and opens db """
 
 import os
-from os.path import abspath, dirname
 
-from flask import Flask
 from werkzeug.exceptions import NotFound
 
+from .factory import create_app, make_celery
 from .api import api_bp
-from .database import db
+
 from ._version import __version__
 
 
 __all__ = ['__version__', 'app']
 
-STATIC_FOLDER_PATH = os.path.join(abspath(dirname(__file__)), 'static')
+app = create_app()
 
-app = Flask(__name__, static_folder=STATIC_FOLDER_PATH)
 app.register_blueprint(api_bp, url_prefix='/api')
 
-if 'ZESJE_SETTINGS' in os.environ:
-    app.config.from_envvar('ZESJE_SETTINGS')
+os.makedirs(app.config['DATA_DIRECTORY'], exist_ok=True)
+os.makedirs(app.config['SCAN_DIRECTORY'], exist_ok=True)
 
-# Default settings
-app.config.update(
-    DATA_DIRECTORY=abspath(app.config.get('DATA_DIRECTORY', 'data')),
-)
-
-# These reference DATA_DIRECTORY, so they need to be in a separate update
-app.config.update(
-    SCAN_DIRECTORY=os.path.join(app.config['DATA_DIRECTORY'], 'scans'),
-    DB_PATH=os.path.join(app.config['DATA_DIRECTORY'], 'course.sqlite'),
-)
-
-
-@app.before_first_request
-def setup():
-    os.makedirs(app.config['DATA_DIRECTORY'], exist_ok=True)
-    os.makedirs(app.config['SCAN_DIRECTORY'], exist_ok=True)
-
-    db.bind('sqlite', app.config['DB_PATH'], create_db=True)
-    db.generate_mapping(create_tables=True)
+celery = make_celery(app)
 
 
 @app.route('/')

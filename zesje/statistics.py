@@ -1,50 +1,55 @@
 from collections import ChainMap
 
-from pony import orm
+from sqlalchemy.orm.exc import NoResultFound
 
 import numpy as np
 import pandas
 
-from .database import Exam, Problem, Solution, Student
+from .database import Exam, Problem, Student
 
 
 def solution_data(exam_id, student_id):
     """Return Python datastructures corresponding to the student submission."""
-    with orm.db_session:
-        exam = Exam[exam_id]
-        student = Student[student_id]
-        if any(i is None for i in (exam, student)):
-            raise RuntimeError('Student did not make a '
-                               'submission for this exam')
+    exam = Exam.query.get(exam_id)
+    if exam is None:
+        raise NoResultFound(f"Exam with id #{exam_id} does not exist.")
+    student = Student.query.get(student_id)
+    if student is None:
+        raise NoResultFound(f"Student with id #{student_id} does not exist.")
+    if any(i is None for i in (exam, student)):
+        raise RuntimeError('Student did not make a '
+                           'submission for this exam')
 
-        results = []
-        for problem in exam.problems.order_by(Problem.id):
-            if not orm.count(problem.feedback_options):
-                # There is no possible feedback for this problem.
-                continue
-            problem_data = {
-                'name': problem.name,
-                'max_score': orm.max(problem.feedback_options.score, default=0)
-            }
-            solutions = Solution.select(lambda s: s.problem == problem
-                                        and s.submission.student == student)
-            problem_data['feedback'] = [
-                {'short': fo.text,
-                 'score': fo.score,
-                 'description': fo.description}
-                for solution in solutions for fo in solution.feedback
-            ]
-            problem_data['score'] = (
-                sum(i['score'] or 0 for i in problem_data['feedback'])
-                if problem_data['feedback']
-                else np.nan
-            )
-            problem_data['remarks'] = '\n\n'.join(sol.remarks
-                                                  for sol in solutions
-                                                  if sol.remarks)
-            results.append(problem_data)
+    results = []
+    for problem in exam.problems:  # Sorted by problem.id
+        if not len(problem.feedback_options):
+            # There is no possible feedback for this problem.
+            continue
+        problem_data = {
+            'name': problem.name,
+            'max_score': max(fb.score for fb in problem.feedback_options) or 0
+        }
+        # TODO Maybe replace this with an optimized query
+        solutions = [sol for sols in [sub.solutions for sub in student.submissions]
+                     for sol in sols
+                     if sol.problem_id == problem.id]
+        problem_data['feedback'] = [
+            {'short': fo.text,
+             'score': fo.score,
+             'description': fo.description}
+            for solution in solutions for fo in solution.feedback
+        ]
+        problem_data['score'] = (
+            sum(i['score'] or 0 for i in problem_data['feedback'])
+            if problem_data['feedback']
+            else np.nan
+        )
+        problem_data['remarks'] = '\n\n'.join(sol.remarks
+                                              for sol in solutions
+                                              if sol.remarks)
+        results.append(problem_data)
 
-        student = student.to_dict()
+    student = student.__dict__
 
     student['total'] = sum(i['score'] for i in results if not np.isnan(i['score']))
     return student, results
@@ -52,27 +57,25 @@ def solution_data(exam_id, student_id):
 
 def full_exam_data(exam_id):
     """Compute all grades of an exam as a pandas DataFrame."""
-    with orm.db_session:
-        exam = Exam[exam_id]
-        if exam is None:
-            raise KeyError("No such exam.")
-        students = sorted(exam.submissions.student.id)
+    exam = Exam.query.get(exam_id)
+    if exam is None:
+        raise KeyError("No such exam.")
+    students = sorted(sub.student.id for sub in exam.submissions if sub.student)
 
-        data = [solution_data(exam_id, student_id)
-                for student_id in students]
+    data = [solution_data(exam_id, student_id)
+            for student_id in students]
 
     if not data:
         # No students were assigned.
-        with orm.db_session:
-            columns = []
-            for problem in exam.problems.order_by(Problem.id):
-                if not orm.count(problem.feedback_options):
-                    # There is no possible feedback for this problem.
-                    continue
-                for fo in problem.feedback_options.text:
-                    columns.append((problem, fo))
-                columns.append((problem, 'total'))
-            columns.append(('total', 'total'))
+        columns = []
+        for problem in exam.problems.order_by(Problem.id):
+            if not len(problem.feedback_options):
+                # There is no possible feedback for this problem.
+                continue
+            for fo in problem.feedback_options:
+                columns.append((problem, fo.text))
+            columns.append((problem, 'total'))
+        columns.append(('total', 'total'))
 
         result = pandas.DataFrame(columns=pandas.MultiIndex.from_tuples(columns))
         return result

@@ -2,8 +2,6 @@ from io import BytesIO
 
 from flask import abort, Response
 
-from pony import orm
-
 import matplotlib
 import numpy as np
 import pandas
@@ -16,7 +14,6 @@ import seaborn  # noqa: E402
 from matplotlib import pyplot  # noqa: E402
 
 
-@orm.db_session
 def get(exam_id):
     """Plot exam summary statistics.
 
@@ -28,12 +25,11 @@ def get(exam_id):
     -------
     Image (JPEG mimetype)
     """
-    try:
-        exam = Exam[exam_id]
-    except KeyError:
-        abort(404)
+    exam = Exam.query.get(exam_id)
+    if exam is None:
+        abort(404, "Exam does not exist")
 
-    scores = {problem.name: max(list(problem.feedback_options.score) + [0])
+    scores = {problem.name: max(list(fb.score for fb in problem.feedback_options) + [0])
               for problem in exam.problems}
     scores['total'] = sum(scores.values())
 

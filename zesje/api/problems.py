@@ -2,8 +2,6 @@
 
 from flask_restful import Resource, reqparse
 
-from pony import orm
-
 from ..database import db, Exam, Problem, ProblemWidget, Solution
 
 
@@ -19,7 +17,6 @@ class Problems(Resource):
     post_parser.add_argument('width', type=int, required=True, location='form')
     post_parser.add_argument('height', type=int, required=True, location='form')
 
-    @orm.db_session
     def post(self):
         """Add a new problem.
 
@@ -31,9 +28,8 @@ class Problems(Resource):
 
         exam_id = args['exam_id']
 
-        try:
-            exam = Exam[exam_id]
-        except orm.ObjectNotFound:
+        exam = Exam.query.get(exam_id)
+        if exam is None:
             msg = f"Exam with id {exam_id} doesn't exist"
             return dict(status=400, message=msg), 400
         else:
@@ -51,13 +47,18 @@ class Problems(Resource):
                 widget=widget,
             )
 
+            # Widget is also added because it is used in problem
+            db.session.add(problem)
+
             # Add solutions for each already existing submission
             for sub in exam.submissions:
-                Solution(problem=problem, submission=sub)
+                db.session.add(Solution(problem=problem, submission=sub))
 
-            db.commit()
-
+            # Commit so problem gets an id
+            db.session.commit()
             widget.name = f'problem_{problem.id}'
+
+            db.session.commit()
 
             return {
                 'id': problem.id,
@@ -67,7 +68,6 @@ class Problems(Resource):
     put_parser = reqparse.RequestParser()
     put_parser.add_argument('name', type=str, required=True)
 
-    @orm.db_session
     def put(self, problem_id, attr):
         """PUT to a problem
 
@@ -85,15 +85,19 @@ class Problems(Resource):
         args = self.put_parser.parse_args()
 
         name = args['name']
-        problem = Problem[problem_id]
+        problem = Problem.query.get(problem_id)
+        if problem is None:
+            msg = f"Problem with id {problem_id} doesn't exist"
+            return dict(status=404, message=msg), 404
+
         problem.name = name
+        db.session.commit()
 
         return dict(status=200, message="ok"), 200
 
-    @orm.db_session
     def delete(self, problem_id):
 
-        problem = Problem.get(id=problem_id)
+        problem = Problem.query.get(problem_id)
 
         if problem is None:
             msg = f"Problem with id {problem_id} doesn't exist"
@@ -101,7 +105,10 @@ class Problems(Resource):
         if any([sol.graded_by is not None for sol in problem.solutions]):
             return dict(status=403, message=f'Problem has already been graded'), 403
         else:
-            problem.delete()
-            problem.widget.delete()
-            db.commit()
+            # Delete all solutions associated with this problem
+            for sol in problem.solutions:
+                db.session.delete(sol)
+            db.session.delete(problem.widget)
+            db.session.delete(problem)
+            db.session.commit()
             return dict(status=200, message="ok"), 200

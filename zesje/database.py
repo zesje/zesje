@@ -160,18 +160,22 @@ class Widget(db.Model):
     }
 
 
-class MultipleChoiceOption(db.Model):
+class MultipleChoiceOption(Widget):
     __tablename__ = 'mc_option'
-    id = Column(Integer, primary_key=True, autoincrement=True)
+    id = Column(Integer, ForeignKey('widget.id'), primary_key=True, autoincrement=True)
 
-    x = Column(Integer, nullable=False)
-    y = Column(Integer, nullable=False)
     page = Column(Integer, nullable=False)
-
     label = Column(String, nullable=True)
+
+    type = Column(String(20))
 
     problem_id = Column(Integer, ForeignKey('solution.id'), nullable=False)
     feedback_id = Column(Integer, ForeignKey('feedback_option.id'), nullable=True)
+
+    __mapper_args__ = {
+        'polymorphic_identity': 'widget',
+        'polymorphic_on': type
+    }
 
 
 class ExamWidget(Widget):

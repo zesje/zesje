@@ -500,13 +500,16 @@ class ExamPreview(Resource):
         )
 
         exam_path = os.path.join(exam_dir, 'exam.pdf')
+
+        cb_data = self.get_cb_data_for_exam(exam)
         generate_pdfs(
             exam_path,
             exam.token[:5] + 'PREVIEW',
             [1519],
             [output_file],
             student_id_widget.x, student_id_widget.y,
-            barcode_widget.x, barcode_widget.y
+            barcode_widget.x, barcode_widget.y,
+            cb_data
         )
 
         output_file.seek(0)

@@ -9,19 +9,16 @@ from email import encoders
 
 import jinja2
 from wand.image import Image
-from pony import orm
 
 from .database import Submission
 from . import statistics
 
 
 def solution_pdf(exam_id, student_id):
-    with orm.db_session:
-        subs = Submission.select(
-            lambda s: s.exam.id == exam_id and s.student.id == student_id
-        )
-        pages = sorted((p for s in subs for p in s.pages), key=(lambda p: p.number))
-        pages = [p.path for p in pages]
+    subs = Submission.query.filter(Submission.exam_id == exam_id,
+                                   Submission.student_id == student_id).all()
+    pages = sorted((p for s in subs for p in s.pages), key=(lambda p: p.number))
+    pages = [p.path for p in pages]
 
     with Image() as output_pdf:
         for filepath in pages:

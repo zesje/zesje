@@ -1,8 +1,13 @@
 # Core components
 flask
 flask_restful
-pony
+flask_sqlalchemy
+sqlalchemy
+Flask-Migrate
+alembic
 pyyaml
+celery
+redis
 
 # General utilities
 numpy

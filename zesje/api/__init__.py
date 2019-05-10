@@ -8,7 +8,7 @@ from .students import Students
 from .submissions import Submissions
 from .problems import Problems
 from .feedback import Feedback
-from .solutions import Solutions
+from .solutions import Solutions, Approve
 from .widgets import Widgets
 from .emails import EmailTemplate, RenderedEmailTemplate, Email
 from . import signature
@@ -55,7 +55,7 @@ api.add_resource(RenderedEmailTemplate,
 api.add_resource(Email,
                  '/email/<int:exam_id>',
                  '/email/<int:exam_id>/<int:student_id>')
-
+api.add_resource(Approve, '/solution/approve/<int:exam_id>/<int:submission_id>/<int:problem_id>')
 
 # Other resources that don't return JSON
 # It is possible to get flask_restful to work with these, but not

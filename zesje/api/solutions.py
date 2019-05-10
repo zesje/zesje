@@ -133,3 +133,44 @@ class Solutions(Resource):
             solution.graded_by = None
 
         return {'state': state}
+
+
+class Approve(Resource):    
+    """ add just a grader to a specifc problem on an exam """
+    put_parser = reqparse.RequestParser()
+    put_parser.add_argument('graderID', type=int, required=True)
+
+    @orm.db_session
+    def put(self, exam_id, submission_id, problem_id):
+        """Takes an existing feedback checks if it is valid then gives the current graders id to the solution this is
+        usefull for approving pre graded solutions
+
+        Parameters
+        ----------
+            graderID: int
+
+        Returns
+        -------
+            state: boolean
+        """
+        args = self.put_parser.parse_args()
+
+        problem = Problem[problem_id]
+        exam = Exam[exam_id]
+        grader = Grader[args.graderID]
+
+        sub = Submission.get(exam=exam, copy_number=submission_id)
+        if not sub:
+            raise orm.core.ObjectNotFound(Submission)
+
+        solution = Solution.get(submission=sub, problem=problem)
+        if not solution:
+            raise orm.core.ObjectNotFound(Solution)
+
+        graded = len(solution.feedback)
+
+        if graded:
+            solution.graded_at = datetime.now()
+            solution.graded_by = grader
+
+        return {'state': graded}

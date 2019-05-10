@@ -149,7 +149,7 @@ class Solutions(Resource):
         return {'state': state}
 
 
-class Approve(Resource):    
+class Approve(Resource):
     """ add just a grader to a specifc problem on an exam """
     put_parser = reqparse.RequestParser()
     put_parser.add_argument('graderID', type=int, required=True)

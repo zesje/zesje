@@ -63,6 +63,12 @@ or `zesje/`.
 You can run the tests by running
 
     yarn test
+    
+#### Viewing test coverage
+
+As a test coverage tool, `pytest-cov` is used.
+
+To view test coverage, use Conda in the Zesje repo and run `python -m pytest --cov=zesje tests/`
 
 #### Policy errors
 

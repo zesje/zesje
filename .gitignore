@@ -91,3 +91,10 @@ data-dev
 
 # webpack analyze data
 stats.json
+
+# JetBrains IDE folders
+.idea/
+
+# pytest coverage reports
+.coverage
+coverage.xml

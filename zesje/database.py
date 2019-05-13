@@ -124,7 +124,7 @@ class Solution(db.Model):
     submission_id = Column(Integer, ForeignKey('submission.id'), nullable=False)  # backref submission
     problem_id = Column(Integer, ForeignKey('problem.id'), nullable=False)  # backref problem
     # if grader_id, and thus graded_by, is null, this has not yet been graded
-    grader_id = Column(Integer, ForeignKey('grader.id'), nullable=True)  # backref graded_by
+    f_id = Column(Integer, ForeignKey('grader.id'), nullable=True)  # backref graded_by
     graded_at = Column(DateTime, nullable=True)
     feedback = db.relationship('FeedbackOption', secondary=solution_feedback, backref='solutions', lazy='subquery')
     remarks = Column(Text)
@@ -166,12 +166,10 @@ class MultipleChoiceOption(db.Model):
 
     x = Column(Integer, nullable=False)
     y = Column(Integer, nullable=False)
-    page = Column(Integer, nullable=False)
-
     label = Column(String, nullable=True)
 
-    problem_id = Column(Integer, ForeignKey('solution.id'), nullable=False)
-    feedback_id = Column(Integer, ForeignKey('feedback_option.id'), nullable=True)
+    problem_id = Column(Integer, ForeignKey('problem.id'), nullable=False)
+    feedback_id = Column(Integer, ForeignKey('feedback_option.id'), nullable=False)
 
 
 class ExamWidget(Widget):

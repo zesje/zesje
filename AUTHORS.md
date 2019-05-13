@@ -6,8 +6,11 @@
 * Justin van der Krieken
 * Jamy Mahabier
 * Nick Cleintuar
-* Stefan Hugtenburg
 * Hugo Kerstens
+* Stefan Hugtenburg
+* Hidde Leistra
+* Pim Otte
+* Luc Enthoven
 
 <!--
 Execute

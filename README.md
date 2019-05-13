@@ -68,7 +68,11 @@ You can run the tests by running
 
 As a test coverage tool, `pytest-cov` is used.
 
-To view test coverage, use Conda in the Zesje repo and run `python -m pytest --cov=zesje tests/`
+To view test coverage, run
+
+    yarn cov
+
+Or use Conda in the Zesje repo and run `python -m pytest --cov=zesje tests/`
 
 #### Policy errors
 

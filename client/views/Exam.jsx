@@ -348,7 +348,7 @@ class Exams extends React.Component {
                     disabled={props.disabledEdit}
                     className='input'
                     placeholder='Problem name'
-                    value={props.problem ? props.problem.name : ''}
+                    value={props.problem.name || ''}
                     onChange={(e) => {
                       props.changeProblemName(e.target.value)
                     }}

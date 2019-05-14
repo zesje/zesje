@@ -124,7 +124,7 @@ class Solution(db.Model):
     submission_id = Column(Integer, ForeignKey('submission.id'), nullable=False)  # backref submission
     problem_id = Column(Integer, ForeignKey('problem.id'), nullable=False)  # backref problem
     # if grader_id, and thus graded_by, is null, this has not yet been graded
-    f_id = Column(Integer, ForeignKey('grader.id'), nullable=True)  # backref graded_by
+    grader_id = Column(Integer, ForeignKey('grader.id'), nullable=True)  # backref graded_by
     graded_at = Column(DateTime, nullable=True)
     feedback = db.relationship('FeedbackOption', secondary=solution_feedback, backref='solutions', lazy='subquery')
     remarks = Column(Text)

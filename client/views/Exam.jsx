@@ -179,6 +179,9 @@ class Exams extends React.Component {
             })
           }}
           createNewWidget={this.createNewWidget}
+          updateExam={() => {
+            this.props.updateExam(this.props.examID)
+          }}
         />
       )
     }
@@ -271,6 +274,8 @@ class Exams extends React.Component {
     let totalNrAnswers = 12 // the upper limit for the nr of possible answer boxes
     let disabledGenerateBoxes = false
     let disabledDeleteBoxes = true
+    let isMCQProblem = false
+    let showPanelMCQ = selectedWidgetId != null // isMCQProblem && (selectedWidgetId != null)
 
     return (
       <React.Fragment>
@@ -296,8 +301,14 @@ class Exams extends React.Component {
             }))
           }}
           saveProblemName={this.saveProblemName}
+          isMCQProblem={isMCQProblem}
+          onCheckboxClick={
+            (e) => {
+              isMCQProblem = e.target.checked
+            }
+          }
         />
-        { this.state.selectedWidgetId == null ? null : (
+        { showPanelMCQ ? (
           <PanelMCQ
             totalNrAnswers={totalNrAnswers}
             disabledGenerateBoxes={disabledGenerateBoxes}
@@ -305,7 +316,7 @@ class Exams extends React.Component {
             problem={problem}
             onGenerateBoxesClick={this.generateAnswerBoxes}
           />
-        )}
+        ) : null }
         <this.PanelExamActions />
       </React.Fragment>
     )
@@ -319,14 +330,18 @@ class Exams extends React.Component {
         <p className='panel-heading'>
           Problem details
         </p>
-        <div className='panel-block'>
-          <div className='field'>
-            {selectedWidgetId === null ? (
+        {selectedWidgetId === null ? (
+          <div className='panel-block'>
+            <div className='field'>
               <p style={{ margin: '0.625em 0', minHeight: '3em' }}>
                 To create a problem, draw a rectangle on the exam.
               </p>
-            ) : (
-              <React.Fragment>
+            </div>
+          </div>
+        ) : (
+          <React.Fragment>
+            <div className='panel-block'>
+              <div className='field'>
                 <label className='label'>Name</label>
                 <div className='control'>
                   <input
@@ -342,10 +357,21 @@ class Exams extends React.Component {
                     }}
                   />
                 </div>
-              </React.Fragment>
-            )}
-          </div>
-        </div>
+              </div>
+            </div>
+            <div className='panel-block'>
+              <div className='field'>
+                <label className='label'>
+                  <input type='checkbox' defaultChecked={props.isMCQProblem} onChange={
+                    (e) => {
+                      props.onCheckboxClick(e)
+                    }} />
+                    Multiple choice question
+                </label>
+              </div>
+            </div>
+          </React.Fragment>
+        )}
         <div className='panel-block'>
           <button
             disabled={props.disabledDelete}
@@ -355,7 +381,6 @@ class Exams extends React.Component {
             Delete problem
           </button>
         </div>
-
       </nav>
     )
   }

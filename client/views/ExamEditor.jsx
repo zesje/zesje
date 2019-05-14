@@ -170,14 +170,6 @@ class ExamEditor extends React.Component {
     }
   }
 
-  // renderMCWidget(labels) {
-  //   const element = (
-  //     <div>
-  //
-  //     </div>
-  //   )
-  // }
-
   renderMCOption (label) {
     const element = (
       <div className='mcq-option widget selected'>
@@ -295,7 +287,7 @@ class ExamEditor extends React.Component {
               }).catch(err => {
                 console.log(err)
                 // update to try and get a consistent state
-                this.updateExam()
+                this.props.updateExam()
               })
             }}
             onDragStart={() => {
@@ -314,7 +306,7 @@ class ExamEditor extends React.Component {
               }).catch(err => {
                 console.log(err)
                 // update to try and get a consistent state
-                this.updateExam()
+                this.props.updateExam()
               })
             }}
           >

@@ -42,7 +42,8 @@ class Exams extends React.Component {
             id: problem.id,
             page: problem.page,
             name: problem.name,
-            graded: problem.graded
+            graded: problem.graded,
+            feedback: problem.feedback || []
           }
         }
       })
@@ -323,7 +324,6 @@ class Exams extends React.Component {
                     onBlur={(e) => {
                       props.saveProblemName(e.target.value)
                     }} />
-
                   {this.state.editActive
                     ? <EditPanel problemID={props.problem.id} feedback={this.state.feedbackToEdit}
                       goBack={this.backToFeedback} />

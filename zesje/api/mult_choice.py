@@ -91,14 +91,19 @@ class MultipleChoice(Resource):
             return dict(status=404, message='Multiple choice question does not exist.'), 404
 
         json = {
-            "id": mult_choice.id,
-            "x": mult_choice.x,
-            "y": mult_choice.y,
-            "problem_id": mult_choice.problem_id,
-            "feedback_id": mult_choice.feedback_id
+            'id': mult_choice.id,
+            'name': mult_choice.name,
+            'x': mult_choice.x,
+            'y': mult_choice.y,
+            'type': mult_choice.type,
+            'problem_id': mult_choice.problem_id
         }
 
+        # Nullable database fields
         if mult_choice.label:
             json['label'] = mult_choice.label
+
+        if mult_choice.feedback_id:
+            json['feedback_id'] = mult_choice.feedback_id
 
         return json

@@ -166,8 +166,7 @@ class MultipleChoiceOption(Widget):
     id = Column(Integer, ForeignKey('widget.id'), primary_key=True, autoincrement=True)
 
     label = Column(String, nullable=True)
-
-    problem = db.relationship('Problem', backref='mc_options', lazy=True)
+    problem_id = Column(Integer, ForeignKey('problem.id'), nullable=False)
     feedback_id = Column(Integer, ForeignKey('feedback_option.id'), nullable=True)
 
     __mapper_args__ = {

@@ -114,7 +114,7 @@ class Exams(Resource):
                                 fb.id for fb in sol.feedback
                             ],
                             'remark': sol.remarks if sol.remarks else "",
-                            'mc_option': [
+                            'mc_options': [
                                 {
                                     'id': mc_option.id,
                                     'label': mc_option.label,
@@ -123,8 +123,7 @@ class Exams(Resource):
                                     'widget': {
                                         'name': mc_option.name,
                                         'x': mc_option.x,
-                                        'y': mc_option.y,
-                                        'type': mc_option.type,
+                                        'y': mc_option.y
                                     }
                                 } for mc_option in sol.problem.mc_options
                             ]

@@ -342,7 +342,7 @@ class ExamGeneratedPdfs(Resource):
         generated_pdfs_dir = self._get_generated_exam_dir(exam_dir)
         os.makedirs(generated_pdfs_dir, exist_ok=True)
 
-        cb_data = self.get_cb_data_for_exam(exam)
+        cb_data = get_cb_data_for_exam(exam)
 
         generate_pdfs(
             exam_path,
@@ -351,7 +351,7 @@ class ExamGeneratedPdfs(Resource):
             pdf_paths,
             student_id_widget.x, student_id_widget.y,
             barcode_widget.x, barcode_widget.y,
-            cb_data=cb_data
+            cb_data
         )
 
     post_parser = reqparse.RequestParser()
@@ -501,7 +501,7 @@ class ExamPreview(Resource):
 
         exam_path = os.path.join(exam_dir, 'exam.pdf')
 
-        cb_data = self.get_cb_data_for_exam(exam)
+        cb_data = get_cb_data_for_exam(exam)
         generate_pdfs(
             exam_path,
             exam.token[:5] + 'PREVIEW',

@@ -90,7 +90,7 @@ class FeedbackPanel extends React.Component {
     const blockURI = this.props.examID + '/' + this.props.submissionID + '/' + this.props.problem.id
 
     let totalScore = 0
-    if(this.props.grading) {
+    if (this.props.grading) {
       for (let i = 0; i < this.props.solution.feedback.length; i++) {
         const probIndex = this.props.problem.feedback.findIndex(fb => fb.id === this.props.solution.feedback[i])
         if (probIndex >= 0) totalScore += this.props.problem.feedback[probIndex].score

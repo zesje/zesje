@@ -216,7 +216,7 @@ class Grade extends React.Component {
                   : <FeedbackPanel examID={exam.id} submissionID={submission.id}
                     problem={problem} solution={solution} graderID={this.props.graderID}
                     editFeedback={this.editFeedback} showTooltips={this.state.showTooltips}
-                    grading={true} updateSubmission={() => {
+                    grading updateSubmission={() => {
                       this.props.updateSubmission(this.state.sIndex)
                     }
                     } />

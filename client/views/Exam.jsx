@@ -38,7 +38,12 @@ class Exams extends React.Component {
         // keep page and name of problem as widget.problem object
         widgets[problem.widget.id] = {
           ...problem.widget,
-          problem : problem
+          problem: {
+            id: problem.id,
+            page: problem.page,
+            name: problem.name,
+            graded: problem.graded
+          }
         }
       })
 
@@ -56,7 +61,7 @@ class Exams extends React.Component {
         previewing: false
       }
     }
-      // This is a rough update for when feedback is edited.
+    // This is a rough update for when feedback is edited.
     newProps.exam.problems.forEach(problem => {
       prevState.widgets[problem.widget.id].problem.feedback = problem.feedback
     })
@@ -291,8 +296,6 @@ class Exams extends React.Component {
 
   PanelEdit = (props) => {
     const selectedWidgetId = this.state.selectedWidgetId
-    let selectedWidget = selectedWidgetId && this.state.widgets[selectedWidgetId]
-    let problem = selectedWidget && selectedWidget.problem
 
     return (
       <nav className='panel'>
@@ -322,9 +325,9 @@ class Exams extends React.Component {
                     }} />
 
                   {this.state.editActive
-                    ? <EditPanel problemID={problem.id} feedback={this.state.feedbackToEdit}
+                    ? <EditPanel problemID={props.problem.id} feedback={this.state.feedbackToEdit}
                       goBack={this.backToFeedback} />
-                    : <FeedbackPanel examID={this.props.examID} problem={problem}
+                    : <FeedbackPanel examID={this.props.examID} problem={props.problem}
                       editFeedback={this.editFeedback} showTooltips={this.state.showTooltips}
                       grading={false}
                     />}

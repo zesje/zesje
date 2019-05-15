@@ -40,7 +40,21 @@ class Exams(Resource):
         elif exam.finalized:
             return dict(status=409, message='Cannot delete a finalized exam.'), 409
         else:
-            exam.delete()
+            # Delete any scans that were wrongly uploaded to this exam
+            for scan in exam.scans:
+                db.session.delete(scan)
+
+            for widget in exam.widgets:
+                db.session.delete(widget)
+
+            for problem in exam.problems:
+                for fb_option in problem.feedback_options:
+                    db.session.delete(fb_option)
+                db.session.delete(problem.widget)
+                db.session.delete(problem)
+
+            db.session.delete(exam)
+            db.session.commit()
 
     def _get_all(self):
         """get list of uploaded exams.

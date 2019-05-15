@@ -170,6 +170,9 @@ def extract_images(filename):
 
             yield img, pagenr+1
 
+        if wand_image is not None:
+            wand_image.close()
+
 
 def extract_image_pypdf(pagenr, reader):
     """Extracts an image as an array from the designated page
@@ -248,6 +251,8 @@ def extract_image_wand(pagenr, wand_image):
     single_page.format = 'jpg'
     img_array = np.asarray(bytearray(single_page.make_blob(format="jpg")), dtype=np.uint8)
     img = Image.open(BytesIO(img_array))
+    img.load()  # Load the data into the PIL image from the Wand image
+    single_page.close()  # Then close the Wand image
     return img
 
 

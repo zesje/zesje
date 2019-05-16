@@ -39,8 +39,26 @@ class Exams(Resource):
             return dict(status=404, message='Exam does not exist.'), 404
         elif exam.finalized:
             return dict(status=409, message='Cannot delete a finalized exam.'), 409
+        elif Submission.query.filter(Submission.exam_id == exam.id).count():
+            return dict(status=500, message='Exam is not finalized but already has submissions.'), 500
         else:
-            exam.delete()
+            # Delete any scans that were wrongly uploaded to this exam
+            for scan in exam.scans:
+                db.session.delete(scan)
+
+            for widget in exam.widgets:
+                db.session.delete(widget)
+
+            for problem in exam.problems:
+                for fb_option in problem.feedback_options:
+                    db.session.delete(fb_option)
+                db.session.delete(problem.widget)
+                db.session.delete(problem)
+
+            db.session.delete(exam)
+            db.session.commit()
+
+            return dict(status=200, message="ok"), 200
 
     def _get_all(self):
         """get list of uploaded exams.

@@ -59,10 +59,4 @@ cov:
   <<: *python_packages
   stage: coverage
   script:
-    - yarn cov
-  artifacts:
-    paths:
-    - cov.xml
-    expire_in: 1 week
-
-
+    - python -m pytest --cov=zesje

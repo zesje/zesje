@@ -58,6 +58,8 @@ class Exams(Resource):
             db.session.delete(exam)
             db.session.commit()
 
+            return dict(status=200, message="ok"), 200
+
     def _get_all(self):
         """get list of uploaded exams.
 

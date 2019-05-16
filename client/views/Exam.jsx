@@ -24,7 +24,8 @@ class Exams extends React.Component {
     widgets: [],
     previewing: false,
     deletingExam: false,
-    deletingWidget: false
+    deletingWidget: false,
+    showPanelMCQ: false
   }
 
   static getDerivedStateFromProps = (newProps, prevState) => {
@@ -39,7 +40,8 @@ class Exams extends React.Component {
             id: problem.id,
             page: problem.page,
             name: problem.name,
-            graded: problem.graded
+            graded: problem.graded,
+            isMCQ: problem.mc_options.length !== 0
           }
         }
       })
@@ -243,10 +245,13 @@ class Exams extends React.Component {
   generateAnswerBoxes = (nrPossibleAnswers, labels) => {
     let width = 26
     let height = 38
-    let xPos = 50
-    let yPos = 50
+    let margin = 4
+    let xPos = this.state.widgets[this.state.selectedWidgetId].x + margin
+    let yPos = this.state.widgets[this.state.selectedWidgetId].y + margin
+
     return labels.map((label, i) => {
       const problemData = {
+        name: 'problem_test',
         page: this.state.page,
         problemID: 10
       }
@@ -274,8 +279,7 @@ class Exams extends React.Component {
     let totalNrAnswers = 12 // the upper limit for the nr of possible answer boxes
     let disabledGenerateBoxes = false
     let disabledDeleteBoxes = true
-    let isMCQProblem = false
-    let showPanelMCQ = selectedWidgetId != null // isMCQProblem && (selectedWidgetId != null)
+    let isMCQ = (problem && problem.isMCQ) || false
 
     return (
       <React.Fragment>
@@ -301,14 +305,25 @@ class Exams extends React.Component {
             }))
           }}
           saveProblemName={this.saveProblemName}
-          isMCQProblem={isMCQProblem}
+          isMCQProblem={isMCQ}
           onCheckboxClick={
-            (e) => {
-              isMCQProblem = e.target.checked
+            (checked) => {
+              this.setState(prevState => ({
+                changedWidgetId: selectedWidgetId,
+                widgets: update(prevState.widgets, {
+                  [selectedWidgetId]: {
+                    problem: {
+                      isMCQ: {
+                        $set: checked
+                      }
+                    }
+                  }
+                })
+              }))
             }
           }
         />
-        { showPanelMCQ ? (
+        { isMCQ ? (
           <PanelMCQ
             totalNrAnswers={totalNrAnswers}
             disabledGenerateBoxes={disabledGenerateBoxes}
@@ -348,7 +363,7 @@ class Exams extends React.Component {
                     disabled={props.disabledEdit}
                     className='input'
                     placeholder='Problem name'
-                    value={props.problem.name || ''}
+                    value={props.problem ? props.problem.name : ''}
                     onChange={(e) => {
                       props.changeProblemName(e.target.value)
                     }}
@@ -364,7 +379,7 @@ class Exams extends React.Component {
                 <label className='label'>
                   <input type='checkbox' defaultChecked={props.isMCQProblem} onChange={
                     (e) => {
-                      props.onCheckboxClick(e)
+                      props.onCheckboxClick(e.target.checked)
                     }} />
                     Multiple choice question
                 </label>

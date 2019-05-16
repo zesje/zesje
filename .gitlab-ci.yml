@@ -56,7 +56,8 @@ lint_py:
     - yarn lint:py
     
 cov:
-    stage: coverage
-    script:
-     - yarn cov
+  <<: *python_packages
+  stage: coverage
+  script:
+    - yarn cov
 

@@ -97,4 +97,4 @@ stats.json
 
 # pytest coverage reports
 .coverage
-coverage.xml
+cov.xml

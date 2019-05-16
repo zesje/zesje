@@ -62,7 +62,7 @@ cov:
     - yarn cov
   artifacts:
     paths:
-    - coverage.xml
+    - cov.xml
     expire_in: 1 week
 
 

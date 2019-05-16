@@ -39,6 +39,8 @@ class Exams(Resource):
             return dict(status=404, message='Exam does not exist.'), 404
         elif exam.finalized:
             return dict(status=409, message='Cannot delete a finalized exam.'), 409
+        elif Submission.query.filter(Submission.exam_id == exam.id).count():
+            return dict(status=500, message='Exam is not finalized but already has submissions.'), 500
         else:
             # Delete any scans that were wrongly uploaded to this exam
             for scan in exam.scans:

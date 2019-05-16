@@ -41,7 +41,8 @@ class Exams extends React.Component {
             page: problem.page,
             name: problem.name,
             graded: problem.graded,
-            isMCQ: problem.mc_options.length !== 0
+            isMCQ: problem.mc_options && problem.mc_options.length !== 0, // is the problem a mc question - used to display PanelMCQ
+            renderSeparately: false // render the mc options as one draggable object or as multiple draggable objects
           }
         }
       })
@@ -306,7 +307,7 @@ class Exams extends React.Component {
           }}
           saveProblemName={this.saveProblemName}
           isMCQProblem={isMCQ}
-          onCheckboxClick={
+          onMCQChange={
             (checked) => {
               this.setState(prevState => ({
                 changedWidgetId: selectedWidgetId,
@@ -328,8 +329,25 @@ class Exams extends React.Component {
             totalNrAnswers={totalNrAnswers}
             disabledGenerateBoxes={disabledGenerateBoxes}
             disabledDeleteBoxes={disabledDeleteBoxes}
+            renderSeparately={problem.renderSeparately}
             problem={problem}
             onGenerateBoxesClick={this.generateAnswerBoxes}
+            onRenderOptionChange={
+              (checked) => {
+                this.setState(prevState => ({
+                  changedWidgetId: selectedWidgetId,
+                  widgets: update(prevState.widgets, {
+                    [selectedWidgetId]: {
+                      problem: {
+                        renderSeparately: {
+                          $set: checked
+                        }
+                      }
+                    }
+                  })
+                }))
+              }
+            }
           />
         ) : null }
         <this.PanelExamActions />
@@ -377,9 +395,9 @@ class Exams extends React.Component {
             <div className='panel-block'>
               <div className='field'>
                 <label className='label'>
-                  <input type='checkbox' defaultChecked={props.isMCQProblem} onChange={
+                  <input disabled={props.disableEdit} type='checkbox' checked={props.isMCQProblem} onChange={
                     (e) => {
-                      props.onCheckboxClick(e.target.checked)
+                      props.onMCQChange(e.target.checked)
                     }} />
                     Multiple choice question
                 </label>

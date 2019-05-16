@@ -101,6 +101,17 @@ class PanelMCQ extends React.Component {
             </React.Fragment>
           </div>
         </div>
+        <div className='panel-block'>
+          <div className='field'>
+            <label className='label'>
+              <input type='checkbox' checked={this.props.renderSeparately} onChange={
+                (e) => {
+                  this.props.onRenderOptionChange(e.target.checked)
+                }} />
+                Render options separately
+            </label>
+          </div>
+        </div>
         <div className='panel-block field is-grouped'>
           <button
             disabled={this.props.disabledGenerateBoxes}

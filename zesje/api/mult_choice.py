@@ -3,7 +3,7 @@ from flask_restful import Resource, reqparse
 from ..database import db, MultipleChoiceOption
 
 
-def set_mc_data(mc_entry, x, y, problem_id, feedback_id, label):
+def set_mc_data(mc_entry, name, x, y, mc_type, problem_id, feedback_id, label):
     """Sets the data of a MultipleChoiceOption ORM object.
 
     Parameters:
@@ -15,8 +15,10 @@ def set_mc_data(mc_entry, x, y, problem_id, feedback_id, label):
     feedback_id: the feedback the MultipleChoiceOption refers to
     label: label for the checkbox that this MultipleChoiceOption represents
     """
+    mc_entry.name = name
     mc_entry.x = x
     mc_entry.y = y
+    mc_entry.type = mc_type
     mc_entry.problem_id = problem_id
     mc_entry.feedback_id = feedback_id
     mc_entry.label = label
@@ -27,6 +29,7 @@ class MultipleChoice(Resource):
     put_parser = reqparse.RequestParser()
 
     # Arguments that have to be supplied in the request body
+    put_parser.add_argument('name', type=str, required=True)
     put_parser.add_argument('x', type=int, required=True)
     put_parser.add_argument('y', type=int, required=True)
     put_parser.add_argument('label', type=str, required=False)
@@ -47,16 +50,20 @@ class MultipleChoice(Resource):
         args = self.put_parser.parse_args()
 
         # Get request arguments
+        name = args['name']
         x = args['x']
         y = args['y']
         label = args['label']
         problem_id = args['problem_id']
         feedback_id = args['feedback_id']
 
+        # TODO: Set type here or add to request?
+        mc_type = 'mcq_widget'
+
         if not id:
             # Insert new entry into the database
             mc_entry = MultipleChoiceOption()
-            set_mc_data(mc_entry, x, y, problem_id, feedback_id, label)
+            set_mc_data(mc_entry, name, x, y, mc_type, problem_id, feedback_id, label)
 
             db.session.add(mc_entry)
             db.session.commit()
@@ -69,7 +76,7 @@ class MultipleChoice(Resource):
         if not mc_entry:
             return dict(status=404, message=f"Multiple choice question with id {id} does not exist"), 404
 
-        set_mc_data(mc_entry, x, y, problem_id, feedback_id, label)
+        set_mc_data(mc_entry, name, x, y, mc_type, problem_id, feedback_id, label)
         db.session.commit()
 
         return dict(status=200, message=f'Multiple choice question with id {id} updated'), 200
@@ -88,17 +95,22 @@ class MultipleChoice(Resource):
         mult_choice = MultipleChoiceOption.query.get(id)
 
         if not mult_choice:
-            return dict(status=404, message='Multiple choice question does not exist.'), 404
+            return dict(status=404, message=f'Multiple choice question with id {id} does not exist.'), 404
 
         json = {
-            "id": mult_choice.id,
-            "x": mult_choice.x,
-            "y": mult_choice.y,
-            "problem_id": mult_choice.problem_id,
-            "feedback_id": mult_choice.feedback_id
+            'id': mult_choice.id,
+            'name': mult_choice.name,
+            'x': mult_choice.x,
+            'y': mult_choice.y,
+            'type': mult_choice.type,
+            'problem_id': mult_choice.problem_id
         }
 
+        # Nullable database fields
         if mult_choice.label:
             json['label'] = mult_choice.label
+
+        if mult_choice.feedback_id:
+            json['feedback_id'] = mult_choice.feedback_id
 
         return json

@@ -1,4 +1,4 @@
-[![coverage report](https://gitlab.kwant-project.org/works-on-my-machine/zesje/badges/%{default_branch}/coverage.svg)](https://gitlab.kwant-project.org/works-on-my-machine/zesje/commits/pytest-cov)
+[![coverage report](https://gitlab.kwant-project.org/works-on-my-machine/zesje/badges/master/coverage.svg)](https://gitlab.kwant-project.org/works-on-my-machine/zesje/commits/pytest-cov)
 
 # Welcome to Zesje
 

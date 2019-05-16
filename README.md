@@ -1,3 +1,5 @@
+[![coverage report](https://gitlab.kwant-project.org/works-on-my-machine/zesje/badges/pytest-cov/coverage.svg)](https://gitlab.kwant-project.org/works-on-my-machine/zesje/commits/pytest-cov)
+
 # Welcome to Zesje
 
 Zesje is an online grading system for written exams.
@@ -139,5 +141,3 @@ Yarn keeps track of all the client-side dependancies in `package.json` when you 
 
 ## License
 Zesje is licensed under AGPLv3, which can be found in `LICENSE`. An summary of this license with it's permissions, conditions and limitations can be found [here](https://choosealicense.com/licenses/agpl-3.0/).
-
-[![coverage report](https://gitlab.kwant-project.org/works-on-my-machine/zesje/badges/pytest-cov/coverage.svg)](https://gitlab.kwant-project.org/works-on-my-machine/zesje/commits/pytest-cov)

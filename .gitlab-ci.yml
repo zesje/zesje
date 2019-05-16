@@ -1,10 +1,10 @@
-
 # This base image can be found in 'Dockerfile'
 image: zesje/base
 
 stages:
   - build
   - test
+  - coverage
 
 # Special hidden job that is merged with JS jobs
 .node_modules: &node_modules
@@ -54,3 +54,9 @@ lint_py:
   allow_failure: true
   script:
     - yarn lint:py
+    
+cov:
+    stage: coverage
+    script:
+     - yarn cov
+

@@ -20,7 +20,6 @@ def upgrade():
                     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
                     sa.Column('x', sa.Integer(), nullable=False),
                     sa.Column('y', sa.Integer(), nullable=False),
-                    sa.Column('page', sa.Integer(), nullable=False),
                     sa.Column('label', sa.String(), nullable=True),
                     sa.Column('problem_id', sa.Integer(), nullable=False),
                     sa.Column('feedback_id', sa.Integer(), nullable=True),

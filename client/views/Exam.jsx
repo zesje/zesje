@@ -80,7 +80,9 @@ class Exams extends React.Component {
     // This might try to save the name unnecessary, but better twice than never.
     this.saveProblemName()
     // Force an update of the upper exam state, since this component does not update and use that correctly
-    this.props.updateExam(this.props.examID)
+    if (!this.state.deletingExam) {
+      this.props.updateExam(this.props.examID)
+    }
   }
 
   saveProblemName = () => {

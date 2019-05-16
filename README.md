@@ -140,4 +140,4 @@ Yarn keeps track of all the client-side dependancies in `package.json` when you 
 ## License
 Zesje is licensed under AGPLv3, which can be found in `LICENSE`. An summary of this license with it's permissions, conditions and limitations can be found [here](https://choosealicense.com/licenses/agpl-3.0/).
 
-![coverage](https://gitlab.kwant-project.org/works-on-my-machine/zesje/pytest-cov/coverage.svg?job=coverage)
+![coverage](https://gitlab.kwant-project.org/works-on-my-machine/zesje/pytest-cov/coverage.svg?job=cov)

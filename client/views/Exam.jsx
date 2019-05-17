@@ -324,17 +324,19 @@ class Exams extends React.Component {
                     onBlur={(e) => {
                       props.saveProblemName(e.target.value)
                     }} />
-                  {this.state.editActive
+                </div>
+              </React.Fragment>
+            )}
+          </div>
+        </div>
+        <div>
+          {selectedWidgetId !== null && (this.state.editActive
                     ? <EditPanel problemID={props.problem.id} feedback={this.state.feedbackToEdit}
                       goBack={this.backToFeedback} />
                     : <FeedbackPanel examID={this.props.examID} problem={props.problem}
                       editFeedback={this.editFeedback} showTooltips={this.state.showTooltips}
                       grading={false}
-                    />}
-                </div>
-              </React.Fragment>
-            )}
-          </div>
+          />)}
         </div>
         <div className='panel-block'>
           <button

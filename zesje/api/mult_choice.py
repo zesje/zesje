@@ -34,7 +34,7 @@ class MultipleChoice(Resource):
     put_parser.add_argument('y', type=int, required=True)
     put_parser.add_argument('label', type=str, required=False)
     put_parser.add_argument('problem_id', type=int, required=True)
-    put_parser.add_argument('feedback_id', type=int, required=True)
+    put_parser.add_argument('feedback_id', type=int, required=False)
 
     def put(self, id=None):
         """Adds or updates a multiple choice option to the database
@@ -68,7 +68,7 @@ class MultipleChoice(Resource):
             db.session.add(mc_entry)
             db.session.commit()
 
-            return dict(status=200, message=f'New multiple choice question with id {mc_entry.id} inserted'), 200
+            return dict(status=200, message=f'New multiple choice question with id {mc_entry.id} inserted', mc_id=mc_entry.id), 200
 
         # Update existing entry otherwise
         mc_entry = MultipleChoiceOption.query.get(id)

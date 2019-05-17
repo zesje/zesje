@@ -76,7 +76,7 @@ To view test coverage, run
 
 Or use Conda in the Zesje repo and run `python -m pytest --cov=zesje tests/`
 
-##### viewing coverage in Visual Studio Code
+##### Viewing coverage in Visual Studio Code
 
 There is a plugin called Coverage Gutter that will highlight which lines of code are covered.
 Simply install Coverage Gutter, after which a watch button appears in the colored box at the bottom of your IDE.

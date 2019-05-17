@@ -106,6 +106,10 @@ class Exams extends React.Component {
     })
   }
 
+  isProblemWidget = (widget) => {
+    return widget && this.state.widgets[widget].problem
+  }
+
   saveProblemName = () => {
     const changedWidgetId = this.state.changedWidgetId
     if (!changedWidgetId) return
@@ -330,7 +334,7 @@ class Exams extends React.Component {
           </div>
         </div>
         <div>
-          {selectedWidgetId !== null && (this.state.editActive
+          {this.isProblemWidget(selectedWidgetId) && (this.state.editActive
                     ? <EditPanel problemID={props.problem.id} feedback={this.state.feedbackToEdit}
                       goBack={this.backToFeedback} />
                     : <FeedbackPanel examID={this.props.examID} problem={props.problem}

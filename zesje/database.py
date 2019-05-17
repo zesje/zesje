@@ -98,6 +98,7 @@ class Problem(db.Model):
     exam_id = Column(Integer, ForeignKey('exam.id'), nullable=False)
     feedback_options = db.relationship('FeedbackOption', backref='problem', order_by='FeedbackOption.id', lazy=True)
     solutions = db.relationship('Solution', backref='problem', lazy=True)
+    mc_options = db.relationship('MultipleChoiceOption', backref='problem', lazy=True)
     widget = db.relationship('ProblemWidget', backref='problem', uselist=False, lazy=True)
 
 
@@ -160,18 +161,17 @@ class Widget(db.Model):
     }
 
 
-class MultipleChoiceOption(db.Model):
+class MultipleChoiceOption(Widget):
     __tablename__ = 'mc_option'
-    id = Column(Integer, primary_key=True, autoincrement=True)
-
-    x = Column(Integer, nullable=False)
-    y = Column(Integer, nullable=False)
-    page = Column(Integer, nullable=False)
+    id = Column(Integer, ForeignKey('widget.id'), primary_key=True, autoincrement=True)
 
     label = Column(String, nullable=True)
-
-    problem_id = Column(Integer, ForeignKey('solution.id'), nullable=False)
+    problem_id = Column(Integer, ForeignKey('problem.id'), nullable=False)
     feedback_id = Column(Integer, ForeignKey('feedback_option.id'), nullable=True)
+
+    __mapper_args__ = {
+        'polymorphic_identity': 'mcq_widget'
+    }
 
 
 class ExamWidget(Widget):

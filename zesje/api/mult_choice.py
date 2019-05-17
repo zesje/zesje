@@ -1,6 +1,6 @@
 from flask_restful import Resource, reqparse
 
-from ..database import db, MultipleChoiceOption
+from ..database import db, MultipleChoiceOption, FeedbackOption
 
 
 def set_mc_data(mc_entry, name, x, y, mc_type, problem_id, feedback_id, label):
@@ -61,6 +61,11 @@ class MultipleChoice(Resource):
         mc_type = 'mcq_widget'
 
         if not id:
+            # Insert new feedback option
+            new_feedback_option = FeedbackOption(problem_id=problem_id, text='')
+            db.session.add(new_feedback_option)
+            db.session.commit()
+
             # Insert new entry into the database
             mc_entry = MultipleChoiceOption()
             set_mc_data(mc_entry, name, x, y, mc_type, problem_id, feedback_id, label)
@@ -68,7 +73,9 @@ class MultipleChoice(Resource):
             db.session.add(mc_entry)
             db.session.commit()
 
-            return dict(status=200, message=f'New multiple choice question with id {mc_entry.id} inserted'), 200
+            return dict(status=200, mult_choice_id=mc_entry.id, feedback_id=new_feedback_option.id,
+                        message=f'New multiple choice question with id {mc_entry.id} inserted. '
+                        + f'New feedback option with id {new_feedback_option.id} inserted.'), 200
 
         # Update existing entry otherwise
         mc_entry = MultipleChoiceOption.query.get(id)
@@ -103,14 +110,12 @@ class MultipleChoice(Resource):
             'x': mult_choice.x,
             'y': mult_choice.y,
             'type': mult_choice.type,
-            'problem_id': mult_choice.problem_id
+            'problem_id': mult_choice.problem_id,
+            'feedback_id': mult_choice.feedback_id
         }
 
         # Nullable database fields
         if mult_choice.label:
             json['label'] = mult_choice.label
-
-        if mult_choice.feedback_id:
-            json['feedback_id'] = mult_choice.feedback_id
 
         return json

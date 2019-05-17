@@ -119,7 +119,7 @@ class PanelMCQ extends React.Component {
             onClick={() => {
               let npa = this.state.nrPossibleAnswers
               let labels = this.generateLabels(npa)
-              this.props.onGenerateBoxesClick(npa, labels)
+              this.props.onGenerateBoxesClick(labels)
             }}
           >
             Generate
@@ -128,7 +128,7 @@ class PanelMCQ extends React.Component {
             disabled={this.props.disabledDeleteBoxes}
             className='button is-danger is-fullwidth'
             onClick={() => {
-              alert('Not yet implemented.')
+              console.log('Delete button not yet implemented.')
             }}
           >
             Delete

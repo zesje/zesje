@@ -41,6 +41,7 @@ class Exams extends React.Component {
             page: problem.page,
             name: problem.name,
             graded: problem.graded,
+            mc_options: problem.mc_options,
             isMCQ: problem.mc_options && problem.mc_options.length !== 0, // is the problem a mc question - used to display PanelMCQ
             renderSeparately: false // render the mc options as one draggable object or as multiple draggable objects
           }
@@ -182,6 +183,7 @@ class Exams extends React.Component {
             })
           }}
           createNewWidget={this.createNewWidget}
+          updateMCOWidget={this.updateMCOWidget}
           updateExam={() => {
             this.props.updateExam(this.props.examID)
           }}
@@ -243,30 +245,71 @@ class Exams extends React.Component {
     })
   }
 
-  generateAnswerBoxes = (nrPossibleAnswers, labels) => {
-    let width = 26
-    let height = 38
-    let margin = 4
-    let xPos = this.state.widgets[this.state.selectedWidgetId].x + margin
-    let yPos = this.state.widgets[this.state.selectedWidgetId].y + margin
+  /**
+   * This method creates a widget object and adds it to the corresponding problem
+   * @param data
+   */
+  createNewMCOWidget = (data) => {
+    this.setState((prevState) => {
+      return {
+        widgets: update(prevState.widgets, {
+          [this.state.selectedWidgetId]: {
+            problem: {
+              mc_options: {
+                $push: [data]
+              }
+            }
+          }
+        })
+      }
+    })
+  }
+
+  updateMCOWidget = (mc_option, data) => {
+    // not yet implemented
+  }
+
+  deleteMCOWidget = (data) => {
+    // not yet implemented
+  }
+
+  /**
+   * This method generates MC options by making the right calls to the api and creating
+   * the widget object in the mc_options array of the corresponding problem
+   * @param labels an array of labels, one label for each option that must be generated
+   * @returns {*}
+   */
+  generateAnswerBoxes = (labels) => {
+    let problemWidget = this.state.widgets[this.state.selectedWidgetId]
+    // position the new mc option widget inside the problem widget
+    let xPos = problemWidget.x + 2
+    let yPos = problemWidget.y + 2
 
     return labels.map((label, i) => {
-      const problemData = {
-        name: 'problem_test',
-        page: this.state.page,
-        problemID: 10
+      let data = {
+        'label': label,
+        'problem_id': problemWidget.problem.id,
+        'feedback_id': null,
+        'widget': {
+          'name': 'mc_option_' + label,
+          'x': xPos + i * 30,
+          'y': yPos,
+          'type': 'mcq_widget'
+        }
       }
-      const widgetData = {
-        x: xPos + i * width,
-        y: yPos,
-        id: 50 + i,
-        name: 'mcq_widget',
-        label: label,
-        width: width,
-        height: height,
-        problem: problemData
-      }
-      this.createNewWidget(widgetData)
+
+      this.createNewMCOWidget(data)
+      // const formData = new window.FormData()
+      // formData.append('name', data.name)
+      // formData.append('x', data.widget.x)
+      // formData.append('y', data.widget.y)
+      // formData.append('problem_id', data.problem_id)
+      // formData.append('label', data.label)
+      // api.put('mult-choice/', formData).then(result => {
+      //   this.createNewMCOWidget(data)
+      // }).catch(err => {
+      //   console.log(err)
+      // })
     })
   }
 
@@ -278,8 +321,8 @@ class Exams extends React.Component {
     let isGraded = problem && problem.graded
     let widgetDeleteDisabled = widgetEditDisabled || isGraded
     let totalNrAnswers = 12 // the upper limit for the nr of possible answer boxes
-    let disabledGenerateBoxes = false
-    let disabledDeleteBoxes = true
+    let disabledGenerateBoxes = (problem && problem.mc_options.length > 0) || false
+    let disabledDeleteBoxes = !disabledGenerateBoxes
     let isMCQ = (problem && problem.isMCQ) || false
 
     return (
@@ -395,7 +438,7 @@ class Exams extends React.Component {
             <div className='panel-block'>
               <div className='field'>
                 <label className='label'>
-                  <input disabled={props.disableEdit} type='checkbox' checked={props.isMCQProblem} onChange={
+                  <input disabled={props.disabledEdit} type='checkbox' checked={props.isMCQProblem} onChange={
                     (e) => {
                       props.onMCQChange(e.target.checked)
                     }} />

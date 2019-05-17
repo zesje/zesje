@@ -153,6 +153,7 @@ class Exams(Resource):
                         'y': prob.widget.y,
                         'width': prob.widget.width,
                         'height': prob.widget.height,
+                        'type': prob.widget.type
                     },
                     'graded': any([sol.graded_by is not None for sol in prob.solutions]),
                     'mc_options': [
@@ -164,7 +165,8 @@ class Exams(Resource):
                             'widget': {
                                 'name': mc_option.name,
                                 'x': mc_option.x,
-                                'y': mc_option.y
+                                'y': mc_option.y,
+                                'type': mc_option.type
                             }
                         } for mc_option in prob.mc_options
                     ]
@@ -176,6 +178,7 @@ class Exams(Resource):
                     'name': widget.name,
                     'x': widget.x,
                     'y': widget.y,
+                    'type': widget.type
                 } for widget in exam.widgets  # Sorted by widget.id
             ],
             'finalized': exam.finalized,

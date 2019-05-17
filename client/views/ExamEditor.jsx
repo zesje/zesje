@@ -170,150 +170,276 @@ class ExamEditor extends React.Component {
     }
   }
 
-  renderMCOption (label) {
-    const element = (
-      <div className='mcq-option widget selected'>
-        <div className='mcq-option-label'>
-          {label}
+  /**
+   * Render one option separately
+   * @param option object containing data about the option
+   * @param widget the problem widget to which the mc options correspond
+   * @returns {*}
+   */
+  renderMCOption (option, widget) {
+    let width = 26
+    let height = 38
+    let enableResizing = false
+    const isSelected = widget.id === this.props.selectedWidgetId
+    return (
+      <ResizeAndDrag
+        key={'widget_' + widget.id + '_' + option.label}
+        bounds={'[data-key="widget_' + widget.id + '"]'}
+        minWidth={width}
+        minHeight={height}
+        enableResizing={{
+          bottom: enableResizing,
+          bottomLeft: enableResizing,
+          bottomRight: enableResizing,
+          left: enableResizing,
+          right: enableResizing,
+          top: enableResizing,
+          topLeft: enableResizing,
+          topRight: enableResizing
+        }}
+        position={{
+          x: option.widget.x,
+          y: option.widget.y
+        }}
+        size={{
+          width: width,
+          height: height
+        }}
+        onDragStart={() => {
+          this.props.selectWidget(widget.id)
+        }}
+        onDragStop={(e, data) => {
+          this.props.updateMCOWidget(option, {
+            x: { $set: Math.round(data.x) },
+            y: { $set: Math.round(data.y) }
+          })
+          api.patch('widgets/' + widget.id, {
+            x: Math.round(data.x),
+            y: Math.round(data.y)
+          }).then(() => {
+            // ok
+          }).catch(err => {
+            console.log(err)
+            // update to try and get a consistent state
+            this.props.updateExam()
+          })
+        }}
+      >
+        <div className={isSelected ? 'mcq-option widget selected' : 'mcq-option widget '}>
+          <div className='mcq-option-label'>
+            {option.label}
+          </div>
+          <img className='mcq-box' src={answerBoxImage} />
         </div>
-        <img className='mcq-box' src={answerBoxImage} />
-      </div>
+      </ResizeAndDrag>
     )
-
-    return element
   }
 
+  /**
+   * This function renders a group of options into one draggable widget
+   * @returns {*}
+   */
+  renderMCWidget = () => {
+    return null // not yet implemented
+  }
+
+  /**
+   * Render problem widget and the mc options that correspond to the problem
+   * @param widget the corresponding widget object from the db
+   * @returns {Array}
+   */
+  renderProblemWidget = (widget) => {
+    // Only render when numPage is set
+    if (widget.problem.page !== this.props.page) return []
+
+    let enableResizing = true
+    const isSelected = widget.id === this.props.selectedWidgetId
+    let minWidth = this.props.problemMinWidth
+    let minHeight = this.props.problemMinHeight
+    let elementList = [(
+      <ResizeAndDrag
+        key={'widget_' + widget.id}
+        data-key={'widget_' + widget.id}
+        bounds='parent'
+        minWidth={minWidth}
+        minHeight={minHeight}
+        enableResizing={{
+          bottom: enableResizing,
+          bottomLeft: enableResizing,
+          bottomRight: enableResizing,
+          left: enableResizing,
+          right: enableResizing,
+          top: enableResizing,
+          topLeft: enableResizing,
+          topRight: enableResizing
+        }}
+        position={{
+          x: widget.x,
+          y: widget.y
+        }}
+        size={{
+          width: widget.width,
+          height: widget.height
+        }}
+        onResize={(e, direction, ref, delta, position) => {
+          this.props.updateWidget(widget.id, {
+            width: { $set: ref.offsetWidth },
+            height: { $set: ref.offsetHeight },
+            x: { $set: Math.round(position.x) },
+            y: { $set: Math.round(position.y) }
+          })
+        }}
+        onResizeStop={(e, direction, ref, delta, position) => {
+          api.patch('widgets/' + widget.id, {
+            x: Math.round(position.x),
+            y: Math.round(position.y),
+            width: ref.offsetWidth,
+            height: ref.offsetHeight
+          }).then(() => {
+            // ok
+          }).catch(err => {
+            console.log(err)
+            // update to try and get a consistent state
+            this.props.updateExam()
+          })
+        }}
+        onDragStart={() => {
+          this.props.selectWidget(widget.id)
+        }}
+        onDragStop={(e, data) => {
+          this.props.updateWidget(widget.id, {
+            x: { $set: Math.round(data.x) },
+            y: { $set: Math.round(data.y) }
+          })
+          api.patch('widgets/' + widget.id, {
+            x: Math.round(data.x),
+            y: Math.round(data.y)
+          }).then(() => {
+            // ok
+          }).catch(err => {
+            console.log(err)
+            // update to try and get a consistent state
+            this.props.updateExam()
+          })
+        }}
+      >
+        <div
+          className={isSelected ? 'widget selected' : 'widget'}
+        />
+      </ResizeAndDrag>
+    )]
+
+    // depending on the rendering option, render the mc_options separately or in a single widget
+    if (widget.problem.renderSeparately) {
+      elementList = elementList.concat(widget.problem.mc_options.map((option) => {
+        return this.renderMCOption(option, widget)
+      }))
+    } else {
+      elementList.push(this.renderMCWidget(widget.problem.mc_options))
+    }
+
+    return elementList
+  }
+
+  /**
+   * Render exam widgets.
+   * @param widget the corresponding widget object from the db
+   * @returns {Array}
+   */
+  renderExamWidget = (widget) => {
+    if (this.props.finalized) return []
+
+    let minWidth, minHeight
+    let enableResizing = false
+    const isSelected = widget.id === this.props.selectedWidgetId
+    let image
+    if (widget.name === 'barcode_widget') {
+      minWidth = barcodeExampleImageSize.width
+      minHeight = barcodeExampleImageSize.height
+      image = barcodeExampleImage
+    } else if (this.props.page === 0 && widget.name === 'student_id_widget') {
+      minWidth = studentIdExampleImageSize.width
+      minHeight = studentIdExampleImageSize.height
+      image = studentIdExampleImage
+    } else {
+      return []
+    }
+
+    return [(
+      <ResizeAndDrag
+        key={'widget_' + widget.id}
+        bounds='parent'
+        minWidth={minWidth}
+        minHeight={minHeight}
+        enableResizing={{
+          bottom: enableResizing,
+          bottomLeft: enableResizing,
+          bottomRight: enableResizing,
+          left: enableResizing,
+          right: enableResizing,
+          top: enableResizing,
+          topLeft: enableResizing,
+          topRight: enableResizing
+        }}
+        position={{
+          x: widget.x,
+          y: widget.y
+        }}
+        size={{
+          width: widget.width,
+          height: widget.height
+        }}
+        onDragStart={() => {
+          this.props.selectWidget(widget.id)
+        }}
+        onDragStop={(e, data) => {
+          this.props.updateWidget(widget.id, {
+            x: { $set: Math.round(data.x) },
+            y: { $set: Math.round(data.y) }
+          })
+          api.patch('widgets/' + widget.id, {
+            x: Math.round(data.x),
+            y: Math.round(data.y)
+          }).then(() => {
+            // ok
+          }).catch(err => {
+            console.log(err)
+            // update to try and get a consistent state
+            this.props.updateExam()
+          })
+        }}
+      >
+        <div
+          className={isSelected ? 'widget selected' : 'widget'}
+          style={{
+            boxSizing: 'content-box',
+            backgroundImage: 'url(' + image + ')',
+            backgroundRepeat: 'no-repeat'
+          }}
+        />
+      </ResizeAndDrag>
+    )]
+  }
+
+  /**
+   * Render all the widgets by calling the right rendering function for each widget type
+   * @returns {Array}
+   */
   renderWidgets = () => {
     // Only render when numPage is set
     if (this.props.numPages !== null && this.props.widgets) {
-      const widgets = this.props.widgets.filter(widget => {
-        if (widget.name === 'student_id_widget' ||
-          widget.name === 'barcode_widget' ||
-          widget.name === 'mcq_widget') {
-          return !this.props.finalized
-        } else if (widget.problem) {
-          return widget.problem.page === this.props.page
-        } else {
-          return true
+      let widgets = this.props.widgets
+      let elementList = []
+
+      widgets.forEach((widget) => {
+        if (widget.type === 'exam_widget') {
+          elementList = elementList.concat(this.renderExamWidget(widget))
+        } else if (widget.type === 'problem_widget') {
+          elementList = elementList.concat(this.renderProblemWidget(widget))
         }
       })
 
-      let minWidth
-      let minHeight
-      let view
-      let enableResizing
-      return widgets.map((widget) => {
-        const isSelected = widget.id === this.props.selectedWidgetId
-
-        if (widget.name === 'mcq_widget') {
-          enableResizing = false
-          minHeight = widget.height
-          minWidth = widget.width
-          view = this.renderMCOption(widget.label)
-        } else if (widget.problem) {
-          minWidth = this.props.problemMinWidth
-          minHeight = this.props.problemMinHeight
-          view = (
-            <div
-              className={isSelected ? 'widget selected' : 'widget'}
-            />
-          )
-          enableResizing = true
-        } else {
-          let image
-          if (widget.name === 'barcode_widget') {
-            minWidth = barcodeExampleImageSize.width
-            minHeight = barcodeExampleImageSize.height
-            image = barcodeExampleImage
-          } else if (this.props.page === 0 && widget.name === 'student_id_widget') {
-            minWidth = studentIdExampleImageSize.width
-            minHeight = studentIdExampleImageSize.height
-            image = studentIdExampleImage
-          } else {
-            return null
-          }
-          view = (
-            <div
-              className={isSelected ? 'widget selected' : 'widget'}
-              style={{
-                boxSizing: 'content-box',
-                backgroundImage: 'url(' + image + ')',
-                backgroundRepeat: 'no-repeat'
-              }}
-            />
-          )
-          enableResizing = false
-        }
-        return (
-          <ResizeAndDrag
-            key={'widget_' + widget.id}
-            bounds='parent'
-            minWidth={minWidth}
-            minHeight={minHeight}
-            enableResizing={{
-              bottom: enableResizing,
-              bottomLeft: enableResizing,
-              bottomRight: enableResizing,
-              left: enableResizing,
-              right: enableResizing,
-              top: enableResizing,
-              topLeft: enableResizing,
-              topRight: enableResizing
-            }}
-            position={{
-              x: widget.x,
-              y: widget.y
-            }}
-            size={{
-              width: widget.width,
-              height: widget.height
-            }}
-            onResize={(e, direction, ref, delta, position) => {
-              this.props.updateWidget(widget.id, {
-                width: { $set: ref.offsetWidth },
-                height: { $set: ref.offsetHeight },
-                x: { $set: Math.round(position.x) },
-                y: { $set: Math.round(position.y) }
-              })
-            }}
-            onResizeStop={(e, direction, ref, delta, position) => {
-              api.patch('widgets/' + widget.id, {
-                x: Math.round(position.x),
-                y: Math.round(position.y),
-                width: ref.offsetWidth,
-                height: ref.offsetHeight
-              }).then(() => {
-                // ok
-              }).catch(err => {
-                console.log(err)
-                // update to try and get a consistent state
-                this.props.updateExam()
-              })
-            }}
-            onDragStart={() => {
-              this.props.selectWidget(widget.id)
-            }}
-            onDragStop={(e, data) => {
-              this.props.updateWidget(widget.id, {
-                x: { $set: Math.round(data.x) },
-                y: { $set: Math.round(data.y) }
-              })
-              api.patch('widgets/' + widget.id, {
-                x: Math.round(data.x),
-                y: Math.round(data.y)
-              }).then(() => {
-                // ok
-              }).catch(err => {
-                console.log(err)
-                // update to try and get a consistent state
-                this.props.updateExam()
-              })
-            }}
-          >
-            {view}
-          </ResizeAndDrag>
-        )
-      })
+      return elementList
     }
   }
 

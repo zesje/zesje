@@ -10,7 +10,7 @@ from werkzeug.datastructures import FileStorage
 from sqlalchemy.orm import selectinload
 
 from ..pdf_generation import generate_pdfs, output_pdf_filename_format, join_pdfs, page_is_size
-from ..database import db, Exam, ExamWidget, Submission, MultipleChoiceOption
+from ..database import db, Exam, ExamWidget, Submission
 
 PAGE_FORMATS = {
     "A4": (595.276, 841.89),
@@ -44,12 +44,10 @@ def get_cb_data_for_exam(exam):
         page: page number
         label: checkbox label
     """
-    problem_ids = [problem.id for problem in exam.problems]
-
-    cb_data = MultipleChoiceOption.query.filter(MultipleChoiceOption.problem_id.in_(problem_ids)).all()
-
-    # Map to tuples with (x pos, y pos, page number, label)
-    cb_data = [(cb.x, cb.y, cb.page, cb.label) for cb in cb_data]
+    cb_data = []
+    for problem in exam.problems:
+        page = problem.widget.page
+        cb_data += [(cb.x, cb.y, page, cb.label) for cb in problem.mc_options]
 
     return cb_data
 

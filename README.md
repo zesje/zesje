@@ -76,6 +76,14 @@ To view test coverage, run
 
 Or use Conda in the Zesje repo and run `python -m pytest --cov=zesje tests/`
 
+##### viewing coverage in Visual Studio Code
+
+There is a plugin called Coverage Gutter that will highlight which lines of code are covered.
+Simply install Coverage Gutter, after which a watch button appears in the colored box at the bottom of your IDE.
+When you click watch, green and red lines appear next to the line numbers indicating if the code is covered.
+
+Coverage Gutter uses the XML which is produced by `yarn cov`, called `cov.xml`. This file should be located in the main folder. 
+
 #### Policy errors
 
 If you encounter PolicyErrors related to ImageMagick in any of the previous steps, please

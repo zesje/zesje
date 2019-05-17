@@ -269,7 +269,7 @@ def _generate_overlay(canv, pagesize, exam_id, copy_num, num_pages, id_grid_x,
     generate_id_grid(canv, id_grid_x, id_grid_y)
 
     # create index for list of checkbox data and sort the data on page
-    if not(cb_data is None):
+    if cb_data:
         index = 0
         max_index = len(cb_data)
         cb_data = sorted(cb_data, key=lambda tup: tup[2])

@@ -22,7 +22,7 @@ def upgrade():
                     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
                     sa.Column('label', sa.String(), nullable=True),
                     sa.Column('problem_id', sa.Integer(), nullable=False),
-                    sa.Column('feedback_id', sa.Integer(), nullable=True),
+                    sa.Column('feedback_id', sa.Integer(), nullable=False),
                     sa.ForeignKeyConstraint(['feedback_id'], ['feedback_option.id'], ),
                     sa.ForeignKeyConstraint(['id'], ['widget.id'], ),
                     sa.ForeignKeyConstraint(['problem_id'], ['problem.id'], ),

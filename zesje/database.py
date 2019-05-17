@@ -167,7 +167,7 @@ class MultipleChoiceOption(Widget):
 
     label = Column(String, nullable=True)
     problem_id = Column(Integer, ForeignKey('problem.id'), nullable=False)
-    feedback_id = Column(Integer, ForeignKey('feedback_option.id'), nullable=True)
+    feedback_id = Column(Integer, ForeignKey('feedback_option.id'), nullable=False)
 
     __mapper_args__ = {
         'polymorphic_identity': 'mcq_widget'

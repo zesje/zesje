@@ -3,7 +3,7 @@ from flask_restful import Resource, reqparse
 from ..database import db, MultipleChoiceOption, FeedbackOption
 
 
-def set_mc_data(mc_entry, name, x, y, mc_type, problem_id, feedback_id, label):
+def set_mc_data(mc_entry, name, x, y, mc_type, feedback_id, label):
     """Sets the data of a MultipleChoiceOption ORM object.
 
     Parameters:
@@ -11,7 +11,6 @@ def set_mc_data(mc_entry, name, x, y, mc_type, problem_id, feedback_id, label):
     mc_entry: The MultipleChoiceOption object
     x: the x-position of the MultipleChoiceOption object.
     y: the y-position of the MultipleChoiceOption object.
-    problem_id: the problem the MultipleChoiceOption refers to
     feedback_id: the feedback the MultipleChoiceOption refers to
     label: label for the checkbox that this MultipleChoiceOption represents
     """
@@ -19,7 +18,6 @@ def set_mc_data(mc_entry, name, x, y, mc_type, problem_id, feedback_id, label):
     mc_entry.x = x
     mc_entry.y = y
     mc_entry.type = mc_type
-    mc_entry.problem_id = problem_id
     mc_entry.feedback_id = feedback_id
     mc_entry.label = label
 
@@ -72,7 +70,7 @@ class MultipleChoice(Resource):
 
             # Insert new entry into the database
             mc_entry = MultipleChoiceOption()
-            set_mc_data(mc_entry, name, x, y, mc_type, problem_id, feedback_id, label)
+            set_mc_data(mc_entry, name, x, y, mc_type, feedback_id, label)
 
             db.session.add(mc_entry)
             db.session.commit()
@@ -114,7 +112,6 @@ class MultipleChoice(Resource):
             'x': mult_choice.x,
             'y': mult_choice.y,
             'type': mult_choice.type,
-            'problem_id': mult_choice.problem_id,
             'feedback_id': mult_choice.feedback_id
         }
 

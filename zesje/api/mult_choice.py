@@ -88,7 +88,7 @@ class MultipleChoice(Resource):
         if not mc_entry:
             return dict(status=404, message=f"Multiple choice question with id {id} does not exist"), 404
 
-        set_mc_data(mc_entry, name, x, y, mc_type, problem_id, feedback_id, label)
+        set_mc_data(mc_entry, name, x, y, mc_type, feedback_id, label)
         db.session.commit()
 
         return dict(status=200, message=f'Multiple choice question with id {id} updated'), 200

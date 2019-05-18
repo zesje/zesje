@@ -265,8 +265,30 @@ class Exams extends React.Component {
     })
   }
 
-  updateMCOWidget = (mc_option, data) => {
-    // not yet implemented
+  /**
+   * This method updates
+   * @param option
+   * @param widget
+   * @param data
+   */
+  updateMCOWidget = (mcOption, widget, data) => {
+    let index = widget.problem.mc_options.findIndex(
+      (option) => { return option.id && option.id === mcOption.id }
+    )
+
+    this.setState((prevState) => {
+      return {
+        widgets: update(prevState.widgets, {
+          [widget.id]: {
+            problem: {
+              mc_options: {
+                [index]: data
+              }
+            }
+          }
+        })
+      }
+    })
   }
 
   deleteMCOWidget = (data) => {
@@ -298,18 +320,19 @@ class Exams extends React.Component {
         }
       }
 
-      this.createNewMCOWidget(data)
-      // const formData = new window.FormData()
-      // formData.append('name', data.name)
-      // formData.append('x', data.widget.x)
-      // formData.append('y', data.widget.y)
-      // formData.append('problem_id', data.problem_id)
-      // formData.append('label', data.label)
-      // api.put('mult-choice/', formData).then(result => {
-      //   this.createNewMCOWidget(data)
-      // }).catch(err => {
-      //   console.log(err)
-      // })
+      // this.createNewMCOWidget(data)
+      const formData = new window.FormData()
+      formData.append('name', data.widget.name)
+      formData.append('x', data.widget.x)
+      formData.append('y', data.widget.y)
+      formData.append('problem_id', data.problem_id)
+      formData.append('label', data.label)
+      api.put('mult-choice/', formData).then(result => {
+        data.id = result.mc_id
+        this.createNewMCOWidget(data)
+      }).catch(err => {
+        console.log(err)
+      })
     })
   }
 

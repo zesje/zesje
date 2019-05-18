@@ -87,13 +87,17 @@ class ExamEditor extends React.Component {
       if (selectionBox.width >= this.props.problemMinWidth && selectionBox.height >= this.props.problemMinHeight) {
         const problemData = {
           name: 'New problem', // TODO: Name
-          page: this.props.page
+          page: this.props.page,
+          mc_options: [],
+          isMCQ: false,
+          renderSeparately: false
         }
         const widgetData = {
           x: Math.round(selectionBox.left),
           y: Math.round(selectionBox.top),
           width: Math.round(selectionBox.width),
-          height: Math.round(selectionBox.height)
+          height: Math.round(selectionBox.height),
+          type: 'problem_widget'
         }
         const formData = new window.FormData()
         formData.append('exam_id', this.props.examID)
@@ -209,11 +213,13 @@ class ExamEditor extends React.Component {
           this.props.selectWidget(widget.id)
         }}
         onDragStop={(e, data) => {
-          this.props.updateMCOWidget(option, {
-            x: { $set: Math.round(data.x) },
-            y: { $set: Math.round(data.y) }
+          this.props.updateMCOWidget(option, widget,{
+            'widget': {
+              x: { $set: Math.round(data.x) },
+              y: { $set: Math.round(data.y) }
+            }
           })
-          api.patch('widgets/' + widget.id, {
+          api.patch('widgets/' + option.id, {
             x: Math.round(data.x),
             y: Math.round(data.y)
           }).then(() => {

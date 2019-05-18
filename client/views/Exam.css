@@ -4,7 +4,7 @@
 }
 
 div.mcq-widget {
-    display:inline-block;
+    display:inline-flex;
 }
 
 div.mcq-option {

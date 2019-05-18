@@ -90,7 +90,6 @@ class ExamEditor extends React.Component {
           page: this.props.page,
           mc_options: [],
           isMCQ: false,
-          renderSeparately: false
         }
         const widgetData = {
           x: Math.round(selectionBox.left),
@@ -175,19 +174,31 @@ class ExamEditor extends React.Component {
   }
 
   /**
-   * Render one option separately
-   * @param option object containing data about the option
-   * @param widget the problem widget to which the mc options correspond
+   * This method is called when the position of a widget has changed. It informs the server about the relocation.
+   * @param widget the widget that was relocated
+   * @param data  the new location
+   */
+  updateWidgetPositionDB = (widget, data) => {
+    api.patch('widgets/' + widget.id, data).then(() => {
+      // ok
+    }).catch(err => {
+      console.log(err)
+      // update to try and get a consistent state
+      this.props.updateExam()
+    })
+  }
+  /**
+   * This function renders a group of options into one draggable widget
    * @returns {*}
    */
-  renderMCOption (option, widget) {
-    let width = 26
+  renderMCWidget = (widget) => {
+    let width = 26 * widget.problem.mc_options.length
     let height = 38
     let enableResizing = false
     const isSelected = widget.id === this.props.selectedWidgetId
     return (
       <ResizeAndDrag
-        key={'widget_' + widget.id + '_' + option.label}
+        key={'widget_mc_' + widget.id}
         bounds={'[data-key="widget_' + widget.id + '"]'}
         minWidth={width}
         minHeight={height}
@@ -202,8 +213,8 @@ class ExamEditor extends React.Component {
           topRight: enableResizing
         }}
         position={{
-          x: option.widget.x,
-          y: option.widget.y
+          x: widget.problem.mc_options[0].widget.x,
+          y: widget.problem.mc_options[0].widget.y
         }}
         size={{
           width: width,
@@ -213,40 +224,35 @@ class ExamEditor extends React.Component {
           this.props.selectWidget(widget.id)
         }}
         onDragStop={(e, data) => {
-          this.props.updateMCOWidget(option, widget,{
-            'widget': {
-              x: { $set: Math.round(data.x) },
-              y: { $set: Math.round(data.y) }
-            }
-          })
-          api.patch('widgets/' + option.id, {
+          this.props.updateMCWidgetPosition(widget, {
             x: Math.round(data.x),
             y: Math.round(data.y)
-          }).then(() => {
-            // ok
-          }).catch(err => {
-            console.log(err)
-            // update to try and get a consistent state
-            this.props.updateExam()
           })
+
+          widget.problem.mc_options.forEach(
+            (option, i) => {
+              let newData = {
+                x: Math.round(data.x),
+                y: Math.round(data.y) + i * 26
+              }
+              this.updateWidgetPositionDB(option, newData)
+            })
         }}
       >
-        <div className={isSelected ? 'mcq-option widget selected' : 'mcq-option widget '}>
-          <div className='mcq-option-label'>
-            {option.label}
-          </div>
-          <img className='mcq-box' src={answerBoxImage} />
+        <div className={isSelected ? 'mcq-widget widget selected' : 'mcq-widget widget '}>
+          {widget.problem.mc_options.map((option) => {
+            return (
+              <div key={'widget_mco_' + option.id} className='mcq-option'>
+                <div className='mcq-option-label'>
+                  {option.label}
+                </div>
+                <img className='mcq-box' src={answerBoxImage} />
+              </div>
+            )
+          })}
         </div>
       </ResizeAndDrag>
     )
-  }
-
-  /**
-   * This function renders a group of options into one draggable widget
-   * @returns {*}
-   */
-  renderMCWidget = () => {
-    return null // not yet implemented
   }
 
   /**
@@ -336,12 +342,8 @@ class ExamEditor extends React.Component {
     )]
 
     // depending on the rendering option, render the mc_options separately or in a single widget
-    if (widget.problem.renderSeparately) {
-      elementList = elementList.concat(widget.problem.mc_options.map((option) => {
-        return this.renderMCOption(option, widget)
-      }))
-    } else {
-      elementList.push(this.renderMCWidget(widget.problem.mc_options))
+    if (widget.problem.mc_options.length > 0) {
+      elementList.push(this.renderMCWidget(widget))
     }
 
     return elementList

@@ -43,7 +43,6 @@ class Exams extends React.Component {
             graded: problem.graded,
             mc_options: problem.mc_options,
             isMCQ: problem.mc_options && problem.mc_options.length !== 0, // is the problem a mc question - used to display PanelMCQ
-            renderSeparately: false // render the mc options as one draggable object or as multiple draggable objects
           }
         }
       })
@@ -183,7 +182,7 @@ class Exams extends React.Component {
             })
           }}
           createNewWidget={this.createNewWidget}
-          updateMCOWidget={this.updateMCOWidget}
+          updateMCWidgetPosition={this.updateMCWidgetPosition}
           updateExam={() => {
             this.props.updateExam(this.props.examID)
           }}
@@ -266,33 +265,36 @@ class Exams extends React.Component {
   }
 
   /**
-   * This method updates
-   * @param option
-   * @param widget
-   * @param data
+   * This method is called when the mcq widget is moved. The positions of the options are stored separately and they
+  * all need to be updated
+   * @param widget the problem widget that includes the mcq widget
+   * @param data the new location of the mcq widget (the location of the top-left corner)
    */
-  updateMCOWidget = (mcOption, widget, data) => {
-    let index = widget.problem.mc_options.findIndex(
-      (option) => { return option.id && option.id === mcOption.id }
-    )
-
-    this.setState((prevState) => {
+  updateMCWidgetPosition = (widget, data) => {
+    let newMCO = widget.problem.mc_options.map((option, i) => {
       return {
-        widgets: update(prevState.widgets, {
-          [widget.id]: {
-            problem: {
-              mc_options: {
-                [index]: data
-              }
-            }
+        'widget': {
+          'x': {
+            $set: data.x + i * 26
+          },
+          'y': {
+            // each mc option needs to be positioned next to the previous option and should not overlap it
+            $set: data.y
           }
-        })
+        }
       }
     })
-  }
 
-  deleteMCOWidget = (data) => {
-    // not yet implemented
+    // update the state with the new locations
+    this.setState(prevState => ({
+      widgets: update(prevState.widgets, {
+        [widget.id]: {
+          'problem': {
+            'mc_options': newMCO
+          }
+        }
+      })
+    }))
   }
 
   /**
@@ -395,25 +397,8 @@ class Exams extends React.Component {
             totalNrAnswers={totalNrAnswers}
             disabledGenerateBoxes={disabledGenerateBoxes}
             disabledDeleteBoxes={disabledDeleteBoxes}
-            renderSeparately={problem.renderSeparately}
             problem={problem}
             onGenerateBoxesClick={this.generateAnswerBoxes}
-            onRenderOptionChange={
-              (checked) => {
-                this.setState(prevState => ({
-                  changedWidgetId: selectedWidgetId,
-                  widgets: update(prevState.widgets, {
-                    [selectedWidgetId]: {
-                      problem: {
-                        renderSeparately: {
-                          $set: checked
-                        }
-                      }
-                    }
-                  })
-                }))
-              }
-            }
           />
         ) : null }
         <this.PanelExamActions />

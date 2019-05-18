@@ -84,9 +84,13 @@ When you click watch, green and red lines appear next to the line numbers indica
 
 Coverage Gutter uses the XML which is produced by `yarn cov`, called `cov.xml`. This file should be located in the main folder.
 
-#### Viewing coverage in PyCharm
-To view test coverage in PyCharm, open up PyCharm and in the top bar go to 'Run -> Show Code Coverage Data' (Ctrl + Alt + F6).
-Press '+' and add `cov.xml` that is in the main project directory.
+##### Viewing coverage in PyCharm
+To view test coverage in PyCharm, run `yarn cov` to generate the coverage report XML file `cov.xml` if it is not present already.
+
+Next, open up PyCharm and in the top bar go to **Run -> Show Code Coverage Data** (Ctrl + Alt + F6).
+
+Press **+** and add the file `cov.xml` that is in the main project directory.
+A code coverage report should now appear in the side bar on the right.
 
 #### Policy errors
 

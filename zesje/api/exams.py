@@ -157,15 +157,14 @@ class Exams(Resource):
                     'graded': any([sol.graded_by is not None for sol in prob.solutions]),
                     'mc_options': [
                         {
-                            'id': mc_option.id,
-                            'label': mc_option.label,
-                            'problem_id': mc_option.problem_id,
-                            'feedback_id': mc_option.feedback_id,
-                            'widget': {
-                                'name': mc_option.name,
-                                'x': mc_option.x,
-                                'y': mc_option.y
-                            }
+                             'id': mc_option.id,
+                             'label': mc_option.label,
+                             'feedback_id': mc_option.feedback_id,
+                             'widget': {
+                                 'name': mc_option.name,
+                                 'x': mc_option.x,
+                                 'y': mc_option.y
+                             }
                         } for mc_option in prob.mc_options
                     ]
                 } for prob in exam.problems  # Sorted by prob.id

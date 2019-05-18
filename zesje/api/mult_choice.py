@@ -60,7 +60,6 @@ class MultipleChoice(Resource):
         y = args['y']
         label = args['label']
         problem_id = args['problem_id']
-        feedback_id = args['feedback_id']
 
         # TODO: Set type here or add to request?
         mc_type = 'mcq_widget'
@@ -73,7 +72,7 @@ class MultipleChoice(Resource):
 
             # Insert new entry into the database
             mc_entry = MultipleChoiceOption()
-            set_mc_data(mc_entry, name, x, y, mc_type, feedback_id, label)
+            set_mc_data(mc_entry, name, x, y, mc_type, new_feedback_option.id, label)
 
             db.session.add(mc_entry)
             db.session.commit()
@@ -88,7 +87,7 @@ class MultipleChoice(Resource):
         if not mc_entry:
             return dict(status=404, message=f"Multiple choice question with id {id} does not exist"), 404
 
-        set_mc_data(mc_entry, name, x, y, mc_type, feedback_id, label)
+        set_mc_data(mc_entry, name, x, y, mc_type, label)
         db.session.commit()
 
         return dict(status=200, message=f'Multiple choice question with id {id} updated'), 200

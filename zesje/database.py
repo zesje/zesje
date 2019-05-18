@@ -103,7 +103,7 @@ class Problem(db.Model):
 
     @hybrid_property
     def mc_options(self):
-        return [mc_option for mc_option in self.feedback_options]
+        return [feedback_option.mc_option for feedback_option in self.feedback_options if feedback_option.mc_option]
 
 
 class FeedbackOption(db.Model):
@@ -114,7 +114,7 @@ class FeedbackOption(db.Model):
     text = Column(Text, nullable=False)
     description = Column(Text, nullable=True)
     score = Column(Integer, nullable=True)
-    mc_option = db.relationship('MultipleChoiceOption', backref='feedback', lazy=True)
+    mc_option = db.relationship('MultipleChoiceOption', backref='feedback', uselist=False, lazy=True)
 
 
 # Table for many to many relationship of FeedbackOption and Solution

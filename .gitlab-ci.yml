@@ -59,3 +59,7 @@ cov:
   stage: test
   script:
     - python -m pytest --cov=zesje
+  artifacts:
+    paths:
+      - cov.xml
+    expire_in: 1 week

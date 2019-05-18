@@ -61,5 +61,5 @@ cov:
     - yarn cov
   artifacts:
     paths:
-      - cov.xml
+      - cov.html/
     expire_in: 1 week

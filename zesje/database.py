@@ -110,6 +110,7 @@ class FeedbackOption(db.Model):
     text = Column(Text, nullable=False)
     description = Column(Text, nullable=True)
     score = Column(Integer, nullable=True)
+    mc_option = db.relationship('MultipleChoiceOption', backref='feedback', lazy=True)
 
 
 # Table for many to many relationship of FeedbackOption and Solution
@@ -166,7 +167,6 @@ class MultipleChoiceOption(Widget):
     id = Column(Integer, ForeignKey('widget.id'), primary_key=True, autoincrement=True)
 
     label = Column(String, nullable=True)
-    problem_id = Column(Integer, ForeignKey('problem.id'), nullable=False)
     feedback_id = Column(Integer, ForeignKey('feedback_option.id'), nullable=False)
 
     __mapper_args__ = {

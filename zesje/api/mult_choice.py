@@ -114,3 +114,24 @@ class MultipleChoice(Resource):
             json['feedback_id'] = mult_choice.feedback_id
 
         return json
+
+    def delete(self, id):
+        """Deletes a multiple choice option from the database
+
+        Parameters
+        ----------
+            id: The ID of the multiple choice option in the database
+
+        Returns
+        -------
+            A message indicating success or failure
+        """
+        mult_choice = MultipleChoiceOption.query.get(id)
+
+        if not mult_choice:
+            return dict(status=404, message=f'Multiple choice question with id {id} does not exist.'), 404
+
+        db.session.delete(mult_choice)
+        db.session.commit()
+
+        return dict(status=200, message=f'Multiple choice question with id {id} deleted.'), 200

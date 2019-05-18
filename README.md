@@ -74,7 +74,8 @@ To view test coverage, run
 
     yarn cov
 
-Or use Conda in the Zesje repo and run `python -m pytest --cov=zesje tests/`
+A coverage report is now generated in the terminal, as an XML file, and in HTML format.
+The HTML file shows an overview of untested code in red.
 
 ##### Viewing coverage in Visual Studio Code
 

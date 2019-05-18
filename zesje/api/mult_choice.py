@@ -9,8 +9,11 @@ def set_mc_data(mc_entry, name, x, y, mc_type, feedback_id, label):
     Parameters:
     -----------
     mc_entry: The MultipleChoiceOption object
+    name: The name of the MultipleChoiceOption widget
     x: the x-position of the MultipleChoiceOption object.
     y: the y-position of the MultipleChoiceOption object.
+    type: the polymorphic type used to distinguish the MultipleChoiceOption widget
+        from other widgets
     feedback_id: the feedback the MultipleChoiceOption refers to
     label: label for the checkbox that this MultipleChoiceOption represents
     """
@@ -31,8 +34,8 @@ class MultipleChoice(Resource):
     put_parser.add_argument('x', type=int, required=True)
     put_parser.add_argument('y', type=int, required=True)
     put_parser.add_argument('label', type=str, required=False)
-    put_parser.add_argument('problem_id', type=int, required=True)
     put_parser.add_argument('feedback_id', type=int, required=True)
+    put_parser.add_argument('problem_id', type=int, required=True)  # Used for FeedbackOption
 
     def put(self, id=None):
         """Adds or updates a multiple choice option to the database
@@ -41,8 +44,8 @@ class MultipleChoice(Resource):
         will be inserted with the data provided in the request body.
 
         For each new multiple choice option, a feedback option that links to
-        the same problem as the multiple choice option is inserted into the
-        database.
+        the multiple choice option is inserted into the database. The new
+        feedback option also refers to same problem as the MultipleChoiceOption
 
         Parameters
         ----------

@@ -58,7 +58,7 @@ cov:
   <<: *python_packages
   stage: test
   script:
-    - python -m pytest --cov=zesje
+    - yarn cov
   artifacts:
     paths:
       - cov.xml

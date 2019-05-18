@@ -82,7 +82,11 @@ There is a plugin called Coverage Gutter that will highlight which lines of code
 Simply install Coverage Gutter, after which a watch button appears in the colored box at the bottom of your IDE.
 When you click watch, green and red lines appear next to the line numbers indicating if the code is covered.
 
-Coverage Gutter uses the XML which is produced by `yarn cov`, called `cov.xml`. This file should be located in the main folder. 
+Coverage Gutter uses the XML which is produced by `yarn cov`, called `cov.xml`. This file should be located in the main folder.
+
+#### Viewing coverage in PyCharm
+To view test coverage in PyCharm, open up PyCharm and in the top bar go to 'Run -> Show Code Coverage Data' (Ctrl + Alt + F6).
+Press '+' and add `cov.xml` that is in the main project directory.
 
 #### Policy errors
 

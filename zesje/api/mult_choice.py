@@ -42,6 +42,10 @@ class MultipleChoice(Resource):
         If the parameter id is not present, a new multiple choice question
         will be inserted with the data provided in the request body.
 
+        For each new multiple choice option, a feedback option that links to
+        the same problem as the multiple choice option is inserted into the
+        database.
+
         Parameters
         ----------
             id: The id of the multiple choice option
@@ -61,7 +65,7 @@ class MultipleChoice(Resource):
         mc_type = 'mcq_widget'
 
         if not id:
-            # Insert new feedback option
+            # Insert new empty feedback option that links to the same problem
             new_feedback_option = FeedbackOption(problem_id=problem_id, text='')
             db.session.add(new_feedback_option)
             db.session.commit()

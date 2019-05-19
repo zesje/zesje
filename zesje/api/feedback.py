@@ -141,6 +141,12 @@ class Feedback(Resource):
 
         # Delete mc_options associated with this feedback option
         if fb.mc_option:
+
+            # Check if the exam with this feedback option
+            if fb.problem.exam.finalized:
+                return dict(status=401, message='Cannot delete feedback option'
+                                                + ' attached to a multiple choice option in a finalized exam.'), 401
+
             db.session.delete(fb.mc_option)
             db.session.commit()
 

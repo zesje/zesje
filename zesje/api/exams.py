@@ -188,7 +188,6 @@ class Exams(Resource):
                         {
                             'id': mc_option.id,
                             'label': mc_option.label,
-                            'problem_id': mc_option.problem_id,
                             'feedback_id': mc_option.feedback_id,
                             'widget': {
                                 'name': mc_option.name,

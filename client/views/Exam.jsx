@@ -372,7 +372,7 @@ class Exams extends React.Component {
     formData.append('problem_id', data.problem_id)
     formData.append('label', data.label)
     api.put('mult-choice/', formData).then(result => {
-      data.id = result.mc_id
+      data.id = result.mult_choice_id
       this.createNewMCOWidget(problemWidget, data)
       this.generateAnswerBoxes(problemWidget, labels, index + 1, xPos + 24, yPos)
     }).catch(err => {

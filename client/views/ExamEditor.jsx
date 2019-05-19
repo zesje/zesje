@@ -232,8 +232,8 @@ class ExamEditor extends React.Component {
           widget.problem.mc_options.forEach(
             (option, i) => {
               let newData = {
-                x: Math.round(data.x),
-                y: Math.round(data.y) + i * 24
+                x: Math.round(data.x) + i * 24,
+                y: Math.round(data.y)
               }
               this.updateWidgetPositionDB(option, newData)
             })

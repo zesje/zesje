@@ -192,7 +192,7 @@ class ExamEditor extends React.Component {
    * @returns {*}
    */
   renderMCWidget = (widget) => {
-    let width = 26 * widget.problem.mc_options.length
+    let width = 24 * widget.problem.mc_options.length
     let height = 38
     let enableResizing = false
     const isSelected = widget.id === this.props.selectedWidgetId
@@ -233,7 +233,7 @@ class ExamEditor extends React.Component {
             (option, i) => {
               let newData = {
                 x: Math.round(data.x),
-                y: Math.round(data.y) + i * 26
+                y: Math.round(data.y) + i * 24
               }
               this.updateWidgetPositionDB(option, newData)
             })

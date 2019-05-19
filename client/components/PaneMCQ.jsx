@@ -117,7 +117,7 @@ class PanelMCQ extends React.Component {
             disabled={this.props.disabledDeleteBoxes}
             className='button is-danger is-fullwidth'
             onClick={() => {
-              console.log('Delete button not yet implemented.')
+              this.props.onDeleteBoxesClick()
             }}
           >
             Delete

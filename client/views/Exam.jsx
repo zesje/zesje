@@ -25,6 +25,7 @@ class Exams extends React.Component {
     previewing: false,
     deletingExam: false,
     deletingWidget: false,
+    deletingMCWidget: false,
     showPanelMCQ: false
   }
 
@@ -42,7 +43,7 @@ class Exams extends React.Component {
             name: problem.name,
             graded: problem.graded,
             mc_options: problem.mc_options,
-            isMCQ: problem.mc_options && problem.mc_options.length !== 0, // is the problem a mc question - used to display PanelMCQ
+            isMCQ: problem.mc_options && problem.mc_options.length !== 0 // is the problem a mc question - used to display PanelMCQ
           }
         }
       })
@@ -245,6 +246,48 @@ class Exams extends React.Component {
   }
 
   /**
+   * This function deletes the mc options coupled to a problem.
+   */
+  deleteMCWidget = () => {
+    const widget = this.state.widgets[this.state.selectedWidgetId]
+    const options = widget.problem.mc_options
+    if (options.length > 0) {
+      options.forEach((option) => {
+        api.del('mult-choice/' + option.id)
+          .catch(err => {
+            console.log(err)
+            err.json().then(res => {
+              this.setState({
+                deletingMCWidget: false
+              })
+              Notification.error('Could not delete multiple choice option' +
+                (res.message ? ': ' + res.message : ''))
+              // update to try and get a consistent state
+              this.props.updateExam(this.props.examID)
+            })
+          })
+      })
+
+      // remove the mc options from the state
+      // note that his can happen before they are removed in the DB due to async calls
+      this.setState((prevState) => {
+        return {
+          widgets: update(prevState.widgets, {
+            [widget.id]: {
+              problem: {
+                mc_options: {
+                  $set: []
+                }
+              }
+            }
+          }),
+          deletingMCWidget: false
+        }
+      })
+    }
+  }
+
+  /**
    * This method creates a widget object and adds it to the corresponding problem
    * @param data
    */
@@ -275,7 +318,7 @@ class Exams extends React.Component {
       return {
         'widget': {
           'x': {
-            $set: data.x + i * 26
+            $set: data.x + i * 24
           },
           'y': {
             // each mc option needs to be positioned next to the previous option and should not overlap it
@@ -316,7 +359,7 @@ class Exams extends React.Component {
         'feedback_id': null,
         'widget': {
           'name': 'mc_option_' + label,
-          'x': xPos + i * 30,
+          'x': xPos + i * 24,
           'y': yPos,
           'type': 'mcq_widget'
         }
@@ -346,14 +389,15 @@ class Exams extends React.Component {
     let isGraded = problem && problem.graded
     let widgetDeleteDisabled = widgetEditDisabled || isGraded
     let totalNrAnswers = 12 // the upper limit for the nr of possible answer boxes
-    let disabledGenerateBoxes = (problem && problem.mc_options.length > 0) || false
-    let disabledDeleteBoxes = !disabledGenerateBoxes
+    let containsMCOptions = (problem && problem.mc_options.length > 0) || false
+    let disabledDeleteBoxes = !containsMCOptions
     let isMCQ = (problem && problem.isMCQ) || false
 
     return (
       <React.Fragment>
         <this.PanelEdit
           disabledEdit={widgetEditDisabled}
+          disableIsMCQ={widgetEditDisabled || containsMCOptions}
           disabledDelete={widgetDeleteDisabled}
           onDeleteClick={() => {
             this.setState({deletingWidget: true})
@@ -395,10 +439,13 @@ class Exams extends React.Component {
         { isMCQ ? (
           <PanelMCQ
             totalNrAnswers={totalNrAnswers}
-            disabledGenerateBoxes={disabledGenerateBoxes}
+            disabledGenerateBoxes={containsMCOptions}
             disabledDeleteBoxes={disabledDeleteBoxes}
             problem={problem}
             onGenerateBoxesClick={this.generateAnswerBoxes}
+            onDeleteBoxesClick={() => {
+              this.setState({deletingMCWidget: true})
+            }}
           />
         ) : null }
         <this.PanelExamActions />
@@ -446,7 +493,7 @@ class Exams extends React.Component {
             <div className='panel-block'>
               <div className='field'>
                 <label className='label'>
-                  <input disabled={props.disabledEdit} type='checkbox' checked={props.isMCQProblem} onChange={
+                  <input disabled={props.disableIsMCQ} type='checkbox' checked={props.isMCQProblem} onChange={
                     (e) => {
                       props.onMCQChange(e.target.checked)
                     }} />
@@ -599,6 +646,18 @@ class Exams extends React.Component {
         confirmText='Delete problem'
         onCancel={() => this.setState({deletingWidget: false})}
         onConfirm={() => this.deleteWidget(this.state.selectedWidgetId)}
+      />
+      <ConfirmationModal
+        active={this.state.deletingMCWidget && this.state.selectedWidgetId != null}
+        color='is-danger'
+        headerText={`Are you sure you want to delete the multiple choice options for problem "${
+          this.state.selectedWidgetId &&
+          this.state.widgets[this.state.selectedWidgetId] &&
+          this.state.widgets[this.state.selectedWidgetId].problem &&
+          this.state.widgets[this.state.selectedWidgetId].problem.name}"`}
+        confirmText='Delete multiple choice options'
+        onCancel={() => this.setState({deletingMCWidget: false})}
+        onConfirm={() => this.deleteMCWidget(this.state.selectedWidgetId)}
       />
     </div>
   }

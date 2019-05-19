@@ -171,16 +171,17 @@ def generate_checkbox(canvas, x, y, label):
     """
     fontsize = 11  # Size of font
     margin = 5  # Margin between elements and sides
-    markboxsize = fontsize - 2  # Size of student number boxes
-    x_label = x + 1
-    y_label = y + margin + fontsize
-
+    markboxsize = fontsize - 2  # Size of checkboxes boxes
+    x_label = x + 1  # location of the label
+    y_label = y - fontsize  # remove fontsize from the y label since we draw from the bottom left up
+    box_y = y - markboxsize
     # check that there is a label to print
     if (label and not (len(label) == 0)):
         canvas.setFont('Helvetica', fontsize)
         canvas.drawString(x_label, y_label, label[0])
+        box_y = box_y - margin - fontsize
 
-    canvas.rect(x, y, markboxsize, markboxsize)
+    canvas.rect(x, box_y, markboxsize, markboxsize)
 
 
 def generate_datamatrix(exam_id, page_num, copy_num):

@@ -8,6 +8,7 @@ from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean, Foreign
 from flask_sqlalchemy.model import BindMetaMixin, Model
 from sqlalchemy.ext.declarative import DeclarativeMeta, declarative_base
 from sqlalchemy.orm.session import object_session
+from sqlalchemy.ext.hybrid import hybrid_property
 
 
 # Class for NOT automatically determining table names
@@ -98,8 +99,11 @@ class Problem(db.Model):
     exam_id = Column(Integer, ForeignKey('exam.id'), nullable=False)
     feedback_options = db.relationship('FeedbackOption', backref='problem', order_by='FeedbackOption.id', lazy=True)
     solutions = db.relationship('Solution', backref='problem', lazy=True)
-    mc_options = db.relationship('MultipleChoiceOption', backref='problem', lazy=True)
     widget = db.relationship('ProblemWidget', backref='problem', uselist=False, lazy=True)
+
+    @hybrid_property
+    def mc_options(self):
+        return [feedback_option.mc_option for feedback_option in self.feedback_options if feedback_option.mc_option]
 
 
 class FeedbackOption(db.Model):
@@ -110,6 +114,7 @@ class FeedbackOption(db.Model):
     text = Column(Text, nullable=False)
     description = Column(Text, nullable=True)
     score = Column(Integer, nullable=True)
+    mc_option = db.relationship('MultipleChoiceOption', backref='feedback', cascade='delete', uselist=False, lazy=True)
 
 
 # Table for many to many relationship of FeedbackOption and Solution
@@ -166,8 +171,7 @@ class MultipleChoiceOption(Widget):
     id = Column(Integer, ForeignKey('widget.id'), primary_key=True, autoincrement=True)
 
     label = Column(String, nullable=True)
-    problem_id = Column(Integer, ForeignKey('problem.id'), nullable=False)
-    feedback_id = Column(Integer, ForeignKey('feedback_option.id'), nullable=True)
+    feedback_id = Column(Integer, ForeignKey('feedback_option.id'), nullable=False)
 
     __mapper_args__ = {
         'polymorphic_identity': 'mcq_widget'

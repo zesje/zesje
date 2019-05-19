@@ -89,7 +89,7 @@ class ExamEditor extends React.Component {
           name: 'New problem', // TODO: Name
           page: this.props.page,
           mc_options: [],
-          isMCQ: false,
+          isMCQ: false
         }
         const widgetData = {
           x: Math.round(selectionBox.left),

@@ -68,7 +68,8 @@ class MultipleChoice(Resource):
             db.session.add(mc_entry)
             db.session.commit()
 
-            return dict(status=200, message=f'New multiple choice question with id {mc_entry.id} inserted', mc_id=mc_entry.id), 200
+            return dict(status=200, message=f'New multiple choice question with id {mc_entry.id} inserted',
+                        mc_id=mc_entry.id), 200
 
         # Update existing entry otherwise
         mc_entry = MultipleChoiceOption.query.get(id)

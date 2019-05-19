@@ -289,9 +289,10 @@ class Exams extends React.Component {
 
   /**
    * This method creates a widget object and adds it to the corresponding problem
-   * @param data
+   * @param problemWidget The widget the mc option belongs to
+   * @param data the mc option
    */
-  createNewMCOWidget = (data) => {
+  createNewMCOWidget = (problemWidget, data) => {
     this.setState((prevState) => {
       return {
         widgets: update(prevState.widgets, {
@@ -342,42 +343,40 @@ class Exams extends React.Component {
 
   /**
    * This method generates MC options by making the right calls to the api and creating
-   * the widget object in the mc_options array of the corresponding problem
-   * @param labels an array of labels, one label for each option that must be generated
-   * @returns {*}
+   * the widget object in the mc_options array of the corresponding problem.
+   * @param problemWidget the problem widget the mc options belong to
+   * @param labels the labels for the options
+   * @param index the index in the labels array (the function is recusive, this index is increased)
+   * @param xPos x position of the current option
+   * @param yPos y position of the current option
    */
-  generateAnswerBoxes = (labels) => {
-    let problemWidget = this.state.widgets[this.state.selectedWidgetId]
-    // position the new mc option widget inside the problem widget
-    let xPos = problemWidget.x + 2
-    let yPos = problemWidget.y + 2
+  generateAnswerBoxes = (problemWidget, labels, index, xPos, yPos) => {
+    if (labels.length === index) return
 
-    return labels.map((label, i) => {
-      let data = {
-        'label': label,
-        'problem_id': problemWidget.problem.id,
-        'feedback_id': null,
-        'widget': {
-          'name': 'mc_option_' + label,
-          'x': xPos + i * 24,
-          'y': yPos,
-          'type': 'mcq_widget'
-        }
+    let data = {
+      'label': labels[index],
+      'problem_id': problemWidget.problem.id,
+      'feedback_id': null,
+      'widget': {
+        'name': 'mc_option_' + labels[index],
+        'x': xPos,
+        'y': yPos,
+        'type': 'mcq_widget'
       }
+    }
 
-      // this.createNewMCOWidget(data)
-      const formData = new window.FormData()
-      formData.append('name', data.widget.name)
-      formData.append('x', data.widget.x)
-      formData.append('y', data.widget.y)
-      formData.append('problem_id', data.problem_id)
-      formData.append('label', data.label)
-      api.put('mult-choice/', formData).then(result => {
-        data.id = result.mc_id
-        this.createNewMCOWidget(data)
-      }).catch(err => {
-        console.log(err)
-      })
+    const formData = new window.FormData()
+    formData.append('name', data.widget.name)
+    formData.append('x', data.widget.x)
+    formData.append('y', data.widget.y)
+    formData.append('problem_id', data.problem_id)
+    formData.append('label', data.label)
+    api.put('mult-choice/', formData).then(result => {
+      data.id = result.mc_id
+      this.createNewMCOWidget(problemWidget, data)
+      this.generateAnswerBoxes(problemWidget, labels, index + 1, xPos + 24, yPos)
+    }).catch(err => {
+      console.log(err)
     })
   }
 
@@ -442,7 +441,13 @@ class Exams extends React.Component {
             disabledGenerateBoxes={containsMCOptions}
             disabledDeleteBoxes={disabledDeleteBoxes}
             problem={problem}
-            onGenerateBoxesClick={this.generateAnswerBoxes}
+            onGenerateBoxesClick={(labels) => {
+              let problemWidget = this.state.widgets[this.state.selectedWidgetId]
+              // position the new mc option widget inside the problem widget
+              let xPos = problemWidget.x + 2
+              let yPos = problemWidget.y + 2
+              this.generateAnswerBoxes(problemWidget, labels, 0, xPos, yPos)
+            }}
             onDeleteBoxesClick={() => {
               this.setState({deletingMCWidget: true})
             }}

@@ -1,5 +1,8 @@
 import React from 'react'
 
+/**
+ * PanelMCQ is a component that allows the user to generate mcq options
+ */
 class PanelMCQ extends React.Component {
   constructor (props) {
     super(props)
@@ -12,6 +15,8 @@ class PanelMCQ extends React.Component {
       labelTypes: ['None', 'True/False', 'A, B, C ...', '1, 2, 3 ...']
     }
   }
+
+  // this function is called when the input is changed for the number of possible answers
   onChangeNPA (e) {
     let value = parseInt(e.target.value)
     if (!isNaN(value)) {
@@ -24,6 +29,7 @@ class PanelMCQ extends React.Component {
     }
   }
 
+  // this function is called when the input is changed for the desired label type
   onChangeLabelType (e) {
     let value = parseInt(e.target.value)
     if (!isNaN(value)) {
@@ -38,6 +44,11 @@ class PanelMCQ extends React.Component {
     }
   }
 
+  /**
+   * This function generates an array with the labels for each option
+   * @param nrLabels the number of options that need to be generated
+   * @returns {any[]|string[]|number[]}
+   */
   generateLabels (nrLabels) {
     let type = this.state.chosenLabelType
 
@@ -53,6 +64,10 @@ class PanelMCQ extends React.Component {
     }
   }
 
+  /**
+   * This function renders the panel with the inputs for generating multiple choice options
+   * @returns the react component containing the mcq panel
+   */
   render () {
     return (
       <nav className='panel'>

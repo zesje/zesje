@@ -342,7 +342,7 @@ class ExamEditor extends React.Component {
     )]
 
     // depending on the rendering option, render the mc_options separately or in a single widget
-    if (widget.problem.mc_options.length > 0) {
+    if (widget.problem.mc_options.length > 0 && !this.props.finalized) {
       elementList.push(this.renderMCWidget(widget))
     }
 

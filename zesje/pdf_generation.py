@@ -162,9 +162,9 @@ def generate_checkbox(canvas, x, y, label):
     canvas : reportlab canvas object
 
     x : int
-        the x coordinate of the top left corner of the box in pixels
+        the x coordinate of the bottom left corner of the box in points (pt)
     y : int
-        the y coordinate of the top left corner of the box in pixels
+        the y coordinate of the bottom left corner of the box in points (pt)
     label: str
         A string representing the label that is drawn on top of the box, will only take the first character
 
@@ -273,6 +273,8 @@ def _generate_overlay(canv, pagesize, exam_id, copy_num, num_pages, id_grid_x,
         index = 0
         max_index = len(cb_data)
         cb_data = sorted(cb_data, key=lambda tup: tup[2])
+        # invert the y axis
+        cb_data = [(cb[0], pagesize[1] - cb[1], cb[2], cb[3]) for cb in cb_data]
     else:
         index = 0
         max_index = 0

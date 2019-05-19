@@ -162,9 +162,9 @@ def generate_checkbox(canvas, x, y, label):
     canvas : reportlab canvas object
 
     x : int
-        the x coordinate of the bottom left corner of the box in points (pt)
+        the x coordinate of the top left corner of the box in points (pt)
     y : int
-        the y coordinate of the bottom left corner of the box in points (pt)
+        the y coordinate of the top left corner of the box in points (pt)
     label: str
         A string representing the label that is drawn on top of the box, will only take the first character
 

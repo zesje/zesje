@@ -34,7 +34,6 @@ class MultipleChoice(Resource):
     put_parser.add_argument('x', type=int, required=True)
     put_parser.add_argument('y', type=int, required=True)
     put_parser.add_argument('label', type=str, required=False)
-    put_parser.add_argument('feedback_id', type=int, required=True)
     put_parser.add_argument('problem_id', type=int, required=True)  # Used for FeedbackOption
 
     def put(self, id=None):
@@ -124,7 +123,11 @@ class MultipleChoice(Resource):
         return json
 
     def delete(self, id):
-        """Deletes a multiple choice option from the database
+        """Deletes a multiple choice option from the database.
+        Also deletes the associated feedback option with this multiple choice option.
+
+        An error will be thrown if the user tries to delete a feedback option
+        associated with a multiple choice option in a finalized exam.
 
         Parameters
         ----------
@@ -139,7 +142,20 @@ class MultipleChoice(Resource):
         if not mult_choice:
             return dict(status=404, message=f'Multiple choice question with id {id} does not exist.'), 404
 
+        if not mult_choice.feedback:
+            return dict(status=404, message=f'Multiple choice question with id {id}'
+                        + ' is not associated with a feedback option.'), 404
+
+        # Check if the exam is finalized, do not delete the multiple choice option otherwise
+        exam = mult_choice.feedback.problem.exam
+
+        if exam.finalized:
+            return dict(status=401, message='Cannot delete feedback option'
+                        + ' attached to a multiple choice option in a finalized exam.'), 401
+
         db.session.delete(mult_choice)
+        db.session.delete(mult_choice.feedback)
         db.session.commit()
 
-        return dict(status=200, message=f'Multiple choice question with id {id} deleted.'), 200
+        return dict(status=200, message=f'Multiple choice question with id {id} deleted.'
+                    + f'Feedback option with id {mult_choice.feedback_id} deleted.'), 200

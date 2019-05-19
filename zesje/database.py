@@ -114,7 +114,7 @@ class FeedbackOption(db.Model):
     text = Column(Text, nullable=False)
     description = Column(Text, nullable=True)
     score = Column(Integer, nullable=True)
-    mc_option = db.relationship('MultipleChoiceOption', backref='feedback', uselist=False, lazy=True)
+    mc_option = db.relationship('MultipleChoiceOption', backref='feedback', cascade='delete', uselist=False, lazy=True)
 
 
 # Table for many to many relationship of FeedbackOption and Solution

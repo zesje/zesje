@@ -21,6 +21,7 @@ class Exams extends React.Component {
     page: 0,
     editActive: false,
     feedbackToEdit: null,
+    problemIdToEditFeedbackOf: null,
     numPages: null,
     selectedWidgetId: null,
     changedWidgetId: null,
@@ -62,10 +63,16 @@ class Exams extends React.Component {
         previewing: false
       }
     }
-    // This is a rough update for when feedback is edited.
-    newProps.exam.problems.forEach(problem => {
-      prevState.widgets[problem.widget.id].problem.feedback = problem.feedback
-    })
+    if(prevState.problemIdToEditFeedbackOf && !prevState.editActive) {
+      if(prevState.waitForNextRender) {
+        var problem = newProps.exam.problems.find(w => {
+          return w.widget.id == prevState.problemIdToEditFeedbackOf
+        })
+        prevState.widgets[problem.widget.id].problem.feedback = problem.feedback
+        prevState.waitForNextRender = false
+        if(!prevState.editActive) prevState.problemIdToEditFeedbackOf = null
+      } else prevState.waitForNextRender = true 
+    }
     return prevState
   }
 
@@ -77,6 +84,10 @@ class Exams extends React.Component {
     // The onBlur event is not fired when the input field is being disabled
     if (prevState.selectedWidgetId !== this.state.selectedWidgetId) {
       this.saveProblemName()
+      this.setState({
+        editActive:false,
+        problemIdToEditFeedbackOf: false
+      })
     }
   }
 
@@ -96,7 +107,8 @@ class Exams extends React.Component {
   editFeedback = (feedback) => {
     this.setState({
       editActive: true,
-      feedbackToEdit: feedback
+      feedbackToEdit: feedback,
+      problemIdToEditFeedbackOf: this.state.selectedWidgetId
     })
   }
   backToFeedback = () => {
@@ -137,6 +149,8 @@ class Exams extends React.Component {
               selectedWidgetId: null,
               changedWidgetId: null,
               deletingWidget: false,
+              editActive: false,
+              problemIdToEditFeedbackOf: null,
               widgets: update(prevState.widgets, {
                 $unset: [widgetId]
               })

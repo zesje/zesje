@@ -125,7 +125,7 @@ class Feedback(Resource):
         problem = fb.problem
         if problem.id != problem_id:
             return dict(status=409, message="Feedback does not match the problem."), 409
-        if problem.exam.finalized:
+        if fb.mc_option and problem.exam.finalized:
             return dict(status=401, message='Cannot delete feedback option'
                                             + ' attached to a multiple choice option in a finalized exam.'), 401
 
@@ -143,8 +143,7 @@ class Feedback(Resource):
         db.session.commit()
 
         # Delete mc_options associated with this feedback option
-        if fb.mc_option:
-            db.session.delete(fb.mc_option)
-            db.session.commit()
+        db.session.delete(fb.mc_option)
+        db.session.commit()
 
         return dict(status=200, message=f"Feedback option with id {feedback_id} deleted."), 200

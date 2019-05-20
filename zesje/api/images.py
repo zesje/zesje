@@ -4,7 +4,7 @@ import numpy as np
 import cv2
 
 from ..images import get_box
-from ..database import Exam, Submission, Problem, Page
+from ..database import Exam, Submission, Problem, Page, Solution
 
 
 def get(exam_id, problem_id, submission_id, full_page=False):
@@ -56,6 +56,26 @@ def get(exam_id, problem_id, submission_id, full_page=False):
     page_path = page.path
 
     page_im = cv2.imread(page_path)
+
+    # pregrade highliting
+    page_im = cv2.rectangle(page_im, (20, 20), (40, 40), (0, 255, 0), 3)
+    solution = Solution.query.filter(Solution.submission_id == sub.id,
+                                     Solution.problem_id == problem_id).one_or_none()
+
+    print('hello world')
+    if solution is not None:
+        fb = list(map(lambda x: x.id, solution.feedback))
+        print(fb)
+        for option in problem.mc_options:
+            if option.feedback_id in fb:
+                print('drawing!!')
+
+                x = int((option.x + 1) * 2.08)
+                y = int((option.y + 18) * 2.08)
+                x1 = x + 20
+                y1 = y + 20
+                page_im = cv2.rectangle(page_im, (x, y), (x1, y1), (0, 255, 0), 3)
+    
     if not full_page:
         raw_image = get_box(page_im, widget_area_in, padding=0.3)
     else:

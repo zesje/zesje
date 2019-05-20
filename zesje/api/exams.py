@@ -287,6 +287,7 @@ class ExamSource(Resource):
 
         return send_file(
             os.path.join(exam_dir, 'exam.pdf'),
+            cache_timeout=0,
             mimetype='application/pdf')
 
 

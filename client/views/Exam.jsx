@@ -319,7 +319,7 @@ class Exams extends React.Component {
       return {
         'widget': {
           'x': {
-            $set: data.x + i * 24
+            $set: data.x + i * 23
           },
           'y': {
             // each mc option needs to be positioned next to the previous option and should not overlap it

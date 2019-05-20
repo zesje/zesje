@@ -359,8 +359,8 @@ class Exams extends React.Component {
       'feedback_id': null,
       'widget': {
         'name': 'mc_option_' + labels[index],
-        'x': xPos,
-        'y': yPos,
+        'x': xPos + 6,
+        'y': yPos + 11,
         'type': 'mcq_widget'
       }
     }

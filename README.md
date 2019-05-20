@@ -1,4 +1,4 @@
-[![coverage report](https://gitlab.kwant-project.org/works-on-my-machine/zesje/badges/master/coverage.svg)](https://gitlab.kwant-project.org/works-on-my-machine/zesje/commits/master)
+[![coverage report](https://gitlab.kwant-project.org/zesje/zesje/badges/master/coverage.svg)](https://gitlab.kwant-project.org/zesje/zesje/commits/master)
 
 # Welcome to Zesje
 

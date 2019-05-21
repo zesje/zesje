@@ -45,20 +45,16 @@ def mco_json():
 
 
 def add_test_data():
-    exam1 = Exam(id=1, name='exam 1', finalized=False)
-    exam2 = Exam(id=2, name='exam 2', finalized=True)
+    exam1 = Exam(id=3, name='exam 1', finalized=False)
 
     db.session.add(exam1)
-    db.session.add(exam2)
     db.session.commit()
 
-    problem1 = Problem(id=1, name='Problem 1', exam_id=1)
-    problem2 = Problem(id=2, name='Problem 2', exam_id=2)
+    problem1 = Problem(id=3, name='Problem 1', exam_id=3)
     db.session.add(problem1)
-    db.session.add(problem2)
     db.session.commit()
 
-    problem_widget_1 = ProblemWidget(id=1, name='problem widget', problem_id=1, page=2,
+    problem_widget_1 = ProblemWidget(id=3, name='problem widget', problem_id=3, page=2,
                                      width=100, height=150, x=40, y=200, type='problem_widget')
     db.session.add(problem_widget_1)
     db.session.commit()
@@ -72,7 +68,7 @@ def test_get_exams(test_client):
     mc_option_1 = {
         'x': 100,
         'y': 40,
-        'problem_id': 1,
+        'problem_id': 3,
         'page': 1,
         'label': 'a',
         'name': 'test'
@@ -82,14 +78,16 @@ def test_get_exams(test_client):
     mc_option_2 = {
         'x': 100,
         'y': 40,
-        'problem_id': 1,
+        'problem_id': 3,
         'page': 1,
         'label': 'a',
         'name': 'test'
     }
     test_client.put('/api/mult-choice/', data=mc_option_2)
 
-    response = test_client.get('/api/exams/1')
+    response = test_client.get('/api/exams/3')
     data = json.loads(response.data)
+
+    print(data)
 
     assert len(data['problems'][0]['mc_options']) == 2

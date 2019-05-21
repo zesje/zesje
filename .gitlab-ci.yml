@@ -53,7 +53,7 @@ test_py:
   <<: *python_packages
   stage: test
   script:
-    - yarn cov
+    - yarn test:py:cov
   artifacts:
     paths:
       - cov.html/

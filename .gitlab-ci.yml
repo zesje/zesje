@@ -35,11 +35,6 @@ test_js:
   stage: test
   script: yarn test:js
 
-test_py:
-  <<: *python_packages
-  stage: test
-  script: yarn test:py
-
 lint_js:
   <<: *node_modules
   stage: test
@@ -53,7 +48,7 @@ lint_py:
   allow_failure: true
   script:
     - yarn lint:py
-    
+
 cov:
   <<: *python_packages
   stage: test

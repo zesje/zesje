@@ -68,11 +68,11 @@ You can run the tests by running
     
 #### Viewing test coverage
 
-As a test coverage tool, `pytest-cov` is used.
+As a test coverage tool for Python tests, `pytest-cov` is used.
 
 To view test coverage, run
 
-    yarn cov
+    yarn test:py:cov
 
 A coverage report is now generated in the terminal, as an XML file, and in HTML format.
 The HTML file shows an overview of untested code in red.
@@ -83,10 +83,10 @@ There is a plugin called Coverage Gutter that will highlight which lines of code
 Simply install Coverage Gutter, after which a watch button appears in the colored box at the bottom of your IDE.
 When you click watch, green and red lines appear next to the line numbers indicating if the code is covered.
 
-Coverage Gutter uses the XML which is produced by `yarn cov`, called `cov.xml`. This file should be located in the main folder.
+Coverage Gutter uses the XML which is produced by `yarn test:py:cov`, called `cov.xml`. This file should be located in the main folder.
 
 ##### Viewing coverage in PyCharm
-To view test coverage in PyCharm, run `yarn cov` to generate the coverage report XML file `cov.xml` if it is not present already.
+To view test coverage in PyCharm, run `yarn test:py:cov` to generate the coverage report XML file `cov.xml` if it is not present already.
 
 Next, open up PyCharm and in the top bar go to **Run -> Show Code Coverage Data** (Ctrl + Alt + F6).
 

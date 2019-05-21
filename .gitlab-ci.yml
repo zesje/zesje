@@ -49,7 +49,7 @@ lint_py:
   script:
     - yarn lint:py
 
-cov:
+test_py:
   <<: *python_packages
   stage: test
   script:

@@ -342,9 +342,11 @@ def make_pages_even(output_filename, exam_pdf_file):
     new = PdfWriter()
     new.addpages(exam_pdf.pages)
     pagecount = len(exam_pdf.pages)
+
     if (pagecount % 2 == 1):
         blank = PageMerge()
-        blank.mbox = [0, 0, 595.276, 841.89]  # A4
+        box = exam_pdf.pages[0].MediaBox
+        blank.mbox = box
         blank = blank.render()
         new.addpage(blank)
 

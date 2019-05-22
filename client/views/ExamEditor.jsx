@@ -187,6 +187,23 @@ class ExamEditor extends React.Component {
       this.props.updateExam()
     })
   }
+
+  updateMCOPosition = (widget, data) => {
+    this.props.updateMCWidgetPosition(widget, {
+      x: Math.round(data.x),
+      y: Math.round(data.y)
+    })
+
+    widget.problem.mc_options.forEach(
+      (option, i) => {
+        let newData = {
+          x: Math.round(data.x) + i * 24 + 7,
+          y: Math.round(data.y) + 21
+        }
+        this.updateWidgetPositionDB(option, newData)
+      })
+  }
+
   /**
    * This function renders a group of options into one draggable widget
    * @returns {*}
@@ -196,6 +213,9 @@ class ExamEditor extends React.Component {
     let height = 38
     let enableResizing = false
     const isSelected = widget.id === this.props.selectedWidgetId
+    let xPos = widget.problem.mc_options[0].widget.x
+    let yPos = widget.problem.mc_options[0].widget.y
+
     return (
       <ResizeAndDrag
         key={'widget_mc_' + widget.id}
@@ -213,8 +233,8 @@ class ExamEditor extends React.Component {
           topRight: enableResizing
         }}
         position={{
-          x: widget.problem.mc_options[0].widget.x,
-          y: widget.problem.mc_options[0].widget.y
+          x: xPos,
+          y: yPos
         }}
         size={{
           width: width,
@@ -224,19 +244,7 @@ class ExamEditor extends React.Component {
           this.props.selectWidget(widget.id)
         }}
         onDragStop={(e, data) => {
-          this.props.updateMCWidgetPosition(widget, {
-            x: Math.round(data.x),
-            y: Math.round(data.y)
-          })
-
-          widget.problem.mc_options.forEach(
-            (option, i) => {
-              let newData = {
-                x: Math.round(data.x) + i * 24 + 7,
-                y: Math.round(data.y) + 21
-              }
-              this.updateWidgetPositionDB(option, newData)
-            })
+          this.updateMCOPosition(widget, data)
         }}
       >
         <div className={isSelected ? 'mcq-widget widget selected' : 'mcq-widget widget '}>
@@ -327,7 +335,26 @@ class ExamEditor extends React.Component {
             x: Math.round(data.x),
             y: Math.round(data.y)
           }).then(() => {
-            // ok
+            if (widget.problem.mc_options.length > 0) {
+              let xPos = widget.problem.mc_options[0].widget.x
+              let yPos = widget.problem.mc_options[0].widget.y
+              let width = 24 * widget.problem.mc_options.length
+              let height = 38
+
+              if (xPos < data.x) {
+                xPos = data.x
+              } else if (xPos + width > data.x + widget.width) {
+                xPos = data.x + widget.width - width
+              }
+
+              if (yPos < data.y) {
+                yPos = data.y
+              } else if (yPos + height > data.y + widget.height) {
+                yPos = data.y + widget.height - height
+              }
+
+              this.updateMCOPosition(widget, { x: xPos, y: yPos })
+            }
           }).catch(err => {
             console.log(err)
             // update to try and get a consistent state

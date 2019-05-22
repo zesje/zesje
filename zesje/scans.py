@@ -16,7 +16,7 @@ from .database import db, Scan, Exam, Page, Student, Submission, Solution, ExamW
 from .datamatrix import decode_raw_datamatrix
 from .images import guess_dpi, get_box
 from .factory import make_celery
-
+from .pregrader import add_feedback_to_solution
 
 ExtractedBarcode = namedtuple('ExtractedBarcode', ['token', 'copy', 'page'])
 
@@ -241,7 +241,8 @@ def process_page(image_data, exam_config, output_dir=None, strict=False):
         return True, "Testing, image not saved and database not updated."
 
     update_database(image_path, barcode)
-    # call our own function to pregrade
+
+    add_feedback_to_solution()
 
     if barcode.page == 0:
         description = guess_student(

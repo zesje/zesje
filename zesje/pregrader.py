@@ -9,7 +9,7 @@
 
 # coupled feedback cannot be deleted
 
-from zesje.database import db, Exam
+from zesje.database import db, Exam, Submission
 
 
 def pregrade(exam_token, image):
@@ -27,17 +27,21 @@ def pregrade(exam_token, image):
     pass
 
 
-def add_feedback_to_solution(solution, image):
-    problem = solution.problem
+def add_feedback_to_solution(image, barcode):
+    exam = Exam.query.filter(Exam.token == barcode.token).first()
+    sub = Submission.query.filter(Submission.copy_number == barcode.copy, Submission.exam_id == exam.id).one_or_none()
 
-    for mc_option in problem.mc_options:
-        box = (mc_option.x, mc_option.y)
+    for solution in sub.solutions:
+        problem = solution.problem
 
-        # check width and so forth
+        for mc_option in problem.mc_options:
+            box = (mc_option.x, mc_option.y)
 
-        if box_is_filled(box, image):
-            solution.feedback = mc_option.feedback
-            db.session.commit()
+            # check width and so forth
+
+            if box_is_filled(box, image):
+                solution.feedback = mc_option.feedback
+                db.session.commit()
 
 
 def box_is_filled(box, image):

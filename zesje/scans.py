@@ -67,6 +67,8 @@ def _process_pdf(scan_id, app_config):
     # Raises exception if zero or more than one scans found
     scan = Scan.query.filter(Scan.id == scan_id).one()
 
+    report_progress('Importing PDF')
+
     pdf_path = os.path.join(data_directory, 'scans', f'{scan.id}.pdf')
     output_directory = os.path.join(data_directory, f'{scan.exam.id}_data')
 

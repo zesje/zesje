@@ -9,9 +9,7 @@
 
 # coupled feedback cannot be deleted
 
-from zesje.database import db, Exam, FeedbackOption
-
-from zesje.images import guess_dpi
+from zesje.database import db, Exam
 
 
 def pregrade(exam_token, image):
@@ -21,6 +19,7 @@ def pregrade(exam_token, image):
     exam = Exam.query.get(exam_token=exam_token)
 
     problems = exam.problems
+
     mc_options = [problem.mc_options for problem in problems]
 
     coords = [(cb.x, cb.y) for cb in mc_options]
@@ -28,7 +27,7 @@ def pregrade(exam_token, image):
     pass
 
 
-def add_feedback_to_solution(solution):
+def add_feedback_to_solution(solution, image):
     problem = solution.problem
 
     for mc_option in problem.mc_options:
@@ -36,10 +35,13 @@ def add_feedback_to_solution(solution):
 
         # check width and so forth
 
-        # if box is filled
-        if True:
+        if box_is_filled(box, image):
             solution.feedback = mc_option.feedback
             db.session.commit()
+
+
+def box_is_filled(box, image):
+    pass
 
 
 def _locate_checkbox():

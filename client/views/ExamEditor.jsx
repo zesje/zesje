@@ -188,11 +188,15 @@ class ExamEditor extends React.Component {
     })
   }
 
-  updateMCOPosition = (widget, data) => {
+  updateState = (widget, data) => {
     this.props.updateMCWidgetPosition(widget, {
       x: Math.round(data.x),
       y: Math.round(data.y)
     })
+  }
+
+  updateMCOPosition = (widget, data) => {
+    this.updateState(widget, data)
 
     widget.problem.mc_options.forEach(
       (option, i) => {
@@ -325,6 +329,28 @@ class ExamEditor extends React.Component {
         }}
         onDragStart={() => {
           this.props.selectWidget(widget.id)
+        }}
+        onDrag={(e, data) => {
+          if (widget.problem.mc_options.length > 0) {
+            let xPos = widget.problem.mc_options[0].widget.x
+            let yPos = widget.problem.mc_options[0].widget.y
+            let width = 24 * widget.problem.mc_options.length
+            let height = 38
+
+            if (xPos < data.x) {
+              xPos = data.x
+            } else if (xPos + width > data.x + widget.width) {
+              xPos = data.x + widget.width - width
+            }
+
+            if (yPos < data.y) {
+              yPos = data.y
+            } else if (yPos + height > data.y + widget.height) {
+              yPos = data.y + widget.height - height
+            }
+
+            this.updateState(widget, { x: xPos, y: yPos })
+          }
         }}
         onDragStop={(e, data) => {
           this.props.updateWidget(widget.id, {

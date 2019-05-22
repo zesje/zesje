@@ -42,7 +42,11 @@ class Exams extends React.Component {
             page: problem.page,
             name: problem.name,
             graded: problem.graded,
-            mc_options: problem.mc_options,
+            mc_options: problem.mc_options.map((option) => {
+              option.widget.x -= 7
+              option.widget.y -= 21
+              return option
+            }),
             isMCQ: problem.mc_options && problem.mc_options.length !== 0 // is the problem a mc question - used to display PanelMCQ
           }
         }
@@ -319,7 +323,7 @@ class Exams extends React.Component {
       return {
         'widget': {
           'x': {
-            $set: data.x + i * 23
+            $set: data.x + i * 24
           },
           'y': {
             // each mc option needs to be positioned next to the previous option and should not overlap it
@@ -359,8 +363,8 @@ class Exams extends React.Component {
       'feedback_id': null,
       'widget': {
         'name': 'mc_option_' + labels[index],
-        'x': xPos + 6,
-        'y': yPos + 11,
+        'x': xPos + 7,
+        'y': yPos + 21,
         'type': 'mcq_widget'
       }
     }
@@ -373,6 +377,8 @@ class Exams extends React.Component {
     formData.append('label', data.label)
     api.put('mult-choice/', formData).then(result => {
       data.id = result.mult_choice_id
+      data.widget.x -= 7
+      data.widget.y -= 21
       this.createNewMCOWidget(problemWidget, data)
       this.generateAnswerBoxes(problemWidget, labels, index + 1, xPos + 24, yPos)
     }).catch(err => {

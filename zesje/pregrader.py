@@ -27,20 +27,20 @@ def pregrade(exam_token, image):
     pass
 
 
-def add_feedback_to_solution(image, barcode):
+def add_feedback_to_solution(page_img, barcode):
     exam = Exam.query.filter(Exam.token == barcode.token).first()
-    sub = Submission.query.filter(Submission.copy_number == barcode.copy, Submission.exam_id == exam.id).one_or_none()
 
-    for solution in sub.solutions:
-        problem = solution.problem
+    problems = exam.problems
+    problems_on_page = list(filter(lambda p: p.widget.page == barcode.page, problems))
 
+    for problem in problems_on_page:
         for mc_option in problem.mc_options:
             box = (mc_option.x, mc_option.y)
 
             # check width and so forth
 
-            if box_is_filled(box, image):
-                solution.feedback = mc_option.feedback
+            if box_is_filled(box, page_img):
+                problem.solution.feedback = mc_option.feedback
                 db.session.commit()
 
 

@@ -67,7 +67,7 @@ class Scans(Resource):
             return dict(status=404, message='Exam does not exist.'), 404
 
         scan = Scan(exam=exam, name=args['pdf'].filename,
-                    status='processing', message='importing PDF')
+                    status='processing', message='Waiting...')
         db.session.add(scan)
         db.session.commit()
 

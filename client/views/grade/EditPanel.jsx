@@ -154,7 +154,7 @@ class EditPanel extends React.Component {
         <div className='panel-block'>
           <BackButton onClick={this.props.goBack} />
           <SaveButton onClick={this.saveFeedback} exists={this.props.feedback}
-            disabled={!this.state.name || !this.state.score || isNaN(parseInt(this.state.score))} />
+            disabled={!this.state.name || (!this.state.score && this.state.score !== 0) || isNaN(parseInt(this.state.score))} />
           <DeleteButton onClick={() => { this.setState({deleting: true}) }} exists={this.props.feedback} />
           <ConfirmationModal
             headerText={`Do you want to irreversibly delete feedback option "${this.state.name}"?`}

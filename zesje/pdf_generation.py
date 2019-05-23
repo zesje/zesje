@@ -173,15 +173,15 @@ def generate_checkbox(canvas, x, y, label):
     margin = 5  # Margin between elements and sides
     markboxsize = fontsize - 2  # Size of checkboxes boxes
     x_label = x + 1  # location of the label
-    y_label = y  + margin  # remove fontsize from the y label since we draw from the bottom left up
-    box_y = y - markboxsize
+    y_label = y + margin  # remove fontsize from the y label since we draw from the bottom left up
+    box_y = y - markboxsize  # remove the markboxsize because the y is the coord of the top
+    # and reportlab prints from the bottom
+
     # check that there is a label to print
     if (label and not (len(label) == 0)):
         canvas.setFont('Helvetica', fontsize)
         canvas.drawString(x_label, y_label, label[0])
-        #box_y = box_y - margin - fontsize
 
-    # canvas.lines([ (x, y, x +15, y), (x, y, x, y +15)])
     canvas.rect(x, box_y, markboxsize, markboxsize)
 
 

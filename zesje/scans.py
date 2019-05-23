@@ -241,7 +241,7 @@ def process_page(image_data, exam_config, output_dir=None, strict=False):
         return True, "Testing, image not saved and database not updated."
 
     update_database(image_path, barcode)
-    add_feedback_to_solution(image_array, barcode)
+    add_feedback_to_solution(image_array, barcode, corner_keypoints)
 
     if barcode.page == 0:
         description = guess_student(

@@ -27,7 +27,7 @@ def pregrade(exam_token, image):
     pass
 
 
-def add_feedback_to_solution(page_img, barcode):
+def add_feedback_to_solution(page_img, barcode, corner_keypoints):
     """
     Adds the multiple choice options that are identified as marked as a feedback option to a solution
 
@@ -48,12 +48,12 @@ def add_feedback_to_solution(page_img, barcode):
             sol = Solution.query.filter(Solution.submission_id == sub.id).one_or_none()
 
             # check if box is filled
-            if box_is_filled(box, page_img):
+            if box_is_filled(box, page_img, corner_keypoints):
                 sol.feedback.append(mc_option.feedback)
                 db.session.commit()
 
 
-def box_is_filled(box, page_img):
+def box_is_filled(box, page_img, corner_keypoints):
     pass
 
 

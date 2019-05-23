@@ -240,8 +240,8 @@ def process_page(image_data, exam_config, output_dir=None, strict=False):
     else:
         return True, "Testing, image not saved and database not updated."
 
-    update_database(image_path, barcode)
-    add_feedback_to_solution(image_array, barcode, corner_keypoints)
+    submission, exam = update_database(image_path, barcode)
+    add_feedback_to_solution(submission, exam, barcode.page, image_array, corner_keypoints)
 
     if barcode.page == 0:
         description = guess_student(
@@ -309,6 +309,8 @@ def update_database(image_path, barcode):
         db.session.add(Page(path=image_path, submission=sub, number=barcode.page))
 
     db.session.commit()
+
+    return sub, exam
 
 
 def decode_barcode(image, exam_config):

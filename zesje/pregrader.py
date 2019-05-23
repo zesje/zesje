@@ -27,7 +27,7 @@ def pregrade(exam_token, image):
     pass
 
 
-def add_feedback_to_solution(page_img, barcode, corner_keypoints):
+def add_feedback_to_solution(submission, page, page_img, corner_keypoints):
     """
     Adds the multiple choice options that are identified as marked as a feedback option to a solution
 
@@ -36,16 +36,13 @@ def add_feedback_to_solution(page_img, barcode, corner_keypoints):
     page_img: image of the page
     barcode: data from the barcode on the page
     """
-    exam = Exam.query.filter(Exam.token == barcode.token).first()
-    sub = Submission.query.filter(Submission.copy_number == barcode.copy, Submission.exam_id == exam.id).one_or_none()
-
-    problems_on_page = Problem.query.filter(Problem.widget.page == barcode.page).all()
+    problems_on_page = Problem.query.filter(Problem.widget.page == page).all()
 
     for problem in problems_on_page:
         for mc_option in problem.mc_options:
             box = (mc_option.x, mc_option.y)
 
-            sol = Solution.query.filter(Solution.submission_id == sub.id).one_or_none()
+            sol = Solution.query.filter(Solution.problem_id == problem.id).one_or_none()
 
             # check if box is filled
             if box_is_filled(box, page_img, corner_keypoints):

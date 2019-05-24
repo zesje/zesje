@@ -13,7 +13,7 @@
 import cv2
 import numpy as np
 
-from zesje.database import db, Solution, ProblemWidget, Problem
+from zesje.database import db, Solution, ProblemWidget
 from zesje.images import guess_dpi, get_box, fix_corner_markers
 
 

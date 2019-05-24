@@ -106,6 +106,19 @@ def test_generate_pdfs_num_files(datadir, tmpdir):
     assert len(tmpdir.listdir()) == num_copies
 
 
+@pytest.mark.parametrize('checkboxes', [[(300, 100, 1, 'c'), (500, 50, 0, 'd'), (500, 500, 0, 'a'), (250, 200, 1, 'b')],
+                         [], [(250, 100, 0, None)]])
+def test_generate_checkboxes(datadir, tmpdir, checkboxes):
+    blank_pdf = os.path.join(datadir, 'blank-a4-2pages.pdf')
+
+    num_copies = 1
+    copy_nums = range(num_copies)
+    paths = map(lambda copy_num: os.path.join(tmpdir, f'{copy_num}.pdf'), copy_nums)
+    pdf_generation.generate_pdfs(blank_pdf, 'ABCDEFGHIJKL', copy_nums, paths, 25, 270, 150, 270, checkboxes)
+
+    assert len(tmpdir.listdir()) == num_copies
+
+
 @pytest.mark.parametrize('name', ['a4', 'square'], ids=['a4', 'square'])
 def test_join_pdfs(mock_generate_datamatrix, mock_generate_id_grid,
                    datadir, tmpdir, name):

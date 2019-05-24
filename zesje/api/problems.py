@@ -108,6 +108,9 @@ class Problems(Resource):
             # Delete all solutions associated with this problem
             for sol in problem.solutions:
                 db.session.delete(sol)
+            # Delete all multiple choice options associated with this problem
+            for mc_option in problem.mc_options:
+                db.session.delete(mc_option)
             db.session.delete(problem.widget)
             db.session.delete(problem)
             db.session.commit()

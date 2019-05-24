@@ -13,7 +13,7 @@
 import cv2
 import numpy as np
 
-from zesje.database import db, Solution, ProblemWidget
+from zesje.database import db, Solution, ProblemWidget, Problem
 from zesje.images import guess_dpi, get_box, fix_corner_markers
 
 
@@ -27,24 +27,28 @@ def add_feedback_to_solution(page, page_img, corner_keypoints):
     barcode: data from the barcode on the page
     corner_keypoints: locations of the corner keypoints
     """
-    widgets = ProblemWidget.query.filter(ProblemWidget.page == page).all()
+    problem_widgets = ProblemWidget.query.filter(ProblemWidget.page == page).all()
+    problems_on_page = [widget.problem for widget in problem_widgets]
 
-    problems_on_page = [widget.problem for widget in widgets]
+    fixed_corner_keypoints = fix_corner_markers(corner_keypoints, page_img.shape)
 
-    corner_keypoints = fix_corner_markers(corner_keypoints, page_img.shape)
+    # TODO: It is not exactly known which corner marker is the top left one
+    # TODO: Also, what do if less than 3 keypoints are found?
+    top_left_point = sorted(fixed_corner_keypoints, key=lambda x: x[0])[0] if fixed_corner_keypoints else []
 
     for problem in problems_on_page:
+        sol = Solution.query.filter(Solution.problem_id == problem.id).one_or_none()
+
         for mc_option in problem.mc_options:
-            if mc_option:
-                sol = Solution.query.filter(Solution.problem_id == problem.id).one_or_none()
-                box = (mc_option.x, mc_option.y)
+            box = (mc_option.x, mc_option.y)
 
-                # TODO: Assume the minimal x value will be of the top left corner
-                top_left = sorted(corner_keypoints, key=lambda x: x[0])[0]
+            if box_is_filled(box, page_img, top_left_point):
+                sol.feedback = mc_option.feedback
 
-                if box_is_filled(box, page_img, top_left):
+                if mc_option.label:
                     sol.feedback.text = mc_option.label
-                    db.session.commit()
+
+                db.session.commit()
 
 
 def box_is_filled(box, page_img, corner_keypoints, marker_margin=72/2.54, threshold=225, cut_padding=0.1, box_size=11):

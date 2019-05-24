@@ -14,7 +14,7 @@ import cv2
 import numpy as np
 
 from zesje.database import db, Solution, Problem
-from zesje.images import guess_dpi, get_box
+from zesje.images import guess_dpi, get_box, fix_corner_markers
 
 
 def add_feedback_to_solution(page, page_img, corner_keypoints):
@@ -33,6 +33,8 @@ def add_feedback_to_solution(page, page_img, corner_keypoints):
             sol = Solution.query.filter(Solution.problem_id == problem.id).one_or_none()
 
             box = (mc_option.x, mc_option.y)
+
+            corner_keypoints = fix_corner_markers(corner_keypoints, image=page_img, image_format=1)
 
             # check if box is filled
             if box_is_filled(box, page_img, corner_keypoints):
@@ -134,9 +136,9 @@ def box_is_filled(box, page_img, corner_keypoints, marker_margin=72/2.54, thresh
     # if the found box is smaller than a certain threshold
     # it means that we only found a little bit of white and the box is filled
     res_x, res_y, *_ = res_rect.shape
-    if(res_x < 0.333 * box_size_px or res_y < 0.333 * box_size_px):
+    if res_x < 0.333 * box_size_px or res_y < 0.333 * box_size_px:
         return True
-    return (np.average(res_rect) < 225)
+    return np.average(res_rect) < threshold
 
 
 def box_is_filled(box, page_img, marker_position, marker_margin=72/2.54):

@@ -77,22 +77,22 @@ def _process_pdf(scan_id, app_config):
 
     total = PyPDF2.PdfFileReader(open(pdf_path, "rb")).getNumPages()
     failures = []
-    try:
-        for image, page in extract_images(pdf_path):
-            report_progress(f'Processing page {page} / {total}')
-            try:
-                success, description = process_page(
-                    image, exam_config, output_directory
-                )
-                if not success:
-                    print(description)
-                    failures.append(page)
-            except Exception as e:
-                report_error(f'Error processing page {page}: {e}')
-                return
-    except Exception as e:
-        report_error(f"Failed to read pdf: {e}")
-        raise
+    # try:
+    for image, page in extract_images(pdf_path):
+        report_progress(f'Processing page {page} / {total}')
+        # try:
+        success, description = process_page(
+            image, exam_config, output_directory
+        )
+        if not success:
+            print(description)
+            failures.append(page)
+    # except Exception as e:
+        #     report_error(f'Error processing page {e.__cause__}')
+            return
+    # except Exception as e:
+    #     report_error(f"Failed to read pdf: {e}")
+    #     raise
 
     if failures:
         processed = total - len(failures)

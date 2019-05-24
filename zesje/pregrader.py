@@ -13,7 +13,7 @@
 import cv2
 import numpy as np
 
-from zesje.database import db, Solution, Problem
+from zesje.database import db, Solution, Problem, ProblemWidget
 from zesje.images import guess_dpi, get_box, fix_corner_markers
 
 
@@ -26,20 +26,23 @@ def add_feedback_to_solution(page, page_img, corner_keypoints):
     page_img: image of the page
     barcode: data from the barcode on the page
     """
-    problems_on_page = Problem.query.filter(Problem.widget.page == page).all()
+    widgets = ProblemWidget.filter(ProblemWidget.page == page).all()
+
+    problems_on_page = [widget.problem for widget in widgets]
 
     for problem in problems_on_page:
         for mc_option in problem.mc_options:
-            sol = Solution.query.filter(Solution.problem_id == problem.id).one_or_none()
+            if mc_option:
+                sol = Solution.query.filter(Solution.problem_id == problem.id).one_or_none()
 
-            box = (mc_option.x, mc_option.y)
+                box = (mc_option.x, mc_option.y)
 
-            corner_keypoints = fix_corner_markers(corner_keypoints, page_img.shape)
+                corner_keypoints = fix_corner_markers(corner_keypoints, page_img.shape)
 
-            # check if box is filled
-            if box_is_filled(box, page_img, corner_keypoints):
-                sol.feedback.append(mc_option.feedback)
-                db.session.commit()
+                # check if box is filled
+                if box_is_filled(box, page_img, corner_keypoints):
+                    sol.feedback.append(mc_option.feedback)
+                    db.session.commit()
 
 
 def box_is_filled(box, page_img, corner_keypoints, marker_margin=72/2.54, threshold=225, cut_padding=0.1, box_size=11):

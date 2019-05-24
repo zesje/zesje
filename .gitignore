@@ -98,3 +98,4 @@ stats.json
 # pytest coverage reports
 .coverage
 cov.xml
+cov.html/

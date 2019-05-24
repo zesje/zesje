@@ -1,3 +1,4 @@
+
 # This base image can be found in 'Dockerfile'
 image: zesje/base
 
@@ -35,11 +36,6 @@ test_js:
   stage: test
   script: yarn test:js
 
-test_py:
-  <<: *python_packages
-  stage: test
-  script: yarn test:py
-
 lint_js:
   <<: *node_modules
   stage: test
@@ -53,9 +49,13 @@ lint_py:
   allow_failure: true
   script:
     - yarn lint:py
-    
-cov:
+
+test_py:
   <<: *python_packages
   stage: test
   script:
-    - python -m pytest --cov=zesje
+    - yarn test:py:cov
+  artifacts:
+    paths:
+      - cov.html/
+    expire_in: 1 week

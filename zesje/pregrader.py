@@ -43,12 +43,12 @@ def add_feedback_to_solution(page, page_img, corner_keypoints):
             box = (mc_option.x, mc_option.y)
 
             if box_is_filled(box, page_img, top_left_point):
-                sol.feedback = mc_option.feedback
+                sol.feedback.append(mc_option.feedback)
+                db.session.commit()
 
                 if mc_option.label:
                     sol.feedback.text = mc_option.label
-
-                db.session.commit()
+                    db.session.commit()
 
 
 def box_is_filled(box, page_img, corner_keypoints, marker_margin=72/2.54, threshold=225, cut_padding=0.1, box_size=11):

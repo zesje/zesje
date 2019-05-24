@@ -49,7 +49,7 @@ def test_calc_angle(test_input1, test_input2, expected):
 def test_detect_enough_cornermarkers(name, datadir):
     bin_im = generate_binary_image(name, datadir)
     keypoints = scans.find_corner_marker_keypoints(bin_im)
-    assert(len(keypoints) >= 2 & len(keypoints) <= 4)
+    assert(len(keypoints) >= 2 and len(keypoints) <= 4)
 
 
 # Tests whether the detected keypoints are actually corner markers.

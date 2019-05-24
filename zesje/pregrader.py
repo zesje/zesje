@@ -56,6 +56,34 @@ def add_feedback_to_solution(submission, page, page_img, corner_keypoints):
 
 
 def box_is_filled(box, page_img, corner_keypoints, marker_margin=72/2.54, threshold=225, cut_padding=0.1, box_size=11):
+    """
+    A function that finds the checkbox in a general area and then checks if it is filled in.
+
+    Params
+    ------
+    box: (int, int)
+        The coordinates of the top left (x,y) of the checkbox in points.
+    page_img: np.array
+        A numpy array of the image scan
+    corner_keypoints: (float,float)
+        The x coordinate of the left markers and the y coordinate of the top markers, 
+        used as point of reference since scans can deviate from the original. 
+        (x,y) are both in pixels.
+    marker_margin: float
+        The margin between the corner markers and the edge of a page when generated.
+    threshold: int
+        the threshold needed for a checkbox to be considered marked range is between 0 (fully black) 
+        and 255 (absolutely white).
+    cut_padding: float
+        The extra padding when retrieving an area where the checkbox is in inches.
+    box_size: int
+        the size of the checkbox in points.
+
+    Output
+    ------
+    True if the box is marked, else False.
+    """
+
     # shouldn't be needed, but some images are drawn a bit weirdly
     y_shift = 5
     # create an array with y top, y bottom, x left and x right. use the marker margin to allign to the page.
@@ -118,6 +146,8 @@ def box_is_filled(box, page_img, corner_keypoints, marker_margin=72/2.54, thresh
         x3, y3, w3, h3 = cv2.boundingRect(coords3)
         res_rect = bin_im[new_y + y3: new_y + y3 + h3, new_x + x3: new_x + x3 + w3]
 
+    # if the found box is smaller than a certain threshold
+    # it means that we only found a little bit of white and the box is filled
     res_x, res_y, *_ = res_rect.shape
     if(res_x < 0.333 * box_size_px or res_y < 0.333 * box_size_px):
         return True

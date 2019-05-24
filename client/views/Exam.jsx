@@ -43,10 +43,14 @@ class Exams extends React.Component {
             name: problem.name,
             graded: problem.graded,
             mc_options: problem.mc_options.map((option) => {
-              option.widget.x -= 7
-              option.widget.y -= 21
+              option.cbOffsetX = 7 // checkbox offset relative to option position on x axis
+              option.cbOffsetY = 21 // checkbox offset relative to option position on y axis
+              option.widget.x -= option.cbOffsetX
+              option.widget.y -= option.cbOffsetY
               return option
             }),
+            widthMCO: 24,
+            heightMCO: 38,
             isMCQ: problem.mc_options && problem.mc_options.length !== 0 // is the problem a mc question - used to display PanelMCQ
           }
         }
@@ -292,7 +296,7 @@ class Exams extends React.Component {
   }
 
   /**
-   * This method creates a widget object and adds it to the corresponding problem
+   * This method creates a mc option widget object and adds it to the corresponding problem
    * @param problemWidget The widget the mc option belongs to
    * @param data the mc option
    */
@@ -323,7 +327,7 @@ class Exams extends React.Component {
       return {
         'widget': {
           'x': {
-            $set: data.x + i * 24
+            $set: data.x + i * widget.problem.widthMCO
           },
           'y': {
             // each mc option needs to be positioned next to the previous option and should not overlap it
@@ -361,26 +365,26 @@ class Exams extends React.Component {
       'label': labels[index],
       'problem_id': problemWidget.problem.id,
       'feedback_id': null,
+      'cbOffsetX': 7, // checkbox offset relative to option position on x axis
+      'cbOffsetY': 21, // checkbox offset relative to option position on y axis
       'widget': {
         'name': 'mc_option_' + labels[index],
-        'x': xPos + 7,
-        'y': yPos + 21,
+        'x': xPos,
+        'y': yPos,
         'type': 'mcq_widget'
       }
     }
 
     const formData = new window.FormData()
     formData.append('name', data.widget.name)
-    formData.append('x', data.widget.x)
-    formData.append('y', data.widget.y)
+    formData.append('x', data.widget.x + data.cbOffsetX)
+    formData.append('y', data.widget.y + data.cbOffsetY)
     formData.append('problem_id', data.problem_id)
     formData.append('label', data.label)
     api.put('mult-choice/', formData).then(result => {
       data.id = result.mult_choice_id
-      data.widget.x -= 7
-      data.widget.y -= 21
       this.createNewMCOWidget(problemWidget, data)
-      this.generateAnswerBoxes(problemWidget, labels, index + 1, xPos + 24, yPos)
+      this.generateAnswerBoxes(problemWidget, labels, index + 1, xPos + problemWidget.problem.widthMCO, yPos)
     }).catch(err => {
       console.log(err)
     })

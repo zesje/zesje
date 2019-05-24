@@ -89,6 +89,8 @@ class ExamEditor extends React.Component {
           name: 'New problem', // TODO: Name
           page: this.props.page,
           mc_options: [],
+          widthMCO: 24,
+          heightMCO: 38,
           isMCQ: false
         }
         const widgetData = {
@@ -197,8 +199,8 @@ class ExamEditor extends React.Component {
     widget.problem.mc_options.forEach(
       (option, i) => {
         let newData = {
-          x: Math.round(data.x) + i * 24 + 7,
-          y: Math.round(data.y) + 21
+          x: Math.round(data.x) + i * widget.problem.widthMCO + option.cbOffsetX,
+          y: Math.round(data.y) + option.cbOffsetY
         }
         this.updateWidgetDB(option, newData)
       })
@@ -217,21 +219,21 @@ class ExamEditor extends React.Component {
       let oldY = widget.problem.mc_options[0].widget.y
       let newX = oldX
       let newY = oldY
-      let width = 24 * widget.problem.mc_options.length
-      let height = 38
+      let widthOption = widget.problem.widthMCO * widget.problem.mc_options.length
+      let heightOption = widget.problem.heightMCO
       let widthProblem = data.width ? data.width : widget.width
       let heightProblem = data.height ? data.height : widget.height
 
       if (newX < data.x) {
         newX = data.x
-      } else if (newX + width > data.x + widthProblem) {
-        newX = data.x + widget.width - width
+      } else if (newX + widthOption > data.x + widthProblem) {
+        newX = data.x + widget.width - widthOption
       }
 
       if (newY < data.y) {
         newY = data.y
-      } else if (newY + height > data.y + heightProblem) {
-        newY = data.y + widget.height - height
+      } else if (newY + heightOption > data.y + heightProblem) {
+        newY = data.y + widget.height - heightOption
       }
 
       let changed = (oldX !== newX) || (oldY !== newY)
@@ -245,11 +247,13 @@ class ExamEditor extends React.Component {
   }
 
   /**
-   * This function renders a group of options into one draggable widget
+   * This function renders a group of options into one draggable widget.
+   * @param widget the problem widget that contains a mc options
+   * @return a react component representing the multiple choice widget
    */
   renderMCWidget = (widget) => {
-    let width = 24 * widget.problem.mc_options.length
-    let height = 38
+    let width = widget.problem.widthMCO * widget.problem.mc_options.length
+    let height = widget.problem.heightMCO
     let enableResizing = false
     const isSelected = widget.id === this.props.selectedWidgetId
     let xPos = widget.problem.mc_options[0].widget.x
@@ -305,7 +309,7 @@ class ExamEditor extends React.Component {
   /**
    * Render problem widget and the mc options that correspond to the problem
    * @param widget the corresponding widget object from the db
-   * @returns {Array}
+   * @returns {Array} an array of react components to be displayed
    */
   renderProblemWidget = (widget) => {
     // Only render when numPage is set
@@ -404,7 +408,7 @@ class ExamEditor extends React.Component {
   /**
    * Render exam widgets.
    * @param widget the corresponding widget object from the db
-   * @returns {Array}
+   * @returns {Array} an array of react components to be displayed
    */
   renderExamWidget = (widget) => {
     if (this.props.finalized) return []
@@ -477,7 +481,7 @@ class ExamEditor extends React.Component {
 
   /**
    * Render all the widgets by calling the right rendering function for each widget type
-   * @returns {Array}
+   * @returns {Array} containing all widgets components to be displayed
    */
   renderWidgets = () => {
     // Only render when numPage is set

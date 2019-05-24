@@ -5,6 +5,7 @@ import os
 from collections import namedtuple, Counter
 from io import BytesIO
 import signal
+import traceback
 
 import cv2
 import numpy as np
@@ -53,7 +54,7 @@ def process_pdf(scan_id):
         # TODO: When #182 is implemented, properly separate user-facing
         #       messages (written to DB) from developer-facing messages,
         #       which should be written into the log.
-        write_pdf_status(scan_id, 'error', "Unexpected error: " + str(error))
+        write_pdf_status(scan_id, 'error', "Unexpected error: " + traceback.format_exc())
 
 
 def _process_pdf(scan_id, app_config):
@@ -77,22 +78,22 @@ def _process_pdf(scan_id, app_config):
 
     total = PyPDF2.PdfFileReader(open(pdf_path, "rb")).getNumPages()
     failures = []
-    # try:
-    for image, page in extract_images(pdf_path):
-        report_progress(f'Processing page {page} / {total}')
-        # try:
-        success, description = process_page(
-            image, exam_config, output_directory
-        )
-        if not success:
-            print(description)
-            failures.append(page)
-    # except Exception as e:
-        #     report_error(f'Error processing page {e.__cause__}')
-            return
-    # except Exception as e:
-    #     report_error(f"Failed to read pdf: {e}")
-    #     raise
+    try:
+        for image, page in extract_images(pdf_path):
+            report_progress(f'Processing page {page} / {total}')
+            try:
+                success, description = process_page(
+                    image, exam_config, output_directory
+                )
+                if not success:
+                    print(description)
+                    failures.append(page)
+            except Exception:
+                report_error(f'Error processing page {traceback.format_exc()}')
+                raise
+    except Exception as e:
+        report_error(f"Failed to read pdf: {e}")
+        raise
 
     if failures:
         processed = total - len(failures)

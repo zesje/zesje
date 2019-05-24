@@ -88,8 +88,8 @@ def _process_pdf(scan_id, app_config):
                 if not success:
                     print(description)
                     failures.append(page)
-            except Exception:
-                report_error(f'Error processing page {traceback.format_exc()}')
+            except Exception as e:
+                report_error(f'Error processing page {e}.\nTraceback:\n{traceback.format_exc()}')
                 raise
     except Exception as e:
         report_error(f"Failed to read pdf: {e}")

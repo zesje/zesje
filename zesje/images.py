@@ -1,7 +1,6 @@
 """Utilities for dealing with images"""
 
 import numpy as np
-import warnings
 
 from operator import sub, add
 
@@ -48,7 +47,6 @@ def fix_corner_markers(corner_keypoints, shape):
     ----------
     corner_keypoints: list of corner marker locations as tuples
     dpi: the dpi of the image in which the corner markers are from
-
     image_format: either A4 or US letter
 
     Returns

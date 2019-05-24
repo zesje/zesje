@@ -1,0 +1,55 @@
+name: zesje-dev
+channels:
+    - conda-forge
+    - anaconda
+dependencies:
+    - python=3.6 
+    - yarn
+    - redis
+    - pip:
+        # Core components
+        - flask
+        - flask_restful
+        - flask_sqlalchemy
+        - sqlalchemy
+        - Flask-Migrate
+        - alembic
+        - pyyaml
+        - celery
+        - redis
+
+        # General utilities
+        - numpy
+        - scipy
+
+        # summary plot generation
+        - matplotlib
+        - seaborn
+
+        # PDF generation
+        - pdfrw
+        - reportlab
+        - Wand
+        - Pillow  # also scan processing
+        - pyStrich  # TODO: can we replace this with stuff from pylibdmtx?
+
+        # Scan processing
+        - opencv-python
+        - git+https://github.com/mstamy2/PyPDF2
+        - pylibdmtx
+
+        # Exporting
+        - pandas
+        - openpyxl  # required for writing dataframes as Excel spreadsheets
+
+        #
+        # Development dependencies
+        #
+
+        # Tests
+        - pytest
+        - pyssim
+        - pytest-cov
+
+        # Linting
+        - flake8

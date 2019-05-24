@@ -58,7 +58,6 @@ def get(exam_id, problem_id, submission_id, full_page=False):
     page_im = cv2.imread(page_path)
 
     # pregrade highliting
-    page_im = cv2.rectangle(page_im, (20, 20), (40, 40), (0, 255, 0), 3)
     solution = Solution.query.filter(Solution.submission_id == sub.id,
                                      Solution.problem_id == problem_id).one_or_none()
 

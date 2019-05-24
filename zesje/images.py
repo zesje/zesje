@@ -1,6 +1,7 @@
 """Utilities for dealing with images"""
 
 import numpy as np
+import warnings
 
 from operator import sub, add
 
@@ -56,11 +57,8 @@ def fix_corner_markers(corner_keypoints, shape):
 
     """
 
-    if len(corner_keypoints) == 4:
+    if len(corner_keypoints) == 4 or len(corner_keypoints) < 3:
         return corner_keypoints
-
-    if len(corner_keypoints) < 3:
-        raise RuntimeError("Two or fewer corner markers detected")
 
     x_sep = shape[1] / 2
     y_sep = shape[0] / 2

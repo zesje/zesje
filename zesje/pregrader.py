@@ -25,22 +25,24 @@ def add_feedback_to_solution(page, page_img, corner_keypoints):
     ------
     page_img: image of the page
     barcode: data from the barcode on the page
+    corner_keypoints: locations of the corner keypoints
     """
     widgets = ProblemWidget.query.filter(ProblemWidget.page == page).all()
 
     problems_on_page = [widget.problem for widget in widgets]
 
+    corner_keypoints = fix_corner_markers(corner_keypoints, page_img.shape)
+
     for problem in problems_on_page:
         for mc_option in problem.mc_options:
             if mc_option:
                 sol = Solution.query.filter(Solution.problem_id == problem.id).one_or_none()
-
                 box = (mc_option.x, mc_option.y)
 
-                corner_keypoints = fix_corner_markers(corner_keypoints, page_img.shape)
+                # TODO: Assume the minimal x value will be of the top left corner
+                top_left = sorted(corner_keypoints, key=lambda x: x[0])[0]
 
-                # check if box is filled
-                if box_is_filled(box, page_img, corner_keypoints):
+                if box_is_filled(box, page_img, top_left):
                     sol.feedback.text = mc_option.label
                     db.session.commit()
 
@@ -82,10 +84,10 @@ def box_is_filled(box, page_img, corner_keypoints, marker_margin=72/2.54, thresh
 
     # add the actually margin from the scan to corner markers to the coords in inches
     dpi = guess_dpi(page_img)
-    coords[0] = coords[0] + corner_keypoints[1][1]/dpi
-    coords[1] = coords[1] + corner_keypoints[1][1]/dpi
-    coords[2] = coords[2] + corner_keypoints[0][0]/dpi
-    coords[3] = coords[3] + corner_keypoints[0][0]/dpi
+    coords[0] = coords[0] + corner_keypoints[1]/dpi
+    coords[1] = coords[1] + corner_keypoints[1]/dpi
+    coords[2] = coords[2] + corner_keypoints[0]/dpi
+    coords[3] = coords[3] + corner_keypoints[0]/dpi
 
     # get the box where we think the box is
     cut_im = get_box(page_img, coords, padding=cut_padding)

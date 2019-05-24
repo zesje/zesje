@@ -2,8 +2,8 @@ import cv2
 import os
 import numpy as np
 
-from zesje.images import fix_corner_markers, guess_dpi
-from zesje.scans import find_corner_marker_keypoints, process_page
+from zesje.images import fix_corner_markers
+from zesje.scans import find_corner_marker_keypoints
 
 
 def test_three_straight_corners_1():

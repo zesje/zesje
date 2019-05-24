@@ -4,6 +4,7 @@ import numpy as np
 
 from operator import sub, add
 
+
 def guess_dpi(image_array):
     h, *_ = image_array.shape
     resolutions = np.array([1200, 600, 400, 300, 200, 150, 120, 100, 75, 60, 50, 40])

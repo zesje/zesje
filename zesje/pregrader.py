@@ -53,13 +53,13 @@ def box_is_filled(box, page_img, corner_keypoints, marker_margin=72/2.54, thresh
     page_img: np.array
         A numpy array of the image scan
     corner_keypoints: (float,float)
-        The x coordinate of the left markers and the y coordinate of the top markers, 
-        used as point of reference since scans can deviate from the original. 
+        The x coordinate of the left markers and the y coordinate of the top markers,
+        used as point of reference since scans can deviate from the original.
         (x,y) are both in pixels.
     marker_margin: float
         The margin between the corner markers and the edge of a page when generated.
     threshold: int
-        the threshold needed for a checkbox to be considered marked range is between 0 (fully black) 
+        the threshold needed for a checkbox to be considered marked range is between 0 (fully black)
         and 255 (absolutely white).
     cut_padding: float
         The extra padding when retrieving an area where the checkbox is in inches.
@@ -139,11 +139,3 @@ def box_is_filled(box, page_img, corner_keypoints, marker_margin=72/2.54, thresh
     if res_x < 0.333 * box_size_px or res_y < 0.333 * box_size_px:
         return True
     return np.average(res_rect) < threshold
-
-
-def box_is_filled(box, page_img, marker_position, marker_margin=72/2.54):
-    pass
-
-
-def _locate_checkbox():
-    pass

@@ -34,7 +34,7 @@ def add_feedback_to_solution(page, page_img, corner_keypoints):
 
             box = (mc_option.x, mc_option.y)
 
-            corner_keypoints = fix_corner_markers(corner_keypoints, image=page_img, image_format=1)
+            corner_keypoints = fix_corner_markers(corner_keypoints, page_img.shape)
 
             # check if box is filled
             if box_is_filled(box, page_img, corner_keypoints):

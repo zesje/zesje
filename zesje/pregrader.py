@@ -9,30 +9,15 @@
 
 # coupled feedback cannot be deleted
 
-from zesje.database import db, Exam, Submission, Solution, Problem
-from zesje.scans import find_corner_marker_keypoints
-import numpy as np
-from zesje.images import guess_dpi, get_box
+
 import cv2
-from PIL import Image
+import numpy as np
+
+from zesje.database import db, Solution, Problem
+from zesje.images import guess_dpi, get_box
 
 
-def pregrade(exam_token, image):
-    # get image
-    image = None
-
-    exam = Exam.query.get(exam_token=exam_token)
-
-    problems = exam.problems
-
-    mc_options = [problem.mc_options for problem in problems]
-
-    coords = [(cb.x, cb.y) for cb in mc_options]
-
-    pass
-
-
-def add_feedback_to_solution(submission, page, page_img, corner_keypoints):
+def add_feedback_to_solution(page, page_img, corner_keypoints):
     """
     Adds the multiple choice options that are identified as marked as a feedback option to a solution
 
@@ -45,9 +30,9 @@ def add_feedback_to_solution(submission, page, page_img, corner_keypoints):
 
     for problem in problems_on_page:
         for mc_option in problem.mc_options:
-            box = (mc_option.x, mc_option.y)
-
             sol = Solution.query.filter(Solution.problem_id == problem.id).one_or_none()
+
+            box = (mc_option.x, mc_option.y)
 
             # check if box is filled
             if box_is_filled(box, page_img, corner_keypoints):
@@ -152,6 +137,10 @@ def box_is_filled(box, page_img, corner_keypoints, marker_margin=72/2.54, thresh
     if(res_x < 0.333 * box_size_px or res_y < 0.333 * box_size_px):
         return True
     return (np.average(res_rect) < 225)
+
+
+def box_is_filled(box, page_img, marker_position, marker_margin=72/2.54):
+    pass
 
 
 def _locate_checkbox():

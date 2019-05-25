@@ -243,7 +243,7 @@ class ExamEditor extends React.Component {
         newY = data.y + widget.height - heightOption
       }
 
-      let changed = (oldX !== newX) || (oldY !== newY)
+      let changed = (oldX !== newX) || (oldY !== newY) // update the state only if the mc options were moved
       if (changed) {
         this.props.updateMCWidget(widget, {
           x: Math.round(newX),
@@ -395,7 +395,9 @@ class ExamEditor extends React.Component {
           }).then(() => {
             if (widget.problem.mc_options.length > 0) {
               this.updateMCO(widget, {
-                x: widget.problem.mc_options[0].widget.x, // these are guaranteed to be up to date
+                // react offers the guarantee that setState calls are processed before handling next event
+                // therefore the data in the state is up to date
+                x: widget.problem.mc_options[0].widget.x,
                 y: widget.problem.mc_options[0].widget.y
               })
             }

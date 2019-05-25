@@ -394,11 +394,11 @@ class Exams extends React.Component {
     const selectedWidgetId = this.state.selectedWidgetId
     let selectedWidget = selectedWidgetId && this.state.widgets[selectedWidgetId]
     let problem = selectedWidget && selectedWidget.problem
-    let widgetEditDisabled = this.state.previewing || !problem
+    let containsMCOptions = (problem && problem.mc_options.length > 0) || false
+    let widgetEditDisabled = (this.state.previewing || !problem) || (this.props.exam.finalized && containsMCOptions)
     let isGraded = problem && problem.graded
     let widgetDeleteDisabled = widgetEditDisabled || isGraded
     let totalNrAnswers = 12 // the upper limit for the nr of possible answer boxes
-    let containsMCOptions = (problem && problem.mc_options.length > 0) || false
     let disabledDeleteBoxes = !containsMCOptions
     let isMCQ = (problem && problem.isMCQ) || false
     let showPanelMCQ = isMCQ && !this.state.previewing && !this.props.exam.finalized

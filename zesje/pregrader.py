@@ -1,19 +1,7 @@
-# 3 - resolution / dpi to convert points to inches to pixels
-# 4 - get corner marker keypoints per page
-# 5 - optional? determine blank pdf corner markers vs submission corner markers
-# 6 - transform submission image
-# 7 - determine checkbox locations
-# 8 - get box location and check if it is filled
-# 8.5 - check if feedback option exists
-# 9 - connect to feedback option
-
-# coupled feedback cannot be deleted
-
-
 import cv2
 import numpy as np
 
-from zesje.database import db, Solution, ProblemWidget
+from zesje.database import db, Solution
 from zesje.images import guess_dpi, get_box, fix_corner_markers
 
 
@@ -44,11 +32,6 @@ def add_feedback_to_solution(exam, page, page_img, corner_keypoints):
 
             if box_is_filled(box, page_img, top_left_point):
                 feedback = mc_option.feedback
-
-                if mc_option.label:
-                    feedback.text = mc_option.label
-                    db.session.commit()
-
                 sol.feedback.append(feedback)
                 db.session.commit()
 

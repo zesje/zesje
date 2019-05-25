@@ -64,8 +64,8 @@ class MultipleChoice(Resource):
         mc_type = 'mcq_widget'
 
         if not id:
-            # Insert new empty feedback option that links to the same problem
-            new_feedback_option = FeedbackOption(problem_id=problem_id, text='')
+            # Insert new empty feedback option that links to the same problem, with the label as name
+            new_feedback_option = FeedbackOption(problem_id=problem_id, text=label)
             db.session.add(new_feedback_option)
             db.session.commit()
 

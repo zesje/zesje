@@ -5,16 +5,20 @@ from zesje.database import db, Solution
 from zesje.images import guess_dpi, get_box, fix_corner_markers
 
 
-def add_feedback_to_solution(exam, page, page_img, corner_keypoints):
+def add_feedback_to_solution(sub, exam, page, page_img, corner_keypoints):
     """
     Adds the multiple choice options that are identified as marked as a feedback option to a solution
 
-    Params
+    Parameters
     ------
-    exam: the current exam
-    page_img: image of the page
-    barcode: data from the barcode on the page
-    corner_keypoints: locations of the corner keypoints
+    sub : Submission
+        the current submission
+    exam : Exam
+        the current exam
+    page_img : Image
+        image of the page
+    corner_keypoints : array
+        locations of the corner keypoints as (x, y) tuples
     """
     problems_on_page = [problem for problem in exam.problems if problem.widget.page == page]
 
@@ -25,7 +29,7 @@ def add_feedback_to_solution(exam, page, page_img, corner_keypoints):
     top_left_point = sorted(fixed_corner_keypoints, key=lambda x: x[0])[0] if fixed_corner_keypoints else []
 
     for problem in problems_on_page:
-        sol = Solution.query.filter(Solution.problem_id == problem.id).one_or_none()
+        sol = Solution.query.filter(Solution.problem_id == problem.id, Solution.submission_id == sub.id).one_or_none()
 
         for mc_option in problem.mc_options:
             box = (mc_option.x, mc_option.y)

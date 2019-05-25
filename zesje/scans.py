@@ -338,8 +338,8 @@ def process_page(image_data, exam_config, output_dir=None, strict=False):
     else:
         return True, "Testing, image not saved and database not updated."
 
-    exam = update_database(image_path, barcode)
-    add_feedback_to_solution(exam, barcode.page, image_array, corner_keypoints)
+    sub, exam = update_database(image_path, barcode)
+    add_feedback_to_solution(sub, exam, barcode.page, image_array, corner_keypoints)
 
     if barcode.page == 0:
         description = guess_student(
@@ -387,8 +387,12 @@ def update_database(image_path, barcode):
 
     Returns
     -------
-    signature_validated : bool
-        If the corresponding submission has a validated signature.
+    sub, exam where
+
+    sub : Submission
+        the current submission
+    exam : Exam
+        the current exam
     """
     exam = Exam.query.filter(Exam.token == barcode.token).first()
     if exam is None:
@@ -408,7 +412,7 @@ def update_database(image_path, barcode):
 
     db.session.commit()
 
-    return exam
+    return sub, exam
 
 
 def decode_barcode(image, exam_config):

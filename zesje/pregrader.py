@@ -22,7 +22,6 @@ def add_feedback_to_solution(sub, exam, page, page_img, corner_keypoints):
     """
     problems_on_page = [problem for problem in exam.problems if problem.widget.page == page]
 
-    # TODO: What if less than 3 keypoints are found?
     top_left_point, fixed_corner_keypoints = fix_corner_markers(corner_keypoints, page_img.shape)
 
     for problem in problems_on_page:

@@ -59,7 +59,7 @@ def fix_corner_markers(corner_keypoints, shape):
     """
 
     if len(corner_keypoints) == 4 or len(corner_keypoints) < 3:
-        return corner_keypoints
+        raise RuntimeError("Fewer then 3 corner markers found")
 
     x_sep = shape[1] / 2
     y_sep = shape[0] / 2

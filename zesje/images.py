@@ -41,7 +41,7 @@ def get_box(image_array, box, padding=0.3):
 def fix_corner_markers(corner_keypoints, shape):
     """
     Corrects the list of corner markers if only three corner markers are found.
-    This function raises if only two corner keypoints are detected.
+    This function raises if less than three corner markers are detected.
 
     Parameters
     ----------

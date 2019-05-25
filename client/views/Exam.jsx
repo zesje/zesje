@@ -184,6 +184,7 @@ class Exams extends React.Component {
           numPages={this.state.numPages}
           onPDFLoad={this.onPDFLoad}
           updateWidget={this.updateWidget}
+          updateMCWidget={this.updateMCWidget}
           selectedWidgetId={this.state.selectedWidgetId}
           selectWidget={(widgetId) => {
             this.setState({
@@ -191,7 +192,6 @@ class Exams extends React.Component {
             })
           }}
           createNewWidget={this.createNewWidget}
-          updateMCWidgetPosition={this.updateMCWidgetPosition}
           updateExam={() => {
             this.props.updateExam(this.props.examID)
           }}
@@ -300,7 +300,7 @@ class Exams extends React.Component {
    * @param problemWidget The widget the mc option belongs to
    * @param data the mc option
    */
-  createNewMCOWidget = (problemWidget, data) => {
+  createNewMCWidget = (problemWidget, data) => {
     this.setState((prevState) => {
       return {
         widgets: update(prevState.widgets, {
@@ -322,7 +322,7 @@ class Exams extends React.Component {
    * @param widget the problem widget that includes the mcq widget
    * @param data the new location of the mcq widget (the location of the top-left corner)
    */
-  updateMCWidgetPosition = (widget, data) => {
+  updateMCWidget = (widget, data) => {
     let newMCO = widget.problem.mc_options.map((option, i) => {
       return {
         'widget': {
@@ -383,7 +383,7 @@ class Exams extends React.Component {
     formData.append('label', data.label)
     api.put('mult-choice/', formData).then(result => {
       data.id = result.mult_choice_id
-      this.createNewMCOWidget(problemWidget, data)
+      this.createNewMCWidget(problemWidget, data)
       this.generateAnswerBoxes(problemWidget, labels, index + 1, xPos + problemWidget.problem.widthMCO, yPos)
     }).catch(err => {
       console.log(err)
@@ -401,6 +401,7 @@ class Exams extends React.Component {
     let containsMCOptions = (problem && problem.mc_options.length > 0) || false
     let disabledDeleteBoxes = !containsMCOptions
     let isMCQ = (problem && problem.isMCQ) || false
+    let showPanelMCQ = isMCQ && !this.state.previewing && !this.props.exam.finalized
 
     return (
       <React.Fragment>
@@ -445,7 +446,7 @@ class Exams extends React.Component {
             }
           }
         />
-        { isMCQ ? (
+        { showPanelMCQ ? (
           <PanelMCQ
             totalNrAnswers={totalNrAnswers}
             disabledGenerateBoxes={containsMCOptions}

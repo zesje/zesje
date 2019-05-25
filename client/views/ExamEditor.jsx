@@ -190,12 +190,19 @@ class ExamEditor extends React.Component {
     })
   }
 
-  updateMCOPosition = (widget, data) => {
-    this.props.updateMCWidgetPosition(widget, {
+  /**
+   * This function updates the state and the Database with the positions of the mc options.
+   * @param widget the problem widget the mc options belong to
+   * @param data the new position of the mc widget
+   */
+  updateMCO = (widget, data) => {
+    // update state
+    this.props.updateMCWidget(widget, {
       x: Math.round(data.x),
       y: Math.round(data.y)
     })
 
+    // update DB
     widget.problem.mc_options.forEach(
       (option, i) => {
         let newData = {
@@ -238,7 +245,7 @@ class ExamEditor extends React.Component {
 
       let changed = (oldX !== newX) || (oldY !== newY)
       if (changed) {
-        this.props.updateMCWidgetPosition(widget, {
+        this.props.updateMCWidget(widget, {
           x: Math.round(newX),
           y: Math.round(newY)
         })
@@ -287,7 +294,7 @@ class ExamEditor extends React.Component {
           this.props.selectWidget(widget.id)
         }}
         onDragStop={(e, data) => {
-          this.updateMCOPosition(widget, data)
+          this.updateMCO(widget, data)
         }}
       >
         <div className={isSelected ? 'mcq-widget widget selected' : 'mcq-widget widget '}>
@@ -307,7 +314,7 @@ class ExamEditor extends React.Component {
   }
 
   /**
-   * Render problem widget and the mc options that correspond to the problem
+   * Render problem widget and the mc options that correspond to the problem.
    * @param widget the corresponding widget object from the db
    * @returns {Array} an array of react components to be displayed
    */
@@ -365,10 +372,12 @@ class ExamEditor extends React.Component {
             width: ref.offsetWidth,
             height: ref.offsetHeight
           }).then(() => {
-            this.updateMCOPosition(widget, {
-              x: widget.problem.mc_options[0].widget.x,
-              y: widget.problem.mc_options[0].widget.y
-            })
+            if (widget.problem.mc_options.length > 0) {
+              this.updateMCO(widget, {
+                x: widget.problem.mc_options[0].widget.x, // these are guaranteed to be up to date
+                y: widget.problem.mc_options[0].widget.y
+              })
+            }
           })
         }}
         onDragStart={() => {
@@ -384,10 +393,12 @@ class ExamEditor extends React.Component {
             x: Math.round(data.x),
             y: Math.round(data.y)
           }).then(() => {
-            this.updateMCOPosition(widget, {
-              x: widget.problem.mc_options[0].widget.x,
-              y: widget.problem.mc_options[0].widget.y
-            })
+            if (widget.problem.mc_options.length > 0) {
+              this.updateMCO(widget, {
+                x: widget.problem.mc_options[0].widget.x, // these are guaranteed to be up to date
+                y: widget.problem.mc_options[0].widget.y
+              })
+            }
           })
         }}
       >

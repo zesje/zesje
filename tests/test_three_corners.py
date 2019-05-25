@@ -10,18 +10,20 @@ def test_three_straight_corners_1():
     shape = (240, 200, 3)
     corner_markers = [(50, 50), (120, 50), (50, 200)]
 
-    corner_markers = fix_corner_markers(corner_markers, shape)
+    top_left, corner_markers = fix_corner_markers(corner_markers, shape)
 
     assert (120, 200) in corner_markers
+    assert top_left == (50, 50)
 
 
 def test_three_straight_corners_2():
     shape = (240, 200, 3)
     corner_markers = [(120, 50), (50, 200), (120, 200)]
 
-    corner_markers = fix_corner_markers(corner_markers, shape)
+    top_left, corner_markers = fix_corner_markers(corner_markers, shape)
 
     assert (50, 50) in corner_markers
+    assert top_left == (50, 50)
 
 
 def test_pdf(datadir):
@@ -46,7 +48,7 @@ def test_pdf(datadir):
     diff = [corner for corner in corners1 if corner not in corners2]
     diff_marker = min(diff)
 
-    fixed_corners2 = fix_corner_markers(corners2, page_img.shape)
+    _, fixed_corners2 = fix_corner_markers(corners2, page_img.shape)
     added_marker = [corner for corner in fixed_corners2 if corner not in corners2][0]
 
     # Check if 'inferred' corner marker is not too far away

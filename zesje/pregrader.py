@@ -22,11 +22,8 @@ def add_feedback_to_solution(sub, exam, page, page_img, corner_keypoints):
     """
     problems_on_page = [problem for problem in exam.problems if problem.widget.page == page]
 
-    fixed_corner_keypoints = fix_corner_markers(corner_keypoints, page_img.shape)
-
-    # TODO: It is not exactly known which corner marker is the top left one
-    # TODO: Also, what do if less than 3 keypoints are found?
-    top_left_point = sorted(fixed_corner_keypoints, key=lambda x: x[0])[0] if fixed_corner_keypoints else []
+    # TODO: What if less than 3 keypoints are found?
+    top_left_point, fixed_corner_keypoints = fix_corner_markers(corner_keypoints, page_img.shape)
 
     for problem in problems_on_page:
         sol = Solution.query.filter(Solution.problem_id == problem.id, Solution.submission_id == sub.id).one_or_none()

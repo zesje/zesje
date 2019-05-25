@@ -45,14 +45,17 @@ def fix_corner_markers(corner_keypoints, shape):
 
     Parameters
     ----------
-    corner_keypoints: list of corner marker locations as tuples
-    dpi: the dpi of the image in which the corner markers are from
-    image_format: either A4 or US letter
+    corner_keypoints :
+        List of corner marker locations as tuples
+    shape :
+        Shape of the image in (x, y, dim)
 
     Returns
     -------
-    A list of four corner markers.
-
+    corner_keypoints :
+        A list of four corner markers.
+    top_left : tuple
+        Coordinates of the top left corner marker
     """
 
     if len(corner_keypoints) == 4 or len(corner_keypoints) < 3:
@@ -66,33 +69,30 @@ def fix_corner_markers(corner_keypoints, shape):
     top_right = [(x, y) for x, y in corner_keypoints if x > x_sep and y < y_sep]
     bottom_right = [(x, y) for x, y in corner_keypoints if x > x_sep and y > y_sep]
 
+    missing_point = ()
+
     if not top_left:
         # Top left point is missing
         (dx, dy) = tuple(map(sub, top_right[0], bottom_right[0]))
-        top_left = tuple(map(add, bottom_left[0], (dx, dy)))
+        missing_point = tuple(map(add, bottom_left[0], (dx, dy)))
+        top_left = [missing_point]
 
-        return corner_keypoints + [top_left]
-
-    if not bottom_left:
+    elif not bottom_left:
         # Bottom left point is missing
         (dx, dy) = tuple(map(sub, top_right[0], bottom_right[0]))
-        bottom_left = tuple(map(sub, top_left[0], (dx, dy)))
+        missing_point = tuple(map(sub, top_left[0], (dx, dy)))
 
-        return corner_keypoints + [bottom_left]
-
-    if not top_right:
+    elif not top_right:
         # Top right point is missing
         (dx, dy) = tuple(map(sub, top_left[0], bottom_left[0]))
-        top_right = tuple(map(add, bottom_right[0], (dx, dy)))
+        missing_point = tuple(map(add, bottom_right[0], (dx, dy)))
 
-        return corner_keypoints + [top_right]
-
-    if not bottom_right:
+    elif not bottom_right:
         # bottom right
         (dx, dy) = tuple(map(sub, top_left[0], bottom_left[0]))
-        bottom_right = tuple(map(sub, top_right[0], (dx, dy)))
+        missing_point = tuple(map(sub, top_right[0], (dx, dy)))
 
-        return corner_keypoints + [bottom_right]
+    return top_left[0], corner_keypoints + [missing_point]
 
 
 def box_is_filled(image_array, box_coords, padding=0.3, threshold=150, pixels=False):

@@ -3,7 +3,7 @@
   "main": "index.js",
   "license": "AGPL-3.0",
   "scripts": {
-    "dev": "concurrently --kill-others --names \"WEBPACK,PYTHON,CELERY\" --prefix-colors \"bgBlue.bold,bgGreen.bold,bgRed.bold\" \"webpack-dev-server --hot --inline --progress --config webpack.dev.js\" \"ZESJE_SETTINGS=$(pwd)/zesje.dev.cfg python3 zesje\" \"ZESJE_SETTINGS=$(pwd)/zesje.dev.cfg celery -A zesje.celery worker\"",
+    "dev": "concurrently --kill-others --names \"WEBPACK,PYTHON,CELERY\" --prefix-colors \"bgBlue.bold,bgGreen.bold,bgRed.bold\" \"webpack-dev-server --hot --inline --progress --config webpack.dev.js\" \"ZESJE_SETTINGS=$(pwd)/zesje.dev.cfg python3 zesje\" \"ZESJE_SETTINGS=$(pwd)/zesje.dev.cfg celery -A zesje.celery worker -l info --autoscale=4,1 --max-tasks-per-child=16\"",
     "build": "webpack --config webpack.prod.js",
     "ci": "yarn lint; yarn test",
     "lint": "yarn lint:js; yarn lint:py",
@@ -17,6 +17,7 @@
     "migrate:dev": "ZESJE_SETTINGS=$(pwd)/zesje.dev.cfg FLASK_APP=zesje/__init__.py flask db upgrade",
     "migrate": "FLASK_APP=zesje/__init__.py flask db upgrade",
     "prepare-migration": "ZESJE_SETTINGS=$(pwd)/zesje.dev.cfg FLASK_APP=zesje/__init__.py flask db migrate",
+    "test:py:cov": "python3 -m pytest -v -W error::RuntimeWarning --cov=zesje --cov-report=xml:cov.xml --cov-report=html:cov.html --cov-report=term tests/",
     "migrate-down": "FLASK_APP=zesje/__init__.py flask db downgrade"
   },
   "standard": {

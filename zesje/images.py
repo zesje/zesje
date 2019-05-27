@@ -58,6 +58,9 @@ def fix_corner_markers(corner_keypoints, shape):
         Coordinates of the top left corner marker
     """
 
+    if len(corner_keypoints) == 4:
+        return corner_keypoints
+
     if len(corner_keypoints) < 3:
         raise RuntimeError("Fewer then 3 corner markers found")
 

@@ -19,6 +19,7 @@ def distance(keyp1, keyp2):
 def generate_image(name, datadir):
     pdf_path = os.path.join(datadir, 'scanned_pdfs', f'{name}')
     pil_im = PIL.Image.open(pdf_path)
+    pil_im = pil_im.convert('RGB')
     image_array = np.array(pil_im)
     return image_array
 

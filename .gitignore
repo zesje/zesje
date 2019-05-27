@@ -89,6 +89,12 @@ build/
 # development data
 data-dev
 
+# test data
+tests/data/submissions
+
+# redis dump
+dump.rdb
+
 # webpack analyze data
 stats.json
 

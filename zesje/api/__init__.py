@@ -12,6 +12,7 @@ from .solutions import Solutions, Approve
 from .widgets import Widgets
 from .emails import EmailTemplate, RenderedEmailTemplate, Email
 from .mult_choice import MultipleChoice
+
 from . import signature
 from . import images
 from . import summary_plot
@@ -52,6 +53,9 @@ api.add_resource(Email,
 api.add_resource(Approve,
                  '/solution/approve/<int:exam_id>/<int:submission_id>/<int:problem_id>')
 api.add_resource(MultipleChoice, '/mult-choice/<int:id>')
+api.add_resource(MultipleChoice,
+                 '/mult-choice/<int:id>',
+                 '/mult-choice/')
 
 # Other resources that don't return JSON
 # It is possible to get flask_restful to work with these, but not

@@ -12,6 +12,7 @@ import withShortcuts from '../components/ShortcutBinder.jsx'
 import * as api from '../api.jsx'
 
 import 'bulma-tooltip/dist/css/bulma-tooltip.min.css'
+import './grade/Grade.css'
 
 class Grade extends React.Component {
   state = {
@@ -309,7 +310,7 @@ class Grade extends React.Component {
                   </article> : null
                 }
 
-                <p className='box'>
+                <p className={'box' + (solution.graded_at ? ' is-graded' : '')}>
                   <img src={exam.id ? ('api/images/solutions/' + exam.id + '/' +
                     problem.id + '/' + submission.id + '/' + (this.state.fullPage ? '1' : '0')) + '?' +
                     this.getLocationHash(problem) : ''} alt='' />

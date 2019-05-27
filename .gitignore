@@ -94,3 +94,8 @@ stats.json
 
 # JetBrains IDE folders
 .idea/
+
+# pytest coverage reports
+.coverage
+cov.xml
+cov.html/

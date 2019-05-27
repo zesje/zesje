@@ -1,7 +1,6 @@
 import math
 import os
 
-import cv2
 import numpy as np
 import PIL
 import pytest
@@ -17,11 +16,11 @@ def distance(keyp1, keyp2):
 
 # Given a name of a exam image and the location it is stored, retrieves the
 # image and converts it to binary image
-def generate_opencv_image(name, datadir):
+def generate_image(name, datadir):
     pdf_path = os.path.join(datadir, 'scanned_pdfs', f'{name}')
     pil_im = PIL.Image.open(pdf_path)
-    opencv_im = cv2.cvtColor(np.array(pil_im), cv2.COLOR_RGB2BGR)
-    return opencv_im
+    image_array = np.array(pil_im)
+    return image_array
 
 # Tests
 
@@ -46,7 +45,7 @@ def test_calc_angle(test_input1, test_input2, expected):
                          ids=os.listdir(
                             os.path.join('tests', 'data', 'scanned_pdfs')))
 def test_detect_enough_cornermarkers(name, datadir):
-    image = generate_opencv_image(name, datadir)
+    image = generate_image(name, datadir)
     keypoints = scans.find_corner_marker_keypoints(image)
     assert(len(keypoints) >= 2 and len(keypoints) <= 4)
 
@@ -61,7 +60,7 @@ def test_detect_enough_cornermarkers(name, datadir):
                          ids=os.listdir(
                             os.path.join('tests', 'data', 'scanned_pdfs')))
 def test_detect_valid_cornermarkers(name, datadir):
-    image = generate_opencv_image(name, datadir)
+    image = generate_image(name, datadir)
     keypoints = scans.find_corner_marker_keypoints(image)
 
     h, w, *_ = image.shape

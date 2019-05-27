@@ -45,10 +45,13 @@ test_args = [
     ('sample_exam.jpg', 4),
     ('shifted.jpg', 4),
     ('tilted.jpg', 4),
-    ('tilted_three_corners.jpg', 3),
+    ('messy_three_corners.jpg', 3),
     ('blank.jpg', 0)]
-@pytest.mark.parametrize('name,expected', test_args,
-ids=list(map(lambda e: f"{e[0]} ({e[1]} markers)", test_args)))
+
+
+@pytest.mark.parametrize(
+    'name,expected', test_args,
+    ids=list(map(lambda e: f"{e[0]} ({e[1]} markers)", test_args)))
 def test_detect_enough_cornermarkers(name, expected, datadir):
     image = generate_image(name, datadir)
     keypoints = scans.find_corner_marker_keypoints(image)

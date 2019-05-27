@@ -10,7 +10,7 @@ def add_feedback_to_solution(sub, exam, page, page_img, corner_keypoints):
     Adds the multiple choice options that are identified as marked as a feedback option to a solution
 
     Parameters
-    ------
+    ----------
     sub : Submission
         the current submission
     exam : Exam

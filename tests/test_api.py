@@ -8,7 +8,7 @@ from zesje.database import db, Exam, Problem, ProblemWidget
 def add_test_data():
     exam1 = Exam(id=1, name='exam 1', finalized=False)
     exam2 = Exam(id=2, name='exam 2', finalized=True)
-    exam3 = Exam(id=3, name='exam 1', finalized=False)
+    exam3 = Exam(id=3, name='exam 3', finalized=False)
 
     db.session.add(exam1)
     db.session.add(exam2)
@@ -17,7 +17,7 @@ def add_test_data():
 
     problem1 = Problem(id=1, name='Problem 1', exam_id=1)
     problem2 = Problem(id=2, name='Problem 2', exam_id=2)
-    problem3 = Problem(id=3, name='Problem 1', exam_id=3)
+    problem3 = Problem(id=3, name='Problem 3', exam_id=3)
 
     db.session.add(problem1)
     db.session.add(problem2)

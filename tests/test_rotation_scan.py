@@ -17,12 +17,11 @@ def distance(keyp1, keyp2):
 
 # Given a name of a exam image and the location it is stored, retrieves the
 # image and converts it to binary image
-def generate_binary_image(name, datadir):
+def generate_opencv_image(name, datadir):
     pdf_path = os.path.join(datadir, 'scanned_pdfs', f'{name}')
     pil_im = PIL.Image.open(pdf_path)
     opencv_im = cv2.cvtColor(np.array(pil_im), cv2.COLOR_RGB2BGR)
-    _, bin_im = cv2.threshold(opencv_im, 150, 255, cv2.THRESH_BINARY)
-    return bin_im
+    return opencv_im
 
 # Tests
 
@@ -47,8 +46,8 @@ def test_calc_angle(test_input1, test_input2, expected):
                          ids=os.listdir(
                             os.path.join('tests', 'data', 'scanned_pdfs')))
 def test_detect_enough_cornermarkers(name, datadir):
-    bin_im = generate_binary_image(name, datadir)
-    keypoints = scans.find_corner_marker_keypoints(bin_im)
+    image = generate_opencv_image(name, datadir)
+    keypoints = scans.find_corner_marker_keypoints(image)
     assert(len(keypoints) >= 2 and len(keypoints) <= 4)
 
 
@@ -62,10 +61,10 @@ def test_detect_enough_cornermarkers(name, datadir):
                          ids=os.listdir(
                             os.path.join('tests', 'data', 'scanned_pdfs')))
 def test_detect_valid_cornermarkers(name, datadir):
-    bin_im = generate_binary_image(name, datadir)
-    keypoints = scans.find_corner_marker_keypoints(bin_im)
+    image = generate_opencv_image(name, datadir)
+    keypoints = scans.find_corner_marker_keypoints(image)
 
-    h, w, *_ = bin_im.shape
+    h, w, *_ = image.shape
     (xmm, ymm) = (210, 297)
     (xcorner, ycorner) = (round(30 * w / xmm), round(30 * h / ymm))
     maxdist = math.hypot(xcorner, ycorner)

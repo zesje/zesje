@@ -10,7 +10,7 @@ def add_feedback_to_solution(sub, exam, page, page_img, corner_keypoints):
     Adds the multiple choice options that are identified as marked as a feedback option to a solution
 
     Parameters
-    ------
+    ----------
     sub : Submission
         the current submission
     exam : Exam
@@ -22,7 +22,11 @@ def add_feedback_to_solution(sub, exam, page, page_img, corner_keypoints):
     """
     problems_on_page = [problem for problem in exam.problems if problem.widget.page == page]
 
-    top_left_point, fixed_corner_keypoints = fix_corner_markers(corner_keypoints, page_img.shape)
+    fixed_corners = fix_corner_markers(corner_keypoints, page_img.shape)
+
+    x_min = min(point[0] for point in fixed_corners)
+    y_min = min(point[1] for point in fixed_corners)
+    top_left_point = (x_min, y_min)
 
     for problem in problems_on_page:
         sol = Solution.query.filter(Solution.problem_id == problem.id, Solution.submission_id == sub.id).one_or_none()

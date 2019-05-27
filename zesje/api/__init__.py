@@ -52,7 +52,6 @@ api.add_resource(Email,
                  '/email/<int:exam_id>/<int:student_id>')
 api.add_resource(Approve,
                  '/solution/approve/<int:exam_id>/<int:submission_id>/<int:problem_id>')
-api.add_resource(MultipleChoice, '/mult-choice/<int:id>')
 api.add_resource(MultipleChoice,
                  '/mult-choice/<int:id>',
                  '/mult-choice/')

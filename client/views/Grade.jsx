@@ -210,17 +210,18 @@ class Grade extends React.Component {
               <div className='column is-one-quarter-desktop is-one-third-tablet'>
                 <ProblemSelector problems={exam.problems} changeProblem={this.changeProblem}
                   current={this.state.pIndex} showTooltips={this.state.showTooltips} />
-                {this.state.editActive
-                  ? <EditPanel problemID={problem.id} feedback={this.state.feedbackToEdit}
-                    goBack={this.backToFeedback} />
-                  : <FeedbackPanel examID={exam.id} submissionID={submission.id}
-                    problem={problem} solution={solution} graderID={this.props.graderID}
-                    editFeedback={this.editFeedback} showTooltips={this.state.showTooltips}
-                    updateSubmission={() => {
-                      this.props.updateSubmission(this.state.sIndex)
-                    }
-                    } grading />
-                }
+                <nav className='panel'>
+                  {this.state.editActive
+                    ? <EditPanel problemID={problem.id} feedback={this.state.feedbackToEdit}
+                      goBack={this.backToFeedback} />
+                    : <FeedbackPanel examID={exam.id} submissionID={submission.id}
+                      problem={problem} solution={solution} graderID={this.props.graderID}
+                      editFeedback={this.editFeedback} showTooltips={this.state.showTooltips}
+                      updateSubmission={() => {
+                        this.props.updateSubmission(this.state.sIndex)
+                      }} grading />
+                  }
+                </nav>
               </div>
 
               <div className='column'>

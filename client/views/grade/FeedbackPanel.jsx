@@ -101,7 +101,7 @@ class FeedbackPanel extends React.Component {
       this.props.problem.feedback[this.state.selectedFeedbackIndex].id
 
     return (
-      <nav className='panel'>
+      <React.Fragment>
         {this.props.grading &&
           <p className='panel-heading'>
             Total:&nbsp;<b>{totalScore}</b>
@@ -126,7 +126,7 @@ class FeedbackPanel extends React.Component {
             <span>option</span>
           </button>
         </div>
-      </nav>
+      </React.Fragment>
     )
   }
 }

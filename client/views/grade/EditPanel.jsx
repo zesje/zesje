@@ -107,7 +107,7 @@ class EditPanel extends React.Component {
 
   render () {
     return (
-      <nav className='panel'>
+      <React.Fragment>
         <p className='panel-heading'>
           Manage feedback
         </p>
@@ -168,7 +168,7 @@ class EditPanel extends React.Component {
             onCancel={() => { this.setState({deleting: false}) }}
           />
         </div>
-      </nav>
+      </React.Fragment>
     )
   }
 }

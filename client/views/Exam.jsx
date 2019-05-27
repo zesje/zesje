@@ -344,7 +344,7 @@ class Exams extends React.Component {
                     }} />
                 </div>
                 <br/>
-                <label className='label'>Feedback options</label>
+                {!this.state.editActive && <label className='label'>Feedback options</label>}
               </React.Fragment>
             )}
           </div>

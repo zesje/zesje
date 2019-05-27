@@ -108,7 +108,7 @@ class EditPanel extends React.Component {
   render () {
     return (
       <React.Fragment>
-        <p className='panel-heading'>
+        <p className={this.props.grading ? 'panel-heading' : 'panel-heading is-radiusless'}>
           Manage feedback
         </p>
 

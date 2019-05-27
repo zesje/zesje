@@ -32,7 +32,9 @@ class FeedbackBlock extends React.Component {
   render () {
     const shortcut = (this.props.index < 11 ? '' : 'shift + ') + this.props.index % 10
     return (
-      <a className='panel-block' onClick={this.props.grading ? this.toggle : this.props.editFeedback}
+      <a
+        className={this.props.grading ? 'panel-block is-active' : 'panel-block'}
+        onClick={this.props.grading ? this.toggle : this.props.editFeedback}
         style={this.props.selected ? {backgroundColor: '#209cee'} : {}}
       >
         <span

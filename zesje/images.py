@@ -54,8 +54,6 @@ def fix_corner_markers(corner_keypoints, shape):
     -------
     corner_keypoints :
         A list of four corner markers.
-    top_left : tuple
-        Coordinates of the top left corner marker
     """
 
     if len(corner_keypoints) == 4:
@@ -78,7 +76,6 @@ def fix_corner_markers(corner_keypoints, shape):
         # Top left point is missing
         (dx, dy) = tuple(map(sub, top_right[0], bottom_right[0]))
         missing_point = tuple(map(add, bottom_left[0], (dx, dy)))
-        top_left = [missing_point]
 
     elif not bottom_left:
         # Bottom left point is missing
@@ -95,7 +92,8 @@ def fix_corner_markers(corner_keypoints, shape):
         (dx, dy) = tuple(map(sub, top_left[0], bottom_left[0]))
         missing_point = tuple(map(sub, top_right[0], (dx, dy)))
 
-    return top_left[0], corner_keypoints + [missing_point]
+    corner_keypoints.append(missing_point)
+    return corner_keypoints
 
 
 def box_is_filled(image_array, box_coords, padding=0.3, threshold=150, pixels=False):

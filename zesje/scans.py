@@ -5,7 +5,6 @@ import os
 from collections import namedtuple, Counter
 from io import BytesIO
 import signal
-import traceback
 
 import cv2
 import numpy as np
@@ -55,7 +54,7 @@ def process_pdf(scan_id):
         # TODO: When #182 is implemented, properly separate user-facing
         #       messages (written to DB) from developer-facing messages,
         #       which should be written into the log.
-        write_pdf_status(scan_id, 'error', f"Unexpected error: {error}\n Traceback:\n" + traceback.format_exc())
+        write_pdf_status(scan_id, 'error', f"Unexpected error: {error}")
 
 
 def _process_pdf(scan_id, app_config):
@@ -92,7 +91,7 @@ def _process_pdf(scan_id, app_config):
                     print(description)
                     failures.append(page)
             except Exception as e:
-                report_error(f'Error processing page {e}.\nTraceback:\n{traceback.format_exc()}')
+                report_error(f'Error processing page {e}')
                 raise
     except Exception as e:
         report_error(f"Failed to read pdf: {e}")

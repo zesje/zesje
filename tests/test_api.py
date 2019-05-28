@@ -30,17 +30,6 @@ def add_test_data():
     db.session.commit()
 
 
-def delete_test_data():
-    db.session.query(Exam).delete()
-    db.session.commit()
-
-    db.session.query(Problem).delete()
-    db.session.commit()
-
-    db.session.query(ProblemWidget).delete()
-    db.session.commit()
-
-
 @pytest.fixture()
 def app():
     app = Flask(__name__, static_folder=None)

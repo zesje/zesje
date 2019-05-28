@@ -1,8 +1,8 @@
 import cv2
 import numpy as np
 
-from zesje.database import db, Solution
-from zesje.images import guess_dpi, get_box, fix_corner_markers
+from .database import db, Solution
+from .images import guess_dpi, get_box, fix_corner_markers
 
 
 def add_feedback_to_solution(sub, exam, page, page_img, corner_keypoints):

@@ -68,7 +68,7 @@ def full_exam_data(exam_id):
     if not data:
         # No students were assigned.
         columns = []
-        for problem in exam.problems.order_by(Problem.id):
+        for problem in exam.problems:  # Sorted by problem.id
             if not len(problem.feedback_options):
                 # There is no possible feedback for this problem.
                 continue

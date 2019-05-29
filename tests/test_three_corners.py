@@ -1,27 +1,20 @@
 import cv2
 import os
 import numpy as np
+import pytest
 
 from zesje.images import fix_corner_markers
 from zesje.scans import find_corner_marker_keypoints
 
 
-def test_three_straight_corners_1():
-    shape = (240, 200, 3)
-    corner_markers = [(50, 50), (120, 50), (50, 200)]
-
-    corner_markers = fix_corner_markers(corner_markers, shape)
-
-    assert (120, 200) in corner_markers
-
-
-def test_three_straight_corners_2():
-    shape = (240, 200, 3)
-    corner_markers = [(120, 50), (50, 200), (120, 200)]
-
-    corner_markers = fix_corner_markers(corner_markers, shape)
-
-    assert (50, 50) in corner_markers
+@pytest.mark.parametrize(
+    'shape,corners,expected',
+    [((240, 200, 3), [(50, 50), (120, 50), (50, 200)], (120, 200)),
+        ((240, 200, 3), [(120, 50), (50, 200), (120, 200)], (50, 50))],
+    ids=["", ""])
+def test_three_straight_corners(shape, corners, expected):
+    corner_markers = fix_corner_markers(corners, shape)
+    assert expected in corner_markers
 
 
 def test_pdf(datadir):

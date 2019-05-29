@@ -1,7 +1,6 @@
 import math
 import os
 
-import cv2
 import numpy as np
 import PIL
 import pytest
@@ -17,12 +16,12 @@ def distance(keyp1, keyp2):
 
 # Given a name of a exam image and the location it is stored, retrieves the
 # image and converts it to binary image
-def generate_binary_image(name, datadir):
+def generate_image(name, datadir):
     pdf_path = os.path.join(datadir, 'scanned_pdfs', f'{name}')
     pil_im = PIL.Image.open(pdf_path)
-    opencv_im = cv2.cvtColor(np.array(pil_im), cv2.COLOR_RGB2BGR)
-    _, bin_im = cv2.threshold(opencv_im, 150, 255, cv2.THRESH_BINARY)
-    return bin_im
+    pil_im = pil_im.convert('RGB')
+    image_array = np.array(pil_im)
+    return image_array
 
 # Tests
 
@@ -41,15 +40,22 @@ def test_calc_angle(test_input1, test_input2, expected):
 
 # Tests whether the amount of cornermakers is enough to calculate the angle and
 # whether it is lower than 5 as we only add 4 corner markers per page.
-@pytest.mark.parametrize('name', os.listdir(
-                                 os.path.join('tests',
-                                              'data', 'scanned_pdfs')),
-                         ids=os.listdir(
-                            os.path.join('tests', 'data', 'scanned_pdfs')))
-def test_detect_enough_cornermarkers(name, datadir):
-    bin_im = generate_binary_image(name, datadir)
-    keypoints = scans.find_corner_marker_keypoints(bin_im)
-    assert(len(keypoints) >= 2 & len(keypoints) <= 4)
+test_args = [
+    ('missing_two_corners.jpg', 2),
+    ('sample_exam.jpg', 4),
+    ('shifted.jpg', 4),
+    ('tilted.jpg', 4),
+    ('messy_three_corners.jpg', 3),
+    ('blank.jpg', 0)]
+
+
+@pytest.mark.parametrize(
+    'name,expected', test_args,
+    ids=list(map(lambda e: f"{e[0]} ({e[1]} markers)", test_args)))
+def test_detect_enough_cornermarkers(name, expected, datadir):
+    image = generate_image(name, datadir)
+    keypoints = scans.find_corner_marker_keypoints(image)
+    assert(len(keypoints) == expected)
 
 
 # Tests whether the detected keypoints are actually corner markers.
@@ -62,10 +68,10 @@ def test_detect_enough_cornermarkers(name, datadir):
                          ids=os.listdir(
                             os.path.join('tests', 'data', 'scanned_pdfs')))
 def test_detect_valid_cornermarkers(name, datadir):
-    bin_im = generate_binary_image(name, datadir)
-    keypoints = scans.find_corner_marker_keypoints(bin_im)
+    image = generate_image(name, datadir)
+    keypoints = scans.find_corner_marker_keypoints(image)
 
-    h, w, *_ = bin_im.shape
+    h, w, *_ = image.shape
     (xmm, ymm) = (210, 297)
     (xcorner, ycorner) = (round(30 * w / xmm), round(30 * h / ymm))
     maxdist = math.hypot(xcorner, ycorner)

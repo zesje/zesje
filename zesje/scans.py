@@ -17,7 +17,7 @@ from .database import db, Scan, Exam, Page, Student, Submission, Solution, ExamW
 from .datamatrix import decode_raw_datamatrix
 from .images import guess_dpi, get_box
 from .factory import make_celery
-
+from .pregrader import add_feedback_to_solution
 
 ExtractedBarcode = namedtuple('ExtractedBarcode', ['token', 'copy', 'page'])
 
@@ -54,7 +54,7 @@ def process_pdf(scan_id):
         # TODO: When #182 is implemented, properly separate user-facing
         #       messages (written to DB) from developer-facing messages,
         #       which should be written into the log.
-        write_pdf_status(scan_id, 'error', "Unexpected error: " + str(error))
+        write_pdf_status(scan_id, 'error', f"Unexpected error: {error}")
 
 
 def _process_pdf(scan_id, app_config):
@@ -91,8 +91,8 @@ def _process_pdf(scan_id, app_config):
                     print(description)
                     failures.append(page)
             except Exception as e:
-                report_error(f'Error processing page {page}: {e}')
-                return
+                report_error(f'Error processing page {e}')
+                raise
     except Exception as e:
         report_error(f"Failed to read pdf: {e}")
         raise
@@ -337,7 +337,13 @@ def process_page(image_data, exam_config, output_dir=None, strict=False):
     else:
         return True, "Testing, image not saved and database not updated."
 
-    update_database(image_path, barcode)
+    sub, exam = update_database(image_path, barcode)
+
+    try:
+        add_feedback_to_solution(sub, exam, barcode.page, image_array, corner_keypoints)
+    except RuntimeError as e:
+        if strict:
+            return False, str(e)
 
     if barcode.page == 0:
         description = guess_student(
@@ -385,8 +391,12 @@ def update_database(image_path, barcode):
 
     Returns
     -------
-    signature_validated : bool
-        If the corresponding submission has a validated signature.
+    sub, exam where
+
+    sub : Submission
+        the current submission
+    exam : Exam
+        the current exam
     """
     exam = Exam.query.filter(Exam.token == barcode.token).first()
     if exam is None:
@@ -405,6 +415,8 @@ def update_database(image_path, barcode):
         db.session.add(Page(path=image_path, submission=sub, number=barcode.page))
 
     db.session.commit()
+
+    return sub, exam
 
 
 def decode_barcode(image, exam_config):

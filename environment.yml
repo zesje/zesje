@@ -6,6 +6,7 @@ dependencies:
     - python=3.6 
     - yarn
     - redis
+    - pip
     - pip:
         # Core components
         - flask

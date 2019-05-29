@@ -5,6 +5,9 @@ stages:
   - build
   - test
 
+before_script:
+  - source activate zesje-dev
+
 # Special hidden job that is merged with JS jobs
 .node_modules: &node_modules
   # Cache the JS modules that yarn fetches

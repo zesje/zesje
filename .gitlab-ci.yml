@@ -5,9 +5,6 @@ stages:
   - build
   - test
 
-before_script:
-  - source activate zesje-dev
-
 # Special hidden job that is merged with JS jobs
 .node_modules: &node_modules
   # Cache the JS modules that yarn fetches
@@ -16,10 +13,12 @@ before_script:
     paths:
       - .yarn-cache
   before_script:
+    - source activate zesje-dev
     - yarn install --cache-folder .yarn-cache
 
 .python_packages: &python_packages
   before_script:
+    - source activate zesje-dev
     - conda env update
 
 build:

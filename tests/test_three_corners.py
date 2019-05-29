@@ -6,10 +6,12 @@ import pytest
 from zesje.images import fix_corner_markers
 from zesje.scans import find_corner_marker_keypoints
 
+
 @pytest.mark.parametrize(
     'shape,corners,expected',
     [((240, 200, 3), [(50, 50), (120, 50), (50, 200)], (120, 200)),
-    ((240, 200, 3), [(120, 50), (50, 200), (120, 200)], (50, 50))], ids=["",""])
+        ((240, 200, 3), [(120, 50), (50, 200), (120, 200)], (50, 50))],
+    ids=["", ""])
 def test_three_straight_corners(shape, corners, expected):
     corner_markers = fix_corner_markers(corners, shape)
     assert expected in corner_markers

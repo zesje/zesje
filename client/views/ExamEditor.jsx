@@ -474,7 +474,7 @@ class ExamEditor extends React.Component {
             x: { $set: Math.round(data.x) },
             y: { $set: Math.round(data.y) }
           })
-          this.updateWidgetDB({
+          this.updateWidgetDB(widget, {
             x: Math.round(data.x),
             y: Math.round(data.y)
           })

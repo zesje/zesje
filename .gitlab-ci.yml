@@ -1,5 +1,5 @@
 # This base image can be found in 'Dockerfile'
-image: zesje/base
+image: gitlab.kwant-project.org:5005/zesje/zesje/conda:latest
 
 stages:
   - build
@@ -17,7 +17,7 @@ stages:
 
 .python_packages: &python_packages
   before_script:
-    - pip install --no-cache-dir -r requirements.txt -r requirements-dev.txt
+    - conda env update
 
 build:
   <<: *node_modules

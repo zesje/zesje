@@ -49,8 +49,7 @@ def get_cb_data_for_exam(exam):
     cb_data = []
     for problem in exam.problems:
         page = problem.widget.page
-        if page:
-            cb_data += [(cb.x, cb.y, page, cb.label) for cb in problem.mc_options]
+        cb_data += [(cb.x, cb.y, page, cb.label) for cb in problem.mc_options]
 
     return cb_data
 

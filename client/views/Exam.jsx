@@ -42,7 +42,15 @@ class Exams extends React.Component {
             page: problem.page,
             name: problem.name,
             graded: problem.graded,
-            mc_options: problem.mc_options,
+            mc_options: problem.mc_options.map((option) => {
+              option.cbOffsetX = 7 // checkbox offset relative to option position on x axis
+              option.cbOffsetY = 21 // checkbox offset relative to option position on y axis
+              option.widget.x -= option.cbOffsetX
+              option.widget.y -= option.cbOffsetY
+              return option
+            }),
+            widthMCO: 24,
+            heightMCO: 38,
             isMCQ: problem.mc_options && problem.mc_options.length !== 0 // is the problem a mc question - used to display PanelMCQ
           }
         }
@@ -178,6 +186,7 @@ class Exams extends React.Component {
           numPages={this.state.numPages}
           onPDFLoad={this.onPDFLoad}
           updateWidget={this.updateWidget}
+          updateMCWidget={this.updateMCWidget}
           selectedWidgetId={this.state.selectedWidgetId}
           selectWidget={(widgetId) => {
             this.setState({
@@ -185,7 +194,6 @@ class Exams extends React.Component {
             })
           }}
           createNewWidget={this.createNewWidget}
-          updateMCWidgetPosition={this.updateMCWidgetPosition}
           updateExam={() => {
             this.props.updateExam(this.props.examID)
           }}
@@ -290,11 +298,11 @@ class Exams extends React.Component {
   }
 
   /**
-   * This method creates a widget object and adds it to the corresponding problem
+   * This method creates a mc option widget object and adds it to the corresponding problem
    * @param problemWidget The widget the mc option belongs to
    * @param data the mc option
    */
-  createNewMCOWidget = (problemWidget, data) => {
+  createNewMCWidget = (problemWidget, data) => {
     this.setState((prevState) => {
       return {
         widgets: update(prevState.widgets, {
@@ -316,12 +324,12 @@ class Exams extends React.Component {
    * @param widget the problem widget that includes the mcq widget
    * @param data the new location of the mcq widget (the location of the top-left corner)
    */
-  updateMCWidgetPosition = (widget, data) => {
+  updateMCWidget = (widget, data) => {
     let newMCO = widget.problem.mc_options.map((option, i) => {
       return {
         'widget': {
           'x': {
-            $set: data.x + i * 24
+            $set: data.x + i * widget.problem.widthMCO
           },
           'y': {
             // each mc option needs to be positioned next to the previous option and should not overlap it
@@ -359,6 +367,8 @@ class Exams extends React.Component {
       'label': labels[index],
       'problem_id': problemWidget.problem.id,
       'feedback_id': null,
+      'cbOffsetX': 7, // checkbox offset relative to option position on x axis
+      'cbOffsetY': 21, // checkbox offset relative to option position on y axis
       'widget': {
         'name': 'mc_option_' + labels[index],
         'x': xPos,
@@ -369,14 +379,14 @@ class Exams extends React.Component {
 
     const formData = new window.FormData()
     formData.append('name', data.widget.name)
-    formData.append('x', data.widget.x)
-    formData.append('y', data.widget.y)
+    formData.append('x', data.widget.x + data.cbOffsetX)
+    formData.append('y', data.widget.y + data.cbOffsetY)
     formData.append('problem_id', data.problem_id)
     formData.append('label', data.label)
     api.put('mult-choice/', formData).then(result => {
       data.id = result.mult_choice_id
-      this.createNewMCOWidget(problemWidget, data)
-      this.generateAnswerBoxes(problemWidget, labels, index + 1, xPos + 24, yPos)
+      this.createNewMCWidget(problemWidget, data)
+      this.generateAnswerBoxes(problemWidget, labels, index + 1, xPos + problemWidget.problem.widthMCO, yPos)
     }).catch(err => {
       console.log(err)
     })
@@ -386,13 +396,14 @@ class Exams extends React.Component {
     const selectedWidgetId = this.state.selectedWidgetId
     let selectedWidget = selectedWidgetId && this.state.widgets[selectedWidgetId]
     let problem = selectedWidget && selectedWidget.problem
-    let widgetEditDisabled = this.state.previewing || !problem
+    let containsMCOptions = (problem && problem.mc_options.length > 0) || false
+    let widgetEditDisabled = (this.state.previewing || !problem) || (this.props.exam.finalized && containsMCOptions)
     let isGraded = problem && problem.graded
     let widgetDeleteDisabled = widgetEditDisabled || isGraded
     let totalNrAnswers = 12 // the upper limit for the nr of possible answer boxes
-    let containsMCOptions = (problem && problem.mc_options.length > 0) || false
     let disabledDeleteBoxes = !containsMCOptions
     let isMCQ = (problem && problem.isMCQ) || false
+    let showPanelMCQ = isMCQ && !this.state.previewing && !this.props.exam.finalized
 
     return (
       <React.Fragment>
@@ -437,7 +448,7 @@ class Exams extends React.Component {
             }
           }
         />
-        { isMCQ ? (
+        { showPanelMCQ ? (
           <PanelMCQ
             totalNrAnswers={totalNrAnswers}
             disabledGenerateBoxes={containsMCOptions}

@@ -24,13 +24,13 @@ def add_test_data():
     db.session.add(problem3)
     db.session.commit()
 
-    problem_widget_1 = ProblemWidget(id=3, name='problem widget', problem_id=3, page=2,
+    problem_widget_1 = ProblemWidget(id=1, name='problem widget', problem_id=1, page=2,
                                      width=100, height=150, x=40, y=200, type='problem_widget')
     db.session.add(problem_widget_1)
     db.session.commit()
 
 
-@pytest.fixture()
+@pytest.fixture(scope="module")
 def app():
     app = Flask(__name__, static_folder=None)
 
@@ -41,19 +41,24 @@ def app():
     db.init_app(app)
 
     with app.app_context():
+        db.drop_all()
         db.create_all()
-        add_test_data()
 
     app.register_blueprint(api_bp, url_prefix='/api')
 
     return app
 
 
-@pytest.fixture()
+@pytest.fixture
 def test_client(app):
     client = app.test_client()
 
     yield client
+
+    with app.app_context():
+        db.drop_all()
+        db.create_all()
+        add_test_data()
 
 
 def mco_json():
@@ -72,7 +77,7 @@ MULTIPLE CHOICE OPTION TESTS
 '''
 
 
-def not_present(test_client):
+def test_not_present(test_client):
     result = test_client.get('/api/mult-choice/1')
     data = json.loads(result.data)
 
@@ -85,10 +90,10 @@ def test_add(test_client):
 
     data = json.loads(response.data)
 
-    assert data['message'] == 'New multiple choice question with id 4 inserted. ' \
+    assert data['message'] == 'New multiple choice question with id 2 inserted. ' \
         + 'New feedback option with id 1 inserted.'
 
-    assert data['mult_choice_id'] == 4
+    assert data['mult_choice_id'] == 2
     assert data['status'] == 200
 
 
@@ -104,7 +109,7 @@ def test_add_get(test_client):
     data = json.loads(result.data)
 
     exp_resp = {
-        'id': 4,
+        'id': 2,
         'name': 'test',
         'x': 100,
         'y': 40,
@@ -177,6 +182,8 @@ def test_delete_finalized_exam(test_client):
     response = test_client.delete(f'/api/mult-choice/{mc_id}')
     data = json.loads(response.data)
 
+    print(data)
+
     assert data['status'] == 401
 
 
@@ -189,7 +196,7 @@ def test_get_exams(test_client):
     mc_option_1 = {
         'x': 100,
         'y': 40,
-        'problem_id': 3,
+        'problem_id': 1,
         'page': 1,
         'label': 'a',
         'name': 'test'
@@ -199,14 +206,14 @@ def test_get_exams(test_client):
     mc_option_2 = {
         'x': 100,
         'y': 40,
-        'problem_id': 3,
+        'problem_id': 1,
         'page': 1,
         'label': 'a',
         'name': 'test'
     }
     test_client.put('/api/mult-choice/', data=mc_option_2)
 
-    response = test_client.get('/api/exams/3')
+    response = test_client.get('/api/exams/1')
     data = json.loads(response.data)
 
     assert len(data['problems'][0]['mc_options']) == 2

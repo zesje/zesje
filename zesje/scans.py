@@ -794,6 +794,25 @@ def realign_image(image_array, keypoints=None,
                   reference_keypoints=None):
     """
     This function realigns an images based on the template image
+
+    params
+    ------
+    image_array : numpy.array
+        The image in the form of a numpy array.
+    keypoints : List[(int,int)]
+        tuples of coordinates of the found keypoints, (x,y), in pixels. Can be a set of 3 or 4 tuples.
+        if none are provided, they are calculated based on the image_array.
+    reference_keypoints: List[(int,int)]
+        Similar to keypoints, only these belong to the keypoints found on the original scan.
+        If none are provided, standard locations are used. Namely [(59, 59), (1179, 59), (59, 1693), (1179, 1693)],
+        which are from an ideal scan of an a4 at 200 dpi.
+
+    returns
+    -------
+    return_array: numpy.array
+        The image realign properly.
+    return_keypoints: List[(int,int)]
+        New keypoints properly aligned.
     """
 
     if(keypoints is None):
@@ -807,6 +826,10 @@ def realign_image(image_array, keypoints=None,
     if (reference_keypoints is None):
         reference_keypoints = [(59, 59), (1179, 59), (59, 1693), (1179, 1693)]
 
+    if (len(reference_keypoints) != 4):
+        # this function assumes that the template has the same dimensions as the input image
+        reference_keypoints = fix_corner_markers(reference_keypoints, image_array.shape)
+
     rows, cols, _ = image_array.shape
 
     keypoints_32 = np.float32(keypoints)
@@ -815,11 +838,12 @@ def realign_image(image_array, keypoints=None,
 
     # get the transformation matrix
     M = cv2.getPerspectiveTransform(keypoints_32, reference_keypoints_32)
-    # apply the transformation matrix
+    # apply the transformation matrix and fill in the new empty spaces with white
     return_image = cv2.warpPerspective(image_array, M, (cols, rows),
                                        borderValue=(255, 255, 255, 255))
-
+    # generate a new set of 4 keypoints
     return_keypoints = find_corner_marker_keypoints(return_image)
+    check_corner_keypoints(return_image, reference_keypoints)
     if(len(return_keypoints) != 4):
         return_keypoints = fix_corner_markers(return_keypoints, return_image.shape)
 

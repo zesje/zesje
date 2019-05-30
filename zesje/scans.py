@@ -15,7 +15,7 @@ from pylibdmtx import pylibdmtx
 
 from .database import db, Scan, Exam, Page, Student, Submission, Solution, ExamWidget
 from .datamatrix import decode_raw_datamatrix
-from .images import guess_dpi, get_box
+from .images import guess_dpi, get_box, fix_corner_markers
 from .factory import make_celery
 from .pregrader import add_feedback_to_solution
 
@@ -788,3 +788,33 @@ def check_corner_keypoints(image_array, keypoints):
 
     if max(corners.values()) > 1:
         raise RuntimeError("Found multiple corner markers in the same corner")
+
+
+def realign_image(image_array, keypoints=None,
+                  reference_keypoints=None):
+
+    if(keypoints is None):
+        keypoints = find_corner_marker_keypoints(image_array)
+        check_corner_keypoints(image_array, keypoints)
+
+    if (len(keypoints) != 4):
+        keypoints = fix_corner_markers(keypoints, image_array.shape)
+
+    # use standard keypoints if no custom ones are provided
+    if (reference_keypoints is None):
+        reference_keypoints = [(59, 59), (1179, 59), (59, 1693), (1179, 1693)]
+
+    rows, cols, _ = image_array.shape
+
+    keypoints_32 = np.float32(keypoints)
+
+    reference_keypoints_32 = np.float32(reference_keypoints)
+
+    # get the transformation matrix
+    M = cv2.getPerspectiveTransform(keypoints_32, reference_keypoints_32)
+    # apply the transformation matrix
+    return_image = cv2.warpPerspective(image_array, M, (cols, rows))
+
+    return_keypoints = find_corner_marker_keypoints(return_image)
+
+    return return_image, return_keypoints

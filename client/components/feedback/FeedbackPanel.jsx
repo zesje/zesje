@@ -4,7 +4,7 @@ import Notification from 'react-bulma-notification'
 
 import * as api from '../../api.jsx'
 
-import withShortcuts from '../../components/ShortcutBinder.jsx'
+import withShortcuts from '../ShortcutBinder.jsx'
 import FeedbackBlock from './FeedbackBlock.jsx'
 
 class FeedbackPanel extends React.Component {

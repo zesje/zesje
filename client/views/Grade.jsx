@@ -2,9 +2,9 @@ import React from 'react'
 
 import Hero from '../components/Hero.jsx'
 
-import FeedbackPanel from './grade/FeedbackPanel.jsx'
+import FeedbackPanel from '../components/feedback/FeedbackPanel.jsx'
 import ProblemSelector from './grade/ProblemSelector.jsx'
-import EditPanel from './grade/EditPanel.jsx'
+import EditPanel from '../components/feedback/EditPanel.jsx'
 import SearchBox from '../components/SearchBox.jsx'
 import ProgressBar from '../components/ProgressBar.jsx'
 import withShortcuts from '../components/ShortcutBinder.jsx'

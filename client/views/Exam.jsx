@@ -10,8 +10,8 @@ import ExamEditor from './ExamEditor.jsx'
 import update from 'immutability-helper'
 import ExamFinalizeMarkdown from './ExamFinalize.md'
 import ConfirmationModal from '../components/ConfirmationModal.jsx'
-import FeedbackPanel from './grade/FeedbackPanel.jsx'
-import EditPanel from './grade/EditPanel.jsx'
+import FeedbackPanel from '../components/feedback/FeedbackPanel.jsx'
+import EditPanel from '../components/feedback/EditPanel.jsx'
 
 import * as api from '../api.jsx'
 

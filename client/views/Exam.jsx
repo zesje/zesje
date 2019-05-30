@@ -104,14 +104,14 @@ class Exams extends React.Component {
 
   updateFeedback = (feedback) => {
     var widgets = this.state.widgets
-    const idx = widgets[this.state.selectedWidgetId].problem.feedback.findIndex(e => { return e.id == feedback.id })
-    if(idx == -1) widgets[this.state.selectedWidgetId].problem.feedback.push(feedback)
+    const idx = widgets[this.state.selectedWidgetId].problem.feedback.findIndex(e => { return e.id === feedback.id })
+    if (idx === -1) widgets[this.state.selectedWidgetId].problem.feedback.push(feedback)
     else {
-      if(feedback.deleted) widgets[this.state.selectedWidgetId].problem.feedback.splice(idx, 1)
+      if (feedback.deleted) widgets[this.state.selectedWidgetId].problem.feedback.splice(idx, 1)
       else widgets[this.state.selectedWidgetId].problem.feedback[idx] = feedback
     }
     this.setState({
-      widgets:widgets
+      widgets: widgets
     })
   }
 

@@ -40,8 +40,8 @@ class EditPanel extends React.Component {
   }
 
   static getDerivedStateFromProps (nextProps, prevState) {
-      // In case nothing is set, use an empty function that no-ops
-    const updateCallback = nextProps.updateCallback || ( _ => {})
+    // In case nothing is set, use an empty function that no-ops
+    const updateCallback = nextProps.updateCallback || (_ => {})
     if (nextProps.feedback && prevState.id !== nextProps.feedback.id) {
       const fb = nextProps.feedback
       return {
@@ -94,7 +94,7 @@ class EditPanel extends React.Component {
     } else {
       api.post(uri, fb)
         .then((response) => {
-            // Response is the feedback option
+          // Response is the feedback option
           this.state.updateCallback(response)
           this.setState({
             id: null,

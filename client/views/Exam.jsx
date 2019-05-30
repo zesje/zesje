@@ -63,17 +63,7 @@ class Exams extends React.Component {
         previewing: false
       }
     }
-    if (prevState.problemIdToEditFeedbackOf && !prevState.editActive) {
-      if (prevState.waitForNextRender) {
-        var problem = newProps.exam.problems.find(w => {
-          return w.widget.id === prevState.problemIdToEditFeedbackOf
-        })
-        prevState.widgets[problem.widget.id].problem.feedback = problem.feedback
-        prevState.waitForNextRender = false
-        if (!prevState.editActive) prevState.problemIdToEditFeedbackOf = null
-      } else prevState.waitForNextRender = true
-    }
-    return prevState
+    return null
   }
 
   componentDidUpdate = (prevProps, prevState) => {
@@ -111,6 +101,20 @@ class Exams extends React.Component {
       problemIdToEditFeedbackOf: this.state.selectedWidgetId
     })
   }
+
+  updateFeedback = (feedback) => {
+    var widgets = this.state.widgets
+    const idx = widgets[this.state.selectedWidgetId].problem.feedback.findIndex(e => { return e.id == feedback.id })
+    if(idx == -1) widgets[this.state.selectedWidgetId].problem.feedback.push(feedback)
+    else {
+      if(feedback.deleted) widgets[this.state.selectedWidgetId].problem.feedback.splice(idx, 1)
+      else widgets[this.state.selectedWidgetId].problem.feedback[idx] = feedback
+    }
+    this.setState({
+      widgets:widgets
+    })
+  }
+
   backToFeedback = () => {
     this.props.updateExam(this.props.exam.id)
     this.setState({
@@ -351,7 +355,7 @@ class Exams extends React.Component {
         </div>
         {this.isProblemWidget(selectedWidgetId) && (this.state.editActive
           ? <EditPanel problemID={props.problem.id} feedback={this.state.feedbackToEdit}
-            goBack={this.backToFeedback} />
+            goBack={this.backToFeedback} updateCallback={this.updateFeedback} />
           : <FeedbackPanel examID={this.props.examID} problem={props.problem}
             editFeedback={this.editFeedback} showTooltips={this.state.showTooltips}
             grading={false}

@@ -182,8 +182,6 @@ def test_delete_finalized_exam(test_client):
     response = test_client.delete(f'/api/mult-choice/{mc_id}')
     data = json.loads(response.data)
 
-    print(data)
-
     assert data['status'] == 401
 
 

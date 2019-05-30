@@ -347,19 +347,24 @@ class Exams extends React.Component {
                       props.saveProblemName(e.target.value)
                     }} />
                 </div>
-                <br />
-                {!this.state.editActive && <label className='label'>Feedback options</label>}
               </React.Fragment>
             )}
           </div>
         </div>
-        {this.isProblemWidget(selectedWidgetId) && (this.state.editActive
-          ? <EditPanel problemID={props.problem.id} feedback={this.state.feedbackToEdit}
-            goBack={this.backToFeedback} updateCallback={this.updateFeedback} />
-          : <FeedbackPanel examID={this.props.examID} problem={props.problem}
-            editFeedback={this.editFeedback} showTooltips={this.state.showTooltips}
-            grading={false}
-          />)}
+        {this.isProblemWidget(selectedWidgetId) &&
+          <React.Fragment>
+            <div className='panel-block'>
+              {!this.state.editActive && <label className='label'>Feedback options</label>}
+            </div>
+            {this.state.editActive
+              ? <EditPanel problemID={props.problem.id} feedback={this.state.feedbackToEdit}
+                goBack={this.backToFeedback} updateCallback={this.updateFeedback} />
+              : <FeedbackPanel examID={this.props.examID} problem={props.problem}
+                editFeedback={this.editFeedback} showTooltips={this.state.showTooltips}
+                grading={false}
+              />}
+          </React.Fragment>
+        }
         <div className='panel-block'>
           <button
             disabled={props.disabledDelete}

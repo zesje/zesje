@@ -63,15 +63,15 @@ class Exams extends React.Component {
         previewing: false
       }
     }
-    if(prevState.problemIdToEditFeedbackOf && !prevState.editActive) {
-      if(prevState.waitForNextRender) {
+    if (prevState.problemIdToEditFeedbackOf && !prevState.editActive) {
+      if (prevState.waitForNextRender) {
         var problem = newProps.exam.problems.find(w => {
-          return w.widget.id == prevState.problemIdToEditFeedbackOf
+          return w.widget.id === prevState.problemIdToEditFeedbackOf
         })
         prevState.widgets[problem.widget.id].problem.feedback = problem.feedback
         prevState.waitForNextRender = false
-        if(!prevState.editActive) prevState.problemIdToEditFeedbackOf = null
-      } else prevState.waitForNextRender = true 
+        if (!prevState.editActive) prevState.problemIdToEditFeedbackOf = null
+      } else prevState.waitForNextRender = true
     }
     return prevState
   }
@@ -85,7 +85,7 @@ class Exams extends React.Component {
     if (prevState.selectedWidgetId !== this.state.selectedWidgetId) {
       this.saveProblemName()
       this.setState({
-        editActive:false,
+        editActive: false,
         problemIdToEditFeedbackOf: false
       })
     }
@@ -343,19 +343,19 @@ class Exams extends React.Component {
                       props.saveProblemName(e.target.value)
                     }} />
                 </div>
-                <br/>
+                <br />
                 {!this.state.editActive && <label className='label'>Feedback options</label>}
               </React.Fragment>
             )}
           </div>
         </div>
         {this.isProblemWidget(selectedWidgetId) && (this.state.editActive
-            ? <EditPanel problemID={props.problem.id} feedback={this.state.feedbackToEdit}
-              goBack={this.backToFeedback} />
-            : <FeedbackPanel examID={this.props.examID} problem={props.problem}
-              editFeedback={this.editFeedback} showTooltips={this.state.showTooltips}
-              grading={false}
-        />)}
+          ? <EditPanel problemID={props.problem.id} feedback={this.state.feedbackToEdit}
+            goBack={this.backToFeedback} />
+          : <FeedbackPanel examID={this.props.examID} problem={props.problem}
+            editFeedback={this.editFeedback} showTooltips={this.state.showTooltips}
+            grading={false}
+          />)}
         <div className='panel-block'>
           <button
             disabled={props.disabledDelete}

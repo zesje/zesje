@@ -25,6 +25,33 @@ def _get_exam_dir(exam_id):
     )
 
 
+def get_cb_data_for_exam(exam):
+    """
+    Returns all multiple choice question check boxes for one specific exam
+
+    Parameters
+    ----------
+        exam: the exam
+
+    Returns
+    -------
+        A list of tuples with checkbox data.
+        Each tuple is represented as (x, y, page, label)
+
+        Where
+        x: x position
+        y: y position
+        page: page number
+        label: checkbox label
+    """
+    cb_data = []
+    for problem in exam.problems:
+        page = problem.widget.page
+        cb_data += [(cb.x, cb.y, page, cb.label) for cb in problem.mc_options]
+
+    return cb_data
+
+
 class Exams(Resource):
 
     def get(self, exam_id=None):
@@ -111,30 +138,30 @@ class Exams(Resource):
             return dict(status=404, message='Exam does not exist.'), 404
 
         submissions = [
-                {
-                    'id': sub.copy_number,
-                    'student': {
-                            'id': sub.student.id,
-                            'firstName': sub.student.first_name,
-                            'lastName': sub.student.last_name,
-                            'email': sub.student.email
-                    } if sub.student else None,
-                    'validated': sub.signature_validated,
-                    'problems': [
-                        {
-                            'id': sol.problem.id,
-                            'graded_by': {
-                                'id': sol.graded_by.id,
-                                'name': sol.graded_by.name
-                            } if sol.graded_by else None,
-                            'graded_at': sol.graded_at.isoformat() if sol.graded_at else None,
-                            'feedback': [
-                                fb.id for fb in sol.feedback
-                            ],
-                            'remark': sol.remarks if sol.remarks else ""
-                        } for sol in sub.solutions  # Sorted by sol.problem_id
-                    ],
-                } for sub in exam.submissions
+            {
+                'id': sub.copy_number,
+                'student': {
+                    'id': sub.student.id,
+                    'firstName': sub.student.first_name,
+                    'lastName': sub.student.last_name,
+                    'email': sub.student.email
+                } if sub.student else None,
+                'validated': sub.signature_validated,
+                'problems': [
+                    {
+                        'id': sol.problem.id,
+                        'graded_by': {
+                            'id': sol.graded_by.id,
+                            'name': sol.graded_by.name
+                        } if sol.graded_by else None,
+                        'graded_at': sol.graded_at.isoformat() if sol.graded_at else None,
+                        'feedback': [
+                            fb.id for fb in sol.feedback
+                        ],
+                        'remark': sol.remarks if sol.remarks else ""
+                    } for sol in sub.solutions  # Sorted by sol.problem_id
+                ],
+            } for sub in exam.submissions
         ]
         # Sort submissions by selecting those with students assigned, then by
         # student number, then by copy number.
@@ -171,8 +198,22 @@ class Exams(Resource):
                         'y': prob.widget.y,
                         'width': prob.widget.width,
                         'height': prob.widget.height,
+                        'type': prob.widget.type
                     },
-                    'graded': any([sol.graded_by is not None for sol in prob.solutions])
+                    'graded': any([sol.graded_by is not None for sol in prob.solutions]),
+                    'mc_options': [
+                        {
+                            'id': mc_option.id,
+                            'label': mc_option.label,
+                            'feedback_id': mc_option.feedback_id,
+                            'widget': {
+                                'name': mc_option.name,
+                                'x': mc_option.x,
+                                'y': mc_option.y,
+                                'type': mc_option.type
+                            }
+                        } for mc_option in prob.mc_options
+                    ]
                 } for prob in exam.problems  # Sorted by prob.id
             ],
             'widgets': [
@@ -181,6 +222,7 @@ class Exams(Resource):
                     'name': widget.name,
                     'x': widget.x,
                     'y': widget.y,
+                    'type': widget.type
                 } for widget in exam.widgets  # Sorted by widget.id
             ],
             'finalized': exam.finalized,
@@ -332,13 +374,16 @@ class ExamGeneratedPdfs(Resource):
         generated_pdfs_dir = self._get_generated_exam_dir(exam_dir)
         os.makedirs(generated_pdfs_dir, exist_ok=True)
 
+        cb_data = get_cb_data_for_exam(exam)
+
         generate_pdfs(
             exam_path,
             exam.token,
             copy_nums,
             pdf_paths,
             student_id_widget.x, student_id_widget.y,
-            barcode_widget.x, barcode_widget.y
+            barcode_widget.x, barcode_widget.y,
+            cb_data
         )
 
     post_parser = reqparse.RequestParser()
@@ -488,13 +533,15 @@ class ExamPreview(Resource):
 
         exam_path = os.path.join(exam_dir, 'exam.pdf')
 
+        cb_data = get_cb_data_for_exam(exam)
         generate_pdfs(
             exam_path,
             exam.token[:5] + 'PREVIEW',
             [1519],
             [output_file],
             student_id_widget.x, student_id_widget.y,
-            barcode_widget.x, barcode_widget.y
+            barcode_widget.x, barcode_widget.y,
+            cb_data
         )
 
         output_file.seek(0)

@@ -3,6 +3,7 @@ import os
 import pytest
 import numpy as np
 import PIL.Image
+import cv2
 from tempfile import NamedTemporaryFile
 from flask import Flask
 from io import BytesIO
@@ -280,3 +281,25 @@ def test_image_extraction(datadir, filename):
         assert img is not None
         assert np.average(np.array(img)) == 255
     assert page == 2
+
+
+@pytest.mark.parametrize('file_name', ["a4-rotated.png", "a4-3-markers.png", "a4-rotated-3-markers.png"])
+def test_realign_image(datadir, file_name):
+    dir_name = "cornermarkers"
+    epsilon = 2
+
+    test_file = os.path.join(datadir, dir_name, file_name)
+    test_image = np.array(PIL.Image.open(test_file))
+
+    correct_file = os.path.join(datadir, dir_name, "a4.png")
+    correct_image = cv2.imread(correct_file)
+
+    correct_corner_markers = scans.find_corner_marker_keypoints(correct_image)
+
+    result_image, result_corner_markers = scans.realign_image(test_image)
+
+    assert result_corner_markers is not None
+    for i in range(4):
+        diff = np.absolute(np.subtract(correct_corner_markers[i], result_corner_markers[i]))
+        assert diff[0] < epsilon
+        assert diff[1] < epsilon

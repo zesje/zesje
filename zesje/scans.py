@@ -792,6 +792,9 @@ def check_corner_keypoints(image_array, keypoints):
 
 def realign_image(image_array, keypoints=None,
                   reference_keypoints=None):
+    """
+    This function realigns an images based on the template image
+    """
 
     if(keypoints is None):
         keypoints = find_corner_marker_keypoints(image_array)
@@ -813,8 +816,11 @@ def realign_image(image_array, keypoints=None,
     # get the transformation matrix
     M = cv2.getPerspectiveTransform(keypoints_32, reference_keypoints_32)
     # apply the transformation matrix
-    return_image = cv2.warpPerspective(image_array, M, (cols, rows))
+    return_image = cv2.warpPerspective(image_array, M, (cols, rows),
+                                       borderValue=(255, 255, 255, 255))
 
     return_keypoints = find_corner_marker_keypoints(return_image)
+    if(len(return_keypoints) != 4):
+        return_keypoints = fix_corner_markers(return_keypoints, return_image.shape)
 
     return return_image, return_keypoints

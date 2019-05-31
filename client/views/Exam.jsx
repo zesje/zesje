@@ -116,16 +116,20 @@ class Exams extends React.Component {
   }
 
   updateFeedback = (feedback) => {
-    let widgets = this.state.widgets
-    const idx = widgets[this.state.selectedWidgetId].problem.feedback.findIndex(e => { return e.id === feedback.id })
+    let problemWidget = this.state.widgets[this.state.selectedWidgetId]
+    const index = problemWidget.problem.feedback.findIndex(e => { return e.id === feedback.id })
+    this.updateFeedbackAtIndex(feedback, problemWidget, index)
+  }
+
+  updateFeedbackAtIndex = (feedback, problemWidget, idx) => {
     if (idx === -1) {
-      widgets[this.state.selectedWidgetId].problem.feedback.push(feedback)
+      problemWidget.problem.feedback.push(feedback)
     } else {
-      if (feedback.deleted) widgets[this.state.selectedWidgetId].problem.feedback.splice(idx, 1)
-      else widgets[this.state.selectedWidgetId].problem.feedback[idx] = feedback
+      if (feedback.deleted) problemWidget.problem.feedback.splice(idx, 1)
+      else problemWidget.problem.feedback[idx] = feedback
     }
     this.setState({
-      widgets: widgets
+      widgets: this.state.widgets
     })
   }
 
@@ -319,11 +323,16 @@ class Exams extends React.Component {
               // update to try and get a consistent state
               this.props.updateExam(this.props.examID)
             })
+          }).then(res => {
+            let index = widget.problem.feedback.findIndex(e => { return e.id === res.feedback_id })
+            let feedback = widget.problem.feedback[index]
+            feedback.deleted = true
+            this.updateFeedbackAtIndex(feedback, widget, index)
           })
       })
 
       // remove the mc options from the state
-      // note that his can happen before they are removed in the DB due to async calls
+      // note that this can happen before they are removed in the DB due to async calls
       this.setState((prevState) => {
         return {
           widgets: update(prevState.widgets, {
@@ -433,10 +442,11 @@ class Exams extends React.Component {
     formData.append('y', data.widget.y + data.cbOffsetY)
     formData.append('problem_id', data.problem_id)
     formData.append('label', data.label)
-    formData.append('fb_description', feedback.fb_description)
-    formData.append('fb_score', feedback.fb_score)
+    formData.append('fb_description', feedback.description)
+    formData.append('fb_score', feedback.score)
     api.put('mult-choice/', formData).then(result => {
       data.id = result.mult_choice_id
+      data.feedback_id = result.feedback_id
       feedback.id = result.feedback_id
       this.createNewMCWidget(problemWidget, data)
       this.updateFeedback(feedback)

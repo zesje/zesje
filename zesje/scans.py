@@ -793,7 +793,7 @@ def check_corner_keypoints(image_array, keypoints):
 def realign_image(image_array, keypoints=None,
                   reference_keypoints=None):
     """
-    This function realigns an images based on the template image
+    Transform the image so that the keypoints match the reference.
 
     params
     ------

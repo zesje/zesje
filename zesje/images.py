@@ -55,7 +55,7 @@ def fix_corner_markers(corner_keypoints, shape):
     corner_keypoints :
         A list of four corner markers.
     """
-
+    # Ignore this comment
     if len(corner_keypoints) == 4:
         return corner_keypoints
 

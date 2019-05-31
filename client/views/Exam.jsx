@@ -2,6 +2,8 @@ import React from 'react'
 
 import Notification from 'react-bulma-notification'
 
+import Switch from 'react-bulma-switch/full'
+
 import Hero from '../components/Hero.jsx'
 import './Exam.css'
 import GeneratedExamPreview from '../components/GeneratedExamPreview.jsx'
@@ -575,10 +577,11 @@ class Exams extends React.Component {
             <div className='panel-block'>
               <div className='field'>
                 <label className='label'> Multiple choice question </label>
-                <input disabled={props.disableIsMCQ} type='checkbox' checked={props.isMCQProblem} onChange={
+                <Switch disabled={props.disableIsMCQ} color='info' outlined value={props.isMCQProblem} onChange={
                   (e) => {
                     props.onMCQChange(e.target.checked)
-                  }} />
+                  }}
+                />
               </div>
             </div>
           </React.Fragment>

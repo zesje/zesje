@@ -34,6 +34,8 @@ class MultipleChoice(Resource):
     put_parser.add_argument('x', type=int, required=True)
     put_parser.add_argument('y', type=int, required=True)
     put_parser.add_argument('label', type=str, required=False)
+    put_parser.add_argument('fb_description', type=str, required=False)
+    put_parser.add_argument('fb_score', type=str, required=False)
     put_parser.add_argument('problem_id', type=int, required=True)  # Used for FeedbackOption
 
     def put(self, id=None):
@@ -58,6 +60,8 @@ class MultipleChoice(Resource):
         x = args['x']
         y = args['y']
         label = args['label']
+        fb_description = args['fb_description']
+        fb_score = args['fb_score']
         problem_id = args['problem_id']
 
         # TODO: Set type here or add to request?
@@ -65,7 +69,8 @@ class MultipleChoice(Resource):
 
         if not id:
             # Insert new empty feedback option that links to the same problem, with the label as name
-            new_feedback_option = FeedbackOption(problem_id=problem_id, text=label)
+            new_feedback_option = FeedbackOption(problem_id=problem_id, text=label,
+                                                 description=fb_description, score=fb_score)
             db.session.add(new_feedback_option)
             db.session.commit()
 

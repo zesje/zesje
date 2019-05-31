@@ -116,10 +116,11 @@ class Exams extends React.Component {
   }
 
   updateFeedback = (feedback) => {
-    var widgets = this.state.widgets
+    let widgets = this.state.widgets
     const idx = widgets[this.state.selectedWidgetId].problem.feedback.findIndex(e => { return e.id === feedback.id })
-    if (idx === -1) widgets[this.state.selectedWidgetId].problem.feedback.push(feedback)
-    else {
+    if (idx === -1) {
+      widgets[this.state.selectedWidgetId].problem.feedback.push(feedback)
+    } else {
       if (feedback.deleted) widgets[this.state.selectedWidgetId].problem.feedback.splice(idx, 1)
       else widgets[this.state.selectedWidgetId].problem.feedback[idx] = feedback
     }
@@ -406,6 +407,12 @@ class Exams extends React.Component {
   generateAnswerBoxes = (problemWidget, labels, index, xPos, yPos) => {
     if (labels.length === index) return
 
+    let feedback = {
+      'name': labels[index],
+      'description': '',
+      'score': 0
+    }
+
     let data = {
       'label': labels[index],
       'problem_id': problemWidget.problem.id,
@@ -426,9 +433,13 @@ class Exams extends React.Component {
     formData.append('y', data.widget.y + data.cbOffsetY)
     formData.append('problem_id', data.problem_id)
     formData.append('label', data.label)
+    formData.append('fb_description', feedback.fb_description)
+    formData.append('fb_score', feedback.fb_score)
     api.put('mult-choice/', formData).then(result => {
       data.id = result.mult_choice_id
+      feedback.id = result.feedback_id
       this.createNewMCWidget(problemWidget, data)
+      this.updateFeedback(feedback)
       this.generateAnswerBoxes(problemWidget, labels, index + 1, xPos + problemWidget.problem.widthMCO, yPos)
     }).catch(err => {
       console.log(err)
@@ -553,13 +564,11 @@ class Exams extends React.Component {
             </div>
             <div className='panel-block'>
               <div className='field'>
-                <label className='label'>
+                <label className='label'> Multiple choice question </label>
                   <input disabled={props.disableIsMCQ} type='checkbox' checked={props.isMCQProblem} onChange={
                     (e) => {
                       props.onMCQChange(e.target.checked)
                     }} />
-                    Multiple choice question
-                </label>
               </div>
             </div>
           </React.Fragment>

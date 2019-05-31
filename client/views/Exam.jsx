@@ -238,6 +238,18 @@ class Exams extends React.Component {
           updateWidget={this.updateWidget}
           updateMCWidget={this.updateMCWidget}
           selectedWidgetId={this.state.selectedWidgetId}
+          highlightFeedback={(widget, feedbackId) => {
+            let index = widget.problem.feedback.findIndex(e => { return e.id === feedbackId })
+            let feedback = widget.problem.feedback[index]
+            feedback.highlight = true
+            this.updateFeedbackAtIndex(feedback, widget, index)
+          }}
+          removeHighlight={(widget, feedbackId) => {
+            let index = widget.problem.feedback.findIndex(e => { return e.id === feedbackId })
+            let feedback = widget.problem.feedback[index]
+            feedback.highlight = false
+            this.updateFeedbackAtIndex(feedback, widget, index)
+          }}
           selectWidget={(widgetId) => {
             this.setState({
               selectedWidgetId: widgetId

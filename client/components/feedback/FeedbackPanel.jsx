@@ -111,7 +111,7 @@ class FeedbackPanel extends React.Component {
             feedback={feedback} checked={this.props.grading && this.props.solution.feedback.includes(feedback.id)}
             editFeedback={() => this.props.editFeedback(feedback)} updateSubmission={this.props.updateSubmission}
             ref={(selectedFeedbackId === feedback.id) ? this.feedbackBlock : null} grading={this.props.grading}
-            selected={selectedFeedbackId === feedback.id} showIndex={this.props.showTooltips} index={index + 1} />
+            selected={selectedFeedbackId === feedback.id || feedback.highlight} showIndex={this.props.showTooltips} index={index + 1} />
         )}
         {this.props.grading &&
           <div className='panel-block'>

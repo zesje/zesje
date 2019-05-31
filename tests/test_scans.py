@@ -286,12 +286,12 @@ def test_image_extraction(datadir, filename):
 @pytest.mark.parametrize('file_name', ["a4-rotated.png", "a4-3-markers.png", "a4-rotated-3-markers.png"])
 def test_realign_image(datadir, file_name):
     dir_name = "cornermarkers"
-    epsilon = 2
+    epsilon = 1
 
     test_file = os.path.join(datadir, dir_name, file_name)
     test_image = np.array(PIL.Image.open(test_file))
 
-    correct_corner_markers = [(59, 59), (1181, 59), (59, 1694), (1181, 1694)]
+    correct_corner_markers = [(59, 59), (1181, 59), (59, 1695), (1181, 1695)]
 
     result_image, result_corner_markers = scans.realign_image(test_image)
 

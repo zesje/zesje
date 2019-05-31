@@ -19,6 +19,8 @@ from .images import guess_dpi, get_box, fix_corner_markers
 from .factory import make_celery
 from .pregrader import add_feedback_to_solution
 
+from .pdf_generation import MARKER_FORMAT, PAGE_FORMATS
+
 ExtractedBarcode = namedtuple('ExtractedBarcode', ['token', 'copy', 'page'])
 
 ExamMetadata = namedtuple('ExamMetadata', ['token', 'barcode_coords'])
@@ -791,7 +793,7 @@ def check_corner_keypoints(image_array, keypoints):
 
 
 def realign_image(image_array, keypoints=None,
-                  reference_keypoints=None):
+                  reference_keypoints=None, page_format="A4"):
     """
     Transform the image so that the keypoints match the reference.
 
@@ -815,7 +817,7 @@ def realign_image(image_array, keypoints=None,
         New keypoints properly aligned.
     """
 
-    if(keypoints is None):
+    if(not keypoints):
         keypoints = find_corner_marker_keypoints(image_array)
         check_corner_keypoints(image_array, keypoints)
 
@@ -823,8 +825,10 @@ def realign_image(image_array, keypoints=None,
         keypoints = fix_corner_markers(keypoints, image_array.shape)
 
     # use standard keypoints if no custom ones are provided
-    if (reference_keypoints is None):
-        reference_keypoints = [(59, 59), (1179, 59), (59, 1693), (1179, 1693)]
+    if (not reference_keypoints):
+        # reference_keypoints = [(59, 59), (1179, 59), (59, 1693), (1179, 1693)]
+        dpi = guess_dpi(image_array)
+        reference_keypoints = generate_perfect_corner_markers(page_format, dpi)
 
     if (len(reference_keypoints) != 4):
         # this function assumes that the template has the same dimensions as the input image
@@ -848,3 +852,15 @@ def realign_image(image_array, keypoints=None,
         return_keypoints = fix_corner_markers(return_keypoints, return_image.shape)
 
     return return_image, return_keypoints
+
+
+def generate_perfect_corner_markers(format="A4", dpi=200):
+    left_x = MARKER_FORMAT["margin"]/72 * dpi
+    top_y = MARKER_FORMAT["margin"]/72 * dpi
+    right_x = (PAGE_FORMATS[format][0] - MARKER_FORMAT["margin"])/72 * dpi
+    bottom_y = (PAGE_FORMATS[format][1] - MARKER_FORMAT["margin"])/72 * dpi
+
+    return [(left_x, top_y),
+            (right_x, top_y),
+            (left_x, bottom_y),
+            (right_x, bottom_y)]

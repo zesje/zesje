@@ -9,13 +9,8 @@ from flask_restful import Resource, reqparse
 from werkzeug.datastructures import FileStorage
 from sqlalchemy.orm import selectinload
 
-from ..pdf_generation import generate_pdfs, output_pdf_filename_format, join_pdfs, page_is_size
+from ..pdf_generation import PAGE_FORMATS, generate_pdfs, output_pdf_filename_format, join_pdfs, page_is_size
 from ..database import db, Exam, ExamWidget, Submission
-
-PAGE_FORMATS = {
-    "A4": (595.276, 841.89),
-    "US letter": (612, 792),
-}
 
 
 def _get_exam_dir(exam_id):

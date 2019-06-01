@@ -44,11 +44,11 @@ def mco_json():
 
 
 '''
-MULTIPLE CHOICE OPTION TESTS
+ACTUAL TESTS
 '''
 
 
-def test_not_present(test_client):
+def test_not_present(test_client, add_test_data):
     result = test_client.get('/api/mult-choice/1')
     data = json.loads(result.data)
 
@@ -92,7 +92,7 @@ def test_add_get(test_client, add_test_data):
     assert exp_resp == data
 
 
-def test_update_put(test_client):
+def test_update_put(test_client, add_test_data):
     req = mco_json()
 
     response = test_client.put('/api/mult-choice/', data=req)
@@ -127,7 +127,7 @@ def test_delete(test_client, add_test_data):
     assert data['status'] == 200
 
 
-def test_delete_not_present(test_client):
+def test_delete_not_present(test_client, add_test_data):
     id = 100
 
     response = test_client.delete(f'/api/mult-choice/{id}')
@@ -154,10 +154,3 @@ def test_delete_finalized_exam(test_client, add_test_data):
     data = json.loads(response.data)
 
     assert data['status'] == 401
-
-
-'''
-EXAM API TESTS
-'''
-
-

@@ -1,6 +1,6 @@
 from flask_restful import Resource, reqparse
 
-from ..database import db, MultipleChoiceOption, FeedbackOption
+from ..database import db, MultipleChoiceOption, FeedbackOption, Problem
 
 
 def set_mc_data(mc_entry, name, x, y, mc_type, feedback_id, label):
@@ -64,6 +64,11 @@ class MultipleChoice(Resource):
         mc_type = 'mcq_widget'
 
         if not id:
+            problem = Problem.query.get(problem_id)
+
+            if not problem:
+                return dict(status=404, message=f'Problem with id {problem_id} not found'), 404
+
             # Insert new empty feedback option that links to the same problem, with the label as name
             new_feedback_option = FeedbackOption(problem_id=problem_id, text=label)
             db.session.add(new_feedback_option)

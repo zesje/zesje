@@ -57,27 +57,27 @@ def render_email(exam_id, student_id, template):
 
 
 def build_email(exam_id, student_id, template, attach, from_address, copy_to=None):
-        student = Student.query.get(student_id)
-        if student is None:
-            abort(
-                404,
-                message=f"Student #{student_id} does not exist"
-            )
-        if not student.email:
-            abort(
-                409,
-                message=f'Student #{student_id} has no email address'
-            )
-
-        return emails.build(
-            student.email,
-            render_email(exam_id, student_id, template),
-            emails.build_solution_attachment(exam_id, student_id)
-            if attach
-            else None,
-            copy_to=copy_to,
-            email_from=from_address,
+    student = Student.query.get(student_id)
+    if student is None:
+        abort(
+            404,
+            message=f"Student #{student_id} does not exist"
         )
+    if not student.email:
+        abort(
+            409,
+            message=f'Student #{student_id} has no email address'
+        )
+
+    return emails.build(
+        student.email,
+        render_email(exam_id, student_id, template),
+        emails.build_solution_attachment(exam_id, student_id)
+        if attach
+        else None,
+        copy_to=copy_to,
+        email_from=from_address,
+    )
 
 
 class EmailTemplate(Resource):

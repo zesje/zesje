@@ -10,6 +10,8 @@ import ExamEditor from './ExamEditor.jsx'
 import update from 'immutability-helper'
 import ExamFinalizeMarkdown from './ExamFinalize.md'
 import ConfirmationModal from '../components/ConfirmationModal.jsx'
+import FeedbackPanel from '../components/feedback/FeedbackPanel.jsx'
+import EditPanel from '../components/feedback/EditPanel.jsx'
 
 import * as api from '../api.jsx'
 
@@ -17,6 +19,9 @@ class Exams extends React.Component {
   state = {
     examID: null,
     page: 0,
+    editActive: false,
+    feedbackToEdit: null,
+    problemIdToEditFeedbackOf: null,
     numPages: null,
     selectedWidgetId: null,
     changedWidgetId: null,
@@ -38,7 +43,8 @@ class Exams extends React.Component {
             id: problem.id,
             page: problem.page,
             name: problem.name,
-            graded: problem.graded
+            graded: problem.graded,
+            feedback: problem.feedback || []
           }
         }
       })
@@ -57,7 +63,6 @@ class Exams extends React.Component {
         previewing: false
       }
     }
-
     return null
   }
 
@@ -69,6 +74,10 @@ class Exams extends React.Component {
     // The onBlur event is not fired when the input field is being disabled
     if (prevState.selectedWidgetId !== this.state.selectedWidgetId) {
       this.saveProblemName()
+      this.setState({
+        editActive: false,
+        problemIdToEditFeedbackOf: false
+      })
     }
   }
 
@@ -83,6 +92,38 @@ class Exams extends React.Component {
     if (!this.state.deletingExam) {
       this.props.updateExam(this.props.examID)
     }
+  }
+
+  editFeedback = (feedback) => {
+    this.setState({
+      editActive: true,
+      feedbackToEdit: feedback,
+      problemIdToEditFeedbackOf: this.state.selectedWidgetId
+    })
+  }
+
+  updateFeedback = (feedback) => {
+    var widgets = this.state.widgets
+    const idx = widgets[this.state.selectedWidgetId].problem.feedback.findIndex(e => { return e.id === feedback.id })
+    if (idx === -1) widgets[this.state.selectedWidgetId].problem.feedback.push(feedback)
+    else {
+      if (feedback.deleted) widgets[this.state.selectedWidgetId].problem.feedback.splice(idx, 1)
+      else widgets[this.state.selectedWidgetId].problem.feedback[idx] = feedback
+    }
+    this.setState({
+      widgets: widgets
+    })
+  }
+
+  backToFeedback = () => {
+    this.props.updateExam(this.props.exam.id)
+    this.setState({
+      editActive: false
+    })
+  }
+
+  isProblemWidget = (widget) => {
+    return widget && this.state.widgets[widget].problem
   }
 
   saveProblemName = () => {
@@ -112,6 +153,8 @@ class Exams extends React.Component {
               selectedWidgetId: null,
               changedWidgetId: null,
               deletingWidget: false,
+              editActive: false,
+              problemIdToEditFeedbackOf: null,
               widgets: update(prevState.widgets, {
                 $unset: [widgetId]
               })
@@ -308,6 +351,20 @@ class Exams extends React.Component {
             )}
           </div>
         </div>
+        {this.isProblemWidget(selectedWidgetId) &&
+          <React.Fragment>
+            <div className='panel-block'>
+              {!this.state.editActive && <label className='label'>Feedback options</label>}
+            </div>
+            {this.state.editActive
+              ? <EditPanel problemID={props.problem.id} feedback={this.state.feedbackToEdit}
+                goBack={this.backToFeedback} updateCallback={this.updateFeedback} />
+              : <FeedbackPanel examID={this.props.examID} problem={props.problem}
+                editFeedback={this.editFeedback} showTooltips={this.state.showTooltips}
+                grading={false}
+              />}
+          </React.Fragment>
+        }
         <div className='panel-block'>
           <button
             disabled={props.disabledDelete}

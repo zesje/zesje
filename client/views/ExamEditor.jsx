@@ -86,7 +86,8 @@ class ExamEditor extends React.Component {
       if (selectionBox.width >= this.props.problemMinWidth && selectionBox.height >= this.props.problemMinHeight) {
         const problemData = {
           name: 'New problem', // TODO: Name
-          page: this.props.page
+          page: this.props.page,
+          feedback: []
         }
         const widgetData = {
           x: Math.round(selectionBox.left),

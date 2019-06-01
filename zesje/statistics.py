@@ -5,7 +5,7 @@ from sqlalchemy.orm.exc import NoResultFound
 import numpy as np
 import pandas
 
-from .database import Exam, Problem, Student
+from .database import Exam, Student
 
 
 def solution_data(exam_id, student_id):

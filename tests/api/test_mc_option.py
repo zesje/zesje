@@ -1,6 +1,6 @@
 import pytest
 
-from flask import Flask, json
+from flask import json
 
 from zesje.database import db, Exam, Problem, ProblemWidget
 

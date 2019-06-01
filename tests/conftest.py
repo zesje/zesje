@@ -6,6 +6,7 @@ from flask import Flask
 from zesje.api import api_bp
 from zesje.database import db
 
+
 # Adapted from https://stackoverflow.com/a/46062148/1062698
 @pytest.fixture
 def datadir():

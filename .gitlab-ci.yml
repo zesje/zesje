@@ -1,5 +1,5 @@
 # This base image can be found in 'Dockerfile'
-image: gitlab.kwant-project.org:5005/zesje/zesje/conda:latest
+image: gitlab.kwant-project.org:5005/zesje/zesje/test:latest
 
 stages:
   - build

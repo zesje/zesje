@@ -11,6 +11,6 @@ RUN conda env create
 RUN echo "source activate $(head -1 /app/environment.yml | cut -d' ' -f2)" > ~/.bashrc
 ENV PATH /opt/conda/envs/$(head -1 /app/environment.yml | cut -d' ' -f2)/bin:$PATH
 
-RUN rm -rf /app/environment.yml
+RUN rm /app/environment.yml
 
 CMD bash

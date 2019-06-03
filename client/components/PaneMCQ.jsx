@@ -10,11 +10,12 @@ class PanelMCQ extends React.Component {
     this.onChangeNPA = this.onChangeNPA.bind(this)
     this.onChangeLabelType = this.onChangeLabelType.bind(this)
     this.generateLabels = this.generateLabels.bind(this)
+    this.updateMCO = this.updateMCO.bind(this)
 
     this.state = {
       isMCQ: false,
-      chosenLabelType: 0,
-      nrPossibleAnswers: 1,
+      chosenLabelType: 2,
+      nrPossibleAnswers: 2,
       labelTypes: ['None', 'True/False', 'A, B, C ...', '1, 2, 3 ...']
     }
   }
@@ -25,33 +26,44 @@ class PanelMCQ extends React.Component {
       return {
         problemId: prob.id,
         isMCQ: prob.mc_options.length > 0,
-        nrPossibleAnswers: prob.mc_options.length || 1,
-        chosenLabelType: prob.labelType || PanelMCQ.deriveLabelType(prob),
+        nrPossibleAnswers: prob.mc_options.length || 2,
+        chosenLabelType: prob.labelType || 2,
       }
     }
 
     return null;
   }
 
-  static deriveLabelType (prob) {
-    let options = prob.mc_options
+  static deriveLabelType (options) {
     if (options.length === 0) {
-      prob.labelType = 0
+      return 0
     } else if (options.length === 2 && ((options[0].label === 'T' && options[1].label === 'F')
       || (options[0].label === 'F' && options[1].label === 'T'))) {
-      prob.labelType = 1
+      return 1
     } else if (options[0].label.match(/[a-z]/)) {
-      prob.labelType = 2
+      return 2
     } else if (parseInt(options[0].label)) {
-      prob.labelType = 3
+      return 3
     } else {
-      prob.labelType = 0
+      return 0
     }
-
-    return prob.labelType
   }
 
+  updateMCO() {
+    let difference = this.state.nrPossibleAnswers - this.props.problem.mc_options.length
+    if (difference > 0) {
+      let startingAt = this.props.problem.mc_options.length
+      let labels = this.generateLabels(difference, startingAt)
+      this.props.generateMCOs(labels)
+    } else if (difference < 0) {
+      this.props.deleteMCOs(-difference)
+    }
 
+    if (this.state.labelType !== this.props.problem.labelType) {
+      let labels = this.generateLabels(this.state.nrPossibleAnswers, 0)
+      this.props.updateMCOs(labels)
+    }
+  }
 
   // this function is called when the input is changed for the number of possible answers
   onChangeNPA (e) {
@@ -62,7 +74,7 @@ class PanelMCQ extends React.Component {
       }
       this.setState({
         nrPossibleAnswers: value
-      })
+      }, this.updateMCO)
     }
   }
 
@@ -72,11 +84,11 @@ class PanelMCQ extends React.Component {
     if (!isNaN(value)) {
       this.setState({
         chosenLabelType: value
-      })
+      }, this.updateMCO)
       if (parseInt(value) === 1) {
         this.setState({
           nrPossibleAnswers: 2
-        })
+        }, this.updateMCO)
       }
     }
   }
@@ -84,18 +96,20 @@ class PanelMCQ extends React.Component {
   /**
    * This function generates an array with the labels for each option
    * @param nrLabels the number of options that need to be generated
+   * @param startingAt at which number/character to start generating labels
    * @returns {any[]|string[]|number[]}
    */
-  generateLabels (nrLabels) {
+  generateLabels (nrLabels, startingAt) {
     let type = this.state.chosenLabelType
 
     switch (type) {
       case 1:
         return ['T', 'F']
       case 2:
-        return Array.from(Array(nrLabels).keys()).map((e) => String.fromCharCode(e + 65))
+        return Array.from(Array(nrLabels).keys()).map(
+          (e) => String.fromCharCode(e + 65 + startingAt))
       case 3:
-        return Array.from(Array(nrLabels).keys()).map(e => e + 1)
+        return Array.from(Array(nrLabels).keys()).map(e => e + 1 + startingAt)
       default:
         return Array(nrLabels).fill(' ')
     }
@@ -117,10 +131,10 @@ class PanelMCQ extends React.Component {
             <Switch color='info' outlined value={this.props.problem.mc_options.length > 0} onChange={(e) => {
               if (e.target.checked) {
                 let npa = this.state.nrPossibleAnswers
-                let labels = this.generateLabels(npa)
-                this.props.onGenerateBoxesClick(labels)
+                let labels = this.generateLabels(npa, 0)
+                this.props.generateMCOs(labels)
               } else {
-                this.props.onDeleteBoxesClick()
+                this.props.deleteMCOs(this.props.problem.mc_options.length)
               }
             }} />
           </div>
@@ -128,7 +142,7 @@ class PanelMCQ extends React.Component {
         <div className='panel-block'>
           <div className='field'>
             <React.Fragment>
-              <label className='label'>Number possible answers</label>
+              <label className='label'>Number options</label>
               <div className='control'>
                 <input type='number'  value={this.state.nrPossibleAnswers} min='1'
                        max={this.props.totalNrAnswers} className='input' onChange={this.onChangeNPA} />
@@ -139,7 +153,7 @@ class PanelMCQ extends React.Component {
         <div className='panel-block'>
           <div className='field'>
             <React.Fragment>
-              <label className='label'>Answer boxes labels</label>
+              <label className='label'>Labels</label>
               <div className='control'>
                 <div className='select is-hovered is-fullwidth'>
                   {(function () {

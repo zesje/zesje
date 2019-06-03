@@ -59,7 +59,8 @@ class Exams extends React.Component {
             }),
             widthMCO: 24,
             heightMCO: 38,
-            isMCQ: problem.mc_options && problem.mc_options.length !== 0 // is the problem a mc question - used to display PanelMCQ
+            isMCQ: problem.mc_options && problem.mc_options.length !== 0, // is the problem a mc question - used to display PanelMCQ
+            labelType: PanelMCQ.deriveLabelType(problem.mc_options)
           }
         }
       })
@@ -317,6 +318,51 @@ class Exams extends React.Component {
     })
   }
 
+
+  deleteMCO = (widget, index) => {
+    let option = widget.problem.mc_options[index]
+    api.del('mult-choice/' + option.id)
+      .catch(err => {
+        console.log(err)
+        err.json().then(res => {
+          this.setState({
+            deletingMCWidget: false
+          })
+          Notification.error('Could not delete multiple choice option' +
+            (res.message ? ': ' + res.message : ''))
+          // update to try and get a consistent state
+          this.props.updateExam(this.props.examID)
+        })
+      })
+      .then(res => {
+        let index = widget.problem.feedback.findIndex(e => { return e.id === res.feedback_id })
+        let feedback = widget.problem.feedback[index]
+        feedback.deleted = true
+        this.updateFeedbackAtIndex(feedback, widget, index)
+      }
+    )
+
+    let options = [...widget.problem.mc_options]
+    options.splice(index, 1)
+
+    // remove the mc options from the state
+    // note that this can happen before they are removed in the DB due to async calls
+    this.setState((prevState) => {
+      return {
+        widgets: update(prevState.widgets, {
+          [widget.id]: {
+            problem: {
+              mc_options: {
+                $set: options
+              }
+            }
+          }
+        }),
+        deletingMCWidget: false
+      }
+    })
+  }
+
   /**
    * This function deletes the mc options coupled to a problem.
    */
@@ -526,15 +572,33 @@ class Exams extends React.Component {
         <PanelMCQ
           totalNrAnswers={totalNrAnswers}
           problem={problem}
-          onGenerateBoxesClick={(labels) => {
+          generateMCOs={(labels) => {
             let problemWidget = this.state.widgets[this.state.selectedWidgetId]
-            // position the new mc option widget inside the problem widget
-            let xPos = problemWidget.x + 2
-            let yPos = problemWidget.y + 2
+            let xPos, yPos
+            if (problem.mc_options.length > 0) {
+              // position the new mc options widget next to the last mc options
+              let last = problem.mc_options[problem.mc_options.length - 1].widget
+              xPos = last.x + problemWidget.problem.widthMCO
+              yPos = last.y
+            } else {
+              // position the new mc option widget inside the problem widget
+              xPos = problemWidget.x + 2
+              yPos = problemWidget.y + 2
+            }
             this.generateAnswerBoxes(problemWidget, labels, 0, xPos, yPos)
           }}
-          onDeleteBoxesClick={() => {
-            this.setState({deletingMCWidget: true})
+          deleteMCOs={(nrMCOs) => {
+            let len = problem.mc_options.length
+            if (nrMCOs >= len) {
+              this.setState({deletingMCWidget: true})
+            } else {
+              for (let i = 0; i < nrMCOs; i++) {
+                this.deleteMCO(selectedWidget, len - 1 - i)
+              }
+            }
+          }}
+          updateMCOs={(labels) => {
+            console.log("update")
           }}
         /> ) : null}
         <this.PanelExamActions />

@@ -108,7 +108,7 @@ def test_update_put(test_client, add_test_data):
         'name': 'test'
     }
 
-    result = test_client.put(f'/api/mult-choice/{id}', data=req2)
+    result = test_client.patch(f'/api/mult-choice/{id}', data=req2)
     data = json.loads(result.data)
 
     assert data['message'] == f'Multiple choice question with id {id} updated'

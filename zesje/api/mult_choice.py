@@ -36,21 +36,13 @@ class MultipleChoice(Resource):
     put_parser.add_argument('label', type=str, required=False)
     put_parser.add_argument('problem_id', type=int, required=True)  # Used for FeedbackOption
 
-    def put(self, id=None):
-        """Adds or updates a multiple choice option to the database
-
-        If the parameter id is not present, a new multiple choice question
-        will be inserted with the data provided in the request body.
+    def put(self):
+        """Adds a multiple choice option to the database
 
         For each new multiple choice option, a feedback option that links to
         the multiple choice option is inserted into the database. The new
         feedback option also refers to same problem as the MultipleChoiceOption
-
-        Parameters
-        ----------
-            id: The id of the multiple choice option
         """
-
         args = self.put_parser.parse_args()
 
         # Get request arguments
@@ -60,36 +52,23 @@ class MultipleChoice(Resource):
         label = args['label']
         problem_id = args['problem_id']
 
-        # TODO: Set type here or add to request?
         mc_type = 'mcq_widget'
 
-        if not id:
-            # Insert new empty feedback option that links to the same problem
-            new_feedback_option = FeedbackOption(problem_id=problem_id, text='')
-            db.session.add(new_feedback_option)
-            db.session.commit()
-
-            # Insert new entry into the database
-            mc_entry = MultipleChoiceOption()
-            set_mc_data(mc_entry, name, x, y, mc_type, new_feedback_option.id, label)
-
-            db.session.add(mc_entry)
-            db.session.commit()
-
-            return dict(status=200, mult_choice_id=mc_entry.id, feedback_id=new_feedback_option.id,
-                        message=f'New multiple choice question with id {mc_entry.id} inserted. '
-                        + f'New feedback option with id {new_feedback_option.id} inserted.'), 200
-
-        # Update existing entry otherwise
-        mc_entry = MultipleChoiceOption.query.get(id)
-
-        if not mc_entry:
-            return dict(status=404, message=f"Multiple choice question with id {id} does not exist"), 404
-
-        set_mc_data(mc_entry, name, x, y, mc_type, mc_entry.feedback_id, label)
+        # Insert new empty feedback option that links to the same problem
+        new_feedback_option = FeedbackOption(problem_id=problem_id, text='')
+        db.session.add(new_feedback_option)
         db.session.commit()
 
-        return dict(status=200, message=f'Multiple choice question with id {id} updated'), 200
+        # Insert new entry into the database
+        mc_entry = MultipleChoiceOption()
+        set_mc_data(mc_entry, name, x, y, mc_type, new_feedback_option.id, label)
+
+        db.session.add(mc_entry)
+        db.session.commit()
+
+        return dict(status=200, mult_choice_id=mc_entry.id, feedback_id=new_feedback_option.id,
+                    message=f'New multiple choice question with id {mc_entry.id} inserted. '
+                            + f'New feedback option with id {new_feedback_option.id} inserted.'), 200
 
     def get(self, id):
         """Fetches multiple choice option from the database
@@ -121,6 +100,32 @@ class MultipleChoice(Resource):
             json['label'] = mult_choice.label
 
         return json
+
+    def patch(self, id):
+        """
+        Updates a multiple choice option
+
+        Parameters
+        ----------
+            id: The id of the multiple choice option in the database.s
+        """
+        args = self.put_parser.parse_args()
+
+        name = args['name']
+        x = args['x']
+        y = args['y']
+        label = args['label']
+        mc_type = 'mcq_widget'
+
+        mc_entry = MultipleChoiceOption.query.get(id)
+
+        if not mc_entry:
+            return dict(status=404, message=f"Multiple choice question with id {id} does not exist"), 404
+
+        set_mc_data(mc_entry, name, x, y, mc_type, mc_entry.feedback_id, label)
+        db.session.commit()
+
+        return dict(status=200, message=f'Multiple choice question with id {id} updated'), 200
 
     def delete(self, id):
         """Deletes a multiple choice option from the database.

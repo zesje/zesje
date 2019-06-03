@@ -64,7 +64,7 @@ def is_blank(problem, page_img, solution):
 
     gray_im = cv2.cvtColor(cut_im, cv2.COLOR_BGR2GRAY)
 
-    value = np.sum(~(gray_im))
+    value = np.average(~(gray_im))
     solution.filled_score = value
     db.session.commit()
     base = 120000000

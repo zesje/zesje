@@ -15,7 +15,6 @@ def add_test_data(app):
         db.session.add(exam1)
         db.session.add(exam2)
         db.session.add(exam3)
-        db.session.commit()
 
         problem1 = Problem(id=1, name='Problem 1', exam_id=1)
         problem2 = Problem(id=2, name='Problem 2', exam_id=2)
@@ -24,11 +23,11 @@ def add_test_data(app):
         db.session.add(problem1)
         db.session.add(problem2)
         db.session.add(problem3)
-        db.session.commit()
 
         problem_widget_1 = ProblemWidget(id=1, name='problem widget', problem_id=1, page=2,
                                          width=100, height=150, x=40, y=200, type='problem_widget')
         db.session.add(problem_widget_1)
+
         db.session.commit()
 
 

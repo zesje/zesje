@@ -474,20 +474,16 @@ class Exams extends React.Component {
     const selectedWidgetId = this.state.selectedWidgetId
     let selectedWidget = selectedWidgetId && this.state.widgets[selectedWidgetId]
     let problem = selectedWidget && selectedWidget.problem
-    let containsMCOptions = (problem && problem.mc_options.length > 0) || false
+    let isMCQ = (problem && problem.mc_options.length > 0) || false
     let widgetEditDisabled = (this.state.previewing || !problem) || (this.props.exam.finalized && containsMCOptions)
     let isGraded = problem && problem.graded
     let widgetDeleteDisabled = widgetEditDisabled || isGraded
     let totalNrAnswers = 12 // the upper limit for the nr of possible answer boxes
-    let disabledDeleteBoxes = !containsMCOptions
-    let isMCQ = (problem && problem.isMCQ) || false
-    let showPanelMCQ = isMCQ && !this.state.previewing && !this.props.exam.finalized
 
     return (
       <React.Fragment>
         <this.PanelEdit
           disabledEdit={widgetEditDisabled}
-          disableIsMCQ={widgetEditDisabled || containsMCOptions}
           disabledDelete={widgetDeleteDisabled}
           onDeleteClick={() => {
             this.setState({deletingWidget: true})
@@ -526,24 +522,21 @@ class Exams extends React.Component {
             }
           }
         />
-        { showPanelMCQ ? (
-          <PanelMCQ
-            totalNrAnswers={totalNrAnswers}
-            disabledGenerateBoxes={containsMCOptions}
-            disabledDeleteBoxes={disabledDeleteBoxes}
-            problem={problem}
-            onGenerateBoxesClick={(labels) => {
-              let problemWidget = this.state.widgets[this.state.selectedWidgetId]
-              // position the new mc option widget inside the problem widget
-              let xPos = problemWidget.x + 2
-              let yPos = problemWidget.y + 2
-              this.generateAnswerBoxes(problemWidget, labels, 0, xPos, yPos)
-            }}
-            onDeleteBoxesClick={() => {
-              this.setState({deletingMCWidget: true})
-            }}
-          />
-        ) : null }
+        {problem ? (
+        <PanelMCQ
+          totalNrAnswers={totalNrAnswers}
+          problem={problem}
+          onGenerateBoxesClick={(labels) => {
+            let problemWidget = this.state.widgets[this.state.selectedWidgetId]
+            // position the new mc option widget inside the problem widget
+            let xPos = problemWidget.x + 2
+            let yPos = problemWidget.y + 2
+            this.generateAnswerBoxes(problemWidget, labels, 0, xPos, yPos)
+          }}
+          onDeleteBoxesClick={() => {
+            this.setState({deletingMCWidget: true})
+          }}
+        /> ) : null}
         <this.PanelExamActions />
       </React.Fragment>
     )
@@ -589,7 +582,7 @@ class Exams extends React.Component {
             <div className='panel-block'>
               <div className='field'>
                 <label className='label'> Multiple choice question </label>
-                <Switch disabled={props.disableIsMCQ} color='info' outlined value={props.isMCQProblem} onChange={
+                <Switch disabled={props.disabledEdit} color='info' outlined value={props.isMCQProblem} onChange={
                   (e) => {
                     props.onMCQChange(e.target.checked)
                   }}

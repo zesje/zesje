@@ -1,4 +1,5 @@
 import React from 'react'
+import Switch from 'react-bulma-switch/full'
 
 /**
  * PanelMCQ is a component that allows the user to generate mcq options
@@ -9,12 +10,48 @@ class PanelMCQ extends React.Component {
     this.onChangeNPA = this.onChangeNPA.bind(this)
     this.onChangeLabelType = this.onChangeLabelType.bind(this)
     this.generateLabels = this.generateLabels.bind(this)
+
     this.state = {
+      isMCQ: false,
       chosenLabelType: 0,
-      nrPossibleAnswers: 2,
+      nrPossibleAnswers: 1,
       labelTypes: ['None', 'True/False', 'A, B, C ...', '1, 2, 3 ...']
     }
   }
+
+  static getDerivedStateFromProps (newProps, prevState) {
+    if (prevState.problemId !== newProps.problem.id) {
+      let prob = newProps.problem
+      return {
+        problemId: prob.id,
+        isMCQ: prob.mc_options.length > 0,
+        nrPossibleAnswers: prob.mc_options.length || 1,
+        chosenLabelType: prob.labelType || PanelMCQ.deriveLabelType(prob),
+      }
+    }
+
+    return null;
+  }
+
+  static deriveLabelType (prob) {
+    let options = prob.mc_options
+    if (options.length === 0) {
+      prob.labelType = 0
+    } else if (options.length === 2 && ((options[0].label === 'T' && options[1].label === 'F')
+      || (options[0].label === 'F' && options[1].label === 'T'))) {
+      prob.labelType = 1
+    } else if (options[0].label.match(/[a-z]/)) {
+      prob.labelType = 2
+    } else if (parseInt(options[0].label)) {
+      prob.labelType = 3
+    } else {
+      prob.labelType = 0
+    }
+
+    return prob.labelType
+  }
+
+
 
   // this function is called when the input is changed for the number of possible answers
   onChangeNPA (e) {
@@ -76,19 +113,25 @@ class PanelMCQ extends React.Component {
         </p>
         <div className='panel-block'>
           <div className='field'>
+            <label className='label'> Multiple choice question </label>
+            <Switch color='info' outlined value={this.props.problem.mc_options.length > 0} onChange={(e) => {
+              if (e.target.checked) {
+                let npa = this.state.nrPossibleAnswers
+                let labels = this.generateLabels(npa)
+                this.props.onGenerateBoxesClick(labels)
+              } else {
+                this.props.onDeleteBoxesClick()
+              }
+            }} />
+          </div>
+        </div>
+        <div className='panel-block'>
+          <div className='field'>
             <React.Fragment>
               <label className='label'>Number possible answers</label>
               <div className='control'>
-                {(function () {
-                  var optionList = []
-                  for (var i = 1; i <= this.props.totalNrAnswers; i++) {
-                    const optionElement = <option key={i} value={String(i)}>{i}</option>
-                    optionList.push(optionElement)
-                  }
-                  return (<div className='select is-hovered is-fullwidth'>
-                    <select value={this.state.nrPossibleAnswers} onChange={this.onChangeNPA}>{optionList}</select>
-                  </div>)
-                }.bind(this)())}
+                <input type='number'  value={this.state.nrPossibleAnswers} min='1'
+                       max={this.props.totalNrAnswers} className='input' onChange={this.onChangeNPA} />
               </div>
             </React.Fragment>
           </div>
@@ -115,28 +158,6 @@ class PanelMCQ extends React.Component {
               </div>
             </React.Fragment>
           </div>
-        </div>
-        <div className='panel-block field is-grouped'>
-          <button
-            disabled={this.props.disabledGenerateBoxes}
-            className='button is-link is-fullwidth'
-            onClick={() => {
-              let npa = this.state.nrPossibleAnswers
-              let labels = this.generateLabels(npa)
-              this.props.onGenerateBoxesClick(labels)
-            }}
-          >
-            Generate
-          </button>
-          <button
-            disabled={this.props.disabledDeleteBoxes}
-            className='button is-danger is-fullwidth'
-            onClick={() => {
-              this.props.onDeleteBoxesClick()
-            }}
-          >
-            Delete
-          </button>
         </div>
       </nav>
     )

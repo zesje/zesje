@@ -99,6 +99,7 @@ class Problem(db.Model):
     exam_id = Column(Integer, ForeignKey('exam.id'), nullable=False)
     feedback_options = db.relationship('FeedbackOption', backref='problem', order_by='FeedbackOption.id', lazy=True)
     solutions = db.relationship('Solution', backref='problem', lazy=True)
+    mc_options = db.relationship('MultipleChoiceOption', backref='problem', lazy=True)
     widget = db.relationship('ProblemWidget', backref='problem', uselist=False, lazy=True)
 
     @hybrid_property
@@ -173,6 +174,9 @@ class MultipleChoiceOption(Widget):
     label = Column(String, nullable=True)
     feedback_id = Column(Integer, ForeignKey('feedback_option.id'), nullable=False)
 
+    __mapper_args__ = {
+        'polymorphic_identity': 'mcq_widget'
+    }
     __mapper_args__ = {
         'polymorphic_identity': 'mcq_widget'
     }

@@ -54,6 +54,22 @@ def test_not_present(test_client, add_test_data):
     assert data['status'] == 404
 
 
+def test_problem_not_present(test_client, add_test_data):
+    req_json = {
+        'x': 100,
+        'y': 40,
+        'problem_id': 99,
+        'page': 1,
+        'label': 'a',
+        'name': 'test'
+    }
+
+    result = test_client.put('/api/mult-choice/', data=req_json)
+    data = json.loads(result.data)
+
+    assert data['status'] == 404
+
+
 def test_add(test_client, add_test_data):
     req = mco_json()
     response = test_client.put('/api/mult-choice/', data=req)

@@ -2,7 +2,7 @@
 
 from flask_restful import Resource, reqparse
 
-from ..database import db, Exam, Problem, ProblemWidget, Solution
+from ..database import db, Exam, Problem, ProblemWidget, Solution, FeedbackOption
 
 
 class Problems(Resource):
@@ -58,6 +58,10 @@ class Problems(Resource):
             db.session.commit()
             widget.name = f'problem_{problem.id}'
 
+            db.session.commit()
+
+            new_feedback_option = FeedbackOption(problem_id=problem.id, text='blank')
+            db.session.add(new_feedback_option)
             db.session.commit()
 
             return {

@@ -134,6 +134,7 @@ class Solution(db.Model):
     graded_at = Column(DateTime, nullable=True)
     feedback = db.relationship('FeedbackOption', secondary=solution_feedback, backref='solutions', lazy='subquery')
     remarks = Column(Text)
+    filled_score = Column(Integer)
 
     @property
     def feedback_count(self):
@@ -195,6 +196,7 @@ class ProblemWidget(Widget):
     page = Column(Integer)
     width = Column(Integer)
     height = Column(Integer)
+    blank_threshold = Column(Integer)
 
     __mapper_args__ = {
         'polymorphic_identity': 'problem_widget'

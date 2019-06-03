@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 
-from .database import db, Solution
+from .database import db, Solution, FeedbackOption
 from .images import guess_dpi, get_box, fix_corner_markers
 
 
@@ -30,6 +30,12 @@ def add_feedback_to_solution(sub, exam, page, page_img, corner_keypoints):
 
     for problem in problems_on_page:
         sol = Solution.query.filter(Solution.problem_id == problem.id, Solution.submission_id == sub.id).one_or_none()
+        
+        if is_blank(problem, page_img, sol):
+            feedback = FeedbackOption.query.filter(FeedbackOption.problem_id == problem.id,
+                                                   FeedbackOption.text == 'blank').one_or_none()
+            sol.feedback.append(feedback)
+            db.session.commit()
 
         for mc_option in problem.mc_options:
             box = (mc_option.x, mc_option.y)
@@ -38,6 +44,34 @@ def add_feedback_to_solution(sub, exam, page, page_img, corner_keypoints):
                 feedback = mc_option.feedback
                 sol.feedback.append(feedback)
                 db.session.commit()
+
+
+def is_blank(problem, page_img, solution):
+    # add the actually margin from the scan to corner markers to the coords in inches
+    dpi = guess_dpi(page_img)
+    # get the box where we think the box is
+
+    widget_area = np.asarray([
+        problem.widget.y,  # top
+        problem.widget.y + problem.widget.height,  # bottom
+        problem.widget.x,  # left
+        problem.widget.x + problem.widget.width,  # right
+    ])
+
+    widget_area_in = widget_area / 72
+
+    cut_im = get_box(page_img, widget_area_in, padding=0)
+
+    gray_im = cv2.cvtColor(cut_im, cv2.COLOR_BGR2GRAY)
+
+    value = np.sum(~(gray_im))
+    solution.filled_score = value
+    db.session.commit()
+    base = 120000000
+
+    return False
+
+
 
 
 def box_is_filled(box, page_img, corner_keypoints, marker_margin=72/2.54, threshold=225, cut_padding=0.1, box_size=11):

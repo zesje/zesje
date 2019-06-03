@@ -51,7 +51,7 @@ def test_not_present(test_client, add_test_data):
     result = test_client.get('/api/mult-choice/1')
     data = json.loads(result.data)
 
-    assert data['message'] == "Multiple choice question with id 1 does not exist."
+    assert data['status'] == 404
 
 
 def test_add(test_client, add_test_data):
@@ -110,7 +110,7 @@ def test_update_put(test_client, add_test_data):
     result = test_client.patch(f'/api/mult-choice/{id}', data=req2)
     data = json.loads(result.data)
 
-    assert data['message'] == f'Multiple choice question with id {id} updated'
+    assert data['status'] == 200
 
 
 def test_delete(test_client, add_test_data):
@@ -132,7 +132,7 @@ def test_delete_not_present(test_client, add_test_data):
     response = test_client.delete(f'/api/mult-choice/{id}')
     data = json.loads(response.data)
 
-    assert data['message'] == f'Multiple choice question with id {id} does not exist.'
+    assert data['status'] == 404
 
 
 def test_delete_finalized_exam(test_client, add_test_data):

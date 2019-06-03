@@ -36,7 +36,7 @@ def test_exam_generate_token_length_uppercase(duplicate_count, monkeypatch):
 
 
 def test_cascades_exam(empty_app, exam, problem, submission, scan, exam_widget):
-    """Tests the cascades defined for a exam
+    """Tests the cascades defined for an exam
 
     Tests the cascades for the following relations:
     - Exam -> Submission

@@ -70,7 +70,7 @@ def box_is_filled(box, page_img, corner_keypoints, marker_margin=72/2.54, thresh
     """
 
     # shouldn't be needed, but some images are drawn a bit weirdly
-    y_shift = 5
+    y_shift = 11
     # create an array with y top, y bottom, x left and x right. use the marker margin to allign to the page.
     coords = np.asarray([box[1] - marker_margin + y_shift, box[1] + box_size - marker_margin + y_shift,
                         box[0] - marker_margin, box[0] + box_size - marker_margin])/72

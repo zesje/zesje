@@ -320,8 +320,11 @@ def process_page(image_data, exam_config, output_dir=None, strict=False):
         if strict:
             return False, str(e)
     else:
-        (image_array, new_keypoints) = rotate_image(image_array, corner_keypoints)
-        image_array = shift_image(image_array, new_keypoints)
+        # (image_array, new_keypoints) = rotate_image(image_array, corner_keypoints)
+        # image_array = shift_image(image_array, new_keypoints)
+        # cv2.imwrite("temp_shifted_and_rotated_image.jpg", image_array)
+        image_array, corner_keypoints = realign_image(image_array, corner_keypoints)
+    # cv2.imwrite("temp_failing_rot.jpg", image_array)
 
     try:
         barcode, upside_down = decode_barcode(image_array, exam_config)
@@ -846,8 +849,9 @@ def realign_image(image_array, keypoints=None,
     return_image = cv2.warpPerspective(image_array, M, (cols, rows),
                                        borderValue=(255, 255, 255, 255))
     # generate a new set of 4 keypoints
+    # cv2.imwrite("temp_image.jpg", return_image)
     return_keypoints = find_corner_marker_keypoints(return_image)
-    check_corner_keypoints(return_image, reference_keypoints)
+    # check_corner_keypoints(return_image, reference_keypoints)
     if(len(return_keypoints) != 4):
         return_keypoints = fix_corner_markers(return_keypoints, return_image.shape)
 

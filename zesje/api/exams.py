@@ -42,19 +42,7 @@ class Exams(Resource):
         elif Submission.query.filter(Submission.exam_id == exam.id).count():
             return dict(status=500, message='Exam is not finalized but already has submissions.'), 500
         else:
-            # Delete any scans that were wrongly uploaded to this exam
-            for scan in exam.scans:
-                db.session.delete(scan)
-
-            for widget in exam.widgets:
-                db.session.delete(widget)
-
-            for problem in exam.problems:
-                for fb_option in problem.feedback_options:
-                    db.session.delete(fb_option)
-                db.session.delete(problem.widget)
-                db.session.delete(problem)
-
+            # All corresponding solutions, scans and problems are automatically deleted
             db.session.delete(exam)
             db.session.commit()
 

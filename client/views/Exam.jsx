@@ -575,10 +575,10 @@ class Exams extends React.Component {
             <div className='panel-block'>
               <div className='field'>
                 <label className='label'> Multiple choice question </label>
-                  <input disabled={props.disableIsMCQ} type='checkbox' checked={props.isMCQProblem} onChange={
-                    (e) => {
-                      props.onMCQChange(e.target.checked)
-                    }} />
+                <input disabled={props.disableIsMCQ} type='checkbox' checked={props.isMCQProblem} onChange={
+                  (e) => {
+                    props.onMCQChange(e.target.checked)
+                  }} />
               </div>
             </div>
           </React.Fragment>

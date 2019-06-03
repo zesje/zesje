@@ -12,6 +12,7 @@ import withShortcuts from '../components/ShortcutBinder.jsx'
 import * as api from '../api.jsx'
 
 import 'bulma-tooltip/dist/css/bulma-tooltip.min.css'
+import './grade/Grade.css'
 
 class Grade extends React.Component {
   state = {
@@ -29,6 +30,7 @@ class Grade extends React.Component {
     // update the tooltips for the associated widgets (in render()).
     this.props.bindShortcut(['left', 'h'], this.prev)
     this.props.bindShortcut(['right', 'l'], this.next)
+    this.props.bindShortcut(['a'], this.approve)
     this.props.bindShortcut(['shift+left', 'shift+h'], (event) => {
       event.preventDefault()
       this.prevUngraded()
@@ -145,6 +147,20 @@ class Grade extends React.Component {
       problem.id
     api.put('solution/' + optionURI, {
       id: problem.feedback[index].id,
+      graderID: this.props.graderID
+    })
+      .then(result => {
+        this.props.updateSubmission(this.state.sIndex)
+      })
+  }
+
+  approve = () => {
+    const exam = this.props.exam
+    const problem = exam.problems[this.state.pIndex]
+    const optionURI = this.state.examID + '/' +
+      exam.submissions[this.state.sIndex].id + '/' +
+      problem.id
+    api.put('solution/approve/' + optionURI, {
       graderID: this.props.graderID
     })
       .then(result => {
@@ -294,7 +310,7 @@ class Grade extends React.Component {
                   </article> : null
                 }
 
-                <p className='box'>
+                <p className={'box' + (solution.graded_at ? ' is-graded' : '')}>
                   <img src={exam.id ? ('api/images/solutions/' + exam.id + '/' +
                     problem.id + '/' + submission.id + '/' + (this.state.fullPage ? '1' : '0')) + '?' +
                     this.getLocationHash(problem) : ''} alt='' />

@@ -265,3 +265,18 @@ def test_all_effects(
         #  image.show()
         success, reason = scans.process_page(image, new_exam, datadir)
         assert success is expected, reason
+
+
+@pytest.mark.parametrize('filename', [
+    'blank-a4-2pages.pdf',
+    'flattened-a4-2pages.pdf'],
+    ids=['blank pdf', 'flattened pdf'])
+def test_image_extraction(datadir, filename):
+    file = os.path.join(datadir, filename)
+    page = 0
+    for img, pagenr in scans.extract_images(file):
+        page += 1
+        assert pagenr == page
+        assert img is not None
+        assert np.average(np.array(img)) == 255
+    assert page == 2

@@ -162,25 +162,27 @@ def generate_checkbox(canvas, x, y, label):
     canvas : reportlab canvas object
 
     x : int
-        the x coordinate of the top left corner of the box in pixels
+        the x coordinate of the top left corner of the box in points (pt)
     y : int
-        the y coordinate of the top left corner of the box in pixels
+        the y coordinate of the top left corner of the box in points (pt)
     label: str
         A string representing the label that is drawn on top of the box, will only take the first character
 
     """
     fontsize = 11  # Size of font
     margin = 5  # Margin between elements and sides
-    markboxsize = fontsize - 2  # Size of student number boxes
-    x_label = x + 1
-    y_label = y + margin + fontsize
+    markboxsize = fontsize - 2  # Size of checkboxes boxes
+    x_label = x + 1  # location of the label
+    y_label = y + margin  # remove fontsize from the y label since we draw from the bottom left up
+    box_y = y - markboxsize  # remove the markboxsize because the y is the coord of the top
+    # and reportlab prints from the bottom
 
     # check that there is a label to print
     if (label and not (len(label) == 0)):
         canvas.setFont('Helvetica', fontsize)
         canvas.drawString(x_label, y_label, label[0])
 
-    canvas.rect(x, y, markboxsize, markboxsize)
+    canvas.rect(x, box_y, markboxsize, markboxsize)
 
 
 def generate_datamatrix(exam_id, page_num, copy_num):
@@ -273,6 +275,8 @@ def _generate_overlay(canv, pagesize, exam_id, copy_num, num_pages, id_grid_x,
         index = 0
         max_index = len(cb_data)
         cb_data = sorted(cb_data, key=lambda tup: tup[2])
+        # invert the y axis
+        cb_data = [(cb[0], pagesize[1] - cb[1], cb[2], cb[3]) for cb in cb_data]
     else:
         index = 0
         max_index = 0
@@ -386,3 +390,19 @@ def page_is_size(exam_pdf_file, shape, tolerance=0):
         pass
 
     return not invalid
+
+
+def make_pages_even(output_filename, exam_pdf_file):
+    exam_pdf = PdfReader(exam_pdf_file)
+    new = PdfWriter()
+    new.addpages(exam_pdf.pages)
+    pagecount = len(exam_pdf.pages)
+
+    if (pagecount % 2 == 1):
+        blank = PageMerge()
+        box = exam_pdf.pages[0].MediaBox
+        blank.mbox = box
+        blank = blank.render()
+        new.addpage(blank)
+
+    new.write(output_filename)

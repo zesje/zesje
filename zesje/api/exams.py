@@ -9,8 +9,10 @@ from flask_restful import Resource, reqparse
 from werkzeug.datastructures import FileStorage
 from sqlalchemy.orm import selectinload
 
-from ..pdf_generation import generate_pdfs, output_pdf_filename_format, join_pdfs, page_is_size
+
+from ..pdf_generation import generate_pdfs, output_pdf_filename_format, join_pdfs, page_is_size, make_pages_even
 from ..database import db, Exam, ExamWidget, Submission
+
 
 PAGE_FORMATS = {
     "A4": (595.276, 841.89),
@@ -47,8 +49,7 @@ def get_cb_data_for_exam(exam):
     cb_data = []
     for problem in exam.problems:
         page = problem.widget.page
-        if page:
-            cb_data += [(cb.x, cb.y, page, cb.label) for cb in problem.mc_options]
+        cb_data += [(cb.x, cb.y, page, cb.label) for cb in problem.mc_options]
 
     return cb_data
 
@@ -67,8 +68,26 @@ class Exams(Resource):
             return dict(status=404, message='Exam does not exist.'), 404
         elif exam.finalized:
             return dict(status=409, message='Cannot delete a finalized exam.'), 409
+        elif Submission.query.filter(Submission.exam_id == exam.id).count():
+            return dict(status=500, message='Exam is not finalized but already has submissions.'), 500
         else:
-            exam.delete()
+            # Delete any scans that were wrongly uploaded to this exam
+            for scan in exam.scans:
+                db.session.delete(scan)
+
+            for widget in exam.widgets:
+                db.session.delete(widget)
+
+            for problem in exam.problems:
+                for fb_option in problem.feedback_options:
+                    db.session.delete(fb_option)
+                db.session.delete(problem.widget)
+                db.session.delete(problem)
+
+            db.session.delete(exam)
+            db.session.commit()
+
+            return dict(status=200, message="ok"), 200
 
     def _get_all(self):
         """get list of uploaded exams.
@@ -268,10 +287,9 @@ class Exams(Resource):
 
         exam_dir = _get_exam_dir(exam.id)
         pdf_path = os.path.join(exam_dir, 'exam.pdf')
-
         os.makedirs(exam_dir, exist_ok=True)
 
-        pdf_data.save(pdf_path)
+        make_pages_even(pdf_path, args['pdf'])
 
         print(f"Added exam {exam.id} (name: {exam_name}, token: {exam.token}) to database")
 
@@ -312,6 +330,7 @@ class ExamSource(Resource):
 
         return send_file(
             os.path.join(exam_dir, 'exam.pdf'),
+            cache_timeout=0,
             mimetype='application/pdf')
 
 

@@ -87,7 +87,7 @@ def _process_pdf(scan_id, app_config):
             report_progress(f'Processing page {page} / {total}')
             try:
                 success, description = process_page(
-                    image, exam_config, output_directory
+                    image, exam_config, output_directory, strict=True
                 )
                 if not success:
                     print(description)
@@ -322,9 +322,7 @@ def process_page(image_data, exam_config, output_dir=None, strict=False):
     else:
         # (image_array, new_keypoints) = rotate_image(image_array, corner_keypoints)
         # image_array = shift_image(image_array, new_keypoints)
-        # cv2.imwrite("temp_shifted_and_rotated_image.jpg", image_array)
         image_array, corner_keypoints = realign_image(image_array, corner_keypoints)
-    # cv2.imwrite("temp_failing_rot.jpg", image_array)
 
     try:
         barcode, upside_down = decode_barcode(image_array, exam_config)
@@ -829,7 +827,6 @@ def realign_image(image_array, keypoints=None,
 
     # use standard keypoints if no custom ones are provided
     if (not reference_keypoints):
-        # reference_keypoints = [(59, 59), (1179, 59), (59, 1693), (1179, 1693)]
         dpi = guess_dpi(image_array)
         reference_keypoints = generate_perfect_corner_markers(page_format, dpi)
 
@@ -839,22 +836,13 @@ def realign_image(image_array, keypoints=None,
 
     rows, cols, _ = image_array.shape
 
-    keypoints_32 = np.float32(keypoints)
-
-    reference_keypoints_32 = np.float32(reference_keypoints)
-
     # get the transformation matrix
-    M = cv2.getPerspectiveTransform(keypoints_32, reference_keypoints_32)
+    M = cv2.getPerspectiveTransform(np.float32(keypoints), np.float32(reference_keypoints))
     # apply the transformation matrix and fill in the new empty spaces with white
     return_image = cv2.warpPerspective(image_array, M, (cols, rows),
                                        borderValue=(255, 255, 255, 255))
     # generate a new set of 4 keypoints
-    # cv2.imwrite("temp_image.jpg", return_image)
     return_keypoints = find_corner_marker_keypoints(return_image)
-    # check_corner_keypoints(return_image, reference_keypoints)
-    if(len(return_keypoints) != 4):
-        return_keypoints = fix_corner_markers(return_keypoints, return_image.shape)
-
     return return_image, return_keypoints
 
 

@@ -72,14 +72,10 @@ def test_problem_not_present(test_client, add_test_data):
 
 def test_add(test_client, add_test_data):
     req = mco_json()
-    response = test_client.put('/api/mult-choice/', data=req)
 
+    response = test_client.put('/api/mult-choice/', data=req)
     data = json.loads(response.data)
 
-    assert data['message'] == 'New multiple choice question with id 2 inserted. ' \
-        + 'New feedback option with id 1 inserted.'
-
-    assert data['mult_choice_id'] == 2
     assert data['status'] == 200
 
 
@@ -88,6 +84,8 @@ def test_add_get(test_client, add_test_data):
 
     response = test_client.put('/api/mult-choice/', data=req)
     data = json.loads(response.data)
+
+    assert data['mult_choice_id']
 
     id = data['mult_choice_id']
 
@@ -107,11 +105,14 @@ def test_add_get(test_client, add_test_data):
     assert exp_resp == data
 
 
-def test_update_put(test_client, add_test_data):
+def test_update_patch(test_client, add_test_data):
     req = mco_json()
 
     response = test_client.put('/api/mult-choice/', data=req)
     data = json.loads(response.data)
+
+    assert data['mult_choice_id']
+
     id = data['mult_choice_id']
 
     req2 = {

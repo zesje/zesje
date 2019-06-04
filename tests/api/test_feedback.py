@@ -2,7 +2,7 @@ import pytest
 
 from flask import json
 
-from zesje.database import db, Exam, Problem, ProblemWidget, FeedbackOption
+from zesje.database import db, Exam, Problem, ProblemWidget
 
 
 @pytest.fixture
@@ -37,14 +37,19 @@ ACTUAL TESTS
 '''
 
 
-def test_not_present(test_client, add_test_data):
+def test_delete_with_mc_option(test_client, add_test_data):
+    """
+    Attempt to delete a FeedbackOption related to a MultipleChoiceOption
+    """
     req = mco_json()
 
     result = test_client.put('/api/mult-choice/', data=req)
     data = json.loads(result.data)
 
+    assert data['feedback_id']
+
     fb_id = data['feedback_id']
-    problem_id = 1
+    problem_id = 1  # Was inserted in add_test_data()
 
     result = test_client.delete(f'/api/feedback/{problem_id}/{fb_id}')
     data = json.loads(result.data)

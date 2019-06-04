@@ -598,7 +598,58 @@ class Exams extends React.Component {
             }
           }}
           updateMCOs={(labels) => {
-            console.log("update")
+            problem.mc_options.map((option, index) => {
+              const formData = new window.FormData()
+              formData.append('name', option.widget.name)
+              formData.append('x', option.widget.x + option.cbOffsetX)
+              formData.append('y', option.widget.y + option.cbOffsetY)
+              formData.append('problem_id', problem.id)
+              formData.append('label', labels[index])
+              api.patch('mult-choice/' + option.id, formData)
+                .then(() => {
+                  this.setState((prevState) => {
+                    return {
+                      widgets: update(prevState.widgets, {
+                        [selectedWidget.id]: {
+                          'problem': {
+                            'mc_options': {
+                              [index]: {
+                                label: {
+                                  $set: labels[index]
+                                }
+                              }
+                            }
+                          }
+                        }
+                      })
+                    }
+                  })
+                })
+                .catch(err => {
+                  console.log(err)
+                  err.json().then(res => {
+                    Notification.error('Could not update feedback' +
+                      (res.message ? ': ' + res.message : ''))
+                    // update to try and get a consistent state
+                    this.props.updateExam(this.props.examID)
+                  })
+                })
+            })
+
+            // this.setState(prevState => ({
+            //   widgets: update(prevState.widgets, {
+            //     [selectedWidget.id]: {
+            //       'problem': {
+            //         'mc_options': {
+            //           $set : options
+            //         },
+            //         'labelType': {
+            //           $set: PanelMCQ.deriveLabelType(options)
+            //         }
+            //       }
+            //     }
+            //   })
+            // }))
           }}
         /> ) : null}
         <this.PanelExamActions />

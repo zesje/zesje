@@ -59,7 +59,7 @@ class PanelMCQ extends React.Component {
       this.props.deleteMCOs(-difference)
     }
 
-    if (this.state.labelType !== this.props.problem.labelType) {
+    if (this.state.chosenLabelType !== this.props.problem.labelType) {
       let labels = this.generateLabels(this.state.nrPossibleAnswers, 0)
       this.props.updateMCOs(labels)
     }
@@ -109,7 +109,7 @@ class PanelMCQ extends React.Component {
         return Array.from(Array(nrLabels).keys()).map(
           (e) => String.fromCharCode(e + 65 + startingAt))
       case 3:
-        return Array.from(Array(nrLabels).keys()).map(e => e + 1 + startingAt)
+        return Array.from(Array(nrLabels).keys()).map(e => String(e + 1 + startingAt))
       default:
         return Array(nrLabels).fill(' ')
     }

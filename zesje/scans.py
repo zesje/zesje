@@ -157,7 +157,7 @@ def get_question_title(problem):
             ocr_str = pytesseract.image_to_string(pil_im)
             split_str = ocr_str.split('\n', 1)
 
-            if len(split_str) == 2:
+            if len(split_str) >= 2:
                 ocr_str = split_str[1]
 
             return ocr_str

@@ -42,6 +42,8 @@ class Problems(Resource):
                 page=args['page'],
             )
 
+            current_app.logger.info(args['name'])
+
             problem = Problem(
                 exam=exam,
                 name=args['name'],
@@ -59,9 +61,9 @@ class Problems(Resource):
             db.session.commit()
             widget.name = f'problem_{problem.id}'
 
-            db.session.commit()
+            problem.name = get_question_title(problem)
 
-            get_question_title(problem)
+            db.session.commit()
 
             return {
                 'id': problem.id,

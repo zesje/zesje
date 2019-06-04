@@ -6,6 +6,7 @@ from ..database import db, Exam, Problem, ProblemWidget, Solution
 
 from zesje.scans import get_question_title
 
+
 class Problems(Resource):
     """ List of problems associated with a particular exam_id """
 

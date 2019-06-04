@@ -7,10 +7,6 @@ from collections import namedtuple, Counter
 from io import BytesIO
 import signal
 
-import PIL
-
-import io
-
 import cv2
 import numpy as np
 import PyPDF2

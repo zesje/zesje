@@ -1,10 +1,15 @@
 import functools
 import itertools
+import pytesseract
 import math
 import os
 from collections import namedtuple, Counter
 from io import BytesIO
 import signal
+
+import PIL
+
+import io
 
 import cv2
 import numpy as np
@@ -18,6 +23,7 @@ from .datamatrix import decode_raw_datamatrix
 from .images import guess_dpi, get_box
 from .factory import make_celery
 
+from flask import current_app
 
 ExtractedBarcode = namedtuple('ExtractedBarcode', ['token', 'copy', 'page'])
 
@@ -39,7 +45,6 @@ def process_pdf(scan_id):
     def raise_exit(signo, frame):
         raise SystemExit('PDF processing was killed by an external signal')
 
-    from flask import current_app
     app_config = current_app.config
 
     # We want to trigger an exit from within Python when a signal is received.
@@ -124,6 +129,38 @@ def exam_metadata(exam_id):
                 max(0, barcode_widget.x + 50),
             ],
         )
+
+
+def get_question_title(problem):
+    """
+    Returns the question title of a problem
+    """
+    data_directory = current_app.config.get('DATA_DIRECTORY', 'data')
+    pdf_path = os.path.join(data_directory, f'{problem.exam_id}_data', 'exam.pdf')
+
+    x = problem.widget.x
+    y = problem.widget.y
+    width = problem.widget.width
+    height = problem.widget.height
+
+    widget_coords = (y, y + height, x, x + width)
+    widget_coords = np.asarray(widget_coords, dtype='float64')
+    widget_coords /= 72
+
+    # Should only return one image and page
+    for image, page in extract_images(pdf_path):
+        if page - 1 == problem.widget.page:
+            img_crop = get_box(np.asarray(image), widget_coords)
+
+            pil_im = Image.fromarray(img_crop.astype('uint8'), 'RGB')
+
+            ocr_str = pytesseract.image_to_string(pil_im)
+            split_str = ocr_str.split('\n', 1)
+
+            if len(split_str) == 2:
+                ocr_str = split_str[1]
+
+            return ocr_str
 
 
 def extract_images(filename):

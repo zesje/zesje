@@ -1,9 +1,10 @@
 """ REST api for problems """
 
-from flask_restful import Resource, reqparse
+from flask_restful import Resource, reqparse, current_app
 
 from ..database import db, Exam, Problem, ProblemWidget, Solution
 
+from zesje.scans import get_question_title
 
 class Problems(Resource):
     """ List of problems associated with a particular exam_id """
@@ -59,6 +60,8 @@ class Problems(Resource):
             widget.name = f'problem_{problem.id}'
 
             db.session.commit()
+
+            get_question_title(problem)
 
             return {
                 'id': problem.id,

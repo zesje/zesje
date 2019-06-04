@@ -170,4 +170,3 @@ class MultipleChoice(Resource):
         return dict(status=200, mult_choice_id=id, feedback_id=mult_choice.feedback_id,
                     message=f'Multiple choice question with id {id} deleted.'
                     + f'Feedback option with id {mult_choice.feedback_id} deleted.'), 200
-

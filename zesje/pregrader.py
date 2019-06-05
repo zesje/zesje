@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 
 from .database import db, Solution
-from .images import guess_dpi, get_box, fix_corner_markers
+from .images import guess_dpi, get_box
 
 
 def add_feedback_to_solution(sub, exam, page, page_img):
@@ -61,7 +61,7 @@ def box_is_filled(box, page_img, threshold=235, cut_padding=0.05, box_size=9):
 
     # add the actually margin from the scan to corner markers to the coords in inches
     dpi = guess_dpi(page_img)
-    
+
     # get the box where we think the box is
     cut_im = get_box(page_img, coords, padding=cut_padding)
 

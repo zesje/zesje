@@ -1,6 +1,5 @@
 import functools
 import itertools
-import fitz
 import math
 import os
 from collections import namedtuple, Counter
@@ -10,6 +9,8 @@ import signal
 import cv2
 import numpy as np
 import PyPDF2
+
+import pdfminer3
 from PIL import Image
 from wand.image import Image as WandImage
 from pylibdmtx import pylibdmtx
@@ -18,6 +19,14 @@ from .database import db, Scan, Exam, Page, Student, Submission, Solution, ExamW
 from .datamatrix import decode_raw_datamatrix
 from .images import guess_dpi, get_box
 from .factory import make_celery
+
+from pdfminer3.pdfparser import PDFParser
+from pdfminer3.pdfdocument import PDFDocument
+from pdfminer3.pdfpage import PDFPage
+from pdfminer3.pdfinterp import PDFResourceManager
+from pdfminer3.pdfinterp import PDFPageInterpreter
+from pdfminer3.layout import LAParams
+from pdfminer3.converter import PDFPageAggregator
 
 from flask import current_app
 
@@ -127,6 +136,31 @@ def exam_metadata(exam_id):
         )
 
 
+def parse_obj(lt_objs):
+    """
+    Returns all text boxes from a pdf page.
+
+    Parameters
+    ----------
+    lt_objs : The list of objects in the page.
+
+    Returns
+    -------
+    A list of tuples with the (x0, y0, x1, y1, text) values.
+
+    """
+    res = []
+
+    for obj in lt_objs:
+        if isinstance(obj, pdfminer3.layout.LTTextBoxHorizontal):
+            res.append((obj.bbox[0], obj.bbox[1], obj.bbox[2], obj.bbox[3], obj.get_text()))
+
+        elif isinstance(obj, pdfminer3.layout.LTFigure):
+            res.append(parse_obj(obj._objs))
+
+    return res
+
+
 def get_question_title(problem):
     """
     Returns the question title of a problem
@@ -139,32 +173,35 @@ def get_question_title(problem):
     width = problem.widget.width
     height = problem.widget.height
 
-    # Loads the pdf page
-    doc = fitz.open(pdf_path)
+    fp = open(pdf_path, 'rb')
 
-    page = doc.loadPage(problem.widget.page)
-    words = page.getTextWords()
+    parser = PDFParser(fp)
+    document = PDFDocument(parser)
+    rsrcmgr = PDFResourceManager()
+    laparams = LAParams()
+    device = PDFPageAggregator(rsrcmgr, laparams=laparams)
+    interpreter = PDFPageInterpreter(rsrcmgr, device)
 
-    # Check if no words are found
-    if len(words) == 0:
-        return "Empty"
+    for page in PDFPage.create_pages(document):
+        interpreter.process_page(page)
+        layout = device.get_result()
 
-    # Finds the text in the problem widget
-    filtered_words = [word for word in words
-                      if word[1] > y and word[3] < y + height
-                      and word[0] > x and word[2] < x + width]
+        if layout.pageid == problem.widget.page + 1:
+            res = parse_obj(layout._objs)
 
-    min_y = min(word[1] for word in filtered_words)
+            filtered_words = [word[4] for word in res
+                              if word[1] < 842 - y and word[3] > 842 - (y + height)
+                              and word[0] > x and word[2] < x + width]
 
-    margin = 2  # pts
-    first_line = [word for word in filtered_words if abs(word[1] - min_y) < margin]
+            if not filtered_words:
+                return ''
 
-    problem_title = ''
+            right_line = filtered_words[0]
 
-    for word in first_line:
-        problem_title += ' ' + word[4]
+            lines = right_line.split('\n')
+            return lines[0]
 
-    return problem_title[1:]
+    return ''
 
 
 def extract_images(filename):

@@ -402,3 +402,19 @@ def page_is_size(exam_pdf_file, shape, tolerance=0):
         pass
 
     return not invalid
+
+
+def make_pages_even(output_filename, exam_pdf_file):
+    exam_pdf = PdfReader(exam_pdf_file)
+    new = PdfWriter()
+    new.addpages(exam_pdf.pages)
+    pagecount = len(exam_pdf.pages)
+
+    if (pagecount % 2 == 1):
+        blank = PageMerge()
+        box = exam_pdf.pages[0].MediaBox
+        blank.mbox = box
+        blank = blank.render()
+        new.addpage(blank)
+
+    new.write(output_filename)

@@ -40,7 +40,7 @@ def add_feedback_to_solution(sub, exam, page, page_img, corner_keypoints):
                 db.session.commit()
 
 
-def box_is_filled(box, page_img, threshold=235, cut_padding=0.05, box_size=9):
+def box_is_filled(box, page_img, corner_keypoints, marker_margin=72/2.54, threshold=235, cut_padding=0.05, box_size=9):
     """
     A function that finds the checkbox in a general area and then checks if it is filled in.
 
@@ -70,13 +70,17 @@ def box_is_filled(box, page_img, threshold=235, cut_padding=0.05, box_size=9):
     """
 
     # shouldn't be needed, but some images are drawn a bit weirdly
-    y_shift = 0
-    # create an array with y top, y bottom, x left and x right.
-    coords = np.asarray([box[1] + y_shift, box[1] + box_size + y_shift,
+    # y_shift = 11
+    # create an array with y top, y bottom, x left and x right. use the marker margin to allign to the page.
+    coords = np.asarray([box[1], box[1] + box_size,
                         box[0], box[0] + box_size])/72
 
     # add the actually margin from the scan to corner markers to the coords in inches
     dpi = guess_dpi(page_img)
+    # coords[0] = coords[0] + corner_keypoints[1]/dpi
+    # coords[1] = coords[1] + corner_keypoints[1]/dpi
+    # coords[2] = coords[2] + corner_keypoints[0]/dpi
+    # coords[3] = coords[3] + corner_keypoints[0]/dpi
 
     # get the box where we think the box is
     cut_im = get_box(page_img, coords, padding=cut_padding)
@@ -84,7 +88,7 @@ def box_is_filled(box, page_img, threshold=235, cut_padding=0.05, box_size=9):
     # convert to grayscale
     gray_im = cv2.cvtColor(cut_im, cv2.COLOR_BGR2GRAY)
     # apply threshold to only have black or white
-    _, bin_im = cv2.threshold(gray_im, 175, 255, cv2.THRESH_BINARY)
+    _, bin_im = cv2.threshold(gray_im, 160, 255, cv2.THRESH_BINARY)
 
     h_bin, w_bin, *_ = bin_im.shape
     # create a mask that gets applied when floodfill the white
@@ -107,7 +111,7 @@ def box_is_filled(box, page_img, threshold=235, cut_padding=0.05, box_size=9):
 
     # if the rectangle is bigger (higher) than expected, cut the image up a bit
     if h > 1.5 * box_size_px:
-        # print("in h resize")
+        print("in h resize")
         y_partition = 0.333
         # try getting another bounding box on bottom 2/3 of the screen
         coords2 = cv2.findNonZero(flood_im[y + int(y_partition * h): y + h, x: x+w])

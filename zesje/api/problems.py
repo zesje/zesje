@@ -1,6 +1,6 @@
 """ REST api for problems """
 
-from flask_restful import Resource, reqparse, current_app
+from flask_restful import Resource, reqparse
 
 from ..database import db, Exam, Problem, ProblemWidget, Solution
 
@@ -43,8 +43,6 @@ class Problems(Resource):
                 page=args['page'],
             )
 
-            current_app.logger.info(args['name'])
-
             problem = Problem(
                 exam=exam,
                 name=args['name'],
@@ -69,6 +67,7 @@ class Problems(Resource):
             return {
                 'id': problem.id,
                 'widget_id': widget.id,
+                'name': problem.name
             }
 
     put_parser = reqparse.RequestParser()

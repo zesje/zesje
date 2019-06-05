@@ -1,6 +1,6 @@
 import functools
 import itertools
-import pytesseract
+import fitz
 import math
 import os
 from collections import namedtuple, Counter
@@ -131,32 +131,40 @@ def get_question_title(problem):
     """
     Returns the question title of a problem
     """
-    data_directory = current_app.config.get('DATA_DIRECTORY', 'data')
-    pdf_path = os.path.join(data_directory, f'{problem.exam_id}_data', 'exam.pdf')
+    data_dir = current_app.config.get('DATA_DIRECTORY', 'data')
+    pdf_path = os.path.join(data_dir, f'{problem.exam_id}_data', 'exam.pdf')
 
     x = problem.widget.x
     y = problem.widget.y
     width = problem.widget.width
     height = problem.widget.height
 
-    widget_coords = (y, y + height, x, x + width)
-    widget_coords = np.asarray(widget_coords, dtype='float64')
-    widget_coords /= 72
+    # Loads the pdf page
+    doc = fitz.open(pdf_path)
 
-    # Should only return one image and page
-    for image, page in extract_images(pdf_path):
-        if page - 1 == problem.widget.page:
-            img_crop = get_box(np.asarray(image), widget_coords)
+    page = doc.loadPage(problem.widget.page)
+    words = page.getTextWords()
 
-            pil_im = Image.fromarray(img_crop.astype('uint8'), 'RGB')
+    # Check if no words are found
+    if len(words) == 0:
+        return "Empty"
 
-            ocr_str = pytesseract.image_to_string(pil_im)
-            split_str = ocr_str.split('\n', 1)
+    # Finds the text in the problem widget
+    filtered_words = [word for word in words
+                      if word[1] > y and word[3] < y + height
+                      and word[0] > x and word[2] < x + width]
 
-            if len(split_str) >= 2:
-                ocr_str = split_str[1]
+    min_y = min(word[1] for word in filtered_words)
 
-            return ocr_str
+    margin = 2  # pts
+    first_line = [word for word in filtered_words if abs(word[1] - min_y) < margin]
+
+    problem_title = ''
+
+    for word in first_line:
+        problem_title += ' ' + word[4]
+
+    return problem_title[1:]
 
 
 def extract_images(filename):

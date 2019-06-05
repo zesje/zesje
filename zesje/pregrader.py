@@ -5,7 +5,7 @@ from .database import db, Solution
 from .images import guess_dpi, get_box, fix_corner_markers
 
 
-def add_feedback_to_solution(sub, exam, page, page_img, corner_keypoints):
+def add_feedback_to_solution(sub, exam, page, page_img):
     """
     Adds the multiple choice options that are identified as marked as a feedback option to a solution
 
@@ -17,16 +17,8 @@ def add_feedback_to_solution(sub, exam, page, page_img, corner_keypoints):
         the current exam
     page_img : Image
         image of the page
-    corner_keypoints : array
-        locations of the corner keypoints as (x, y) tuples
     """
     problems_on_page = [problem for problem in exam.problems if problem.widget.page == page]
-
-    fixed_corner_keypoints = fix_corner_markers(corner_keypoints, page_img.shape)
-
-    x_min = min(point[0] for point in fixed_corner_keypoints)
-    y_min = min(point[1] for point in fixed_corner_keypoints)
-    top_left_point = (x_min, y_min)
 
     for problem in problems_on_page:
         sol = Solution.query.filter(Solution.problem_id == problem.id, Solution.submission_id == sub.id).one_or_none()
@@ -34,13 +26,13 @@ def add_feedback_to_solution(sub, exam, page, page_img, corner_keypoints):
         for mc_option in problem.mc_options:
             box = (mc_option.x, mc_option.y)
 
-            if box_is_filled(box, page_img, top_left_point):
+            if box_is_filled(box, page_img):
                 feedback = mc_option.feedback
                 sol.feedback.append(feedback)
                 db.session.commit()
 
 
-def box_is_filled(box, page_img, corner_keypoints, marker_margin=72/2.54, threshold=235, cut_padding=0.05, box_size=9):
+def box_is_filled(box, page_img, threshold=235, cut_padding=0.05, box_size=9):
     """
     A function that finds the checkbox in a general area and then checks if it is filled in.
 
@@ -50,12 +42,6 @@ def box_is_filled(box, page_img, corner_keypoints, marker_margin=72/2.54, thresh
         The coordinates of the top left (x,y) of the checkbox in points.
     page_img: np.array
         A numpy array of the image scan
-    corner_keypoints: (float,float)
-        The x coordinate of the left markers and the y coordinate of the top markers,
-        used as point of reference since scans can deviate from the original.
-        (x,y) are both in pixels.
-    marker_margin: float
-        The margin between the corner markers and the edge of a page when generated.
     threshold: int
         the threshold needed for a checkbox to be considered marked range is between 0 (fully black)
         and 255 (absolutely white).
@@ -69,19 +55,13 @@ def box_is_filled(box, page_img, corner_keypoints, marker_margin=72/2.54, thresh
     True if the box is marked, else False.
     """
 
-    # shouldn't be needed, but some images are drawn a bit weirdly
-    # y_shift = 11
-    # create an array with y top, y bottom, x left and x right. use the marker margin to allign to the page.
+    # create an array with y top, y bottom, x left and x right. And divide by 72 to get dimensions in inches.
     coords = np.asarray([box[1], box[1] + box_size,
                         box[0], box[0] + box_size])/72
 
     # add the actually margin from the scan to corner markers to the coords in inches
     dpi = guess_dpi(page_img)
-    # coords[0] = coords[0] + corner_keypoints[1]/dpi
-    # coords[1] = coords[1] + corner_keypoints[1]/dpi
-    # coords[2] = coords[2] + corner_keypoints[0]/dpi
-    # coords[3] = coords[3] + corner_keypoints[0]/dpi
-
+    
     # get the box where we think the box is
     cut_im = get_box(page_img, coords, padding=cut_padding)
 
@@ -111,7 +91,6 @@ def box_is_filled(box, page_img, corner_keypoints, marker_margin=72/2.54, thresh
 
     # if the rectangle is bigger (higher) than expected, cut the image up a bit
     if h > 1.5 * box_size_px:
-        print("in h resize")
         y_partition = 0.333
         # try getting another bounding box on bottom 2/3 of the screen
         coords2 = cv2.findNonZero(flood_im[y + int(y_partition * h): y + h, x: x+w])

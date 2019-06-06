@@ -224,15 +224,15 @@ def _generate_overlay(canv, pagesize, exam_id, copy_num, num_pages, id_grid_x,
         The y coordinate where the DataMatrix codes should be placed
     """
 
-    # Font settings for the copy number (printed under the datamatrix)
-    fontsize = 8
-    canv.setFont('Helvetica', fontsize)
-
     # transform y-cooridate to different origin location
     id_grid_y = pagesize[1] - id_grid_y
 
     # ID grid on first page only
     generate_id_grid(canv, id_grid_x, id_grid_y)
+
+    # Font settings for the copy number (printed under the datamatrix)
+    fontsize = 12
+    canv.setFont('Helvetica', fontsize)
 
     for page_num in range(num_pages):
         _add_corner_markers_and_bottom_bar(canv, pagesize)
@@ -244,7 +244,7 @@ def _generate_overlay(canv, pagesize, exam_id, copy_num, num_pages, id_grid_x,
 
         canv.drawInlineImage(datamatrix, datamatrix_x, datamatrix_y_adjusted)
         canv.drawString(
-            datamatrix_x, datamatrix_y_adjusted - fontsize,
+            datamatrix_x, datamatrix_y_adjusted - (fontsize * 0.66),
             f" # {copy_num}"
         )
         canv.showPage()

@@ -1,5 +1,5 @@
 # This base image can be found in 'Dockerfile'
-image: zesje/base
+image: gitlab.kwant-project.org:5005/zesje/zesje/test:latest
 
 stages:
   - build
@@ -13,11 +13,13 @@ stages:
     paths:
       - .yarn-cache
   before_script:
+    - source activate zesje-dev
     - yarn install --cache-folder .yarn-cache
 
 .python_packages: &python_packages
   before_script:
-    - pip install --no-cache-dir -r requirements.txt -r requirements-dev.txt
+    - source activate zesje-dev
+    - conda env update
 
 build:
   <<: *node_modules

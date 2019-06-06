@@ -88,6 +88,7 @@ class ExamEditor extends React.Component {
         const problemData = {
           name: 'New problem', // TODO: Name
           page: this.props.page,
+          feedback: [],
           mc_options: [],
           widthMCO: 24,
           heightMCO: 38,

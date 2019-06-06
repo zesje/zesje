@@ -2,9 +2,9 @@ import React from 'react'
 
 import Hero from '../components/Hero.jsx'
 
-import FeedbackPanel from './grade/FeedbackPanel.jsx'
+import FeedbackPanel from '../components/feedback/FeedbackPanel.jsx'
 import ProblemSelector from './grade/ProblemSelector.jsx'
-import EditPanel from './grade/EditPanel.jsx'
+import EditPanel from '../components/feedback/EditPanel.jsx'
 import SearchBox from '../components/SearchBox.jsx'
 import ProgressBar from '../components/ProgressBar.jsx'
 import withShortcuts from '../components/ShortcutBinder.jsx'
@@ -225,17 +225,18 @@ class Grade extends React.Component {
               <div className='column is-one-quarter-desktop is-one-third-tablet'>
                 <ProblemSelector problems={exam.problems} changeProblem={this.changeProblem}
                   current={this.state.pIndex} showTooltips={this.state.showTooltips} />
-                {this.state.editActive
-                  ? <EditPanel problemID={problem.id} feedback={this.state.feedbackToEdit}
-                    goBack={this.backToFeedback} />
-                  : <FeedbackPanel examID={exam.id} submissionID={submission.id}
-                    problem={problem} solution={solution} graderID={this.props.graderID}
-                    editFeedback={this.editFeedback} showTooltips={this.state.showTooltips}
-                    updateSubmission={() => {
-                      this.props.updateSubmission(this.state.sIndex)
-                    }
-                    } />
-                }
+                <nav className='panel'>
+                  {this.state.editActive
+                    ? <EditPanel problemID={problem.id} feedback={this.state.feedbackToEdit}
+                      goBack={this.backToFeedback} />
+                    : <FeedbackPanel examID={exam.id} submissionID={submission.id}
+                      problem={problem} solution={solution} graderID={this.props.graderID}
+                      editFeedback={this.editFeedback} showTooltips={this.state.showTooltips}
+                      updateSubmission={() => {
+                        this.props.updateSubmission(this.state.sIndex)
+                      }} grading />
+                  }
+                </nav>
               </div>
 
               <div className='column'>

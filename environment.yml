@@ -32,7 +32,6 @@ dependencies:
         - reportlab
         - Wand
         - Pillow  # also scan processing
-        - pyStrich  # TODO: can we replace this with stuff from pylibdmtx?
 
         # Scan processing
         - opencv-python

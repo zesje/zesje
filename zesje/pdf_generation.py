@@ -15,7 +15,7 @@ def generate_pdfs(exam_pdf_file, exam_id, copy_nums, output_paths, id_grid_x,
     """
     Generate the final PDFs from the original exam PDF.
 
-    To maintain a consistent grid size of the DataMatrix codes, adhere to
+    To ensure the page information fits into the datamatrix grid, adhere to
     (# of letters in exam ID) + 2 * (# of digits in exam ID) = C for a certain
     constant C. The reason for this is that libdmtx encodes two digits in as
     much space as one letter.
@@ -154,7 +154,7 @@ def generate_datamatrix(exam_id, page_num, copy_num):
     """
     Generates a DataMatrix code to be used on a page.
 
-    To maintain a consistent grid size of the DataMatrix codes, adhere to
+    To ensure the page information fits into the datamatrix grid, adhere to
     (# of letters in exam ID) + 2 * (# of digits in exam ID) = C for a certain
     constant C. The reason for this is that pylibdmtx encodes two digits in as
     much space as one letter.
@@ -193,7 +193,7 @@ def _generate_overlay(canv, pagesize, exam_id, copy_num, num_pages, id_grid_x,
     Generates an overlay ('watermark') PDF, which can then be overlaid onto
     the exam PDF.
 
-    To maintain a consistent grid size of the DataMatrix codes in the overlay,
+    To ensure the page information fits into the datamatrix grid in the overlay,
     adhere to (# of letters in exam ID) + 2 * (# of digits in exam ID) = C for
     a certain constant C. The reason for this is that pylibdmtx encodes two
     digits in as much space as one letter.

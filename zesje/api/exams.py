@@ -10,7 +10,7 @@ from werkzeug.datastructures import FileStorage
 from sqlalchemy.orm import selectinload
 
 from ..pdf_generation import generate_pdfs, output_pdf_filename_format, join_pdfs, page_is_size
-from ..database import db, Exam, ExamWidget, Submission
+from ..database import db, Exam, ExamWidget, Submission, token_length
 
 PAGE_FORMATS = {
     "A4": (595.276, 841.89),
@@ -478,8 +478,8 @@ class ExamPreview(Resource):
 
         generate_pdfs(
             exam_path,
-            exam.token[:5] + 'PREVIEW',
-            [1519],
+            "A" * token_length,
+            [159],
             [output_file],
             student_id_widget.x, student_id_widget.y,
             barcode_widget.x, barcode_widget.y

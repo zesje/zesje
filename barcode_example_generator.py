@@ -14,7 +14,7 @@ from zesje.database import token_length  # noqa: E402
 
 
 exam_token = "A" * token_length
-copy_num = 159
+copy_num = 1559
 page_num = 0
 
 fontsize = 12

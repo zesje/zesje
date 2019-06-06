@@ -59,8 +59,7 @@ class Exams extends React.Component {
             }),
             widthMCO: 24,
             heightMCO: 38,
-            isMCQ: problem.mc_options && problem.mc_options.length !== 0, // is the problem a mc question - used to display PanelMCQ
-            labelType: PanelMCQ.deriveLabelType(problem.mc_options)
+            isMCQ: problem.mc_options && problem.mc_options.length !== 0 // is the problem a mc question - used to display PanelMCQ
           }
         }
       })
@@ -125,14 +124,26 @@ class Exams extends React.Component {
   }
 
   updateFeedbackAtIndex = (feedback, problemWidget, idx) => {
+    let fb = [...problemWidget.problem.feedback]
     if (idx === -1) {
-      problemWidget.problem.feedback.push(feedback)
+      fb.push(feedback)
     } else {
-      if (feedback.deleted) problemWidget.problem.feedback.splice(idx, 1)
-      else problemWidget.problem.feedback[idx] = feedback
+      if (feedback.deleted) fb.splice(idx, 1)
+      else fb[idx] = feedback
     }
-    this.setState({
-      widgets: this.state.widgets
+
+    this.setState(prevState => {
+      return {
+        widgets: update(prevState.widgets, {
+          [problemWidget.id]: {
+            'problem': {
+              'feedback': {
+                $set: fb
+              }
+            }
+          }
+        })
+      }
     })
   }
 
@@ -319,15 +330,15 @@ class Exams extends React.Component {
   }
 
 
-  deleteMCO = (widget, index) => {
+  deleteMCO = (widgetId, index, nrMCOs) => {
+    let widget = this.state.widgets[widgetId]
+    if (nrMCOs <= 0 || !widget.problem.mc_options.length) return;
+
     let option = widget.problem.mc_options[index]
-    api.del('mult-choice/' + option.id)
+    return api.del('mult-choice/' + option.id)
       .catch(err => {
         console.log(err)
         err.json().then(res => {
-          this.setState({
-            deletingMCWidget: false
-          })
           Notification.error('Could not delete multiple choice option' +
             (res.message ? ': ' + res.message : ''))
           // update to try and get a consistent state
@@ -335,32 +346,33 @@ class Exams extends React.Component {
         })
       })
       .then(res => {
-        let index = widget.problem.feedback.findIndex(e => { return e.id === res.feedback_id })
         let feedback = widget.problem.feedback[index]
         feedback.deleted = true
-        this.updateFeedbackAtIndex(feedback, widget, index)
-      }
-    )
-
-    let options = [...widget.problem.mc_options]
-    options.splice(index, 1)
-
-    // remove the mc options from the state
-    // note that this can happen before they are removed in the DB due to async calls
-    this.setState((prevState) => {
-      return {
-        widgets: update(prevState.widgets, {
-          [widget.id]: {
-            problem: {
-              mc_options: {
-                $set: options
+        this.updateFeedback(feedback)
+        this.setState((prevState) => {
+          return {
+            widgets: update(prevState.widgets, {
+              [widget.id]: {
+                problem: {
+                  mc_options: {
+                    $splice: [[index, 1]]
+                  }
+                }
               }
-            }
+            })
           }
-        }),
-        deletingMCWidget: false
-      }
-    })
+        }, () => {
+          this.deleteMCO(widgetId, index, nrMCOs-1)
+        })
+      })
+  }
+
+
+  deleteMCOs = (widget, startIndex, nrMCOs) => {
+    let options = [...widget.problem.mc_options]
+    options.splice(startIndex, nrMCOs)
+
+    this.deleteMCO(widget.id, startIndex, nrMCOs)
   }
 
   /**
@@ -591,14 +603,13 @@ class Exams extends React.Component {
             let len = problem.mc_options.length
             if (nrMCOs >= len) {
               this.setState({deletingMCWidget: true})
-            } else {
-              for (let i = 0; i < nrMCOs; i++) {
-                this.deleteMCO(selectedWidget, len - 1 - i)
-              }
+            } else if (nrMCOs > 0) {
+              this.deleteMCOs(selectedWidget, len - nrMCOs, nrMCOs)
             }
           }}
-          updateMCOs={(labels) => {
-            problem.mc_options.map((option, index) => {
+          updateLabels={(labels) => {
+            labels.map((label, index) => {
+              let option = problem.mc_options[index]
               const formData = new window.FormData()
               formData.append('name', option.widget.name)
               formData.append('x', option.widget.x + option.cbOffsetX)
@@ -635,21 +646,6 @@ class Exams extends React.Component {
                   })
                 })
             })
-
-            // this.setState(prevState => ({
-            //   widgets: update(prevState.widgets, {
-            //     [selectedWidget.id]: {
-            //       'problem': {
-            //         'mc_options': {
-            //           $set : options
-            //         },
-            //         'labelType': {
-            //           $set: PanelMCQ.deriveLabelType(options)
-            //         }
-            //       }
-            //     }
-            //   })
-            // }))
           }}
         /> ) : null}
         <this.PanelExamActions />
@@ -874,7 +870,7 @@ class Exams extends React.Component {
           this.state.widgets[this.state.selectedWidgetId].problem.name}"`}
         confirmText='Delete multiple choice options'
         onCancel={() => this.setState({deletingMCWidget: false})}
-        onConfirm={() => this.deleteMCWidget(this.state.selectedWidgetId)}
+        onConfirm={() => this.deleteMCO(this.state.selectedWidgetId, 0)}
       />
     </div>
   }

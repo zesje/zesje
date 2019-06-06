@@ -276,9 +276,13 @@ class Grade extends React.Component {
                           renderSuggestion={(submission) => {
                             const stud = submission.student
                             return (
-                              <div>
-                                <b>{`${stud.firstName} ${stud.lastName}`}</b>
-                                <i style={{float: 'right'}}>({stud.id})</i>
+                              <div className='flex-parent'>
+                                <b className='flex-child truncated'>
+                                  {`${stud.firstName} ${stud.lastName}`}
+                                </b>
+                                <i className='flex-child fixed'>
+                                  ({stud.id})
+                                </i>
                               </div>
                             )
                           }}

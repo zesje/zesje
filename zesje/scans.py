@@ -10,7 +10,7 @@ import cv2
 import numpy as np
 import PyPDF2
 
-import pdfminer3
+import pdfminer
 from PIL import Image
 from wand.image import Image as WandImage
 from pylibdmtx import pylibdmtx
@@ -20,13 +20,13 @@ from .datamatrix import decode_raw_datamatrix
 from .images import guess_dpi, get_box
 from .factory import make_celery
 
-from pdfminer3.pdfparser import PDFParser
-from pdfminer3.pdfdocument import PDFDocument
-from pdfminer3.pdfpage import PDFPage
-from pdfminer3.pdfinterp import PDFResourceManager
-from pdfminer3.pdfinterp import PDFPageInterpreter
-from pdfminer3.layout import LAParams
-from pdfminer3.converter import PDFPageAggregator
+from pdfminer.pdfparser import PDFParser
+from pdfminer.pdfdocument import PDFDocument
+from pdfminer.pdfpage import PDFPage
+from pdfminer.pdfinterp import PDFResourceManager
+from pdfminer.pdfinterp import PDFPageInterpreter
+from pdfminer.layout import LAParams
+from pdfminer.converter import PDFPageAggregator
 
 from flask import current_app
 
@@ -147,15 +147,14 @@ def parse_obj(lt_objs):
     Returns
     -------
     A list of tuples with the (x0, y0, x1, y1, text) values.
-
     """
     res = []
 
     for obj in lt_objs:
-        if isinstance(obj, pdfminer3.layout.LTTextBoxHorizontal):
+        if isinstance(obj, pdfminer.layout.LTTextBoxHorizontal):
             res.append((obj.bbox[0], obj.bbox[1], obj.bbox[2], obj.bbox[3], obj.get_text()))
 
-        elif isinstance(obj, pdfminer3.layout.LTFigure):
+        elif isinstance(obj, pdfminer.layout.LTFigure):
             res.append(parse_obj(obj._objs))
 
     return res

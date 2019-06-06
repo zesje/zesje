@@ -8,7 +8,7 @@ RUN apt-get update && \
         poppler-utils build-essential libgl1-mesa-glx \
         imagemagick libsm-dev libdmtx-dev libdmtx0a libmagickwand-dev \
         && \
-    apt-get -y --quiet install git supervisor nginx && \
+    apt-get -y --quiet install git supervisor nginx
 
 WORKDIR /app
 

@@ -368,11 +368,11 @@ class Exams extends React.Component {
   }
 
 
-  deleteMCOs = (widget, startIndex, nrMCOs) => {
+  deleteMCOs = (widgetId, startIndex, nrMCOs) => {
     let options = [...widget.problem.mc_options]
     options.splice(startIndex, nrMCOs)
 
-    this.deleteMCO(widget.id, startIndex, nrMCOs)
+    this.deleteMCO(widgetId, startIndex, nrMCOs)
   }
 
   /**
@@ -536,7 +536,6 @@ class Exams extends React.Component {
     let widgetEditDisabled = (this.state.previewing || !problem) || (this.props.exam.finalized && containsMCOptions)
     let isGraded = problem && problem.graded
     let widgetDeleteDisabled = widgetEditDisabled || isGraded
-    let totalNrAnswers = 12 // the upper limit for the nr of possible answer boxes
 
     return (
       <React.Fragment>
@@ -580,74 +579,6 @@ class Exams extends React.Component {
             }
           }
         />
-        {problem ? (
-        <PanelMCQ
-          totalNrAnswers={totalNrAnswers}
-          problem={problem}
-          generateMCOs={(labels) => {
-            let problemWidget = this.state.widgets[this.state.selectedWidgetId]
-            let xPos, yPos
-            if (problem.mc_options.length > 0) {
-              // position the new mc options widget next to the last mc options
-              let last = problem.mc_options[problem.mc_options.length - 1].widget
-              xPos = last.x + problemWidget.problem.widthMCO
-              yPos = last.y
-            } else {
-              // position the new mc option widget inside the problem widget
-              xPos = problemWidget.x + 2
-              yPos = problemWidget.y + 2
-            }
-            this.generateAnswerBoxes(problemWidget, labels, 0, xPos, yPos)
-          }}
-          deleteMCOs={(nrMCOs) => {
-            let len = problem.mc_options.length
-            if (nrMCOs >= len) {
-              this.setState({deletingMCWidget: true})
-            } else if (nrMCOs > 0) {
-              this.deleteMCOs(selectedWidget, len - nrMCOs, nrMCOs)
-            }
-          }}
-          updateLabels={(labels) => {
-            labels.map((label, index) => {
-              let option = problem.mc_options[index]
-              const formData = new window.FormData()
-              formData.append('name', option.widget.name)
-              formData.append('x', option.widget.x + option.cbOffsetX)
-              formData.append('y', option.widget.y + option.cbOffsetY)
-              formData.append('problem_id', problem.id)
-              formData.append('label', labels[index])
-              api.patch('mult-choice/' + option.id, formData)
-                .then(() => {
-                  this.setState((prevState) => {
-                    return {
-                      widgets: update(prevState.widgets, {
-                        [selectedWidget.id]: {
-                          'problem': {
-                            'mc_options': {
-                              [index]: {
-                                label: {
-                                  $set: labels[index]
-                                }
-                              }
-                            }
-                          }
-                        }
-                      })
-                    }
-                  })
-                })
-                .catch(err => {
-                  console.log(err)
-                  err.json().then(res => {
-                    Notification.error('Could not update feedback' +
-                      (res.message ? ': ' + res.message : ''))
-                    // update to try and get a consistent state
-                    this.props.updateExam(this.props.examID)
-                  })
-                })
-            })
-          }}
-        /> ) : null}
         <this.PanelExamActions />
       </React.Fragment>
     )
@@ -655,6 +586,7 @@ class Exams extends React.Component {
 
   PanelEdit = (props) => {
     const selectedWidgetId = this.state.selectedWidgetId
+    let totalNrAnswers = 12 // the upper limit for the nr of possible answer boxes
 
     return (
       <nav className='panel'>
@@ -690,16 +622,74 @@ class Exams extends React.Component {
                 </div>
               </div>
             </div>
-            <div className='panel-block'>
-              <div className='field'>
-                <label className='label'> Multiple choice question </label>
-                <Switch disabled={props.disabledEdit} color='info' outlined value={props.isMCQProblem} onChange={
-                  (e) => {
-                    props.onMCQChange(e.target.checked)
-                  }}
-                />
-              </div>
-            </div>
+            {props.problem ? (
+              <PanelMCQ
+                totalNrAnswers={totalNrAnswers}
+                problem={props.problem}
+                generateMCOs={(labels) => {
+                  let problemWidget = this.state.widgets[this.state.selectedWidgetId]
+                  let xPos, yPos
+                  if (props.problem.mc_options.length > 0) {
+                    // position the new mc options widget next to the last mc options
+                    let last = props.problem.mc_options[props.problem.mc_options.length - 1].widget
+                    xPos = last.x + problemWidget.problem.widthMCO
+                    yPos = last.y
+                  } else {
+                    // position the new mc option widget inside the problem widget
+                    xPos = problemWidget.x + 2
+                    yPos = problemWidget.y + 2
+                  }
+                  this.generateAnswerBoxes(problemWidget, labels, 0, xPos, yPos)
+                }}
+                deleteMCOs={(nrMCOs) => {
+                  let len = props.problem.mc_options.length
+                  if (nrMCOs >= len) {
+                    this.setState({deletingMCWidget: true})
+                  } else if (nrMCOs > 0) {
+                    this.deleteMCOs(selectedWidgetId, len - nrMCOs, nrMCOs)
+                  }
+                }}
+                updateLabels={(labels) => {
+                  labels.map((label, index) => {
+                    let option = props.problem.mc_options[index]
+                    const formData = new window.FormData()
+                    formData.append('name', option.widget.name)
+                    formData.append('x', option.widget.x + option.cbOffsetX)
+                    formData.append('y', option.widget.y + option.cbOffsetY)
+                    formData.append('problem_id', props.problem.id)
+                    formData.append('label', labels[index])
+                    api.patch('mult-choice/' + option.id, formData)
+                      .then(() => {
+                        this.setState((prevState) => {
+                          return {
+                            widgets: update(prevState.widgets, {
+                              [selectedWidget.id]: {
+                                'problem': {
+                                  'mc_options': {
+                                    [index]: {
+                                      label: {
+                                        $set: labels[index]
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            })
+                          }
+                        })
+                      })
+                      .catch(err => {
+                        console.log(err)
+                        err.json().then(res => {
+                          Notification.error('Could not update feedback' +
+                            (res.message ? ': ' + res.message : ''))
+                          // update to try and get a consistent state
+                          this.props.updateExam(this.props.examID)
+                        })
+                      })
+                  })
+                }}
+              /> ) : null}
           </React.Fragment>
         )}
         {this.isProblemWidget(selectedWidgetId) &&

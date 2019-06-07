@@ -1,6 +1,37 @@
+:root {
+    --option-width:20px;
+    --label-font-size:14px;
+}
+
+div.mcq-widget {
+    display:inline-flex;
+}
+
+div.mcq-option {
+    display: block;
+    width: var(--option-width);
+    padding:2px;
+    box-sizing: content-box;
+    height: auto;
+}
+
+div.mcq-option div.mcq-option-label {
+    display:block;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: var(--label-font-size);
+    text-align: center;
+}
+
+div.mcq-option img.mcq-box {
+    display: block;
+    margin:auto;
+}
+
+
 .editor-content {
   background-color: #ddd;
-  border-radius: 10px
+  border-radius: 10px;
+  height: 100%;
 }
 
 .selection-area {

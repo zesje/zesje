@@ -1,0 +1,8 @@
+.panel-block.mcq-block {
+    justify-content: space-between;
+    border-top: none;
+}
+
+.mcq-block input, .mcq-block .select {
+    max-width: 130px;
+}

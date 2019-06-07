@@ -2,8 +2,6 @@ import React from 'react'
 
 import Notification from 'react-bulma-notification'
 
-import Switch from 'react-bulma-switch/full'
-
 import Hero from '../components/Hero.jsx'
 import './Exam.css'
 import GeneratedExamPreview from '../components/GeneratedExamPreview.jsx'
@@ -330,7 +328,7 @@ class Exams extends React.Component {
   }
 
 
-  deleteMCO = (widgetId, index, nrMCOs) => {
+  deleteMCOs = (widgetId, index, nrMCOs) => {
     let widget = this.state.widgets[widgetId]
     if (nrMCOs <= 0 || !widget.problem.mc_options.length) return;
 
@@ -362,64 +360,9 @@ class Exams extends React.Component {
             })
           }
         }, () => {
-          this.deleteMCO(widgetId, index, nrMCOs-1)
+          this.deleteMCOs(widgetId, index, nrMCOs-1)
         })
       })
-  }
-
-
-  deleteMCOs = (widgetId, startIndex, nrMCOs) => {
-    let options = [...widget.problem.mc_options]
-    options.splice(startIndex, nrMCOs)
-
-    this.deleteMCO(widgetId, startIndex, nrMCOs)
-  }
-
-  /**
-   * This function deletes the mc options coupled to a problem.
-   */
-  deleteMCWidget = () => {
-    const widget = this.state.widgets[this.state.selectedWidgetId]
-    const options = widget.problem.mc_options
-    if (options.length > 0) {
-      options.forEach((option) => {
-        api.del('mult-choice/' + option.id)
-          .catch(err => {
-            console.log(err)
-            err.json().then(res => {
-              this.setState({
-                deletingMCWidget: false
-              })
-              Notification.error('Could not delete multiple choice option' +
-                (res.message ? ': ' + res.message : ''))
-              // update to try and get a consistent state
-              this.props.updateExam(this.props.examID)
-            })
-          }).then(res => {
-            let index = widget.problem.feedback.findIndex(e => { return e.id === res.feedback_id })
-            let feedback = widget.problem.feedback[index]
-            feedback.deleted = true
-            this.updateFeedbackAtIndex(feedback, widget, index)
-          })
-      })
-
-      // remove the mc options from the state
-      // note that this can happen before they are removed in the DB due to async calls
-      this.setState((prevState) => {
-        return {
-          widgets: update(prevState.widgets, {
-            [widget.id]: {
-              problem: {
-                mc_options: {
-                  $set: []
-                }
-              }
-            }
-          }),
-          deletingMCWidget: false
-        }
-      })
-    }
   }
 
   /**
@@ -663,7 +606,7 @@ class Exams extends React.Component {
                         this.setState((prevState) => {
                           return {
                             widgets: update(prevState.widgets, {
-                              [selectedWidget.id]: {
+                              [selectedWidgetId]: {
                                 'problem': {
                                   'mc_options': {
                                     [index]: {
@@ -860,7 +803,12 @@ class Exams extends React.Component {
           this.state.widgets[this.state.selectedWidgetId].problem.name}"`}
         confirmText='Delete multiple choice options'
         onCancel={() => this.setState({deletingMCWidget: false})}
-        onConfirm={() => this.deleteMCO(this.state.selectedWidgetId, 0)}
+        onConfirm={() => {
+          this.setState({
+            deletingMCWidget: false
+          })
+          this.deleteMCOs(this.state.selectedWidgetId, 0)
+        }}
       />
     </div>
   }

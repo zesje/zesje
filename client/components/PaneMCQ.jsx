@@ -1,5 +1,6 @@
 import React from 'react'
 import Switch from 'react-bulma-switch/full'
+import './PanelMCQ.css'
 
 /**
  * PanelMCQ is a component that allows the user to generate mcq options
@@ -13,7 +14,6 @@ class PanelMCQ extends React.Component {
     this.updateNumberOptions = this.updateNumberOptions.bind(this)
 
     this.state = {
-      isMCQ: false,
       chosenLabelType: 2,
       nrPossibleAnswers: 2,
       labelTypes: ['None', 'True/False', 'A, B, C ...', '1, 2, 3 ...']
@@ -25,7 +25,6 @@ class PanelMCQ extends React.Component {
       let prob = newProps.problem
       return {
         problemId: prob.id,
-        isMCQ: prob.mc_options.length > 0,
         nrPossibleAnswers: prob.mc_options.length || 2,
         chosenLabelType: PanelMCQ.deriveLabelType(prob.mc_options),
       }
@@ -126,13 +125,9 @@ class PanelMCQ extends React.Component {
   render () {
     return (
       <React.Fragment>
-        <div className='panel-block'>
-          <div className='field'>
+        <div className='panel-block mcq-block'>
             <label className='label'> Multiple choice question </label>
             <Switch color='info' outlined value={this.props.problem.mc_options.length > 0} onChange={(e) => {
-              this.setState({
-                isMCQ: true
-              })
               if (e.target.checked) {
                 let npa = this.state.nrPossibleAnswers
                 let labels = this.generateLabels(npa, 0)
@@ -141,34 +136,33 @@ class PanelMCQ extends React.Component {
                 this.props.deleteMCOs(this.props.problem.mc_options.length)
               }
             }} />
-            { this.state.isMCQ ? (
-              <React.Fragment>
-                <label>Number options</label>
-                <div className='control'>
-                  <input type='number'  value={this.state.nrPossibleAnswers} min='1'
-                         max={this.props.totalNrAnswers} className='input' onChange={this.onChangeNPA} />
-                </div>
-                <label>Labels</label>
-                <div className='control'>
-                  <div className='select is-hovered is-fullwidth'>
-                    {(function () {
-                      var optionList = this.state.labelTypes.map(
-                        (label, i) => <option key={i} value={String(i)}>{label}</option>
-                      )
-                      return (
-                        <div className='select is-hovered is-fullwidth'>
-                          <select value={this.state.chosenLabelType} onChange={this.onChangeLabelType}>
-                            {optionList}
-                          </select>
-                        </div>
-                      )
-                    }.bind(this)())}
-                  </div>
-                </div>
-              </React.Fragment>) : null
-            }
-          </div>
         </div>
+        { this.props.problem.mc_options.length > 0 ? (
+          <React.Fragment>
+            <div className='panel-block mcq-block'>
+              <label>Number options</label>
+              <input type='number'  value={this.state.nrPossibleAnswers} min='1'
+                     max={this.props.totalNrAnswers} className='input' onChange={this.onChangeNPA} />
+            </div>
+            <div className='panel-block mcq-block'>
+              <label>Labels</label>
+              <div className='select is-hovered is-fullwidth'>
+                {(function () {
+                  var optionList = this.state.labelTypes.map(
+                    (label, i) => <option key={i} value={String(i)}>{label}</option>
+                  )
+                  return (
+                    <div className='select is-hovered is-fullwidth'>
+                      <select value={this.state.chosenLabelType} onChange={this.onChangeLabelType}>
+                        {optionList}
+                      </select>
+                    </div>
+                  )
+                }.bind(this)())}
+              </div>
+            </div>
+          </React.Fragment>) : null
+        }
       </React.Fragment>
     )
   }

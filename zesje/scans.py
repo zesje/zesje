@@ -138,28 +138,28 @@ def exam_metadata(exam_id):
         )
 
 
-def parse_obj(lt_objs):
+def get_words(layout_objs):
     """
     Returns all text boxes from a pdf page.
 
     Parameters
     ----------
-    lt_objs : The list of objects in the page.
+    layout_objs : The list of objects in the page.
 
     Returns
     -------
     A list of tuples with the (x0, y0, x1, y1, text) values.
     """
-    res = []
+    words = []
 
-    for obj in lt_objs:
+    for obj in layout_objs:
         if isinstance(obj, pdfminer.layout.LTTextBoxHorizontal):
-            res.append((obj.bbox[0], obj.bbox[1], obj.bbox[2], obj.bbox[3], obj.get_text()))
+            words.append((obj.bbox[0], obj.bbox[1], obj.bbox[2], obj.bbox[3], obj.get_text()))
 
         elif isinstance(obj, pdfminer.layout.LTFigure):
-            res.append(parse_obj(obj._objs))
+            words.append(get_words(obj._objs))
 
-    return res
+    return words
 
 
 def get_question_title(problem):
@@ -188,9 +188,9 @@ def get_question_title(problem):
         layout = device.get_result()
 
         if layout.pageid == problem.widget.page + 1:
-            res = parse_obj(layout._objs)
+            words = get_words(layout._objs)
 
-            filtered_words = [word[4] for word in res
+            filtered_words = [word[4] for word in words
                               if word[1] < 842 - y and word[3] > 842 - (y + height)
                               and word[0] > x and word[2] < x + width]
 

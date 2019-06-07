@@ -3,8 +3,6 @@ import pytest
 from PIL import Image
 import numpy as np
 from zesje import pregrader
-from zesje import scans
-from zesje import images
 
 directory_name = "checkboxes"
 
@@ -17,18 +15,11 @@ def scanned_image(datadir):
     return image
 
 
-@pytest.fixture
-def scanned_image_keypoints(scanned_image):
-    corner_markers = scans.find_corner_marker_keypoints(scanned_image)
-    fixed_corner_keypoints = images.fix_corner_markers(corner_markers, scanned_image.shape)
-    return fixed_corner_keypoints
-
-
 @pytest.mark.parametrize('box_coords, result', [((346, 479), True), ((370, 479), False), ((393, 479), True),
                                                 ((416, 479), True), ((439, 479), True), ((155, 562), True)],
                          ids=["1 filled", "2 empty", "3 marked with line", "4 completely filled",
                               "5 marked with an x", "e marked with a cirle inside"])
-def test_ideal_crops(box_coords, result, scanned_image_keypoints, scanned_image):
+def test_ideal_crops(box_coords, result, scanned_image):
     assert pregrader.box_is_filled(box_coords, scanned_image, cut_padding=0.1) == result
 
 
@@ -38,7 +29,7 @@ def test_ideal_crops(box_coords, result, scanned_image_keypoints, scanned_image)
                          ids=["1 filled bottom right", "1 filled top left", "5 filled with a bit of 6",
                               "4 fully filled with the label", "6 empty with label",
                               "7 partially  cropped, filled and a part of 6", "B empty with cb at the bottom"])
-def test_shifted_crops(box_coords, result, scanned_image_keypoints, scanned_image):
+def test_shifted_crops(box_coords, result, scanned_image):
     assert pregrader.box_is_filled(box_coords, scanned_image, cut_padding=0.1) == result
 
 
@@ -46,5 +37,5 @@ def test_shifted_crops(box_coords, result, scanned_image_keypoints, scanned_imag
                                                 ((131, 562), False)],
                          ids=["A filled with trailing letter", "C filled with letters close",
                               "D blank with trailing letter"])
-def test_trailing_text(box_coords, result, scanned_image_keypoints, scanned_image):
+def test_trailing_text(box_coords, result, scanned_image):
     assert pregrader.box_is_filled(box_coords, scanned_image, cut_padding=0.1) == result

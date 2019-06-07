@@ -864,7 +864,7 @@ def generate_perfect_corner_markers(format="A4", dpi=200):
     right_x = (PAGE_FORMATS[format][0] - MARKER_FORMAT["margin"])/72 * dpi
     bottom_y = (PAGE_FORMATS[format][1] - MARKER_FORMAT["margin"])/72 * dpi
 
-    return [(left_x, top_y),
+    return np.round([(left_x, top_y),
             (right_x, top_y),
             (left_x, bottom_y),
-            (right_x, bottom_y)]
+            (right_x, bottom_y)])

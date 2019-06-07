@@ -41,6 +41,8 @@ class MultipleChoice(Resource):
     put_parser.add_argument('x', type=int, required=True)
     put_parser.add_argument('y', type=int, required=True)
     put_parser.add_argument('label', type=str, required=False)
+    put_parser.add_argument('fb_description', type=str, required=False)
+    put_parser.add_argument('fb_score', type=str, required=False)
     put_parser.add_argument('problem_id', type=int, required=True)  # Used for FeedbackOption
 
     def put(self):
@@ -52,13 +54,18 @@ class MultipleChoice(Resource):
         """
         args = self.put_parser.parse_args()
 
+        # Get request arguments
+        label = args['label']
+        fb_description = args['fb_description']
+        fb_score = args['fb_score']
         problem_id = args['problem_id']
 
         if not Problem.query.get(problem_id):
             return dict(status=404, message=f'Problem with id {problem_id} does not exist'), 404
 
         # Insert new empty feedback option that links to the same problem
-        new_feedback_option = FeedbackOption(problem_id=problem_id, text='')
+        new_feedback_option = FeedbackOption(problem_id=problem_id, text=label,
+                                             description=fb_description, score=fb_score)
         db.session.add(new_feedback_option)
         db.session.commit()
 
@@ -67,11 +74,6 @@ class MultipleChoice(Resource):
         update_mc_option(mc_entry, args, new_feedback_option.id)
 
         db.session.add(mc_entry)
-
-        # Set the feedback label to the
-        if mc_entry.label:
-            new_feedback_option.description = mc_entry.label
-
         db.session.commit()
 
         return dict(status=200, mult_choice_id=mc_entry.id, feedback_id=new_feedback_option.id,
@@ -171,5 +173,6 @@ class MultipleChoice(Resource):
         db.session.delete(mult_choice.feedback)
         db.session.commit()
 
-        return dict(status=200, message=f'Multiple choice question with id {id} deleted.'
+        return dict(status=200, mult_choice_id=id, feedback_id=mult_choice.feedback_id,
+                    message=f'Multiple choice question with id {id} deleted.'
                     + f'Feedback option with id {mult_choice.feedback_id} deleted.'), 200

@@ -67,7 +67,7 @@ class Problems(Resource):
             return {
                 'id': problem.id,
                 'widget_id': widget.id,
-                'name': problem.name
+                'problem_name': problem.name
             }
 
     put_parser = reqparse.RequestParser()

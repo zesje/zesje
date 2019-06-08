@@ -28,7 +28,7 @@ pyStrich  # TODO: can we replace this with stuff from pylibdmtx?
 opencv-python
 git+https://github.com/mstamy2/PyPDF2
 pylibdmtx
-pdfminer.six
+pdfminer3
 
 # Exporting
 pandas

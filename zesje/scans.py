@@ -9,6 +9,16 @@ import signal
 import cv2
 import numpy as np
 import PyPDF2
+import pdfminer3
+
+from pdfminer3.pdfparser import PDFParser
+from pdfminer3.pdfdocument import PDFDocument
+from pdfminer3.pdfpage import PDFPage
+from pdfminer3.pdfinterp import PDFResourceManager
+from pdfminer3.pdfinterp import PDFPageInterpreter
+from pdfminer3.layout import LAParams
+from pdfminer3.converter import PDFPageAggregator
+
 
 from PIL import Image
 from wand.image import Image as WandImage
@@ -21,14 +31,6 @@ from .pregrader import add_feedback_to_solution
 from .datamatrix import decode_raw_datamatrix
 from .images import guess_dpi, get_box
 from .factory import make_celery
-
-from pdfminer3.pdfparser import PDFParser
-from pdfminer3.pdfdocument import PDFDocument
-from pdfminer3.pdfpage import PDFPage
-from pdfminer3.pdfinterp import PDFResourceManager
-from pdfminer3.pdfinterp import PDFPageInterpreter
-from pdfminer3.layout import LAParams
-from pdfminer3.converter import PDFPageAggregator
 
 
 ExtractedBarcode = namedtuple('ExtractedBarcode', ['token', 'copy', 'page'])
@@ -152,10 +154,10 @@ def get_words(layout_objs):
     words = []
 
     for obj in layout_objs:
-        if isinstance(obj, pdfminer.layout.LTTextBoxHorizontal):
+        if isinstance(obj, pdfminer3.layout.LTTextBoxHorizontal):
             words.append((obj.bbox[0], obj.bbox[1], obj.bbox[2], obj.bbox[3], obj.get_text()))
 
-        elif isinstance(obj, pdfminer.layout.LTFigure):
+        elif isinstance(obj, pdfminer3.layout.LTFigure):
             words.append(get_words(obj._objs))
 
     return words

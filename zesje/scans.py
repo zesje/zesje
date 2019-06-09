@@ -10,7 +10,6 @@ import cv2
 import numpy as np
 import PyPDF2
 
-import pdfminer
 from PIL import Image
 from wand.image import Image as WandImage
 from pylibdmtx import pylibdmtx
@@ -23,13 +22,13 @@ from .datamatrix import decode_raw_datamatrix
 from .images import guess_dpi, get_box
 from .factory import make_celery
 
-from pdfminer.pdfparser import PDFParser
-from pdfminer.pdfdocument import PDFDocument
-from pdfminer.pdfpage import PDFPage
-from pdfminer.pdfinterp import PDFResourceManager
-from pdfminer.pdfinterp import PDFPageInterpreter
-from pdfminer.layout import LAParams
-from pdfminer.converter import PDFPageAggregator
+from pdfminer3.pdfparser import PDFParser
+from pdfminer3.pdfdocument import PDFDocument
+from pdfminer3.pdfpage import PDFPage
+from pdfminer3.pdfinterp import PDFResourceManager
+from pdfminer3.pdfinterp import PDFPageInterpreter
+from pdfminer3.layout import LAParams
+from pdfminer3.converter import PDFPageAggregator
 
 
 ExtractedBarcode = namedtuple('ExtractedBarcode', ['token', 'copy', 'page'])

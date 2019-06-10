@@ -14,8 +14,6 @@ from PIL import Image
 from wand.image import Image as WandImage
 from pylibdmtx import pylibdmtx
 
-from flask import current_app
-
 from .database import db, Scan, Exam, Page, Student, Submission, Solution, ExamWidget
 from .pregrader import add_feedback_to_solution
 from .datamatrix import decode_raw_datamatrix
@@ -43,6 +41,7 @@ def process_pdf(scan_id):
     def raise_exit(signo, frame):
         raise SystemExit('PDF processing was killed by an external signal')
 
+    from flask import current_app
     app_config = current_app.config
 
     # We want to trigger an exit from within Python when a signal is received.

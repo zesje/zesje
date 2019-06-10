@@ -165,9 +165,15 @@ def extract_image_pikepdf(pagenr, reader):
     """Extracts an image as an array from the designated page
 
     This method uses PikePDF to extract the image and only works
-    when there is a single image present on the page.
+    when there is a single image present on the page with the
+    same aspect ratio as the page.
 
-    Raises an error if not exactly one image is found on the page.
+    We do not check for the actual size of the image on the page,
+    since this size depends on the draw instruction rather than
+    the embedded image object available to pikepdf.
+
+    Raises an error if not exactly image is present or the image
+    does not have the same aspect ratio as the page.
 
     Parameters
     ----------
@@ -184,8 +190,8 @@ def extract_image_pikepdf(pagenr, reader):
     Raises
     ------
     ValueError
-        if not exactly one image is found on the page or the
-        image does not have the same dimensions as the page
+        if not exactly one image is found on the page or the image
+        does not have the same aspect ratio as the page
     AttributeError
         if no XObject or MediaBox is present on the page
     """

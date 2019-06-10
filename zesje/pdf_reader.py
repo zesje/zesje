@@ -48,8 +48,8 @@ def get_problem_title(problem):
     problem_above = problems_on_page[idx - 1]
 
     # Determine y coordinates to search for text
-    y_above = problem_above.widget.y + problem_above.widget.height
-    y_current = problem.widget.y if idx == 0 else 0
+    y_above = problem_above.widget.y + problem_above.widget.height if idx != 0 else 0
+    y_current = problem.widget.y
 
     for page in PDFPage.create_pages(document):
         interpreter.process_page(page)
@@ -89,7 +89,7 @@ def get_words(layout_objs, y_top, y_bottom):
 
     for obj in layout_objs:
         if isinstance(obj, pdfminer3.layout.LTTextBoxHorizontal):
-            if 841.89 - y_top > obj.bbox[3] > 841.89 - y_bottom:
+            if 841.89 - y_top > obj.bbox[1] > 841.89 - y_bottom:
                 words.append(obj.get_text())
 
         elif isinstance(obj, pdfminer3.layout.LTFigure):

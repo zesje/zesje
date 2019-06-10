@@ -7,6 +7,7 @@ from tempfile import NamedTemporaryFile
 from flask import Flask
 from io import BytesIO
 import wand.image
+from pikepdf import Pdf
 
 from zesje.scans import decode_barcode, ExamMetadata, ExtractedBarcode
 from zesje.database import db, _generate_exam_token
@@ -265,6 +266,24 @@ def test_all_effects(
         #  image.show()
         success, reason = scans.process_page(image, new_exam, datadir)
         assert success is expected, reason
+
+
+@pytest.mark.parametrize('filename,expected', [
+    ['blank-a4-2pages.pdf', AttributeError],
+    ['single-image-a4.pdf', ValueError],
+    ['two-images-a4.pdf', ValueError],
+    ['flattened-a4-2pages.pdf', None]],
+    ids=['blank pdf', 'single image', 'two images', 'flattened pdf'])
+def test_image_extraction_pike(datadir, filename, expected):
+    file = os.path.join(datadir, filename)
+    with Pdf.open(file) as pdf_reader:
+        for pagenr in range(len(pdf_reader.pages)):
+            if expected is not None:
+                with pytest.raises(expected):
+                    scans.extract_image_pikepdf(pagenr, pdf_reader)
+            else:
+                img = scans.extract_image_pikepdf(pagenr, pdf_reader)
+                assert img is not None
 
 
 @pytest.mark.parametrize('filename', [

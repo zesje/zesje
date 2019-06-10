@@ -4,7 +4,7 @@ from flask_restful import Resource, reqparse
 
 from ..database import db, Exam, Problem, ProblemWidget, Solution
 
-from zesje.scans import get_question_title
+from zesje.pdf_reader import get_problem_title
 
 
 class Problems(Resource):
@@ -60,7 +60,7 @@ class Problems(Resource):
             db.session.commit()
             widget.name = f'problem_{problem.id}'
 
-            problem.name = get_question_title(problem)
+            problem.name = get_problem_title(problem)
 
             db.session.commit()
 

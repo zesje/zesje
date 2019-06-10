@@ -9,16 +9,6 @@ import signal
 import cv2
 import numpy as np
 import PyPDF2
-import pdfminer3
-
-from pdfminer3.pdfparser import PDFParser
-from pdfminer3.pdfdocument import PDFDocument
-from pdfminer3.pdfpage import PDFPage
-from pdfminer3.pdfinterp import PDFResourceManager
-from pdfminer3.pdfinterp import PDFPageInterpreter
-from pdfminer3.layout import LAParams
-from pdfminer3.converter import PDFPageAggregator
-
 
 from PIL import Image
 from wand.image import Image as WandImage
@@ -139,71 +129,7 @@ def exam_metadata(exam_id):
         )
 
 
-def get_words(layout_objs):
-    """
-    Returns all text boxes from a pdf page.
 
-    Parameters
-    ----------
-    layout_objs : The list of objects in the page.
-
-    Returns
-    -------
-    A list of tuples with the (x0, y0, x1, y1, text) values.
-    """
-    words = []
-
-    for obj in layout_objs:
-        if isinstance(obj, pdfminer3.layout.LTTextBoxHorizontal):
-            words.append((obj.bbox[0], obj.bbox[1], obj.bbox[2], obj.bbox[3], obj.get_text()))
-
-        elif isinstance(obj, pdfminer3.layout.LTFigure):
-            words.append(get_words(obj._objs))
-
-    return words
-
-
-def get_question_title(problem):
-    """
-    Returns the question title of a problem
-    """
-    data_dir = current_app.config.get('DATA_DIRECTORY', 'data')
-    pdf_path = os.path.join(data_dir, f'{problem.exam_id}_data', 'exam.pdf')
-
-    x = problem.widget.x
-    y = problem.widget.y
-    width = problem.widget.width
-    height = problem.widget.height
-
-    fp = open(pdf_path, 'rb')
-
-    parser = PDFParser(fp)
-    document = PDFDocument(parser)
-    rsrcmgr = PDFResourceManager()
-    laparams = LAParams()
-    device = PDFPageAggregator(rsrcmgr, laparams=laparams)
-    interpreter = PDFPageInterpreter(rsrcmgr, device)
-
-    for page in PDFPage.create_pages(document):
-        interpreter.process_page(page)
-        layout = device.get_result()
-
-        if layout.pageid == problem.widget.page + 1:
-            words = get_words(layout._objs)
-
-            filtered_words = [word[4] for word in words
-                              if word[1] < 842 - y and word[3] > 842 - (y + height)
-                              and word[0] > x and word[2] < x + width]
-
-            if not filtered_words:
-                return ''
-
-            right_line = filtered_words[0]
-
-            lines = right_line.split('\n')
-            return lines[0]
-
-    return ''
 
 
 def extract_images(filename):

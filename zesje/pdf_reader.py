@@ -12,8 +12,6 @@ from pdfminer3.pdfparser import PDFParser
 
 from flask import current_app
 
-from .database import Problem
-
 
 def get_problem_title(problem):
     """
@@ -42,8 +40,7 @@ def get_problem_title(problem):
     interpreter = PDFPageInterpreter(rsrcmgr, device)
 
     # Get the other problems on the same page
-    problems_on_page = Problem.query.filter(Problem.exam_id == problem.exam_id,
-                                            Problem.widget.page == problem.widget.page).all()
+    problems_on_page = [p for p in problem.exam.problems if p.widget.page == problem.widget.page]
     problems_on_page.sort(key=lambda prob: prob.widget.y)
 
     idx = problems_on_page.index(problem)
@@ -61,17 +58,11 @@ def get_problem_title(problem):
         if layout.pageid == problem.widget.page + 1:
             filtered_words = []
 
-            if idx == 0 and layout.pageid == 1:
-                # get student widget coords
-                raise RuntimeError("TODO")
-            elif idx == 0:
+            if idx == 0:
                 # Check between widget and top of page
-                filtered_words = get_words(layout._objs, 0, 841.89 - y_current)
+                filtered_words = get_words(layout._objs, 0, y_current)
             else:
-                filtered_words = get_words(layout._objs, 841.89 - y_above, 841.89 - y_current)
-
-            # filtered_words = [word[4] for word in words
-            #                   if 841.89 - y_above > word[3] > 841.89 - problem.widget.y]
+                filtered_words = get_words(layout._objs, y_above, y_current)
 
             if not filtered_words:
                 return ''
@@ -106,7 +97,7 @@ def get_words(layout_objs, y_top, y_bottom):
 
     for obj in layout_objs:
         if isinstance(obj, pdfminer3.layout.LTTextBoxHorizontal):
-            if y_top > obj.bbox[3] > y_bottom:
+            if 841.89 - y_top > obj.bbox[3] > 841.89 - y_bottom:
                 words.append(obj.get_text())
 
         elif isinstance(obj, pdfminer3.layout.LTFigure):

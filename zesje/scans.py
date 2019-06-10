@@ -129,9 +129,6 @@ def exam_metadata(exam_id):
         )
 
 
-
-
-
 def extract_images(filename):
     """Yield all images from a PDF file.
 

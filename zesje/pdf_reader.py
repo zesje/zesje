@@ -49,27 +49,19 @@ def get_problem_title(problem):
 
     # Determine y coordinates to search for text
     y_above = problem_above.widget.y + problem_above.widget.height
-    y_current = problem.widget.y
+    y_current = problem.widget.y if idx == 0 else 0
 
     for page in PDFPage.create_pages(document):
         interpreter.process_page(page)
         layout = device.get_result()
 
         if layout.pageid == problem.widget.page + 1:
-            filtered_words = []
-
-            if idx == 0:
-                # Check between widget and top of page
-                filtered_words = get_words(layout._objs, 0, y_current)
-            else:
-                filtered_words = get_words(layout._objs, y_above, y_current)
+            filtered_words = get_words(layout._objs, y_above, y_current)
 
             if not filtered_words:
                 return ''
 
-            right_line = filtered_words[0]
-
-            lines = right_line.split('\n')
+            lines = filtered_words[0].split('\n')
             return lines[0]
 
     return ''

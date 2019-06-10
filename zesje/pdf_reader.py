@@ -17,7 +17,7 @@ from .api.exams import PAGE_FORMATS
 
 def get_problem_title(problem):
     """
-    Returns the question title of a problem
+    Returns the title of a problem
 
     Parameters
     ----------
@@ -27,7 +27,7 @@ def get_problem_title(problem):
     Returns
     -------
     title: str
-        The title of the problem
+        The title of the problem, or an empty string if no text is found
     """
     data_dir = current_app.config.get('DATA_DIRECTORY', 'data')
     pdf_path = os.path.join(data_dir, f'{problem.exam_id}_data', 'exam.pdf')
@@ -71,16 +71,16 @@ def get_problem_title(problem):
 
 def get_words(layout_objs, y_top, y_bottom):
     """
-    Returns all text boxes from a pdf page.
+    Returns the text from a pdf page within a specified height.
 
     Parameters
     ----------
-    layout_objs :
+    layout_objs : list of layout objects
         The list of objects in the page.
     y_top : double
-        Top coordinate of each word
+        Highest top coordinate of each word
     y_bottom : double
-        Bottom coordinate of each word
+        Lowest bottom coordinate of each word
 
     Returns
     -------

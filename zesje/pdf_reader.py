@@ -87,7 +87,7 @@ def get_words(layout_objs, y_top, y_bottom):
     words : list of tuples
         A list of tuples with the (y, text) values.
     """
-    page_format = current_app.config.get('PAGE_FORMAT')
+    page_format = current_app.config.get('PAGE_FORMAT', 'A4')
     page_height = PAGE_FORMATS[page_format][1]
 
     words = []

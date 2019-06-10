@@ -9,7 +9,6 @@ import signal
 import cv2
 import numpy as np
 import PyPDF2
-
 from PIL import Image
 from wand.image import Image as WandImage
 from pylibdmtx import pylibdmtx
@@ -19,7 +18,6 @@ from .datamatrix import decode_raw_datamatrix
 from .images import guess_dpi, get_box
 from .factory import make_celery
 from .pregrader import add_feedback_to_solution
-
 
 ExtractedBarcode = namedtuple('ExtractedBarcode', ['token', 'copy', 'page'])
 

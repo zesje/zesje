@@ -476,7 +476,8 @@ class Exams extends React.Component {
     let selectedWidget = selectedWidgetId && this.state.widgets[selectedWidgetId]
     let problem = selectedWidget && selectedWidget.problem
     let isMCQ = (problem && problem.mc_options.length > 0) || false
-    let widgetEditDisabled = (this.state.previewing || !problem) || (this.props.exam.finalized && containsMCOptions)
+    let widgetEditDisabled = (this.state.previewing || !problem)
+      || (this.props.exam.finalized && problem.mc_options.length > 0)
     let isGraded = problem && problem.graded
     let widgetDeleteDisabled = widgetEditDisabled || isGraded
 
@@ -529,7 +530,7 @@ class Exams extends React.Component {
 
   PanelEdit = (props) => {
     const selectedWidgetId = this.state.selectedWidgetId
-    let totalNrAnswers = 12 // the upper limit for the nr of possible answer boxes
+    let totalNrAnswers = 9 // the upper limit for the nr of possible answer boxes
 
     return (
       <nav className='panel'>

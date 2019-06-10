@@ -62,7 +62,7 @@ class PanelMCQ extends React.Component {
   // this function is called when the input is changed for the number of possible answers
   onChangeNPA (e) {
     let value = parseInt(e.target.value)
-    if (!isNaN(value)) {
+    if (!isNaN(value) && value <= this.props.totalNrAnswers) {
       if (this.state.chosenLabelType === 1) {
         value = 2
       }
@@ -140,25 +140,27 @@ class PanelMCQ extends React.Component {
         { this.props.problem.mc_options.length > 0 ? (
           <React.Fragment>
             <div className='panel-block mcq-block'>
-              <label>Number options</label>
-              <input type='number'  value={this.state.nrPossibleAnswers} min='1'
-                     max={this.props.totalNrAnswers} className='input' onChange={this.onChangeNPA} />
-            </div>
-            <div className='panel-block mcq-block'>
-              <label>Labels</label>
-              <div className='select is-hovered is-fullwidth'>
-                {(function () {
-                  var optionList = this.state.labelTypes.map(
-                    (label, i) => <option key={i} value={String(i)}>{label}</option>
-                  )
-                  return (
-                    <div className='select is-hovered is-fullwidth'>
-                      <select value={this.state.chosenLabelType} onChange={this.onChangeLabelType}>
-                        {optionList}
-                      </select>
-                    </div>
-                  )
-                }.bind(this)())}
+              <div className='inline-mcq-edit'>
+                <label>#</label>
+                <input type='number'  value={this.state.nrPossibleAnswers} min='1'
+                       max={this.props.totalNrAnswers} className='input' onChange={this.onChangeNPA} />
+              </div>
+              <div className='inline-mcq-edit'>
+                <label>Labels</label>
+                <div className='select is-hovered is-fullwidth'>
+                  {(function () {
+                    var optionList = this.state.labelTypes.map(
+                      (label, i) => <option key={i} value={String(i)}>{label}</option>
+                    )
+                    return (
+                      <div className='select is-hovered is-fullwidth'>
+                        <select value={this.state.chosenLabelType} onChange={this.onChangeLabelType}>
+                          {optionList}
+                        </select>
+                      </div>
+                    )
+                  }.bind(this)())}
+                </div>
               </div>
             </div>
           </React.Fragment>) : null

@@ -12,6 +12,8 @@ from pdfminer3.pdfparser import PDFParser
 
 from flask import current_app
 
+from .api.exams import PAGE_FORMATS
+
 
 def get_problem_title(problem):
     """
@@ -85,11 +87,14 @@ def get_words(layout_objs, y_top, y_bottom):
     words : list of tuples
         A list of tuples with the (y, text) values.
     """
+    page_format = current_app.config.get('PAGE_FORMAT')
+    page_height = PAGE_FORMATS[page_format][1]
+
     words = []
 
     for obj in layout_objs:
         if isinstance(obj, pdfminer3.layout.LTTextBoxHorizontal):
-            if 841.89 - y_top > obj.bbox[1] > 841.89 - y_bottom:
+            if page_height - y_top > obj.bbox[1] > page_height - y_bottom:
                 words.append(obj.get_text())
 
         elif isinstance(obj, pdfminer3.layout.LTFigure):

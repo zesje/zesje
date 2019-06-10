@@ -214,8 +214,8 @@ def extract_image_pikepdf(pagenr, reader):
             ratio_width = pdfimage.width / pdf_width
             ratio_height = pdfimage.height / pdf_height
 
-            # Check if the dimensions of the image are the same as the
-            # dimensions of the page up to a 3% relative error
+            # Check if the aspect ratio of the image is the same as the
+            # aspect ratio of the page up to a 3% relative error
             if abs(ratio_width - ratio_height) > 0.03 * ratio_width:
                 raise ValueError('Image has incorrect dimensions')
 

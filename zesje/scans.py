@@ -183,7 +183,11 @@ def extract_image_pikepdf(pagenr, reader):
 
     Raises
     ------
-    ValueError if not exactly one image is found on the page
+    ValueError
+        if not exactly one image is found on the page or the
+        image does not have the same dimensions as the page
+    AttributeError
+        if no XObject or MediaBox is present on the page
     """
 
     page = reader.pages[pagenr]
@@ -192,11 +196,23 @@ def extract_image_pikepdf(pagenr, reader):
 
     if sum((xObject[obj].Subtype == '/Image')
             for obj in xObject) != 1:
-        raise ValueError
+        raise ValueError('Not exactly 1 image present on the page')
 
     for obj in xObject:
         if xObject[obj].Subtype == '/Image':
             pdfimage = PdfImage(xObject[obj])
+
+            pdf_width = float(page.MediaBox[2] - page.MediaBox[0])
+            pdf_height = float(page.MediaBox[3] - page.MediaBox[1])
+
+            ratio_width = pdfimage.width / pdf_width
+            ratio_height = pdfimage.height / pdf_height
+
+            # Check if the dimensions of the image are the same as the
+            # dimensions of the page up to a 3% relative error
+            if abs(ratio_width - ratio_height) > 0.03 * ratio_width:
+                raise ValueError('Image has incorrect dimensions')
+
             return pdfimage.as_pil_image()
 
 

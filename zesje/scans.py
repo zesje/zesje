@@ -15,9 +15,10 @@ from pylibdmtx import pylibdmtx
 
 from .database import db, Scan, Exam, Page, Student, Submission, Solution, ExamWidget
 from .datamatrix import decode_raw_datamatrix
-from .images import guess_dpi, get_box, fix_corner_markers
+from .images import guess_dpi, get_box
 from .factory import make_celery
 from .pregrader import add_feedback_to_solution
+from .images import fix_corner_markers
 
 from .pdf_generation import MARKER_FORMAT, PAGE_FORMATS
 
@@ -349,6 +350,7 @@ def process_page(image_data, exam_config, output_dir=None, strict=False):
     sub, exam = update_database(image_path, barcode)
 
     try:
+        corner_keypoints = fix_corner_markers(corner_keypoints, image_array.shape)
         add_feedback_to_solution(sub, exam, barcode.page, image_array, corner_keypoints)
     except RuntimeError as e:
         if strict:

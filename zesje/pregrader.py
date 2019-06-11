@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 
 from .database import db, Solution
-from .images import guess_dpi, get_box, fix_corner_markers
+from .images import guess_dpi, get_box
 
 
 def add_feedback_to_solution(sub, exam, page, page_img, corner_keypoints):
@@ -17,16 +17,12 @@ def add_feedback_to_solution(sub, exam, page, page_img, corner_keypoints):
         the current exam
     page_img : Image
         image of the page
-    corner_keypoints : array
+    corner_keypoints : list of tuples
         locations of the corner keypoints as (x, y) tuples
     """
     problems_on_page = [problem for problem in exam.problems if problem.widget.page == page]
 
-    fixed_corner_keypoints = fix_corner_markers(corner_keypoints, page_img.shape)
-
-    x_min = min(point[0] for point in fixed_corner_keypoints)
-    y_min = min(point[1] for point in fixed_corner_keypoints)
-    top_left_point = (x_min, y_min)
+    top_left_point = min(point[0] + point[1] for point in corner_keypoints)
 
     for problem in problems_on_page:
         sol = Solution.query.filter(Solution.problem_id == problem.id, Solution.submission_id == sub.id).one_or_none()

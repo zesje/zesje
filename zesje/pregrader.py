@@ -68,7 +68,7 @@ def box_is_filled(box, page_img, threshold=225, cut_padding=0.05, box_size=9):
     # convert to grayscale
     gray_im = cv2.cvtColor(cut_im, cv2.COLOR_BGR2GRAY)
     # apply threshold to only have black or white
-    _, bin_im = cv2.threshold(gray_im, 150, 255, cv2.THRESH_BINARY)
+    _, bin_im = cv2.threshold(gray_im, 160, 255, cv2.THRESH_BINARY)
 
     h_bin, w_bin, *_ = bin_im.shape
     # create a mask that gets applied when floodfill the white

@@ -7,7 +7,7 @@ from operator import sub, add
 
 def guess_dpi(image_array):
     h, *_ = image_array.shape
-    resolutions = np.array([1200, 600, 400, 300, 200, 150, 120, 100, 75, 60, 50, 40])
+    resolutions = np.array([1200, 600, 400, 300, 200, 150, 120, 100, 75, 72, 60, 50, 40])
     return resolutions[np.argmin(abs(resolutions - 25.4 * h / 297))]
 
 
@@ -71,28 +71,32 @@ def fix_corner_markers(corner_keypoints, shape):
     bottom_right = [(x, y) for x, y in corner_keypoints if x > x_sep and y > y_sep]
 
     missing_point = ()
-
+    # index = 0
     if not top_left:
         # Top left point is missing
         (dx, dy) = tuple(map(sub, top_right[0], bottom_right[0]))
         missing_point = tuple(map(add, bottom_left[0], (dx, dy)))
+        index = 0
 
     elif not bottom_left:
         # Bottom left point is missing
         (dx, dy) = tuple(map(sub, top_right[0], bottom_right[0]))
         missing_point = tuple(map(sub, top_left[0], (dx, dy)))
+        index = 2
 
     elif not top_right:
         # Top right point is missing
         (dx, dy) = tuple(map(sub, top_left[0], bottom_left[0]))
         missing_point = tuple(map(add, bottom_right[0], (dx, dy)))
+        index = 1
 
     elif not bottom_right:
         # bottom right
         (dx, dy) = tuple(map(sub, top_left[0], bottom_left[0]))
         missing_point = tuple(map(sub, top_right[0], (dx, dy)))
+        index = 3
 
-    corner_keypoints.append(missing_point)
+    corner_keypoints.insert(index, missing_point)
     return corner_keypoints
 
 

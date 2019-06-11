@@ -15,9 +15,11 @@ from pylibdmtx import pylibdmtx
 
 from .database import db, Scan, Exam, Page, Student, Submission, Solution, ExamWidget
 from .datamatrix import decode_raw_datamatrix
-from .images import guess_dpi, get_box
+from .images import guess_dpi, get_box, fix_corner_markers
 from .factory import make_celery
 from .pregrader import add_feedback_to_solution
+
+from .pdf_generation import MARKER_FORMAT, PAGE_FORMATS
 
 ExtractedBarcode = namedtuple('ExtractedBarcode', ['token', 'copy', 'page'])
 
@@ -318,8 +320,15 @@ def process_page(image_data, exam_config, output_dir=None, strict=False):
         if strict:
             return False, str(e)
     else:
-        (image_array, new_keypoints) = rotate_image(image_array, corner_keypoints)
-        image_array = shift_image(image_array, new_keypoints)
+        image_array = realign_image(image_array, corner_keypoints)
+
+    # get new corner markers of the realigned image
+    corner_keypoints = find_corner_marker_keypoints(image_array)
+    try:
+        check_corner_keypoints(image_array, corner_keypoints)
+    except RuntimeError as e:
+        if strict:
+            return False, str(e)
 
     try:
         barcode, upside_down = decode_barcode(image_array, exam_config)
@@ -465,104 +474,6 @@ def decode_barcode(image, exam_config):
                 pass
 
     raise RuntimeError("No barcode found.")
-
-
-def rotate_image(image_array, corner_keypoints):
-    """Rotate an image according to the rotation of the corner markers."""
-
-    # Find two corner markers which lie in the same horizontal half.
-    # Same horizontal half is chosen as the line from one keypoint to
-    # the other shoud be 0. To get corner markers in the same horizontal half,
-    # the pair with the smallest distance is chosen.
-    distances = [(a, b, math.hypot(a[0] - b[0], a[1] - b[1]))
-                 for (a, b)
-                 in list(itertools.combinations(corner_keypoints, 2))]
-    distances.sort(key=lambda tup: tup[2], reverse=True)
-    best_keypoint_combination = distances.pop()
-
-    (coords1, coords2, dist) = best_keypoint_combination
-
-    # If the angle is downward, we have a negative angle and
-    # we want to rotate it counterclockwise
-    # However warpaffine needs a positve angle if
-    # you want to rotate it counterclockwise
-    # So we invert the angle retrieved from calc_angle
-    angle_deg = -1 * calc_angle(coords1, coords2)
-    angle_rad = math.radians(angle_deg)
-
-    h, w, *_ = image_array.shape
-    rot_origin = (w / 2, h / 2)
-
-    keyp_from_rot_origin = [(coord_x - rot_origin[0], coord_y - rot_origin[1])
-                            for (coord_x, coord_y)
-                            in corner_keypoints]
-
-    after_rot_keypoints = [((coord_y * math.sin(angle_rad) +
-                            coord_x * math.cos(angle_rad) + rot_origin[0]),
-                            (coord_y * math.cos(angle_rad) -
-                            coord_x * math.sin(angle_rad)) + rot_origin[1])
-                           for (coord_x, coord_y)
-                           in keyp_from_rot_origin]
-
-    # Create rotation matrix and rotate the image around the center
-    rot_mat = cv2.getRotationMatrix2D(rot_origin, angle_deg, 1)
-    rot_image = cv2.warpAffine(image_array, rot_mat, (w, h), cv2.BORDER_CONSTANT,
-                               borderMode=cv2.BORDER_CONSTANT,
-                               borderValue=(255, 255, 255))
-
-    return (rot_image, after_rot_keypoints)
-
-
-def shift_image(image, corner_keypoints):
-    """Roll the image such that QR occupies coords
-       specified by the template."""
-    corner_keypoints = np.array(corner_keypoints)
-    h, w, *_ = image.shape
-
-    xkeypoints = np.array([keypoint[0] for keypoint in corner_keypoints])
-    ykeypoints = np.array([keypoint[1] for keypoint in corner_keypoints])
-
-    is_left_half = xkeypoints < (w / 2)
-    is_top_half = ykeypoints < (h / 2)
-
-    # Get pixel locations to translate to. Currently only works with A4 sized
-    # paper
-    # TODO Add US letter functionality
-    x0 = 10/210 * w
-    y0 = 10/297 * h
-
-    # If there is a keypoint in the topleft, take that point as starting point
-    # for the translation
-    topleft = corner_keypoints[is_left_half & is_top_half]
-    if(len(topleft) == 1):
-        x = topleft[0][0]
-        y = topleft[0][1]
-    else:
-
-        # If there is no keypoint in the topleft, try to check if there is one
-        # in the bottom left and bottom right. If so, infer the topleft
-        # coordinates from their coordinates
-        topright = corner_keypoints[~is_left_half & is_top_half]
-        bottomleft = corner_keypoints[is_left_half & ~is_top_half]
-        if(len(topright) == 1 & len(bottomleft) == 1):
-            x = bottomleft[0][0]
-            y = topright[0][1]
-
-        else:
-            # We can only end here if something went wrong with the detection
-            # of corner markers. If so, just don't shift at all.
-            x = x0
-            y = y0
-
-    shift = np.round((y0-y, x0-x)).astype(int)
-    shifted_image = np.roll(image, shift[0], axis=0)
-    shifted_image = np.roll(shifted_image, shift[1], axis=1)
-
-    # Workaround of https://github.com/python-pillow/Pillow/issues/3109
-    if shifted_image.dtype == bool:
-        shifted_image = shifted_image * np.uint8(255)
-
-    return shifted_image
 
 
 def guess_student(exam_token, copy_number, app_config=None, force=False):
@@ -788,3 +699,67 @@ def check_corner_keypoints(image_array, keypoints):
 
     if max(corners.values()) > 1:
         raise RuntimeError("Found multiple corner markers in the same corner")
+
+
+def realign_image(image_array, keypoints=None,
+                  reference_keypoints=None, page_format="A4"):
+    """
+    Transform the image so that the keypoints match the reference.
+
+    params
+    ------
+    image_array : numpy.array
+        The image in the form of a numpy array.
+    keypoints : List[(int,int)]
+        tuples of coordinates of the found keypoints, (x,y), in pixels. Can be a set of 3 or 4 tuples.
+        if none are provided, they are calculated based on the image_array.
+    reference_keypoints: List[(int,int)]
+        Similar to keypoints, only these belong to the keypoints found on the original scan.
+        If none are provided, standard locations are used. Namely [(59, 59), (1179, 59), (59, 1693), (1179, 1693)],
+        which are from an ideal scan of an a4 at 200 dpi.
+
+    returns
+    -------
+    return_array: numpy.array
+        The image realign properly.
+    return_keypoints: List[(int,int)]
+        New keypoints properly aligned.
+    """
+
+    if (not keypoints):
+        keypoints = find_corner_marker_keypoints(image_array)
+        check_corner_keypoints(image_array, keypoints)
+
+    if (len(keypoints) != 4):
+        keypoints = fix_corner_markers(keypoints, image_array.shape)
+
+    # use standard keypoints if no custom ones are provided
+    if (not reference_keypoints):
+        dpi = guess_dpi(image_array)
+        reference_keypoints = generate_perfect_corner_markers(page_format, dpi)
+
+    if (len(reference_keypoints) != 4):
+        # this function assumes that the template has the same dimensions as the input image
+        reference_keypoints = fix_corner_markers(reference_keypoints, image_array.shape)
+
+    rows, cols, _ = image_array.shape
+
+    # get the transformation matrix
+    M = cv2.getPerspectiveTransform(np.float32(keypoints), np.float32(reference_keypoints))
+    # apply the transformation matrix and fill in the new empty spaces with white
+    return_image = cv2.warpPerspective(image_array, M, (cols, rows),
+                                       borderValue=(255, 255, 255, 255))
+
+    return return_image
+
+
+def generate_perfect_corner_markers(format="A4", dpi=200):
+    left_x = MARKER_FORMAT["margin"]/72 * dpi
+    top_y = MARKER_FORMAT["margin"]/72 * dpi
+    right_x = (PAGE_FORMATS[format][0] - MARKER_FORMAT["margin"])/72 * dpi
+    bottom_y = (PAGE_FORMATS[format][1] - MARKER_FORMAT["margin"])/72 * dpi
+
+    return np.round([(left_x, top_y),
+                     (right_x, top_y),
+                     (left_x, bottom_y),
+                     (right_x, bottom_y)])

@@ -183,7 +183,7 @@ def apply_scan(img, rotation=0, scale=1, skew=(0, 0)):
 
 def upscale_image(image, scale=2):
     width, height = image.size
-    # standardly, the image has a dpi of 72 so 72*2=144 dpi when using the standard scale
+    # the standard dpi is 72 so 72*2=144 dpi with the standard scale.
     new_size = (int(scale * width), int(scale * height))
     image = image.resize(new_size, resample=1)
     return image

@@ -2,6 +2,7 @@ import React from 'react'
 
 import ConfirmationModal from '../../components/ConfirmationModal.jsx'
 import * as api from '../../api.jsx'
+import Notification from 'react-bulma-notification'
 
 const BackButton = (props) => (
   <button className='button is-light is-fullwidth' onClick={props.onClick}>
@@ -116,6 +117,14 @@ class EditPanel extends React.Component {
           })
           this.props.goBack()
         })
+       .catch(err => {
+        err.json().then(res => {
+          Notification.error('Could not delete feedback' +
+            (res.message ? ': ' + res.message : ''))
+          // update to try and get a consistent state
+          this.props.goBack()
+        })
+      })
     }
   }
 

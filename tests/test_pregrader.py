@@ -34,7 +34,7 @@ def test_ideal_crops(box_coords, result, scanned_image_keypoints, scanned_image)
 
 @pytest.mark.parametrize('box_coords, result', [((341, 471), True), ((352, 482), True), ((448, 482), True),
                                                 ((423, 474), True), ((460, 475), False), ((477, 474), True),
-                                                ((87, 548), False)],
+                                                ((87, 544), False)],
                          ids=["1 filled bottom right", "1 filled top left", "5 filled with a bit of 6",
                               "4 fully filled with the label", "6 empty with label",
                               "7 partially  cropped, filled and a part of 6", "B empty with cb at the bottom"])

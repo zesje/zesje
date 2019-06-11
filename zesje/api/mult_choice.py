@@ -1,28 +1,35 @@
 from flask_restful import Resource, reqparse
 
-from ..database import db, MultipleChoiceOption, FeedbackOption
+from ..database import db, MultipleChoiceOption, FeedbackOption, Problem
 
 
-def set_mc_data(mc_entry, name, x, y, mc_type, feedback_id, label):
-    """Sets the data of a MultipleChoiceOption ORM object.
-
-    Parameters:
-    -----------
-    mc_entry: The MultipleChoiceOption object
-    name: The name of the MultipleChoiceOption widget
-    x: the x-position of the MultipleChoiceOption object.
-    y: the y-position of the MultipleChoiceOption object.
-    type: the polymorphic type used to distinguish the MultipleChoiceOption widget
-        from other widgets
-    feedback_id: the feedback the MultipleChoiceOption refers to
-    label: label for the checkbox that this MultipleChoiceOption represents
+def update_mc_option(mc_option, args, feedback_id=None):
     """
-    mc_entry.name = name
-    mc_entry.x = x
-    mc_entry.y = y
-    mc_entry.type = mc_type
-    mc_entry.feedback_id = feedback_id
-    mc_entry.label = label
+    Updates a multiple choice option
+
+    Parameters
+    ----------
+    mc_option: The multiple choice option
+    args: The arguments supplied in the request body
+    feedback_id: The id of the feedback option related to the
+    """
+
+    for attr, value in args.items():
+        try:
+            if value:
+                setattr(mc_option, attr, value)
+        except AttributeError:
+            msg = f"Multiple choice option doesn't have a property {attr}"
+            return dict(status=400, message=msg), 400
+        except (TypeError, ValueError) as error:
+            return dict(status=400, message=str(error)), 400
+
+    if feedback_id:
+        mc_option.feedback_id = feedback_id
+
+    mc_option.type = 'mcq_widget'
+
+    db.session.commit()
 
 
 class MultipleChoice(Resource):
@@ -48,15 +55,13 @@ class MultipleChoice(Resource):
         args = self.put_parser.parse_args()
 
         # Get request arguments
-        name = args['name']
-        x = args['x']
-        y = args['y']
         label = args['label']
         fb_description = args['fb_description']
         fb_score = args['fb_score']
         problem_id = args['problem_id']
 
-        mc_type = 'mcq_widget'
+        if not Problem.query.get(problem_id):
+            return dict(status=404, message=f'Problem with id {problem_id} does not exist'), 404
 
         # Insert new empty feedback option that links to the same problem
         new_feedback_option = FeedbackOption(problem_id=problem_id, text=label,
@@ -66,14 +71,14 @@ class MultipleChoice(Resource):
 
         # Insert new entry into the database
         mc_entry = MultipleChoiceOption()
-        set_mc_data(mc_entry, name, x, y, mc_type, new_feedback_option.id, label)
+        update_mc_option(mc_entry, args, new_feedback_option.id)
 
         db.session.add(mc_entry)
         db.session.commit()
 
         return dict(status=200, mult_choice_id=mc_entry.id, feedback_id=new_feedback_option.id,
                     message=f'New multiple choice question with id {mc_entry.id} inserted. '
-                            + f'New feedback option with id {new_feedback_option.id} inserted.'), 200
+                    + f'New feedback option with id {new_feedback_option.id} inserted.'), 200
 
     def get(self, id):
         """Fetches multiple choice option from the database
@@ -106,6 +111,14 @@ class MultipleChoice(Resource):
 
         return json
 
+    patch_parser = reqparse.RequestParser()
+
+    # Arguments that have to be supplied in the request body
+    patch_parser.add_argument('name', type=str, required=False)
+    patch_parser.add_argument('x', type=int, required=False)
+    patch_parser.add_argument('y', type=int, required=False)
+    patch_parser.add_argument('label', type=str, required=False)
+
     def patch(self, id):
         """
         Updates a multiple choice option
@@ -114,21 +127,14 @@ class MultipleChoice(Resource):
         ----------
             id: The id of the multiple choice option in the database.s
         """
-        args = self.put_parser.parse_args()
-
-        name = args['name']
-        x = args['x']
-        y = args['y']
-        label = args['label']
-        mc_type = 'mcq_widget'
+        args = self.patch_parser.parse_args()
 
         mc_entry = MultipleChoiceOption.query.get(id)
 
         if not mc_entry:
             return dict(status=404, message=f"Multiple choice question with id {id} does not exist"), 404
 
-        set_mc_data(mc_entry, name, x, y, mc_type, mc_entry.feedback_id, label)
-        db.session.commit()
+        update_mc_option(mc_entry, args)
 
         return dict(status=200, message=f'Multiple choice question with id {id} updated'), 200
 

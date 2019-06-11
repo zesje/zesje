@@ -3,7 +3,7 @@ import Switch from 'react-bulma-switch/full'
 import './PanelMCQ.css'
 
 /**
- * PanelMCQ is a component that allows the user to generate mcq options
+ * PanelMCQ is a component that allows the user to generate mc questions and options
  */
 class PanelMCQ extends React.Component {
   constructor (props) {
@@ -20,7 +20,9 @@ class PanelMCQ extends React.Component {
     }
   }
 
+  // modify the state if the properties are changed
   static getDerivedStateFromProps (newProps, prevState) {
+    // if another problem is selected, update the state and implicitly the contents of the inputs
     if (prevState.problemId !== newProps.problem.id) {
       let prob = newProps.problem
       return {
@@ -33,6 +35,11 @@ class PanelMCQ extends React.Component {
     return null;
   }
 
+  /**
+   * Derive the label type given an array of options.
+   * @param options the options that correspond to a problem
+   * @returns {number} the index in the labelTypes array representing the label type
+   */
   static deriveLabelType (options) {
     if (options.length === 0) {
       return 2
@@ -48,6 +55,7 @@ class PanelMCQ extends React.Component {
     }
   }
 
+  // this functions calculates
   updateNumberOptions() {
     let difference = this.state.nrPossibleAnswers - this.props.problem.mc_options.length
     if (difference > 0) {
@@ -76,6 +84,8 @@ class PanelMCQ extends React.Component {
   onChangeLabelType (e) {
     let value = parseInt(e.target.value)
     if (!isNaN(value)) {
+
+      // if the label type is True/False then reduce the number of mc options to 2
       if (parseInt(value) === 1) {
         this.setState({
           nrPossibleAnswers: 2,
@@ -126,7 +136,7 @@ class PanelMCQ extends React.Component {
     return (
       <React.Fragment>
         <div className='panel-block mcq-block'>
-            <label className='label'> Multiple choice question </label>
+            <label className='label'> Multiple choice </label>
             <Switch color='info' outlined value={this.props.problem.mc_options.length > 0} onChange={(e) => {
               if (e.target.checked) {
                 let npa = this.state.nrPossibleAnswers

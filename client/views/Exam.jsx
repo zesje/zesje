@@ -56,8 +56,7 @@ class Exams extends React.Component {
               return option
             }),
             widthMCO: 24,
-            heightMCO: 38,
-            isMCQ: problem.mc_options && problem.mc_options.length !== 0 // is the problem a mc question - used to display PanelMCQ
+            heightMCO: 38
           }
         }
       })
@@ -475,7 +474,6 @@ class Exams extends React.Component {
     const selectedWidgetId = this.state.selectedWidgetId
     let selectedWidget = selectedWidgetId && this.state.widgets[selectedWidgetId]
     let problem = selectedWidget && selectedWidget.problem
-    let isMCQ = (problem && problem.mc_options.length > 0) || false
     let widgetEditDisabled = (this.state.previewing || !problem)
       || (this.props.exam.finalized && problem.mc_options.length > 0)
     let isGraded = problem && problem.graded
@@ -505,23 +503,6 @@ class Exams extends React.Component {
             }))
           }}
           saveProblemName={this.saveProblemName}
-          isMCQProblem={isMCQ}
-          onMCQChange={
-            (checked) => {
-              this.setState(prevState => ({
-                changedWidgetId: selectedWidgetId,
-                widgets: update(prevState.widgets, {
-                  [selectedWidgetId]: {
-                    problem: {
-                      isMCQ: {
-                        $set: checked
-                      }
-                    }
-                  }
-                })
-              }))
-            }
-          }
         />
         <this.PanelExamActions />
       </React.Fragment>

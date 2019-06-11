@@ -9,7 +9,8 @@ from flask_restful import Resource, reqparse
 from werkzeug.datastructures import FileStorage
 from sqlalchemy.orm import selectinload
 
-from ..pdf_generation import PAGE_FORMATS, generate_pdfs, output_pdf_filename_format, join_pdfs, page_is_size
+from ..pdf_generation import generate_pdfs, output_pdf_filename_format, join_pdfs, page_is_size, make_pages_even
+from ..pdf_generation import PAGE_FORMATS
 from ..database import db, Exam, ExamWidget, Submission
 
 
@@ -280,10 +281,9 @@ class Exams(Resource):
 
         exam_dir = _get_exam_dir(exam.id)
         pdf_path = os.path.join(exam_dir, 'exam.pdf')
-
         os.makedirs(exam_dir, exist_ok=True)
 
-        pdf_data.save(pdf_path)
+        make_pages_even(pdf_path, args['pdf'])
 
         print(f"Added exam {exam.id} (name: {exam_name}, token: {exam.token}) to database")
 

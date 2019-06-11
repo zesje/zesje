@@ -18,18 +18,20 @@ class FeedbackPanel extends React.Component {
   }
 
   componentDidMount = () => {
-    this.props.bindShortcut(['up', 'k'], (event) => {
-      event.preventDefault()
-      this.prevOption()
-    })
-    this.props.bindShortcut(['down', 'j'], (event) => {
-      event.preventDefault()
-      this.nextOption()
-    })
-    this.props.bindShortcut(['space'], (event) => {
-      event.preventDefault()
-      this.toggleSelectedOption()
-    })
+    if (this.props.grading) {
+      this.props.bindShortcut(['up', 'k'], (event) => {
+        event.preventDefault()
+        this.prevOption()
+      })
+      this.props.bindShortcut(['down', 'j'], (event) => {
+        event.preventDefault()
+        this.nextOption()
+      })
+      this.props.bindShortcut(['space'], (event) => {
+        event.preventDefault()
+        this.toggleSelectedOption()
+      })
+    }
   }
 
   static getDerivedStateFromProps (nextProps, prevState) {

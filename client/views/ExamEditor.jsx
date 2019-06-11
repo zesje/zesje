@@ -198,7 +198,7 @@ class ExamEditor extends React.Component {
    */
   updateMCO = (widget, data) => {
     // update state
-    this.props.updateMCWidget(widget, {
+    this.props.updateMCOsInState(widget, {
       x: Math.round(data.x),
       y: Math.round(data.y)
     })
@@ -246,7 +246,7 @@ class ExamEditor extends React.Component {
 
       let changed = (oldX !== newX) || (oldY !== newY) // update the state only if the mc options were moved
       if (changed) {
-        this.props.updateMCWidget(widget, {
+        this.props.updateMCOsInState(widget, {
           x: Math.round(newX),
           y: Math.round(newY)
         })

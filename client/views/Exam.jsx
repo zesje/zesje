@@ -151,10 +151,6 @@ class Exams extends React.Component {
     })
   }
 
-  isProblemWidget = (widget) => {
-    return widget && this.state.widgets[widget].problem
-  }
-
   saveProblemName = () => {
     const changedWidgetId = this.state.changedWidgetId
     if (!changedWidgetId) return
@@ -245,7 +241,7 @@ class Exams extends React.Component {
           numPages={this.state.numPages}
           onPDFLoad={this.onPDFLoad}
           updateWidget={this.updateWidget}
-          updateMCWidget={this.updateMCWidget}
+          updateMCOsInState={this.updateMCOsInState}
           selectedWidgetId={this.state.selectedWidgetId}
           highlightFeedback={(widget, feedbackId) => {
             let index = widget.problem.feedback.findIndex(e => { return e.id === feedbackId })
@@ -326,7 +322,87 @@ class Exams extends React.Component {
     })
   }
 
+    /**
+   * This method generates MC options by making the right calls to the api and creating
+   * the widget object in the mc_options array of the corresponding problem.
+   * @param problemWidget the problem widget the mc options belong to
+   * @param labels the labels for the options
+   * @param index the index in the labels array (the function is recusive, this index is increased)
+   * @param xPos x position of the current option
+   * @param yPos y position of the current option
+   */
+  generateMCOs = (problemWidget, labels, index, xPos, yPos) => {
+    if (labels.length === index) return
 
+    let feedback = {
+      'name': labels[index],
+      'description': '',
+      'score': 0
+    }
+
+    let data = {
+      'label': labels[index],
+      'problem_id': problemWidget.problem.id,
+      'feedback_id': null,
+      'cbOffsetX': 7, // checkbox offset relative to option position on x axis
+      'cbOffsetY': 21, // checkbox offset relative to option position on y axis
+      'widget': {
+        'name': 'mc_option_' + labels[index],
+        'x': xPos,
+        'y': yPos,
+        'type': 'mcq_widget'
+      }
+    }
+
+    const formData = new window.FormData()
+    formData.append('name', data.widget.name)
+    formData.append('x', data.widget.x + data.cbOffsetX)
+    formData.append('y', data.widget.y + data.cbOffsetY)
+    formData.append('problem_id', data.problem_id)
+    formData.append('label', data.label)
+    formData.append('fb_description', feedback.description)
+    formData.append('fb_score', feedback.score)
+    api.put('mult-choice/', formData).then(result => {
+      data.id = result.mult_choice_id
+      data.feedback_id = result.feedback_id
+      feedback.id = result.feedback_id
+      this.addMCOtoState(problemWidget, data)
+      this.updateFeedback(feedback)
+      this.generateMCOs(problemWidget, labels, index + 1, xPos + problemWidget.problem.widthMCO, yPos)
+    }).catch(err => {
+      console.log(err)
+    })
+  }
+
+    /**
+   * This method creates a mc option widget object and adds it to the corresponding problem in the state
+   * @param problemWidget The widget the mc option belongs to
+   * @param data the mc option
+   */
+  addMCOtoState = (problemWidget, data) => {
+    this.setState((prevState) => {
+      return {
+        widgets: update(prevState.widgets, {
+          [this.state.selectedWidgetId]: {
+            problem: {
+              mc_options: {
+                $push: [data]
+              }
+            }
+          }
+        })
+      }
+    })
+  }
+
+
+  /**
+   * This method deletes mc options coupled to a problem in both the state and the database.
+   * @param widgetId the id of the widget for which the mc options need to be deleted
+   * @param index the index of the first mc option to be removed
+   * @param nrMCOs the number of mc options to remove
+   * @returns {Promise<T | never>}
+   */
   deleteMCOs = (widgetId, index, nrMCOs) => {
     let widget = this.state.widgets[widgetId]
     if (nrMCOs <= 0 || !widget.problem.mc_options.length) return;
@@ -365,33 +441,12 @@ class Exams extends React.Component {
   }
 
   /**
-   * This method creates a mc option widget object and adds it to the corresponding problem
-   * @param problemWidget The widget the mc option belongs to
-   * @param data the mc option
-   */
-  createNewMCWidget = (problemWidget, data) => {
-    this.setState((prevState) => {
-      return {
-        widgets: update(prevState.widgets, {
-          [this.state.selectedWidgetId]: {
-            problem: {
-              mc_options: {
-                $push: [data]
-              }
-            }
-          }
-        })
-      }
-    })
-  }
-
-  /**
    * This method is called when the mcq widget is moved. The positions of the options are stored separately and they
-  * all need to be updated
+  * all need to be updated in the state. This method does not update the positions of the mc options in the DB.
    * @param widget the problem widget that includes the mcq widget
    * @param data the new location of the mcq widget (the location of the top-left corner)
    */
-  updateMCWidget = (widget, data) => {
+  updateMCOsInState = (widget, data) => {
     let newMCO = widget.problem.mc_options.map((option, i) => {
       return {
         'widget': {
@@ -416,58 +471,6 @@ class Exams extends React.Component {
         }
       })
     }))
-  }
-
-  /**
-   * This method generates MC options by making the right calls to the api and creating
-   * the widget object in the mc_options array of the corresponding problem.
-   * @param problemWidget the problem widget the mc options belong to
-   * @param labels the labels for the options
-   * @param index the index in the labels array (the function is recusive, this index is increased)
-   * @param xPos x position of the current option
-   * @param yPos y position of the current option
-   */
-  generateAnswerBoxes = (problemWidget, labels, index, xPos, yPos) => {
-    if (labels.length === index) return
-
-    let feedback = {
-      'name': labels[index],
-      'description': '',
-      'score': 0
-    }
-
-    let data = {
-      'label': labels[index],
-      'problem_id': problemWidget.problem.id,
-      'feedback_id': null,
-      'cbOffsetX': 7, // checkbox offset relative to option position on x axis
-      'cbOffsetY': 21, // checkbox offset relative to option position on y axis
-      'widget': {
-        'name': 'mc_option_' + labels[index],
-        'x': xPos,
-        'y': yPos,
-        'type': 'mcq_widget'
-      }
-    }
-
-    const formData = new window.FormData()
-    formData.append('name', data.widget.name)
-    formData.append('x', data.widget.x + data.cbOffsetX)
-    formData.append('y', data.widget.y + data.cbOffsetY)
-    formData.append('problem_id', data.problem_id)
-    formData.append('label', data.label)
-    formData.append('fb_description', feedback.description)
-    formData.append('fb_score', feedback.score)
-    api.put('mult-choice/', formData).then(result => {
-      data.id = result.mult_choice_id
-      data.feedback_id = result.feedback_id
-      feedback.id = result.feedback_id
-      this.createNewMCWidget(problemWidget, data)
-      this.updateFeedback(feedback)
-      this.generateAnswerBoxes(problemWidget, labels, index + 1, xPos + problemWidget.problem.widthMCO, yPos)
-    }).catch(err => {
-      console.log(err)
-    })
   }
 
   SidePanel = (props) => {
@@ -564,7 +567,7 @@ class Exams extends React.Component {
                     xPos = problemWidget.x + 2
                     yPos = problemWidget.y + 2
                   }
-                  this.generateAnswerBoxes(problemWidget, labels, 0, xPos, yPos)
+                  this.generateMCOs(problemWidget, labels, 0, xPos, yPos)
                 }}
                 deleteMCOs={(nrMCOs) => {
                   let len = props.problem.mc_options.length
@@ -617,7 +620,7 @@ class Exams extends React.Component {
               /> ) : null}
           </React.Fragment>
         )}
-        {this.isProblemWidget(selectedWidgetId) &&
+        {props.problem &&
           <React.Fragment>
             <div className='panel-block'>
               {!this.state.editActive && <label className='label'>Feedback options</label>}

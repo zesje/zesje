@@ -11,6 +11,8 @@ import ExamEditor from './ExamEditor.jsx'
 import update from 'immutability-helper'
 import ExamFinalizeMarkdown from './ExamFinalize.md'
 import ConfirmationModal from '../components/ConfirmationModal.jsx'
+import FeedbackPanel from '../components/feedback/FeedbackPanel.jsx'
+import EditPanel from '../components/feedback/EditPanel.jsx'
 
 import * as api from '../api.jsx'
 
@@ -18,6 +20,9 @@ class Exams extends React.Component {
   state = {
     examID: null,
     page: 0,
+    editActive: false,
+    feedbackToEdit: null,
+    problemIdToEditFeedbackOf: null,
     numPages: null,
     selectedWidgetId: null,
     changedWidgetId: null,
@@ -42,11 +47,16 @@ class Exams extends React.Component {
             page: problem.page,
             name: problem.name,
             graded: problem.graded,
+            feedback: problem.feedback || [],
             mc_options: problem.mc_options.map((option) => {
-              option.widget.x -= 7
-              option.widget.y -= 21
+              option.cbOffsetX = 7 // checkbox offset relative to option position on x axis
+              option.cbOffsetY = 21 // checkbox offset relative to option position on y axis
+              option.widget.x -= option.cbOffsetX
+              option.widget.y -= option.cbOffsetY
               return option
             }),
+            widthMCO: 24,
+            heightMCO: 38,
             isMCQ: problem.mc_options && problem.mc_options.length !== 0 // is the problem a mc question - used to display PanelMCQ
           }
         }
@@ -66,7 +76,6 @@ class Exams extends React.Component {
         previewing: false
       }
     }
-
     return null
   }
 
@@ -78,6 +87,10 @@ class Exams extends React.Component {
     // The onBlur event is not fired when the input field is being disabled
     if (prevState.selectedWidgetId !== this.state.selectedWidgetId) {
       this.saveProblemName()
+      this.setState({
+        editActive: false,
+        problemIdToEditFeedbackOf: false
+      })
     }
   }
 
@@ -92,6 +105,43 @@ class Exams extends React.Component {
     if (!this.state.deletingExam) {
       this.props.updateExam(this.props.examID)
     }
+  }
+
+  editFeedback = (feedback) => {
+    this.setState({
+      editActive: true,
+      feedbackToEdit: feedback,
+      problemIdToEditFeedbackOf: this.state.selectedWidgetId
+    })
+  }
+
+  updateFeedback = (feedback) => {
+    let problemWidget = this.state.widgets[this.state.selectedWidgetId]
+    const index = problemWidget.problem.feedback.findIndex(e => { return e.id === feedback.id })
+    this.updateFeedbackAtIndex(feedback, problemWidget, index)
+  }
+
+  updateFeedbackAtIndex = (feedback, problemWidget, idx) => {
+    if (idx === -1) {
+      problemWidget.problem.feedback.push(feedback)
+    } else {
+      if (feedback.deleted) problemWidget.problem.feedback.splice(idx, 1)
+      else problemWidget.problem.feedback[idx] = feedback
+    }
+    this.setState({
+      widgets: this.state.widgets
+    })
+  }
+
+  backToFeedback = () => {
+    this.props.updateExam(this.props.exam.id)
+    this.setState({
+      editActive: false
+    })
+  }
+
+  isProblemWidget = (widget) => {
+    return widget && this.state.widgets[widget].problem
   }
 
   saveProblemName = () => {
@@ -134,6 +184,8 @@ class Exams extends React.Component {
               selectedWidgetId: null,
               changedWidgetId: null,
               deletingWidget: false,
+              editActive: false,
+              problemIdToEditFeedbackOf: null,
               widgets: update(prevState.widgets, {
                 $unset: [widgetId]
               })
@@ -182,6 +234,7 @@ class Exams extends React.Component {
           numPages={this.state.numPages}
           onPDFLoad={this.onPDFLoad}
           updateWidget={this.updateWidget}
+          updateMCWidget={this.updateMCWidget}
           selectedWidgetId={this.state.selectedWidgetId}
           selectWidget={(widgetId) => {
             this.setState({
@@ -189,7 +242,6 @@ class Exams extends React.Component {
             })
           }}
           createNewWidget={this.createNewWidget}
-          updateMCWidgetPosition={this.updateMCWidgetPosition}
           updateExam={() => {
             this.props.updateExam(this.props.examID)
           }}
@@ -271,11 +323,16 @@ class Exams extends React.Component {
               // update to try and get a consistent state
               this.props.updateExam(this.props.examID)
             })
+          }).then(res => {
+            let index = widget.problem.feedback.findIndex(e => { return e.id === res.feedback_id })
+            let feedback = widget.problem.feedback[index]
+            feedback.deleted = true
+            this.updateFeedbackAtIndex(feedback, widget, index)
           })
       })
 
       // remove the mc options from the state
-      // note that his can happen before they are removed in the DB due to async calls
+      // note that this can happen before they are removed in the DB due to async calls
       this.setState((prevState) => {
         return {
           widgets: update(prevState.widgets, {
@@ -294,11 +351,11 @@ class Exams extends React.Component {
   }
 
   /**
-   * This method creates a widget object and adds it to the corresponding problem
+   * This method creates a mc option widget object and adds it to the corresponding problem
    * @param problemWidget The widget the mc option belongs to
    * @param data the mc option
    */
-  createNewMCOWidget = (problemWidget, data) => {
+  createNewMCWidget = (problemWidget, data) => {
     this.setState((prevState) => {
       return {
         widgets: update(prevState.widgets, {
@@ -320,12 +377,12 @@ class Exams extends React.Component {
    * @param widget the problem widget that includes the mcq widget
    * @param data the new location of the mcq widget (the location of the top-left corner)
    */
-  updateMCWidgetPosition = (widget, data) => {
+  updateMCWidget = (widget, data) => {
     let newMCO = widget.problem.mc_options.map((option, i) => {
       return {
         'widget': {
           'x': {
-            $set: data.x + i * 24
+            $set: data.x + i * widget.problem.widthMCO
           },
           'y': {
             // each mc option needs to be positioned next to the previous option and should not overlap it
@@ -359,30 +416,41 @@ class Exams extends React.Component {
   generateAnswerBoxes = (problemWidget, labels, index, xPos, yPos) => {
     if (labels.length === index) return
 
+    let feedback = {
+      'name': labels[index],
+      'description': '',
+      'score': 0
+    }
+
     let data = {
       'label': labels[index],
       'problem_id': problemWidget.problem.id,
       'feedback_id': null,
+      'cbOffsetX': 7, // checkbox offset relative to option position on x axis
+      'cbOffsetY': 21, // checkbox offset relative to option position on y axis
       'widget': {
         'name': 'mc_option_' + labels[index],
-        'x': xPos + 7,
-        'y': yPos + 21,
+        'x': xPos,
+        'y': yPos,
         'type': 'mcq_widget'
       }
     }
 
     const formData = new window.FormData()
     formData.append('name', data.widget.name)
-    formData.append('x', data.widget.x)
-    formData.append('y', data.widget.y)
+    formData.append('x', data.widget.x + data.cbOffsetX)
+    formData.append('y', data.widget.y + data.cbOffsetY)
     formData.append('problem_id', data.problem_id)
     formData.append('label', data.label)
+    formData.append('fb_description', feedback.description)
+    formData.append('fb_score', feedback.score)
     api.put('mult-choice/', formData).then(result => {
       data.id = result.mult_choice_id
-      data.widget.x -= 7
-      data.widget.y -= 21
-      this.createNewMCOWidget(problemWidget, data)
-      this.generateAnswerBoxes(problemWidget, labels, index + 1, xPos + 24, yPos)
+      data.feedback_id = result.feedback_id
+      feedback.id = result.feedback_id
+      this.createNewMCWidget(problemWidget, data)
+      this.updateFeedback(feedback)
+      this.generateAnswerBoxes(problemWidget, labels, index + 1, xPos + problemWidget.problem.widthMCO, yPos)
     }).catch(err => {
       console.log(err)
     })
@@ -392,13 +460,14 @@ class Exams extends React.Component {
     const selectedWidgetId = this.state.selectedWidgetId
     let selectedWidget = selectedWidgetId && this.state.widgets[selectedWidgetId]
     let problem = selectedWidget && selectedWidget.problem
-    let widgetEditDisabled = this.state.previewing || !problem
+    let containsMCOptions = (problem && problem.mc_options.length > 0) || false
+    let widgetEditDisabled = (this.state.previewing || !problem) || (this.props.exam.finalized && containsMCOptions)
     let isGraded = problem && problem.graded
     let widgetDeleteDisabled = widgetEditDisabled || isGraded
     let totalNrAnswers = 12 // the upper limit for the nr of possible answer boxes
-    let containsMCOptions = (problem && problem.mc_options.length > 0) || false
     let disabledDeleteBoxes = !containsMCOptions
     let isMCQ = (problem && problem.isMCQ) || false
+    let showPanelMCQ = isMCQ && !this.state.previewing && !this.props.exam.finalized
 
     return (
       <React.Fragment>
@@ -443,7 +512,7 @@ class Exams extends React.Component {
             }
           }
         />
-        { isMCQ ? (
+        { showPanelMCQ ? (
           <PanelMCQ
             totalNrAnswers={totalNrAnswers}
             disabledGenerateBoxes={containsMCOptions}
@@ -505,17 +574,29 @@ class Exams extends React.Component {
             </div>
             <div className='panel-block'>
               <div className='field'>
-                <label className='label'>
-                  <input disabled={props.disableIsMCQ} type='checkbox' checked={props.isMCQProblem} onChange={
-                    (e) => {
-                      props.onMCQChange(e.target.checked)
-                    }} />
-                    Multiple choice question
-                </label>
+                <label className='label'> Multiple choice question </label>
+                <input disabled={props.disableIsMCQ} type='checkbox' checked={props.isMCQProblem} onChange={
+                  (e) => {
+                    props.onMCQChange(e.target.checked)
+                  }} />
               </div>
             </div>
           </React.Fragment>
         )}
+        {this.isProblemWidget(selectedWidgetId) &&
+          <React.Fragment>
+            <div className='panel-block'>
+              {!this.state.editActive && <label className='label'>Feedback options</label>}
+            </div>
+            {this.state.editActive
+              ? <EditPanel problemID={props.problem.id} feedback={this.state.feedbackToEdit}
+                goBack={this.backToFeedback} updateCallback={this.updateFeedback} />
+              : <FeedbackPanel examID={this.props.examID} problem={props.problem}
+                editFeedback={this.editFeedback} showTooltips={this.state.showTooltips}
+                grading={false}
+              />}
+          </React.Fragment>
+        }
         <div className='panel-block'>
           <button
             disabled={props.disabledDelete}

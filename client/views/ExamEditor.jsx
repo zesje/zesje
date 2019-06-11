@@ -88,7 +88,10 @@ class ExamEditor extends React.Component {
         const problemData = {
           name: 'New problem', // TODO: Name
           page: this.props.page,
+          feedback: [],
           mc_options: [],
+          widthMCO: 24,
+          heightMCO: 38,
           isMCQ: false
         }
         const widgetData = {
@@ -178,8 +181,8 @@ class ExamEditor extends React.Component {
    * @param widget the widget that was relocated
    * @param data  the new location
    */
-  updateWidgetPositionDB = (widget, data) => {
-    api.patch('widgets/' + widget.id, data).then(() => {
+  updateWidgetDB = (widget, data) => {
+    return api.patch('widgets/' + widget.id, data).then(() => {
       // ok
     }).catch(err => {
       console.log(err)
@@ -188,33 +191,77 @@ class ExamEditor extends React.Component {
     })
   }
 
-  updateState = (widget, data) => {
-    this.props.updateMCWidgetPosition(widget, {
+  /**
+   * This function updates the state and the Database with the positions of the mc options.
+   * @param widget the problem widget the mc options belong to
+   * @param data the new position of the mc widget
+   */
+  updateMCO = (widget, data) => {
+    // update state
+    this.props.updateMCWidget(widget, {
       x: Math.round(data.x),
       y: Math.round(data.y)
     })
-  }
 
-  updateMCOPosition = (widget, data) => {
-    this.updateState(widget, data)
-
+    // update DB
     widget.problem.mc_options.forEach(
       (option, i) => {
         let newData = {
-          x: Math.round(data.x) + i * 24 + 7,
-          y: Math.round(data.y) + 21
+          x: Math.round(data.x) + i * widget.problem.widthMCO + option.cbOffsetX,
+          y: Math.round(data.y) + option.cbOffsetY
         }
-        this.updateWidgetPositionDB(option, newData)
+        this.updateWidgetDB(option, newData)
       })
   }
 
   /**
-   * This function renders a group of options into one draggable widget
-   * @returns {*}
+   * This function updates the position of the mc options inside when the corresponding problem widget changes in
+   * size or position. Note that the positions in the database are not updated. These should be updated once when the
+   * action (resizing/dragging/other) is finalized.
+   * @param widget the problem widget containing mc options
+   * @param data the new data about the new size/position of the problem widget
+   */
+  repositionMC = (widget, data) => {
+    if (widget.problem.mc_options.length > 0) {
+      let oldX = widget.problem.mc_options[0].widget.x
+      let oldY = widget.problem.mc_options[0].widget.y
+      let newX = oldX
+      let newY = oldY
+      let widthOption = widget.problem.widthMCO * widget.problem.mc_options.length
+      let heightOption = widget.problem.heightMCO
+      let widthProblem = data.width ? data.width : widget.width
+      let heightProblem = data.height ? data.height : widget.height
+
+      if (newX < data.x) {
+        newX = data.x
+      } else if (newX + widthOption > data.x + widthProblem) {
+        newX = data.x + widget.width - widthOption
+      }
+
+      if (newY < data.y) {
+        newY = data.y
+      } else if (newY + heightOption > data.y + heightProblem) {
+        newY = data.y + widget.height - heightOption
+      }
+
+      let changed = (oldX !== newX) || (oldY !== newY) // update the state only if the mc options were moved
+      if (changed) {
+        this.props.updateMCWidget(widget, {
+          x: Math.round(newX),
+          y: Math.round(newY)
+        })
+      }
+    }
+  }
+
+  /**
+   * This function renders a group of options into one draggable widget.
+   * @param widget the problem widget that contains a mc options
+   * @return a react component representing the multiple choice widget
    */
   renderMCWidget = (widget) => {
-    let width = 24 * widget.problem.mc_options.length
-    let height = 38
+    let width = widget.problem.widthMCO * widget.problem.mc_options.length
+    let height = widget.problem.heightMCO
     let enableResizing = false
     const isSelected = widget.id === this.props.selectedWidgetId
     let xPos = widget.problem.mc_options[0].widget.x
@@ -248,7 +295,7 @@ class ExamEditor extends React.Component {
           this.props.selectWidget(widget.id)
         }}
         onDragStop={(e, data) => {
-          this.updateMCOPosition(widget, data)
+          this.updateMCO(widget, data)
         }}
       >
         <div className={isSelected ? 'mcq-widget widget selected' : 'mcq-widget widget '}>
@@ -268,9 +315,9 @@ class ExamEditor extends React.Component {
   }
 
   /**
-   * Render problem widget and the mc options that correspond to the problem
+   * Render problem widget and the mc options that correspond to the problem.
    * @param widget the corresponding widget object from the db
-   * @returns {Array}
+   * @returns {Array} an array of react components to be displayed
    */
   renderProblemWidget = (widget) => {
     // Only render when numPage is set
@@ -312,79 +359,49 @@ class ExamEditor extends React.Component {
             x: { $set: Math.round(position.x) },
             y: { $set: Math.round(position.y) }
           })
+          this.repositionMC(widget, {
+            width: ref.offsetWidth,
+            height: ref.offsetHeight,
+            x: Math.round(position.x),
+            y: Math.round(position.y)
+          })
         }}
         onResizeStop={(e, direction, ref, delta, position) => {
-          api.patch('widgets/' + widget.id, {
+          this.updateWidgetDB(widget, {
             x: Math.round(position.x),
             y: Math.round(position.y),
             width: ref.offsetWidth,
             height: ref.offsetHeight
           }).then(() => {
-            // ok
-          }).catch(err => {
-            console.log(err)
-            // update to try and get a consistent state
-            this.props.updateExam()
+            if (widget.problem.mc_options.length > 0) {
+              this.updateMCO(widget, {
+                x: widget.problem.mc_options[0].widget.x, // these are guaranteed to be up to date
+                y: widget.problem.mc_options[0].widget.y
+              })
+            }
           })
         }}
         onDragStart={() => {
           this.props.selectWidget(widget.id)
         }}
-        onDrag={(e, data) => {
-          if (widget.problem.mc_options.length > 0) {
-            let xPos = widget.problem.mc_options[0].widget.x
-            let yPos = widget.problem.mc_options[0].widget.y
-            let width = 24 * widget.problem.mc_options.length
-            let height = 38
-
-            if (xPos < data.x) {
-              xPos = data.x
-            } else if (xPos + width > data.x + widget.width) {
-              xPos = data.x + widget.width - width
-            }
-
-            if (yPos < data.y) {
-              yPos = data.y
-            } else if (yPos + height > data.y + widget.height) {
-              yPos = data.y + widget.height - height
-            }
-
-            this.updateState(widget, { x: xPos, y: yPos })
-          }
-        }}
+        onDrag={(e, data) => this.repositionMC(widget, data)}
         onDragStop={(e, data) => {
           this.props.updateWidget(widget.id, {
             x: { $set: Math.round(data.x) },
             y: { $set: Math.round(data.y) }
           })
-          api.patch('widgets/' + widget.id, {
+          this.updateWidgetDB(widget, {
             x: Math.round(data.x),
             y: Math.round(data.y)
           }).then(() => {
             if (widget.problem.mc_options.length > 0) {
-              let xPos = widget.problem.mc_options[0].widget.x
-              let yPos = widget.problem.mc_options[0].widget.y
-              let width = 24 * widget.problem.mc_options.length
-              let height = 38
-
-              if (xPos < data.x) {
-                xPos = data.x
-              } else if (xPos + width > data.x + widget.width) {
-                xPos = data.x + widget.width - width
-              }
-
-              if (yPos < data.y) {
-                yPos = data.y
-              } else if (yPos + height > data.y + widget.height) {
-                yPos = data.y + widget.height - height
-              }
-
-              this.updateMCOPosition(widget, { x: xPos, y: yPos })
+              this.updateMCO(widget, {
+                // react offers the guarantee that setState calls are processed before handling next event
+                // therefore the data in the state is up to date
+                x: widget.problem.mc_options[0].widget.x,
+                y: widget.problem.mc_options[0].widget.y
+              })
             }
-          }).catch(err => {
-            console.log(err)
-            // update to try and get a consistent state
-            this.props.updateExam()
           })
         }}
       >
@@ -405,7 +422,7 @@ class ExamEditor extends React.Component {
   /**
    * Render exam widgets.
    * @param widget the corresponding widget object from the db
-   * @returns {Array}
+   * @returns {Array} an array of react components to be displayed
    */
   renderExamWidget = (widget) => {
     if (this.props.finalized) return []
@@ -458,15 +475,9 @@ class ExamEditor extends React.Component {
             x: { $set: Math.round(data.x) },
             y: { $set: Math.round(data.y) }
           })
-          api.patch('widgets/' + widget.id, {
+          this.updateWidgetDB(widget, {
             x: Math.round(data.x),
             y: Math.round(data.y)
-          }).then(() => {
-            // ok
-          }).catch(err => {
-            console.log(err)
-            // update to try and get a consistent state
-            this.props.updateExam()
           })
         }}
       >
@@ -484,7 +495,7 @@ class ExamEditor extends React.Component {
 
   /**
    * Render all the widgets by calling the right rendering function for each widget type
-   * @returns {Array}
+   * @returns {Array} containing all widgets components to be displayed
    */
   renderWidgets = () => {
     // Only render when numPage is set

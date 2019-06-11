@@ -726,7 +726,7 @@ def realign_image(image_array, keypoints=None,
         New keypoints properly aligned.
     """
 
-    if(not keypoints):
+    if (not keypoints):
         keypoints = find_corner_marker_keypoints(image_array)
         check_corner_keypoints(image_array, keypoints)
 

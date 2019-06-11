@@ -78,20 +78,20 @@ def get_corner_marker_sides(corner_markers, shape):
 
     Parameters
     ----------
-    corner_markers : List[Tuple]
+    corner_markers : list of tuples
         The list of corner marker points
-    shape: Tuple
+    shape: tuple
         The shape of an image
 
     Returns
     -------
-    tuples : Tuple
+    tuples : tuple
         The corner markers divided into sides
     """
 
     def get_val(tup_list):
         """
-        Returns a tuple if present in
+        Returns a tuple if present in the list.
 
         Parameters
         ----------
@@ -131,9 +131,10 @@ def get_delta(top_left, top_right, bottom_left, bottom_right):
 
     Returns
     -------
-    delta : Tuple
+    delta : tuple
         The absolute difference as an (x, y) tuple
     """
+
     if not top_left or not bottom_left:
         return sub_tup(top_right, bottom_right)
 
@@ -165,15 +166,14 @@ def fix_corner_markers(corner_keypoints, shape):
     top_left, top_right, bottom_left, bottom_right = get_corner_marker_sides(corner_keypoints, shape)
     delta = get_delta(top_left, top_right, bottom_left, bottom_right)
 
-    # One point must be empty for three corner markers
     if not top_left:
         top_left = add_tup(bottom_left, delta)
 
-    if not bottom_left:
-        bottom_left = sub_tup(top_left, delta)
-
     if not top_right:
         top_right = add_tup(bottom_right, delta)
+
+    if not bottom_left:
+        bottom_left = sub_tup(top_left, delta)
 
     if not bottom_right:
         bottom_right = sub_tup(top_right, delta)

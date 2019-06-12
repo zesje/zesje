@@ -16,9 +16,9 @@ def add_test_data(app):
         db.session.add(exam2)
         db.session.add(exam3)
 
-        problem1 = Problem(id=1, name='Problem 1', exam_id=1)
-        problem2 = Problem(id=2, name='Problem 2', exam_id=2)
-        problem3 = Problem(id=3, name='Problem 3', exam_id=3)
+        problem1 = Problem(id=1, name='Problem 1', exam_id=1, grading_policy=1)
+        problem2 = Problem(id=2, name='Problem 2', exam_id=2, grading_policy=1)
+        problem3 = Problem(id=3, name='Problem 3', exam_id=3, grading_policy=1)
 
         db.session.add(problem1)
         db.session.add(problem2)

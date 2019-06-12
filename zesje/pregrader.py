@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 
-from .database import db, Solution
+from .database import db, Solution, Grader
 from .images import guess_dpi, get_box, fix_corner_markers
 
 
@@ -38,6 +38,41 @@ def add_feedback_to_solution(sub, exam, page, page_img, corner_keypoints):
                 feedback = mc_option.feedback
                 sol.feedback.append(feedback)
                 db.session.commit()
+
+        check_grading_policy(sol)
+
+
+def check_grading_policy(solution):
+    """
+    Check if a solution should be graded manually.
+
+    The grading policy means:
+        1: Manually grade everything
+        2: Manually grade blank solutions only
+        3: Manually grade blank solutions or solutions with one option
+
+    To ensure a solution is graded manually, the grader of a solution
+    is set to a grader named Zesje. That way, the detected option is
+    not set as 'ungraded'.
+
+    Parameters
+    ----------
+    solution : Solution
+        The solution
+    """
+    marked_opt_count = len(list(filter(lambda mc: mc.feedback, solution.problem.mc_options)))
+
+    # TODO: Check right grader
+    zesje_grader = Grader.query.get(Grader.name == 'zesje').first()
+
+    grading_policy = solution.problem.grading_policy
+
+    if grading_policy == 0:
+        solution.graded_by = zesje_grader
+    if grading_policy == 1 and marked_opt_count == 0:
+        solution.graded_by = zesje_grader
+    if grading_policy == 2 and marked_opt_count < 2:
+        solution.grader_by = zesje_grader
 
 
 def box_is_filled(box, page_img, corner_keypoints, marker_margin=72/2.54, threshold=225, cut_padding=0.1, box_size=11):

@@ -131,6 +131,9 @@ class MultipleChoice(Resource):
 
         mc_entry = MultipleChoiceOption.query.get(id)
 
+        if mc_entry.feedback.problem.exam.finalized:
+            return dict(status=403, message=f'Exam is finalized'), 403
+
         if not mc_entry:
             return dict(status=404, message=f"Multiple choice question with id {id} does not exist"), 404
 

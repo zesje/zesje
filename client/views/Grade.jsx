@@ -2,9 +2,9 @@ import React from 'react'
 
 import Hero from '../components/Hero.jsx'
 
-import FeedbackPanel from './grade/FeedbackPanel.jsx'
+import FeedbackPanel from '../components/feedback/FeedbackPanel.jsx'
 import ProblemSelector from './grade/ProblemSelector.jsx'
-import EditPanel from './grade/EditPanel.jsx'
+import EditPanel from '../components/feedback/EditPanel.jsx'
 import SearchBox from '../components/SearchBox.jsx'
 import ProgressBar from '../components/ProgressBar.jsx'
 import withShortcuts from '../components/ShortcutBinder.jsx'
@@ -12,6 +12,7 @@ import withShortcuts from '../components/ShortcutBinder.jsx'
 import * as api from '../api.jsx'
 
 import 'bulma-tooltip/dist/css/bulma-tooltip.min.css'
+import './grade/Grade.css'
 
 class Grade extends React.Component {
   state = {
@@ -29,6 +30,7 @@ class Grade extends React.Component {
     // update the tooltips for the associated widgets (in render()).
     this.props.bindShortcut(['left', 'h'], this.prev)
     this.props.bindShortcut(['right', 'l'], this.next)
+    this.props.bindShortcut(['a'], this.approve)
     this.props.bindShortcut(['shift+left', 'shift+h'], (event) => {
       event.preventDefault()
       this.prevUngraded()
@@ -152,6 +154,20 @@ class Grade extends React.Component {
       })
   }
 
+  approve = () => {
+    const exam = this.props.exam
+    const problem = exam.problems[this.state.pIndex]
+    const optionURI = this.state.examID + '/' +
+      exam.submissions[this.state.sIndex].id + '/' +
+      problem.id
+    api.put('solution/approve/' + optionURI, {
+      graderID: this.props.graderID
+    })
+      .then(result => {
+        this.props.updateSubmission(this.state.sIndex)
+      })
+  }
+
   toggleFullPage = (event) => {
     this.setState({
       fullPage: event.target.checked
@@ -209,17 +225,18 @@ class Grade extends React.Component {
               <div className='column is-one-quarter-desktop is-one-third-tablet'>
                 <ProblemSelector problems={exam.problems} changeProblem={this.changeProblem}
                   current={this.state.pIndex} showTooltips={this.state.showTooltips} />
-                {this.state.editActive
-                  ? <EditPanel problemID={problem.id} feedback={this.state.feedbackToEdit}
-                    goBack={this.backToFeedback} />
-                  : <FeedbackPanel examID={exam.id} submissionID={submission.id}
-                    problem={problem} solution={solution} graderID={this.props.graderID}
-                    editFeedback={this.editFeedback} showTooltips={this.state.showTooltips}
-                    updateSubmission={() => {
-                      this.props.updateSubmission(this.state.sIndex)
-                    }
-                    } />
-                }
+                <nav className='panel'>
+                  {this.state.editActive
+                    ? <EditPanel problemID={problem.id} feedback={this.state.feedbackToEdit}
+                      goBack={this.backToFeedback} />
+                    : <FeedbackPanel examID={exam.id} submissionID={submission.id}
+                      problem={problem} solution={solution} graderID={this.props.graderID}
+                      editFeedback={this.editFeedback} showTooltips={this.state.showTooltips}
+                      updateSubmission={() => {
+                        this.props.updateSubmission(this.state.sIndex)
+                      }} grading />
+                  }
+                </nav>
               </div>
 
               <div className='column'>
@@ -259,9 +276,13 @@ class Grade extends React.Component {
                           renderSuggestion={(submission) => {
                             const stud = submission.student
                             return (
-                              <div>
-                                <b>{`${stud.firstName} ${stud.lastName}`}</b>
-                                <i style={{float: 'right'}}>({stud.id})</i>
+                              <div className='flex-parent'>
+                                <b className='flex-child truncated'>
+                                  {`${stud.firstName} ${stud.lastName}`}
+                                </b>
+                                <i className='flex-child fixed'>
+                                  ({stud.id})
+                                </i>
                               </div>
                             )
                           }}
@@ -294,7 +315,7 @@ class Grade extends React.Component {
                   </article> : null
                 }
 
-                <p className='box'>
+                <p className={'box' + (solution.graded_at ? ' is-graded' : '')}>
                   <img src={exam.id ? ('api/images/solutions/' + exam.id + '/' +
                     problem.id + '/' + submission.id + '/' + (this.state.fullPage ? '1' : '0')) + '?' +
                     this.getLocationHash(problem) : ''} alt='' />

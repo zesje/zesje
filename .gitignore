@@ -89,8 +89,19 @@ build/
 # development data
 data-dev
 
+# test data
+tests/data/submissions
+
+# redis dump
+dump.rdb
+
 # webpack analyze data
 stats.json
 
 # JetBrains IDE folders
 .idea/
+
+# pytest coverage reports
+.coverage
+cov.xml
+cov.html/

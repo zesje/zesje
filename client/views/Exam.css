@@ -30,7 +30,8 @@ div.mcq-option img.mcq-box {
 
 .editor-content {
   background-color: #ddd;
-  border-radius: 10px
+  border-radius: 10px;
+  height: 100%;
 }
 
 .selection-area {

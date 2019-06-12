@@ -10,6 +10,19 @@ from reportlab.pdfgen import canvas
 
 output_pdf_filename_format = '{0:05d}.pdf'
 
+# the size of the markers in points
+MARKER_FORMAT = {
+    "margin": 10 * mm,
+    "marker_line_length": 8 * mm,
+    "marker_line_width": 1 * mm,
+    "bar_length": 40 * mm
+}
+
+PAGE_FORMATS = {
+    "A4": (595.276, 841.89),
+    "US letter": (612, 792),
+}
+
 
 def generate_pdfs(exam_pdf_file, exam_id, copy_nums, output_paths, id_grid_x,
                   id_grid_y, datamatrix_x, datamatrix_y, cb_data=None):
@@ -173,13 +186,14 @@ def generate_checkbox(canvas, x, y, label):
     margin = 5  # Margin between elements and sides
     markboxsize = fontsize - 2  # Size of checkboxes boxes
     x_label = x + 1  # location of the label
-    y_label = y - fontsize  # remove fontsize from the y label since we draw from the bottom left up
-    box_y = y - markboxsize
+    y_label = y + margin  # remove fontsize from the y label since we draw from the bottom left up
+    box_y = y - markboxsize  # remove the markboxsize because the y is the coord of the top
+    # and reportlab prints from the bottom
+
     # check that there is a label to print
     if (label and not (len(label) == 0)):
         canvas.setFont('Helvetica', fontsize)
         canvas.drawString(x_label, y_label, label[0])
-        box_y = box_y - margin - fontsize
 
     canvas.rect(x, box_y, markboxsize, markboxsize)
 
@@ -317,15 +331,14 @@ def _add_corner_markers_and_bottom_bar(canv, pagesize):
     """
     page_width = pagesize[0]
     page_height = pagesize[1]
-    margin = 10 * mm
-    marker_line_length = 8 * mm
-    bar_length = 40 * mm
+    marker_line_length = MARKER_FORMAT["marker_line_length"]
+    bar_length = MARKER_FORMAT["bar_length"]
 
     # Calculate coordinates offset from page edge
-    left = margin
-    bottom = margin
-    right = page_width - margin
-    top = page_height - margin
+    left = MARKER_FORMAT["margin"]
+    bottom = MARKER_FORMAT["margin"]
+    right = page_width - MARKER_FORMAT["margin"]
+    top = page_height - MARKER_FORMAT["margin"]
 
     # Calculate start and end coordinates of bottom bar
     bar_start = page_width / 2 - bar_length / 2
@@ -389,3 +402,19 @@ def page_is_size(exam_pdf_file, shape, tolerance=0):
         pass
 
     return not invalid
+
+
+def make_pages_even(output_filename, exam_pdf_file):
+    exam_pdf = PdfReader(exam_pdf_file)
+    new = PdfWriter()
+    new.addpages(exam_pdf.pages)
+    pagecount = len(exam_pdf.pages)
+
+    if (pagecount % 2 == 1):
+        blank = PageMerge()
+        box = exam_pdf.pages[0].MediaBox
+        blank.mbox = box
+        blank = blank.render()
+        new.addpage(blank)
+
+    new.write(output_filename)

@@ -10,13 +10,16 @@ import cv2
 import numpy as np
 import PyPDF2
 from PIL import Image
+from wand.image import Image as WandImage
 from pylibdmtx import pylibdmtx
 
 from .database import db, Scan, Exam, Page, Student, Submission, Solution, ExamWidget
 from .datamatrix import decode_raw_datamatrix
-from .images import guess_dpi, get_box
+from .images import guess_dpi, get_box, fix_corner_markers
 from .factory import make_celery
+from .pregrader import add_feedback_to_solution
 
+from .pdf_generation import MARKER_FORMAT, PAGE_FORMATS
 
 ExtractedBarcode = namedtuple('ExtractedBarcode', ['token', 'copy', 'page'])
 
@@ -53,7 +56,7 @@ def process_pdf(scan_id):
         # TODO: When #182 is implemented, properly separate user-facing
         #       messages (written to DB) from developer-facing messages,
         #       which should be written into the log.
-        write_pdf_status(scan_id, 'error', "Unexpected error: " + str(error))
+        write_pdf_status(scan_id, 'error', f"Unexpected error: {error}")
 
 
 def _process_pdf(scan_id, app_config):
@@ -65,6 +68,8 @@ def _process_pdf(scan_id, app_config):
 
     # Raises exception if zero or more than one scans found
     scan = Scan.query.filter(Scan.id == scan_id).one()
+
+    report_progress('Importing PDF')
 
     pdf_path = os.path.join(data_directory, 'scans', f'{scan.id}.pdf')
     output_directory = os.path.join(data_directory, f'{scan.exam.id}_data')
@@ -88,8 +93,8 @@ def _process_pdf(scan_id, app_config):
                     print(description)
                     failures.append(page)
             except Exception as e:
-                report_error(f'Error processing page {page}: {e}')
-                return
+                report_error(f'Error processing page {e}')
+                raise
     except Exception as e:
         report_error(f"Failed to read pdf: {e}")
         raise
@@ -126,39 +131,133 @@ def exam_metadata(exam_id):
 def extract_images(filename):
     """Yield all images from a PDF file.
 
+    Tries to use PyPDF2 to extract the images from the given PDF.
+    If PyPDF2 fails to open the PDF or PyPDF2 is not able to extract
+    a page, it continues to use Wand for the rest of the pages.
+    """
+
+    with open(filename, "rb") as file:
+        use_wand = False
+        pypdf_reader = None
+        wand_image = None
+        total = 0
+
+        try:
+            pypdf_reader = PyPDF2.PdfFileReader(file)
+            total = pypdf_reader.getNumPages()
+        except Exception:
+            # Fallback to Wand if opening the PDF with PyPDF2 failed
+            use_wand = True
+
+        if use_wand:
+            # If PyPDF2 failed we need Wand to count the number of pages
+            wand_image = WandImage(filename=filename, resolution=300)
+            total = len(wand_image.sequence)
+
+        for pagenr in range(total):
+            if not use_wand:
+                try:
+                    # Try to use PyPDF2, but catch any error it raises
+                    img = extract_image_pypdf(pagenr, pypdf_reader)
+
+                except Exception:
+                    # Fallback to Wand if extracting with PyPDF2 failed
+                    use_wand = True
+
+            if use_wand:
+                if wand_image is None:
+                    wand_image = WandImage(filename=filename, resolution=300)
+                img = extract_image_wand(pagenr, wand_image)
+
+            if img.mode == 'L':
+                img = img.convert('RGB')
+
+            yield img, pagenr+1
+
+        if wand_image is not None:
+            wand_image.close()
+
+
+def extract_image_pypdf(pagenr, reader):
+    """Extracts an image as an array from the designated page
+
+    This method uses PyPDF2 to extract the image and only works
+    when there is a single image present on the page.
+
+    Raises an error if not exactly one image is found on the page
+    or the image filter is not `FlateDecode`.
+
     Adapted from https://stackoverflow.com/a/34116472/2217463
 
-    We raise if there are > 1 images / page
+    Parameters
+    ----------
+    pagenr : int
+        Page number to extract
+    reader : PyPDF2.PdfFileReader instance
+        The reader to read the page from
+
+    Returns
+    -------
+    img_array : PIL Image
+        The extracted image data
+
+    Raises
+    ------
+    ValueError if not exactly one image is found on the page
+
+    NotImplementedError if the image filter is not `FlateDecode`
     """
-    reader = PyPDF2.PdfFileReader(open(filename, "rb"))
-    total = reader.getNumPages()
-    for pagenr in range(total):
-        page = reader.getPage(pagenr)
-        xObject = page['/Resources']['/XObject'].getObject()
 
-        if sum((xObject[obj]['/Subtype'] == '/Image')
-               for obj in xObject) > 1:
-            raise RuntimeError(f'Page {pagenr + 1} contains more than 1 image,'
-                               'likely not a scan')
+    page = reader.getPage(pagenr)
+    xObject = page['/Resources']['/XObject'].getObject()
 
-        for obj in xObject:
-            if xObject[obj]['/Subtype'] == '/Image':
-                data = xObject[obj].getData()
-                filter = xObject[obj]['/Filter']
+    if sum((xObject[obj]['/Subtype'] == '/Image')
+            for obj in xObject) != 1:
+        raise ValueError
 
-                if filter == '/FlateDecode':
-                    size = (xObject[obj]['/Width'], xObject[obj]['/Height'])
-                    if xObject[obj]['/ColorSpace'] == '/DeviceRGB':
-                        mode = "RGB"
-                    else:
-                        mode = "P"
-                    img = Image.frombytes(mode, size, data)
+    for obj in xObject:
+        if xObject[obj]['/Subtype'] == '/Image':
+            data = xObject[obj].getData()
+            filter = xObject[obj]['/Filter']
+
+            if filter == '/FlateDecode':
+                size = (xObject[obj]['/Width'], xObject[obj]['/Height'])
+                if xObject[obj]['/ColorSpace'] == '/DeviceRGB':
+                    mode = "RGB"
                 else:
-                    img = Image.open(BytesIO(data))
+                    mode = "P"
+                img = Image.frombytes(mode, size, data)
+            else:
+                raise NotImplementedError
 
-                if img.mode == 'L':
-                    img = img.convert('RGB')
-                yield img, pagenr+1
+            return img
+
+
+def extract_image_wand(pagenr, wand_image):
+    """Flattens a page from a PDF to an image array
+
+    This method uses Wand to flatten the page and extract the image.
+
+    Parameters
+    ----------
+    pagenr : int
+        Page number to extract, starting at 0
+    wand_image : Wand Image instance
+        The Wand Image to read from
+
+    Returns
+    -------
+    img_array : PIL Image
+        The extracted image data
+    """
+
+    single_page = WandImage(wand_image.sequence[pagenr])
+    single_page.format = 'jpg'
+    img_array = np.asarray(bytearray(single_page.make_blob(format="jpg")), dtype=np.uint8)
+    img = Image.open(BytesIO(img_array))
+    img.load()  # Load the data into the PIL image from the Wand image
+    single_page.close()  # Then close the Wand image
+    return img
 
 
 def write_pdf_status(scan_id, status, message):
@@ -221,8 +320,15 @@ def process_page(image_data, exam_config, output_dir=None, strict=False):
         if strict:
             return False, str(e)
     else:
-        (image_array, new_keypoints) = rotate_image(image_array, corner_keypoints)
-        image_array = shift_image(image_array, new_keypoints)
+        image_array = realign_image(image_array, corner_keypoints)
+
+    # get new corner markers of the realigned image
+    corner_keypoints = find_corner_marker_keypoints(image_array)
+    try:
+        check_corner_keypoints(image_array, corner_keypoints)
+    except RuntimeError as e:
+        if strict:
+            return False, str(e)
 
     try:
         barcode, upside_down = decode_barcode(image_array, exam_config)
@@ -240,7 +346,13 @@ def process_page(image_data, exam_config, output_dir=None, strict=False):
     else:
         return True, "Testing, image not saved and database not updated."
 
-    update_database(image_path, barcode)
+    sub, exam = update_database(image_path, barcode)
+
+    try:
+        add_feedback_to_solution(sub, exam, barcode.page, image_array, corner_keypoints)
+    except RuntimeError as e:
+        if strict:
+            return False, str(e)
 
     if barcode.page == 0:
         description = guess_student(
@@ -288,8 +400,12 @@ def update_database(image_path, barcode):
 
     Returns
     -------
-    signature_validated : bool
-        If the corresponding submission has a validated signature.
+    sub, exam where
+
+    sub : Submission
+        the current submission
+    exam : Exam
+        the current exam
     """
     exam = Exam.query.filter(Exam.token == barcode.token).first()
     if exam is None:
@@ -308,6 +424,8 @@ def update_database(image_path, barcode):
         db.session.add(Page(path=image_path, submission=sub, number=barcode.page))
 
     db.session.commit()
+
+    return sub, exam
 
 
 def decode_barcode(image, exam_config):
@@ -356,104 +474,6 @@ def decode_barcode(image, exam_config):
                 pass
 
     raise RuntimeError("No barcode found.")
-
-
-def rotate_image(image_array, corner_keypoints):
-    """Rotate an image according to the rotation of the corner markers."""
-
-    # Find two corner markers which lie in the same horizontal half.
-    # Same horizontal half is chosen as the line from one keypoint to
-    # the other shoud be 0. To get corner markers in the same horizontal half,
-    # the pair with the smallest distance is chosen.
-    distances = [(a, b, math.hypot(a[0] - b[0], a[1] - b[1]))
-                 for (a, b)
-                 in list(itertools.combinations(corner_keypoints, 2))]
-    distances.sort(key=lambda tup: tup[2], reverse=True)
-    best_keypoint_combination = distances.pop()
-
-    (coords1, coords2, dist) = best_keypoint_combination
-
-    # If the angle is downward, we have a negative angle and
-    # we want to rotate it counterclockwise
-    # However warpaffine needs a positve angle if
-    # you want to rotate it counterclockwise
-    # So we invert the angle retrieved from calc_angle
-    angle_deg = -1 * calc_angle(coords1, coords2)
-    angle_rad = math.radians(angle_deg)
-
-    h, w, *_ = image_array.shape
-    rot_origin = (w / 2, h / 2)
-
-    keyp_from_rot_origin = [(coord_x - rot_origin[0], coord_y - rot_origin[1])
-                            for (coord_x, coord_y)
-                            in corner_keypoints]
-
-    after_rot_keypoints = [((coord_y * math.sin(angle_rad) +
-                            coord_x * math.cos(angle_rad) + rot_origin[0]),
-                            (coord_y * math.cos(angle_rad) -
-                            coord_x * math.sin(angle_rad)) + rot_origin[1])
-                           for (coord_x, coord_y)
-                           in keyp_from_rot_origin]
-
-    # Create rotation matrix and rotate the image around the center
-    rot_mat = cv2.getRotationMatrix2D(rot_origin, angle_deg, 1)
-    rot_image = cv2.warpAffine(image_array, rot_mat, (w, h), cv2.BORDER_CONSTANT,
-                               borderMode=cv2.BORDER_CONSTANT,
-                               borderValue=(255, 255, 255))
-
-    return (rot_image, after_rot_keypoints)
-
-
-def shift_image(image, corner_keypoints):
-    """Roll the image such that QR occupies coords
-       specified by the template."""
-    corner_keypoints = np.array(corner_keypoints)
-    h, w, *_ = image.shape
-
-    xkeypoints = np.array([keypoint[0] for keypoint in corner_keypoints])
-    ykeypoints = np.array([keypoint[1] for keypoint in corner_keypoints])
-
-    is_left_half = xkeypoints < (w / 2)
-    is_top_half = ykeypoints < (h / 2)
-
-    # Get pixel locations to translate to. Currently only works with A4 sized
-    # paper
-    # TODO Add US letter functionality
-    x0 = 10/210 * w
-    y0 = 10/297 * h
-
-    # If there is a keypoint in the topleft, take that point as starting point
-    # for the translation
-    topleft = corner_keypoints[is_left_half & is_top_half]
-    if(len(topleft) == 1):
-        x = topleft[0][0]
-        y = topleft[0][1]
-    else:
-
-        # If there is no keypoint in the topleft, try to check if there is one
-        # in the bottom left and bottom right. If so, infer the topleft
-        # coordinates from their coordinates
-        topright = corner_keypoints[~is_left_half & is_top_half]
-        bottomleft = corner_keypoints[is_left_half & ~is_top_half]
-        if(len(topright) == 1 & len(bottomleft) == 1):
-            x = bottomleft[0][0]
-            y = topright[0][1]
-
-        else:
-            # We can only end here if something went wrong with the detection
-            # of corner markers. If so, just don't shift at all.
-            x = x0
-            y = y0
-
-    shift = np.round((y0-y, x0-x)).astype(int)
-    shifted_image = np.roll(image, shift[0], axis=0)
-    shifted_image = np.roll(shifted_image, shift[1], axis=1)
-
-    # Workaround of https://github.com/python-pillow/Pillow/issues/3109
-    if shifted_image.dtype == bool:
-        shifted_image = shifted_image * np.uint8(255)
-
-    return shifted_image
 
 
 def guess_student(exam_token, copy_number, app_config=None, force=False):
@@ -679,3 +699,67 @@ def check_corner_keypoints(image_array, keypoints):
 
     if max(corners.values()) > 1:
         raise RuntimeError("Found multiple corner markers in the same corner")
+
+
+def realign_image(image_array, keypoints=None,
+                  reference_keypoints=None, page_format="A4"):
+    """
+    Transform the image so that the keypoints match the reference.
+
+    params
+    ------
+    image_array : numpy.array
+        The image in the form of a numpy array.
+    keypoints : List[(int,int)]
+        tuples of coordinates of the found keypoints, (x,y), in pixels. Can be a set of 3 or 4 tuples.
+        if none are provided, they are calculated based on the image_array.
+    reference_keypoints: List[(int,int)]
+        Similar to keypoints, only these belong to the keypoints found on the original scan.
+        If none are provided, standard locations are used. Namely [(59, 59), (1179, 59), (59, 1693), (1179, 1693)],
+        which are from an ideal scan of an a4 at 200 dpi.
+
+    returns
+    -------
+    return_array: numpy.array
+        The image realign properly.
+    return_keypoints: List[(int,int)]
+        New keypoints properly aligned.
+    """
+
+    if (not keypoints):
+        keypoints = find_corner_marker_keypoints(image_array)
+        check_corner_keypoints(image_array, keypoints)
+
+    if (len(keypoints) != 4):
+        keypoints = fix_corner_markers(keypoints, image_array.shape)
+
+    # use standard keypoints if no custom ones are provided
+    if (not reference_keypoints):
+        dpi = guess_dpi(image_array)
+        reference_keypoints = generate_perfect_corner_markers(page_format, dpi)
+
+    if (len(reference_keypoints) != 4):
+        # this function assumes that the template has the same dimensions as the input image
+        reference_keypoints = fix_corner_markers(reference_keypoints, image_array.shape)
+
+    rows, cols, _ = image_array.shape
+
+    # get the transformation matrix
+    M = cv2.getPerspectiveTransform(np.float32(keypoints), np.float32(reference_keypoints))
+    # apply the transformation matrix and fill in the new empty spaces with white
+    return_image = cv2.warpPerspective(image_array, M, (cols, rows),
+                                       borderValue=(255, 255, 255, 255))
+
+    return return_image
+
+
+def generate_perfect_corner_markers(format="A4", dpi=200):
+    left_x = MARKER_FORMAT["margin"]/72 * dpi
+    top_y = MARKER_FORMAT["margin"]/72 * dpi
+    right_x = (PAGE_FORMATS[format][0] - MARKER_FORMAT["margin"])/72 * dpi
+    bottom_y = (PAGE_FORMATS[format][1] - MARKER_FORMAT["margin"])/72 * dpi
+
+    return np.round([(left_x, top_y),
+                     (right_x, top_y),
+                     (left_x, bottom_y),
+                     (right_x, bottom_y)])

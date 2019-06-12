@@ -68,8 +68,8 @@ def get(exam_id, problem_id, submission_id, full_page=False):
         fb = list(map(lambda x: x.id, solution.feedback))
         for option in problem.mc_options:
             if option.feedback_id in fb:
-                x = int((option.x) / 72 * dpi)
-                y = int((option.y) / 72 * dpi)
+                x = int(option.x / 72 * dpi)
+                y = int(option.y / 72 * dpi)
                 box_length = int(BOX_SIZE / 72 * dpi)
                 x1 = x + box_length
                 y1 = y + box_length

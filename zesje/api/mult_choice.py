@@ -109,9 +109,6 @@ class MultipleChoice(Resource):
         if mult_choice.label:
             json['label'] = mult_choice.label
 
-        if mult_choice.feedback_id:
-            json['feedback_id'] = mult_choice.feedback_id
-
         return json
 
     patch_parser = reqparse.RequestParser()

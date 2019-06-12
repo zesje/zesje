@@ -3,6 +3,7 @@ import numpy as np
 
 from .database import db, Solution
 from .images import guess_dpi, get_box
+from .pdf_generation import CHECKBOX_FORMAT
 
 
 def add_feedback_to_solution(sub, exam, page, page_img):
@@ -26,7 +27,7 @@ def add_feedback_to_solution(sub, exam, page, page_img):
         for mc_option in problem.mc_options:
             box = (mc_option.x, mc_option.y)
 
-            if box_is_filled(box, page_img):
+            if box_is_filled(box, page_img, box_size=CHECKBOX_FORMAT["box_size"]):
                 feedback = mc_option.feedback
                 sol.feedback.append(feedback)
                 db.session.commit()

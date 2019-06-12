@@ -100,10 +100,10 @@ def get_corner_marker_sides(corner_markers, shape):
 
         Returns
         -------
-        tup : tuple or list
+        tup : tuple or None
             Tuple in list or empty list
         """
-        return tup_list[0] if tup_list else []
+        return tup_list[0] if tup_list else None
 
     x_sep = shape[1] / 2
     y_sep = shape[0] / 2
@@ -125,9 +125,9 @@ def get_delta(top_left, top_right, bottom_left, bottom_right):
     top_right : tuple
         Top right point
     bottom_left : tuple
-        Tot om_left point
+        Bottom left point
     bottom_right : tuple
-        Tot om_right point
+        Bottom right point
 
     Returns
     -------
@@ -142,19 +142,19 @@ def get_delta(top_left, top_right, bottom_left, bottom_right):
 
 
 def fix_corner_markers(corner_keypoints, shape):
-    """Corrects the list of corner markers if only three corner markers are found.
-    This function raises if less than three corner markers are detected.
+    """Corrects the list of corner markers if three corner markers are found.
+    This function raises if less than three corner markers are found.
 
     Parameters
     ----------
-    corner_keypoints : list of tuple
+    corner_keypoints : list of tuples
         List of corner marker locations as tuples
-    shape : tuple
+    shape : (float, float, int)
         Shape of the image in (x, y, dim)
 
     Returns
     -------
-    corner_keypoints : (float, float)
+    fixed_corners : (float, float)
         A list of four corner markers.
     """
     if len(corner_keypoints) == 4:

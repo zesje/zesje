@@ -29,7 +29,7 @@ def scanned_image_keypoints(scanned_image):
                          ids=["1 filled", "2 empty", "3 marked with line", "4 completely filled",
                               "5 marked with an x", "e marked with a cirle inside"])
 def test_ideal_crops(box_coords, result, scanned_image_keypoints, scanned_image):
-    assert pregrader.box_is_filled(box_coords, scanned_image, scanned_image_keypoints[0]) == result
+    assert pregrader.box_is_filled(box_coords, scanned_image, scanned_image_keypoints[0], box_size=9) == result
 
 
 @pytest.mark.parametrize('box_coords, result', [((341, 471), True), ((352, 482), True), ((448, 482), True),
@@ -39,7 +39,7 @@ def test_ideal_crops(box_coords, result, scanned_image_keypoints, scanned_image)
                               "4 fully filled with the label", "6 empty with label",
                               "7 partially  cropped, filled and a part of 6", "B empty with cb at the bottom"])
 def test_shifted_crops(box_coords, result, scanned_image_keypoints, scanned_image):
-    assert pregrader.box_is_filled(box_coords, scanned_image, scanned_image_keypoints[0]) == result
+    assert pregrader.box_is_filled(box_coords, scanned_image, scanned_image_keypoints[0], box_size=9) == result
 
 
 @pytest.mark.parametrize('box_coords, result', [((60, 562), True), ((107, 562), True),
@@ -47,4 +47,4 @@ def test_shifted_crops(box_coords, result, scanned_image_keypoints, scanned_imag
                          ids=["A filled with trailing letter", "C filled with letters close",
                               "D blank with trailing letter"])
 def test_trailing_text(box_coords, result, scanned_image_keypoints, scanned_image):
-    assert pregrader.box_is_filled(box_coords, scanned_image, scanned_image_keypoints[0]) == result
+    assert pregrader.box_is_filled(box_coords, scanned_image, scanned_image_keypoints[0], box_size=9) == result

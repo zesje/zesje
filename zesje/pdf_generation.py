@@ -18,6 +18,12 @@ MARKER_FORMAT = {
     "bar_length": 40 * mm
 }
 
+# the parameters of drawing checkboxes
+CHECKBOX_FORMAT = {
+    "margin": 5,
+    "font_size": 11,
+    "box_size": 9
+}
 PAGE_FORMATS = {
     "A4": (595.276, 841.89),
     "US letter": (612, 792),
@@ -182,20 +188,17 @@ def generate_checkbox(canvas, x, y, label):
         A string representing the label that is drawn on top of the box, will only take the first character
 
     """
-    fontsize = 11  # Size of font
-    margin = 5  # Margin between elements and sides
-    markboxsize = fontsize - 2  # Size of checkboxes boxes
     x_label = x + 1  # location of the label
-    y_label = y + margin  # remove fontsize from the y label since we draw from the bottom left up
-    box_y = y - markboxsize  # remove the markboxsize because the y is the coord of the top
+    y_label = y + CHECKBOX_FORMAT["margin"]  # remove fontsize from the y label since we draw from the bottom left up
+    box_y = y - CHECKBOX_FORMAT["box_size"]  # remove the markboxsize because the y is the coord of the top
     # and reportlab prints from the bottom
 
     # check that there is a label to print
     if (label and not (len(label) == 0)):
-        canvas.setFont('Helvetica', fontsize)
+        canvas.setFont('Helvetica', CHECKBOX_FORMAT["font_size"])
         canvas.drawString(x_label, y_label, label[0])
 
-    canvas.rect(x, box_y, markboxsize, markboxsize)
+    canvas.rect(x, box_y, CHECKBOX_FORMAT["box_size"], CHECKBOX_FORMAT["box_size"])
 
 
 def generate_datamatrix(exam_id, page_num, copy_num):

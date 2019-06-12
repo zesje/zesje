@@ -476,8 +476,7 @@ class Exams extends React.Component {
     const selectedWidgetId = this.state.selectedWidgetId
     let selectedWidget = selectedWidgetId && this.state.widgets[selectedWidgetId]
     let problem = selectedWidget && selectedWidget.problem
-    let widgetEditDisabled = (this.state.previewing || !problem) ||
-      (this.props.exam.finalized && problem.mc_options.length > 0)
+    let widgetEditDisabled = (this.state.previewing || !problem)
     let isGraded = problem && problem.graded
     let widgetDeleteDisabled = widgetEditDisabled || isGraded
 
@@ -549,7 +548,7 @@ class Exams extends React.Component {
                 </div>
               </div>
             </div>
-            {props.problem ? (
+            {props.problem && !this.props.exam.finalized ? (
               <PanelMCQ
                 totalNrAnswers={totalNrAnswers}
                 problem={props.problem}
@@ -617,22 +616,22 @@ class Exams extends React.Component {
                   })
                 }}
               />) : null}
+            {props.problem &&
+              <React.Fragment>
+                <div className='panel-block'>
+                  {!this.state.editActive && <label className='label'>Feedback options</label>}
+                </div>
+                {this.state.editActive
+                  ? <EditPanel problemID={props.problem.id} feedback={this.state.feedbackToEdit}
+                    goBack={this.backToFeedback} updateCallback={this.updateFeedback} />
+                  : <FeedbackPanel examID={this.props.examID} problem={props.problem}
+                    editFeedback={this.editFeedback} showTooltips={this.state.showTooltips}
+                    grading={false}
+                  />}
+              </React.Fragment>
+            }
           </React.Fragment>
         )}
-        {props.problem &&
-          <React.Fragment>
-            <div className='panel-block'>
-              {!this.state.editActive && <label className='label'>Feedback options</label>}
-            </div>
-            {this.state.editActive
-              ? <EditPanel problemID={props.problem.id} feedback={this.state.feedbackToEdit}
-                goBack={this.backToFeedback} updateCallback={this.updateFeedback} />
-              : <FeedbackPanel examID={this.props.examID} problem={props.problem}
-                editFeedback={this.editFeedback} showTooltips={this.state.showTooltips}
-                grading={false}
-              />}
-          </React.Fragment>
-        }
         <div className='panel-block'>
           <button
             disabled={props.disabledDelete}
@@ -688,7 +687,10 @@ class Exams extends React.Component {
     return (
       <button
         className='button is-link is-fullwidth'
-        onClick={() => { this.setState({previewing: true}) }}
+        onClick={() => { this.setState({
+          selectedWidgetId: null,
+          previewing: true
+        }) }}
       >
         Finalize
       </button>

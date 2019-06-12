@@ -197,6 +197,8 @@ class ExamEditor extends React.Component {
    * @param data the new position of the mc widget
    */
   updateMCO = (widget, data) => {
+    if (this.props.finalized) return // do not modify the locations of the mc options after the exam is finalized
+
     // update state
     this.props.updateMCOsInState(widget, {
       x: Math.round(data.x),

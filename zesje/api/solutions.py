@@ -186,4 +186,6 @@ class Approve(Resource):
             solution.graded_at = datetime.now()
             solution.graded_by = grader
 
+        db.session.commit()
+
         return {'state': graded}

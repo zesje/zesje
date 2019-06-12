@@ -322,14 +322,6 @@ def process_page(image_data, exam_config, output_dir=None, strict=False):
     else:
         image_array = realign_image(image_array, corner_keypoints)
 
-    # get new corner markers of the realigned image
-    corner_keypoints = find_corner_marker_keypoints(image_array)
-    try:
-        check_corner_keypoints(image_array, corner_keypoints)
-    except RuntimeError as e:
-        if strict:
-            return False, str(e)
-
     try:
         barcode, upside_down = decode_barcode(image_array, exam_config)
         if upside_down:
@@ -349,7 +341,7 @@ def process_page(image_data, exam_config, output_dir=None, strict=False):
     sub, exam = update_database(image_path, barcode)
 
     try:
-        add_feedback_to_solution(sub, exam, barcode.page, image_array, corner_keypoints)
+        add_feedback_to_solution(sub, exam, barcode.page, image_array)
     except RuntimeError as e:
         if strict:
             return False, str(e)
@@ -730,7 +722,7 @@ def realign_image(image_array, keypoints=None,
         keypoints = find_corner_marker_keypoints(image_array)
         check_corner_keypoints(image_array, keypoints)
 
-    if (len(keypoints) != 4):
+    if(len(keypoints) != 4):
         keypoints = fix_corner_markers(keypoints, image_array.shape)
 
     # use standard keypoints if no custom ones are provided

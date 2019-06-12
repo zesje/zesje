@@ -7,7 +7,7 @@ from operator import sub, add
 
 def guess_dpi(image_array):
     h, *_ = image_array.shape
-    resolutions = np.array([1200, 600, 400, 300, 200, 150, 120, 100, 75, 72, 60, 50, 40])
+    resolutions = np.array([1200, 600, 400, 300, 200, 150, 144, 120, 100, 75, 72, 60, 50, 40])
     return resolutions[np.argmin(abs(resolutions - 25.4 * h / 297))]
 
 
@@ -60,7 +60,7 @@ def fix_corner_markers(corner_keypoints, shape):
         return corner_keypoints
 
     if len(corner_keypoints) < 3:
-        raise RuntimeError("Fewer then 3 corner markers found")
+        raise RuntimeError("Fewer than 3 corner markers found while trying to fix corners")
 
     x_sep = shape[1] / 2
     y_sep = shape[0] / 2

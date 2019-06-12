@@ -18,18 +18,20 @@ class FeedbackPanel extends React.Component {
   }
 
   componentDidMount = () => {
-    this.props.bindShortcut(['up', 'k'], (event) => {
-      event.preventDefault()
-      this.prevOption()
-    })
-    this.props.bindShortcut(['down', 'j'], (event) => {
-      event.preventDefault()
-      this.nextOption()
-    })
-    this.props.bindShortcut(['space'], (event) => {
-      event.preventDefault()
-      this.toggleSelectedOption()
-    })
+    if (this.props.grading) {
+      this.props.bindShortcut(['up', 'k'], (event) => {
+        event.preventDefault()
+        this.prevOption()
+      })
+      this.props.bindShortcut(['down', 'j'], (event) => {
+        event.preventDefault()
+        this.nextOption()
+      })
+      this.props.bindShortcut(['space'], (event) => {
+        event.preventDefault()
+        this.toggleSelectedOption()
+      })
+    }
   }
 
   static getDerivedStateFromProps (nextProps, prevState) {
@@ -111,7 +113,7 @@ class FeedbackPanel extends React.Component {
             feedback={feedback} checked={this.props.grading && this.props.solution.feedback.includes(feedback.id)}
             editFeedback={() => this.props.editFeedback(feedback)} updateSubmission={this.props.updateSubmission}
             ref={(selectedFeedbackId === feedback.id) ? this.feedbackBlock : null} grading={this.props.grading}
-            selected={selectedFeedbackId === feedback.id} showIndex={this.props.showTooltips} index={index + 1} />
+            selected={selectedFeedbackId === feedback.id || feedback.highlight} showIndex={this.props.showTooltips} index={index + 1} />
         )}
         {this.props.grading &&
           <div className='panel-block'>

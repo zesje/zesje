@@ -28,11 +28,11 @@ class PanelMCQ extends React.Component {
       return {
         problemId: prob.id,
         nrPossibleAnswers: prob.mc_options.length || 2,
-        chosenLabelType: PanelMCQ.deriveLabelType(prob.mc_options),
+        chosenLabelType: PanelMCQ.deriveLabelType(prob.mc_options)
       }
     }
 
-    return null;
+    return null
   }
 
   /**
@@ -43,8 +43,8 @@ class PanelMCQ extends React.Component {
   static deriveLabelType (options) {
     if (options.length === 0) {
       return 2
-    } else if (options.length === 2 && ((options[0].label === 'T' && options[1].label === 'F')
-      || (options[0].label === 'F' && options[1].label === 'T'))) {
+    } else if (options.length === 2 && ((options[0].label === 'T' && options[1].label === 'F') ||
+      (options[0].label === 'F' && options[1].label === 'T'))) {
       return 1
     } else if (options[0].label.match(/[A-Z]/)) {
       return 2
@@ -56,7 +56,7 @@ class PanelMCQ extends React.Component {
   }
 
   // this functions calculates
-  updateNumberOptions() {
+  updateNumberOptions () {
     let difference = this.state.nrPossibleAnswers - this.props.problem.mc_options.length
     if (difference > 0) {
       let startingAt = this.props.problem.mc_options.length
@@ -84,7 +84,6 @@ class PanelMCQ extends React.Component {
   onChangeLabelType (e) {
     let value = parseInt(e.target.value)
     if (!isNaN(value)) {
-
       // if the label type is True/False then reduce the number of mc options to 2
       if (parseInt(value) === 1) {
         this.setState({
@@ -136,24 +135,24 @@ class PanelMCQ extends React.Component {
     return (
       <React.Fragment>
         <div className='panel-block mcq-block'>
-            <label className='label'> Multiple choice </label>
-            <Switch color='info' outlined value={this.props.problem.mc_options.length > 0} onChange={(e) => {
-              if (e.target.checked) {
-                let npa = this.state.nrPossibleAnswers
-                let labels = this.generateLabels(npa, 0)
-                this.props.generateMCOs(labels)
-              } else {
-                this.props.deleteMCOs(this.props.problem.mc_options.length)
-              }
-            }} />
+          <label className='label'> Multiple choice </label>
+          <Switch color='info' outlined value={this.props.problem.mc_options.length > 0} onChange={(e) => {
+            if (e.target.checked) {
+              let npa = this.state.nrPossibleAnswers
+              let labels = this.generateLabels(npa, 0)
+              this.props.generateMCOs(labels)
+            } else {
+              this.props.deleteMCOs(this.props.problem.mc_options.length)
+            }
+          }} />
         </div>
         { this.props.problem.mc_options.length > 0 ? (
           <React.Fragment>
             <div className='panel-block mcq-block'>
               <div className='inline-mcq-edit'>
                 <label>#</label>
-                <input type='number'  value={this.state.nrPossibleAnswers} min='1'
-                       max={this.props.totalNrAnswers} className='input' onChange={this.onChangeNPA} />
+                <input type='number' value={this.state.nrPossibleAnswers} min='1'
+                  max={this.props.totalNrAnswers} className='input' onChange={this.onChangeNPA} />
               </div>
               <div className='inline-mcq-edit'>
                 <label>Labels</label>

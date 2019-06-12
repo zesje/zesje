@@ -302,12 +302,12 @@ class ExamEditor extends React.Component {
           {widget.problem.mc_options.map((option) => {
             return (
               <div key={'widget_mco_' + option.id} className='mcq-option'
-                   onMouseEnter={() => {
-                     this.props.highlightFeedback(widget, option.feedback_id)
-                    }}
-                   onMouseLeave={() => {
-                     this.props.removeHighlight(widget, option.feedback_id)
-                   }}
+                onMouseEnter={() => {
+                  this.props.highlightFeedback(widget, option.feedback_id)
+                }}
+                onMouseLeave={() => {
+                  this.props.removeHighlight(widget, option.feedback_id)
+                }}
               >
                 <div className='mcq-option-label'>
                   {option.label}

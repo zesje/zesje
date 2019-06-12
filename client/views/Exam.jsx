@@ -322,7 +322,7 @@ class Exams extends React.Component {
     })
   }
 
-    /**
+  /**
    * This method generates MC options by making the right calls to the api and creating
    * the widget object in the mc_options array of the corresponding problem.
    * @param problemWidget the problem widget the mc options belong to
@@ -374,7 +374,7 @@ class Exams extends React.Component {
     })
   }
 
-    /**
+  /**
    * This method creates a mc option widget object and adds it to the corresponding problem in the state
    * @param problemWidget The widget the mc option belongs to
    * @param data the mc option
@@ -395,7 +395,6 @@ class Exams extends React.Component {
     })
   }
 
-
   /**
    * This method deletes mc options coupled to a problem in both the state and the database.
    * @param widgetId the id of the widget for which the mc options need to be deleted
@@ -405,7 +404,7 @@ class Exams extends React.Component {
    */
   deleteMCOs = (widgetId, index, nrMCOs) => {
     let widget = this.state.widgets[widgetId]
-    if (nrMCOs <= 0 || !widget.problem.mc_options.length) return;
+    if (nrMCOs <= 0 || !widget.problem.mc_options.length) return
 
     let option = widget.problem.mc_options[index]
     return api.del('mult-choice/' + option.id)
@@ -435,7 +434,7 @@ class Exams extends React.Component {
             })
           }
         }, () => {
-          this.deleteMCOs(widgetId, index, nrMCOs-1)
+          this.deleteMCOs(widgetId, index, nrMCOs - 1)
         })
       })
   }
@@ -477,8 +476,8 @@ class Exams extends React.Component {
     const selectedWidgetId = this.state.selectedWidgetId
     let selectedWidget = selectedWidgetId && this.state.widgets[selectedWidgetId]
     let problem = selectedWidget && selectedWidget.problem
-    let widgetEditDisabled = (this.state.previewing || !problem)
-      || (this.props.exam.finalized && problem.mc_options.length > 0)
+    let widgetEditDisabled = (this.state.previewing || !problem) ||
+      (this.props.exam.finalized && problem.mc_options.length > 0)
     let isGraded = problem && problem.graded
     let widgetDeleteDisabled = widgetEditDisabled || isGraded
 
@@ -617,7 +616,7 @@ class Exams extends React.Component {
                       })
                   })
                 }}
-              /> ) : null}
+              />) : null}
           </React.Fragment>
         )}
         {props.problem &&

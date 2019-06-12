@@ -100,6 +100,7 @@ class Problem(db.Model):
     feedback_options = db.relationship('FeedbackOption', backref='problem', order_by='FeedbackOption.id', lazy=True)
     solutions = db.relationship('Solution', backref='problem', lazy=True)
     widget = db.relationship('ProblemWidget', backref='problem', uselist=False, lazy=True)
+    grading_policy = Column(Integer, nullable=False)
 
     @hybrid_property
     def mc_options(self):

@@ -16,6 +16,7 @@ class Problems(Resource):
     post_parser.add_argument('y', type=int, required=True, location='form')
     post_parser.add_argument('width', type=int, required=True, location='form')
     post_parser.add_argument('height', type=int, required=True, location='form')
+    post_parser.add_argument('grading_policy', type=int, required=True, location='form')
 
     def post(self):
         """Add a new problem.
@@ -45,6 +46,7 @@ class Problems(Resource):
                 exam=exam,
                 name=args['name'],
                 widget=widget,
+                grading_policy=args['grading_policy']
             )
 
             # Widget is also added because it is used in problem

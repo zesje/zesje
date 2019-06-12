@@ -687,10 +687,12 @@ class Exams extends React.Component {
     return (
       <button
         className='button is-link is-fullwidth'
-        onClick={() => { this.setState({
-          selectedWidgetId: null,
-          previewing: true
-        }) }}
+        onClick={() => {
+          this.setState({
+            selectedWidgetId: null,
+            previewing: true
+          })
+        }}
       >
         Finalize
       </button>

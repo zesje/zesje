@@ -92,7 +92,8 @@ class ExamEditor extends React.Component {
           mc_options: [],
           widthMCO: 24,
           heightMCO: 38,
-          isMCQ: false
+          isMCQ: false,
+          grading_policy: 0
         }
         const widgetData = {
           x: Math.round(selectionBox.left),
@@ -109,6 +110,7 @@ class ExamEditor extends React.Component {
         formData.append('y', widgetData.y)
         formData.append('width', widgetData.width)
         formData.append('height', widgetData.height)
+        formData.append('grading_policy', problemData.grading_policy)
         api.post('problems', formData).then(result => {
           widgetData.id = result.widget_id
           problemData.id = result.id

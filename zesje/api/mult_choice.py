@@ -65,9 +65,6 @@ class MultipleChoice(Resource):
         # TODO: Set type here or add to request?
         mc_type = 'mcq_widget'
 
-        # TODO: Set type here or add to request?
-        mc_type = 'mcq_widget'
-
         if not id:
             # Insert new empty feedback option that links to the same problem
             new_feedback_option = FeedbackOption(problem_id=problem_id, text='')
@@ -126,9 +123,6 @@ class MultipleChoice(Resource):
         # Nullable database fields
         if mult_choice.label:
             json['label'] = mult_choice.label
-
-        if mult_choice.feedback_id:
-            json['feedback_id'] = mult_choice.feedback_id
 
         return json
 

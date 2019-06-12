@@ -177,9 +177,6 @@ class MultipleChoiceOption(Widget):
     __mapper_args__ = {
         'polymorphic_identity': 'mcq_widget'
     }
-    __mapper_args__ = {
-        'polymorphic_identity': 'mcq_widget'
-    }
 
 
 class ExamWidget(Widget):

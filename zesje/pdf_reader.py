@@ -10,17 +10,17 @@ from pdfminer3.pdfinterp import PDFPageInterpreter
 from pdfminer3.pdfpage import PDFPage
 from pdfminer3.pdfparser import PDFParser
 
-from flask import current_app
-
 from .api.exams import PAGE_FORMATS
 
 
-def get_problem_title(problem):
+def get_problem_title(problem, app_config):
     """
     Returns the title of a problem
 
     Parameters
     ----------
+    app_config : dict
+        Configuration of the app
     problem : Problem
         The currently selected problem
 
@@ -29,7 +29,7 @@ def get_problem_title(problem):
     title: str
         The title of the problem, or an empty string if no text is found
     """
-    data_dir = current_app.config.get('DATA_DIRECTORY', 'data')
+    data_dir = app_config.get('DATA_DIRECTORY', 'data')
     pdf_path = os.path.join(data_dir, f'{problem.exam_id}_data', 'exam.pdf')
 
     fp = open(pdf_path, 'rb')
@@ -69,12 +69,14 @@ def get_problem_title(problem):
     return ''
 
 
-def get_words(layout_objs, y_top, y_bottom):
+def get_words(layout_objs, y_top, y_bottom, app_config):
     """
     Returns the text from a pdf page within a specified height.
 
     Parameters
     ----------
+    app_config : dict
+        Configuration of the app
     layout_objs : list of layout objects
         The list of objects in the page.
     y_top : double
@@ -87,7 +89,7 @@ def get_words(layout_objs, y_top, y_bottom):
     words : list of tuples
         A list of tuples with the (y, text) values.
     """
-    page_format = current_app.config.get('PAGE_FORMAT', 'A4')
+    page_format = app_config.get('PAGE_FORMAT', 'A4')
     page_height = PAGE_FORMATS[page_format][1]
 
     words = []

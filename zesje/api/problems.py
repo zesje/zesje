@@ -1,6 +1,6 @@
 """ REST api for problems """
 
-from flask_restful import Resource, reqparse
+from flask_restful import Resource, reqparse, current_app
 
 from ..database import db, Exam, Problem, ProblemWidget, Solution
 
@@ -60,7 +60,7 @@ class Problems(Resource):
             db.session.commit()
             widget.name = f'problem_{problem.id}'
 
-            problem.name = get_problem_title(problem)
+            problem.name = get_problem_title(problem, current_app.config)
 
             db.session.commit()
 

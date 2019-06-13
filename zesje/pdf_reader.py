@@ -47,10 +47,13 @@ def get_problem_title(problem, app_config):
 
     idx = problems_on_page.index(problem)
 
-    problem_above = problems_on_page[idx - 1]
-
     # Determine y coordinates to search for text
-    y_above = problem_above.widget.y + problem_above.widget.height if idx != 0 else 0
+    if idx == 0:
+        y_above = 0
+    else:
+        problem_above = problems_on_page[idx - 1]
+        y_above = problem_above.widget.y + problem_above.widget.height
+        
     y_current = problem.widget.y + problem.widget.height
 
     for page in PDFPage.create_pages(document):

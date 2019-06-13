@@ -7,6 +7,7 @@ import * as api from '../api.jsx'
 
 import Hero from '../components/Hero.jsx'
 import ProgressBar from '../components/ProgressBar.jsx'
+import SearchBox from '../components/SearchBox.jsx'
 
 import SearchPanel from './students/SearchPanel.jsx'
 import EditPanel from './students/EditPanel.jsx'
@@ -99,21 +100,12 @@ class CheckStudents extends React.Component {
     }
   }
 
-  setSubmission = () => {
-    const input = parseInt(this.state.input)
-    const i = this.props.exam.submissions.findIndex(sub => sub.id === input)
-
-    if (i >= 0) {
-      this.setState({
-        index: i
-      })
-      this.props.updateSubmission(i)
-    } else {
-      this.setState({
-        input: this.props.submissions[this.state.index].id
-      })
-      Notification.error('Could not find that submission number :(\nSorry!')
-    }
+  setSubmission = (id) => {
+    const i = this.props.exam.submissions.findIndex(sub => sub.id === id)
+    this.setState({
+      index: i
+    })
+    this.props.updateSubmission(i)
   }
 
   setSubInput = (event) => {
@@ -154,11 +146,8 @@ class CheckStudents extends React.Component {
   }
 
   render () {
-    const inputStyle = {
-      width: '5em'
-    }
-
-    const subm = this.props.exam.submissions[this.state.index]
+    const exam = this.props.exam
+    const subm = exam.submissions[this.state.index]
 
     return (
       <div>
@@ -190,11 +179,42 @@ class CheckStudents extends React.Component {
                             onClick={this.prev}>Previous</button>
                         </div>
                         <div className='control'>
-                          <input className={'input is-rounded has-text-centered' + (subm.validated ? ' is-success' : ' is-link')}
-                            value={this.state.input} type='text'
-                            onChange={this.setSubInput} onSubmit={this.setSubmission}
-                            onBlur={this.setSubmission} onFocus={(event) => { event.target.select() }}
-                            maxLength='4' size='6' style={inputStyle} />
+                          <SearchBox
+                            placeholder='Search for a submission'
+                            selected={subm}
+                            options={exam.submissions}
+                            suggestionKeys={[
+                              'id',
+                              'student.firstName',
+                              'student.lastName',
+                              'student.id'
+                            ]}
+                            setSelected={this.setSubmission}
+                            renderSelected={({id, student}) => {
+                              if (student) {
+                                return `#${id}: ${student.firstName} ${student.lastName} (${student.id})`
+                              } else {
+                                return `#${id}`
+                              }
+                            }}
+                            renderSuggestion={(submission) => {
+                              const stud = submission.student
+                              if (stud) {
+                                return (
+                                  <div className='flex-parent'>
+                                    <span className='flex-child truncated'>
+                                      {`#${submission.id} ${stud.firstName} ${stud.lastName}`}
+                                    </span>
+                                    <i className='flex-child fixed'>
+                                      ({stud.id})
+                                    </i>
+                                  </div>
+                                )
+                              } else {
+                                return `#${submission.id}: No student`
+                              }
+                            }}
+                          />
                         </div>
                         <div className='control'>
                           <button type='submit' className={'button' + (subm.validated ? ' is-success' : ' is-link')}

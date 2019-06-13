@@ -58,7 +58,7 @@ def get_problem_title(problem, app_config):
         layout = device.get_result()
 
         if layout.pageid == problem.widget.page + 1:
-            filtered_words = get_words(layout._objs, y_above, y_current)
+            filtered_words = get_words(layout._objs, y_above, y_current, app_config)
 
             if not filtered_words:
                 return ''
@@ -100,6 +100,6 @@ def get_words(layout_objs, y_top, y_bottom, app_config):
                 words.append(obj.get_text())
 
         elif isinstance(obj, pdfminer3.layout.LTFigure):
-            words.append(get_words(obj._objs))
+            words.append(get_words(obj._objs, app_config))
 
     return words

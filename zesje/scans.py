@@ -165,9 +165,15 @@ def extract_image_pikepdf(pagenr, reader):
     """Extracts an image as an array from the designated page
 
     This method uses PikePDF to extract the image and only works
-    when there is a single image present on the page.
+    when there is a single image present on the page with the
+    same aspect ratio as the page.
 
-    Raises an error if not exactly one image is found on the page.
+    We do not check for the actual size of the image on the page,
+    since this size depends on the draw instruction rather than
+    the embedded image object available to pikepdf.
+
+    Raises an error if not exactly image is present or the image
+    does not have the same aspect ratio as the page.
 
     Parameters
     ----------
@@ -183,7 +189,11 @@ def extract_image_pikepdf(pagenr, reader):
 
     Raises
     ------
-    ValueError if not exactly one image is found on the page
+    ValueError
+        if not exactly one image is found on the page or the image
+        does not have the same aspect ratio as the page
+    AttributeError
+        if no XObject or MediaBox is present on the page
     """
 
     page = reader.pages[pagenr]
@@ -192,11 +202,23 @@ def extract_image_pikepdf(pagenr, reader):
 
     if sum((xObject[obj].Subtype == '/Image')
             for obj in xObject) != 1:
-        raise ValueError
+        raise ValueError('Not exactly 1 image present on the page')
 
     for obj in xObject:
         if xObject[obj].Subtype == '/Image':
             pdfimage = PdfImage(xObject[obj])
+
+            pdf_width = float(page.MediaBox[2] - page.MediaBox[0])
+            pdf_height = float(page.MediaBox[3] - page.MediaBox[1])
+
+            ratio_width = pdfimage.width / pdf_width
+            ratio_height = pdfimage.height / pdf_height
+
+            # Check if the aspect ratio of the image is the same as the
+            # aspect ratio of the page up to a 3% relative error
+            if abs(ratio_width - ratio_height) > 0.03 * ratio_width:
+                raise ValueError('Image has incorrect dimensions')
+
             return pdfimage.as_pil_image()
 
 

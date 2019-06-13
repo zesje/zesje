@@ -13,6 +13,7 @@ import * as api from '../api.jsx'
 
 import 'bulma-tooltip/dist/css/bulma-tooltip.min.css'
 import './grade/Grade.css'
+import '../components/SubmissionNavigation.css'
 
 class Grade extends React.Component {
   state = {
@@ -226,7 +227,7 @@ class Grade extends React.Component {
 
               <div className='column'>
                 <div className='level'>
-                  <div className='level-item'>
+                  <div className='level-item make-wider'>
                     <div className='field has-addons is-mobile'>
                       <div className='control'>
                         <button type='submit'
@@ -240,7 +241,7 @@ class Grade extends React.Component {
                           data-tooltip='←'
                           onClick={this.prev}>Previous</button>
                       </div>
-                      <div className='control'>
+                      <div className='control is-wider'>
                         <SearchBox
                           placeholder='Search for a submission'
                           selected={submission}

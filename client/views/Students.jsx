@@ -12,6 +12,8 @@ import SearchBox from '../components/SearchBox.jsx'
 import SearchPanel from './students/SearchPanel.jsx'
 import EditPanel from './students/EditPanel.jsx'
 
+import '../components/SubmissionNavigation.css'
+
 class CheckStudents extends React.Component {
   state = {
     editActive: false,
@@ -170,7 +172,7 @@ class CheckStudents extends React.Component {
               {this.props.exam.submissions.length
                 ? <div className='column'>
                   <div className='level'>
-                    <div className='level-item'>
+                    <div className='level-item make-wider'>
                       <div className='field has-addons is-mobile'>
                         <div className='control'>
                           <button type='submit' className='button is-info is-rounded is-hidden-mobile'
@@ -178,7 +180,7 @@ class CheckStudents extends React.Component {
                           <button type='submit' className={'button' + (subm.validated ? ' is-success' : ' is-link')}
                             onClick={this.prev}>Previous</button>
                         </div>
-                        <div className='control'>
+                        <div className='control is-wider'>
                           <SearchBox
                             placeholder='Search for a submission'
                             selected={subm}

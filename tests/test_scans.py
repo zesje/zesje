@@ -3,6 +3,7 @@ import os
 import pytest
 import numpy as np
 import PIL.Image
+import cv2
 from tempfile import NamedTemporaryFile
 from flask import Flask
 from io import BytesIO
@@ -180,6 +181,13 @@ def apply_scan(img, rotation=0, scale=1, skew=(0, 0)):
     return dst.convert("RGB")
 
 
+def upscale_image(image, scale=2):
+    width, height = image.size
+    # the standard dpi is 72 so 72*2=144 dpi with the standard scale.
+    new_size = (int(scale * width), int(scale * height))
+    image = image.resize(new_size, resample=1)
+    return image
+
 # Pipeline tests:
 # General strucuture:
 #     1. Make/clean Database
@@ -193,6 +201,7 @@ def apply_scan(img, rotation=0, scale=1, skew=(0, 0)):
 def test_pipeline(new_exam, datadir):
     genPDF = generate_pdf(new_exam, 5)
     for image in makeImage(genPDF):
+        image = upscale_image(image)
         success, reason = scans.process_page(image, new_exam, datadir)
         assert success is True, reason
 
@@ -214,13 +223,14 @@ def test_noise(new_exam, datadir, threshold, expected):
     (-2, True),
     (0.5, True),
     (0.8, True),
-    (2, False)],
-    ids=['Large rot', 'Small rot', 'Medium rot', 'failing rot'])
+    (2, True)],
+    ids=['Large rot', 'Small rot', 'Medium rot', 'Large counterclockwise rot'])
 def test_rotate(new_exam, datadir, rotation, expected):
     genPDF = generate_pdf(new_exam, 1)
     for image in makeImage(genPDF):
+        image = upscale_image(image, scale=2)
         image = apply_scan(img=image, rotation=rotation)
-        #  image.show()
+        # image.show()
         success, reason = scans.process_page(image, new_exam, datadir)
         assert success is expected, reason
 
@@ -280,3 +290,43 @@ def test_image_extraction(datadir, filename):
         assert img is not None
         assert np.average(np.array(img)) == 255
     assert page == 2
+
+
+@pytest.mark.parametrize('file_name, markers', [("a4-rotated.png", [(59, 59), (1181, 59), (59, 1695), (1181, 1695)]),
+                                                ("a4-3-markers.png", [(1181, 59), (59, 1695), (1181, 1695)]),
+                                                ("a4-rotated-3-markers.png", [(1181, 59), (59, 1695), (1181, 1695)])
+                                                ])
+def test_realign_image(datadir, file_name, markers):
+    dir_name = "cornermarkers"
+    epsilon = 1
+
+    test_file = os.path.join(datadir, dir_name, file_name)
+    test_image = np.array(PIL.Image.open(test_file))
+
+    result_image = scans.realign_image(test_image)
+    result_corner_markers = scans.find_corner_marker_keypoints(result_image)
+    assert result_corner_markers is not None
+    for i in range(len(markers)):
+        diff = np.absolute(np.subtract(markers[i], result_corner_markers[i]))
+        assert diff[0] <= epsilon
+        assert diff[1] <= epsilon
+
+
+def test_incomplete_reference_realign_image(datadir):
+    dir_name = "cornermarkers"
+    epsilon = 1
+    test_file = os.path.join(datadir, dir_name, "a4-rotated.png")
+    test_image = cv2.imread(test_file)
+
+    reference_markers = [(59, 59), (59, 1695), (1181, 1695)]
+
+    correct_corner_markers = [(59, 59), (1181, 59), (59, 1695), (1181, 1695)]
+
+    result_image = scans.realign_image(test_image, reference_keypoints=reference_markers)
+    result_corner_markers = scans.find_corner_marker_keypoints(result_image)
+
+    assert result_corner_markers is not None
+    for i in range(4):
+        diff = np.absolute(np.subtract(correct_corner_markers[i], result_corner_markers[i]))
+        assert diff[0] <= epsilon
+        assert diff[1] <= epsilon

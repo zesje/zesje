@@ -6,6 +6,9 @@ import cv2
 from ..images import get_box, guess_dpi
 from ..database import Exam, Submission, Problem, Page, Solution
 
+from ..pdf_generation import CHECKBOX_FORMAT
+
+
 
 def get(exam_id, problem_id, submission_id, full_page=False):
     """get image for the given problem.
@@ -66,10 +69,13 @@ def get(exam_id, problem_id, submission_id, full_page=False):
         fb = list(map(lambda x: x.id, solution.feedback))
         for option in problem.mc_options:
             if option.feedback_id in fb:
-                x = int((option.x) / 72 * dpi)
-                y = int((option.y) / 72 * dpi)
-                x1 = x + 20
-                y1 = y + 20
+
+                x = int(option.x / 72 * dpi)
+                y = int(option.y / 72 * dpi)
+                box_length = int(CHECKBOX_FORMAT["box_size"] / 72 * dpi)
+                x1 = x + box_length
+                y1 = y + box_length
+
                 page_im = cv2.rectangle(page_im, (x, y), (x1, y1), (0, 255, 0), 3)
 
     if not full_page:

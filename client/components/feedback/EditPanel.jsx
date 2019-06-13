@@ -2,6 +2,7 @@ import React from 'react'
 
 import ConfirmationModal from '../../components/ConfirmationModal.jsx'
 import * as api from '../../api.jsx'
+import Notification from 'react-bulma-notification'
 
 const BackButton = (props) => (
   <button className='button is-light is-fullwidth' onClick={props.onClick}>
@@ -40,16 +41,19 @@ class EditPanel extends React.Component {
   }
 
   static getDerivedStateFromProps (nextProps, prevState) {
+    // In case nothing is set, use an empty function that no-ops
+    const updateCallback = nextProps.updateCallback || (_ => {})
     if (nextProps.feedback && prevState.id !== nextProps.feedback.id) {
       const fb = nextProps.feedback
       return {
         id: fb.id,
         name: fb.name,
         description: fb.description,
-        score: fb.score
+        score: fb.score,
+        updateCallback: updateCallback
       }
     }
-    return null
+    return {updateCallback: updateCallback}
   }
 
   changeText = (event) => {
@@ -84,10 +88,15 @@ class EditPanel extends React.Component {
     if (this.state.id) {
       fb.id = this.state.id
       api.put(uri, fb)
-        .then(() => this.props.goBack())
+        .then(() => {
+          this.state.updateCallback(fb)
+          this.props.goBack()
+        })
     } else {
       api.post(uri, fb)
-        .then(() => {
+        .then((response) => {
+          // Response is the feedback option
+          this.state.updateCallback(response)
           this.setState({
             id: null,
             name: '',
@@ -101,14 +110,28 @@ class EditPanel extends React.Component {
   deleteFeedback = () => {
     if (this.state.id) {
       api.del('feedback/' + this.props.problemID + '/' + this.state.id)
-        .then(() => this.props.goBack())
+        .then(() => {
+          this.state.updateCallback({
+            id: this.state.id,
+            deleted: true
+          })
+          this.props.goBack()
+        })
+        .catch(err => {
+          err.json().then(res => {
+            Notification.error('Could not delete feedback' +
+              (res.message ? ': ' + res.message : ''))
+            // update to try and get a consistent state
+            this.props.goBack()
+          })
+        })
     }
   }
 
   render () {
     return (
-      <nav className='panel'>
-        <p className='panel-heading'>
+      <React.Fragment>
+        <p className={this.props.grading ? 'panel-heading' : 'panel-heading is-radiusless'}>
           Manage feedback
         </p>
 
@@ -168,7 +191,7 @@ class EditPanel extends React.Component {
             onCancel={() => { this.setState({deleting: false}) }}
           />
         </div>
-      </nav>
+      </React.Fragment>
     )
   }
 }

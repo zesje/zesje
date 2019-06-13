@@ -88,6 +88,7 @@ class ExamEditor extends React.Component {
         const problemData = {
           name: 'New problem', // TODO: Name
           page: this.props.page,
+          feedback: [],
           mc_options: [],
           widthMCO: 24,
           heightMCO: 38,
@@ -197,7 +198,7 @@ class ExamEditor extends React.Component {
    */
   updateMCO = (widget, data) => {
     // update state
-    this.props.updateMCWidget(widget, {
+    this.props.updateMCOsInState(widget, {
       x: Math.round(data.x),
       y: Math.round(data.y)
     })
@@ -245,7 +246,7 @@ class ExamEditor extends React.Component {
 
       let changed = (oldX !== newX) || (oldY !== newY) // update the state only if the mc options were moved
       if (changed) {
-        this.props.updateMCWidget(widget, {
+        this.props.updateMCOsInState(widget, {
           x: Math.round(newX),
           y: Math.round(newY)
         })
@@ -300,7 +301,14 @@ class ExamEditor extends React.Component {
         <div className={isSelected ? 'mcq-widget widget selected' : 'mcq-widget widget '}>
           {widget.problem.mc_options.map((option) => {
             return (
-              <div key={'widget_mco_' + option.id} className='mcq-option'>
+              <div key={'widget_mco_' + option.id} className='mcq-option'
+                onMouseEnter={() => {
+                  this.props.highlightFeedback(widget, option.feedback_id)
+                }}
+                onMouseLeave={() => {
+                  this.props.removeHighlight(widget, option.feedback_id)
+                }}
+              >
                 <div className='mcq-option-label'>
                   {option.label}
                 </div>

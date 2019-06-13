@@ -100,6 +100,7 @@ class Problem(db.Model):
     feedback_options = db.relationship('FeedbackOption', backref='problem', order_by='FeedbackOption.id', lazy=True)
     solutions = db.relationship('Solution', backref='problem', lazy=True)
     widget = db.relationship('ProblemWidget', backref='problem', uselist=False, lazy=True)
+    blank_threshold = Column(Integer)
 
     @hybrid_property
     def mc_options(self):
@@ -196,7 +197,6 @@ class ProblemWidget(Widget):
     page = Column(Integer)
     width = Column(Integer)
     height = Column(Integer)
-    blank_threshold = Column(Integer)
 
     __mapper_args__ = {
         'polymorphic_identity': 'problem_widget'

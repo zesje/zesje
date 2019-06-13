@@ -1,8 +1,9 @@
 import cv2
 import numpy as np
 
-from .database import db, Solution, FeedbackOption
+from .database import db, Solution, FeedbackOption, Exam
 from .images import guess_dpi, get_box, fix_corner_markers
+
 
 
 def add_feedback_to_solution(sub, exam, page, page_img, corner_keypoints):
@@ -34,6 +35,14 @@ def add_feedback_to_solution(sub, exam, page, page_img, corner_keypoints):
         if is_blank(problem, page_img, sol):
             feedback = FeedbackOption.query.filter(FeedbackOption.problem_id == problem.id,
                                                    FeedbackOption.text == 'blank').one_or_none()
+
+            if(feedback == None):
+                new_feedback_option = FeedbackOption(problem_id=problem.id, text='blank')
+                db.session.add(new_feedback_option)
+                db.session.commit()
+                feedback = FeedbackOption.query.filter(FeedbackOption.problem_id == problem.id,
+                                                        FeedbackOption.text == 'blank').one_or_none()
+
             sol.feedback.append(feedback)
             db.session.commit()
 
@@ -62,17 +71,29 @@ def is_blank(problem, page_img, solution):
 
     cut_im = get_box(page_img, widget_area_in, padding=0)
 
-    gray_im = cv2.cvtColor(cut_im, cv2.COLOR_BGR2GRAY)
+    gray = cv2.cvtColor(cut_im, cv2.COLOR_BGR2GRAY)
 
-    value = np.average(~(gray_im))
+
+    ret,thresh = cv2.threshold(gray,180,255,3)
+    kernel = np.ones((3,3),np.uint8)
+    timp = cv2.dilate(~thresh,kernel,iterations = 2)
+    ret, temp = cv2.threshold(timp,180,255,3)
+    contours,h = cv2.findContours(~temp,1,2)
+    a = 80
+    value = 0
+    for cnt in contours:   
+        if cv2.contourArea(cnt) > a:
+            value = value+1
+
     solution.filled_score = value
     db.session.commit()
-    base = 120000000
+    base = problem.blank_threshold
 
-    return False
+    return value <= (base)
 
 
 
+            
 
 def box_is_filled(box, page_img, corner_keypoints, marker_margin=72/2.54, threshold=225, cut_padding=0.1, box_size=11):
     """

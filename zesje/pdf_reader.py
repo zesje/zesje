@@ -53,7 +53,7 @@ def get_problem_title(problem, app_config):
     else:
         problem_above = problems_on_page[idx - 1]
         y_above = problem_above.widget.y + problem_above.widget.height
-        
+
     y_current = problem.widget.y + problem.widget.height
 
     for page in PDFPage.create_pages(document):
@@ -75,7 +75,7 @@ def get_problem_title(problem, app_config):
 def get_words(layout_objs, y_top, y_bottom, app_config):
     """
     Returns the text from a pdf page within a specified height.
-    Pdfminer orients the coordinates of a layout object from
+    Pdfminer orients the coordinates of a layout objectp from
     the bottom left.
 
     Parameters

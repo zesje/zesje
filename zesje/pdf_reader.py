@@ -1,9 +1,9 @@
 import os
 
-import pdfminer3
-
 from pdfminer3.converter import PDFPageAggregator
 from pdfminer3.layout import LAParams
+from pdfminer3.layout import LTFigure
+from pdfminer3.layout import LTTextBoxHorizontal
 from pdfminer3.pdfdocument import PDFDocument
 from pdfminer3.pdfinterp import PDFResourceManager
 from pdfminer3.pdfinterp import PDFPageInterpreter
@@ -72,6 +72,8 @@ def get_problem_title(problem, app_config):
 def get_words(layout_objs, y_top, y_bottom, app_config):
     """
     Returns the text from a pdf page within a specified height.
+    Pdfminer orients the coordinates of a layout object from
+    the bottom left.
 
     Parameters
     ----------
@@ -95,11 +97,11 @@ def get_words(layout_objs, y_top, y_bottom, app_config):
     words = []
 
     for obj in layout_objs:
-        if isinstance(obj, pdfminer3.layout.LTTextBoxHorizontal):
+        if isinstance(obj, LTTextBoxHorizontal):
             if page_height - y_top > obj.bbox[1] > page_height - y_bottom:
                 words.append(obj.get_text())
 
-        elif isinstance(obj, pdfminer3.layout.LTFigure):
-            words.append(get_words(obj._objs, app_config))
+        elif isinstance(obj, LTFigure):
+            words.append(get_words(obj._objs, y_top, y_bottom, app_config))
 
     return words

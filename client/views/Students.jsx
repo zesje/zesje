@@ -205,7 +205,8 @@ class CheckStudents extends React.Component {
                                 return (
                                   <div className='flex-parent'>
                                     <span className='flex-child truncated'>
-                                      {`#${submission.id} ${stud.firstName} ${stud.lastName}`}
+                                      <b>#{submission.id}</b>
+                                      {` ${stud.firstName} ${stud.lastName}`}
                                     </span>
                                     <i className='flex-child fixed'>
                                       ({stud.id})

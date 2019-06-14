@@ -4,11 +4,12 @@ import math
 import os
 from collections import namedtuple, Counter
 from io import BytesIO
+from tempfile import SpooledTemporaryFile
 import signal
 
 import cv2
 import numpy as np
-import PyPDF2
+from pikepdf import Pdf, PdfImage
 from PIL import Image
 from wand.image import Image as WandImage
 from pylibdmtx import pylibdmtx
@@ -80,7 +81,9 @@ def _process_pdf(scan_id, app_config):
         report_error(f'Error while reading Exam metadata: {e}')
         raise
 
-    total = PyPDF2.PdfFileReader(open(pdf_path, "rb")).getNumPages()
+    with Pdf.open(pdf_path) as pdf_reader:
+        total = len(pdf_reader.pages)
+
     failures = []
     try:
         for image, page in extract_images(pdf_path):
@@ -131,70 +134,55 @@ def exam_metadata(exam_id):
 def extract_images(filename):
     """Yield all images from a PDF file.
 
-    Tries to use PyPDF2 to extract the images from the given PDF.
-    If PyPDF2 fails to open the PDF or PyPDF2 is not able to extract
-    a page, it continues to use Wand for the rest of the pages.
+    Tries to use PikePDF to extract the images from the given PDF.
+    If PikePDF is not able to extract the image from a page,
+    it continues to use Wand to flatten the rest of the pages.
     """
 
-    with open(filename, "rb") as file:
+    with Pdf.open(filename) as pdf_reader:
         use_wand = False
-        pypdf_reader = None
-        wand_image = None
-        total = 0
 
-        try:
-            pypdf_reader = PyPDF2.PdfFileReader(file)
-            total = pypdf_reader.getNumPages()
-        except Exception:
-            # Fallback to Wand if opening the PDF with PyPDF2 failed
-            use_wand = True
-
-        if use_wand:
-            # If PyPDF2 failed we need Wand to count the number of pages
-            wand_image = WandImage(filename=filename, resolution=300)
-            total = len(wand_image.sequence)
+        total = len(pdf_reader.pages)
 
         for pagenr in range(total):
             if not use_wand:
                 try:
-                    # Try to use PyPDF2, but catch any error it raises
-                    img = extract_image_pypdf(pagenr, pypdf_reader)
+                    # Try to use PikePDF, but catch any error it raises
+                    img = extract_image_pikepdf(pagenr, pdf_reader)
 
                 except Exception:
-                    # Fallback to Wand if extracting with PyPDF2 failed
+                    # Fallback to Wand if extracting with PikePDF failed
                     use_wand = True
 
             if use_wand:
-                if wand_image is None:
-                    wand_image = WandImage(filename=filename, resolution=300)
-                img = extract_image_wand(pagenr, wand_image)
+                img = extract_image_wand(pagenr, pdf_reader)
 
             if img.mode == 'L':
                 img = img.convert('RGB')
 
             yield img, pagenr+1
 
-        if wand_image is not None:
-            wand_image.close()
 
-
-def extract_image_pypdf(pagenr, reader):
+def extract_image_pikepdf(pagenr, reader):
     """Extracts an image as an array from the designated page
 
-    This method uses PyPDF2 to extract the image and only works
-    when there is a single image present on the page.
+    This method uses PikePDF to extract the image and only works
+    when there is a single image present on the page with the
+    same aspect ratio as the page.
 
-    Raises an error if not exactly one image is found on the page
-    or the image filter is not `FlateDecode`.
+    We do not check for the actual size of the image on the page,
+    since this size depends on the draw instruction rather than
+    the embedded image object available to pikepdf.
 
-    Adapted from https://stackoverflow.com/a/34116472/2217463
+    Raises an error if not exactly image is present or the image
+    does not have the same aspect ratio as the page.
 
     Parameters
     ----------
     pagenr : int
         Page number to extract
-    reader : PyPDF2.PdfFileReader instance
-        The reader to read the page from
+    reader : pikepdf.Pdf instance
+        The pdf reader to read the page from
 
     Returns
     -------
@@ -203,60 +191,71 @@ def extract_image_pypdf(pagenr, reader):
 
     Raises
     ------
-    ValueError if not exactly one image is found on the page
-
-    NotImplementedError if the image filter is not `FlateDecode`
+    ValueError
+        if not exactly one image is found on the page or the image
+        does not have the same aspect ratio as the page
+    AttributeError
+        if no XObject or MediaBox is present on the page
     """
 
-    page = reader.getPage(pagenr)
-    xObject = page['/Resources']['/XObject'].getObject()
+    page = reader.pages[pagenr]
 
-    if sum((xObject[obj]['/Subtype'] == '/Image')
+    xObject = page.Resources.XObject
+
+    if sum((xObject[obj].Subtype == '/Image')
             for obj in xObject) != 1:
-        raise ValueError
+        raise ValueError('Not exactly 1 image present on the page')
 
     for obj in xObject:
-        if xObject[obj]['/Subtype'] == '/Image':
-            data = xObject[obj].getData()
-            filter = xObject[obj]['/Filter']
+        if xObject[obj].Subtype == '/Image':
+            pdfimage = PdfImage(xObject[obj])
 
-            if filter == '/FlateDecode':
-                size = (xObject[obj]['/Width'], xObject[obj]['/Height'])
-                if xObject[obj]['/ColorSpace'] == '/DeviceRGB':
-                    mode = "RGB"
-                else:
-                    mode = "P"
-                img = Image.frombytes(mode, size, data)
-            else:
-                raise NotImplementedError
+            pdf_width = float(page.MediaBox[2] - page.MediaBox[0])
+            pdf_height = float(page.MediaBox[3] - page.MediaBox[1])
 
-            return img
+            ratio_width = pdfimage.width / pdf_width
+            ratio_height = pdfimage.height / pdf_height
+
+            # Check if the aspect ratio of the image is the same as the
+            # aspect ratio of the page up to a 3% relative error
+            if abs(ratio_width - ratio_height) > 0.03 * ratio_width:
+                raise ValueError('Image has incorrect dimensions')
+
+            return pdfimage.as_pil_image()
 
 
-def extract_image_wand(pagenr, wand_image):
+def extract_image_wand(pagenr, reader):
     """Flattens a page from a PDF to an image array
 
-    This method uses Wand to flatten the page and extract the image.
+    This method uses Wand to flatten the page and creates an image.
 
     Parameters
     ----------
     pagenr : int
         Page number to extract, starting at 0
-    wand_image : Wand Image instance
-        The Wand Image to read from
+    reader : pikepdf.Pdf instance
+        The pdf reader to read the page from
 
     Returns
     -------
     img_array : PIL Image
         The extracted image data
     """
+    page = reader.pages[pagenr]
 
-    single_page = WandImage(wand_image.sequence[pagenr])
-    single_page.format = 'jpg'
-    img_array = np.asarray(bytearray(single_page.make_blob(format="jpg")), dtype=np.uint8)
-    img = Image.open(BytesIO(img_array))
-    img.load()  # Load the data into the PIL image from the Wand image
-    single_page.close()  # Then close the Wand image
+    page_pdf = Pdf.new()
+    page_pdf.pages.append(page)
+
+    with SpooledTemporaryFile() as page_file:
+
+        page_pdf.save(page_file)
+
+        with WandImage(blob=page_file._file.getvalue(), format='pdf', resolution=300) as page_image:
+            page_image.format = 'jpg'
+            img_array = np.asarray(bytearray(page_image.make_blob(format="jpg")), dtype=np.uint8)
+            img = Image.open(BytesIO(img_array))
+            img.load()  # Load the data into the PIL image from the Wand image
+
     return img
 
 

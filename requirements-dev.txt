@@ -1,7 +1,0 @@
-# Tests
-pytest
-pyssim
-pytest-cov
-
-# Linting
-flake8

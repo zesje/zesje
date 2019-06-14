@@ -15,10 +15,11 @@ Install Miniconda by following the instructions on this page:
 
 https://conda.io/miniconda.html
 
-Create a Conda environment that you will use for installing all
-of zesje's dependencies:
+Make sure you cloned this repository and enter its directory. Then 
+create a Conda environment that will automatically install all 
+of zesje's Python dependencies:
 
-    conda create -c conda-forge -n zesje-dev python=3.6 yarn
+    conda env create  # Creates an environment from environment.yml 
 
 Then, *activate* the conda environment:
 
@@ -30,10 +31,6 @@ This tells you that the environment is activated.
 Install all of the Javascript dependencies:
 
     yarn install
-
-Install all of the Python dependencies:
-
-    pip install -r requirements.txt -r requirements-dev.txt
 
 Unfortunately there is also another dependency that must be installed
 manually for now (we are working to bring this dependency into the
@@ -145,10 +142,10 @@ If you use Atom, install the [linter-js-standard-engine](https://atom.io/package
 ### Adding dependencies
 
 #### Server-side
-If you start using a new Python library, be sure to add it to `requirements.txt`. Python libraries for the testing are in `requirements-dev.txt`.
-The packages can be installed and updated in your environment by `pip` using
+If you start using a new Python library, be sure to add it to `environment.yml`.
+The packages can be installed and updated in your environment by `conda` using
 
-    pip install -r requirements.txt -r requirements-dev.txt
+    conda env update
 
 
 #### Client-side

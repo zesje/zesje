@@ -33,8 +33,8 @@ def create_app():
     )
 
     app.config.update(
-        CELERY_BROKER_URL='redis://localhost:6379',
-        CELERY_RESULT_BACKEND='redis://localhost:6379'
+        CELERY_BROKER_URL='redis://localhost:6479',
+        CELERY_RESULT_BACKEND='redis://localhost:6479'
     )
 
     db.init_app(app)

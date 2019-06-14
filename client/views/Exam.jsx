@@ -56,8 +56,7 @@ class Exams extends React.Component {
               return option
             }),
             widthMCO: 24,
-            heightMCO: 38,
-            isMCQ: problem.mc_options && problem.mc_options.length !== 0 // is the problem a mc question - used to display PanelMCQ
+            heightMCO: 38
           }
         }
       })
@@ -122,14 +121,26 @@ class Exams extends React.Component {
   }
 
   updateFeedbackAtIndex = (feedback, problemWidget, idx) => {
+    let fb = [...problemWidget.problem.feedback]
     if (idx === -1) {
-      problemWidget.problem.feedback.push(feedback)
+      fb.push(feedback)
     } else {
-      if (feedback.deleted) problemWidget.problem.feedback.splice(idx, 1)
-      else problemWidget.problem.feedback[idx] = feedback
+      if (feedback.deleted) fb.splice(idx, 1)
+      else fb[idx] = feedback
     }
-    this.setState({
-      widgets: this.state.widgets
+
+    this.setState(prevState => {
+      return {
+        widgets: update(prevState.widgets, {
+          [problemWidget.id]: {
+            'problem': {
+              'feedback': {
+                $set: fb
+              }
+            }
+          }
+        })
+      }
     })
   }
 
@@ -138,10 +149,6 @@ class Exams extends React.Component {
     this.setState({
       editActive: false
     })
-  }
-
-  isProblemWidget = (widget) => {
-    return widget && this.state.widgets[widget].problem
   }
 
   saveProblemName = () => {
@@ -234,8 +241,20 @@ class Exams extends React.Component {
           numPages={this.state.numPages}
           onPDFLoad={this.onPDFLoad}
           updateWidget={this.updateWidget}
-          updateMCWidget={this.updateMCWidget}
+          updateMCOsInState={this.updateMCOsInState}
           selectedWidgetId={this.state.selectedWidgetId}
+          highlightFeedback={(widget, feedbackId) => {
+            let index = widget.problem.feedback.findIndex(e => { return e.id === feedbackId })
+            let feedback = widget.problem.feedback[index]
+            feedback.highlight = true
+            this.updateFeedbackAtIndex(feedback, widget, index)
+          }}
+          removeHighlight={(widget, feedbackId) => {
+            let index = widget.problem.feedback.findIndex(e => { return e.id === feedbackId })
+            let feedback = widget.problem.feedback[index]
+            feedback.highlight = false
+            this.updateFeedbackAtIndex(feedback, widget, index)
+          }}
           selectWidget={(widgetId) => {
             this.setState({
               selectedWidgetId: widgetId
@@ -304,107 +323,6 @@ class Exams extends React.Component {
   }
 
   /**
-   * This function deletes the mc options coupled to a problem.
-   */
-  deleteMCWidget = () => {
-    const widget = this.state.widgets[this.state.selectedWidgetId]
-    const options = widget.problem.mc_options
-    if (options.length > 0) {
-      options.forEach((option) => {
-        api.del('mult-choice/' + option.id)
-          .catch(err => {
-            console.log(err)
-            err.json().then(res => {
-              this.setState({
-                deletingMCWidget: false
-              })
-              Notification.error('Could not delete multiple choice option' +
-                (res.message ? ': ' + res.message : ''))
-              // update to try and get a consistent state
-              this.props.updateExam(this.props.examID)
-            })
-          }).then(res => {
-            let index = widget.problem.feedback.findIndex(e => { return e.id === res.feedback_id })
-            let feedback = widget.problem.feedback[index]
-            feedback.deleted = true
-            this.updateFeedbackAtIndex(feedback, widget, index)
-          })
-      })
-
-      // remove the mc options from the state
-      // note that this can happen before they are removed in the DB due to async calls
-      this.setState((prevState) => {
-        return {
-          widgets: update(prevState.widgets, {
-            [widget.id]: {
-              problem: {
-                mc_options: {
-                  $set: []
-                }
-              }
-            }
-          }),
-          deletingMCWidget: false
-        }
-      })
-    }
-  }
-
-  /**
-   * This method creates a mc option widget object and adds it to the corresponding problem
-   * @param problemWidget The widget the mc option belongs to
-   * @param data the mc option
-   */
-  createNewMCWidget = (problemWidget, data) => {
-    this.setState((prevState) => {
-      return {
-        widgets: update(prevState.widgets, {
-          [this.state.selectedWidgetId]: {
-            problem: {
-              mc_options: {
-                $push: [data]
-              }
-            }
-          }
-        })
-      }
-    })
-  }
-
-  /**
-   * This method is called when the mcq widget is moved. The positions of the options are stored separately and they
-  * all need to be updated
-   * @param widget the problem widget that includes the mcq widget
-   * @param data the new location of the mcq widget (the location of the top-left corner)
-   */
-  updateMCWidget = (widget, data) => {
-    let newMCO = widget.problem.mc_options.map((option, i) => {
-      return {
-        'widget': {
-          'x': {
-            $set: data.x + i * widget.problem.widthMCO
-          },
-          'y': {
-            // each mc option needs to be positioned next to the previous option and should not overlap it
-            $set: data.y
-          }
-        }
-      }
-    })
-
-    // update the state with the new locations
-    this.setState(prevState => ({
-      widgets: update(prevState.widgets, {
-        [widget.id]: {
-          'problem': {
-            'mc_options': newMCO
-          }
-        }
-      })
-    }))
-  }
-
-  /**
    * This method generates MC options by making the right calls to the api and creating
    * the widget object in the mc_options array of the corresponding problem.
    * @param problemWidget the problem widget the mc options belong to
@@ -413,7 +331,7 @@ class Exams extends React.Component {
    * @param xPos x position of the current option
    * @param yPos y position of the current option
    */
-  generateAnswerBoxes = (problemWidget, labels, index, xPos, yPos) => {
+  generateMCOs = (problemWidget, labels, index, xPos, yPos) => {
     if (labels.length === index) return
 
     let feedback = {
@@ -448,32 +366,125 @@ class Exams extends React.Component {
       data.id = result.mult_choice_id
       data.feedback_id = result.feedback_id
       feedback.id = result.feedback_id
-      this.createNewMCWidget(problemWidget, data)
+      this.addMCOtoState(problemWidget, data)
       this.updateFeedback(feedback)
-      this.generateAnswerBoxes(problemWidget, labels, index + 1, xPos + problemWidget.problem.widthMCO, yPos)
+      this.generateMCOs(problemWidget, labels, index + 1, xPos + problemWidget.problem.widthMCO, yPos)
     }).catch(err => {
       console.log(err)
     })
+  }
+
+  /**
+   * This method creates a mc option widget object and adds it to the corresponding problem in the state
+   * @param problemWidget The widget the mc option belongs to
+   * @param data the mc option
+   */
+  addMCOtoState = (problemWidget, data) => {
+    this.setState((prevState) => {
+      return {
+        widgets: update(prevState.widgets, {
+          [this.state.selectedWidgetId]: {
+            problem: {
+              mc_options: {
+                $push: [data]
+              }
+            }
+          }
+        })
+      }
+    })
+  }
+
+  /**
+   * This method deletes mc options coupled to a problem in both the state and the database.
+   * @param widgetId the id of the widget for which the mc options need to be deleted
+   * @param index the index of the first mc option to be removed
+   * @param nrMCOs the number of mc options to remove
+   * @returns {Promise<T | never>}
+   */
+  deleteMCOs = (widgetId, index, nrMCOs) => {
+    let widget = this.state.widgets[widgetId]
+    if (nrMCOs <= 0 || !widget.problem.mc_options.length) return
+
+    let option = widget.problem.mc_options[index]
+    return api.del('mult-choice/' + option.id)
+      .catch(err => {
+        console.log(err)
+        err.json().then(res => {
+          Notification.error('Could not delete multiple choice option' +
+            (res.message ? ': ' + res.message : ''))
+          // update to try and get a consistent state
+          this.props.updateExam(this.props.examID)
+        })
+      })
+      .then(res => {
+        let feedback = widget.problem.feedback[index]
+        feedback.deleted = true
+        this.updateFeedback(feedback)
+        this.setState((prevState) => {
+          return {
+            widgets: update(prevState.widgets, {
+              [widget.id]: {
+                problem: {
+                  mc_options: {
+                    $splice: [[index, 1]]
+                  }
+                }
+              }
+            })
+          }
+        }, () => {
+          this.deleteMCOs(widgetId, index, nrMCOs - 1)
+        })
+      })
+  }
+
+  /**
+   * This method is called when the mcq widget is moved. The positions of the options are stored separately and they
+  * all need to be updated in the state. This method does not update the positions of the mc options in the DB.
+   * @param widget the problem widget that includes the mcq widget
+   * @param data the new location of the mcq widget (the location of the top-left corner)
+   */
+  updateMCOsInState = (widget, data) => {
+    let newMCO = widget.problem.mc_options.map((option, i) => {
+      return {
+        'widget': {
+          'x': {
+            $set: data.x + i * widget.problem.widthMCO
+          },
+          'y': {
+            // each mc option needs to be positioned next to the previous option and should not overlap it
+            $set: data.y
+          }
+        }
+      }
+    })
+
+    // update the state with the new locations
+    this.setState(prevState => ({
+      widgets: update(prevState.widgets, {
+        [widget.id]: {
+          'problem': {
+            'mc_options': newMCO
+          }
+        }
+      })
+    }))
   }
 
   SidePanel = (props) => {
     const selectedWidgetId = this.state.selectedWidgetId
     let selectedWidget = selectedWidgetId && this.state.widgets[selectedWidgetId]
     let problem = selectedWidget && selectedWidget.problem
-    let containsMCOptions = (problem && problem.mc_options.length > 0) || false
-    let widgetEditDisabled = (this.state.previewing || !problem) || (this.props.exam.finalized && containsMCOptions)
+    let widgetEditDisabled = (this.state.previewing || !problem) ||
+      (this.props.exam.finalized && problem.mc_options.length > 0)
     let isGraded = problem && problem.graded
     let widgetDeleteDisabled = widgetEditDisabled || isGraded
-    let totalNrAnswers = 12 // the upper limit for the nr of possible answer boxes
-    let disabledDeleteBoxes = !containsMCOptions
-    let isMCQ = (problem && problem.isMCQ) || false
-    let showPanelMCQ = isMCQ && !this.state.previewing && !this.props.exam.finalized
 
     return (
       <React.Fragment>
         <this.PanelEdit
           disabledEdit={widgetEditDisabled}
-          disableIsMCQ={widgetEditDisabled || containsMCOptions}
           disabledDelete={widgetDeleteDisabled}
           onDeleteClick={() => {
             this.setState({deletingWidget: true})
@@ -494,42 +505,7 @@ class Exams extends React.Component {
             }))
           }}
           saveProblemName={this.saveProblemName}
-          isMCQProblem={isMCQ}
-          onMCQChange={
-            (checked) => {
-              this.setState(prevState => ({
-                changedWidgetId: selectedWidgetId,
-                widgets: update(prevState.widgets, {
-                  [selectedWidgetId]: {
-                    problem: {
-                      isMCQ: {
-                        $set: checked
-                      }
-                    }
-                  }
-                })
-              }))
-            }
-          }
         />
-        { showPanelMCQ ? (
-          <PanelMCQ
-            totalNrAnswers={totalNrAnswers}
-            disabledGenerateBoxes={containsMCOptions}
-            disabledDeleteBoxes={disabledDeleteBoxes}
-            problem={problem}
-            onGenerateBoxesClick={(labels) => {
-              let problemWidget = this.state.widgets[this.state.selectedWidgetId]
-              // position the new mc option widget inside the problem widget
-              let xPos = problemWidget.x + 2
-              let yPos = problemWidget.y + 2
-              this.generateAnswerBoxes(problemWidget, labels, 0, xPos, yPos)
-            }}
-            onDeleteBoxesClick={() => {
-              this.setState({deletingMCWidget: true})
-            }}
-          />
-        ) : null }
         <this.PanelExamActions />
       </React.Fragment>
     )
@@ -537,6 +513,7 @@ class Exams extends React.Component {
 
   PanelEdit = (props) => {
     const selectedWidgetId = this.state.selectedWidgetId
+    let totalNrAnswers = 9 // the upper limit for the nr of possible answer boxes
 
     return (
       <nav className='panel'>
@@ -572,18 +549,77 @@ class Exams extends React.Component {
                 </div>
               </div>
             </div>
-            <div className='panel-block'>
-              <div className='field'>
-                <label className='label'> Multiple choice question </label>
-                <input disabled={props.disableIsMCQ} type='checkbox' checked={props.isMCQProblem} onChange={
-                  (e) => {
-                    props.onMCQChange(e.target.checked)
-                  }} />
-              </div>
-            </div>
+            {props.problem ? (
+              <PanelMCQ
+                totalNrAnswers={totalNrAnswers}
+                problem={props.problem}
+                generateMCOs={(labels) => {
+                  let problemWidget = this.state.widgets[this.state.selectedWidgetId]
+                  let xPos, yPos
+                  if (props.problem.mc_options.length > 0) {
+                    // position the new mc options widget next to the last mc options
+                    let last = props.problem.mc_options[props.problem.mc_options.length - 1].widget
+                    xPos = last.x + problemWidget.problem.widthMCO
+                    yPos = last.y
+                  } else {
+                    // position the new mc option widget inside the problem widget
+                    xPos = problemWidget.x + 2
+                    yPos = problemWidget.y + 2
+                  }
+                  this.generateMCOs(problemWidget, labels, 0, xPos, yPos)
+                }}
+                deleteMCOs={(nrMCOs) => {
+                  let len = props.problem.mc_options.length
+                  if (nrMCOs >= len) {
+                    this.setState({deletingMCWidget: true})
+                  } else if (nrMCOs > 0) {
+                    this.deleteMCOs(selectedWidgetId, len - nrMCOs, nrMCOs)
+                  }
+                }}
+                updateLabels={(labels) => {
+                  labels.map((label, index) => {
+                    let option = props.problem.mc_options[index]
+                    const formData = new window.FormData()
+                    formData.append('name', option.widget.name)
+                    formData.append('x', option.widget.x + option.cbOffsetX)
+                    formData.append('y', option.widget.y + option.cbOffsetY)
+                    formData.append('problem_id', props.problem.id)
+                    formData.append('label', labels[index])
+                    api.patch('mult-choice/' + option.id, formData)
+                      .then(() => {
+                        this.setState((prevState) => {
+                          return {
+                            widgets: update(prevState.widgets, {
+                              [selectedWidgetId]: {
+                                'problem': {
+                                  'mc_options': {
+                                    [index]: {
+                                      label: {
+                                        $set: labels[index]
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            })
+                          }
+                        })
+                      })
+                      .catch(err => {
+                        console.log(err)
+                        err.json().then(res => {
+                          Notification.error('Could not update feedback' +
+                            (res.message ? ': ' + res.message : ''))
+                          // update to try and get a consistent state
+                          this.props.updateExam(this.props.examID)
+                        })
+                      })
+                  })
+                }}
+              />) : null}
           </React.Fragment>
         )}
-        {this.isProblemWidget(selectedWidgetId) &&
+        {props.problem &&
           <React.Fragment>
             <div className='panel-block'>
               {!this.state.editActive && <label className='label'>Feedback options</label>}
@@ -751,7 +787,12 @@ class Exams extends React.Component {
           this.state.widgets[this.state.selectedWidgetId].problem.name}"`}
         confirmText='Delete multiple choice options'
         onCancel={() => this.setState({deletingMCWidget: false})}
-        onConfirm={() => this.deleteMCWidget(this.state.selectedWidgetId)}
+        onConfirm={() => {
+          this.setState({
+            deletingMCWidget: false
+          })
+          this.deleteMCOs(this.state.selectedWidgetId, 0)
+        }}
       />
     </div>
   }

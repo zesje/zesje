@@ -42,7 +42,7 @@ def sub_tup(tup1, tup2):
 
 def guess_dpi(image_array):
     h, *_ = image_array.shape
-    resolutions = np.array([1200, 600, 400, 300, 200, 150, 120, 100, 75, 72, 60, 50, 40])
+    resolutions = np.array([1200, 600, 400, 300, 200, 150, 144, 120, 100, 75, 72, 60, 50, 40])
     return resolutions[np.argmin(abs(resolutions - 25.4 * h / 297))]
 
 
@@ -161,7 +161,7 @@ def fix_corner_markers(corner_keypoints, shape):
         return corner_keypoints
 
     if len(corner_keypoints) < 3:
-        raise RuntimeError("Fewer then 3 corner markers found")
+        raise RuntimeError("Fewer than 3 corner markers found while trying to fix corners")
 
     top_left, top_right, bottom_left, bottom_right = get_corner_marker_sides(corner_keypoints, shape)
     delta = get_delta(top_left, top_right, bottom_left, bottom_right)

@@ -3,14 +3,12 @@ import itertools
 import math
 import os
 from collections import namedtuple, Counter
-from io import BytesIO
 import signal
 
 import cv2
 import numpy as np
 import PyPDF2
 from PIL import Image
-from wand.image import Image as WandImage
 from pylibdmtx import pylibdmtx
 
 from .database import db, Scan, Exam, Page, Student, Submission, Solution, ExamWidget
@@ -48,6 +46,7 @@ PAGE_FORMATS = {
     "A4": (595.276, 841.89),
     "US letter": (612, 792),
 }
+
 
 @celery.task()
 def process_pdf(scan_id):

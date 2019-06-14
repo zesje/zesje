@@ -8,6 +8,7 @@ from ..database import Exam, Submission, Problem, Page, Solution
 
 from ..pdf_generation import CHECKBOX_FORMAT
 
+
 def get(exam_id, problem_id, submission_id, full_page=False):
     """get image for the given problem.
 

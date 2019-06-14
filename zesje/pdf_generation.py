@@ -69,8 +69,6 @@ def generate_pdfs(exam_pdf_file, exam_id, copy_nums, output_paths, id_grid_x,
     mediabox = exam_pdf.pages[0].MediaBox
     pagesize = (float(mediabox[2]), float(mediabox[3]))
 
-    first = True
-
     for copy_num, output_path in zip(copy_nums, output_paths):
         # ReportLab can't deal with file handles, but only with file names,
         # so we have to use a named file
@@ -101,8 +99,7 @@ def generate_pdfs(exam_pdf_file, exam_id, copy_nums, output_paths, id_grid_x,
                 exam_merge = PageMerge(exam_page).add(overlay_merge)
                 exam_merge.render()
 
-            PdfWriter(output_path, trailer=exam_pdf).write()
-                
+            PdfWriter(output_path, trailer=exam_pdf).write()       
 
 
 def join_pdfs(output_filename, pdf_paths):

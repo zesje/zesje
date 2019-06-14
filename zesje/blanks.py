@@ -1,9 +1,6 @@
-import cv2
 import numpy as np
 import os
 
-from .database import db, Exam, Problem
-from .images import guess_dpi, get_box
 from .image_extraction import extract_images
 from PIL import Image
 from flask import current_app
@@ -14,10 +11,10 @@ def set_blank(copy_number, exam_id, dpi):
     data_directory = app_config.get('DATA_DIRECTORY', 'data')
     output_directory = os.path.join(data_directory, f'{exam_id}_data')
 
-    pdf_path = os.path.join(output_directory, 'generated_pdfs', f'{copy_number:05d}.pdf' )
+    pdf_path = os.path.join(output_directory, 'generated_pdfs', f'{copy_number:05d}.pdf')
     pages = extract_images(pdf_path, dpi)
 
-    for image, page in pages :
+    for image, page in pages:
         save_image(np.array(image), page, dpi, exam_id, output_directory)
 
 

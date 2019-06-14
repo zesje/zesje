@@ -4,8 +4,8 @@ import os
 import sys
 
 
-from .database import db, Solution, FeedbackOption, Exam, Problem
-from .images import guess_dpi, get_box, fix_corner_markers
+from .database import db, Solution, FeedbackOption
+from .images import guess_dpi, get_box
 from .blanks import set_blank
 
 from PIL import Image
@@ -19,6 +19,7 @@ CHECKBOX_FORMAT = {
     "font_size": 11,
     "box_size": 9
 }
+
 
 def add_feedback_to_solution(sub, exam, page, page_img):
 
@@ -49,21 +50,20 @@ def add_feedback_to_solution(sub, exam, page, page_img):
                 mc_blank = False
                 db.session.commit()
 
-
         if (mc_blank and is_mc) or ((not is_mc) and is_blank(problem, page_img, sol, exam.id, sub)):
             set_blank_feedback(problem, sol)
 
 
 def set_blank_feedback(problem, sol):
     feedback = FeedbackOption.query.filter(FeedbackOption.problem_id == problem.id,
-                                            FeedbackOption.text == 'blank').one_or_none()
+                                           FeedbackOption.text == 'blank').one_or_none()
 
-    if(feedback == None):
+    if feedback is None:
         new_feedback_option = FeedbackOption(problem_id=problem.id, text='blank')
         db.session.add(new_feedback_option)
         db.session.commit()
         feedback = FeedbackOption.query.filter(FeedbackOption.problem_id == problem.id,
-                                                FeedbackOption.text == 'blank').one_or_none()
+                                               FeedbackOption.text == 'blank').one_or_none()
 
     sol.feedback.append(feedback)
     db.session.commit()
@@ -82,7 +82,7 @@ def is_blank(problem, page_img, solution, exam_id, sub):
     ])
 
     widget_area_in = widget_area / 72
-    
+
     cut_im = get_box(page_img, widget_area_in, padding=0)
 
     reference = get_blank(problem, dpi, widget_area_in, exam_id, sub)
@@ -97,21 +97,17 @@ def is_blank(problem, page_img, solution, exam_id, sub):
     n = 0
     max = input_image.shape[0]
 
-    while n + 50 < max :
+    while n + 50 < max:
         m = n + 50
         if (np.average(~input_image[n: m]) > (1.03 * np.average(~blank_image[n: m]))):
-            if problem.id == 2:
-                print(f"n:m {n}:{m} filled =  {np.average(~input_image[n: m])}/{np.average(~blank_image[n: m])}", file=sys.stderr)
             return False
         n = m
 
     if (np.average(~input_image[n: max-1]) > (1.03 * np.average(~blank_image[n: max-1]))):
-        if problem.id == 2:
-            print(f"Final Line n:m {n}:{max} filled =  {np.average(~input_image[n: max-1])}/{np.average(~blank_image[n: max-1])}", file=sys.stderr)
         return False
-    
+
     print(f"{sub.id},{problem.id} SHOULD BE BLANK", file=sys.stderr)
-    return True 
+    return True
 
 
 def get_blank(problem, dpi, widget_area_in, exam_id, sub):
@@ -131,7 +127,7 @@ def get_blank(problem, dpi, widget_area_in, exam_id, sub):
     value = box
     return value
 
-        
+
 def box_is_filled(box, page_img, threshold=225, cut_padding=0.05, box_size=9):
 
     """

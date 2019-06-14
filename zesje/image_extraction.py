@@ -6,7 +6,7 @@ from PIL import Image
 from wand.image import Image as WandImage
 
 
-def extract_images(filename, dpi= 300):
+def extract_images(filename, dpi=300):
     """Yield all images from a PDF file.
 
     Tries to use PyPDF2 to extract the images from the given PDF.

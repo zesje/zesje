@@ -99,7 +99,7 @@ def generate_pdfs(exam_pdf_file, exam_id, copy_nums, output_paths, id_grid_x,
                 exam_merge = PageMerge(exam_page).add(overlay_merge)
                 exam_merge.render()
 
-            PdfWriter(output_path, trailer=exam_pdf).write()       
+            PdfWriter(output_path, trailer=exam_pdf).write()
 
 
 def join_pdfs(output_filename, pdf_paths):

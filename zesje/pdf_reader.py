@@ -19,8 +19,10 @@ def get_problem_title(problem, data_dir, page_format):
 
     Parameters
     ----------
-    app_config : dict
-        Configuration of the app
+    data_dir : str
+        Location of the data folder
+    page_format : str
+        Format of the current page
     problem : Problem
         The currently selected problem
 
@@ -89,7 +91,7 @@ def get_words(layout_objs, y_top, y_bottom, page_format):
 
     Parameters
     ----------
-    page_format : dict
+    page_format : str
         Format of the current page
     layout_objs : list of layout objects
         The list of objects in the page.

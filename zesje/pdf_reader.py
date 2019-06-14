@@ -13,7 +13,7 @@ from pdfminer3.pdfparser import PDFParser
 from .api.exams import PAGE_FORMATS
 
 
-def get_problem_title(problem, app_config):
+def get_problem_title(problem, data_dir, page_format):
     """
     Returns the title of a problem
 
@@ -29,7 +29,7 @@ def get_problem_title(problem, app_config):
     title: str
         The title of the problem, or an empty string if no text is found
     """
-    data_dir = app_config.get('DATA_DIRECTORY', 'data')
+
     pdf_path = os.path.join(data_dir, f'{problem.exam_id}_data', 'exam.pdf')
 
     fp = open(pdf_path, 'rb')
@@ -61,7 +61,7 @@ def get_problem_title(problem, app_config):
         layout = device.get_result()
 
         if layout.pageid == problem.widget.page + 1:
-            filtered_words = get_words(layout._objs, y_above, y_current, app_config)
+            filtered_words = get_words(layout._objs, y_above, y_current, page_format)
 
             if not filtered_words:
                 return ''
@@ -72,7 +72,7 @@ def get_problem_title(problem, app_config):
     return ''
 
 
-def get_words(layout_objs, y_top, y_bottom, app_config):
+def get_words(layout_objs, y_top, y_bottom, page_format):
     """
     Returns the text from a pdf page within a specified height.
     Pdfminer orients the coordinates of a layout object from
@@ -89,8 +89,8 @@ def get_words(layout_objs, y_top, y_bottom, app_config):
 
     Parameters
     ----------
-    app_config : dict
-        Configuration of the app
+    page_format : dict
+        Format of the current page
     layout_objs : list of layout objects
         The list of objects in the page.
     y_top : double
@@ -103,7 +103,6 @@ def get_words(layout_objs, y_top, y_bottom, app_config):
     words : list of tuples
         A list of tuples with the (y, text) values.
     """
-    page_format = app_config.get('PAGE_FORMAT', 'A4')
     page_height = PAGE_FORMATS[page_format][1]
 
     words = []

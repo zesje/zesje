@@ -60,7 +60,11 @@ class Problems(Resource):
             db.session.commit()
             widget.name = f'problem_{problem.id}'
 
-            problem.name = get_problem_title(problem, current_app.config)
+            app_config = current_app.config
+            data_dir = app_config.get('DATA_DIRECTORY', 'data')
+            page_format = app_config.get('PAGE_FORMAT', 'A4')
+
+            problem.name = get_problem_title(problem, data_dir, page_format)
 
             db.session.commit()
 

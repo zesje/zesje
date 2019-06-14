@@ -55,7 +55,7 @@ def add_feedback_to_solution(sub, exam, page, page_img):
         if (mc_filled_counter == 0 and is_mc) or ((not is_mc) and is_blank(problem, page_img, sol, exam.id, sub)):
             set_blank_feedback(problem, sol)
 
-        if problem.grading_policy == 2 and mc_filled_counter == 1:
+        if (problem.grading_policy.value == 2) and mc_filled_counter == 1:
             set_auto_grader(sol)
 
 
@@ -73,9 +73,11 @@ def set_auto_grader(solution):
     solution : Solution
         The solution
     """
-    zesje_grader = Grader.query.get(Grader.name == 'Zesje').first()
+    zesje_grader = Grader.query.filter(Grader.name == 'Zesje')
 
-    if not zesje_grader:
+    current_app.logger.info(str(zesje_grader))
+
+    if zesje_grader is None:
         zesje_grader = Grader(name='Zesje')
         db.session.add(zesje_grader)
         db.session.commit()
@@ -88,7 +90,7 @@ def set_blank_feedback(problem, sol):
     feedback = FeedbackOption.query.filter(FeedbackOption.problem_id == problem.id,
                                            FeedbackOption.text == 'blank').one_or_none()
 
-    if problem.grading_policy > 0:
+    if problem.grading_policy.value > 0:
         set_auto_grader(sol)
 
     if feedback is None:
@@ -139,7 +141,6 @@ def is_blank(problem, page_img, solution, exam_id, sub):
     if (np.average(~input_image[n: max-1]) > (1.03 * np.average(~blank_image[n: max-1]))):
         return False
 
-    print(f"{sub.id},{problem.id} SHOULD BE BLANK", file=sys.stderr)
     return True
 
 

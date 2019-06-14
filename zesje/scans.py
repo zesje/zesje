@@ -4,6 +4,8 @@ import math
 import os
 from collections import namedtuple, Counter
 import signal
+import traceback
+import sys
 
 import cv2
 import numpy as np
@@ -76,6 +78,10 @@ def process_pdf(scan_id):
         # TODO: When #182 is implemented, properly separate user-facing
         #       messages (written to DB) from developer-facing messages,
         #       which should be written into the log.
+        print("TEST")
+
+        print(traceback.format_exc(error), file=sys.stderr)
+
         write_pdf_status(scan_id, 'error', f"Unexpected error: {error}")
 
 

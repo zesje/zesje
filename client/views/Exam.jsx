@@ -47,6 +47,7 @@ class Exams extends React.Component {
             page: problem.page,
             name: problem.name,
             graded: problem.graded,
+            grading_policy: problem.grading_policy,
             feedback: problem.feedback || [],
             mc_options: problem.mc_options.map((option) => {
               option.cbOffsetX = 7 // checkbox offset relative to option position on x axis
@@ -161,11 +162,38 @@ class Exams extends React.Component {
     const problem = changedWidget.problem
     if (!problem) return
 
-    api.put('problems/' + problem.id + '/name', { name: problem.name })
+    api.put('problems/' + problem.id, { name: problem.name })
       .catch(e => Notification.error('Could not save new problem name: ' + e))
       .then(this.setState({
         changedWidgetId: null
       }))
+  }
+
+  onChangeAutoApproveType (e) {
+    const selectedWidgetId = this.state.selectedWidgetId
+    if (!selectedWidgetId) return
+
+    const selectedWidget = this.state.widgets[selectedWidgetId]
+    if (!selectedWidget) return
+
+    const problem = selectedWidget.problem
+    if (!problem) return
+
+    const newPolicy = e.target.value
+
+    api.put('problems/' + problem.id, { grading_policy: newPolicy })
+      .catch(e => Notification.error('Could not change grading policy: ' + e))
+      .then(this.setState(prevState => ({
+        widgets: update(prevState.widgets, {
+          [selectedWidgetId]: {
+            problem: {
+              grading_policy: {
+                $set: newPolicy
+              }
+            }
+          }
+        })
+      })))
   }
 
   createNewWidget = (widgetData) => {
@@ -631,6 +659,16 @@ class Exams extends React.Component {
                 editFeedback={this.editFeedback} showTooltips={this.state.showTooltips}
                 grading={false}
               />}
+            <div className='panel-block mcq-block'>
+              <b>Auto-approve</b>
+              <div className='select is-hovered is-fullwidth'>
+                <select value={props.problem.grading_policy} onChange={this.onChangeAutoApproveType.bind(this)}>
+                  <option value='0'>Nothing</option>
+                  <option value='1'>Blanks</option>
+                  <option value='2'>One answer/blanks</option>
+                </select>
+              </div>
+            </div>
           </React.Fragment>
         }
         <div className='panel-block'>

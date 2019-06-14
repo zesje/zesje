@@ -71,7 +71,7 @@ class Problems(Resource):
     put_parser.add_argument('name', type=str)
     put_parser.add_argument('grading_policy', type=int)
 
-    def put(self, problem_id, attr):
+    def put(self, problem_id):
         """PUT to a problem
 
         This method accepts any of the legible arguments passed to it.

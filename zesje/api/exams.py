@@ -197,6 +197,7 @@ class Exams(Resource):
                         'type': prob.widget.type
                     },
                     'graded': any([sol.graded_by is not None for sol in prob.solutions]),
+                    'grading_policy': prob.grading_policy,
                     'mc_options': [
                         {
                             'id': mc_option.id,

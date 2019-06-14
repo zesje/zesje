@@ -115,6 +115,6 @@ def get_words(layout_objs, y_top, y_bottom, page_format):
                 words.append(obj.get_text())
 
         elif isinstance(obj, LTFigure):
-            words.append(get_words(obj._objs, y_top, y_bottom, app_config))
+            words.append(get_words(obj._objs, y_top, y_bottom, page_format))
 
     return words

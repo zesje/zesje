@@ -75,8 +75,17 @@ def get_problem_title(problem, app_config):
 def get_words(layout_objs, y_top, y_bottom, app_config):
     """
     Returns the text from a pdf page within a specified height.
-    Pdfminer orients the coordinates of a layout objectp from
+    Pdfminer orients the coordinates of a layout object from
     the bottom left.
+
+    Adapted from https://github.com/euske/pdfminer/issues/171
+    obj.bbox returns the following values: (x0, y0, x1, y1)
+
+    With
+    x0: the distance from the left of the page to the left edge of the box.
+    y0: the distance from the bottom of the page to the lower edge of the box.
+    x1: the distance from the left of the page to the right edge of the box.
+    y1: the distance from the bottom of the page to the upper edge of the box.
 
     Parameters
     ----------

@@ -33,8 +33,7 @@ def set_blank(pdf_path, exam_id):
 
     #        ret,thresh = cv2.threshold(gray,180,255,3)
             input_image = np.array(gray)
-            problem.blank_threshold = np.average(~(input_image))
-            db.session.commit()
+
 
 
 def save_image(image, page, dpi, exam_id):

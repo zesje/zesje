@@ -100,7 +100,6 @@ class Problem(db.Model):
     feedback_options = db.relationship('FeedbackOption', backref='problem', order_by='FeedbackOption.id', lazy=True)
     solutions = db.relationship('Solution', backref='problem', lazy=True)
     widget = db.relationship('ProblemWidget', backref='problem', uselist=False, lazy=True)
-    blank_threshold = Column(Integer)
 
     @hybrid_property
     def mc_options(self):
@@ -135,7 +134,6 @@ class Solution(db.Model):
     graded_at = Column(DateTime, nullable=True)
     feedback = db.relationship('FeedbackOption', secondary=solution_feedback, backref='solutions', lazy='subquery')
     remarks = Column(Text)
-    filled_score = Column(Integer)
 
     @property
     def feedback_count(self):

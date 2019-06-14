@@ -6,6 +6,7 @@ import sys
 
 from .database import db, Solution, FeedbackOption, Exam, Problem
 from .images import guess_dpi, get_box, fix_corner_markers
+from .blanks import set_blank
 
 from PIL import Image
 from flask import current_app
@@ -37,29 +38,35 @@ def add_feedback_to_solution(sub, exam, page, page_img):
 
     for problem in problems_on_page:
         sol = Solution.query.filter(Solution.problem_id == problem.id, Solution.submission_id == sub.id).one_or_none()
-        
-        if is_blank(problem, page_img, sol, exam.id, sub.id):
-            feedback = FeedbackOption.query.filter(FeedbackOption.problem_id == problem.id,
-                                                   FeedbackOption.text == 'blank').one_or_none()
-
-            if(feedback == None):
-                new_feedback_option = FeedbackOption(problem_id=problem.id, text='blank')
-                db.session.add(new_feedback_option)
-                db.session.commit()
-                feedback = FeedbackOption.query.filter(FeedbackOption.problem_id == problem.id,
-                                                        FeedbackOption.text == 'blank').one_or_none()
-
-            sol.feedback.append(feedback)
-            db.session.commit()
-
+        is_mc = False
+        mc_blank = False
         for mc_option in problem.mc_options:
             box = (mc_option.x, mc_option.y)
-
+            is_mc = True
             if box_is_filled(box, page_img, box_size=CHECKBOX_FORMAT["box_size"]):
                 feedback = mc_option.feedback
                 sol.feedback.append(feedback)
+                mc_blank = False
                 db.session.commit()
 
+
+        if (mc_blank and is_mc) or ((not is_mc) and is_blank(problem, page_img, sol, exam.id, sub)):
+            set_blank(problem, sol)
+
+
+def set_blank(problem, sol):
+    feedback = FeedbackOption.query.filter(FeedbackOption.problem_id == problem.id,
+                                            FeedbackOption.text == 'blank').one_or_none()
+
+    if(feedback == None):
+        new_feedback_option = FeedbackOption(problem_id=problem.id, text='blank')
+        db.session.add(new_feedback_option)
+        db.session.commit()
+        feedback = FeedbackOption.query.filter(FeedbackOption.problem_id == problem.id,
+                                                FeedbackOption.text == 'blank').one_or_none()
+
+    sol.feedback.append(feedback)
+    db.session.commit()
 
 
 def is_blank(problem, page_img, solution, exam_id, sub):
@@ -99,6 +106,10 @@ def is_blank(problem, page_img, solution, exam_id, sub):
             return False
         n = m
 
+    if (np.average(~input_image[n: max-1]) > (1.03 * np.average(~blank_image[n: max-1]))):
+        if problem.id == 2:
+            print(f"Final Line n:m {n}:{max} filled =  {np.average(~input_image[n: max-1])}/{np.average(~blank_image[n: max-1])}", file=sys.stderr)
+        return False
     
  #   gray = cv2.cvtColor(cut_im, cv2.COLOR_BGR2GRAY)
  #   ret,thresh = cv2.threshold(gray,180,255,1)
@@ -109,7 +120,7 @@ def is_blank(problem, page_img, solution, exam_id, sub):
  #   solution.filled_score = value
  #   db.session.commit()
  #   base = problem.blank_threshold
-    print(f"{sub},{problem.id} SHOULD BE BLANK", file=sys.stderr)
+    print(f"{sub.id},{problem.id} SHOULD BE BLANK", file=sys.stderr)
     return True # value <= (base)
 
 def get_blank(problem, dpi, widget_area_in, exam_id, sub):
@@ -117,12 +128,13 @@ def get_blank(problem, dpi, widget_area_in, exam_id, sub):
 
     app_config = current_app.config
     data_directory = app_config.get('DATA_DIRECTORY', 'data')
-    # blank_storage = os.path.join(data_directory, 'scans', f'{scan.id}.pdf')
     output_directory = os.path.join(data_directory, f'{exam_id}_data')
 
-    submission_path = os.path.join(output_directory, 'blanks', f'{dpi}')
-    os.makedirs(submission_path, exist_ok=True)
-    image_path = os.path.join(submission_path, f'page{page:02d}.jpg')
+    generated_path = os.path.join(output_directory, 'blanks', f'{dpi}')
+    if not os.path.exists(generated_path):
+        set_blank(sub.copy_number, exam_id, dpi)
+
+    image_path = os.path.join(generated_path, f'page{page:02d}.jpg')
     blank_page = Image.open(image_path)
     box = get_box(np.array(blank_page), widget_area_in, padding=0)
     value = box

@@ -6,7 +6,6 @@ from pdfrw import PdfReader, PdfWriter, PageMerge
 from pystrich.datamatrix import DataMatrixEncoder
 from reportlab.lib.units import mm
 from reportlab.pdfgen import canvas
-from .blanks import set_blank
 
 
 output_pdf_filename_format = '{0:05d}.pdf'
@@ -103,9 +102,6 @@ def generate_pdfs(exam_pdf_file, exam_id, copy_nums, output_paths, id_grid_x,
                 exam_merge.render()
 
             PdfWriter(output_path, trailer=exam_pdf).write()
-            if first and copy_num != 1519 :
-                first = False
-                set_blank(output_path, exam_id)
                 
 
 

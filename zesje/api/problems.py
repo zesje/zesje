@@ -68,31 +68,35 @@ class Problems(Resource):
             }
 
     put_parser = reqparse.RequestParser()
-    put_parser.add_argument('name', type=str, required=True)
+    put_parser.add_argument('name', type=str)
+    put_parser.add_argument('grading_policy', type=int)
 
     def put(self, problem_id, attr):
         """PUT to a problem
 
-        As of writing this method only supports putting the name property
+        This method accepts any of the legible arguments passed to it.
 
         problem_id: int
             the problem id to put to
         attr: str
-            the attribute (or property) to put to (only supports 'name' now)
+            the attribute (or property) to put to
 
         Returns
-            HTTP 200 on success
+            HTTP 200 on succes, 404 if problem is invalid
         """
 
         args = self.put_parser.parse_args()
 
-        name = args['name']
         problem = Problem.query.get(problem_id)
         if problem is None:
             msg = f"Problem with id {problem_id} doesn't exist"
             return dict(status=404, message=msg), 404
 
-        problem.name = name
+        for key in args.keys():
+            value = args[key]
+            if value is not None:
+                setattr(problem, key, value)
+
         db.session.commit()
 
         return dict(status=200, message="ok"), 200

@@ -1,12 +1,23 @@
 import cv2
 import numpy as np
+import os
+import sys
 
 
-from .database import db, Solution, FeedbackOption, Exam
+from .database import db, Solution, FeedbackOption, Exam, Problem
 from .images import guess_dpi, get_box, fix_corner_markers
 
-from .pdf_generation import CHECKBOX_FORMAT
+from PIL import Image
+from flask import current_app
 
+# from .pdf_generation import CHECKBOX_FORMAT
+
+
+CHECKBOX_FORMAT = {
+    "margin": 5,
+    "font_size": 11,
+    "box_size": 9
+}
 
 def add_feedback_to_solution(sub, exam, page, page_img):
 
@@ -27,7 +38,7 @@ def add_feedback_to_solution(sub, exam, page, page_img):
     for problem in problems_on_page:
         sol = Solution.query.filter(Solution.problem_id == problem.id, Solution.submission_id == sub.id).one_or_none()
         
-        if is_blank(problem, page_img, sol):
+        if is_blank(problem, page_img, sol, exam.id, sub.id):
             feedback = FeedbackOption.query.filter(FeedbackOption.problem_id == problem.id,
                                                    FeedbackOption.text == 'blank').one_or_none()
 
@@ -51,7 +62,7 @@ def add_feedback_to_solution(sub, exam, page, page_img):
 
 
 
-def is_blank(problem, page_img, solution):
+def is_blank(problem, page_img, solution, exam_id, sub):
     # add the actually margin from the scan to corner markers to the coords in inches
     dpi = guess_dpi(page_img)
     # get the box where we think the box is
@@ -64,28 +75,62 @@ def is_blank(problem, page_img, solution):
     ])
 
     widget_area_in = widget_area / 72
-
+    
     cut_im = get_box(page_img, widget_area_in, padding=0)
 
-    gray = cv2.cvtColor(cut_im, cv2.COLOR_BGR2GRAY)
+    reference = get_blank(problem, dpi, widget_area_in, exam_id, sub)
+
+    blank_image = np.array(reference)
+    blank_image = cv2.cvtColor(blank_image, cv2.COLOR_BGR2GRAY)
+    blank_image = np.array(blank_image)
+    input_image = np.array(cut_im)
+    input_image = cv2.cvtColor(input_image, cv2.COLOR_BGR2GRAY)
+    input_image = np.array(input_image)
+
+    n = 0
+    max = input_image.shape[0]
+
+    while n + 50 < max :
+        m = n + 50
+        # print(f" filled = {np.sum(~input_image[n: m])}/{np.sum(~blank_image[n: m])}")
+        if (np.average(~input_image[n: m]) > (1.03 * np.average(~blank_image[n: m]))):
+            if problem.id == 2:
+                print(f"n:m {n}:{m} filled =  {np.average(~input_image[n: m])}/{np.average(~blank_image[n: m])}", file=sys.stderr)
+            return False
+        n = m
+
+    
+ #   gray = cv2.cvtColor(cut_im, cv2.COLOR_BGR2GRAY)
+ #   ret,thresh = cv2.threshold(gray,180,255,1)
+ #   input_image = np.array(thresh)
+ #   value = np.average((input_image))
 
 
-    ret,thresh = cv2.threshold(gray,180,255,3)
-    kernel = np.ones((3,3),np.uint8)
-    timp = cv2.dilate(~thresh,kernel,iterations = 2)
-    ret, temp = cv2.threshold(timp,180,255,3)
-    contours,h = cv2.findContours(~temp,1,2)
-    a = 80
-    value = 0
-    for cnt in contours:   
-        if cv2.contourArea(cnt) > a:
-            value = value+1
+ #   solution.filled_score = value
+ #   db.session.commit()
+ #   base = problem.blank_threshold
+    print(f"{sub},{problem.id} SHOULD BE BLANK", file=sys.stderr)
+    return True # value <= (base)
 
-    solution.filled_score = value
-    db.session.commit()
-    base = problem.blank_threshold
+def get_blank(problem, dpi, widget_area_in, exam_id, sub):
+    page = problem.widget.page
 
-    return value <= (base)
+    app_config = current_app.config
+    data_directory = app_config.get('DATA_DIRECTORY', 'data')
+    # blank_storage = os.path.join(data_directory, 'scans', f'{scan.id}.pdf')
+    output_directory = os.path.join(data_directory, f'{exam_id}_data')
+
+    submission_path = os.path.join(output_directory, 'blanks', f'{dpi}')
+    os.makedirs(submission_path, exist_ok=True)
+    image_path = os.path.join(submission_path, f'page{page:02d}.jpg')
+    blank_page = Image.open(image_path)
+    box = get_box(np.array(blank_page), widget_area_in, padding=0)
+    value = box
+    # box_folder = os.path.join(submission_path, f'{problem.id}')
+    # os.makedirs(box_folder, exist_ok=True)
+    # box_path = os.path.join(box_folder, f'{sub:03d}.jpg')    
+    # Image.fromarray(box).save(box_path)
+    return value
 
         
 def box_is_filled(box, page_img, threshold=225, cut_padding=0.05, box_size=9):

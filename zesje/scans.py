@@ -19,7 +19,8 @@ from .images import guess_dpi, get_box, fix_corner_markers
 from .factory import make_celery
 from .pregrader import add_feedback_to_solution
 
-from .pdf_generation import MARKER_FORMAT, PAGE_FORMATS
+# from .pdf_generation import MARKER_FORMAT, PAGE_FORMATS
+from reportlab.lib.units import mm
 
 ExtractedBarcode = namedtuple('ExtractedBarcode', ['token', 'copy', 'page'])
 
@@ -27,6 +28,25 @@ ExamMetadata = namedtuple('ExamMetadata', ['token', 'barcode_coords'])
 
 celery = make_celery()
 
+
+# the size of the markers in points
+MARKER_FORMAT = {
+    "margin": 10 * mm,
+    "marker_line_length": 8 * mm,
+    "marker_line_width": 1 * mm,
+    "bar_length": 40 * mm
+}
+
+# the parameters of drawing checkboxes
+CHECKBOX_FORMAT = {
+    "margin": 5,
+    "font_size": 11,
+    "box_size": 9
+}
+PAGE_FORMATS = {
+    "A4": (595.276, 841.89),
+    "US letter": (612, 792),
+}
 
 @celery.task()
 def process_pdf(scan_id):
@@ -128,7 +148,7 @@ def exam_metadata(exam_id):
         )
 
 
-def extract_images(filename):
+def extract_images(filename, dpi = 300):
     """Yield all images from a PDF file.
 
     Tries to use PyPDF2 to extract the images from the given PDF.
@@ -151,7 +171,7 @@ def extract_images(filename):
 
         if use_wand:
             # If PyPDF2 failed we need Wand to count the number of pages
-            wand_image = WandImage(filename=filename, resolution=300)
+            wand_image = WandImage(filename=filename, resolution=dpi)
             total = len(wand_image.sequence)
 
         for pagenr in range(total):
@@ -166,7 +186,7 @@ def extract_images(filename):
 
             if use_wand:
                 if wand_image is None:
-                    wand_image = WandImage(filename=filename, resolution=300)
+                    wand_image = WandImage(filename=filename, resolution=dpi)
                 img = extract_image_wand(pagenr, wand_image)
 
             if img.mode == 'L':

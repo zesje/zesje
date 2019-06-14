@@ -15,9 +15,7 @@ def set_blank(copy_number, exam_id, dpi):
     output_directory = os.path.join(data_directory, f'{exam_id}_data')
 
     pdf_path = os.path.join(output_directory, 'generated_pdfs', f'{copy_number:05d}.pdf' )
-
     pages = extract_images(pdf_path, dpi)
-    exam = Exam.query.filter(Exam.token == exam_id).first()
 
     for image, page in pages :
         save_image(np.array(image), page, dpi, exam_id, output_directory)
@@ -40,8 +38,6 @@ def save_image(image, page, dpi, exam_id, output_directory):
     image_path : string
         Location of the image.
     """
-
-
 
     submission_path = os.path.join(output_directory, 'blanks', f'{dpi}')
     os.makedirs(submission_path, exist_ok=True)

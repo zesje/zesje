@@ -51,10 +51,10 @@ def add_feedback_to_solution(sub, exam, page, page_img):
 
 
         if (mc_blank and is_mc) or ((not is_mc) and is_blank(problem, page_img, sol, exam.id, sub)):
-            set_blank(problem, sol)
+            set_blank_feedback(problem, sol)
 
 
-def set_blank(problem, sol):
+def set_blank_feedback(problem, sol):
     feedback = FeedbackOption.query.filter(FeedbackOption.problem_id == problem.id,
                                             FeedbackOption.text == 'blank').one_or_none()
 
@@ -99,7 +99,6 @@ def is_blank(problem, page_img, solution, exam_id, sub):
 
     while n + 50 < max :
         m = n + 50
-        # print(f" filled = {np.sum(~input_image[n: m])}/{np.sum(~blank_image[n: m])}")
         if (np.average(~input_image[n: m]) > (1.03 * np.average(~blank_image[n: m]))):
             if problem.id == 2:
                 print(f"n:m {n}:{m} filled =  {np.average(~input_image[n: m])}/{np.average(~blank_image[n: m])}", file=sys.stderr)
@@ -111,17 +110,9 @@ def is_blank(problem, page_img, solution, exam_id, sub):
             print(f"Final Line n:m {n}:{max} filled =  {np.average(~input_image[n: max-1])}/{np.average(~blank_image[n: max-1])}", file=sys.stderr)
         return False
     
- #   gray = cv2.cvtColor(cut_im, cv2.COLOR_BGR2GRAY)
- #   ret,thresh = cv2.threshold(gray,180,255,1)
- #   input_image = np.array(thresh)
- #   value = np.average((input_image))
-
-
- #   solution.filled_score = value
- #   db.session.commit()
- #   base = problem.blank_threshold
     print(f"{sub.id},{problem.id} SHOULD BE BLANK", file=sys.stderr)
-    return True # value <= (base)
+    return True 
+
 
 def get_blank(problem, dpi, widget_area_in, exam_id, sub):
     page = problem.widget.page
@@ -138,10 +129,6 @@ def get_blank(problem, dpi, widget_area_in, exam_id, sub):
     blank_page = Image.open(image_path)
     box = get_box(np.array(blank_page), widget_area_in, padding=0)
     value = box
-    # box_folder = os.path.join(submission_path, f'{problem.id}')
-    # os.makedirs(box_folder, exist_ok=True)
-    # box_path = os.path.join(box_folder, f'{sub:03d}.jpg')    
-    # Image.fromarray(box).save(box_path)
     return value
 
         

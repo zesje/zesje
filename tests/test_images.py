@@ -9,9 +9,11 @@ from zesje.scans import find_corner_marker_keypoints
 
 @pytest.mark.parametrize(
     'shape,corners,expected',
-    [((240, 200, 3), [(50, 50), (120, 50), (50, 200)], (120, 200)),
-        ((240, 200, 3), [(120, 50), (50, 200), (120, 200)], (50, 50))],
-    ids=["", ""])
+    [((240, 200, 3), [(120, 50), (50, 200), (120, 200)], (50, 50)),
+     ((240, 200, 3), [(50, 50), (50, 200), (120, 200)], (120, 50)),
+     ((240, 200, 3), [(50, 50), (120, 50), (120, 200)], (50, 200)),
+     ((240, 200, 3), [(50, 50), (120, 50), (50, 200)], (120, 200))],
+    ids=["missing top left", "missing top right", "missing bottom left", "missing bottom right"])
 def test_three_straight_corners(shape, corners, expected):
     corner_markers = fix_corner_markers(corners, shape)
     assert expected in corner_markers
@@ -48,16 +50,21 @@ def test_pdf(datadir):
     assert dist < epsilon
 
 
-def test_get_delta_1():
-    delta = get_delta((0, 1), (1, 1), (0, 0), None)
+@pytest.mark.parametrize(
+    'inputs,expected',
+    [
+        (((0, 1), (1, 1), (0, 0), None), (0, 1)),
+        (((0, 1), None, (0, 0), (0, 1)), (0, 1)),
+        (((1, 1), (2, 1), None, (2, 2)), (0, -1)),
+        ((None, (1, 1), (1, 2), (2, 2)), (-1, -1))
+    ],
+    ids=["missing bottom right", "missing top right", "missing bottom left", "missing top left"]
+)
+def test_get_delta(inputs, expected):
+    # unpack inputs so that the individual elements are paramaters
+    delta = get_delta(*inputs)
 
-    assert delta == (0, 1)
-
-
-def test_get_delta_2():
-    delta = get_delta((0, 1), None, (0, 0), (0, 1))
-
-    assert delta == (0, 1)
+    assert delta == expected
 
 
 def test_get_corner_marker_sides_all_four():

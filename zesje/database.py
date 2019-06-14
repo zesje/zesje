@@ -92,7 +92,7 @@ class Page(db.Model):
     number = Column(Integer, nullable=False)
 
 
-class GradingPolicy(enum.Enum):
+class GradingPolicy(enum.IntEnum):
     """
     Enum for the grading policy of a problem
 

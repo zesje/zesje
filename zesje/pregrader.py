@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 import os
-import sys
+
 from datetime import datetime
 
 from .database import db, Solution, Grader, FeedbackOption, GradingPolicy
@@ -10,9 +10,6 @@ from .blanks import set_blank
 
 from PIL import Image
 from flask import current_app
- 
-
-# from .pdf_generation import CHECKBOX_FORMAT
 
 
 CHECKBOX_FORMAT = {
@@ -43,7 +40,7 @@ def add_feedback_to_solution(sub, exam, page, page_img):
         is_mc = False
         mc_filled_counter = 0
 
-        if(problem.grading_policy is None):
+        if problem.grading_policy is None:
             problem.grading_policy = GradingPolicy.set_blank
             db.session.commit()
 
@@ -58,10 +55,10 @@ def add_feedback_to_solution(sub, exam, page, page_img):
 
                 db.session.commit()
 
-        if (mc_filled_counter == 0 and is_mc) or ((not is_mc) and is_blank(problem, page_img, sol, exam.id, sub)):
+        if (mc_filled_counter == 0 and is_mc) or ((not is_mc) and is_blank(problem, page_img, exam.id, sub)):
             set_blank_feedback(problem, sol)
 
-        if (problem.grading_policy.value == 2) and mc_filled_counter == 1:
+        if problem.grading_policy.value == 2 and mc_filled_counter == 1:
             set_auto_grader(sol)
 
 
@@ -111,11 +108,11 @@ def set_blank_feedback(problem, sol):
     db.session.commit()
 
 
-def is_blank(problem, page_img, solution, exam_id, sub):
+def is_blank(problem, page_img, exam_id, sub):
     # add the actually margin from the scan to corner markers to the coords in inches
     dpi = guess_dpi(page_img)
-    # get the box where we think the box is
 
+    # get the box where we think the box is
     widget_area = np.asarray([
         problem.widget.y,  # top
         problem.widget.y + problem.widget.height,  # bottom

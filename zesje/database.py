@@ -1,10 +1,11 @@
 """ db.Models used in the db """
 
+import enum
 import random
 import string
 
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean, ForeignKey
+from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean, ForeignKey, Enum
 from flask_sqlalchemy.model import BindMetaMixin, Model
 from sqlalchemy.ext.declarative import DeclarativeMeta, declarative_base
 from sqlalchemy.orm.session import object_session
@@ -91,6 +92,20 @@ class Page(db.Model):
     number = Column(Integer, nullable=False)
 
 
+class GradingPolicy(enum.Enum):
+    """
+    Enum for the grading policy of a problem
+
+    The grading policy of a problem means:
+        0: Manually grade everything
+        1: Manually grade blank solutions only
+        2: Manually grade blank solutions or multiple choice solutions with one option
+    """
+    set_nothing = 0
+    set_blank = 1
+    set_blank_single = 2
+
+
 class Problem(db.Model):
     """this will be initialized @ app initialization and immutable from then on."""
     __tablename__ = 'problem'
@@ -100,7 +115,7 @@ class Problem(db.Model):
     feedback_options = db.relationship('FeedbackOption', backref='problem', order_by='FeedbackOption.id', lazy=True)
     solutions = db.relationship('Solution', backref='problem', lazy=True)
     widget = db.relationship('ProblemWidget', backref='problem', uselist=False, lazy=True)
-    grading_policy = Column(Integer, nullable=False)
+    grading_policy = Column('value', Enum(GradingPolicy), nullable=False)
 
     @hybrid_property
     def mc_options(self):

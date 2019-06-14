@@ -2,7 +2,7 @@
 
 from flask_restful import Resource, reqparse
 
-from ..database import db, Exam, Problem, ProblemWidget, Solution, FeedbackOption
+from ..database import db, Exam, Problem, ProblemWidget, Solution, FeedbackOption, GradingPolicy
 
 
 class Problems(Resource):
@@ -46,7 +46,7 @@ class Problems(Resource):
                 exam=exam,
                 name=args['name'],
                 widget=widget,
-                grading_policy=args['grading_policy']
+                grading_policy=GradingPolicy(args['grading_policy'])
             )
 
             # Widget is also added because it is used in problem

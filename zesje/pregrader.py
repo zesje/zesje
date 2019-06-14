@@ -64,11 +64,6 @@ def set_auto_grader(solution):
     Sets the grader to 'Zesje', meaning that a question is
     considered automatically graded.
 
-    The grading policy of a problem means:
-        1: Manually grade everything
-        2: Manually grade blank solutions only
-        3: Manually grade blank solutions or solutions with one option
-
     To ensure a solution is graded manually, the grader of a solution
     is set to a grader named Zesje. That way, the detected option is
     not set as 'ungraded'.

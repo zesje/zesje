@@ -41,6 +41,7 @@ def test_client(app):
         db.create_all()
 
 
+@pytest.fixture
 def empty_app(app):
     with app.app_context():
         db.drop_all()

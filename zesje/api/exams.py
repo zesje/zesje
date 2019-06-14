@@ -9,8 +9,10 @@ from flask_restful import Resource, reqparse
 from werkzeug.datastructures import FileStorage
 from sqlalchemy.orm import selectinload
 
-from ..pdf_generation import generate_pdfs, output_pdf_filename_format, join_pdfs, page_is_size, make_pages_even
-from ..pdf_generation import PAGE_FORMATS
+
+from ..pdf_generation import PAGE_FORMATS, generate_pdfs, output_pdf_filename_format
+from ..pdf_generation import join_pdfs, page_is_size, make_pages_even
+
 from ..database import db, Exam, ExamWidget, Submission
 
 

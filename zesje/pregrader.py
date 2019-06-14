@@ -1,11 +1,27 @@
 import cv2
 import numpy as np
+import os
+import sys
 
-from .database import db, Solution, Grader
-from .images import guess_dpi, get_box, fix_corner_markers
+from .database import db, Solution, Grader, FeedbackOption
+from .images import guess_dpi, get_box
+from .blanks import set_blank
+
+from PIL import Image
+from flask import current_app
+
+# from .pdf_generation import CHECKBOX_FORMAT
 
 
-def add_feedback_to_solution(sub, exam, page, page_img, corner_keypoints):
+CHECKBOX_FORMAT = {
+    "margin": 5,
+    "font_size": 11,
+    "box_size": 9
+}
+
+
+def add_feedback_to_solution(sub, exam, page, page_img):
+
     """
     Adds the multiple choice options that are identified as marked as a feedback option to a solution
 
@@ -17,36 +33,38 @@ def add_feedback_to_solution(sub, exam, page, page_img, corner_keypoints):
         the current exam
     page_img : Image
         image of the page
-    corner_keypoints : array
-        locations of the corner keypoints as (x, y) tuples
     """
     problems_on_page = [problem for problem in exam.problems if problem.widget.page == page]
 
-    fixed_corner_keypoints = fix_corner_markers(corner_keypoints, page_img.shape)
-
-    x_min = min(point[0] for point in fixed_corner_keypoints)
-    y_min = min(point[1] for point in fixed_corner_keypoints)
-    top_left_point = (x_min, y_min)
-
     for problem in problems_on_page:
         sol = Solution.query.filter(Solution.problem_id == problem.id, Solution.submission_id == sub.id).one_or_none()
+        is_mc = False
+        mc_filled_counter = 0
 
         for mc_option in problem.mc_options:
             box = (mc_option.x, mc_option.y)
+            is_mc = True
 
-            if box_is_filled(box, page_img, top_left_point):
+            if box_is_filled(box, page_img, box_size=CHECKBOX_FORMAT["box_size"]):
                 feedback = mc_option.feedback
                 sol.feedback.append(feedback)
+                mc_filled_counter += 1
+
                 db.session.commit()
 
-        check_grading_policy(sol)
+        if (mc_filled_counter == 0 and is_mc) or ((not is_mc) and is_blank(problem, page_img, sol, exam.id, sub)):
+            set_blank_feedback(problem, sol)
+
+        if problem.grading_policy == 2 and mc_filled_counter == 1:
+            set_auto_grader(sol)
 
 
-def check_grading_policy(solution):
+def set_auto_grader(solution):
     """
-    Check if a solution should be graded manually.
+    Sets the grader to 'Zesje', meaning that a question is
+    considered automatically graded.
 
-    The grading policy means:
+    The grading policy of a problem means:
         1: Manually grade everything
         2: Manually grade blank solutions only
         3: Manually grade blank solutions or solutions with one option
@@ -60,22 +78,95 @@ def check_grading_policy(solution):
     solution : Solution
         The solution
     """
-    marked_opt_count = len(list(filter(lambda mc: mc.feedback, solution.problem.mc_options)))
+    zesje_grader = Grader.query.get(Grader.name == 'Zesje').first()
 
-    # TODO: Check right grader
-    zesje_grader = Grader.query.get(Grader.name == 'zesje').first()
+    if not zesje_grader:
+        zesje_grader = Grader(name='Zesje')
+        db.session.add(zesje_grader)
+        db.session.commit()
 
-    grading_policy = solution.problem.grading_policy
-
-    if grading_policy == 0:
-        solution.graded_by = zesje_grader
-    if grading_policy == 1 and marked_opt_count == 0:
-        solution.graded_by = zesje_grader
-    if grading_policy == 2 and marked_opt_count < 2:
-        solution.grader_by = zesje_grader
+    solution.graded_by = zesje_grader
+    db.session.commit()
 
 
-def box_is_filled(box, page_img, corner_keypoints, marker_margin=72/2.54, threshold=225, cut_padding=0.1, box_size=11):
+def set_blank_feedback(problem, sol):
+    feedback = FeedbackOption.query.filter(FeedbackOption.problem_id == problem.id,
+                                           FeedbackOption.text == 'blank').one_or_none()
+
+    if problem.grading_policy > 0:
+        set_auto_grader(sol)
+
+    if feedback is None:
+        new_feedback_option = FeedbackOption(problem_id=problem.id, text='blank')
+        db.session.add(new_feedback_option)
+        db.session.commit()
+        feedback = FeedbackOption.query.filter(FeedbackOption.problem_id == problem.id,
+                                               FeedbackOption.text == 'blank').one_or_none()
+
+    sol.feedback.append(feedback)
+    db.session.commit()
+
+
+def is_blank(problem, page_img, solution, exam_id, sub):
+    # add the actually margin from the scan to corner markers to the coords in inches
+    dpi = guess_dpi(page_img)
+    # get the box where we think the box is
+
+    widget_area = np.asarray([
+        problem.widget.y,  # top
+        problem.widget.y + problem.widget.height,  # bottom
+        problem.widget.x,  # left
+        problem.widget.x + problem.widget.width,  # right
+    ])
+
+    widget_area_in = widget_area / 72
+
+    cut_im = get_box(page_img, widget_area_in, padding=0)
+
+    reference = get_blank(problem, dpi, widget_area_in, exam_id, sub)
+
+    blank_image = np.array(reference)
+    blank_image = cv2.cvtColor(blank_image, cv2.COLOR_BGR2GRAY)
+    blank_image = np.array(blank_image)
+    input_image = np.array(cut_im)
+    input_image = cv2.cvtColor(input_image, cv2.COLOR_BGR2GRAY)
+    input_image = np.array(input_image)
+
+    n = 0
+    max = input_image.shape[0]
+
+    while n + 50 < max:
+        m = n + 50
+        if (np.average(~input_image[n: m]) > (1.03 * np.average(~blank_image[n: m]))):
+            return False
+        n = m
+
+    if (np.average(~input_image[n: max-1]) > (1.03 * np.average(~blank_image[n: max-1]))):
+        return False
+
+    print(f"{sub.id},{problem.id} SHOULD BE BLANK", file=sys.stderr)
+    return True
+
+
+def get_blank(problem, dpi, widget_area_in, exam_id, sub):
+    page = problem.widget.page
+
+    app_config = current_app.config
+    data_directory = app_config.get('DATA_DIRECTORY', 'data')
+    output_directory = os.path.join(data_directory, f'{exam_id}_data')
+
+    generated_path = os.path.join(output_directory, 'blanks', f'{dpi}')
+    if not os.path.exists(generated_path):
+        set_blank(sub.copy_number, exam_id, dpi)
+
+    image_path = os.path.join(generated_path, f'page{page:02d}.jpg')
+    blank_page = Image.open(image_path)
+    box = get_box(np.array(blank_page), widget_area_in, padding=0)
+    value = box
+    return value
+
+
+def box_is_filled(box, page_img, threshold=225, cut_padding=0.05, box_size=9):
     """
     A function that finds the checkbox in a general area and then checks if it is filled in.
 
@@ -85,12 +176,6 @@ def box_is_filled(box, page_img, corner_keypoints, marker_margin=72/2.54, thresh
         The coordinates of the top left (x,y) of the checkbox in points.
     page_img: np.array
         A numpy array of the image scan
-    corner_keypoints: (float,float)
-        The x coordinate of the left markers and the y coordinate of the top markers,
-        used as point of reference since scans can deviate from the original.
-        (x,y) are both in pixels.
-    marker_margin: float
-        The margin between the corner markers and the edge of a page when generated.
     threshold: int
         the threshold needed for a checkbox to be considered marked range is between 0 (fully black)
         and 255 (absolutely white).
@@ -104,18 +189,12 @@ def box_is_filled(box, page_img, corner_keypoints, marker_margin=72/2.54, thresh
     True if the box is marked, else False.
     """
 
-    # shouldn't be needed, but some images are drawn a bit weirdly
-    y_shift = 11
-    # create an array with y top, y bottom, x left and x right. use the marker margin to allign to the page.
-    coords = np.asarray([box[1] - marker_margin + y_shift, box[1] + box_size - marker_margin + y_shift,
-                        box[0] - marker_margin, box[0] + box_size - marker_margin])/72
+    # create an array with y top, y bottom, x left and x right. And divide by 72 to get dimensions in inches.
+    coords = np.asarray([box[1], box[1] + box_size,
+                        box[0], box[0] + box_size])/72
 
     # add the actually margin from the scan to corner markers to the coords in inches
     dpi = guess_dpi(page_img)
-    coords[0] = coords[0] + corner_keypoints[1]/dpi
-    coords[1] = coords[1] + corner_keypoints[1]/dpi
-    coords[2] = coords[2] + corner_keypoints[0]/dpi
-    coords[3] = coords[3] + corner_keypoints[0]/dpi
 
     # get the box where we think the box is
     cut_im = get_box(page_img, coords, padding=cut_padding)
@@ -123,7 +202,7 @@ def box_is_filled(box, page_img, corner_keypoints, marker_margin=72/2.54, thresh
     # convert to grayscale
     gray_im = cv2.cvtColor(cut_im, cv2.COLOR_BGR2GRAY)
     # apply threshold to only have black or white
-    _, bin_im = cv2.threshold(gray_im, 150, 255, cv2.THRESH_BINARY)
+    _, bin_im = cv2.threshold(gray_im, 160, 255, cv2.THRESH_BINARY)
 
     h_bin, w_bin, *_ = bin_im.shape
     # create a mask that gets applied when floodfill the white
@@ -146,7 +225,6 @@ def box_is_filled(box, page_img, corner_keypoints, marker_margin=72/2.54, thresh
 
     # if the rectangle is bigger (higher) than expected, cut the image up a bit
     if h > 1.5 * box_size_px:
-        print("in h resize")
         y_partition = 0.333
         # try getting another bounding box on bottom 2/3 of the screen
         coords2 = cv2.findNonZero(flood_im[y + int(y_partition * h): y + h, x: x+w])

@@ -8,10 +8,12 @@ from email.mime.base import MIMEBase
 from email import encoders
 
 import jinja2
-from wand.image import Image
+
+from reportlab.pdfgen import canvas
 
 from .database import Submission
 from . import statistics
+from .api.exams import PAGE_FORMATS
 
 
 def solution_pdf(exam_id, student_id):
@@ -20,17 +22,17 @@ def solution_pdf(exam_id, student_id):
     pages = sorted((p for s in subs for p in s.pages), key=(lambda p: p.number))
     pages = [p.path for p in pages]
 
-    with Image() as output_pdf:
-        for filepath in pages:
-            with Image(filename=filepath) as page:
-                output_pdf.sequence.append(page)
+    from flask import current_app
+    page_format = current_app.config.get('PAGE_FORMAT', 'A4')  # TODO Remove default value
+    page_size = PAGE_FORMATS[page_format]
 
-        output_pdf.format = 'pdf'
+    result = BytesIO()
+    pdf = canvas.Canvas(result, pagesize=page_size)
+    for page in pages:
+        pdf.drawImage(page, 0, 0, width=page_size[0], height=page_size[1])
+        pdf.showPage()
 
-        result = BytesIO()
-
-        output_pdf.save(file=result)
-
+    pdf.save()
     result.seek(0)
 
     return result

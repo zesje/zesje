@@ -1,9 +1,8 @@
-from io import BytesIO
 from tempfile import NamedTemporaryFile
 
 import PIL
 from pdfrw import PdfReader, PdfWriter, PageMerge
-from pystrich.datamatrix import DataMatrixEncoder
+from pylibdmtx.pylibdmtx import encode
 from reportlab.lib.units import mm
 from reportlab.pdfgen import canvas
 
@@ -35,9 +34,9 @@ def generate_pdfs(exam_pdf_file, exam_id, copy_nums, output_paths, id_grid_x,
     """
     Generate the final PDFs from the original exam PDF.
 
-    To maintain a consistent size of the DataMatrix codes, adhere to (# of
-    letters in exam ID) + 2 * (# of digits in exam ID) = C for a certain
-    constant C. The reason for this is that pyStrich encodes two digits in as
+    To ensure the page information fits into the datamatrix grid, adhere to
+    (# of letters in exam ID) + 2 * (# of digits in exam ID) = C for a certain
+    constant C. The reason for this is that libdmtx encodes two digits in as
     much space as one letter.
 
     If maximum interchangeability with version 1 QR codes is desired (error
@@ -205,9 +204,9 @@ def generate_datamatrix(exam_id, page_num, copy_num):
     """
     Generates a DataMatrix code to be used on a page.
 
-    To maintain a consistent size of the DataMatrix codes, adhere to (# of
-    letters in exam ID) + 2 * (# of digits in exam ID) = C for a certain
-    constant C. The reason for this is that pyStrich encodes two digits in as
+    To ensure the page information fits into the datamatrix grid, adhere to
+    (# of letters in exam ID) + 2 * (# of digits in exam ID) = C for a certain
+    constant C. The reason for this is that pylibdmtx encodes two digits in as
     much space as one letter.
 
     If maximum interchangeability with version 1 QR codes is desired (error
@@ -232,8 +231,10 @@ def generate_datamatrix(exam_id, page_num, copy_num):
 
     data = f'{exam_id}/{copy_num:04d}/{page_num:02d}'
 
-    image_bytes = DataMatrixEncoder(data).get_imagedata(cellsize=2)
-    return PIL.Image.open(BytesIO(image_bytes))
+    encoded = encode(data.encode('utf-8'), size='18x18')
+    datamatrix = PIL.Image.frombytes('RGB', (encoded.width, encoded.height), encoded.pixels)
+    datamatrix = datamatrix.resize((44, 44)).convert('L')
+    return datamatrix
 
 
 def _generate_overlay(canv, pagesize, exam_id, copy_num, num_pages, id_grid_x,
@@ -242,9 +243,9 @@ def _generate_overlay(canv, pagesize, exam_id, copy_num, num_pages, id_grid_x,
     Generates an overlay ('watermark') PDF, which can then be overlaid onto
     the exam PDF.
 
-    To maintain a consistent size of the DataMatrix codes in the overlay,
+    To ensure the page information fits into the datamatrix grid in the overlay,
     adhere to (# of letters in exam ID) + 2 * (# of digits in exam ID) = C for
-    a certain constant C. The reason for this is that pyStrich encodes two
+    a certain constant C. The reason for this is that pylibdmtx encodes two
     digits in as much space as one letter.
 
     If maximum interchangeability with version 1 QR codes is desired (error
@@ -276,10 +277,6 @@ def _generate_overlay(canv, pagesize, exam_id, copy_num, num_pages, id_grid_x,
 
     """
 
-    # Font settings for the copy number (printed under the datamatrix)
-    fontsize = 8
-    canv.setFont('Helvetica', fontsize)
-
     # transform y-cooridate to different origin location
     id_grid_y = pagesize[1] - id_grid_y
 
@@ -296,6 +293,9 @@ def _generate_overlay(canv, pagesize, exam_id, copy_num, num_pages, id_grid_x,
     else:
         index = 0
         max_index = 0
+    # Font settings for the copy number (printed under the datamatrix)
+    fontsize = 12
+    canv.setFont('Helvetica', fontsize)
 
     for page_num in range(num_pages):
         _add_corner_markers_and_bottom_bar(canv, pagesize)
@@ -307,7 +307,7 @@ def _generate_overlay(canv, pagesize, exam_id, copy_num, num_pages, id_grid_x,
 
         canv.drawInlineImage(datamatrix, datamatrix_x, datamatrix_y_adjusted)
         canv.drawString(
-            datamatrix_x, datamatrix_y_adjusted - fontsize,
+            datamatrix_x, datamatrix_y_adjusted - (fontsize * 0.66),
             f" # {copy_num}"
         )
 

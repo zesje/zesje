@@ -1,15 +1,24 @@
-FROM archlinux/base
+FROM continuumio/miniconda3
 
-## Install packages and clear the cache after installation. Yarn is fixed at 1.6.0 untill 1.8.0 is released due to a critical bug.
-RUN pacman -Sy --noconfirm nodejs python-pip git libdmtx libsm libxrender libxext gcc libmagick6 imagemagick ghostscript; \
-    pacman -U --noconfirm https://archive.archlinux.org/packages/y/yarn/yarn-1.6.0-1-any.pkg.tar.xz
+RUN apt-get update -y && apt-get install -y libdmtx0a libmagickwand-dev
 
-WORKDIR ~
-ADD requirements*.txt ./
-#ADD package.json .
-RUN pip install --no-cache-dir -r requirements.txt -r requirements-dev.txt;
-#RUN yarn install; \
-#    yarn cache clean; \
-#    rm package.json
+RUN apt-get update && \
+    apt-get install -y \
+        curl \
+        poppler-utils build-essential libgl1-mesa-glx \
+        imagemagick libsm-dev libdmtx-dev libdmtx0a libmagickwand-dev \
+        && \
+    apt-get -y --quiet install git supervisor nginx
+
+WORKDIR /app
+
+ADD environment.yml /app/environment.yml
+RUN conda env create
+
+# From https://medium.com/@chadlagore/conda-environments-with-docker-82cdc9d25754
+RUN echo "source activate $(head -1 /app/environment.yml | cut -d' ' -f2)" > ~/.bashrc
+ENV PATH /opt/conda/envs/$(head -1 /app/environment.yml | cut -d' ' -f2)/bin:$PATH
+
+RUN rm /app/environment.yml
 
 CMD bash

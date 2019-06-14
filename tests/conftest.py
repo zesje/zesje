@@ -1,7 +1,6 @@
 import os
 
 import pytest
-
 from flask import Flask
 from zesje.api import api_bp
 from zesje.database import db
@@ -40,3 +39,12 @@ def test_client(app):
     with app.app_context():
         db.drop_all()
         db.create_all()
+
+
+@pytest.fixture
+def empty_app(app):
+    with app.app_context():
+        db.drop_all()
+        db.create_all()
+
+    return app

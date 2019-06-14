@@ -64,10 +64,11 @@ class Exam(db.Model):
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(Text, nullable=False)
     token = Column(String(token_length), unique=True, default=_generate_exam_token)
-    submissions = db.relationship('Submission', backref='exam', lazy=True)
-    problems = db.relationship('Problem', backref='exam', order_by='Problem.id', lazy=True)
-    scans = db.relationship('Scan', backref='exam', lazy=True)
-    widgets = db.relationship('ExamWidget', backref='exam', order_by='ExamWidget.id', lazy=True)
+    submissions = db.relationship('Submission', backref='exam', cascade='all', lazy=True)
+    problems = db.relationship('Problem', backref='exam', cascade='all', order_by='Problem.id', lazy=True)
+    scans = db.relationship('Scan', backref='exam', cascade='all', lazy=True)
+    widgets = db.relationship('ExamWidget', backref='exam', cascade='all',
+                              order_by='ExamWidget.id', lazy=True)
     finalized = Column(Boolean, default=False, server_default='f')
 
 
@@ -77,8 +78,9 @@ class Submission(db.Model):
     id = Column(Integer, primary_key=True, autoincrement=True)
     copy_number = Column(Integer, nullable=False)
     exam_id = Column(Integer, ForeignKey('exam.id'), nullable=False)
-    solutions = db.relationship('Solution', backref='submission', order_by='Solution.problem_id', lazy=True)
-    pages = db.relationship('Page', backref='submission', lazy=True)
+    solutions = db.relationship('Solution', backref='submission', cascade='all',
+                                order_by='Solution.problem_id', lazy=True)
+    pages = db.relationship('Page', backref='submission', cascade='all', lazy=True)
     student_id = Column(Integer, ForeignKey('student.id'), nullable=True)
     signature_validated = Column(Boolean, default=False, server_default='f', nullable=False)
 
@@ -112,10 +114,11 @@ class Problem(db.Model):
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(Text, nullable=False)
     exam_id = Column(Integer, ForeignKey('exam.id'), nullable=False)
-    feedback_options = db.relationship('FeedbackOption', backref='problem', order_by='FeedbackOption.id', lazy=True)
-    solutions = db.relationship('Solution', backref='problem', lazy=True)
-    widget = db.relationship('ProblemWidget', backref='problem', uselist=False, lazy=True)
     grading_policy = Column('value', Enum(GradingPolicy), nullable=False)
+    feedback_options = db.relationship('FeedbackOption', backref='problem', cascade='all',
+                                       order_by='FeedbackOption.id', lazy=True)
+    solutions = db.relationship('Solution', backref='problem', cascade='all', lazy=True)
+    widget = db.relationship('ProblemWidget', backref='problem', cascade='all', uselist=False, lazy=True)
 
     @hybrid_property
     def mc_options(self):

@@ -255,6 +255,12 @@ class Exams extends React.Component {
             feedback.highlight = false
             this.updateFeedbackAtIndex(feedback, widget, index)
           }}
+          removeAllHighlight={(widget) => {
+            widget.problem.feedback.forEach((feedback, index) => {
+              feedback.highlight = false
+              this.updateFeedbackAtIndex(feedback, widget, index)
+            })
+          }}
           selectWidget={(widgetId) => {
             this.setState({
               selectedWidgetId: widgetId

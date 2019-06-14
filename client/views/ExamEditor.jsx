@@ -23,7 +23,8 @@ class ExamEditor extends React.Component {
     mouseDown: false,
     selectionStartPoint: null,
     selectionEndPoint: null,
-    selectionBox: null
+    selectionBox: null,
+    draggingWidget: false // if a problem widget is being dragged, remove the highlighting of the feedback
   }
 
   getPDFUrl = () => {
@@ -295,9 +296,17 @@ class ExamEditor extends React.Component {
         }}
         onDragStart={() => {
           this.props.selectWidget(widget.id)
+          this.setState({
+            draggingWidget: true
+          })
+
+          this.props.removeAllHighlight(widget)
         }}
         onDragStop={(e, data) => {
           this.updateMCO(widget, data)
+          this.setState({
+            draggingWidget: false
+          })
         }}
       >
         <div className={isSelected ? 'mcq-widget widget selected' : 'mcq-widget widget '}>
@@ -305,10 +314,14 @@ class ExamEditor extends React.Component {
             return (
               <div key={'widget_mco_' + option.id} className='mcq-option'
                 onMouseEnter={() => {
-                  this.props.highlightFeedback(widget, option.feedback_id)
+                  if (!this.state.draggingWidget) {
+                    this.props.highlightFeedback(widget, option.feedback_id)
+                  }
                 }}
                 onMouseLeave={() => {
-                  this.props.removeHighlight(widget, option.feedback_id)
+                  if (!this.state.draggingWidget) {
+                    this.props.removeHighlight(widget, option.feedback_id)
+                  }
                 }}
               >
                 <div className='mcq-option-label'>
@@ -392,9 +405,15 @@ class ExamEditor extends React.Component {
         }}
         onDragStart={() => {
           this.props.selectWidget(widget.id)
+          this.setState({
+            draggingWidget: true
+          })
         }}
         onDrag={(e, data) => this.repositionMC(widget, data)}
         onDragStop={(e, data) => {
+          this.setState({
+            draggingWidget: false
+          })
           this.props.updateWidget(widget.id, {
             x: { $set: Math.round(data.x) },
             y: { $set: Math.round(data.y) }

@@ -2,13 +2,15 @@ import cv2
 import numpy as np
 import os
 import sys
+from datetime import datetime
 
-from .database import db, Solution, Grader, FeedbackOption
+from .database import db, Solution, Grader, FeedbackOption, GradingPolicy
 from .images import guess_dpi, get_box
 from .blanks import set_blank
 
 from PIL import Image
 from flask import current_app
+ 
 
 # from .pdf_generation import CHECKBOX_FORMAT
 
@@ -40,6 +42,10 @@ def add_feedback_to_solution(sub, exam, page, page_img):
         sol = Solution.query.filter(Solution.problem_id == problem.id, Solution.submission_id == sub.id).one_or_none()
         is_mc = False
         mc_filled_counter = 0
+
+        if(problem.grading_policy is None):
+            problem.grading_policy = GradingPolicy.set_blank
+            db.session.commit()
 
         for mc_option in problem.mc_options:
             box = (mc_option.x, mc_option.y)
@@ -73,7 +79,7 @@ def set_auto_grader(solution):
     solution : Solution
         The solution
     """
-    zesje_grader = Grader.query.filter(Grader.name == 'Zesje')
+    zesje_grader = Grader.query.filter(Grader.name == 'Zesje').one_or_none()
 
     current_app.logger.info(str(zesje_grader))
 
@@ -83,6 +89,7 @@ def set_auto_grader(solution):
         db.session.commit()
 
     solution.graded_by = zesje_grader
+    solution.graded_at = datetime.now()
     db.session.commit()
 
 

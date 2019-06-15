@@ -10,10 +10,8 @@ from pdfminer3.pdfinterp import PDFPageInterpreter
 from pdfminer3.pdfpage import PDFPage
 from pdfminer3.pdfparser import PDFParser
 
-from .api.exams import PAGE_FORMATS
 
-
-def guess_problem_title(problem, data_dir, page_format):
+def guess_problem_title(problem, data_dir):
     """
     Returns the title of a problem
 
@@ -21,8 +19,6 @@ def guess_problem_title(problem, data_dir, page_format):
     ----------
     data_dir : str
         Location of the data folder
-    page_format : str
-        Format of the current page
     problem : Problem
         The currently selected problem
 
@@ -62,8 +58,10 @@ def guess_problem_title(problem, data_dir, page_format):
         interpreter.process_page(page)
         layout = device.get_result()
 
+        page_height = page.mediabox[3]
+
         if layout.pageid == problem.widget.page + 1:
-            filtered_words = get_words(layout._objs, y_above, y_current, page_format)
+            filtered_words = get_words(layout._objs, y_above, y_current, page_height)
 
             if not filtered_words:
                 return ''
@@ -74,14 +72,14 @@ def guess_problem_title(problem, data_dir, page_format):
     return ''
 
 
-def get_words(layout_objs, y_top, y_bottom, page_format):
+def get_words(layout_objs, y_top, y_bottom, page_height):
     """
     Returns the text from a pdf page within a specified height.
 
     Parameters
     ----------
-    page_format : str
-        Format of the current page
+    page_height : int
+        Height of the current page in points
     layout_objs : list of layout objects
         The list of objects in the page.
     y_top : double
@@ -94,8 +92,6 @@ def get_words(layout_objs, y_top, y_bottom, page_format):
     words : list of tuples
         A list of tuples with the (y, text) values.
     """
-    page_height = PAGE_FORMATS[page_format][1]
-
     words = []
 
     # Adapted from https://github.com/euske/pdfminer/issues/171
@@ -113,6 +109,6 @@ def get_words(layout_objs, y_top, y_bottom, page_format):
                 words.append(obj.get_text())
 
         elif isinstance(obj, LTFigure):
-            words.append(get_words(obj._objs, y_top, y_bottom, page_format))
+            words.append(get_words(obj._objs, y_top, y_bottom, page_height))
 
     return words

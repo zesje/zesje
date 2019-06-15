@@ -62,9 +62,8 @@ class Problems(Resource):
 
             app_config = current_app.config
             data_dir = app_config.get('DATA_DIRECTORY', 'data')
-            page_format = app_config.get('PAGE_FORMAT', 'A4')
 
-            guessed_title = guess_problem_title(problem, data_dir, page_format)
+            guessed_title = guess_problem_title(problem, data_dir)
 
             if guessed_title:
                 problem.name = guessed_title

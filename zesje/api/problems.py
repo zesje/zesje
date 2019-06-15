@@ -114,10 +114,6 @@ class Problems(Resource):
         if any([sol.graded_by is not None for sol in problem.solutions]):
             return dict(status=403, message=f'Problem has already been graded'), 403
         else:
-            # delete mc options
-            for mc_option in problem.mc_options:
-                db.session.delete(mc_option)
-
             # The widget and all associated solutions are automatically deleted
             db.session.delete(problem)
             db.session.commit()

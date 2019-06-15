@@ -159,8 +159,8 @@ class MultipleChoice(Resource):
             return dict(status=404, message=f'Multiple choice question with id {id} does not exist.'), 404
 
         if not mult_choice.feedback:
-            return dict(status=404, message=f'Multiple choice question with id {id}'
-                        + ' is not associated with a feedback option.'), 404
+            return dict(status=500, message=f'Multiple choice question with id {id}'
+                        + ' is not associated with a feedback option.'), 500
 
         # Check if the exam is finalized, do not delete the multiple choice option otherwise
         exam = mult_choice.feedback.problem.exam
@@ -170,7 +170,6 @@ class MultipleChoice(Resource):
                         + ' attached to a multiple choice option in a finalized exam.'), 401
 
         db.session.delete(mult_choice)
-        db.session.delete(mult_choice.feedback)
         db.session.commit()
 
         return dict(status=200, mult_choice_id=id, feedback_id=mult_choice.feedback_id,

@@ -42,7 +42,7 @@ def mco_json():
     }
 
 
-# ACTUAL TESTS
+# Actual tests
 
 
 def test_not_present(test_client, add_test_data):

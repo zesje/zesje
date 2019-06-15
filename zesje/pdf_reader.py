@@ -77,17 +77,6 @@ def guess_problem_title(problem, data_dir, page_format):
 def get_words(layout_objs, y_top, y_bottom, page_format):
     """
     Returns the text from a pdf page within a specified height.
-    Pdfminer orients the coordinates of a layout object from
-    the bottom left.
-
-    Adapted from https://github.com/euske/pdfminer/issues/171
-    obj.bbox returns the following values: (x0, y0, x1, y1)
-
-    With
-    x0: the distance from the left of the page to the left edge of the box.
-    y0: the distance from the bottom of the page to the lower edge of the box.
-    x1: the distance from the left of the page to the right edge of the box.
-    y1: the distance from the bottom of the page to the upper edge of the box.
 
     Parameters
     ----------
@@ -108,6 +97,15 @@ def get_words(layout_objs, y_top, y_bottom, page_format):
     page_height = PAGE_FORMATS[page_format][1]
 
     words = []
+
+    # Adapted from https://github.com/euske/pdfminer/issues/171
+    #
+    # obj.bbox returns the following values: (x0, y0, x1, y1), where
+    #
+    # x0: the distance from the left of the page to the left edge of the box.
+    # y0: the distance from the bottom of the page to the lower edge of the box.
+    # x1: the distance from the left of the page to the right edge of the box.
+    # y1: the distance from the bottom of the page to the upper edge of the box.
 
     for obj in layout_objs:
         if isinstance(obj, LTTextBoxHorizontal):

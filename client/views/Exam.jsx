@@ -55,7 +55,7 @@ class Exams extends React.Component {
               option.widget.y -= option.cbOffsetY
               return option
             }),
-            widthMCO: 24,
+            widthMCO: 20,
             heightMCO: 38
           }
         }

@@ -94,7 +94,7 @@ class MultipleChoice(Resource):
         mult_choice = MultipleChoiceOption.query.get(id)
 
         if not mult_choice:
-            return dict(status=404, message=f'Multiple choice question with id {id} does not exist.'), 404
+            return dict(status=404, message=f'Multiple choice option with id {id} does not exist.'), 404
 
         json = {
             'id': mult_choice.id,

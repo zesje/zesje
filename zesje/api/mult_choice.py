@@ -9,20 +9,17 @@ def update_mc_option(mc_option, args, feedback_id=None):
 
     Parameters
     ----------
-    mc_option: The multiple choice option
-    args: The arguments supplied in the request body
-    feedback_id: The id of the feedback option related to the
+    mc_option : MultipleChoiceOption
+        The multiple choice option
+    args: dict
+        The arguments supplied in the request body
+    feedback_id : int
+        id of the feedback option coupled to the multiple choice option
     """
 
     for attr, value in args.items():
-        try:
-            if value:
-                setattr(mc_option, attr, value)
-        except AttributeError:
-            msg = f"Multiple choice option doesn't have a property {attr}"
-            return dict(status=400, message=msg), 400
-        except (TypeError, ValueError) as error:
-            return dict(status=400, message=str(error)), 400
+        if value:
+            setattr(mc_option, attr, value)
 
     if feedback_id:
         mc_option.feedback_id = feedback_id
@@ -71,7 +68,10 @@ class MultipleChoice(Resource):
 
         # Insert new entry into the database
         mc_entry = MultipleChoiceOption()
-        update_mc_option(mc_entry, args, new_feedback_option.id)
+        try:
+            update_mc_option(mc_entry, args, new_feedback_option.id)
+        except (TypeError, ValueError) as error:
+            return dict(status=400, message=str(error)), 400
 
         db.session.add(mc_entry)
         db.session.commit()
@@ -134,7 +134,10 @@ class MultipleChoice(Resource):
         if not mc_entry:
             return dict(status=404, message=f"Multiple choice question with id {id} does not exist"), 404
 
-        update_mc_option(mc_entry, args)
+        try:
+            update_mc_option(mc_entry, args)
+        except (TypeError, ValueError) as error:
+            return dict(status=400, message=str(error)), 400
 
         return dict(status=200, message=f'Multiple choice question with id {id} updated'), 200
 

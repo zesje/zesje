@@ -13,7 +13,7 @@ from pdfminer3.pdfparser import PDFParser
 from .api.exams import PAGE_FORMATS
 
 
-def get_problem_title(problem, data_dir, page_format):
+def guess_problem_title(problem, data_dir, page_format):
     """
     Returns the title of a problem
 
@@ -69,7 +69,7 @@ def get_problem_title(problem, data_dir, page_format):
                 return ''
 
             lines = filtered_words[0].split('\n')
-            return lines[0]
+            return lines[0].strip()
 
     return ''
 

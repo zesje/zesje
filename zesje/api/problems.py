@@ -4,7 +4,7 @@ from flask_restful import Resource, reqparse, current_app
 
 from ..database import db, Exam, Problem, ProblemWidget, Solution
 
-from zesje.pdf_reader import get_problem_title
+from zesje.pdf_reader import guess_problem_title
 
 
 class Problems(Resource):
@@ -64,7 +64,7 @@ class Problems(Resource):
             data_dir = app_config.get('DATA_DIRECTORY', 'data')
             page_format = app_config.get('PAGE_FORMAT', 'A4')
 
-            problem.name = get_problem_title(problem, data_dir, page_format)
+            problem.name = guess_problem_title(problem, data_dir, page_format)
 
             db.session.commit()
 

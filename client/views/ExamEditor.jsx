@@ -218,46 +218,6 @@ class ExamEditor extends React.Component {
   }
 
   /**
-   * This function updates the position of the mc options inside when the corresponding problem widget changes in
-   * size or position. Note that the positions in the database are not updated. These should be updated once when the
-   * action (resizing/dragging/other) is finalized.
-   * @param widget the problem widget containing mc options
-   * @param data the new data about the new size/position of the problem widget
-   */
-  repositionMC = (widget, data) => {
-    if (widget.problem.mc_options.length > 0) {
-      let oldX = widget.problem.mc_options[0].widget.x
-      let oldY = widget.problem.mc_options[0].widget.y
-      let newX = oldX
-      let newY = oldY
-      let widthOption = widget.problem.widthMCO * widget.problem.mc_options.length
-      let heightOption = widget.problem.heightMCO
-      let widthProblem = data.width ? data.width : widget.width
-      let heightProblem = data.height ? data.height : widget.height
-
-      if (newX < data.x) {
-        newX = data.x
-      } else if (newX + widthOption > data.x + widthProblem) {
-        newX = data.x + widget.width - widthOption
-      }
-
-      if (newY < data.y) {
-        newY = data.y
-      } else if (newY + heightOption > data.y + heightProblem) {
-        newY = data.y + widget.height - heightOption
-      }
-
-      let changed = (oldX !== newX) || (oldY !== newY) // update the state only if the mc options were moved
-      if (changed) {
-        this.props.updateMCOsInState(widget, {
-          x: Math.round(newX),
-          y: Math.round(newY)
-        })
-      }
-    }
-  }
-
-  /**
    * This function renders a group of options into one draggable widget.
    * @param widget the problem widget that contains a mc options
    * @return a react component representing the multiple choice widget
@@ -325,7 +285,7 @@ class ExamEditor extends React.Component {
                 }}
               >
                 <div className='mcq-option-label'>
-                  {option.label}
+                  {option.label === ' ' ? <span>&nbsp;</span> : option.label}
                 </div>
                 <img className='mcq-box' src={answerBoxImage} />
               </div>
@@ -381,7 +341,7 @@ class ExamEditor extends React.Component {
             x: { $set: Math.round(position.x) },
             y: { $set: Math.round(position.y) }
           })
-          this.repositionMC(widget, {
+          this.props.repositionMCO(widget.id, {
             width: ref.offsetWidth,
             height: ref.offsetHeight,
             x: Math.round(position.x),
@@ -409,7 +369,7 @@ class ExamEditor extends React.Component {
             draggingWidget: true
           })
         }}
-        onDrag={(e, data) => this.repositionMC(widget, data)}
+        onDrag={(e, data) => this.props.repositionMCO(widget.id, data)}
         onDragStop={(e, data) => {
           this.setState({
             draggingWidget: false

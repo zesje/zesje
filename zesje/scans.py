@@ -700,18 +700,14 @@ def realign_image(image_array, keypoints=None,
         The image in the form of a numpy array.
     keypoints : List[(int,int)]
         tuples of coordinates of the found keypoints, (x,y), in pixels. Can be a set of 3 or 4 tuples.
-        if none are provided, they are calculated based on the image_array.
+        if none are provided, they are found by using find_corner_marker_keypoints on the input image.
     reference_keypoints: List[(int,int)]
         Similar to keypoints, only these belong to the keypoints found on the original scan.
-        If none are provided, standard locations are used. Namely [(59, 59), (1179, 59), (59, 1693), (1179, 1693)],
-        which are from an ideal scan of an a4 at 200 dpi.
-
+        If none are provided, ideal ones are calculated based on the dpi of the input image.
     returns
     -------
     return_array: numpy.array
-        The image realign properly.
-    return_keypoints: List[(int,int)]
-        New keypoints properly aligned.
+        The image realigned properly.
     """
 
     if not keypoints:

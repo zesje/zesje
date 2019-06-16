@@ -24,8 +24,6 @@ def update_mc_option(mc_option, args, feedback_id=None):
     if feedback_id:
         mc_option.feedback_id = feedback_id
 
-    mc_option.type = 'mcq_widget'
-
 
 class MultipleChoice(Resource):
 

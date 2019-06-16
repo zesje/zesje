@@ -128,6 +128,36 @@ def test_update_patch(test_client, add_test_data):
     assert data['status'] == 200
 
 
+def test_update_finalized_exam(test_client, add_test_data):
+    req = mco_json()
+
+    # Link mc_option to finalized exam
+    req['problem_id'] = '1'
+
+    response = test_client.put('/api/mult-choice/', data=req)
+    data = json.loads(response.data)
+
+    assert data['mult_choice_id']
+
+    test_client.put('api/exams/1/finalized', data='true')
+
+    id = data['mult_choice_id']
+
+    req2 = {
+        'x': 120,
+        'y': 50,
+        'problem_id': 4,
+        'page': 1,
+        'label': 'b',
+        'name': 'test'
+    }
+
+    result = test_client.patch(f'/api/mult-choice/{id}', data=req2)
+    data = json.loads(result.data)
+
+    assert data['status'] == 403
+
+
 def test_delete(test_client, add_test_data):
     req = mco_json()
 
@@ -187,7 +217,7 @@ def test_delete_not_present(test_client, add_test_data):
     assert data['status'] == 404
 
 
-def test_delete_finalized_exam(test_client, add_test_data):
+def test_add_finalized_exam(test_client, add_test_data):
     mc_option_json = {
         'x': 100,
         'y': 40,
@@ -200,9 +230,19 @@ def test_delete_finalized_exam(test_client, add_test_data):
     response = test_client.put('/api/mult-choice/', data=mc_option_json)
     data = json.loads(response.data)
 
+    assert data['status'] == 403
+
+
+def test_delete_finalized_exam(test_client, add_test_data):
+    req = mco_json()
+
+    response = test_client.put('/api/mult-choice/', data=req)
+    data = json.loads(response.data)
     mc_id = data['mult_choice_id']
+
+    test_client.put('api/exams/1/finalized', data='true')
 
     response = test_client.delete(f'/api/mult-choice/{mc_id}')
     data = json.loads(response.data)
 
-    assert data['status'] == 401
+    assert data['status'] == 403

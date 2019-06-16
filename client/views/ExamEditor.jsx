@@ -23,7 +23,8 @@ class ExamEditor extends React.Component {
     mouseDown: false,
     selectionStartPoint: null,
     selectionEndPoint: null,
-    selectionBox: null
+    selectionBox: null,
+    draggingWidget: false // if a problem widget is being dragged, remove the highlighting of the feedback
   }
 
   getPDFUrl = () => {
@@ -198,6 +199,8 @@ class ExamEditor extends React.Component {
    * @param data the new position of the mc widget
    */
   updateMCO = (widget, data) => {
+    if (this.props.finalized) return // do not modify the locations of the mc options after the exam is finalized
+
     // update state
     this.props.updateMCOsInState(widget, {
       x: Math.round(data.x),
@@ -213,46 +216,6 @@ class ExamEditor extends React.Component {
         }
         this.updateWidgetDB(option, newData)
       })
-  }
-
-  /**
-   * This function updates the position of the mc options inside when the corresponding problem widget changes in
-   * size or position. Note that the positions in the database are not updated. These should be updated once when the
-   * action (resizing/dragging/other) is finalized.
-   * @param widget the problem widget containing mc options
-   * @param data the new data about the new size/position of the problem widget
-   */
-  repositionMC = (widget, data) => {
-    if (widget.problem.mc_options.length > 0) {
-      let oldX = widget.problem.mc_options[0].widget.x
-      let oldY = widget.problem.mc_options[0].widget.y
-      let newX = oldX
-      let newY = oldY
-      let widthOption = widget.problem.widthMCO * widget.problem.mc_options.length
-      let heightOption = widget.problem.heightMCO
-      let widthProblem = data.width ? data.width : widget.width
-      let heightProblem = data.height ? data.height : widget.height
-
-      if (newX < data.x) {
-        newX = data.x
-      } else if (newX + widthOption > data.x + widthProblem) {
-        newX = data.x + widget.width - widthOption
-      }
-
-      if (newY < data.y) {
-        newY = data.y
-      } else if (newY + heightOption > data.y + heightProblem) {
-        newY = data.y + widget.height - heightOption
-      }
-
-      let changed = (oldX !== newX) || (oldY !== newY) // update the state only if the mc options were moved
-      if (changed) {
-        this.props.updateMCOsInState(widget, {
-          x: Math.round(newX),
-          y: Math.round(newY)
-        })
-      }
-    }
   }
 
   /**
@@ -294,9 +257,17 @@ class ExamEditor extends React.Component {
         }}
         onDragStart={() => {
           this.props.selectWidget(widget.id)
+          this.setState({
+            draggingWidget: true
+          })
+
+          this.props.removeAllHighlight(widget)
         }}
         onDragStop={(e, data) => {
           this.updateMCO(widget, data)
+          this.setState({
+            draggingWidget: false
+          })
         }}
       >
         <div className={isSelected ? 'mcq-widget widget selected' : 'mcq-widget widget '}>
@@ -304,14 +275,18 @@ class ExamEditor extends React.Component {
             return (
               <div key={'widget_mco_' + option.id} className='mcq-option'
                 onMouseEnter={() => {
-                  this.props.highlightFeedback(widget, option.feedback_id)
+                  if (!this.state.draggingWidget) {
+                    this.props.highlightFeedback(widget, option.feedback_id)
+                  }
                 }}
                 onMouseLeave={() => {
-                  this.props.removeHighlight(widget, option.feedback_id)
+                  if (!this.state.draggingWidget) {
+                    this.props.removeHighlight(widget, option.feedback_id)
+                  }
                 }}
               >
                 <div className='mcq-option-label'>
-                  {option.label}
+                  {option.label === ' ' ? <span>&nbsp;</span> : option.label}
                 </div>
                 <img className='mcq-box' src={answerBoxImage} />
               </div>
@@ -367,7 +342,7 @@ class ExamEditor extends React.Component {
             x: { $set: Math.round(position.x) },
             y: { $set: Math.round(position.y) }
           })
-          this.repositionMC(widget, {
+          this.props.repositionMCO(widget.id, {
             width: ref.offsetWidth,
             height: ref.offsetHeight,
             x: Math.round(position.x),
@@ -391,9 +366,15 @@ class ExamEditor extends React.Component {
         }}
         onDragStart={() => {
           this.props.selectWidget(widget.id)
+          this.setState({
+            draggingWidget: true
+          })
         }}
-        onDrag={(e, data) => this.repositionMC(widget, data)}
+        onDrag={(e, data) => this.props.repositionMCO(widget.id, data)}
         onDragStop={(e, data) => {
+          this.setState({
+            draggingWidget: false
+          })
           this.props.updateWidget(widget.id, {
             x: { $set: Math.round(data.x) },
             y: { $set: Math.round(data.y) }

@@ -92,8 +92,8 @@ class Students(Resource):
             student_same_mail = Student.query.filter(Student.email == args.email).one_or_none()
             if student_same_mail:
                 return dict(status=400, message=(
-                    f'Could not add or update student #{args.studentID}. '
-                    'Another student (#{other_id}, {other_first} {other_last}) already has the same email.'
+                    '''Could not add or update student #{student_id}.
+                    Another student (#{other_id}, {other_first} {other_last}) already has the same email.'''
                     .format(student_id=args.studentID, other_id=student_same_mail.id,
                             other_first=student_same_mail.first_name, other_last=student_same_mail.last_name))), 400
 

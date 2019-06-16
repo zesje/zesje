@@ -1,5 +1,3 @@
-import os
-
 from pdfminer3.converter import PDFPageAggregator
 from pdfminer3.layout import LAParams
 from pdfminer3.layout import LTFigure
@@ -11,33 +9,77 @@ from pdfminer3.pdfpage import PDFPage
 from pdfminer3.pdfparser import PDFParser
 
 
-def guess_problem_title(problem, data_dir):
+def get_problem_page(problem, pdf_path):
     """
-    Returns the title of a problem
+    Returns the pdf object belonging to the page of a problem widget
 
     Parameters
     ----------
-    data_dir : str
-        Location of the data folder
+    problem : Problem
+        Problem object in the database of the currently selected problem
+    pdf_path : str
+        Path to the PDF file of the exam for this problem
+
+    Returns
+    -------
+    page : PDFPage
+        PDFPage object with information about the current page
+    """
+    fp = open(pdf_path, 'rb')
+
+    parser = PDFParser(fp)
+    document = PDFDocument(parser)
+
+    # PDFPage.create_pages() only yields a list of key-value pairs
+    # So there should be no problem saving the result to a list
+
+    i = 0
+
+    for page in PDFPage.create_pages(document):
+        if i == problem.widget.page:
+            return page
+        i += 1
+
+
+def get_layout(pdf_page):
+    """
+    Returns the layout objects in a PDF page
+
+    Parameters
+    ----------
+    pdf_page : PDFPage
+        PDFPage object with information about the current page
+
+    Returns
+    -------
+    layout : list of pdfminer3 layout objects
+        A list of layout objects on the page
+    """
+    rsrcmgr = PDFResourceManager()
+    laparams = LAParams()
+    device = PDFPageAggregator(rsrcmgr, laparams=laparams)
+    interpreter = PDFPageInterpreter(rsrcmgr, device)
+    interpreter.process_page(pdf_page)
+
+    return device.get_result()
+
+
+def guess_problem_title(problem, pdf_page):
+    """
+    Tries to find the title of a problem
+
+    Parameters
+    ----------
     problem : Problem
         The currently selected problem
+    pdf_page : PDFPage
+        Information extracted from the PDF page where the problem is located.
 
     Returns
     -------
     title: str
         The title of the problem, or an empty string if no text is found
     """
-
-    pdf_path = os.path.join(data_dir, f'{problem.exam_id}_data', 'exam.pdf')
-
-    fp = open(pdf_path, 'rb')
-
-    parser = PDFParser(fp)
-    document = PDFDocument(parser)
-    rsrcmgr = PDFResourceManager()
-    laparams = LAParams()
-    device = PDFPageAggregator(rsrcmgr, laparams=laparams)
-    interpreter = PDFPageInterpreter(rsrcmgr, device)
 
     # Get the other problems on the same page
     problems_on_page = [p for p in problem.exam.problems if p.widget.page == problem.widget.page]
@@ -53,23 +95,16 @@ def guess_problem_title(problem, data_dir):
         y_above = problem_above.widget.y + problem_above.widget.height
 
     y_current = problem.widget.y + problem.widget.height
+    page_height = pdf_page.mediabox[3]
 
-    for page in PDFPage.create_pages(document):
-        interpreter.process_page(page)
-        layout = device.get_result()
+    layout = get_layout(pdf_page)
+    filtered_words = get_words(layout._objs, y_above, y_current, page_height)
 
-        page_height = page.mediabox[3]
+    if not filtered_words:
+        return ''
 
-        if layout.pageid == problem.widget.page + 1:
-            filtered_words = get_words(layout._objs, y_above, y_current, page_height)
-
-            if not filtered_words:
-                return ''
-
-            lines = filtered_words[0].split('\n')
-            return lines[0].strip()
-
-    return ''
+    lines = filtered_words[0].split('\n')
+    return lines[0].strip()
 
 
 def get_words(layout_objs, y_top, y_bottom, page_height):
@@ -105,10 +140,10 @@ def get_words(layout_objs, y_top, y_bottom, page_height):
 
     for obj in layout_objs:
         if isinstance(obj, LTTextBoxHorizontal):
-            if page_height - y_top > obj.bbox[1] > page_height - y_bottom:
+            if y_bottom > page_height - obj.bbox[1] > y_top:
                 words.append(obj.get_text())
 
         elif isinstance(obj, LTFigure):
-            words.append(get_words(obj._objs, y_top, y_bottom, page_height))
+            words += get_words(obj._objs, y_top, y_bottom, page_height)
 
     return words

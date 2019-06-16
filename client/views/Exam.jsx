@@ -340,7 +340,7 @@ class Exams extends React.Component {
    */
   generateMCOs = (problemWidget, labels, index, xPos, yPos) => {
     if (labels.length === index) {
-      this.repositionMCO(problemWidget.id, {x: problemWidget.x, y: problemWidget.y});
+      this.repositionMCO(problemWidget.id, {x: problemWidget.x, y: problemWidget.y})
       return
     }
 

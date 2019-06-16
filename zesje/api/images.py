@@ -60,7 +60,7 @@ def get(exam_id, problem_id, submission_id, full_page=False):
 
     # pregrade highliting
     solution = Solution.query.filter(Solution.submission_id == sub.id,
-                                     Solution.problem_id == problem_id).one_or_none()
+                                     Solution.problem_id == problem_id).one()
 
     if solution is not None:
         dpi = guess_dpi(page_im)

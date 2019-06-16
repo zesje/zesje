@@ -332,7 +332,7 @@ class Exams extends React.Component {
    * @param yPos y position of the current option
    */
   generateMCOs = (problemWidget, labels, index, xPos, yPos) => {
-    if (labels.length === index) return
+    if (labels.length === index) return false
 
     let feedback = {
       'name': labels[index],
@@ -362,13 +362,13 @@ class Exams extends React.Component {
     formData.append('label', data.label)
     formData.append('fb_description', feedback.description)
     formData.append('fb_score', feedback.score)
-    api.put('mult-choice/', formData).then(result => {
+    return api.put('mult-choice/', formData).then(result => {
       data.id = result.mult_choice_id
       data.feedback_id = result.feedback_id
       feedback.id = result.feedback_id
       this.addMCOtoState(problemWidget, data)
       this.updateFeedback(feedback)
-      this.generateMCOs(problemWidget, labels, index + 1, xPos + problemWidget.problem.widthMCO, yPos)
+      return this.generateMCOs(problemWidget, labels, index + 1, xPos + problemWidget.problem.widthMCO, yPos)
     }).catch(err => {
       console.log(err)
     })
@@ -404,7 +404,7 @@ class Exams extends React.Component {
    */
   deleteMCOs = (widgetId, index, nrMCOs) => {
     let widget = this.state.widgets[widgetId]
-    if (nrMCOs <= 0 || !widget.problem.mc_options.length) return
+    if (nrMCOs <= 0 || !widget.problem.mc_options.length) return false
 
     let option = widget.problem.mc_options[index]
     return api.del('mult-choice/' + option.id)
@@ -421,20 +421,22 @@ class Exams extends React.Component {
         let feedback = widget.problem.feedback[index]
         feedback.deleted = true
         this.updateFeedback(feedback)
-        this.setState((prevState) => {
-          return {
-            widgets: update(prevState.widgets, {
-              [widget.id]: {
-                problem: {
-                  mc_options: {
-                    $splice: [[index, 1]]
+        return new Promise((resolve, reject) => {
+          this.setState((prevState) => {
+            return {
+              widgets: update(prevState.widgets, {
+                [widget.id]: {
+                  problem: {
+                    mc_options: {
+                      $splice: [[index, 1]]
+                    }
                   }
                 }
-              }
-            })
-          }
-        }, () => {
-          this.deleteMCOs(widgetId, index, nrMCOs - 1)
+              })
+            }
+          }, () => {
+            resolve(this.deleteMCOs(widgetId, index, nrMCOs - 1))
+          })
         })
       })
   }
@@ -566,14 +568,16 @@ class Exams extends React.Component {
                     xPos = problemWidget.x + 2
                     yPos = problemWidget.y + 2
                   }
-                  this.generateMCOs(problemWidget, labels, 0, xPos, yPos)
+                  return this.generateMCOs(problemWidget, labels, 0, xPos, yPos)
                 }}
                 deleteMCOs={(nrMCOs) => {
                   let len = props.problem.mc_options.length
                   if (nrMCOs >= len) {
-                    this.setState({deletingMCWidget: true})
+                    return new Promise((resolve, reject) => {
+                      this.setState({deletingMCWidget: true}, () => {resolve(false)})
+                    })
                   } else if (nrMCOs > 0) {
-                    this.deleteMCOs(selectedWidgetId, len - nrMCOs, nrMCOs)
+                    return this.deleteMCOs(selectedWidgetId, len - nrMCOs, nrMCOs)
                   }
                 }}
                 updateLabels={(labels) => {

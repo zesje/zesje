@@ -90,9 +90,8 @@ class PanelMCQ extends React.Component {
           nrPossibleAnswers: 2,
           chosenLabelType: value
         }, () => {
-          this.updateNumberOptions()
           let labels = this.generateLabels(this.state.nrPossibleAnswers, 0)
-          this.props.updateLabels(labels)
+          this.updateNumberOptions().then(() => this.props.updateLabels(labels))
         })
       } else {
         this.setState({
@@ -116,7 +115,7 @@ class PanelMCQ extends React.Component {
 
     switch (type) {
       case 1:
-        return ['T', 'F']
+        return ['T', 'F'].slice(startingAt)
       case 2:
         return Array.from(Array(nrLabels).keys()).map(
           (e) => String.fromCharCode(e + 65 + startingAt))

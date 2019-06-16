@@ -62,17 +62,16 @@ def get(exam_id, problem_id, submission_id, full_page=False):
     solution = Solution.query.filter(Solution.submission_id == sub.id,
                                      Solution.problem_id == problem_id).one()
 
-    if solution is not None:
-        dpi = guess_dpi(page_im)
-        fb = list(map(lambda x: x.id, solution.feedback))
-        for option in problem.mc_options:
-            if option.feedback_id in fb:
-                x = int(option.x / 72 * dpi)
-                y = int(option.y / 72 * dpi)
-                box_length = int(CHECKBOX_FORMAT["box_size"] / 72 * dpi)
-                x1 = x + box_length
-                y1 = y + box_length
-                page_im = cv2.rectangle(page_im, (x, y), (x1, y1), (0, 255, 0), 3)
+    dpi = guess_dpi(page_im)
+    fb = list(map(lambda x: x.id, solution.feedback))
+    for option in problem.mc_options:
+        if option.feedback_id in fb:
+            x = int(option.x / 72 * dpi)
+            y = int(option.y / 72 * dpi)
+            box_length = int(CHECKBOX_FORMAT["box_size"] / 72 * dpi)
+            x1 = x + box_length
+            y1 = y + box_length
+            page_im = cv2.rectangle(page_im, (x, y), (x1, y1), (0, 255, 0), 3)
 
     if not full_page:
         raw_image = get_box(page_im, widget_area_in, padding=0.3)

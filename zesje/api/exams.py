@@ -9,9 +9,9 @@ from flask_restful import Resource, reqparse
 from werkzeug.datastructures import FileStorage
 from sqlalchemy.orm import selectinload
 
-from ..pdf_generation import generate_pdfs, output_pdf_filename_format, join_pdfs, page_is_size, make_pages_even
-from ..pdf_generation import PAGE_FORMATS
-from ..database import db, Exam, ExamWidget, Submission
+from ..pdf_generation import generate_pdfs, output_pdf_filename_format, join_pdfs
+from ..pdf_generation import page_is_size, make_pages_even, PAGE_FORMATS
+from ..database import db, Exam, ExamWidget, Submission, token_length
 
 
 def _get_exam_dir(exam_id):
@@ -65,19 +65,7 @@ class Exams(Resource):
         elif Submission.query.filter(Submission.exam_id == exam.id).count():
             return dict(status=500, message='Exam is not finalized but already has submissions.'), 500
         else:
-            # Delete any scans that were wrongly uploaded to this exam
-            for scan in exam.scans:
-                db.session.delete(scan)
-
-            for widget in exam.widgets:
-                db.session.delete(widget)
-
-            for problem in exam.problems:
-                for fb_option in problem.feedback_options:
-                    db.session.delete(fb_option)
-                db.session.delete(problem.widget)
-                db.session.delete(problem)
-
+            # All corresponding solutions, scans and problems are automatically deleted
             db.session.delete(exam)
             db.session.commit()
 
@@ -531,8 +519,8 @@ class ExamPreview(Resource):
         cb_data = get_cb_data_for_exam(exam)
         generate_pdfs(
             exam_path,
-            exam.token[:5] + 'PREVIEW',
-            [1519],
+            "A" * token_length,
+            [1559],
             [output_file],
             student_id_widget.x, student_id_widget.y,
             barcode_widget.x, barcode_widget.y,

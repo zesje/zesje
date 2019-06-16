@@ -42,9 +42,7 @@ def mco_json():
     }
 
 
-'''
-ACTUAL TESTS
-'''
+# Actual tests
 
 
 def test_not_present(test_client, add_test_data):
@@ -171,6 +169,43 @@ def test_delete(test_client, add_test_data):
     data = json.loads(response.data)
 
     assert data['status'] == 200
+
+
+def test_delete_problem_check_mco(test_client, add_test_data):
+    req = mco_json()
+    problem_id = req['problem_id']
+
+    response = test_client.put('/api/mult-choice/', data=req)
+    data = json.loads(response.data)
+    mult_choice_id = data['mult_choice_id']
+
+    # Delete problem
+    test_client.delete(f'/api/problems/{problem_id}')
+
+    # Get mult choice option
+    response = test_client.get(f'/api/mult-choice/{mult_choice_id}')
+    data = json.loads(response.data)
+
+    assert data['status'] == 404
+
+
+def test_delete_mco_check_feedback(test_client, add_test_data):
+    req = mco_json()
+
+    response = test_client.put('/api/mult-choice/', data=req)
+    data = json.loads(response.data)
+    mult_choice_id = data['mult_choice_id']
+    feedback_id = data['feedback_id']
+
+    test_client.delete(f'/api/mult-choice/{mult_choice_id}')
+
+    # Get feedback
+    response = test_client.get(f'/api/feedback/{feedback_id}')
+    data = json.loads(response.data)
+
+    ids = [fb['id'] for fb in data]
+
+    assert feedback_id not in ids
 
 
 def test_delete_not_present(test_client, add_test_data):

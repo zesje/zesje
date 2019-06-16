@@ -1,9 +1,8 @@
-from io import BytesIO
 from tempfile import NamedTemporaryFile
 
 import PIL
 from pdfrw import PdfReader, PdfWriter, PageMerge
-from pystrich.datamatrix import DataMatrixEncoder
+from pylibdmtx.pylibdmtx import encode
 from reportlab.lib.units import mm
 from reportlab.pdfgen import canvas
 
@@ -18,6 +17,12 @@ MARKER_FORMAT = {
     "bar_length": 40 * mm
 }
 
+# the parameters of drawing checkboxes
+CHECKBOX_FORMAT = {
+    "margin": 5,
+    "font_size": 11,
+    "box_size": 9
+}
 PAGE_FORMATS = {
     "A4": (595.276, 841.89),
     "US letter": (612, 792),
@@ -29,9 +34,9 @@ def generate_pdfs(exam_pdf_file, exam_id, copy_nums, output_paths, id_grid_x,
     """
     Generate the final PDFs from the original exam PDF.
 
-    To maintain a consistent size of the DataMatrix codes, adhere to (# of
-    letters in exam ID) + 2 * (# of digits in exam ID) = C for a certain
-    constant C. The reason for this is that pyStrich encodes two digits in as
+    To ensure the page information fits into the datamatrix grid, adhere to
+    (# of letters in exam ID) + 2 * (# of digits in exam ID) = C for a certain
+    constant C. The reason for this is that libdmtx encodes two digits in as
     much space as one letter.
 
     If maximum interchangeability with version 1 QR codes is desired (error
@@ -168,7 +173,7 @@ def generate_id_grid(canv, x, y):
 
 def generate_checkbox(canvas, x, y, label):
     """
-    draw a checkbox and draw a  singel character label ontop of the checkbox
+    draw a checkbox and draw a single character on top of the checkbox
 
     Parameters
     ----------
@@ -182,29 +187,26 @@ def generate_checkbox(canvas, x, y, label):
         A string representing the label that is drawn on top of the box, will only take the first character
 
     """
-    fontsize = 11  # Size of font
-    margin = 5  # Margin between elements and sides
-    markboxsize = fontsize - 2  # Size of checkboxes boxes
     x_label = x + 1  # location of the label
-    y_label = y + margin  # remove fontsize from the y label since we draw from the bottom left up
-    box_y = y - markboxsize  # remove the markboxsize because the y is the coord of the top
+    y_label = y + CHECKBOX_FORMAT["margin"]  # remove fontsize from the y label since we draw from the bottom left up
+    box_y = y - CHECKBOX_FORMAT["box_size"]  # remove the markboxsize because the y is the coord of the top
     # and reportlab prints from the bottom
 
     # check that there is a label to print
     if (label and not (len(label) == 0)):
-        canvas.setFont('Helvetica', fontsize)
+        canvas.setFont('Helvetica', CHECKBOX_FORMAT["font_size"])
         canvas.drawString(x_label, y_label, label[0])
 
-    canvas.rect(x, box_y, markboxsize, markboxsize)
+    canvas.rect(x, box_y, CHECKBOX_FORMAT["box_size"], CHECKBOX_FORMAT["box_size"])
 
 
 def generate_datamatrix(exam_id, page_num, copy_num):
     """
     Generates a DataMatrix code to be used on a page.
 
-    To maintain a consistent size of the DataMatrix codes, adhere to (# of
-    letters in exam ID) + 2 * (# of digits in exam ID) = C for a certain
-    constant C. The reason for this is that pyStrich encodes two digits in as
+    To ensure the page information fits into the datamatrix grid, adhere to
+    (# of letters in exam ID) + 2 * (# of digits in exam ID) = C for a certain
+    constant C. The reason for this is that pylibdmtx encodes two digits in as
     much space as one letter.
 
     If maximum interchangeability with version 1 QR codes is desired (error
@@ -229,8 +231,10 @@ def generate_datamatrix(exam_id, page_num, copy_num):
 
     data = f'{exam_id}/{copy_num:04d}/{page_num:02d}'
 
-    image_bytes = DataMatrixEncoder(data).get_imagedata(cellsize=2)
-    return PIL.Image.open(BytesIO(image_bytes))
+    encoded = encode(data.encode('utf-8'), size='18x18')
+    datamatrix = PIL.Image.frombytes('RGB', (encoded.width, encoded.height), encoded.pixels)
+    datamatrix = datamatrix.resize((44, 44)).convert('L')
+    return datamatrix
 
 
 def _generate_overlay(canv, pagesize, exam_id, copy_num, num_pages, id_grid_x,
@@ -239,9 +243,9 @@ def _generate_overlay(canv, pagesize, exam_id, copy_num, num_pages, id_grid_x,
     Generates an overlay ('watermark') PDF, which can then be overlaid onto
     the exam PDF.
 
-    To maintain a consistent size of the DataMatrix codes in the overlay,
+    To ensure the page information fits into the datamatrix grid in the overlay,
     adhere to (# of letters in exam ID) + 2 * (# of digits in exam ID) = C for
-    a certain constant C. The reason for this is that pyStrich encodes two
+    a certain constant C. The reason for this is that pylibdmtx encodes two
     digits in as much space as one letter.
 
     If maximum interchangeability with version 1 QR codes is desired (error
@@ -273,10 +277,6 @@ def _generate_overlay(canv, pagesize, exam_id, copy_num, num_pages, id_grid_x,
 
     """
 
-    # Font settings for the copy number (printed under the datamatrix)
-    fontsize = 8
-    canv.setFont('Helvetica', fontsize)
-
     # transform y-cooridate to different origin location
     id_grid_y = pagesize[1] - id_grid_y
 
@@ -293,6 +293,9 @@ def _generate_overlay(canv, pagesize, exam_id, copy_num, num_pages, id_grid_x,
     else:
         index = 0
         max_index = 0
+    # Font settings for the copy number (printed under the datamatrix)
+    fontsize = 12
+    canv.setFont('Helvetica', fontsize)
 
     for page_num in range(num_pages):
         _add_corner_markers_and_bottom_bar(canv, pagesize)
@@ -304,7 +307,7 @@ def _generate_overlay(canv, pagesize, exam_id, copy_num, num_pages, id_grid_x,
 
         canv.drawInlineImage(datamatrix, datamatrix_x, datamatrix_y_adjusted)
         canv.drawString(
-            datamatrix_x, datamatrix_y_adjusted - fontsize,
+            datamatrix_x, datamatrix_y_adjusted - (fontsize * 0.66),
             f" # {copy_num}"
         )
 

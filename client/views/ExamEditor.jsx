@@ -113,6 +113,7 @@ class ExamEditor extends React.Component {
         api.post('problems', formData).then(result => {
           widgetData.id = result.widget_id
           problemData.id = result.id
+          problemData.name = result.problem_name
           widgetData.problem = problemData
 
           this.props.createNewWidget(widgetData)

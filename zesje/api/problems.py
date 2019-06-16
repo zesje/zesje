@@ -1,8 +1,10 @@
 """ REST api for problems """
 
-from flask_restful import Resource, reqparse
+from flask_restful import Resource, reqparse, current_app
 
 from ..database import db, Exam, Problem, ProblemWidget, Solution
+
+from zesje.pdf_reader import guess_problem_title
 
 
 class Problems(Resource):
@@ -58,11 +60,20 @@ class Problems(Resource):
             db.session.commit()
             widget.name = f'problem_{problem.id}'
 
+            app_config = current_app.config
+            data_dir = app_config.get('DATA_DIRECTORY', 'data')
+
+            guessed_title = guess_problem_title(problem, data_dir)
+
+            if guessed_title:
+                problem.name = guessed_title
+
             db.session.commit()
 
             return {
                 'id': problem.id,
                 'widget_id': widget.id,
+                'problem_name': problem.name
             }
 
     put_parser = reqparse.RequestParser()
@@ -105,13 +116,7 @@ class Problems(Resource):
         if any([sol.graded_by is not None for sol in problem.solutions]):
             return dict(status=403, message=f'Problem has already been graded'), 403
         else:
-            # Delete all solutions associated with this problem
-            for sol in problem.solutions:
-                db.session.delete(sol)
-            # Delete all multiple choice options associated with this problem
-            for mc_option in problem.mc_options:
-                db.session.delete(mc_option)
-            db.session.delete(problem.widget)
+            # The widget and all associated solutions are automatically deleted
             db.session.delete(problem)
             db.session.commit()
             return dict(status=200, message="ok"), 200

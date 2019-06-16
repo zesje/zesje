@@ -128,9 +128,6 @@ class Feedback(Resource):
         if fb.mc_option:
             return dict(status=401, message='Cannot delete feedback option'
                                             + ' attached to a multiple choice option.'), 401
-        if fb.mc_option and problem.exam.finalized:
-            return dict(status=401, message='Cannot delete feedback option'
-                                            + ' attached to a multiple choice option in a finalized exam.'), 401
 
         db.session.delete(fb)
 

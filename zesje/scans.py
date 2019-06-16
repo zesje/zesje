@@ -726,7 +726,7 @@ def realign_image(image_array, keypoints=None,
     # use standard keypoints if no custom ones are provided
     if (not reference_keypoints):
         dpi = guess_dpi(image_array)
-        reference_keypoints = generate_perfect_corner_markers(page_format, dpi)
+        reference_keypoints = original_corner_markers(page_format, dpi)
 
     if (len(reference_keypoints) != 4):
         # this function assumes that the template has the same dimensions as the input image
@@ -743,7 +743,7 @@ def realign_image(image_array, keypoints=None,
     return return_image
 
 
-def generate_perfect_corner_markers(format="A4", dpi=200):
+def original_corner_markers(format="A4", dpi=200):
     left_x = MARKER_FORMAT["margin"]/72 * dpi
     top_y = MARKER_FORMAT["margin"]/72 * dpi
     right_x = (PAGE_FORMATS[format][0] - MARKER_FORMAT["margin"])/72 * dpi

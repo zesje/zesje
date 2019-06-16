@@ -58,7 +58,7 @@ def process_pdf(scan_id):
         # TODO: When #182 is implemented, properly separate user-facing
         #       messages (written to DB) from developer-facing messages,
         #       which should be written into the log.
-        write_pdf_status(scan_id, 'error', f"Unexpected error: {error}")
+        write_pdf_status(scan_id, 'error', "Unexpected error: " + str(error))
 
 
 def _process_pdf(scan_id, app_config):

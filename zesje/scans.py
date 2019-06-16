@@ -338,10 +338,10 @@ def process_page(image_data, exam_config, output_dir=None, strict=False):
     else:
         return True, "Testing, image not saved and database not updated."
 
-    sub, exam = update_database(image_path, barcode)
+    sub = update_database(image_path, barcode)
 
     try:
-        grade_mcq(sub, exam, barcode.page, image_array)
+        grade_mcq(sub, barcode.page, image_array)
     except RuntimeError as e:
         if strict:
             return False, str(e)
@@ -394,8 +394,6 @@ def update_database(image_path, barcode):
     -------
     sub : Submission
         the current submission
-    exam : Exam
-        the current exam
     """
     exam = Exam.query.filter(Exam.token == barcode.token).first()
     if exam is None:
@@ -415,7 +413,7 @@ def update_database(image_path, barcode):
 
     db.session.commit()
 
-    return sub, exam
+    return sub
 
 
 def decode_barcode(image, exam_config):

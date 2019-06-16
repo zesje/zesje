@@ -6,7 +6,7 @@ from .images import guess_dpi, get_box
 from .pdf_generation import CHECKBOX_FORMAT
 
 
-def grade_mcq(sub, exam, page, page_img):
+def grade_mcq(sub, page, page_img):
     """
     Adds the multiple choice options that are identified as marked as a feedback option to a solution
 
@@ -14,12 +14,10 @@ def grade_mcq(sub, exam, page, page_img):
     ------
     sub : Submission
         the current submission
-    exam : Exam
-        the current exam
     page_img : Image
         image of the page
     """
-    problems_on_page = [problem for problem in exam.problems if problem.widget.page == page]
+    problems_on_page = [problem for problem in sub.exam.problems if problem.widget.page == page]
 
     for problem in problems_on_page:
         sol = Solution.query.filter(Solution.problem_id == problem.id, Solution.submission_id == sub.id).one_or_none()

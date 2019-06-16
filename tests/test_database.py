@@ -135,7 +135,7 @@ def exam():
 
 @pytest.fixture
 def problem():
-    return Problem(name='')
+    return Problem(name='', grading_policy=1)
 
 
 @pytest.fixture

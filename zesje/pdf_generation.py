@@ -173,7 +173,7 @@ def generate_id_grid(canv, x, y):
 
 def generate_checkbox(canvas, x, y, label):
     """
-    draw a checkbox and draw a  singel character label ontop of the checkbox
+    draw a checkbox and draw a single character on top of the checkbox
 
     Parameters
     ----------

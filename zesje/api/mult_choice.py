@@ -59,9 +59,14 @@ class MultipleChoice(Resource):
         fb_description = args['fb_description']
         fb_score = args['fb_score']
         problem_id = args['problem_id']
+        problem = Problem.query.get(problem_id)
 
-        if not Problem.query.get(problem_id):
+        if not problem:
             return dict(status=404, message=f'Problem with id {problem_id} does not exist'), 404
+
+        if problem.exam.finalized:
+            return dict(status=403, message='Cannot create multiple choice option and corresponding feedback option'
+                        + ' in a finalized exam.'), 403
 
         # Insert new empty feedback option that links to the same problem
         new_feedback_option = FeedbackOption(problem_id=problem_id, text=label,
@@ -169,8 +174,8 @@ class MultipleChoice(Resource):
         exam = mult_choice.feedback.problem.exam
 
         if exam.finalized:
-            return dict(status=401, message='Cannot delete feedback option'
-                        + ' attached to a multiple choice option in a finalized exam.'), 401
+            return dict(status=403, message='Cannot delete feedback option'
+                        + ' attached to a multiple choice option in a finalized exam.'), 403
 
         db.session.delete(mult_choice)
         db.session.delete(mult_choice.feedback)

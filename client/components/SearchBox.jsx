@@ -2,6 +2,8 @@ import React from 'react'
 import Autosuggest from 'react-autosuggest'
 import Fuse from 'fuse.js'
 
+import './SearchBox.css'
+
 const theme = {
   input: {
     width: '100%'

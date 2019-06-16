@@ -85,6 +85,18 @@ class Students(Resource):
         args = self.put_parser.parse_args()
 
         student = Student.query.get(args.studentID)
+
+        # Check if another student with same email is already present
+        # and that it is not the student we are updating
+        if args.email and (not student or student.email != args.email):
+            student_same_mail = Student.query.filter(Student.email == args.email).one_or_none()
+            if student_same_mail:
+                return dict(status=400, message=(
+                    f'Could not add or update student #{args.studentID}. '
+                    'Another student (#{other_id}, {other_first} {other_last}) already has the same email.'
+                    .format(student_id=args.studentID, other_id=student_same_mail.id,
+                            other_first=student_same_mail.first_name, other_last=student_same_mail.last_name))), 400
+
         if student is None:
             student = Student(id=args.studentID,
                               first_name=args.firstName,

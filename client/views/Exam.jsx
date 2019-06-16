@@ -332,7 +332,7 @@ class Exams extends React.Component {
    * @param yPos y position of the current option
    */
   generateMCOs = (problemWidget, labels, index, xPos, yPos) => {
-    if (labels.length === index) return false
+    if (labels.length === index) return true
 
     let feedback = {
       'name': labels[index],
@@ -371,6 +371,16 @@ class Exams extends React.Component {
       return this.generateMCOs(problemWidget, labels, index + 1, xPos + problemWidget.problem.widthMCO, yPos)
     }).catch(err => {
       console.log(err)
+      err.json().then(res => {
+        Notification.error('Could not create multiple choice option' +
+          (res.message ? ': ' + res.message : ''))
+        // update to try and get a consistent state
+        this.props.updateExam(this.props.examID)
+        this.setState({
+          selectedWidgetId: null
+        })
+        return false
+      })
     })
   }
 
@@ -404,19 +414,10 @@ class Exams extends React.Component {
    */
   deleteMCOs = (widgetId, index, nrMCOs) => {
     let widget = this.state.widgets[widgetId]
-    if (nrMCOs <= 0 || !widget.problem.mc_options.length) return false
+    if (nrMCOs <= 0 || !widget.problem.mc_options.length) return true
 
     let option = widget.problem.mc_options[index]
     return api.del('mult-choice/' + option.id)
-      .catch(err => {
-        console.log(err)
-        err.json().then(res => {
-          Notification.error('Could not delete multiple choice option' +
-            (res.message ? ': ' + res.message : ''))
-          // update to try and get a consistent state
-          this.props.updateExam(this.props.examID)
-        })
-      })
       .then(res => {
         let feedback = widget.problem.feedback[index]
         feedback.deleted = true
@@ -437,6 +438,19 @@ class Exams extends React.Component {
           }, () => {
             resolve(this.deleteMCOs(widgetId, index, nrMCOs - 1))
           })
+        })
+      })
+      .catch(err => {
+        console.log(err)
+        err.json().then(res => {
+          Notification.error('Could not delete multiple choice option' +
+            (res.message ? ': ' + res.message : ''))
+          // update to try and get a consistent state
+          this.props.updateExam(this.props.examID)
+          this.setState({
+            selectedWidgetId: null
+          })
+          return false
         })
       })
   }
@@ -574,7 +588,7 @@ class Exams extends React.Component {
                   let len = props.problem.mc_options.length
                   if (nrMCOs >= len) {
                     return new Promise((resolve, reject) => {
-                      this.setState({deletingMCWidget: true}, () => {resolve(false)})
+                      this.setState({deletingMCWidget: true}, () => { resolve(false) })
                     })
                   } else if (nrMCOs > 0) {
                     return this.deleteMCOs(selectedWidgetId, len - nrMCOs, nrMCOs)

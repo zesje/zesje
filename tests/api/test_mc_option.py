@@ -234,16 +234,9 @@ def test_add_finalized_exam(test_client, add_test_data):
 
 
 def test_delete_finalized_exam(test_client, add_test_data):
-    mc_option_json = {
-        'x': 100,
-        'y': 40,
-        'problem_id': 1,
-        'page': 1,
-        'label': 'a',
-        'name': 'test'
-    }
+    req = mco_json()
 
-    response = test_client.put('/api/mult-choice/', data=mc_option_json)
+    response = test_client.put('/api/mult-choice/', data=req)
     data = json.loads(response.data)
     mc_id = data['mult_choice_id']
 

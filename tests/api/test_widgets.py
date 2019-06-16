@@ -28,9 +28,7 @@ def add_test_data(app):
         db.session.commit()
 
 
-'''
-ACTUAL TESTS
-'''
+# Actual tests
 
 
 def test_update_mco_finalized_exam(test_client, add_test_data):

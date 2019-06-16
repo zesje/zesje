@@ -1,5 +1,6 @@
 div.mcq-widget {
     display:inline-flex;
+    box-sizing: content-box;
 }
 
 div.mcq-option {
@@ -12,7 +13,7 @@ div.mcq-option {
 div.mcq-option div.mcq-option-label {
     display:block;
     font-family: Arial, Helvetica, sans-serif;
-    font-size: 14px;
+    font-size: 12px;
     text-align: center;
 }
 

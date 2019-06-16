@@ -392,8 +392,6 @@ def update_database(image_path, barcode):
 
     Returns
     -------
-    sub, exam where
-
     sub : Submission
         the current submission
     exam : Exam

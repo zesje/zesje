@@ -125,10 +125,10 @@ class Exams(Resource):
                 {
                     'id': sub.copy_number,
                     'student': {
-                        'id': sub.student.id,
-                        'firstName': sub.student.first_name,
-                        'lastName': sub.student.last_name,
-                        'email': sub.student.email
+                            'id': sub.student.id,
+                            'firstName': sub.student.first_name,
+                            'lastName': sub.student.last_name,
+                            'email': sub.student.email
                     } if sub.student else None,
                     'validated': sub.signature_validated,
                     'problems': [

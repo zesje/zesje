@@ -6,7 +6,7 @@ from .images import guess_dpi, get_box
 from .pdf_generation import CHECKBOX_FORMAT
 
 
-def add_feedback_to_solution(sub, exam, page, page_img):
+def grade_mcq(sub, exam, page, page_img):
     """
     Adds the multiple choice options that are identified as marked as a feedback option to a solution
 

@@ -18,7 +18,7 @@ from .database import db, Scan, Exam, Page, Student, Submission, Solution, ExamW
 from .datamatrix import decode_raw_datamatrix
 from .images import guess_dpi, get_box
 from .factory import make_celery
-from .pregrader import add_feedback_to_solution
+from .pregrader import grade_mcq
 from .images import fix_corner_markers
 
 from .pdf_generation import MARKER_FORMAT, PAGE_FORMATS
@@ -341,7 +341,7 @@ def process_page(image_data, exam_config, output_dir=None, strict=False):
     sub, exam = update_database(image_path, barcode)
 
     try:
-        add_feedback_to_solution(sub, exam, barcode.page, image_array)
+        grade_mcq(sub, exam, barcode.page, image_array)
     except RuntimeError as e:
         if strict:
             return False, str(e)

@@ -14,13 +14,15 @@ def grade_mcq(sub, page, page_img):
     ------
     sub : Submission
         the current submission
-    page_img : Image
+    page : int
+        Page number of the submission
+     page_img : Image
         image of the page
     """
-    problems_on_page = [problem for problem in sub.exam.problems if problem.widget.page == page]
+    problems_on_page = [prob for prob in sub.exam.problems if prob.widget.page == page]
 
     for problem in problems_on_page:
-        sol = Solution.query.filter(Solution.problem_id == problem.id, Solution.submission_id == sub.id).one_or_none()
+        sol = Solution.query.filter(Solution.problem_id == problem.id, Solution.submission_id == sub.id).one()
 
         for mc_option in problem.mc_options:
             box = (mc_option.x, mc_option.y)

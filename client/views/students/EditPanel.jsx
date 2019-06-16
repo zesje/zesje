@@ -108,6 +108,11 @@ class EditPanel extends React.Component {
         } else {
           this.idblock.clear()
         }
+      }).catch(resp => {
+        resp.json().then(r => Notification.error(r.message, {
+          duration: 0,
+          closable: true
+        }))
       })
   }
 

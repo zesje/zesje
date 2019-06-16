@@ -179,39 +179,3 @@ def fix_corner_markers(corner_keypoints, shape):
         bottom_right = sub_tup(top_right, delta)
 
     return [top_left, top_right, bottom_left, bottom_right]
-
-
-def box_is_filled(image_array, box_coords, padding=0.3, threshold=150, pixels=False):
-    """
-    Determines if a box is filled
-
-    Parameters:
-    -----------
-    image_array : 2D or 3D array
-        The image source.
-    box_coords : 4 floats (top, bottom, left, right)
-        Coordinates of the bounding box in inches or pixels. By due to differing
-        traditions, box coordinates are counted from the bottom left of the
-        image, while image array coordinates are from the top left.
-    padding : float
-        Padding around box borders in inches.
-    threshold : int
-        Optional threshold value to determine minimal 'darkness'
-        to consider a box to be filled in
-    pixels : boolean
-        Whether the box coordinates are entered as pixels instead of inches.
-    """
-
-    # Divide by DPI if pixel coordinates are used
-    if pixels:
-        box_coords /= guess_dpi(image_array)
-
-    box_img = get_box(image_array, box_coords, padding)
-
-    # Check if the coordinates are outside of the image
-    if box_img.size == 0:
-        raise RuntimeError("Box coordinates are outside of image")
-
-    avg = np.average(box_img)
-
-    return avg < threshold

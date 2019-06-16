@@ -26,8 +26,6 @@ def update_mc_option(mc_option, args, feedback_id=None):
 
     mc_option.type = 'mcq_widget'
 
-    db.session.commit()
-
 
 class MultipleChoice(Resource):
 
@@ -138,6 +136,8 @@ class MultipleChoice(Resource):
             update_mc_option(mc_entry, args)
         except (TypeError, ValueError) as error:
             return dict(status=400, message=str(error)), 400
+
+        db.session.commit()
 
         return dict(status=200, message=f'Multiple choice question with id {id} updated'), 200
 

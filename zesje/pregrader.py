@@ -61,7 +61,6 @@ def box_is_filled(box, page_img, threshold=225, cut_padding=0.05, box_size=9):
     coords = np.asarray([box[1], box[1] + box_size,
                         box[0], box[0] + box_size])/72
 
-    # add the actually margin from the scan to corner markers to the coords in inches
     dpi = guess_dpi(page_img)
 
     # get the box where we think the box is

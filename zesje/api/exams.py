@@ -21,7 +21,7 @@ def _get_exam_dir(exam_id):
     )
 
 
-def get_cb_data_for_exam(exam):
+def checkboxes(exam):
     """
     Returns all multiple choice question check boxes for one specific exam
 
@@ -357,7 +357,7 @@ class ExamGeneratedPdfs(Resource):
         generated_pdfs_dir = self._get_generated_exam_dir(exam_dir)
         os.makedirs(generated_pdfs_dir, exist_ok=True)
 
-        cb_data = get_cb_data_for_exam(exam)
+        cb_data = checkboxes(exam)
 
         generate_pdfs(
             exam_path,
@@ -516,7 +516,7 @@ class ExamPreview(Resource):
 
         exam_path = os.path.join(exam_dir, 'exam.pdf')
 
-        cb_data = get_cb_data_for_exam(exam)
+        cb_data = checkboxes(exam)
         generate_pdfs(
             exam_path,
             "A" * token_length,

@@ -1,10 +1,11 @@
 """ REST api for problems """
 
+import os
+
 from flask_restful import Resource, reqparse, current_app
 
-from ..database import db, Exam, Problem, ProblemWidget, Solution
-
-from zesje.pdf_reader import get_problem_title
+from zesje.database import db, Exam, Problem, ProblemWidget, Solution
+from zesje.pdf_reader import guess_problem_title, get_problem_page
 
 
 class Problems(Resource):
@@ -60,11 +61,14 @@ class Problems(Resource):
             db.session.commit()
             widget.name = f'problem_{problem.id}'
 
-            app_config = current_app.config
-            data_dir = app_config.get('DATA_DIRECTORY', 'data')
-            page_format = app_config.get('PAGE_FORMAT', 'A4')
+            data_dir = current_app.config.get('DATA_DIRECTORY', 'data')
+            pdf_path = os.path.join(data_dir, f'{problem.exam_id}_data', 'exam.pdf')
 
-            problem.name = get_problem_title(problem, data_dir, page_format)
+            page = get_problem_page(problem, pdf_path)
+            guessed_title = guess_problem_title(problem, page)
+
+            if guessed_title:
+                problem.name = guessed_title
 
             db.session.commit()
 
@@ -114,10 +118,6 @@ class Problems(Resource):
         if any([sol.graded_by is not None for sol in problem.solutions]):
             return dict(status=403, message=f'Problem has already been graded'), 403
         else:
-            # delete mc options
-            for mc_option in problem.mc_options:
-                db.session.delete(mc_option)
-
             # The widget and all associated solutions are automatically deleted
             db.session.delete(problem)
             db.session.commit()

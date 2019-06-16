@@ -9,27 +9,20 @@ def update_mc_option(mc_option, args, feedback_id=None):
 
     Parameters
     ----------
-    mc_option: The multiple choice option
-    args: The arguments supplied in the request body
-    feedback_id: The id of the feedback option related to the
+    mc_option : MultipleChoiceOption
+        The multiple choice option
+    args: dict
+        The arguments supplied in the request body
+    feedback_id : int
+        id of the feedback option coupled to the multiple choice option
     """
 
     for attr, value in args.items():
-        try:
-            if value:
-                setattr(mc_option, attr, value)
-        except AttributeError:
-            msg = f"Multiple choice option doesn't have a property {attr}"
-            return dict(status=400, message=msg), 400
-        except (TypeError, ValueError) as error:
-            return dict(status=400, message=str(error)), 400
+        if value:
+            setattr(mc_option, attr, value)
 
     if feedback_id:
         mc_option.feedback_id = feedback_id
-
-    mc_option.type = 'mcq_widget'
-
-    db.session.commit()
 
 
 class MultipleChoice(Resource):
@@ -59,9 +52,14 @@ class MultipleChoice(Resource):
         fb_description = args['fb_description']
         fb_score = args['fb_score']
         problem_id = args['problem_id']
+        problem = Problem.query.get(problem_id)
 
-        if not Problem.query.get(problem_id):
+        if not problem:
             return dict(status=404, message=f'Problem with id {problem_id} does not exist'), 404
+
+        if problem.exam.finalized:
+            return dict(status=403, message='Cannot create multiple choice option and corresponding feedback option'
+                        + ' in a finalized exam.'), 403
 
         # Insert new empty feedback option that links to the same problem
         new_feedback_option = FeedbackOption(problem_id=problem_id, text=label,
@@ -71,7 +69,10 @@ class MultipleChoice(Resource):
 
         # Insert new entry into the database
         mc_entry = MultipleChoiceOption()
-        update_mc_option(mc_entry, args, new_feedback_option.id)
+        try:
+            update_mc_option(mc_entry, args, new_feedback_option.id)
+        except (TypeError, ValueError) as error:
+            return dict(status=400, message=str(error)), 400
 
         db.session.add(mc_entry)
         db.session.commit()
@@ -131,10 +132,18 @@ class MultipleChoice(Resource):
 
         mc_entry = MultipleChoiceOption.query.get(id)
 
+        if mc_entry.feedback.problem.exam.finalized:
+            return dict(status=403, message=f'Exam is finalized'), 403
+
         if not mc_entry:
             return dict(status=404, message=f"Multiple choice question with id {id} does not exist"), 404
 
-        update_mc_option(mc_entry, args)
+        try:
+            update_mc_option(mc_entry, args)
+        except (TypeError, ValueError) as error:
+            return dict(status=400, message=str(error)), 400
+
+        db.session.commit()
 
         return dict(status=200, message=f'Multiple choice question with id {id} updated'), 200
 
@@ -158,19 +167,14 @@ class MultipleChoice(Resource):
         if not mult_choice:
             return dict(status=404, message=f'Multiple choice question with id {id} does not exist.'), 404
 
-        if not mult_choice.feedback:
-            return dict(status=404, message=f'Multiple choice question with id {id}'
-                        + ' is not associated with a feedback option.'), 404
-
         # Check if the exam is finalized, do not delete the multiple choice option otherwise
         exam = mult_choice.feedback.problem.exam
 
         if exam.finalized:
-            return dict(status=401, message='Cannot delete feedback option'
-                        + ' attached to a multiple choice option in a finalized exam.'), 401
+            return dict(status=403, message='Cannot delete feedback option'
+                        + ' attached to a multiple choice option in a finalized exam.'), 403
 
         db.session.delete(mult_choice)
-        db.session.delete(mult_choice.feedback)
         db.session.commit()
 
         return dict(status=200, mult_choice_id=id, feedback_id=mult_choice.feedback_id,

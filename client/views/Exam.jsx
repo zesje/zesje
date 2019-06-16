@@ -243,6 +243,7 @@ class Exams extends React.Component {
           updateWidget={this.updateWidget}
           updateMCOsInState={this.updateMCOsInState}
           selectedWidgetId={this.state.selectedWidgetId}
+          repositionMCO={this.repositionMCO}
           highlightFeedback={(widget, feedbackId) => {
             let index = widget.problem.feedback.findIndex(e => { return e.id === feedbackId })
             let feedback = widget.problem.feedback[index]
@@ -254,6 +255,12 @@ class Exams extends React.Component {
             let feedback = widget.problem.feedback[index]
             feedback.highlight = false
             this.updateFeedbackAtIndex(feedback, widget, index)
+          }}
+          removeAllHighlight={(widget) => {
+            widget.problem.feedback.forEach((feedback, index) => {
+              feedback.highlight = false
+              this.updateFeedbackAtIndex(feedback, widget, index)
+            })
           }}
           selectWidget={(widgetId) => {
             this.setState({
@@ -332,7 +339,10 @@ class Exams extends React.Component {
    * @param yPos y position of the current option
    */
   generateMCOs = (problemWidget, labels, index, xPos, yPos) => {
-    if (labels.length === index) return true
+    if (labels.length === index) {
+      this.repositionMCO(problemWidget.id, {x: problemWidget.x, y: problemWidget.y})
+      return true
+    }
 
     let feedback = {
       'name': labels[index],
@@ -456,6 +466,47 @@ class Exams extends React.Component {
   }
 
   /**
+   * This function updates the position of the mc options inside when the corresponding problem widget changes in
+   * size or position. Note that the positions in the database are not updated. These should be updated once when the
+   * action (resizing/dragging/other) is finalized.
+   * @param widget the problem widget containing mc options
+   * @param data the new data about the new size/position of the problem widget
+   */
+  repositionMCO = (widgetId, data) => {
+    let widget = this.state.widgets[widgetId]
+    if (widget.problem.mc_options.length > 0) {
+      let oldX = widget.problem.mc_options[0].widget.x
+      let oldY = widget.problem.mc_options[0].widget.y
+      let newX = oldX
+      let newY = oldY
+      let widthOption = widget.problem.widthMCO * widget.problem.mc_options.length
+      let heightOption = widget.problem.heightMCO
+      let widthProblem = data.width ? data.width : widget.width
+      let heightProblem = data.height ? data.height : widget.height
+
+      if (newX < data.x || widthOption >= widthProblem) {
+        newX = data.x
+      } else if (newX + widthOption > data.x + widthProblem) {
+        newX = data.x + widget.width - widthOption
+      }
+
+      if (newY < data.y || heightOption >= heightProblem) {
+        newY = data.y
+      } else if (newY + heightOption > data.y + heightProblem) {
+        newY = data.y + widget.height - heightOption
+      }
+
+      let changed = (oldX !== newX) || (oldY !== newY) // update the state only if the mc options were moved
+      if (changed) {
+        this.updateMCOsInState(widget, {
+          x: Math.round(newX),
+          y: Math.round(newY)
+        })
+      }
+    }
+  }
+
+  /**
    * This method is called when the mcq widget is moved. The positions of the options are stored separately and they
   * all need to be updated in the state. This method does not update the positions of the mc options in the DB.
    * @param widget the problem widget that includes the mcq widget
@@ -492,8 +543,7 @@ class Exams extends React.Component {
     const selectedWidgetId = this.state.selectedWidgetId
     let selectedWidget = selectedWidgetId && this.state.widgets[selectedWidgetId]
     let problem = selectedWidget && selectedWidget.problem
-    let widgetEditDisabled = (this.state.previewing || !problem) ||
-      (this.props.exam.finalized && problem.mc_options.length > 0)
+    let widgetEditDisabled = (this.state.previewing || !problem)
     let isGraded = problem && problem.graded
     let widgetDeleteDisabled = widgetEditDisabled || isGraded
 
@@ -565,7 +615,7 @@ class Exams extends React.Component {
                 </div>
               </div>
             </div>
-            {props.problem ? (
+            {props.problem && !this.props.exam.finalized ? (
               <PanelMCQ
                 totalNrAnswers={totalNrAnswers}
                 problem={props.problem}
@@ -635,22 +685,22 @@ class Exams extends React.Component {
                   })
                 }}
               />) : null}
+            {props.problem &&
+              <React.Fragment>
+                <div className='panel-block'>
+                  {!this.state.editActive && <label className='label'>Feedback options</label>}
+                </div>
+                {this.state.editActive
+                  ? <EditPanel problemID={props.problem.id} feedback={this.state.feedbackToEdit}
+                    goBack={this.backToFeedback} updateCallback={this.updateFeedback} />
+                  : <FeedbackPanel examID={this.props.examID} problem={props.problem}
+                    editFeedback={this.editFeedback} showTooltips={this.state.showTooltips}
+                    grading={false}
+                  />}
+              </React.Fragment>
+            }
           </React.Fragment>
         )}
-        {props.problem &&
-          <React.Fragment>
-            <div className='panel-block'>
-              {!this.state.editActive && <label className='label'>Feedback options</label>}
-            </div>
-            {this.state.editActive
-              ? <EditPanel problemID={props.problem.id} feedback={this.state.feedbackToEdit}
-                goBack={this.backToFeedback} updateCallback={this.updateFeedback} />
-              : <FeedbackPanel examID={this.props.examID} problem={props.problem}
-                editFeedback={this.editFeedback} showTooltips={this.state.showTooltips}
-                grading={false}
-              />}
-          </React.Fragment>
-        }
         <div className='panel-block'>
           <button
             disabled={props.disabledDelete}
@@ -706,7 +756,12 @@ class Exams extends React.Component {
     return (
       <button
         className='button is-link is-fullwidth'
-        onClick={() => { this.setState({previewing: true}) }}
+        onClick={() => {
+          this.setState({
+            selectedWidgetId: null,
+            previewing: true
+          })
+        }}
       >
         Finalize
       </button>

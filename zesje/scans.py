@@ -18,7 +18,7 @@ from .database import db, Scan, Exam, Page, Student, Submission, Solution, ExamW
 from .datamatrix import decode_raw_datamatrix
 from .images import guess_dpi, get_box
 from .factory import make_celery
-from .pregrader import add_feedback_to_solution
+from .pregrader import grade_mcq
 from .images import fix_corner_markers
 
 from .pdf_generation import MARKER_FORMAT, PAGE_FORMATS
@@ -58,7 +58,7 @@ def process_pdf(scan_id):
         # TODO: When #182 is implemented, properly separate user-facing
         #       messages (written to DB) from developer-facing messages,
         #       which should be written into the log.
-        write_pdf_status(scan_id, 'error', f"Unexpected error: {error}")
+        write_pdf_status(scan_id, 'error', "Unexpected error: " + str(error))
 
 
 def _process_pdf(scan_id, app_config):
@@ -97,8 +97,8 @@ def _process_pdf(scan_id, app_config):
                     print(description)
                     failures.append(page)
             except Exception as e:
-                report_error(f'Error processing page {e}')
-                raise
+                report_error(f'Error processing page {page}: {e}')
+                return
     except Exception as e:
         report_error(f"Failed to read pdf: {e}")
         raise
@@ -341,7 +341,7 @@ def process_page(image_data, exam_config, output_dir=None, strict=False):
     sub, exam = update_database(image_path, barcode)
 
     try:
-        add_feedback_to_solution(sub, exam, barcode.page, image_array)
+        grade_mcq(sub, exam, barcode.page, image_array)
     except RuntimeError as e:
         if strict:
             return False, str(e)
@@ -392,8 +392,6 @@ def update_database(image_path, barcode):
 
     Returns
     -------
-    sub, exam where
-
     sub : Submission
         the current submission
     exam : Exam

@@ -321,7 +321,11 @@ def process_page(image_data, exam_config, output_dir=None, strict=False):
         if strict:
             return False, str(e)
     else:
-        image_array = realign_image(image_array, corner_keypoints)
+        try:
+            image_array = realign_image(image_array, corner_keypoints)
+        except RuntimeError as e:
+            if strict:
+                return False, str(e)
 
     try:
         barcode, upside_down = decode_barcode(image_array, exam_config)
@@ -709,6 +713,7 @@ def realign_image(image_array, keypoints=None, page_format="A4"):
 
     if not keypoints:
         keypoints = find_corner_marker_keypoints(image_array)
+        keypoints = np.asarray(keypoints)
 
     if len(keypoints) < 2:
         raise RuntimeError(
@@ -720,9 +725,10 @@ def realign_image(image_array, keypoints=None, page_format="A4"):
     reference_keypoints = original_corner_markers(page_format, dpi)
 
     # create a matrix with the distances between each keypoint and match the keypoint sets
-    dists = spatial.distance.cdist(reference_keypoints, keypoints)
+    dists = spatial.distance.cdist(keypoints, reference_keypoints)
+
     idxs = np.argmin(dists, 1)  # apply to column 1 so indices for input keypoints
-    adjusted_markers = [keypoints[i] for i in idxs]
+    adjusted_markers = keypoints[idxs]
 
     rows, cols, _ = image_array.shape
 

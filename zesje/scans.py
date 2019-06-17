@@ -321,7 +321,11 @@ def process_page(image_data, exam_config, output_dir=None, strict=False):
         if strict:
             return False, str(e)
     else:
-        image_array = realign_image(image_array, corner_keypoints)
+        try:
+            image_array = realign_image(image_array, corner_keypoints)
+        except RuntimeError as e:
+            if strict:
+                return False, str(e)
 
     try:
         barcode, upside_down = decode_barcode(image_array, exam_config)
@@ -709,23 +713,27 @@ def realign_image(image_array, keypoints=None, page_format="A4"):
 
     if not keypoints:
         keypoints = find_corner_marker_keypoints(image_array)
+        keypoints = np.asarray(keypoints)
 
-    if not (2 <= len(keypoints) <= 4):
-        raise RuntimeError(f"Found {len(keypoints)} markers while realigning image")
+    if len(keypoints) < 2:
+        raise RuntimeError(
+            f"Need at least 2 corner markers to realign the image, found {len(keypoints)} instead."
+        )
 
     # generate the coordinates where the markers should be
     dpi = guess_dpi(image_array)
     reference_keypoints = original_corner_markers(page_format, dpi)
 
     # create a matrix with the distances between each keypoint and match the keypoint sets
-    dists = spatial.distance.cdist(reference_keypoints, keypoints)
+    dists = spatial.distance.cdist(keypoints, reference_keypoints)
+
     idxs = np.argmin(dists, 1)  # apply to column 1 so indices for input keypoints
-    adjusted_markers = [keypoints[i] for i in idxs]
+    adjusted_markers = reference_keypoints[idxs]
 
     rows, cols, _ = image_array.shape
 
     # get the transformation matrix
-    M = cv2.estimateAffinePartial2D(np.asarray(adjusted_markers), np.asarray(reference_keypoints))[0]
+    M = cv2.estimateAffinePartial2D(np.asarray(keypoints), np.asarray(adjusted_markers))[0]
 
     # apply the transformation matrix and fill in the new empty spaces with white
     return_image = cv2.warpAffine(image_array, M, (cols, rows),

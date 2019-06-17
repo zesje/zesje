@@ -752,3 +752,12 @@ def original_corner_markers(format, dpi):
                      (right_x, top_y),
                      (left_x, bottom_y),
                      (right_x, bottom_y)])
+
+
+def shift_image(image_array, orig_point, ref_point):
+
+    M = np.float32([[1, 0, orig_point[0] - ref_point[0]],
+                   [0, 1, orig_point[1] - ref_point[1]]])
+    h, w, _ = image_array.shape
+    return cv2.warpAffine(image_array, M, (w, h),
+                          borderValue=(255, 255, 255, 255))

@@ -271,7 +271,9 @@ class Exams(Resource):
         pdf_path = os.path.join(exam_dir, 'exam.pdf')
         os.makedirs(exam_dir, exist_ok=True)
 
-        make_pages_even(pdf_path, args['pdf'])
+        even_pdf = make_pages_even(args['pdf'])
+
+        even_pdf.write(pdf_path)
 
         print(f"Added exam {exam.id} (name: {exam_name}, token: {exam.token}) to database")
 

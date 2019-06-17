@@ -701,9 +701,6 @@ def realign_image(image_array, keypoints=None, page_format="A4"):
     keypoints : List[(int,int)]
         tuples of coordinates of the found keypoints, (x,y), in pixels. Can be a set of 3 or 4 tuples.
         if none are provided, they are found by using find_corner_marker_keypoints on the input image.
-    reference_keypoints: List[(int,int)]
-        Similar to keypoints, only these belong to the keypoints found on the original scan.
-        If none are provided, ideal ones are calculated based on the dpi of the input image.
     returns
     -------
     return_array: numpy.array
@@ -712,17 +709,20 @@ def realign_image(image_array, keypoints=None, page_format="A4"):
 
     if not keypoints:
         keypoints = find_corner_marker_keypoints(image_array)
-        check_corner_keypoints(image_array, keypoints)
 
-    # use standard keypoints if no custom ones are provided
+    if not (2 <= len(keypoints) <= 4):
+        raise RuntimeError(f"Found {len(keypoints)} markers while realigning image")
+
+    # generate the coordinates where the markers should be
     dpi = guess_dpi(image_array)
     reference_keypoints = original_corner_markers(page_format, dpi)
 
+    # create a matrix with the distances between each keypoint and match the keypoint sets
     dists = spatial.distance.cdist(reference_keypoints, keypoints)
-    idxs = np.argmin(dists, 1)
+    idxs = np.argmin(dists, 1)  # apply to column 1 so indices for input keypoints
+    adjusted_markers = [keypoints[i] for i in idxs]
 
     rows, cols, _ = image_array.shape
-    adjusted_markers = [keypoints[i] for i in idxs]
 
     # get the transformation matrix
     M = cv2.estimateAffinePartial2D(np.asarray(adjusted_markers), np.asarray(reference_keypoints))[0]

@@ -41,7 +41,7 @@ def get_problem_page(problem, pdf_path):
         i += 1
 
 
-def get_layout(pdf_page):
+def layout(pdf_page):
     """
     Returns the layout objects in a PDF page
 
@@ -97,7 +97,7 @@ def guess_problem_title(problem, pdf_page):
     y_current = problem.widget.y + problem.widget.height
     page_height = pdf_page.mediabox[3]
 
-    layout = get_layout(pdf_page)
+    layout = layout(pdf_page)
     filtered_words = get_words(layout._objs, y_above, y_current, page_height)
 
     if not filtered_words:

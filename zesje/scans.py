@@ -710,7 +710,7 @@ def realign_image(image_array, keypoints=None, page_format="A4"):
     if not keypoints:
         keypoints = find_corner_marker_keypoints(image_array)
 
-    if len(keypoints) <= 2:
+    if len(keypoints) < 2:
         raise RuntimeError(
             f"Need at least 2 corner markers to realign the image, found {len(keypoints)} instead."
         )

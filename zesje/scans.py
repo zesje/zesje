@@ -728,12 +728,12 @@ def realign_image(image_array, keypoints=None, page_format="A4"):
     dists = spatial.distance.cdist(keypoints, reference_keypoints)
 
     idxs = np.argmin(dists, 1)  # apply to column 1 so indices for input keypoints
-    adjusted_markers = keypoints[idxs]
+    adjusted_markers = reference_keypoints[idxs]
 
     rows, cols, _ = image_array.shape
 
     # get the transformation matrix
-    M = cv2.estimateAffinePartial2D(np.asarray(adjusted_markers), np.asarray(reference_keypoints))[0]
+    M = cv2.estimateAffinePartial2D(np.asarray(keypoints), np.asarray(adjusted_markers))[0]
 
     # apply the transformation matrix and fill in the new empty spaces with white
     return_image = cv2.warpAffine(image_array, M, (cols, rows),

@@ -125,12 +125,42 @@ class EditPanel extends React.Component {
       const data = new window.FormData()
       data.append('csv', file)
       api.post('students', data)
-        .then(newStudentCount => {
-          Notification.success('successfully added ' + newStudentCount + ' students', { 'duration': 5 })
+        .then(resp => {
+          let totalSuccess = resp.added + resp.updated + resp.identical
+          let total = totalSuccess + resp.failed
+          let sentences = []
+          if (resp.added) sentences.push(<React.Fragment><b>{resp.added}</b> new students were added </React.Fragment>)
+          if (resp.updated) sentences.push(<React.Fragment><b>{resp.updated}</b> students were updated</React.Fragment>)
+          if (resp.identical) sentences.push(<React.Fragment><b>{resp.identical}</b> were already up to date</React.Fragment>)
+
+          let sentence = sentences.map((sent, index) => (
+            <React.Fragment>
+              {sent}{index <= sentences.length - 3 ? ', ' : ''}{index === sentences.length - 2 ? ' and ' : ''}
+            </React.Fragment>
+          ))
+          let message = <p>
+            Succesfully processed <b>{totalSuccess} / {total}</b> students. A total of {sentence}.
+          </p>
+          if (resp.failed === 0) {
+            Notification.success(message, { 'duration': 0, 'closeable': true })
+          } else {
+            message = <div className='content'>
+              {message}
+              <p>However, we were not able to process <b>{resp.failed}</b> students:</p>
+              <ul>
+                {
+                  resp.errors.map((error, index) => (
+                    <li key={index}>{error}</li>
+                  ))
+                }
+              </ul>
+            </div>
+            Notification.warn(message, { 'duration': 0, 'closeable': true })
+          }
         })
         .catch(resp => {
           console.error('failed to upload student CSV file')
-          resp.json().then(r => Notification.error(r.message))
+          resp.json().then(r => Notification.error(r.message), { 'duration': 0, 'closeable': true })
         })
     })
   }

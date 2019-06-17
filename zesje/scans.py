@@ -9,6 +9,8 @@ import signal
 
 import cv2
 import numpy as np
+from scipy import spatial
+
 from pikepdf import Pdf, PdfImage
 from PIL import Image
 from wand.image import Image as WandImage
@@ -19,7 +21,6 @@ from .datamatrix import decode_raw_datamatrix
 from .images import guess_dpi, get_box
 from .factory import make_celery
 from .pregrader import grade_mcq
-from .images import fix_corner_markers
 
 from .pdf_generation import MARKER_FORMAT, PAGE_FORMATS
 
@@ -689,8 +690,7 @@ def check_corner_keypoints(image_array, keypoints):
         raise RuntimeError("Found multiple corner markers in the same corner")
 
 
-def realign_image(image_array, keypoints=None,
-                  reference_keypoints=None, page_format="A4"):
+def realign_image(image_array, keypoints=None, page_format="A4"):
     """
     Transform the image so that the keypoints match the reference.
 
@@ -714,25 +714,22 @@ def realign_image(image_array, keypoints=None,
         keypoints = find_corner_marker_keypoints(image_array)
         check_corner_keypoints(image_array, keypoints)
 
-    if len(keypoints) != 4:
-        keypoints = fix_corner_markers(keypoints, image_array.shape)
-
     # use standard keypoints if no custom ones are provided
-    if not reference_keypoints:
-        dpi = guess_dpi(image_array)
-        reference_keypoints = original_corner_markers(page_format, dpi)
+    dpi = guess_dpi(image_array)
+    reference_keypoints = original_corner_markers(page_format, dpi)
 
-    if len(reference_keypoints) != 4:
-        # this function assumes that the template has the same dimensions as the input image
-        reference_keypoints = fix_corner_markers(reference_keypoints, image_array.shape)
+    dists = spatial.distance.cdist(reference_keypoints, keypoints)
+    idxs = np.argmin(dists, 1)
 
     rows, cols, _ = image_array.shape
+    adjusted_markers = [keypoints[i] for i in idxs]
 
     # get the transformation matrix
-    M = cv2.getPerspectiveTransform(np.float32(keypoints), np.float32(reference_keypoints))
+    M = cv2.estimateAffinePartial2D(np.asarray(adjusted_markers), np.asarray(reference_keypoints))
+
     # apply the transformation matrix and fill in the new empty spaces with white
-    return_image = cv2.warpPerspective(image_array, M, (cols, rows),
-                                       borderValue=(255, 255, 255, 255))
+    return_image = cv2.warpAffine(image_array, M[0], (cols, rows),
+                                  borderValue=(255, 255, 255, 255))
 
     return return_image
 

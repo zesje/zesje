@@ -323,7 +323,9 @@ def test_realign_image(datadir, file_name, markers):
     test_image = np.array(PIL.Image.open(test_file))
 
     result_image = scans.realign_image(test_image)
+
     result_corner_markers = scans.find_corner_marker_keypoints(result_image)
+
     assert result_corner_markers is not None
     for i in range(len(markers)):
         diff = np.absolute(np.subtract(markers[i], result_corner_markers[i]))
@@ -337,11 +339,9 @@ def test_incomplete_reference_realign_image(datadir):
     test_file = os.path.join(datadir, dir_name, "a4-rotated.png")
     test_image = cv2.imread(test_file)
 
-    reference_markers = [(59, 59), (59, 1695), (1181, 1695)]
-
     correct_corner_markers = [(59, 59), (1181, 59), (59, 1695), (1181, 1695)]
 
-    result_image = scans.realign_image(test_image, reference_keypoints=reference_markers)
+    result_image = scans.realign_image(test_image)
     result_corner_markers = scans.find_corner_marker_keypoints(result_image)
 
     assert result_corner_markers is not None

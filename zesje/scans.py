@@ -715,7 +715,7 @@ def realign_image(image_array, keypoints=None, page_format="A4"):
         keypoints = find_corner_marker_keypoints(image_array)
         keypoints = np.asarray(keypoints)
 
-    if len(keypoints) < 2:
+    if len(keypoints) < 1:
         raise RuntimeError(
             f"Need at least 2 corner markers to realign the image, found {len(keypoints)} instead."
         )
@@ -729,6 +729,9 @@ def realign_image(image_array, keypoints=None, page_format="A4"):
 
     idxs = np.argmin(dists, 1)  # apply to column 1 so indices for input keypoints
     adjusted_markers = reference_keypoints[idxs]
+
+    if len(adjusted_markers) == 1:
+        return shift_image(image_array, keypoints[0], adjusted_markers[0])
 
     rows, cols, _ = image_array.shape
 
@@ -756,8 +759,8 @@ def original_corner_markers(format, dpi):
 
 def shift_image(image_array, orig_point, ref_point):
 
-    M = np.float32([[1, 0, orig_point[0] - ref_point[0]],
-                   [0, 1, orig_point[1] - ref_point[1]]])
+    M = np.float32([[1, 0, ref_point[0] - orig_point[0]],
+                   [0, 1, ref_point[1] - orig_point[1]]])
     h, w, _ = image_array.shape
     return cv2.warpAffine(image_array, M, (w, h),
                           borderValue=(255, 255, 255, 255))

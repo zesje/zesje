@@ -315,7 +315,8 @@ def test_image_extraction(datadir, filename):
                                                 ("a4-3-markers.png", [(1181, 59), (59, 1695), (1181, 1695)]),
                                                 ("a4-rotated-3-markers.png", [(1181, 59), (59, 1695), (1181, 1695)]),
                                                 ("a4-rotated-2-markers.png", [(1181, 59), (59, 1695)]),
-                                                ("a4-rotated-2-bottom-markers.png", [(59, 1695), (1181, 1695)])
+                                                ("a4-rotated-2-bottom-markers.png", [(59, 1695), (1181, 1695)]),
+                                                ("a4-shifted-1-marker.png", [(59, 1695)])
                                                 ])
 def test_realign_image(datadir, file_name, markers):
     dir_name = "cornermarkers"
@@ -327,7 +328,6 @@ def test_realign_image(datadir, file_name, markers):
     result_image = scans.realign_image(test_image)
 
     result_corner_markers = scans.find_corner_marker_keypoints(result_image)
-
     assert result_corner_markers is not None
     for i in range(len(markers)):
         diff = np.absolute(np.subtract(markers[i], result_corner_markers[i]))
@@ -363,8 +363,7 @@ def test_shift_image(datadir):
     shift_x, shift_y = 20, -30
     shift_keypoint = (bottom_left[0] + shift_x, bottom_left[1] - shift_y)
 
-    test_image = scans.shift_image(test_image, shift_keypoint, bottom_left)
-
+    test_image = scans.shift_image(test_image, bottom_left, shift_keypoint)
     keypoints = scans.find_corner_marker_keypoints(test_image)
 
     diff = np.absolute(np.subtract(shift_keypoint, keypoints[0]))

@@ -284,6 +284,7 @@ class ExamEditor extends React.Component {
                     this.props.removeHighlight(widget, option.feedback_id)
                   }
                 }}
+                style={{'--width-mco': widget.problem.widthMCO + 'px', '--height-mco': widget.problem.heightMCO + 'px'}}
               >
                 <div className='mcq-option-label'>
                   {option.label === ' ' ? <span>&nbsp;</span> : option.label}

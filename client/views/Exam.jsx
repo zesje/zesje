@@ -49,14 +49,16 @@ class Exams extends React.Component {
             graded: problem.graded,
             feedback: problem.feedback || [],
             mc_options: problem.mc_options.map((option) => {
+              // the database stores the positions of the checkboxes but the front end uses the top-left position
+              // of the option; the cbOffsetX and cbOffsetY are used to manually locate the checkbox precisely
               option.cbOffsetX = 7 // checkbox offset relative to option position on x axis
               option.cbOffsetY = 21 // checkbox offset relative to option position on y axis
               option.widget.x -= option.cbOffsetX
               option.widget.y -= option.cbOffsetY
               return option
             }),
-            widthMCO: 24,
-            heightMCO: 38
+            widthMCO: 20,
+            heightMCO: 34
           }
         }
       })

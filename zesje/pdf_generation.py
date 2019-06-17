@@ -407,7 +407,7 @@ def page_is_size(exam_pdf_file, shape, tolerance=0):
     return not invalid
 
 
-def make_pages_even(output_filename, exam_pdf_file):
+def make_pages_even(exam_pdf_file):
     exam_pdf = PdfReader(exam_pdf_file)
     new = PdfWriter()
     new.addpages(exam_pdf.pages)
@@ -420,4 +420,4 @@ def make_pages_even(output_filename, exam_pdf_file):
         blank = blank.render()
         new.addpage(blank)
 
-    new.write(output_filename)
+    return new

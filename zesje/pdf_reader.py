@@ -97,8 +97,8 @@ def guess_problem_title(problem, pdf_page):
     y_current = problem.widget.y + problem.widget.height
     page_height = pdf_page.mediabox[3]
 
-    layout = layout(pdf_page)
-    filtered_words = get_words(layout._objs, y_above, y_current, page_height)
+    layout_objects = layout(pdf_page)
+    filtered_words = get_words(layout_objects._objs, y_above, y_current, page_height)
 
     if not filtered_words:
         return ''

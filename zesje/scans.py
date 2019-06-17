@@ -725,10 +725,10 @@ def realign_image(image_array, keypoints=None, page_format="A4"):
     adjusted_markers = [keypoints[i] for i in idxs]
 
     # get the transformation matrix
-    M = cv2.estimateAffinePartial2D(np.asarray(adjusted_markers), np.asarray(reference_keypoints))
+    M = cv2.estimateAffinePartial2D(np.asarray(adjusted_markers), np.asarray(reference_keypoints))[0]
 
     # apply the transformation matrix and fill in the new empty spaces with white
-    return_image = cv2.warpAffine(image_array, M[0], (cols, rows),
+    return_image = cv2.warpAffine(image_array, M, (cols, rows),
                                   borderValue=(255, 255, 255, 255))
 
     return return_image

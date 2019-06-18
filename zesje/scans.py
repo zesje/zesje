@@ -9,6 +9,8 @@ import signal
 
 import cv2
 import numpy as np
+from scipy import spatial
+
 from pikepdf import Pdf, PdfImage
 from PIL import Image
 from wand.image import Image as WandImage
@@ -19,7 +21,6 @@ from .datamatrix import decode_raw_datamatrix
 from .images import guess_dpi, get_box
 from .factory import make_celery
 from .pregrader import grade_mcq
-from .images import fix_corner_markers
 
 from .pdf_generation import MARKER_FORMAT, PAGE_FORMATS
 
@@ -316,11 +317,10 @@ def process_page(image_data, exam_config, output_dir=None, strict=False):
     corner_keypoints = find_corner_marker_keypoints(image_array)
     try:
         check_corner_keypoints(image_array, corner_keypoints)
+        image_array = realign_image(image_array, corner_keypoints)
     except RuntimeError as e:
         if strict:
             return False, str(e)
-    else:
-        image_array = realign_image(image_array, corner_keypoints)
 
     try:
         barcode, upside_down = decode_barcode(image_array, exam_config)
@@ -684,8 +684,7 @@ def check_corner_keypoints(image_array, keypoints):
         raise RuntimeError("Found multiple corner markers in the same corner")
 
 
-def realign_image(image_array, keypoints=None,
-                  reference_keypoints=None, page_format="A4"):
+def realign_image(image_array, keypoints=None, page_format="A4"):
     """
     Transform the image so that the keypoints match the reference.
 
@@ -696,9 +695,6 @@ def realign_image(image_array, keypoints=None,
     keypoints : List[(int,int)]
         tuples of coordinates of the found keypoints, (x,y), in pixels. Can be a set of 3 or 4 tuples.
         if none are provided, they are found by using find_corner_marker_keypoints on the input image.
-    reference_keypoints: List[(int,int)]
-        Similar to keypoints, only these belong to the keypoints found on the original scan.
-        If none are provided, ideal ones are calculated based on the dpi of the input image.
     returns
     -------
     return_array: numpy.array
@@ -707,27 +703,34 @@ def realign_image(image_array, keypoints=None,
 
     if not keypoints:
         keypoints = find_corner_marker_keypoints(image_array)
-        check_corner_keypoints(image_array, keypoints)
 
-    if len(keypoints) != 4:
-        keypoints = fix_corner_markers(keypoints, image_array.shape)
+    keypoints = np.asarray(keypoints)
 
-    # use standard keypoints if no custom ones are provided
-    if not reference_keypoints:
-        dpi = guess_dpi(image_array)
-        reference_keypoints = original_corner_markers(page_format, dpi)
+    if not len(keypoints):
+        raise RuntimeError("No keypoints provided for alignment.")
 
-    if len(reference_keypoints) != 4:
-        # this function assumes that the template has the same dimensions as the input image
-        reference_keypoints = fix_corner_markers(reference_keypoints, image_array.shape)
+    # generate the coordinates where the markers should be
+    dpi = guess_dpi(image_array)
+    reference_keypoints = original_corner_markers(page_format, dpi)
+
+    # create a matrix with the distances between each keypoint and match the keypoint sets
+    dists = spatial.distance.cdist(keypoints, reference_keypoints)
+
+    idxs = np.argmin(dists, 1)  # apply to column 1 so indices for input keypoints
+    adjusted_markers = reference_keypoints[idxs]
+
+    if len(adjusted_markers) == 1:
+        x_shift, y_shift = np.subtract(adjusted_markers[0], keypoints[0])
+        return shift_image(image_array, x_shift, y_shift)
 
     rows, cols, _ = image_array.shape
 
     # get the transformation matrix
-    M = cv2.getPerspectiveTransform(np.float32(keypoints), np.float32(reference_keypoints))
+    M = cv2.estimateAffinePartial2D(keypoints, adjusted_markers)[0]
+
     # apply the transformation matrix and fill in the new empty spaces with white
-    return_image = cv2.warpPerspective(image_array, M, (cols, rows),
-                                       borderValue=(255, 255, 255, 255))
+    return_image = cv2.warpAffine(image_array, M, (cols, rows),
+                                  borderValue=(255, 255, 255, 255))
 
     return return_image
 
@@ -742,3 +745,28 @@ def original_corner_markers(format, dpi):
                      (right_x, top_y),
                      (left_x, bottom_y),
                      (right_x, bottom_y)])
+
+
+def shift_image(image_array, x_shift, y_shift):
+    """
+    take an image and shift it along the x and y axis using opencv
+
+    params:
+    -------
+    image_array: numpy.array
+        an array of the image to be shifted
+    x_shift: int
+        indicates how many pixels it has to be shifted on the x-axis, so from left to right
+    y_shift: int
+        indicates how many pixels it has to be shifted on the y-axis, so from top to bottom
+    returns:
+    --------
+    a numpy array of the image shifted where empty spaces are filled with white
+
+    """
+
+    M = np.float32([[1, 0, x_shift],
+                   [0, 1, y_shift]])
+    h, w, _ = image_array.shape
+    return cv2.warpAffine(image_array, M, (w, h),
+                          borderValue=(255, 255, 255, 255))

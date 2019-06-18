@@ -313,7 +313,10 @@ def test_image_extraction(datadir, filename):
 
 @pytest.mark.parametrize('file_name, markers', [("a4-rotated.png", [(59, 59), (1181, 59), (59, 1695), (1181, 1695)]),
                                                 ("a4-3-markers.png", [(1181, 59), (59, 1695), (1181, 1695)]),
-                                                ("a4-rotated-3-markers.png", [(1181, 59), (59, 1695), (1181, 1695)])
+                                                ("a4-rotated-3-markers.png", [(1181, 59), (59, 1695), (1181, 1695)]),
+                                                ("a4-rotated-2-markers.png", [(1181, 59), (59, 1695)]),
+                                                ("a4-rotated-2-bottom-markers.png", [(59, 1695), (1181, 1695)]),
+                                                ("a4-shifted-1-marker.png", [(59, 1695)])
                                                 ])
 def test_realign_image(datadir, file_name, markers):
     dir_name = "cornermarkers"
@@ -323,6 +326,7 @@ def test_realign_image(datadir, file_name, markers):
     test_image = np.array(PIL.Image.open(test_file))
 
     result_image = scans.realign_image(test_image)
+
     result_corner_markers = scans.find_corner_marker_keypoints(result_image)
     assert result_corner_markers is not None
     for i in range(len(markers)):
@@ -337,11 +341,9 @@ def test_incomplete_reference_realign_image(datadir):
     test_file = os.path.join(datadir, dir_name, "a4-rotated.png")
     test_image = cv2.imread(test_file)
 
-    reference_markers = [(59, 59), (59, 1695), (1181, 1695)]
-
     correct_corner_markers = [(59, 59), (1181, 59), (59, 1695), (1181, 1695)]
 
-    result_image = scans.realign_image(test_image, reference_keypoints=reference_markers)
+    result_image = scans.realign_image(test_image)
     result_corner_markers = scans.find_corner_marker_keypoints(result_image)
 
     assert result_corner_markers is not None
@@ -349,3 +351,22 @@ def test_incomplete_reference_realign_image(datadir):
         diff = np.absolute(np.subtract(correct_corner_markers[i], result_corner_markers[i]))
         assert diff[0] <= epsilon
         assert diff[1] <= epsilon
+
+
+def test_shift_image(datadir):
+    dir_name = "cornermarkers"
+    epsilon = 1
+    test_file = os.path.join(datadir, dir_name, "a4-1-marker.png")
+    test_image = cv2.imread(test_file)
+
+    bottom_left = (59, 1695)
+    shift_x, shift_y = 20, -30
+    shift_keypoint = (bottom_left[0] + shift_x, bottom_left[1] + shift_y)
+
+    test_image = scans.shift_image(test_image, shift_x, shift_y)
+    # test_image = scans.shift_image(test_image, bottom_left, shift_keypoint)
+    keypoints = scans.find_corner_marker_keypoints(test_image)
+
+    diff = np.absolute(np.subtract(shift_keypoint, keypoints[0]))
+    assert diff[0] <= epsilon
+    assert diff[1] <= epsilon

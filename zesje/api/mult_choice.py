@@ -126,7 +126,7 @@ class MultipleChoice(Resource):
 
         Parameters
         ----------
-            id: The id of the multiple choice option in the database.s
+            id: The id of the multiple choice option in the database.
         """
         args = self.patch_parser.parse_args()
 

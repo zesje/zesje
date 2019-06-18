@@ -713,7 +713,8 @@ def realign_image(image_array, keypoints=None, page_format="A4"):
 
     if not keypoints:
         keypoints = find_corner_marker_keypoints(image_array)
-        keypoints = np.asarray(keypoints)
+
+    keypoints = np.asarray(keypoints)
 
     if len(keypoints) < 1:
         raise RuntimeError(

@@ -72,8 +72,7 @@ class MultipleChoice(Resource):
         args.pop('problem_id')
 
         # Insert new multiple choice entry into the database
-        mc_entry = MultipleChoiceOption(**args)
-        mc_entry.feedback_id = new_feedback_option.id
+        mc_entry = MultipleChoiceOption(**args, feedback_id=new_feedback_option.id)
 
         db.session.add(mc_entry)
         db.session.commit()

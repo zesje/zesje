@@ -68,11 +68,16 @@ class MultipleChoice(Resource):
         db.session.commit()
 
         # Insert new entry into the database
-        mc_entry = MultipleChoiceOption()
+        args.pop('fb_description')
+        args.pop('fb_score')
+        args.pop('problem_id')
+
         try:
-            update_mc_option(mc_entry, args, new_feedback_option.id)
+            mc_entry = MultipleChoiceOption(**args)
         except (TypeError, ValueError) as error:
             return dict(status=400, message=str(error)), 400
+
+        mc_entry.feedback_id = new_feedback_option.id
 
         db.session.add(mc_entry)
         db.session.commit()

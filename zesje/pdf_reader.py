@@ -55,10 +55,10 @@ def layout(pdf_page):
     layout : list of pdfminer3 layout objects
         A list of layout objects on the page
     """
-    rsrcmgr = PDFResourceManager()
-    laparams = LAParams()
-    device = PDFPageAggregator(rsrcmgr, laparams=laparams)
-    interpreter = PDFPageInterpreter(rsrcmgr, device)
+    resource_manager = PDFResourceManager()
+    la_params = LAParams()
+    device = PDFPageAggregator(resource_manager, laparams=la_params)
+    interpreter = PDFPageInterpreter(resource_manager, device)
     interpreter.process_page(pdf_page)
 
     return device.get_result()

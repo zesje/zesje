@@ -58,8 +58,8 @@ class MultipleChoice(Resource):
             return dict(status=404, message=f'Problem with id {problem_id} does not exist'), 404
 
         if problem.exam.finalized:
-            return dict(status=403, message='Cannot create multiple choice option and corresponding feedback option'
-                        + ' in a finalized exam.'), 403
+            return dict(status=405, message='Cannot create multiple choice option and corresponding feedback option'
+                        + ' in a finalized exam.'), 405
 
         # Insert new empty feedback option that links to the same problem
         new_feedback_option = FeedbackOption(problem_id=problem_id, text=label,
@@ -133,7 +133,7 @@ class MultipleChoice(Resource):
         mc_entry = MultipleChoiceOption.query.get(id)
 
         if mc_entry.feedback.problem.exam.finalized:
-            return dict(status=403, message=f'Exam is finalized'), 403
+            return dict(status=405, message=f'Exam is finalized'), 405
 
         if not mc_entry:
             return dict(status=404, message=f"Multiple choice question with id {id} does not exist"), 404
@@ -171,8 +171,7 @@ class MultipleChoice(Resource):
         exam = mult_choice.feedback.problem.exam
 
         if exam.finalized:
-            return dict(status=403, message='Cannot delete feedback option'
-                        + ' attached to a multiple choice option in a finalized exam.'), 403
+            return dict(status=405, message='Cannot delete multiple choice option in a finalized exam.'), 405
 
         db.session.delete(mult_choice)
         db.session.commit()

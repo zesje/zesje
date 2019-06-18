@@ -94,7 +94,7 @@ def guess_problem_title(problem, pdf_page):
     page_height = pdf_page.mediabox[3]
 
     layout_objects = layout(pdf_page)
-    filtered_words = get_words(layout_objects._objs, y_above, y_current, page_height)
+    filtered_words = read_lines(layout_objects._objs, y_above, y_current, page_height)
 
     if not filtered_words:
         return ''
@@ -103,9 +103,9 @@ def guess_problem_title(problem, pdf_page):
     return lines[0].strip()
 
 
-def get_words(layout_objs, y_top, y_bottom, page_height):
+def read_lines(layout_objs, y_top, y_bottom, page_height):
     """
-    Returns the text from a pdf page within a specified height.
+    Returns lines of text from a PDF page within a specified height.
 
     Parameters
     ----------
@@ -140,6 +140,6 @@ def get_words(layout_objs, y_top, y_bottom, page_height):
                 words.append(obj.get_text())
 
         elif isinstance(obj, LTFigure):
-            words += get_words(obj._objs, y_top, y_bottom, page_height)
+            words += read_lines(obj._objs, y_top, y_bottom, page_height)
 
     return words

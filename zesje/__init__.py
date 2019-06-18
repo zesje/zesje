@@ -16,10 +16,13 @@ app = create_app()
 
 app.register_blueprint(api_bp, url_prefix='/api')
 
-os.makedirs(app.config['DATA_DIRECTORY'], exist_ok=True)
-os.makedirs(app.config['SCAN_DIRECTORY'], exist_ok=True)
-
 celery = make_celery(app)
+
+
+@app.before_first_request
+def setup():
+    os.makedirs(app.config['DATA_DIRECTORY'], exist_ok=True)
+    os.makedirs(app.config['SCAN_DIRECTORY'], exist_ok=True)
 
 
 @app.route('/')

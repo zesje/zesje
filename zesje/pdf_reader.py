@@ -1,3 +1,5 @@
+import itertools
+
 from pdfminer3.converter import PDFPageAggregator
 from pdfminer3.layout import LAParams
 from pdfminer3.layout import LTFigure
@@ -29,9 +31,6 @@ def get_problem_page(problem, pdf_path):
 
     parser = PDFParser(fp)
     document = PDFDocument(parser)
-
-    # PDFPage.create_pages() only yields a list of key-value pairs
-    # So there should be no problem saving the result to a list
 
     page_number = problem.widget.page
     return next(itertools.islice(PDFPage.create_pages(document), page_number, page_number + 1))

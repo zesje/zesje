@@ -30,7 +30,7 @@ class MultipleChoice(Resource):
     put_parser = reqparse.RequestParser()
 
     # Arguments that have to be supplied in the request body
-    put_parser.add_argument('name', type=str, required=True)
+    put_parser.add_argument('name', type=str, required=False)
     put_parser.add_argument('x', type=int, required=True)
     put_parser.add_argument('y', type=int, required=True)
     put_parser.add_argument('label', type=str, required=False)

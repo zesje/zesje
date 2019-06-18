@@ -712,7 +712,7 @@ def realign_image(image_array, keypoints=None, page_format="A4"):
     keypoints = np.asarray(keypoints)
 
     if not len(keypoints):
-         raise RuntimeError("No keypoints provided for alignment.")
+        raise RuntimeError("No keypoints provided for alignment.")
 
     # generate the coordinates where the markers should be
     dpi = guess_dpi(image_array)

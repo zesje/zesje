@@ -33,12 +33,8 @@ def get_problem_page(problem, pdf_path):
     # PDFPage.create_pages() only yields a list of key-value pairs
     # So there should be no problem saving the result to a list
 
-    i = 0
-
-    for page in PDFPage.create_pages(document):
-        if i == problem.widget.page:
-            return page
-        i += 1
+    page_number = problem.widget.page
+    return next(itertools.islice(PDFPage.create_pages(document), page_number, page_number + 1))
 
 
 def layout(pdf_page):

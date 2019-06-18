@@ -92,10 +92,10 @@ class SearchPanel extends React.Component {
     if (event.target.selected) {
       this.props.matchStudent(this.state.result[this.state.selected])
     } else {
-      const index = this.state.result.findIndex(result => result.id === event.target.id)
+      const clickedId = parseInt(event.target.id)
+      const newIndex = this.state.result.findIndex(result => result.id === clickedId)
       this.setState({
-        ...this.state,
-        selected: index
+        selected: newIndex
       })
     }
   }

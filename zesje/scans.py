@@ -317,15 +317,10 @@ def process_page(image_data, exam_config, output_dir=None, strict=False):
     corner_keypoints = find_corner_marker_keypoints(image_array)
     try:
         check_corner_keypoints(image_array, corner_keypoints)
+        image_array = realign_image(image_array, corner_keypoints)
     except RuntimeError as e:
         if strict:
             return False, str(e)
-    else:
-        try:
-            image_array = realign_image(image_array, corner_keypoints)
-        except RuntimeError as e:
-            if strict:
-                return False, str(e)
 
     try:
         barcode, upside_down = decode_barcode(image_array, exam_config)

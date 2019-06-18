@@ -89,7 +89,7 @@ def box_is_filled(box, page_img, threshold=225, cut_padding=0.05, box_size=9):
     res_rect = bin_im[y:y+h, x:x+w]
 
     # the size in pixels we expect the drawn box to
-    box_size_px = box_size*dpi / 72
+    box_size_px = box_size * dpi / 72
 
     # if the rectangle is bigger (higher) than expected, cut the image up a bit
     if h > 1.5 * box_size_px:

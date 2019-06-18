@@ -16,7 +16,7 @@ def grade_mcq(sub, page, page_img):
         the current submission
     page : int
         Page number of the submission
-    page_img : Image
+    page_img : np.array
         image of the page
     """
     problems_on_page = [prob for prob in sub.exam.problems if prob.widget.page == page]

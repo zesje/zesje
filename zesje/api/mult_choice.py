@@ -67,16 +67,12 @@ class MultipleChoice(Resource):
         db.session.add(new_feedback_option)
         db.session.commit()
 
-        # Insert new entry into the database
         args.pop('fb_description')
         args.pop('fb_score')
         args.pop('problem_id')
 
-        try:
-            mc_entry = MultipleChoiceOption(**args)
-        except (TypeError, ValueError) as error:
-            return dict(status=400, message=str(error)), 400
-
+        # Insert new multiple choice entry into the database
+        mc_entry = MultipleChoiceOption(**args)
         mc_entry.feedback_id = new_feedback_option.id
 
         db.session.add(mc_entry)
@@ -137,16 +133,13 @@ class MultipleChoice(Resource):
 
         mc_entry = MultipleChoiceOption.query.get(id)
 
-        if mc_entry.feedback.problem.exam.finalized:
-            return dict(status=405, message=f'Exam is finalized'), 405
-
         if not mc_entry:
             return dict(status=404, message=f"Multiple choice question with id {id} does not exist"), 404
 
-        try:
-            update_mc_option(mc_entry, args)
-        except (TypeError, ValueError) as error:
-            return dict(status=400, message=str(error)), 400
+        if mc_entry.feedback.problem.exam.finalized:
+            return dict(status=405, message=f'Exam is finalized'), 405
+
+        update_mc_option(mc_entry, args)
 
         db.session.commit()
 

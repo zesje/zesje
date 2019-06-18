@@ -725,7 +725,8 @@ def realign_image(image_array, keypoints=None, page_format="A4"):
     adjusted_markers = reference_keypoints[idxs]
 
     if len(adjusted_markers) == 1:
-        return shift_image(image_array, keypoints[0], adjusted_markers[0])
+        x_shift, y_shift = np.subtract(adjusted_markers[0], keypoints[0])
+        return shift_image(image_array, x_shift, y_shift)
 
     rows, cols, _ = image_array.shape
 
@@ -751,10 +752,26 @@ def original_corner_markers(format, dpi):
                      (right_x, bottom_y)])
 
 
-def shift_image(image_array, orig_point, ref_point):
+def shift_image(image_array, x_shift, y_shift):
+    """
+    take an image and shift it along the x and y axis using opencv
 
-    M = np.float32([[1, 0, ref_point[0] - orig_point[0]],
-                   [0, 1, ref_point[1] - orig_point[1]]])
+    params:
+    -------
+    image_array: numpy.array
+        an array of the image to be shifted
+    x_shift: int
+        indicates how many pixels it has to be shifted on the x-axis, so from left to right
+    y_shift: int
+        indicates how many pixels it has to be shifted on the y-axis, so from top to bottom
+    returns:
+    --------
+    a numpy array of the image shifted where empty spaces are filled with white
+
+    """
+
+    M = np.float32([[1, 0, x_shift],
+                   [0, 1, y_shift]])
     h, w, _ = image_array.shape
     return cv2.warpAffine(image_array, M, (w, h),
                           borderValue=(255, 255, 255, 255))

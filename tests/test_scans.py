@@ -361,9 +361,10 @@ def test_shift_image(datadir):
 
     bottom_left = (59, 1695)
     shift_x, shift_y = 20, -30
-    shift_keypoint = (bottom_left[0] + shift_x, bottom_left[1] - shift_y)
+    shift_keypoint = (bottom_left[0] + shift_x, bottom_left[1] + shift_y)
 
-    test_image = scans.shift_image(test_image, bottom_left, shift_keypoint)
+    test_image = scans.shift_image(test_image, shift_x, shift_y)
+    # test_image = scans.shift_image(test_image, bottom_left, shift_keypoint)
     keypoints = scans.find_corner_marker_keypoints(test_image)
 
     diff = np.absolute(np.subtract(shift_keypoint, keypoints[0]))

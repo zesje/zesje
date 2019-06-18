@@ -339,12 +339,7 @@ def process_page(image_data, exam_config, output_dir=None, strict=False):
         return True, "Testing, image not saved and database not updated."
 
     sub = update_database(image_path, barcode)
-
-    try:
-        grade_mcq(sub, barcode.page, image_array)
-    except RuntimeError as e:
-        if strict:
-            return False, str(e)
+    grade_mcq(sub, barcode.page, image_array)
 
     if barcode.page == 0:
         description = guess_student(

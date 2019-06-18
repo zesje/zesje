@@ -98,7 +98,7 @@ def guess_problem_title(problem, pdf_page):
     if not filtered_words:
         return ''
 
-    lines = filtered_words[0].split('\n')
+    lines = filtered_words.split('\n')
     return lines[0].strip()
 
 
@@ -108,19 +108,19 @@ def read_lines(layout_objs, y_top, y_bottom, page_height):
 
     Parameters
     ----------
-    page_height : int
-        Height of the current page in points
     layout_objs : list of layout objects
         The list of objects in the page.
     y_top : double
         Highest top coordinate of each word
     y_bottom : double
         Lowest bottom coordinate of each word
+    page_height : int
+        Height of the current page in points
 
     Returns
     -------
-    words : list of tuples
-        A list of tuples with the (y, text) values.
+    words : str
+        The first line of text that if it is found, or else an empty string
     """
     words = []
 
@@ -141,4 +141,7 @@ def read_lines(layout_objs, y_top, y_bottom, page_height):
         elif isinstance(obj, LTFigure):
             words += read_lines(obj._objs, y_top, y_bottom, page_height)
 
-    return words
+    if not words:
+        return ''
+
+    return words[0]

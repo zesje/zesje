@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 
-from .database import db, Solution
+from .database import db
 from .images import guess_dpi, get_box
 from .pdf_generation import CHECKBOX_FORMAT
 

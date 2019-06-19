@@ -34,20 +34,20 @@ class SearchBox extends React.Component {
   state = {
     value: '',
     suggestions: [],
-    selectedID: null
+    selected: null
   }
 
   static getDerivedStateFromProps (nextProps, prevState) {
     if (nextProps.selected === null) {
       return {
         value: '',
-        selectedID: null
+        selected: null
       }
     }
-    if (nextProps.selected.id !== prevState.selectedID) {
+    if (nextProps.selected !== prevState.selected) {
       return {
         value: nextProps.renderSelected(nextProps.selected),
-        selectedID: nextProps.selected.id
+        selected: nextProps.selected
       }
     }
     return null

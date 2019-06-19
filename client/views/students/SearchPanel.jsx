@@ -40,6 +40,25 @@ class SearchPanel extends React.Component {
 
   componentDidUpdate (prevProps, prevState) {
     this.searchInput.current.focus()
+    // Check if the search input is empty
+    if (!this.searchInput.current || !this.searchInput.current.value || this.searchInput.current.value.length === 0) {
+      if (this.props.submission && this.props.submission.student) {
+        // There is no result yet, always update it
+        if (this.state.result.length === 0) {
+          this.setState({
+            result: [this.props.submission.student]
+          })
+        // There is a result already, check if it is outdated
+        } else if (this.state.result.length === 1) {
+          const newResult = this.props.submission.student ? [this.props.submission.student] : []
+          if (this.state.result[0] !== newResult[0]) {
+            this.setState({
+              result: newResult
+            })
+          }
+        }
+      }
+    }
   }
 
   search = (event) => {

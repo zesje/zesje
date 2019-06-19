@@ -144,6 +144,7 @@ class CheckStudents extends React.Component {
         editActive: !this.state.editActive,
         editStud: null
       })
+      this.props.updateSubmission(this.state.index)
     }
   }
 
@@ -164,7 +165,7 @@ class CheckStudents extends React.Component {
               <div className='column is-one-quarter-desktop is-one-third-tablet'>
                 {this.state.editActive
                   ? <EditPanel toggleEdit={this.toggleEdit} editStud={this.state.editStud} />
-                  : <SearchPanel matchStudent={this.matchStudent} toggleEdit={this.toggleEdit}
+                  : <SearchPanel matchStudent={this.matchStudent} toggleEdit={this.toggleEdit} submission={subm}
                     student={subm && subm.student} validated={subm && subm.validated} subIndex={this.state.index} />
                 }
               </div>

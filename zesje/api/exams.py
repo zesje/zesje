@@ -10,7 +10,7 @@ from werkzeug.datastructures import FileStorage
 from sqlalchemy.orm import selectinload
 
 from ..pdf_generation import generate_pdfs, output_pdf_filename_format, join_pdfs
-from ..pdf_generation import page_is_size, make_pages_even, PAGE_FORMATS
+from ..pdf_generation import page_is_size, save_with_even_pages, PAGE_FORMATS
 from ..database import db, Exam, ExamWidget, Submission, token_length
 
 
@@ -271,9 +271,7 @@ class Exams(Resource):
         pdf_path = os.path.join(exam_dir, 'exam.pdf')
         os.makedirs(exam_dir, exist_ok=True)
 
-        even_pdf = make_pages_even(args['pdf'])
-
-        even_pdf.write(pdf_path)
+        save_with_even_pages(pdf_path, args['pdf'])
 
         print(f"Added exam {exam.id} (name: {exam_name}, token: {exam.token}) to database")
 

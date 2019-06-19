@@ -407,17 +407,21 @@ def page_is_size(exam_pdf_file, shape, tolerance=0):
     return not invalid
 
 
-def make_pages_even(exam_pdf_file):
+def save_with_even_pages(pdf_path, exam_pdf_file):
     exam_pdf = PdfReader(exam_pdf_file)
-    new = PdfWriter()
-    new.addpages(exam_pdf.pages)
     pagecount = len(exam_pdf.pages)
 
-    if (pagecount % 2 == 1):
-        blank = PageMerge()
-        box = exam_pdf.pages[0].MediaBox
-        blank.mbox = box
-        blank = blank.render()
-        new.addpage(blank)
+    if (pagecount % 2 == 0):
+        exam_pdf_file.save(pdf_path)
+        return
+    
 
-    return new
+    new = PdfWriter()
+    new.addpages(exam_pdf.pages)
+    blank = PageMerge()
+    box = exam_pdf.pages[0].MediaBox
+    blank.mbox = box
+    blank = blank.render()
+    new.addpage(blank)
+
+    new.write(pdf_path)

@@ -15,6 +15,7 @@ from pikepdf import Pdf, PdfImage
 from PIL import Image
 from wand.image import Image as WandImage
 from pylibdmtx import pylibdmtx
+from sqlalchemy import exc
 
 from .database import db, Scan, Exam, Page, Student, Submission, Solution, ExamWidget
 from .datamatrix import decode_raw_datamatrix
@@ -339,7 +340,12 @@ def process_page(image_data, exam_config, output_dir=None, strict=False):
         return True, "Testing, image not saved and database not updated."
 
     sub = update_database(image_path, barcode)
-    grade_mcq(sub, barcode.page, image_array)
+
+    try:
+        grade_mcq(sub, barcode.page, image_array)
+    except exc.InternalError as e:
+        if strict:
+            return False, str(e)
 
     if barcode.page == 0:
         description = guess_student(

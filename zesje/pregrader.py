@@ -19,14 +19,13 @@ def grade_mcq(sub, page, page_img):
     page_img : np.array
         image of the page
     """
-    problems_to_grade = [
-        sol.problem
-        for sol in sub.solutions
-        if sol.graded_id and sol.problem.widget.page == page
+    solutions_to_grade = [
+        sol for sol in sub.solutions
+        if sol.graded_at and sol.problem.widget.page == page
     ]
 
-    for problem in problems_to_grade:
-        sol = Solution.query.filter(Solution.problem_id == problem.id, Solution.submission_id == sub.id).one()
+    for sol in solutions_to_grade:
+        problem = sol.problem
 
         for mc_option in problem.mc_options:
             box = (mc_option.x, mc_option.y)

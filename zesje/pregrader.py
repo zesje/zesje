@@ -25,9 +25,7 @@ def grade_mcq(sub, page, page_img):
     ]
 
     for sol in solutions_to_grade:
-        problem = sol.problem
-
-        for mc_option in problem.mc_options:
+        for mc_option in sol.problem.mc_options:
             box = (mc_option.x, mc_option.y)
 
             if box_is_filled(box, page_img, box_size=CHECKBOX_FORMAT["box_size"]):

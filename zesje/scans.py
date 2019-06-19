@@ -15,7 +15,7 @@ from pikepdf import Pdf, PdfImage
 from PIL import Image
 from wand.image import Image as WandImage
 from pylibdmtx import pylibdmtx
-from sqlalchemy import exc
+from sqlalchemy.exc import InternalError
 
 from .database import db, Scan, Exam, Page, Student, Submission, Solution, ExamWidget
 from .datamatrix import decode_raw_datamatrix
@@ -343,7 +343,7 @@ def process_page(image_data, exam_config, output_dir=None, strict=False):
 
     try:
         grade_mcq(sub, barcode.page, image_array)
-    except exc.InternalError as e:
+    except InternalError as e:
         if strict:
             return False, str(e)
 

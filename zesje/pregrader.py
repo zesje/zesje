@@ -64,31 +64,22 @@ def box_is_filled(box, page_img, threshold=225, cut_padding=0.05, box_size=9):
 
     dpi = guess_dpi(page_img)
 
-    # get the box where we think the box is
     cut_im = get_box(page_img, coords, padding=cut_padding)
 
-    # convert to grayscale
     gray_im = cv2.cvtColor(cut_im, cv2.COLOR_BGR2GRAY)
-    # apply threshold to only have black or white
     _, bin_im = cv2.threshold(gray_im, 160, 255, cv2.THRESH_BINARY)
 
     h_bin, w_bin, *_ = bin_im.shape
-    # create a mask that gets applied when floodfill the white
     mask = np.zeros((h_bin+2, w_bin+2), np.uint8)
     flood_im = bin_im.copy()
-    # fill the image from the top left
     cv2.floodFill(flood_im, mask, (0, 0),  0)
     # fill it from the bottom right just in case the top left doesn't cover all the white
     cv2.floodFill(flood_im, mask, (h_bin-2, w_bin-2), 0)
 
-    # find white parts
     coords = cv2.findNonZero(flood_im)
-    # Find a bounding box of the white parts
     x, y, w, h = cv2.boundingRect(coords)
-    # cut the image to this box
     res_rect = bin_im[y:y+h, x:x+w]
 
-    # the size in pixels we expect the drawn box to
     box_size_px = box_size * dpi / 72
 
     # if the rectangle is bigger (higher) than expected, cut the image up a bit
@@ -107,7 +98,7 @@ def box_is_filled(box, page_img, threshold=225, cut_padding=0.05, box_size=9):
 
     # do the same for width
     if w2 > 1.5 * box_size_px:
-        # usually the checkbox is somewhere in the bottom left of the bounding box
+        # usually the checkbox is somewhere in the bottom left of the bounding box after applying the previous steps
         coords3 = cv2.findNonZero(flood_im[new_y: new_y + h2, new_x: new_x + int(0.66 * w2)])
         x3, y3, w3, h3 = cv2.boundingRect(coords3)
         res_rect = bin_im[new_y + y3: new_y + y3 + h3, new_x + x3: new_x + x3 + w3]

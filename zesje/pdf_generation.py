@@ -171,7 +171,7 @@ def generate_id_grid(canv, x, y):
               textboxwidth, textboxheight)
 
 
-def generate_checkbox(canvas, x, y, label):
+def add_checkbox(canvas, x, y, label):
     """
     draw a checkbox and draw a single character on top of the checkbox
 
@@ -314,7 +314,7 @@ def _generate_overlay(canv, pagesize, exam_id, copy_num, num_pages, id_grid_x,
         # call generate for all checkboxes that belong to the current page
         while index < max_index and cb_data[index][2] <= page_num:
             x, y, _, label = cb_data[index]
-            generate_checkbox(canv, x, y, label)
+            add_checkbox(canv, x, y, label)
             index += 1
 
         canv.showPage()

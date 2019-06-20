@@ -150,7 +150,7 @@ class Solutions(Resource):
 
 
 class Approve(Resource):
-    """ add just a grader to a specifc problem on an exam """
+    """Mark a solution as graded."""
     put_parser = reqparse.RequestParser()
     put_parser.add_argument('graderID', type=int, required=True)
 

@@ -73,7 +73,7 @@ class Problems(Resource):
 
             db.session.commit()
 
-            new_feedback_option = FeedbackOption(problem_id=problem.id, text='blank')
+            new_feedback_option = FeedbackOption(problem_id=problem.id, text='blank', score=0)
             db.session.add(new_feedback_option)
             db.session.commit()
 

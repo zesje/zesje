@@ -15,10 +15,10 @@ def set_blank(copy_number, exam_id, dpi):
     pages = extract_images(pdf_path, dpi)
 
     for image, page in pages:
-        save_image(np.array(image), page, dpi, exam_id, output_directory)
+        save_image(np.array(image), page, dpi, output_directory)
 
 
-def save_image(image, page, dpi, exam_id, output_directory):
+def save_image(image, page, dpi, output_directory):
     """Save an image at an appropriate location.
 
     Parameters

@@ -98,20 +98,19 @@ class Problems(Resource):
             the attribute (or property) to put to
 
         Returns
-            HTTP 200 on succes, 404 if problem is invalid
+            HTTP 200 on success, 404 if problem is invalid
         """
 
         args = self.put_parser.parse_args()
 
         problem = Problem.query.get(problem_id)
-        if problem is None:
-            msg = f"Problem with id {problem_id} doesn't exist"
-            return dict(status=404, message=msg), 404
 
-        for key in args.keys():
-            value = args[key]
+        if problem is None:
+            return dict(status=404, message=f"Problem with id {problem_id} doesn't exist"), 404
+
+        for attr, value in args.items():
             if value is not None:
-                setattr(problem, key, value)
+                setattr(problem, attr, value)
 
         db.session.commit()
 

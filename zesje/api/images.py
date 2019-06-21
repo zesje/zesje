@@ -5,7 +5,6 @@ import cv2
 
 from ..images import get_box, guess_dpi
 from ..database import Exam, Submission, Problem, Page, Solution
-
 from ..pdf_generation import CHECKBOX_FORMAT
 
 

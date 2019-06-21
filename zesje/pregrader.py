@@ -7,16 +7,10 @@ from datetime import datetime
 from .blanks import set_blank
 from .database import db, Grader, FeedbackOption, GradingPolicy
 from .images import guess_dpi, get_box
+from .pdf_generation import CHECKBOX_FORMAT
 
 from PIL import Image
 from flask import current_app
-
-
-CHECKBOX_FORMAT = {
-    "margin": 5,
-    "font_size": 11,
-    "box_size": 9
-}
 
 
 def grade_mcq(sub, page, page_img):
@@ -79,8 +73,6 @@ def set_auto_grader(solution):
         The solution
     """
     zesje_grader = Grader.query.filter(Grader.name == 'Zesje').one_or_none()
-
-    current_app.logger.info(str(zesje_grader))
 
     if zesje_grader is None:
         zesje_grader = Grader(name='Zesje')

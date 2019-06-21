@@ -138,7 +138,6 @@ def is_blank(problem, page_img, sub):
     return not(np.average(~input_image[n: max-1]) > (1.03 * np.average(~blank_image[n: max-1])))
 
 
-
 def get_blank(problem, dpi, widget_area_in, sub):
     page = problem.widget.page
 

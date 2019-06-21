@@ -280,7 +280,8 @@ def process_page(image_data, exam_config, output_dir=None, strict=False):
     3. Verify it satisfies the format required by zesje
     4. Verify it belongs to the correct exam
     5. Incorporate the page in the database
-    6. If the page contains student number, try to read it off the page
+    6. Perform pregrading
+    7. If the page contains student number, try to read it off the page
 
     Parameters
     ----------

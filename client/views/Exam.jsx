@@ -733,16 +733,6 @@ class Exams extends React.Component {
         )}
         {props.problem &&
           <React.Fragment>
-            <div className='panel-block'>
-              {!this.state.editActive && <label className='label'>Feedback options</label>}
-            </div>
-            {this.state.editActive
-              ? <EditPanel problemID={props.problem.id} feedback={this.state.feedbackToEdit}
-                goBack={this.backToFeedback} updateCallback={this.updateFeedback} />
-              : <FeedbackPanel examID={this.props.examID} problem={props.problem}
-                editFeedback={this.editFeedback} showTooltips={this.state.showTooltips}
-                grading={false}
-              />}
             <div className='panel-block mcq-block'>
               <b>Auto-approve</b>
               <div className='select is-hovered is-fullwidth'>

@@ -21,6 +21,9 @@ def add_test_data(app):
         db.session.commit()
 
 
+# Actual tests
+
+
 def test_get_exams(test_client, add_test_data):
     mc_option_1 = {
         'x': 100,

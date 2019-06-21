@@ -2,7 +2,7 @@ import pytest
 from flask import Flask
 
 from zesje.database import db, _generate_exam_token, Exam, Problem, ProblemWidget, Solution
-from zesje.database import Submission, Scan, Page, ExamWidget, FeedbackOption
+from zesje.database import Submission, Scan, Page, ExamWidget, FeedbackOption, MultipleChoiceOption
 
 
 @pytest.mark.parametrize('duplicate_count', [
@@ -126,6 +126,41 @@ def test_cascades_submission(empty_app, exam, problem, submission, solution, pag
 
     assert solution not in db.session
     assert page not in db.session
+
+
+def test_cascades_fb_mco(empty_app, feedback_option, mc_option):
+    empty_app.app_context().push()
+
+    feedback_option.mc_option = mc_option
+    db.session.add(feedback_option)
+    db.session.commit()
+
+    assert mc_option in db.session
+
+    db.session.delete(feedback_option)
+    db.session.commit()
+
+    assert mc_option not in db.session
+
+
+def test_cascades_mco_fb(empty_app, feedback_option, mc_option):
+    empty_app.app_context().push()
+
+    feedback_option.mc_option = mc_option
+    db.session.add(mc_option)
+    db.session.commit()
+
+    assert feedback_option in db.session
+
+    db.session.delete(mc_option)
+    db.session.commit()
+
+    assert feedback_option not in db.session
+
+
+@pytest.fixture
+def mc_option():
+    return MultipleChoiceOption(name='', x=0, y=0)
 
 
 @pytest.fixture

@@ -21,7 +21,7 @@ def _get_exam_dir(exam_id):
     )
 
 
-def get_cb_data_for_exam(exam):
+def checkboxes(exam):
     """
     Returns all multiple choice question check boxes for one specific exam
 
@@ -122,30 +122,30 @@ class Exams(Resource):
             return dict(status=404, message='Exam does not exist.'), 404
 
         submissions = [
-            {
-                'id': sub.copy_number,
-                'student': {
-                    'id': sub.student.id,
-                    'firstName': sub.student.first_name,
-                    'lastName': sub.student.last_name,
-                    'email': sub.student.email
-                } if sub.student else None,
-                'validated': sub.signature_validated,
-                'problems': [
-                    {
-                        'id': sol.problem.id,
-                        'graded_by': {
-                            'id': sol.graded_by.id,
-                            'name': sol.graded_by.name
-                        } if sol.graded_by else None,
-                        'graded_at': sol.graded_at.isoformat() if sol.graded_at else None,
-                        'feedback': [
-                            fb.id for fb in sol.feedback
-                        ],
-                        'remark': sol.remarks if sol.remarks else ""
-                    } for sol in sub.solutions  # Sorted by sol.problem_id
-                ],
-            } for sub in exam.submissions
+                {
+                    'id': sub.copy_number,
+                    'student': {
+                            'id': sub.student.id,
+                            'firstName': sub.student.first_name,
+                            'lastName': sub.student.last_name,
+                            'email': sub.student.email
+                    } if sub.student else None,
+                    'validated': sub.signature_validated,
+                    'problems': [
+                        {
+                            'id': sol.problem.id,
+                            'graded_by': {
+                                'id': sol.graded_by.id,
+                                'name': sol.graded_by.name
+                            } if sol.graded_by else None,
+                            'graded_at': sol.graded_at.isoformat() if sol.graded_at else None,
+                            'feedback': [
+                                fb.id for fb in sol.feedback
+                            ],
+                            'remark': sol.remarks if sol.remarks else ""
+                        } for sol in sub.solutions  # Sorted by sol.problem_id
+                    ],
+                } for sub in exam.submissions
         ]
         # Sort submissions by selecting those with students assigned, then by
         # student number, then by copy number.
@@ -272,7 +272,9 @@ class Exams(Resource):
         pdf_path = os.path.join(exam_dir, 'exam.pdf')
         os.makedirs(exam_dir, exist_ok=True)
 
-        make_pages_even(pdf_path, args['pdf'])
+        even_pdf = make_pages_even(args['pdf'])
+
+        even_pdf.write(pdf_path)
 
         print(f"Added exam {exam.id} (name: {exam_name}, token: {exam.token}) to database")
 
@@ -358,7 +360,7 @@ class ExamGeneratedPdfs(Resource):
         generated_pdfs_dir = self._get_generated_exam_dir(exam_dir)
         os.makedirs(generated_pdfs_dir, exist_ok=True)
 
-        cb_data = get_cb_data_for_exam(exam)
+        cb_data = checkboxes(exam)
 
         generate_pdfs(
             exam_path,
@@ -517,7 +519,7 @@ class ExamPreview(Resource):
 
         exam_path = os.path.join(exam_dir, 'exam.pdf')
 
-        cb_data = get_cb_data_for_exam(exam)
+        cb_data = checkboxes(exam)
         generate_pdfs(
             exam_path,
             "A" * token_length,

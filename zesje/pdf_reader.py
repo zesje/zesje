@@ -1,4 +1,4 @@
-import os
+import itertools
 
 from pdfminer3.converter import PDFPageAggregator
 from pdfminer3.layout import LAParams
@@ -10,38 +10,71 @@ from pdfminer3.pdfinterp import PDFPageInterpreter
 from pdfminer3.pdfpage import PDFPage
 from pdfminer3.pdfparser import PDFParser
 
-from .api.exams import PAGE_FORMATS
 
-
-def get_problem_title(problem, data_dir, page_format):
+def get_problem_page(problem, pdf_path):
     """
-    Returns the title of a problem
+    Returns the pdf object belonging to the page of a problem widget
 
     Parameters
     ----------
-    data_dir : str
-        Location of the data folder
-    page_format : str
-        Format of the current page
+    problem : Problem
+        Problem object in the database of the currently selected problem
+    pdf_path : str
+        Path to the PDF file of the exam for this problem
+
+    Returns
+    -------
+    page : PDFPage
+        PDFPage object with information about the current page
+    """
+    fp = open(pdf_path, 'rb')
+
+    parser = PDFParser(fp)
+    document = PDFDocument(parser)
+
+    page_number = problem.widget.page
+    return next(itertools.islice(PDFPage.create_pages(document), page_number, page_number + 1))
+
+
+def layout(pdf_page):
+    """
+    Returns the layout objects in a PDF page
+
+    Parameters
+    ----------
+    pdf_page : PDFPage
+        PDFPage object with information about the current page
+
+    Returns
+    -------
+    layout : list of pdfminer3 layout objects
+        A list of layout objects on the page
+    """
+    resource_manager = PDFResourceManager()
+    la_params = LAParams()
+    device = PDFPageAggregator(resource_manager, laparams=la_params)
+    interpreter = PDFPageInterpreter(resource_manager, device)
+    interpreter.process_page(pdf_page)
+
+    return device.get_result()
+
+
+def guess_problem_title(problem, pdf_page):
+    """
+    Tries to find the title of a problem
+
+    Parameters
+    ----------
     problem : Problem
         The currently selected problem
+    pdf_page : PDFPage
+        Information extracted from the PDF page where the problem is located.
 
     Returns
     -------
     title: str
         The title of the problem, or an empty string if no text is found
     """
-
-    pdf_path = os.path.join(data_dir, f'{problem.exam_id}_data', 'exam.pdf')
-
-    fp = open(pdf_path, 'rb')
-
-    parser = PDFParser(fp)
-    document = PDFDocument(parser)
-    rsrcmgr = PDFResourceManager()
-    laparams = LAParams()
-    device = PDFPageAggregator(rsrcmgr, laparams=laparams)
-    interpreter = PDFPageInterpreter(rsrcmgr, device)
 
     # Get the other problems on the same page
     problems_on_page = [p for p in problem.exam.problems if p.widget.page == problem.widget.page]
@@ -57,64 +90,58 @@ def get_problem_title(problem, data_dir, page_format):
         y_above = problem_above.widget.y + problem_above.widget.height
 
     y_current = problem.widget.y + problem.widget.height
+    page_height = pdf_page.mediabox[3]
 
-    for page in PDFPage.create_pages(document):
-        interpreter.process_page(page)
-        layout = device.get_result()
+    layout_objects = layout(pdf_page)
+    filtered_words = read_lines(layout_objects._objs, y_above, y_current, page_height)
 
-        if layout.pageid == problem.widget.page + 1:
-            filtered_words = get_words(layout._objs, y_above, y_current, page_format)
+    if not filtered_words:
+        return ''
 
-            if not filtered_words:
-                return ''
-
-            lines = filtered_words[0].split('\n')
-            return lines[0]
-
-    return ''
+    lines = filtered_words.split('\n')
+    return lines[0].strip()
 
 
-def get_words(layout_objs, y_top, y_bottom, page_format):
+def read_lines(layout_objs, y_top, y_bottom, page_height):
     """
-    Returns the text from a pdf page within a specified height.
-    Pdfminer orients the coordinates of a layout object from
-    the bottom left.
-
-    Adapted from https://github.com/euske/pdfminer/issues/171
-    obj.bbox returns the following values: (x0, y0, x1, y1)
-
-    With
-    x0: the distance from the left of the page to the left edge of the box.
-    y0: the distance from the bottom of the page to the lower edge of the box.
-    x1: the distance from the left of the page to the right edge of the box.
-    y1: the distance from the bottom of the page to the upper edge of the box.
+    Returns lines of text from a PDF page within a specified height.
 
     Parameters
     ----------
-    page_format : str
-        Format of the current page
     layout_objs : list of layout objects
         The list of objects in the page.
     y_top : double
         Highest top coordinate of each word
     y_bottom : double
         Lowest bottom coordinate of each word
+    page_height : int
+        Height of the current page in points
 
     Returns
     -------
-    words : list of tuples
-        A list of tuples with the (y, text) values.
+    words : str
+        The first line of text that if it is found, or else an empty string
     """
-    page_height = PAGE_FORMATS[page_format][1]
-
     words = []
+
+    # Adapted from https://github.com/euske/pdfminer/issues/171
+    #
+    # obj.bbox returns the following values: (x0, y0, x1, y1), where
+    #
+    # x0: the distance from the left of the page to the left edge of the box.
+    # y0: the distance from the bottom of the page to the lower edge of the box.
+    # x1: the distance from the left of the page to the right edge of the box.
+    # y1: the distance from the bottom of the page to the upper edge of the box.
 
     for obj in layout_objs:
         if isinstance(obj, LTTextBoxHorizontal):
-            if page_height - y_top > obj.bbox[1] > page_height - y_bottom:
+            if y_bottom > page_height - obj.bbox[1] > y_top:
                 words.append(obj.get_text())
 
         elif isinstance(obj, LTFigure):
-            words.append(get_words(obj._objs, y_top, y_bottom, page_format))
+            words += read_lines(obj._objs, y_top, y_bottom, page_height)
 
-    return words
+    if not words:
+        return ''
+
+    return words[0]

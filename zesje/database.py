@@ -8,6 +8,7 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean, ForeignKey, Enum
 from flask_sqlalchemy.model import BindMetaMixin, Model
 from sqlalchemy.ext.declarative import DeclarativeMeta, declarative_base
+from sqlalchemy.orm import backref
 from sqlalchemy.orm.session import object_session
 from sqlalchemy.ext.hybrid import hybrid_property
 
@@ -133,7 +134,8 @@ class FeedbackOption(db.Model):
     text = Column(Text, nullable=False)
     description = Column(Text, nullable=True)
     score = Column(Integer, nullable=True)
-    mc_option = db.relationship('MultipleChoiceOption', backref='feedback', cascade='delete', uselist=False, lazy=True)
+    mc_option = db.relationship('MultipleChoiceOption', backref=backref('feedback', cascade='all'),
+                                cascade='all', uselist=False, lazy=True)
 
 
 # Table for many to many relationship of FeedbackOption and Solution

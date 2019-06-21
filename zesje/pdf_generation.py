@@ -171,9 +171,9 @@ def generate_id_grid(canv, x, y):
               textboxwidth, textboxheight)
 
 
-def generate_checkbox(canvas, x, y, label):
+def add_checkbox(canvas, x, y, label):
     """
-    draw a checkbox and draw a  singel character label ontop of the checkbox
+    draw a checkbox and draw a single character on top of the checkbox
 
     Parameters
     ----------
@@ -314,7 +314,7 @@ def _generate_overlay(canv, pagesize, exam_id, copy_num, num_pages, id_grid_x,
         # call generate for all checkboxes that belong to the current page
         while index < max_index and cb_data[index][2] <= page_num:
             x, y, _, label = cb_data[index]
-            generate_checkbox(canv, x, y, label)
+            add_checkbox(canv, x, y, label)
             index += 1
 
         canv.showPage()
@@ -407,7 +407,7 @@ def page_is_size(exam_pdf_file, shape, tolerance=0):
     return not invalid
 
 
-def make_pages_even(output_filename, exam_pdf_file):
+def make_pages_even(exam_pdf_file):
     exam_pdf = PdfReader(exam_pdf_file)
     new = PdfWriter()
     new.addpages(exam_pdf.pages)
@@ -420,4 +420,4 @@ def make_pages_even(output_filename, exam_pdf_file):
         blank = blank.render()
         new.addpage(blank)
 
-    new.write(output_filename)
+    return new

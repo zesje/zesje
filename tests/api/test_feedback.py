@@ -32,9 +32,7 @@ def mco_json():
     }
 
 
-'''
-ACTUAL TESTS
-'''
+# Actual tests
 
 
 def test_delete_with_mc_option(test_client, add_test_data):

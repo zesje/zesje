@@ -9,17 +9,19 @@ import signal
 
 import cv2
 import numpy as np
+from scipy import spatial
 
 from pikepdf import Pdf, PdfImage
 from PIL import Image
 from wand.image import Image as WandImage
 from pylibdmtx import pylibdmtx
+from sqlalchemy.exc import InternalError
 
 from .database import db, Scan, Exam, Page, Student, Submission, Solution, ExamWidget
 from .datamatrix import decode_raw_datamatrix
 from .images import guess_dpi, get_box, fix_corner_markers
 from .factory import make_celery
-from .pregrader import add_feedback_to_solution
+from .pregrader import grade_mcq
 
 from .pdf_generation import MARKER_FORMAT, PAGE_FORMATS
 
@@ -58,7 +60,7 @@ def process_pdf(scan_id):
         # TODO: When #182 is implemented, properly separate user-facing
         #       messages (written to DB) from developer-facing messages,
         #       which should be written into the log.
-        write_pdf_status(scan_id, 'error', f"Unexpected error: {error}")
+        write_pdf_status(scan_id, 'error', "Unexpected error: " + str(error))
 
 
 def _process_pdf(scan_id, app_config):
@@ -97,8 +99,8 @@ def _process_pdf(scan_id, app_config):
                     print(description)
                     failures.append(page)
             except Exception as e:
-                report_error(f'Error processing page {e}')
-                raise
+                report_error(f'Error processing page {page}: {e}')
+                return
     except Exception as e:
         report_error(f"Failed to read pdf: {e}")
         raise
@@ -278,7 +280,8 @@ def process_page(image_data, exam_config, output_dir=None, strict=False):
     3. Verify it satisfies the format required by zesje
     4. Verify it belongs to the correct exam
     5. Incorporate the page in the database
-    6. If the page contains student number, try to read it off the page
+    6. Perform pregrading
+    7. If the page contains student number, try to read it off the page
 
     Parameters
     ----------
@@ -316,11 +319,10 @@ def process_page(image_data, exam_config, output_dir=None, strict=False):
     corner_keypoints = find_corner_marker_keypoints(image_array)
     try:
         check_corner_keypoints(image_array, corner_keypoints)
+        image_array = realign_image(image_array, corner_keypoints)
     except RuntimeError as e:
         if strict:
             return False, str(e)
-    else:
-        image_array = realign_image(image_array, corner_keypoints)
 
     try:
         barcode, upside_down = decode_barcode(image_array, exam_config)
@@ -338,11 +340,11 @@ def process_page(image_data, exam_config, output_dir=None, strict=False):
     else:
         return True, "Testing, image not saved and database not updated."
 
-    sub, exam = update_database(image_path, barcode)
+    sub = update_database(image_path, barcode)
 
     try:
-        add_feedback_to_solution(sub, exam, barcode.page, image_array)
-    except RuntimeError as e:
+        grade_mcq(sub, barcode.page, image_array)
+    except InternalError as e:
         if strict:
             return False, str(e)
 
@@ -392,12 +394,8 @@ def update_database(image_path, barcode):
 
     Returns
     -------
-    sub, exam where
-
     sub : Submission
         the current submission
-    exam : Exam
-        the current exam
     """
     exam = Exam.query.filter(Exam.token == barcode.token).first()
     if exam is None:
@@ -417,7 +415,7 @@ def update_database(image_path, barcode):
 
     db.session.commit()
 
-    return sub, exam
+    return sub
 
 
 def decode_barcode(image, exam_config):
@@ -693,8 +691,7 @@ def check_corner_keypoints(image_array, keypoints):
         raise RuntimeError("Found multiple corner markers in the same corner")
 
 
-def realign_image(image_array, keypoints=None,
-                  reference_keypoints=None, page_format="A4"):
+def realign_image(image_array, keypoints=None, page_format="A4"):
     """
     Transform the image so that the keypoints match the reference.
 
@@ -704,48 +701,48 @@ def realign_image(image_array, keypoints=None,
         The image in the form of a numpy array.
     keypoints : List[(int,int)]
         tuples of coordinates of the found keypoints, (x,y), in pixels. Can be a set of 3 or 4 tuples.
-        if none are provided, they are calculated based on the image_array.
-    reference_keypoints: List[(int,int)]
-        Similar to keypoints, only these belong to the keypoints found on the original scan.
-        If none are provided, standard locations are used. Namely [(59, 59), (1179, 59), (59, 1693), (1179, 1693)],
-        which are from an ideal scan of an a4 at 200 dpi.
-
+        if none are provided, they are found by using find_corner_marker_keypoints on the input image.
     returns
     -------
     return_array: numpy.array
-        The image realign properly.
-    return_keypoints: List[(int,int)]
-        New keypoints properly aligned.
+        The image realigned properly.
     """
 
-    if (not keypoints):
+    if not keypoints:
         keypoints = find_corner_marker_keypoints(image_array)
-        check_corner_keypoints(image_array, keypoints)
 
-    if(len(keypoints) != 4):
-        keypoints = fix_corner_markers(keypoints, image_array.shape)
+    keypoints = np.asarray(keypoints)
 
-    # use standard keypoints if no custom ones are provided
-    if (not reference_keypoints):
-        dpi = guess_dpi(image_array)
-        reference_keypoints = generate_perfect_corner_markers(page_format, dpi)
+    if not len(keypoints):
+        raise RuntimeError("No keypoints provided for alignment.")
 
-    if (len(reference_keypoints) != 4):
-        # this function assumes that the template has the same dimensions as the input image
-        reference_keypoints = fix_corner_markers(reference_keypoints, image_array.shape)
+    # generate the coordinates where the markers should be
+    dpi = guess_dpi(image_array)
+    reference_keypoints = original_corner_markers(page_format, dpi)
+
+    # create a matrix with the distances between each keypoint and match the keypoint sets
+    dists = spatial.distance.cdist(keypoints, reference_keypoints)
+
+    idxs = np.argmin(dists, 1)  # apply to column 1 so indices for input keypoints
+    adjusted_markers = reference_keypoints[idxs]
+
+    if len(adjusted_markers) == 1:
+        x_shift, y_shift = np.subtract(adjusted_markers[0], keypoints[0])
+        return shift_image(image_array, x_shift, y_shift)
 
     rows, cols, _ = image_array.shape
 
     # get the transformation matrix
-    M = cv2.getPerspectiveTransform(np.float32(keypoints), np.float32(reference_keypoints))
+    M = cv2.estimateAffinePartial2D(keypoints, adjusted_markers)[0]
+
     # apply the transformation matrix and fill in the new empty spaces with white
-    return_image = cv2.warpPerspective(image_array, M, (cols, rows),
-                                       borderValue=(255, 255, 255, 255))
+    return_image = cv2.warpAffine(image_array, M, (cols, rows),
+                                  borderValue=(255, 255, 255, 255))
 
     return return_image
 
 
-def generate_perfect_corner_markers(format="A4", dpi=200):
+def original_corner_markers(format, dpi):
     left_x = MARKER_FORMAT["margin"]/72 * dpi
     top_y = MARKER_FORMAT["margin"]/72 * dpi
     right_x = (PAGE_FORMATS[format][0] - MARKER_FORMAT["margin"])/72 * dpi
@@ -755,3 +752,28 @@ def generate_perfect_corner_markers(format="A4", dpi=200):
                      (right_x, top_y),
                      (left_x, bottom_y),
                      (right_x, bottom_y)])
+
+
+def shift_image(image_array, x_shift, y_shift):
+    """
+    take an image and shift it along the x and y axis using opencv
+
+    params:
+    -------
+    image_array: numpy.array
+        an array of the image to be shifted
+    x_shift: int
+        indicates how many pixels it has to be shifted on the x-axis, so from left to right
+    y_shift: int
+        indicates how many pixels it has to be shifted on the y-axis, so from top to bottom
+    returns:
+    --------
+    a numpy array of the image shifted where empty spaces are filled with white
+
+    """
+
+    M = np.float32([[1, 0, x_shift],
+                   [0, 1, y_shift]])
+    h, w, _ = image_array.shape
+    return cv2.warpAffine(image_array, M, (w, h),
+                          borderValue=(255, 255, 255, 255))

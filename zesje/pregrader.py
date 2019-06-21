@@ -154,9 +154,7 @@ def get_blank(problem, dpi, widget_area_in, exam_id, sub):
 
     image_path = os.path.join(generated_path, f'page{page:02d}.jpg')
     blank_page = Image.open(image_path)
-    box = get_box(np.array(blank_page), widget_area_in, padding=0)
-    value = box
-    return value
+    return get_box(np.array(blank_page), widget_area_in, padding=0)
 
 
 def box_is_filled(box, page_img, threshold=225, cut_padding=0.05, box_size=9):

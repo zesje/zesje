@@ -135,10 +135,8 @@ def is_blank(problem, page_img, exam_id, sub):
             return False
         n = m
 
-    if np.average(~input_image[n: max-1]) > (1.03 * np.average(~blank_image[n: max-1])):
-        return False
+    return !(np.average(~input_image[n: max-1]) > (1.03 * np.average(~blank_image[n: max-1])))
 
-    return True
 
 
 def get_blank(problem, dpi, widget_area_in, exam_id, sub):

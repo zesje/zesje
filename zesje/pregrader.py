@@ -77,7 +77,6 @@ def set_auto_grader(solution):
     if zesje_grader is None:
         zesje_grader = Grader(name='Zesje')
         db.session.add(zesje_grader)
-        db.session.commit()
 
     solution.graded_by = zesje_grader
     solution.graded_at = datetime.now()
@@ -92,11 +91,8 @@ def set_blank_feedback(problem, sol):
         set_auto_grader(sol)
 
     if feedback is None:
-        new_feedback_option = FeedbackOption(problem_id=problem.id, text='blank', score=0)
-        db.session.add(new_feedback_option)
-        db.session.commit()
-        feedback = FeedbackOption.query.filter(FeedbackOption.problem_id == problem.id,
-                                               FeedbackOption.text == 'blank').one_or_none()
+        feedback = FeedbackOption(problem_id=problem.id, text='blank', score=0)
+        db.session.add(feedback)
 
     sol.feedback.append(feedback)
     db.session.commit()

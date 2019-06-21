@@ -19,7 +19,7 @@ from sqlalchemy.exc import InternalError
 
 from .database import db, Scan, Exam, Page, Student, Submission, Solution, ExamWidget
 from .datamatrix import decode_raw_datamatrix
-from .images import guess_dpi, get_box, fix_corner_markers
+from .images import guess_dpi, get_box
 from .factory import make_celery
 from .pregrader import grade_mcq
 

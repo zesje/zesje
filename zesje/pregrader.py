@@ -5,7 +5,7 @@ import os
 from datetime import datetime
 
 from .blanks import set_blank
-from .database import db, Solution, Grader, FeedbackOption, GradingPolicy
+from .database import db, Grader, FeedbackOption, GradingPolicy
 from .images import guess_dpi, get_box
 
 from PIL import Image
@@ -39,12 +39,12 @@ def grade_mcq(sub, page, page_img):
 
     for sol in solutions_to_grade:
         problem = sol.problem
-        
+
         for mc_option in problem.mc_options:
             box = (mc_option.x, mc_option.y)
             is_mc = True
             mc_filled_counter = 0
-            
+
             if problem.grading_policy is None:
                 problem.grading_policy = GradingPolicy.set_blank
                 db.session.commit()
@@ -54,11 +54,12 @@ def grade_mcq(sub, page, page_img):
                 sol.feedback.append(feedback)
                 mc_filled_counter += 1
 
-        if (mc_filled_counter == 0 and is_mc) or ((not is_mc) and is_blank(problem, page_img, exam.id, sub)):
-            set_blank_feedback(problem, sol)
+            if (mc_filled_counter == 0 and is_mc) or\
+                    ((not is_mc) and is_blank(problem, page_img, problem.exam_id, sub)):
+                set_blank_feedback(problem, sol)
 
-        if problem.grading_policy.value == 2 and mc_filled_counter == 1:
-            set_auto_grader(sol)
+            if problem.grading_policy.value == 2 and mc_filled_counter == 1:
+                set_auto_grader(sol)
 
     db.session.commit()
 
@@ -110,7 +111,6 @@ def set_blank_feedback(problem, sol):
 
 
 def is_blank(problem, page_img, exam_id, sub):
-    # add the actually margin from the scan to corner markers to the coords in inches
     dpi = guess_dpi(page_img)
 
     # get the box where we think the box is
@@ -139,11 +139,11 @@ def is_blank(problem, page_img, exam_id, sub):
 
     while n + 50 < max:
         m = n + 50
-        if (np.average(~input_image[n: m]) > (1.03 * np.average(~blank_image[n: m]))):
+        if np.average(~input_image[n: m]) > (1.03 * np.average(~blank_image[n: m])):
             return False
         n = m
 
-    if (np.average(~input_image[n: max-1]) > (1.03 * np.average(~blank_image[n: max-1]))):
+    if np.average(~input_image[n: max-1]) > (1.03 * np.average(~blank_image[n: max-1])):
         return False
 
     return True

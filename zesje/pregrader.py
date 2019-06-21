@@ -98,7 +98,7 @@ def set_blank_feedback(problem, sol):
         set_auto_grader(sol)
 
     if feedback is None:
-        new_feedback_option = FeedbackOption(problem_id=problem.id, text='blank', score= 0)
+        new_feedback_option = FeedbackOption(problem_id=problem.id, text='blank', score=0)
         db.session.add(new_feedback_option)
         db.session.commit()
         feedback = FeedbackOption.query.filter(FeedbackOption.problem_id == problem.id,

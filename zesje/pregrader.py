@@ -49,7 +49,7 @@ def grade_mcq(sub, page, page_img):
                 mc_filled_counter += 1
 
             if (mc_filled_counter == 0 and is_mc) or\
-                    ((not is_mc) and is_blank(problem, page_img, problem.exam_id, sub)):
+                    ((not is_mc) and is_blank(problem, page_img, sub)):
                 set_blank_feedback(problem, sol)
 
             if problem.grading_policy.value == 2 and mc_filled_counter == 1:
@@ -102,7 +102,7 @@ def set_blank_feedback(problem, sol):
     db.session.commit()
 
 
-def is_blank(problem, page_img, exam_id, sub):
+def is_blank(problem, page_img, sub):
     dpi = guess_dpi(page_img)
 
     # get the box where we think the box is
@@ -117,7 +117,7 @@ def is_blank(problem, page_img, exam_id, sub):
 
     cut_im = get_box(page_img, widget_area_in, padding=0)
 
-    reference = get_blank(problem, dpi, widget_area_in, exam_id, sub)
+    reference = get_blank(problem, dpi, widget_area_in, sub)
 
     blank_image = np.array(reference)
     blank_image = cv2.cvtColor(blank_image, cv2.COLOR_BGR2GRAY)
@@ -139,16 +139,16 @@ def is_blank(problem, page_img, exam_id, sub):
 
 
 
-def get_blank(problem, dpi, widget_area_in, exam_id, sub):
+def get_blank(problem, dpi, widget_area_in, sub):
     page = problem.widget.page
 
     app_config = current_app.config
     data_directory = app_config.get('DATA_DIRECTORY', 'data')
-    output_directory = os.path.join(data_directory, f'{exam_id}_data')
+    output_directory = os.path.join(data_directory, f'{problem.exam_id}_data')
 
     generated_path = os.path.join(output_directory, 'blanks', f'{dpi}')
     if not os.path.exists(generated_path):
-        set_blank(sub.copy_number, exam_id, dpi)
+        set_blank(sub.copy_number, problem.exam_id, dpi)
 
     image_path = os.path.join(generated_path, f'page{page:02d}.jpg')
     blank_page = Image.open(image_path)

@@ -4,7 +4,7 @@ import os
 
 from datetime import datetime
 
-from .blanks import set_blank
+from .blanks import get_blank
 from .database import db, Grader, FeedbackOption, GradingPolicy
 from .images import guess_dpi, get_box
 from .pdf_generation import CHECKBOX_FORMAT
@@ -136,23 +136,6 @@ def is_blank(problem, page_img, sub):
         n = m
 
     return not(np.average(~input_image[n: max-1]) > (1.03 * np.average(~blank_image[n: max-1])))
-
-
-
-def get_blank(problem, dpi, widget_area_in, sub):
-    page = problem.widget.page
-
-    app_config = current_app.config
-    data_directory = app_config.get('DATA_DIRECTORY', 'data')
-    output_directory = os.path.join(data_directory, f'{problem.exam_id}_data')
-
-    generated_path = os.path.join(output_directory, 'blanks', f'{dpi}')
-    if not os.path.exists(generated_path):
-        set_blank(sub.copy_number, problem.exam_id, dpi)
-
-    image_path = os.path.join(generated_path, f'page{page:02d}.jpg')
-    blank_page = Image.open(image_path)
-    return get_box(np.array(blank_page), widget_area_in, padding=0)
 
 
 def box_is_filled(box, page_img, threshold=225, cut_padding=0.05, box_size=9):

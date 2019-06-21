@@ -90,7 +90,7 @@ class Problems(Resource):
     def put(self, problem_id):
         """PUT to a problem
 
-        This method accepts any of the legible arguments passed to it.
+        This method accepts both the problem name and the grading policy.
 
         problem_id: int
             the problem id to put to

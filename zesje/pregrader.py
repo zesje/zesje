@@ -135,7 +135,7 @@ def is_blank(problem, page_img, exam_id, sub):
             return False
         n = m
 
-    return !(np.average(~input_image[n: max-1]) > (1.03 * np.average(~blank_image[n: max-1])))
+    return not(np.average(~input_image[n: max-1]) > (1.03 * np.average(~blank_image[n: max-1])))
 
 
 

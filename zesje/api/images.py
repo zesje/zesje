@@ -78,7 +78,7 @@ def get(exam_id, problem_id, submission_id, full_page=False):
                 page_im = cv2.rectangle(page_im, (x, y), (x1, y1), (0, 255, 0), 3)
 
     if not full_page:
-        raw_image = get_box(page_im, widget_area_in, padding=0)
+        raw_image = get_box(page_im, widget_area_in, padding=0.3)
     else:
         raw_image = page_im
 

@@ -1,7 +1,5 @@
 import cv2
 import numpy as np
-import os
-
 from datetime import datetime
 
 from .blanks import get_blank
@@ -9,8 +7,6 @@ from .database import db, Grader, FeedbackOption, GradingPolicy
 from .images import guess_dpi, get_box
 from .pdf_generation import CHECKBOX_FORMAT
 
-from PIL import Image
-from flask import current_app
 
 
 def grade_mcq(sub, page, page_img):

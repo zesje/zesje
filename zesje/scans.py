@@ -3,7 +3,6 @@ import itertools
 import math
 import os
 from collections import namedtuple, Counter
-from io import BytesIO
 import signal
 
 import cv2
@@ -12,7 +11,6 @@ from scipy import spatial
 
 from PIL import Image
 from pikepdf import Pdf
-from wand.image import Image as WandImage
 from pylibdmtx import pylibdmtx
 from sqlalchemy.exc import InternalError
 
@@ -132,6 +130,7 @@ def exam_metadata(exam_id):
                 max(0, barcode_widget.x + 50),
             ],
         )
+
 
 def write_pdf_status(scan_id, status, message):
     scan = Scan.query.get(scan_id)

@@ -1,7 +1,6 @@
 from io import BytesIO
 
 import numpy as np
-import PyPDF2
 from PIL import Image
 from pikepdf import Pdf, PdfImage
 from tempfile import SpooledTemporaryFile

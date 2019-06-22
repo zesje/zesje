@@ -133,4 +133,3 @@ def extract_image_wand(pagenr, reader):
             img.load()  # Load the data into the PIL image from the Wand image
 
     return img
-

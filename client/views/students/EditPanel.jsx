@@ -142,7 +142,7 @@ class EditPanel extends React.Component {
             Succesfully processed <b>{totalSuccess} / {total}</b> students. A total of {sentence}.
           </p>
           if (resp.failed === 0) {
-            Notification.success(message, { 'duration': 0, 'closeable': true })
+            Notification.success(message, { 'duration': 10, 'closeable': true })
           } else {
             message = <div className='content'>
               {message}

@@ -3,6 +3,7 @@ from flask_restful import Resource, reqparse
 from werkzeug.datastructures import FileStorage
 import pandas as pd
 from io import BytesIO
+from enum import Enum
 
 from ..database import db, Student
 
@@ -84,20 +85,18 @@ class Students(Resource):
 
         args = self.put_parser.parse_args()
 
-        student = Student.query.get(args.studentID)
-        if student is None:
-            student = Student(id=args.studentID,
-                              first_name=args.firstName,
-                              last_name=args.lastName,
-                              email=args.email or None)
-            db.session.add(student)
-        else:
-            student.id = args.studentID
-            student.first_name = args.firstName
-            student.last_name = args.lastName
-            student.email = args.email or None
+        student = Student(id=args.studentID,
+                          first_name=args.firstName,
+                          last_name=args.lastName,
+                          email=args.email or None)
 
-        db.session.commit()
+        result, reason = _add_or_update_student(student)
+
+        if result == Result.UPDATED or Result.ADDED:
+            db.session.commit()
+
+        if result == Result.ERROR:
+            return dict(status=400, message=reason), 400
 
         return {
             'studentID': student.id,
@@ -128,50 +127,118 @@ class Students(Resource):
         """
         args = self.post_parser.parse_args()
         try:
-            df = pd.read_csv(BytesIO(args['csv'].read()))
+            # Disable the NaN filter to allow for empty email fields
+            df = pd.read_csv(BytesIO(args['csv'].read()), na_filter=False)
         except Exception:
             return dict(message='Uploaded file is not CSV'), 400
 
-        try:
-            added_students = sum(_add_or_update_student(row)
-                                 for _, row in df.iterrows())
-        except Exception as e:
-            print(e)
-            message = ('Uploaded CSV is not in the correct format: '
-                       'did you export it from Brightspace? '
-                       'The error was: ' + str(type(e)) + ": " + str(e))
+        results = []
+        errors = []
+        for _, row in df.iterrows():
+            student = _row_to_student(row)
+
+            if student is None:
+                results.append(Result.ERROR)
+                full_row = ', '.join([str(c) for c in row.values])
+                errors.append(f'The following row has an incorrect format: {full_row}')
+
+            else:
+                result, reason = _add_or_update_student(student)
+                results.append(result)
+
+                if result == Result.ERROR:
+                    errors.append(reason)
+
+        # All rows failed to process
+        if len(errors) == len(results):
+            message = ('All the rows failed to process, '
+                       'CSV is not in the correct format: '
+                       'did you export it from Brightspace?')
             return dict(message=message), 400
 
+        # At least one student was added to the database
         db.session.commit()
 
-        return added_students
+        return {
+            'added': results.count(Result.ADDED),
+            'updated': results.count(Result.UPDATED),
+            'identical': results.count(Result.IDENTICAL),
+            'failed': results.count(Result.ERROR),
+            'errors': errors
+        }
 
 
-def _add_or_update_student(row):
-    """Add or update a student from a CSV row.
-
-    Returns whether a new student was added
-    (False if the student was already present, or
-    if there was an error processing the row).
-    """
-    content = dict(id=row['OrgDefinedId'].replace('#', ''),
-                   first_name=row['First Name'],
-                   last_name=row['Last Name'],
-                   email=row['Email'] or None)
+def _row_to_student(row):
     try:
         # Brightspace includes instructors in the course list,
         # and these might not have student numbers. (If they
         # do then they will be added to the student list).
-        content['id'] = int(str(content['id']).replace('#', ''))
-        student = Student.query.get(content['id'])
+        content = dict(id=int(str(row['OrgDefinedId']).replace('#', '')),
+                       first_name=row['First Name'],
+                       last_name=row['Last Name'],
+                       email=row['Email'] or None)
     except ValueError:
-        return False
-    if student is None:
-        db.session.add(Student(**content))
-        return True
+        return None
+
+    return Student(**content)
+
+
+class Result(Enum):
+    ERROR = -1
+    IDENTICAL = 0
+    UPDATED = 1
+    ADDED = 2
+
+
+def _add_or_update_student(student):
+    """Add or update a student from a Student instance
+
+    Returns
+    -------
+    result : Result
+        Whether a new student was added, updated, an identical
+        student was present or an error happened
+    reason : str
+        A description of what happened when there was
+        an error, else an empty string
+    """
+
+    student_in_db = None
+
+    if student.email:
+        student_same_mail = Student.query.filter(Student.email == student.email).one_or_none()
+        if student_same_mail:
+            if student_same_mail.id == student.id:
+                # The student with the same email is the one we are updating
+                student_in_db = student_same_mail
+            else:
+                # Another student is already present with the same email
+                return Result.ERROR, (
+                    'Could not add or update student #{student_id}. ' +
+                    'Another student (#{other_id}, {other_first} {other_last}) already has the same email.'
+                ).format(student_id=student.id, other_id=student_same_mail.id,
+                         other_first=student_same_mail.first_name, other_last=student_same_mail.last_name)
+
+    if not student_in_db:
+        student_in_db = Student.query.get(student.id)
+
+    if not student_in_db:
+        db.session.add(student)
+        return Result.ADDED, ''
+    elif _student_is_equal(student, student_in_db):
+        return Result.IDENTICAL, ''
     else:
-        student.id = content['id']
-        student.first_name = content['first_name']
-        student.last_name = content['last_name']
-        student.email = content['email']
+        student_in_db.first_name = student.first_name
+        student_in_db.last_name = student.last_name
+        student_in_db.email = student.email
+        return Result.UPDATED, ''
+
+
+def _student_is_equal(student1, student2):
+    if student1.id != student2.id:
         return False
+    if student1.first_name != student2.first_name:
+        return False
+    if student1.last_name != student2.last_name:
+        return False
+    return student1.email == student2.email

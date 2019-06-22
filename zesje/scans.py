@@ -11,6 +11,7 @@ import numpy as np
 from scipy import spatial
 
 from PIL import Image
+from pikepdf import Pdf
 from wand.image import Image as WandImage
 from pylibdmtx import pylibdmtx
 from sqlalchemy.exc import InternalError

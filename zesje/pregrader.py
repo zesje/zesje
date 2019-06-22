@@ -21,7 +21,7 @@ def grade_mcq(sub, page, page_img):
     """
     solutions_to_grade = [
         sol for sol in sub.solutions
-        if sol.graded_at and sol.problem.widget.page == page
+        if not sol.graded_at and sol.problem.widget.page == page
     ]
 
     for sol in solutions_to_grade:

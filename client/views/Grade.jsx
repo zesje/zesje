@@ -13,6 +13,7 @@ import * as api from '../api.jsx'
 
 import 'bulma-tooltip/dist/css/bulma-tooltip.min.css'
 import './grade/Grade.css'
+import Notification from 'react-bulma-notification'
 
 class Grade extends React.Component {
   state = {
@@ -163,6 +164,9 @@ class Grade extends React.Component {
     api.put('solution/approve/' + optionURI, {
       graderID: this.props.graderID
     })
+      .catch(resp => {
+        resp.json().then(body => Notification.error('Auto-approve failed: ' + body.message))
+      })
       .then(result => {
         this.props.updateSubmission(this.state.sIndex)
       })

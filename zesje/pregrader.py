@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 
-from .database import db, Solution
+from .database import db
 from .images import guess_dpi, get_box
 from .pdf_generation import CHECKBOX_FORMAT
 
@@ -16,15 +16,16 @@ def grade_mcq(sub, page, page_img):
         the current submission
     page : int
         Page number of the submission
-     page_img : Image
+    page_img : np.array
         image of the page
     """
-    problems_on_page = [prob for prob in sub.exam.problems if prob.widget.page == page]
+    solutions_to_grade = [
+        sol for sol in sub.solutions
+        if not sol.graded_at and sol.problem.widget.page == page
+    ]
 
-    for problem in problems_on_page:
-        sol = Solution.query.filter(Solution.problem_id == problem.id, Solution.submission_id == sub.id).one()
-
-        for mc_option in problem.mc_options:
+    for sol in solutions_to_grade:
+        for mc_option in sol.problem.mc_options:
             box = (mc_option.x, mc_option.y)
 
             if box_is_filled(box, page_img, box_size=CHECKBOX_FORMAT["box_size"]):
@@ -61,35 +62,25 @@ def box_is_filled(box, page_img, threshold=225, cut_padding=0.05, box_size=9):
     coords = np.asarray([box[1], box[1] + box_size,
                         box[0], box[0] + box_size])/72
 
-    # add the actually margin from the scan to corner markers to the coords in inches
     dpi = guess_dpi(page_img)
 
-    # get the box where we think the box is
     cut_im = get_box(page_img, coords, padding=cut_padding)
 
-    # convert to grayscale
     gray_im = cv2.cvtColor(cut_im, cv2.COLOR_BGR2GRAY)
-    # apply threshold to only have black or white
     _, bin_im = cv2.threshold(gray_im, 160, 255, cv2.THRESH_BINARY)
 
     h_bin, w_bin, *_ = bin_im.shape
-    # create a mask that gets applied when floodfill the white
     mask = np.zeros((h_bin+2, w_bin+2), np.uint8)
     flood_im = bin_im.copy()
-    # fill the image from the top left
     cv2.floodFill(flood_im, mask, (0, 0),  0)
     # fill it from the bottom right just in case the top left doesn't cover all the white
     cv2.floodFill(flood_im, mask, (h_bin-2, w_bin-2), 0)
 
-    # find white parts
     coords = cv2.findNonZero(flood_im)
-    # Find a bounding box of the white parts
     x, y, w, h = cv2.boundingRect(coords)
-    # cut the image to this box
     res_rect = bin_im[y:y+h, x:x+w]
 
-    # the size in pixels we expect the drawn box to
-    box_size_px = box_size*dpi / 72
+    box_size_px = box_size * dpi / 72
 
     # if the rectangle is bigger (higher) than expected, cut the image up a bit
     if h > 1.5 * box_size_px:
@@ -107,7 +98,7 @@ def box_is_filled(box, page_img, threshold=225, cut_padding=0.05, box_size=9):
 
     # do the same for width
     if w2 > 1.5 * box_size_px:
-        # usually the checkbox is somewhere in the bottom left of the bounding box
+        # usually the checkbox is somewhere in the bottom left of the bounding box after applying the previous steps
         coords3 = cv2.findNonZero(flood_im[new_y: new_y + h2, new_x: new_x + int(0.66 * w2)])
         x3, y3, w3, h3 = cv2.boundingRect(coords3)
         res_rect = bin_im[new_y + y3: new_y + y3 + h3, new_x + x3: new_x + x3 + w3]

@@ -42,4 +42,4 @@ def test_update_mco_finalized_exam(test_client, add_test_data):
     result = test_client.patch(f'/api/widgets/{widget_id}', data=req_body)
     data = json.loads(result.data)
 
-    assert data['status'] == 403
+    assert data['status'] == 405

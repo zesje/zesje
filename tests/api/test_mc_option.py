@@ -155,7 +155,7 @@ def test_update_finalized_exam(test_client, add_test_data):
     result = test_client.patch(f'/api/mult-choice/{id}', data=req2)
     data = json.loads(result.data)
 
-    assert data['status'] == 403
+    assert data['status'] == 405
 
 
 def test_delete(test_client, add_test_data):
@@ -230,7 +230,7 @@ def test_add_finalized_exam(test_client, add_test_data):
     response = test_client.put('/api/mult-choice/', data=mc_option_json)
     data = json.loads(response.data)
 
-    assert data['status'] == 403
+    assert data['status'] == 405
 
 
 def test_delete_finalized_exam(test_client, add_test_data):
@@ -245,4 +245,4 @@ def test_delete_finalized_exam(test_client, add_test_data):
     response = test_client.delete(f'/api/mult-choice/{mc_id}')
     data = json.loads(response.data)
 
-    assert data['status'] == 403
+    assert data['status'] == 405

@@ -1,3 +1,5 @@
+import itertools
+
 from pdfminer3.converter import PDFPageAggregator
 from pdfminer3.layout import LAParams
 from pdfminer3.layout import LTFigure
@@ -30,15 +32,8 @@ def get_problem_page(problem, pdf_path):
     parser = PDFParser(fp)
     document = PDFDocument(parser)
 
-    # PDFPage.create_pages() only yields a list of key-value pairs
-    # So there should be no problem saving the result to a list
-
-    i = 0
-
-    for page in PDFPage.create_pages(document):
-        if i == problem.widget.page:
-            return page
-        i += 1
+    page_number = problem.widget.page
+    return next(itertools.islice(PDFPage.create_pages(document), page_number, page_number + 1))
 
 
 def layout(pdf_page):
@@ -55,10 +50,10 @@ def layout(pdf_page):
     layout : list of pdfminer3 layout objects
         A list of layout objects on the page
     """
-    rsrcmgr = PDFResourceManager()
-    laparams = LAParams()
-    device = PDFPageAggregator(rsrcmgr, laparams=laparams)
-    interpreter = PDFPageInterpreter(rsrcmgr, device)
+    resource_manager = PDFResourceManager()
+    la_params = LAParams()
+    device = PDFPageAggregator(resource_manager, laparams=la_params)
+    interpreter = PDFPageInterpreter(resource_manager, device)
     interpreter.process_page(pdf_page)
 
     return device.get_result()
@@ -98,34 +93,34 @@ def guess_problem_title(problem, pdf_page):
     page_height = pdf_page.mediabox[3]
 
     layout_objects = layout(pdf_page)
-    filtered_words = get_words(layout_objects._objs, y_above, y_current, page_height)
+    filtered_words = read_lines(layout_objects._objs, y_above, y_current, page_height)
 
     if not filtered_words:
         return ''
 
-    lines = filtered_words[0].split('\n')
+    lines = filtered_words.split('\n')
     return lines[0].strip()
 
 
-def get_words(layout_objs, y_top, y_bottom, page_height):
+def read_lines(layout_objs, y_top, y_bottom, page_height):
     """
-    Returns the text from a pdf page within a specified height.
+    Returns lines of text from a PDF page within a specified height.
 
     Parameters
     ----------
-    page_height : int
-        Height of the current page in points
     layout_objs : list of layout objects
         The list of objects in the page.
     y_top : double
         Highest top coordinate of each word
     y_bottom : double
         Lowest bottom coordinate of each word
+    page_height : int
+        Height of the current page in points
 
     Returns
     -------
-    words : list of tuples
-        A list of tuples with the (y, text) values.
+    words : str
+        The first line of text that if it is found, or else an empty string
     """
     words = []
 
@@ -144,6 +139,9 @@ def get_words(layout_objs, y_top, y_bottom, page_height):
                 words.append(obj.get_text())
 
         elif isinstance(obj, LTFigure):
-            words += get_words(obj._objs, y_top, y_bottom, page_height)
+            words += read_lines(obj._objs, y_top, y_bottom, page_height)
 
-    return words
+    if not words:
+        return ''
+
+    return words[0]

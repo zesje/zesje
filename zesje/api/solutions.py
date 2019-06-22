@@ -150,7 +150,7 @@ class Solutions(Resource):
 
 
 class Approve(Resource):
-    """ add just a grader to a specifc problem on an exam """
+    """Mark a solution as graded."""
     put_parser = reqparse.RequestParser()
     put_parser.add_argument('graderID', type=int, required=True)
 
@@ -186,5 +186,7 @@ class Approve(Resource):
             solution.graded_at = datetime.now()
             solution.graded_by = grader
             db.session.commit()
+        else:
+            return dict(status=409, message='At least one feedback option must be selected.'), 409
 
         return {'state': graded}

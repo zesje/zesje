@@ -1,0 +1,15 @@
+.flex-parent {
+    display: flex;
+    align-items: center;
+}
+
+.flex-child.truncated {
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.flex-child.fixed {
+    white-space: nowrap;
+}

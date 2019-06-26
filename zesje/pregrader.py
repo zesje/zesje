@@ -8,9 +8,12 @@ from .images import guess_dpi, get_box
 from .pdf_generation import CHECKBOX_FORMAT
 
 
-def grade_mcq(sub, page, page_img):
+def grade_problem(sub, page, page_img):
     """
-    Adds the multiple choice options that are identified as marked as a feedback option to a solution
+    Automatically checks if a problem is blank, and adds a feedback option
+    'blank' if so.
+    For multiple choice problems, a feedback option is added for each checkbox
+    that is identified as filled in is created.
 
     Parameters
     ------
@@ -29,27 +32,74 @@ def grade_mcq(sub, page, page_img):
     for sol in solutions_to_grade:
         problem = sol.problem
 
-        for mc_option in problem.mc_options:
-            box = (mc_option.x, mc_option.y)
-            is_mc = True
-            mc_filled_counter = 0
+        if not problem.grading_policy:
+            problem.grading_policy = GradingPolicy.set_blank
+            db.session.commit()
 
-            if problem.grading_policy is None:
-                problem.grading_policy = GradingPolicy.set_blank
-                db.session.commit()
+        if problem.mc_options:
+            grade_mcq(sol, page_img)
+        elif is_blank(problem, page_img, sub):
+            grade_as_blank(sol)
 
-            if box_is_filled(box, page_img, box_size=CHECKBOX_FORMAT["box_size"]):
-                feedback = mc_option.feedback
-                sol.feedback.append(feedback)
-                mc_filled_counter += 1
+    db.session.commit()
 
-            if (mc_filled_counter == 0 and is_mc) or\
-                    ((not is_mc) and is_blank(problem, page_img, sub)):
-                set_blank_feedback(problem, sol)
 
-            if problem.grading_policy.value == 2 and mc_filled_counter == 1:
-                set_auto_grader(sol)
+def grade_mcq(sol, page_img):
+    """
+    Pre-grades a multiple choice problem.
+    This function does either of two things:
+    - Adds a feedback option 'blank' if no option has been detected as filled
+    - Adds a feedback option for every option that has been detected as filled
 
+    In both cases, a grader named 'Zesje' is set for this problem.
+
+    Parameters
+    ----------
+    sol : Solution
+        The solution to the multiple choice question
+    page_img: np.array
+        A numpy array of the image scan
+    """
+    box_size = CHECKBOX_FORMAT["box_size"]
+    problem = sol.problem
+    mc_filled_counter = 0
+
+    for mc_option in problem.mc_options:
+        box = (mc_option.x, mc_option.y)
+
+        if box_is_filled(box, page_img, box_size=box_size):
+            feedback = mc_option.feedback
+            sol.feedback.append(feedback)
+            mc_filled_counter += 1
+
+    if mc_filled_counter == 0:
+        grade_as_blank(sol)
+    if mc_filled_counter == 1 and problem.grading_policy.value == 2:
+        set_auto_grader(sol)
+
+    db.session.commit()
+
+
+def grade_as_blank(sol):
+    """
+    Pre-grades a solution as identified as blank.
+
+    Parameters
+    ----------
+    sol : Solution
+        The solution to pre-grade
+    """
+    feedback = FeedbackOption.query.filter(FeedbackOption.problem_id == sol.problem.id,
+                                           FeedbackOption.text == 'blank').one_or_none()
+
+    if sol.problem.grading_policy.value > 0:
+        set_auto_grader(sol)
+
+    if feedback is None:
+        feedback = FeedbackOption(problem_id=sol.problem.id, text='blank', score=0)
+        db.session.add(feedback)
+
+    sol.feedback.append(feedback)
     db.session.commit()
 
 
@@ -67,29 +117,10 @@ def set_auto_grader(solution):
     solution : Solution
         The solution
     """
-    zesje_grader = Grader.query.filter(Grader.name == 'Zesje').one_or_none()
-
-    if zesje_grader is None:
-        zesje_grader = Grader(name='Zesje')
-        db.session.add(zesje_grader)
+    zesje_grader = Grader.query.filter(Grader.name == 'Zesje').one_or_none() or Grader(name='Zesje')
 
     solution.graded_by = zesje_grader
     solution.graded_at = datetime.now()
-    db.session.commit()
-
-
-def set_blank_feedback(problem, sol):
-    feedback = FeedbackOption.query.filter(FeedbackOption.problem_id == problem.id,
-                                           FeedbackOption.text == 'blank').one_or_none()
-
-    if problem.grading_policy.value > 0:
-        set_auto_grader(sol)
-
-    if feedback is None:
-        feedback = FeedbackOption(problem_id=problem.id, text='blank', score=0)
-        db.session.add(feedback)
-
-    sol.feedback.append(feedback)
     db.session.commit()
 
 

@@ -16,15 +16,12 @@ def add_test_data(app):
 # Actual tests
 
 
-def test_add_grader_no_duplicate_name(test_client, add_test_data):
-    body = {'name': 'grader2'}
+@pytest.mark.parametrize('grader_name, expected_status_code', [
+    ('grader', 409),
+    ('grader2', 200)],
+    ids=['Duplicate grader name', 'Unused grader name'])
+def test_add_grader(test_client, add_test_data, grader_name, expected_status_code):
+    body = {'name': grader_name}
 
     result = test_client.post('/api/graders', data=body)
-    assert result.status_code == 200
-
-
-def test_add_grader_duplicate_name(test_client, add_test_data):
-    body = {'name': 'grader'}
-
-    result = test_client.post('/api/graders', data=body)
-    assert result.status_code == 409
+    assert result.status_code == expected_status_code

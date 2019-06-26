@@ -422,13 +422,15 @@ class Exams extends React.Component {
    * @param widgetId the id of the widget for which the mc options need to be deleted
    * @param index the index of the first mc option to be removed
    * @param nrMCOs the number of mc options to remove
-   * @returns {Promise<T | never>}
+   * @returns {Promise<boolean>} a promise that contains true if the operation was successful and false otherwise
    */
   deleteMCOs = (widgetId, index, nrMCOs) => {
     let widget = this.state.widgets[widgetId]
-    if (nrMCOs <= 0 || !widget.problem.mc_options.length) return true
+    if (nrMCOs <= 0 || !widget.problem.mc_options.length) return Promise.resolve(true)
 
     let option = widget.problem.mc_options[index]
+    if (!option) return Promise.resolve(false);
+
     return api.del('mult-choice/' + option.id)
       .then(res => {
         let feedback = widget.problem.feedback[index]
@@ -462,7 +464,7 @@ class Exams extends React.Component {
           this.setState({
             selectedWidgetId: null
           })
-          return false
+          return Promise.resolve(false)
         })
       })
   }

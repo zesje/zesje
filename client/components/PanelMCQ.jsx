@@ -65,6 +65,8 @@ class PanelMCQ extends React.Component {
     } else if (difference < 0) {
       return this.props.deleteMCOs(-difference)
     }
+
+    return Promise.resolve(true);
   }
 
   // this function is called when the input is changed for the number of possible answers

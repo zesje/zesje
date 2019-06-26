@@ -34,11 +34,10 @@ def upgrade():
     conn = op.get_bind()
 
     graders = conn.execute('SELECT id, name FROM grader').fetchall()
-    removed_graders = []
 
     for grader in graders:
         # Check if grader is not deleted already
-        if grader in removed_graders:
+        if not conn.execute(f'SELECT * FROM grader WHERE grader.id  = {grader.id}').fetchall():
             continue
 
         # Get other graders with same name
@@ -48,38 +47,35 @@ def upgrade():
             conn.execute(f'UPDATE solution SET grader_id = {grader.id} WHERE solution.grader_id = {other_grader.id}')
             conn.execute(f'DELETE FROM grader WHERE grader.id = {other_grader.id}')
 
-            removed_graders.append(other_grader)
-
-    op.rename_table('grader', 'grader_old')
-
     # Create copy table and remove data
     op.create_table(
-        'grader',
+        'grader_copy',
         sa.Column('id', sa.Integer(), nullable=False),
         sa.Column('name', sa.Text(), nullable=False, unique=True),
         sa.PrimaryKeyConstraint('id')
     )
 
-    op.execute('INSERT INTO grader (id, name)' +
-               'SELECT id, name FROM grader_old')
+    op.execute('INSERT INTO grader_copy (id, name)' +
+               'SELECT id, name FROM grader')
 
-    op.drop_table('grader_old')
+    op.drop_table('grader')
+    op.rename_table('grader_copy', 'grader')
 
 
 def downgrade():
     backup_db()
 
-    op.rename_table('grader', 'grader_old')
-
     # Add Grader table without unique constraint
     op.create_table(
-        'grader',
+        'grader_copy',
         sa.Column('id', sa.Integer(), nullable=False),
         sa.Column('name', sa.Text(), nullable=False, unique=False),
         sa.PrimaryKeyConstraint('id')
     )
 
-    # Move data from old Grader table and delete it
-    op.execute('INSERT INTO grader (id, name)' +
-               'SELECT id, name FROM grader_old')
-    op.drop_table('grader_old')
+    # Move data from old Grader table
+    op.execute('INSERT INTO grader_copy (id, name)' +
+               'SELECT id, name FROM grader')
+
+    op.drop_table('grader')
+    op.rename_table('grader_copy', 'grader')

@@ -28,15 +28,8 @@ def upgrade():
         sa.PrimaryKeyConstraint('id')
     )
 
-    conn = op.get_bind()
-
-    old_problems = conn.execute('SELECT id, name, exam_id FROM problem').fetchall()
-
-    grading_policy = "'set_blank'"
-    for id, name, exam_id in old_problems:
-        # Add quotes for SQLite
-        name = "'" + name + "'"
-        conn.execute(f'INSERT INTO problem_copy VALUES ({id}, {name}, {exam_id}, {grading_policy})')
+    op.execute('INSERT INTO problem_copy (id, name, exam_id, grading_policy)' +
+               'SELECT id, name, exam_id, \'set_blank\' FROM problem')
 
     op.drop_table('problem')
     op.rename_table('problem_copy', 'problem')

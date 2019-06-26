@@ -115,7 +115,7 @@ class Problem(db.Model):
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(Text, nullable=False)
     exam_id = Column(Integer, ForeignKey('exam.id'), nullable=False)
-    grading_policy = Column('value', Enum(GradingPolicy), default=1, nullable=False)
+    grading_policy = Column('grading_policy', Enum(GradingPolicy), default=1, nullable=False)
     feedback_options = db.relationship('FeedbackOption', backref='problem', cascade='all',
                                        order_by='FeedbackOption.id', lazy=True)
     solutions = db.relationship('Solution', backref='problem', cascade='all', lazy=True)

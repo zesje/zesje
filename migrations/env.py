@@ -69,8 +69,7 @@ def run_migrations_online():
     db_url = config.get_main_option("sqlalchemy.url")
     db_path = db_url.replace('sqlite:///', '')
     db_dir = os.path.dirname(db_path)
-    if not os.path.exists(db_dir):
-        os.makedirs(db_dir)
+    os.makedirs(db_dir, exists_ok=True)
 
     connection = engine.connect()
     context.configure(connection=connection,

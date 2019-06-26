@@ -89,13 +89,13 @@ def grade_as_blank(sol):
     sol : Solution
         The solution to pre-grade
     """
-    feedback = FeedbackOption.query.filter(FeedbackOption.problem_id == sol.problem.id,
-                                           FeedbackOption.text == 'blank').one_or_none()
-
     if sol.problem.grading_policy.value > 0:
         set_auto_grader(sol)
 
-    if feedback is None:
+    feedback = FeedbackOption.query.filter(FeedbackOption.problem_id == sol.problem.id,
+                                           FeedbackOption.text == 'blank').one_or_none()
+
+    if not feedback:
         feedback = FeedbackOption(problem_id=sol.problem.id, text='blank', score=0)
         db.session.add(feedback)
 

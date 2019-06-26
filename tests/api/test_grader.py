@@ -1,6 +1,5 @@
 import pytest
 
-from flask import json
 
 from zesje.database import db, Grader
 

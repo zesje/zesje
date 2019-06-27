@@ -17,14 +17,14 @@ def get_blank(problem, dpi, widget_area_in, sub):
     generated_path = os.path.join(output_directory, 'blanks', f'{dpi}')
 
     if not os.path.exists(generated_path):
-        set_blank(sub.copy_number, problem.exam_id, dpi, output_directory)
+        set_blank(sub.copy_number, dpi, output_directory)
 
     image_path = os.path.join(generated_path, f'page{page:02d}.jpg')
     blank_page = Image.open(image_path)
     return get_box(np.array(blank_page), widget_area_in, padding=0)
 
 
-def set_blank(copy_number, exam_id, dpi, output_directory):
+def set_blank(copy_number, dpi, output_directory):
     pdf_path = os.path.join(output_directory, 'generated_pdfs', f'{copy_number:05d}.pdf')
     pages = extract_images(pdf_path)
 

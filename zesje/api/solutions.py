@@ -186,5 +186,7 @@ class Approve(Resource):
             solution.graded_at = datetime.now()
             solution.graded_by = grader
             db.session.commit()
+        else:
+            return dict(status=409, message='At least one feedback option must be selected.'), 409
 
         return {'state': graded}

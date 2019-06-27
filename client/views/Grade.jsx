@@ -1,4 +1,5 @@
 import React from 'react'
+import Notification from 'react-bulma-notification'
 
 import Hero from '../components/Hero.jsx'
 
@@ -13,6 +14,7 @@ import * as api from '../api.jsx'
 
 import 'bulma-tooltip/dist/css/bulma-tooltip.min.css'
 import './grade/Grade.css'
+import '../components/SubmissionNavigation.css'
 
 class Grade extends React.Component {
   state = {
@@ -163,6 +165,9 @@ class Grade extends React.Component {
     api.put('solution/approve/' + optionURI, {
       graderID: this.props.graderID
     })
+      .catch(resp => {
+        resp.json().then(body => Notification.error('Could not approve feedback: ' + body.message))
+      })
       .then(result => {
         this.props.updateSubmission(this.state.sIndex)
       })
@@ -241,7 +246,7 @@ class Grade extends React.Component {
 
               <div className='column'>
                 <div className='level'>
-                  <div className='level-item'>
+                  <div className='level-item make-wider'>
                     <div className='field has-addons is-mobile'>
                       <div className='control'>
                         <button type='submit'
@@ -255,7 +260,7 @@ class Grade extends React.Component {
                           data-tooltip='←'
                           onClick={this.prev}>Previous</button>
                       </div>
-                      <div className='control'>
+                      <div className='control is-wider'>
                         <SearchBox
                           placeholder='Search for a submission'
                           selected={submission}
@@ -320,12 +325,14 @@ class Grade extends React.Component {
                     problem.id + '/' + submission.id + '/' + (this.state.fullPage ? '1' : '0')) + '?' +
                     this.getLocationHash(problem) : ''} alt='' />
                 </p>
-
-                {solution.graded_at
-                  ? <div>Graded by: {solution.graded_by.name} <i>({gradedTime.toLocaleString()})</i></div>
-                  : <div>Ungraded</div>
-                }
-
+                <div className={
+                  'graded info' + (this.state.showTooltips ? ' tooltip is-tooltip-active is-tooltip-left' : ''
+                  )} data-tooltip='a to approve' >
+                  {solution.graded_at
+                    ? <div>Graded by: {solution.graded_by.name} <i>({gradedTime.toLocaleString()})</i></div>
+                    : <div>Ungraded</div>
+                  }
+                </div>
                 <label className='checkbox'>
                   <input checked={this.state.fullPage} onChange={this.toggleFullPage} type='checkbox' />
                   View full page

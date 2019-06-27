@@ -91,8 +91,8 @@ class ExamEditor extends React.Component {
           page: this.props.page,
           feedback: [],
           mc_options: [],
-          widthMCO: 24,
-          heightMCO: 38,
+          widthMCO: 20,
+          heightMCO: 34,
           isMCQ: false,
           grading_policy: 0
         }

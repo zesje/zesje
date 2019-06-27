@@ -116,34 +116,66 @@ class Exams extends React.Component {
     })
   }
 
-  updateFeedback = (feedback) => {
-    let problemWidget = this.state.widgets[this.state.selectedWidgetId]
+  updateFeedback = (feedback, problemWidget) => {
     const index = problemWidget.problem.feedback.findIndex(e => { return e.id === feedback.id })
     this.updateFeedbackAtIndex(feedback, problemWidget, index)
   }
 
+  /**
+   * Update feedback corresponding to a problem
+   * @param feedback the feedback to be created/deleted/updated
+   * @param problemWidget the problem that contains the feedback
+   * @param idx the location of the feedback in the feedback field of the problem
+   */
   updateFeedbackAtIndex = (feedback, problemWidget, idx) => {
-    let fb = [...problemWidget.problem.feedback]
     if (idx === -1) {
-      fb.push(feedback)
-    } else {
-      if (feedback.deleted) fb.splice(idx, 1)
-      else fb[idx] = feedback
-    }
-
-    this.setState(prevState => {
-      return {
-        widgets: update(prevState.widgets, {
-          [problemWidget.id]: {
-            'problem': {
-              'feedback': {
-                $set: fb
+      // in case the feedback doesn't exist, create a new feedback object
+      this.setState((prevState) => {
+        return {
+          widgets: update(prevState.widgets, {
+            [problemWidget.id]: {
+              'problem': {
+                'feedback': {
+                  $push: [feedback]
+                }
               }
             }
-          }
-        })
-      }
-    })
+          })
+        }
+      })
+    } else if (feedback.deleted) {
+      // delete the feedback if the deleted field is set
+      this.setState((prevState) => {
+        return {
+          widgets: update(prevState.widgets, {
+            [problemWidget.id]: {
+              'problem': {
+                'feedback': {
+                  $splice: [[idx, 1]]
+                }
+              }
+            }
+          })
+        }
+      })
+    } else {
+      // update the existing feedback
+      this.setState(prevState => {
+        return {
+          widgets: update(prevState.widgets, {
+            [problemWidget.id]: {
+              'problem': {
+                'feedback': {
+                  [idx]: {
+                    $set: feedback
+                  }
+                }
+              }
+            }
+          })
+        }
+      })
+    }
   }
 
   backToFeedback = () => {
@@ -379,7 +411,7 @@ class Exams extends React.Component {
       data.feedback_id = result.feedback_id
       feedback.id = result.feedback_id
       this.addMCOtoState(problemWidget, data)
-      this.updateFeedback(feedback)
+      this.updateFeedback(feedback, problemWidget)
       return this.generateMCOs(problemWidget, labels, index + 1, xPos + problemWidget.problem.widthMCO, yPos)
     }).catch(err => {
       console.log(err)
@@ -405,7 +437,7 @@ class Exams extends React.Component {
     this.setState((prevState) => {
       return {
         widgets: update(prevState.widgets, {
-          [this.state.selectedWidgetId]: {
+          [problemWidget.id]: {
             problem: {
               mc_options: {
                 $push: [data]
@@ -435,8 +467,8 @@ class Exams extends React.Component {
       .then(res => {
         let feedback = widget.problem.feedback[index]
         feedback.deleted = true
-        this.updateFeedback(feedback)
-        return new Promise((resolve, reject) => {
+        this.updateFeedbackAtIndex(feedback, widget, index)
+        return new Promise((resolve) => {
           this.setState((prevState) => {
             return {
               widgets: update(prevState.widgets, {
@@ -696,7 +728,8 @@ class Exams extends React.Component {
                 </div>
                 {this.state.editActive
                   ? <EditPanel problemID={props.problem.id} feedback={this.state.feedbackToEdit}
-                    goBack={this.backToFeedback} updateCallback={this.updateFeedback} />
+                    goBack={this.backToFeedback}
+                    updateCallback={(fb) => this.updateFeedback(fb, this.state.widgets[selectedWidgetId])} />
                   : <FeedbackPanel examID={this.props.examID} problem={props.problem}
                     editFeedback={this.editFeedback} showTooltips={this.state.showTooltips}
                     grading={false}

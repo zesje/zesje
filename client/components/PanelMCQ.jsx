@@ -12,6 +12,7 @@ class PanelMCQ extends React.Component {
     this.onChangeLabelType = this.onChangeLabelType.bind(this)
     this.generateLabels = this.generateLabels.bind(this)
     this.updateNumberOptions = this.updateNumberOptions.bind(this)
+    this.operationInProgress = this.operationInProgress.bind(this)
 
     this.state = {
       chosenLabelType: 2,
@@ -55,6 +56,16 @@ class PanelMCQ extends React.Component {
     }
   }
 
+  /**
+   * Check if a change is currently in progress.
+   * @returns {boolean} true if there's a change operation in progress, false otherwise
+   */
+  operationInProgress () {
+    let prob = this.props.problem
+    return this.state.chosenLabelType !== PanelMCQ.deriveLabelType(prob.mc_options) ||
+      this.state.nrPossibleAnswers !== prob.mc_options.length
+  }
+
   // this functions calculates
   updateNumberOptions () {
     let difference = this.state.nrPossibleAnswers - this.props.problem.mc_options.length
@@ -71,6 +82,8 @@ class PanelMCQ extends React.Component {
 
   // this function is called when the input is changed for the number of possible answers
   onChangeNPA (e) {
+    if (this.operationInProgress()) return // finish the first operation first to ensure consistency
+
     let value = parseInt(e.target.value)
     if (!isNaN(value) && value <= this.props.totalNrAnswers) {
       if (this.state.chosenLabelType === 1) {
@@ -84,6 +97,8 @@ class PanelMCQ extends React.Component {
 
   // this function is called when the input is changed for the desired label type
   onChangeLabelType (e) {
+    if (this.operationInProgress()) return // finish the first operation first to ensure consistency
+
     let value = parseInt(e.target.value)
     if (!isNaN(value)) {
       // if the label type is True/False then reduce the number of mc options to 2

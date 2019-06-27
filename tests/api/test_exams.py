@@ -11,7 +11,7 @@ def add_test_data(app):
         db.session.add(exam1)
         db.session.commit()
 
-        problem1 = Problem(id=1, name='Problem 1', exam_id=1, grading_policy=1)
+        problem1 = Problem(id=1, name='Problem 1', exam_id=1)
         db.session.add(problem1)
         db.session.commit()
 

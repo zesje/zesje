@@ -1,4 +1,5 @@
 import React from 'react'
+import Notification from 'react-bulma-notification'
 
 import Hero from '../components/Hero.jsx'
 
@@ -13,7 +14,6 @@ import * as api from '../api.jsx'
 
 import 'bulma-tooltip/dist/css/bulma-tooltip.min.css'
 import './grade/Grade.css'
-import Notification from 'react-bulma-notification'
 import '../components/SubmissionNavigation.css'
 
 class Grade extends React.Component {

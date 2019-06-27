@@ -23,7 +23,7 @@ def upgrade():
         sa.Column('name', sa.Text(), nullable=False),
         sa.Column('exam_id', sa.Integer(), nullable=False),
         sa.Column('grading_policy', sa.Enum('set_nothing', 'set_blank', 'set_blank_single', name='gradingpolicy'),
-                  default=1, nullable=False),
+                  default='set_blank', nullable=False),
         sa.ForeignKeyConstraint(['exam_id'], ['exam.id'], ),
         sa.PrimaryKeyConstraint('id')
     )

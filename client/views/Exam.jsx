@@ -461,7 +461,7 @@ class Exams extends React.Component {
     if (nrMCOs <= 0 || !widget.problem.mc_options.length) return Promise.resolve(true)
 
     let option = widget.problem.mc_options[index]
-    if (!option) return Promise.resolve(false);
+    if (!option) return Promise.resolve(false)
 
     return api.del('mult-choice/' + option.id)
       .then(res => {

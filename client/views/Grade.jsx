@@ -325,9 +325,9 @@ class Grade extends React.Component {
                     problem.id + '/' + submission.id + '/' + (this.state.fullPage ? '1' : '0')) + '?' +
                     this.getLocationHash(problem) : ''} alt='' />
                 </p>
-                <div className={'graded info' +
-                  (this.state.showTooltips ? ' tooltip is-tooltip-active is-tooltip-left' : '')}
-                  data-tooltip='a to approve' >
+                <div className={
+                  'graded info' + (this.state.showTooltips ? ' tooltip is-tooltip-active is-tooltip-left' : ''
+                  )} data-tooltip='a to approve' >
                   {solution.graded_at
                     ? <div>Graded by: {solution.graded_by.name} <i>({gradedTime.toLocaleString()})</i></div>
                     : <div>Ungraded</div>

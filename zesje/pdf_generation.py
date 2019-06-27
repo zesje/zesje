@@ -414,7 +414,7 @@ def save_with_even_pages(pdf_path, exam_pdf_file):
     if (pagecount % 2 == 0):
         exam_pdf_file.save(pdf_path)
         return
-    
+
     new = PdfWriter()
     new.addpages(exam_pdf.pages)
     blank = PageMerge()

@@ -15,7 +15,7 @@ All the available shortcuts are listed below, grouped by page.
 | `→`                  | Next submission        |
 | `shift` + `←`        | Previous ungraded      |
 | `shift` + `→`        | Next ungraded          |
-| `a`                  | Approve solution       |
+| `a`                  | Approve feedback       |
 
 ### Students
 

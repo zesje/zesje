@@ -30,6 +30,7 @@ def grade_problem(sub, page, page_img):
     ]
 
     for sol in solutions_to_grade:
+        sol.feedback = []
         problem = sol.problem
 
         if not problem.grading_policy:

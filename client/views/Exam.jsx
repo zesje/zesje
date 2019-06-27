@@ -465,9 +465,10 @@ class Exams extends React.Component {
 
     return api.del('mult-choice/' + option.id)
       .then(res => {
-        let feedback = widget.problem.feedback[index]
+        let indexFb = widget.problem.feedback.findIndex(e => { return e.id === option.feedback_id })
+        let feedback = widget.problem.feedback[indexFb]
         feedback.deleted = true
-        this.updateFeedbackAtIndex(feedback, widget, index)
+        this.updateFeedbackAtIndex(feedback, widget, indexFb)
         return new Promise((resolve) => {
           this.setState((prevState) => {
             return {

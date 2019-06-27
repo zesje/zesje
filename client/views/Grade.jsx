@@ -166,7 +166,7 @@ class Grade extends React.Component {
       graderID: this.props.graderID
     })
       .catch(resp => {
-        resp.json().then(body => Notification.error('Auto-approve failed: ' + body.message))
+        resp.json().then(body => Notification.error('Could not approve feedback: ' + body.message))
       })
       .then(result => {
         this.props.updateSubmission(this.state.sIndex)

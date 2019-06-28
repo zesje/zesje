@@ -7,7 +7,7 @@ from tempfile import SpooledTemporaryFile
 from wand.image import Image as WandImage
 
 
-def extract_images(filename):
+def extract_images(filename, dpi=300):
     """Yield all images from a PDF file.
 
     Tries to use PikePDF to extract the images from the given PDF.
@@ -31,7 +31,7 @@ def extract_images(filename):
                     use_wand = True
 
             if use_wand:
-                img = extract_image_wand(pagenr, pdf_reader)
+                img = extract_image_wand(pagenr, pdf_reader, dpi)
 
             if img.mode == 'L':
                 img = img.convert('RGB')
@@ -100,7 +100,7 @@ def extract_image_pikepdf(pagenr, reader):
             return pdfimage.as_pil_image()
 
 
-def extract_image_wand(pagenr, reader):
+def extract_image_wand(pagenr, reader, dpi):
     """Flattens a page from a PDF to an image array
 
     This method uses Wand to flatten the page and creates an image.
@@ -126,7 +126,7 @@ def extract_image_wand(pagenr, reader):
 
         page_pdf.save(page_file)
 
-        with WandImage(blob=page_file._file.getvalue(), format='pdf', resolution=300) as page_image:
+        with WandImage(blob=page_file._file.getvalue(), format='pdf', resolution=dpi) as page_image:
             page_image.format = 'jpg'
             img_array = np.asarray(bytearray(page_image.make_blob(format="jpg")), dtype=np.uint8)
             img = Image.open(BytesIO(img_array))

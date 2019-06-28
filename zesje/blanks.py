@@ -26,7 +26,7 @@ def get_blank(problem, dpi, widget_area_in, sub):
 
 def set_blank(copy_number, dpi, output_directory):
     pdf_path = os.path.join(output_directory, 'generated_pdfs', f'{copy_number:05d}.pdf')
-    pages = extract_images(pdf_path)
+    pages = extract_images(pdf_path, dpi)
 
     for image, page in pages:
         save_image(np.array(image), page, dpi, output_directory)

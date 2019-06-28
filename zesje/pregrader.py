@@ -33,10 +33,6 @@ def grade_problem(sub, page, page_img):
         sol.feedback = []
         problem = sol.problem
 
-        if not problem.grading_policy:
-            problem.grading_policy = GradingPolicy.set_blank
-            db.session.commit()
-
         if problem.mc_options:
             grade_mcq(sol, page_img)
         elif is_blank(problem, page_img, sub):
@@ -75,7 +71,7 @@ def grade_mcq(sol, page_img):
 
     if mc_filled_counter == 0:
         grade_as_blank(sol)
-    if mc_filled_counter == 1 and problem.grading_policy.value == 2:
+    if mc_filled_counter == 1 and problem.grading_policy == GradingPolicy.set_blank_single:
         set_auto_grader(sol)
 
     db.session.commit()
@@ -90,7 +86,7 @@ def grade_as_blank(sol):
     sol : Solution
         The solution to pre-grade
     """
-    if sol.problem.grading_policy.value > 0:
+    if sol.problem.grading_policy != GradingPolicy.set_nothing:
         set_auto_grader(sol)
 
     feedback = FeedbackOption.query.filter(FeedbackOption.problem_id == sol.problem.id,

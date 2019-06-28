@@ -404,8 +404,6 @@ class Exams extends React.Component {
     formData.append('y', data.widget.y + data.cbOffsetY)
     formData.append('problem_id', data.problem_id)
     formData.append('label', data.label)
-    formData.append('fb_description', feedback.description)
-    formData.append('fb_score', feedback.score)
     return api.put('mult-choice/', formData).then(result => {
       data.id = result.mult_choice_id
       data.feedback_id = result.feedback_id

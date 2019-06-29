@@ -100,6 +100,8 @@ def upgrade():
 
 
 def downgrade():
+    backup_db()
+
     #
     # Remove the multiple choice question table
     #

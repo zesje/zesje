@@ -218,7 +218,7 @@ class ExamEditor extends React.Component {
       })
   }
 
-    /**
+  /**
    * This function updates the position of the mc options inside when the corresponding problem widget changes in
    * size or position. Note that the positions in the database are not updated. These should be updated once when the
    * action (resizing/dragging/other) is finalized.

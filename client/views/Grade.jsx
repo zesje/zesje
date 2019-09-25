@@ -154,9 +154,9 @@ class Grade extends React.Component {
       })
   }
 
-  toggleFullPage = (event) => {
+  toggleFullPage = () => {
     this.setState({
-      fullPage: event.target.checked
+      fullPage: !this.state.fullPage
     })
   }
 

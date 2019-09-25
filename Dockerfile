@@ -1,3 +1,5 @@
+# A Dockerfile containing the production deployment for Zesje
+
 FROM continuumio/miniconda3
 
 RUN apt-get update && \

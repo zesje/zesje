@@ -302,28 +302,34 @@ class Grade extends React.Component {
                   </article> : null
                 }
 
+                <div className='level'>
+                  <p classname='level-item'>
+                    {solution.graded_at
+                      ? <div>Graded by: {solution.graded_by.name} <i>({gradedTime.toLocaleString()})</i></div>
+                      : <div>Ungraded</div>
+                    }
+                  </p>
+                  <div className='level-right'>
+                    <div className='level-item'>
+                      <label className={'button' + (this.state.showTooltips ? ' tooltip is-tooltip-active' : '')}
+                        data-tooltip='f'>
+                        <input checked={this.state.fullPage} onChange={this.toggleFullPage} type='checkbox' />
+                        {this.state.fullPage ? 'Focus exercise' : 'View full page'}
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
                 <p className={'box' + (solution.graded_at ? ' is-graded' : '')}>
                   <img src={exam.id ? ('api/images/solutions/' + exam.id + '/' +
                     problem.id + '/' + submission.id + '/' + (this.state.fullPage ? '1' : '0')) + '?' +
                     this.getLocationHash(problem) : ''} alt='' />
                 </p>
 
-                {solution.graded_at
-                  ? <div>Graded by: {solution.graded_by.name} <i>({gradedTime.toLocaleString()})</i></div>
-                  : <div>Ungraded</div>
-                }
-
-                <label className={'checkbox' + (this.state.showTooltips ? ' tooltip is-tooltip-active' : '')}
-                  data-tooltip='f'>
-                  <input checked={this.state.fullPage} onChange={this.toggleFullPage} type='checkbox' />
-                  View full page
-                </label>
-
               </div>
             </div>
           </div>
         </section>
-
       </div>
     )
   }

@@ -313,7 +313,8 @@ class Grade extends React.Component {
                   : <div>Ungraded</div>
                 }
 
-                <label className='checkbox'>
+                <label className={'checkbox' + (this.state.showTooltips ? ' tooltip is-tooltip-active' : '')}
+                  data-tooltip='f'>
                   <input checked={this.state.fullPage} onChange={this.toggleFullPage} type='checkbox' />
                   View full page
                 </label>

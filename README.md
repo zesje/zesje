@@ -4,6 +4,30 @@
 
 Zesje is an online grading system for written exams.
 
+## Running Zesje
+
+### Running Zesje using Docker
+Running Zesje using Docker is the easiest method to run Zesje
+yourself with minimal technical knowledge required. For this approach 
+we assume that you already have docker [Docker](https://www.docker.com/) 
+installed and have cloned the repository.
+
+First create a volume to store the data:
+
+    docker volume create zesje
+
+Then build the Docker image using the following below. Anytime you 
+update Zesje by pulling the repository you have to run this command again.
+
+    docker build -f auto.Dockerfile . -t zesje:auto
+
+Finally, you can run the container to start Zesje using:
+
+    docker run -p 8881:80 --volume zesje:/app/data-dev -it zesje:auto
+
+Zesje should be available at http://127.0.0.1:8881. If you get 
+the error `502 - Bad Gateway` it means that Zesje is still starting.
+
 ## Development
 
 ### Setting up a development environment

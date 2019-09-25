@@ -1,2 +1,5 @@
-*
-!environment.yml
+.git/
+cov.html
+data
+data-dev
+node_modules/

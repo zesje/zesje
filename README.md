@@ -9,7 +9,7 @@ Zesje is an online grading system for written exams.
 ### Running Zesje using Docker
 Running Zesje using Docker is the easiest method to run Zesje
 yourself with minimal technical knowledge required. For this approach 
-we assume that you already have docker [Docker](https://www.docker.com/) 
+we assume that you already have [Docker](https://www.docker.com/) 
 installed and have cloned the repository.
 
 First create a volume to store the data:

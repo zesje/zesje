@@ -306,10 +306,10 @@ class Grade extends React.Component {
                   <div className='level-left'>
                     <div className='level-item'>
                       <div>
-                      {solution.graded_at
-                        ? <div>Graded by: {solution.graded_by.name} <i>({gradedTime.toLocaleString()})</i></div>
-                        : <div>Ungraded</div>
-                      }
+                        {solution.graded_at
+                          ? <div>Graded by: {solution.graded_by.name} <i>({gradedTime.toLocaleString()})</i></div>
+                          : <div>Ungraded</div>
+                        }
                       </div>
                     </div>
                   </div>

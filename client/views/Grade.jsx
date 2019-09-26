@@ -305,12 +305,12 @@ class Grade extends React.Component {
                 <div className='level'>
                   <div className='level-left'>
                     <div className='level-item'>
-                      <p>
+                      <div>
                       {solution.graded_at
                         ? <div>Graded by: {solution.graded_by.name} <i>({gradedTime.toLocaleString()})</i></div>
                         : <div>Ungraded</div>
                       }
-                      </p>
+                      </div>
                     </div>
                   </div>
                   <div className='level-right'>

@@ -303,19 +303,22 @@ class Grade extends React.Component {
                 }
 
                 <div className='level'>
-                  <div className='level-item'>
-                    {solution.graded_at
-                      ? <div>Graded by: {solution.graded_by.name} <i>({gradedTime.toLocaleString()})</i></div>
-                      : <div>Ungraded</div>
-                    }
+                  <div className='level-left'>
+                    <div className='level-item'>
+                      <p>
+                      {solution.graded_at
+                        ? <div>Graded by: {solution.graded_by.name} <i>({gradedTime.toLocaleString()})</i></div>
+                        : <div>Ungraded</div>
+                      }
+                      </p>
+                    </div>
                   </div>
                   <div className='level-right'>
                     <div className='level-item'>
-                      <label className={'button' + (this.state.showTooltips ? ' tooltip is-tooltip-active' : '')}
-                        data-tooltip='f'>
-                        <input checked={this.state.fullPage} onChange={this.toggleFullPage} type='checkbox' />
+                      <button className={'button is-info is-outlined' + (this.state.showTooltips ? ' tooltip is-tooltip-active' : '')}
+                        data-tooltip='f' onClick={this.toggleFullPage}>
                         {this.state.fullPage ? 'Focus exercise' : 'View full page'}
-                      </label>
+                      </button>
                     </div>
                   </div>
                 </div>

@@ -30,6 +30,9 @@ class CheckStudents extends React.Component {
     Mousetrap.unbind(['down', 'j'])
   };
 
+  // If we add shortcuts here, don't forget to add them
+  // to ./client/components/help/ShortcutsHelp.md
+
   componentDidMount = () => {
     Mousetrap.bind(['left', 'h'], this.prev)
     Mousetrap.bind(['right', 'l'], this.next)

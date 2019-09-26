@@ -3,7 +3,7 @@ All the available shortcuts are listed below, grouped by page.
 ### Grade
 
 | Shortcut             | Action                 |
-|----------------------|------------------------|
+| -------------------- | ---------------------- |
 | `ctrl`               | Show shortcuts         |
 | `↑` and `↓`          | Select option          |
 | `space`              | Toggle selected option |
@@ -15,6 +15,7 @@ All the available shortcuts are listed below, grouped by page.
 | `→`                  | Next submission        |
 | `shift` + `←`        | Previous ungraded      |
 | `shift` + `→`        | Next ungraded          |
+| `f`                  | Toggle full page       |
 
 ### Students
 

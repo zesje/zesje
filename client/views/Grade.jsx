@@ -317,7 +317,7 @@ class Grade extends React.Component {
                     <div className='level-item'>
                       <button className={'button is-info is-outlined' + (this.state.showTooltips ? ' tooltip is-tooltip-active' : '')}
                         data-tooltip='f' onClick={this.toggleFullPage}>
-                        {this.state.fullPage ? 'Focus exercise' : 'View full page'}
+                        {this.state.fullPage ? 'Focus problem' : 'View full page'}
                       </button>
                     </div>
                   </div>

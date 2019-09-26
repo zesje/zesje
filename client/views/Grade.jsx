@@ -303,12 +303,12 @@ class Grade extends React.Component {
                 }
 
                 <div className='level'>
-                  <p classname='level-item'>
+                  <div className='level-item'>
                     {solution.graded_at
                       ? <div>Graded by: {solution.graded_by.name} <i>({gradedTime.toLocaleString()})</i></div>
                       : <div>Ungraded</div>
                     }
-                  </p>
+                  </div>
                   <div className='level-right'>
                     <div className='level-item'>
                       <label className={'button' + (this.state.showTooltips ? ' tooltip is-tooltip-active' : '')}

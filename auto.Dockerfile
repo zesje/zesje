@@ -22,4 +22,4 @@ RUN yarn build
 
 EXPOSE 80
 
-CMD service nginx restart && yarn migrate:dev && yarn dev
+CMD service nginx restart && yarn migrate:dev && yarn dev:backend

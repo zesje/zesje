@@ -8,6 +8,7 @@ dependencies:
     - gunicorn
     - redis
     - pip
+    - imagemagick
     - pip:
         # Core components
         - flask

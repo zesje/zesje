@@ -412,6 +412,7 @@ def save_with_even_pages(pdf_path, exam_pdf_file):
     pagecount = len(exam_pdf.pages)
 
     if (pagecount % 2 == 0):
+        exam_pdf_file.seek(0)
         exam_pdf_file.save(pdf_path)
         return
 

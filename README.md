@@ -31,6 +31,8 @@ the error `502 - Bad Gateway` it means that Zesje is still starting.
 ## Development
 
 ### Setting up a development environment
+*Zesje currently doesn't support native Windows, but WSL works.*
+
 We recommend using the Conda tool for managing your development
 environment. If you already have Anaconda or Miniconda installed,
 you may skip this step.
@@ -61,15 +63,14 @@ manually for now (we are working to bring this dependency into the
 Conda ecosystem). You can install this dependency in the following way
 on different platforms:
 
-| OS            | Command                      |
-|---------------|------------------------------|
-| macOS         | `brew install libdmtx`       |
-| Debian/Ubuntu | `sudo apt install libdmtx0a` |
-| Arch          | `pacman -S libdmtx`          |
-| Fedora        | `dnf install libdmtx`        |
-| openSUSE      | `zypper install libdmtx0`    |
-| Windows       | *not necessary*              |
-
+| OS                            | Command                   |
+|-------------------------------|---------------------------|
+| macOS                         | `brew install libdmtx`    |
+| Debian <= 9, Ubuntu <= 19.04  | `apt install libdmtx0a`   |
+| Debian >= 10, Ubuntu >= 19.10 | `apt install libdmtx0b`   |
+| Arch                          | `pacman -S libdmtx`       |
+| Fedora                        | `dnf install libdmtx`     |
+| openSUSE                      | `zypper install libdmtx0` |
 
 
 ### Running a development server

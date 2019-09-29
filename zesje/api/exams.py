@@ -9,13 +9,9 @@ from flask_restful import Resource, reqparse
 from werkzeug.datastructures import FileStorage
 from sqlalchemy.orm import selectinload
 
-from ..pdf_generation import generate_pdfs, output_pdf_filename_format, join_pdfs, page_is_size
+from ..pdf_generation import generate_pdfs, output_pdf_filename_format, join_pdfs
+from ..pdf_generation import page_is_size, save_with_even_pages, PAGE_FORMATS
 from ..database import db, Exam, ExamWidget, Submission, token_length
-
-PAGE_FORMATS = {
-    "A4": (595.276, 841.89),
-    "US letter": (612, 792),
-}
 
 
 def _get_exam_dir(exam_id):
@@ -23,6 +19,33 @@ def _get_exam_dir(exam_id):
         app.config['DATA_DIRECTORY'],
         f'{exam_id}_data',
     )
+
+
+def checkboxes(exam):
+    """
+    Returns all multiple choice question check boxes for one specific exam
+
+    Parameters
+    ----------
+        exam: the exam
+
+    Returns
+    -------
+        A list of tuples with checkbox data.
+        Each tuple is represented as (x, y, page, label)
+
+        Where
+        x: x position
+        y: y position
+        page: page number
+        label: checkbox label
+    """
+    cb_data = []
+    for problem in exam.problems:
+        page = problem.widget.page
+        cb_data += [(cb.x, cb.y, page, cb.label) for cb in problem.mc_options]
+
+    return cb_data
 
 
 class Exams(Resource):
@@ -159,8 +182,22 @@ class Exams(Resource):
                         'y': prob.widget.y,
                         'width': prob.widget.width,
                         'height': prob.widget.height,
+                        'type': prob.widget.type
                     },
-                    'graded': any([sol.graded_by is not None for sol in prob.solutions])
+                    'graded': any([sol.graded_by is not None for sol in prob.solutions]),
+                    'mc_options': [
+                        {
+                            'id': mc_option.id,
+                            'label': mc_option.label,
+                            'feedback_id': mc_option.feedback_id,
+                            'widget': {
+                                'name': mc_option.name,
+                                'x': mc_option.x,
+                                'y': mc_option.y,
+                                'type': mc_option.type
+                            }
+                        } for mc_option in prob.mc_options
+                    ]
                 } for prob in exam.problems  # Sorted by prob.id
             ],
             'widgets': [
@@ -169,6 +206,7 @@ class Exams(Resource):
                     'name': widget.name,
                     'x': widget.x,
                     'y': widget.y,
+                    'type': widget.type
                 } for widget in exam.widgets  # Sorted by widget.id
             ],
             'finalized': exam.finalized,
@@ -231,10 +269,9 @@ class Exams(Resource):
 
         exam_dir = _get_exam_dir(exam.id)
         pdf_path = os.path.join(exam_dir, 'exam.pdf')
-
         os.makedirs(exam_dir, exist_ok=True)
 
-        pdf_data.save(pdf_path)
+        save_with_even_pages(pdf_path, args['pdf'])
 
         print(f"Added exam {exam.id} (name: {exam_name}, token: {exam.token}) to database")
 
@@ -320,13 +357,16 @@ class ExamGeneratedPdfs(Resource):
         generated_pdfs_dir = self._get_generated_exam_dir(exam_dir)
         os.makedirs(generated_pdfs_dir, exist_ok=True)
 
+        cb_data = checkboxes(exam)
+
         generate_pdfs(
             exam_path,
             exam.token,
             copy_nums,
             pdf_paths,
             student_id_widget.x, student_id_widget.y,
-            barcode_widget.x, barcode_widget.y
+            barcode_widget.x, barcode_widget.y,
+            cb_data
         )
 
     post_parser = reqparse.RequestParser()
@@ -476,13 +516,15 @@ class ExamPreview(Resource):
 
         exam_path = os.path.join(exam_dir, 'exam.pdf')
 
+        cb_data = checkboxes(exam)
         generate_pdfs(
             exam_path,
             "A" * token_length,
             [1559],
             [output_file],
             student_id_widget.x, student_id_widget.y,
-            barcode_widget.x, barcode_widget.y
+            barcode_widget.x, barcode_widget.y,
+            cb_data
         )
 
         output_file.seek(0)

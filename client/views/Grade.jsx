@@ -1,4 +1,5 @@
 import React from 'react'
+import Notification from 'react-bulma-notification'
 
 import Hero from '../components/Hero.jsx'
 
@@ -32,6 +33,7 @@ class Grade extends React.Component {
     // Also add the shortcut to ./client/commponents/help/ShortcutsHelp.md
     this.props.bindShortcut(['left', 'h'], this.prev)
     this.props.bindShortcut(['right', 'l'], this.next)
+    this.props.bindShortcut(['a'], this.approve)
     this.props.bindShortcut(['shift+left', 'shift+h'], (event) => {
       event.preventDefault()
       this.prevUngraded()
@@ -151,6 +153,23 @@ class Grade extends React.Component {
       id: problem.feedback[index].id,
       graderID: this.props.graderID
     })
+      .then(result => {
+        this.props.updateSubmission(this.state.sIndex)
+      })
+  }
+
+  approve = () => {
+    const exam = this.props.exam
+    const problem = exam.problems[this.state.pIndex]
+    const optionURI = this.state.examID + '/' +
+      exam.submissions[this.state.sIndex].id + '/' +
+      problem.id
+    api.put('solution/approve/' + optionURI, {
+      graderID: this.props.graderID
+    })
+      .catch(resp => {
+        resp.json().then(body => Notification.error('Could not approve feedback: ' + body.message))
+      })
       .then(result => {
         this.props.updateSubmission(this.state.sIndex)
       })
@@ -306,7 +325,8 @@ class Grade extends React.Component {
                 <div className='level'>
                   <div className='level-left'>
                     <div className='level-item'>
-                      <div>
+                      <div className={(this.state.showTooltips ? ' tooltip is-tooltip-active is-tooltip-top' : '')}
+                        data-tooltip='approve feedback: a' >
                         {solution.graded_at
                           ? <div>Graded by: {solution.graded_by.name} <i>({gradedTime.toLocaleString()})</i></div>
                           : <div>Ungraded</div>

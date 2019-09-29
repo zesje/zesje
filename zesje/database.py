@@ -7,7 +7,9 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean, ForeignKey
 from flask_sqlalchemy.model import BindMetaMixin, Model
 from sqlalchemy.ext.declarative import DeclarativeMeta, declarative_base
+from sqlalchemy.orm import backref
 from sqlalchemy.orm.session import object_session
+from sqlalchemy.ext.hybrid import hybrid_property
 
 
 # Class for NOT automatically determining table names
@@ -103,6 +105,10 @@ class Problem(db.Model):
     solutions = db.relationship('Solution', backref='problem', cascade='all', lazy=True)
     widget = db.relationship('ProblemWidget', backref='problem', cascade='all', uselist=False, lazy=True)
 
+    @hybrid_property
+    def mc_options(self):
+        return [feedback_option.mc_option for feedback_option in self.feedback_options if feedback_option.mc_option]
+
 
 class FeedbackOption(db.Model):
     """feedback option"""
@@ -112,6 +118,8 @@ class FeedbackOption(db.Model):
     text = Column(Text, nullable=False)
     description = Column(Text, nullable=True)
     score = Column(Integer, nullable=True)
+    mc_option = db.relationship('MultipleChoiceOption', backref=backref('feedback', cascade='all'),
+                                cascade='all', uselist=False, lazy=True)
 
 
 # Table for many to many relationship of FeedbackOption and Solution
@@ -160,6 +168,18 @@ class Widget(db.Model):
     __mapper_args__ = {
         'polymorphic_identity': 'widget',
         'polymorphic_on': type
+    }
+
+
+class MultipleChoiceOption(Widget):
+    __tablename__ = 'mc_option'
+    id = Column(Integer, ForeignKey('widget.id'), primary_key=True, autoincrement=True)
+
+    label = Column(String, nullable=True)
+    feedback_id = Column(Integer, ForeignKey('feedback_option.id'), nullable=False)
+
+    __mapper_args__ = {
+        'polymorphic_identity': 'mcq_widget'
     }
 
 

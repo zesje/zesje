@@ -1,0 +1,22 @@
+.panel-block.mcq-block {
+    justify-content: space-between;
+}
+
+.mcq-block .inline-mcq-edit {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: nowrap;
+}
+
+.mcq-block .inline-mcq-edit label {
+    margin-right: 4px;
+}
+
+.mcq-block .inline-mcq-edit:first-of-type {
+    margin-right: 20px;
+}
+
+.mcq-block input, .mcq-block .select {
+    max-width: 130px;
+}

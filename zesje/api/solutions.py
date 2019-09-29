@@ -147,3 +147,46 @@ class Solutions(Resource):
         db.session.commit()
 
         return {'state': state}
+
+
+class Approve(Resource):
+    """Mark a solution as graded."""
+    put_parser = reqparse.RequestParser()
+    put_parser.add_argument('graderID', type=int, required=True)
+
+    def put(self, exam_id, submission_id, problem_id):
+        """Takes an existing feedback checks if it is valid then gives the current graders id to the solution this is
+        usefull for approving pre graded solutions
+
+        Parameters
+        ----------
+            graderID: int
+
+        Returns
+        -------
+            state: boolean
+        """
+        args = self.put_parser.parse_args()
+
+        grader = Grader.query.get(args.graderID)
+
+        sub = Submission.query.filter(Submission.exam_id == exam_id,
+                                      Submission.copy_number == submission_id).one_or_none()
+        if sub is None:
+            return dict(status=404, message='Submission does not exist.'), 404
+
+        solution = Solution.query.filter(Solution.submission_id == sub.id,
+                                         Solution.problem_id == problem_id).one_or_none()
+        if solution is None:
+            return dict(status=404, message='Solution does not exist.'), 404
+
+        graded = len(solution.feedback)
+
+        if graded:
+            solution.graded_at = datetime.now()
+            solution.graded_by = grader
+            db.session.commit()
+        else:
+            return dict(status=409, message='At least one feedback option must be selected.'), 409
+
+        return {'state': graded}

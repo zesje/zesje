@@ -9,16 +9,21 @@ import signal
 
 import cv2
 import numpy as np
+from scipy import spatial
+
 from pikepdf import Pdf, PdfImage
 from PIL import Image
 from wand.image import Image as WandImage
 from pylibdmtx import pylibdmtx
+from sqlalchemy.exc import InternalError
 
 from .database import db, Scan, Exam, Page, Student, Submission, Solution, ExamWidget
 from .datamatrix import decode_raw_datamatrix
 from .images import guess_dpi, get_box
 from .factory import make_celery
+from .pregrader import grade_mcq
 
+from .pdf_generation import MARKER_FORMAT, PAGE_FORMATS
 
 ExtractedBarcode = namedtuple('ExtractedBarcode', ['token', 'copy', 'page'])
 
@@ -275,7 +280,8 @@ def process_page(image_data, exam_config, output_dir=None, strict=False):
     3. Verify it satisfies the format required by zesje
     4. Verify it belongs to the correct exam
     5. Incorporate the page in the database
-    6. If the page contains student number, try to read it off the page
+    6. Perform pregrading
+    7. If the page contains student number, try to read it off the page
 
     Parameters
     ----------
@@ -313,12 +319,10 @@ def process_page(image_data, exam_config, output_dir=None, strict=False):
     corner_keypoints = find_corner_marker_keypoints(image_array)
     try:
         check_corner_keypoints(image_array, corner_keypoints)
+        image_array = realign_image(image_array, corner_keypoints)
     except RuntimeError as e:
         if strict:
             return False, str(e)
-    else:
-        (image_array, new_keypoints) = rotate_image(image_array, corner_keypoints)
-        image_array = shift_image(image_array, new_keypoints)
 
     try:
         barcode, upside_down = decode_barcode(image_array, exam_config)
@@ -336,7 +340,13 @@ def process_page(image_data, exam_config, output_dir=None, strict=False):
     else:
         return True, "Testing, image not saved and database not updated."
 
-    update_database(image_path, barcode)
+    sub = update_database(image_path, barcode)
+
+    try:
+        grade_mcq(sub, barcode.page, image_array)
+    except InternalError as e:
+        if strict:
+            return False, str(e)
 
     if barcode.page == 0:
         description = guess_student(
@@ -384,8 +394,8 @@ def update_database(image_path, barcode):
 
     Returns
     -------
-    signature_validated : bool
-        If the corresponding submission has a validated signature.
+    sub : Submission
+        the current submission
     """
     exam = Exam.query.filter(Exam.token == barcode.token).first()
     if exam is None:
@@ -404,6 +414,8 @@ def update_database(image_path, barcode):
         db.session.add(Page(path=image_path, submission=sub, number=barcode.page))
 
     db.session.commit()
+
+    return sub
 
 
 def decode_barcode(image, exam_config):
@@ -452,104 +464,6 @@ def decode_barcode(image, exam_config):
                 pass
 
     raise RuntimeError("No barcode found.")
-
-
-def rotate_image(image_array, corner_keypoints):
-    """Rotate an image according to the rotation of the corner markers."""
-
-    # Find two corner markers which lie in the same horizontal half.
-    # Same horizontal half is chosen as the line from one keypoint to
-    # the other shoud be 0. To get corner markers in the same horizontal half,
-    # the pair with the smallest distance is chosen.
-    distances = [(a, b, math.hypot(a[0] - b[0], a[1] - b[1]))
-                 for (a, b)
-                 in list(itertools.combinations(corner_keypoints, 2))]
-    distances.sort(key=lambda tup: tup[2], reverse=True)
-    best_keypoint_combination = distances.pop()
-
-    (coords1, coords2, dist) = best_keypoint_combination
-
-    # If the angle is downward, we have a negative angle and
-    # we want to rotate it counterclockwise
-    # However warpaffine needs a positve angle if
-    # you want to rotate it counterclockwise
-    # So we invert the angle retrieved from calc_angle
-    angle_deg = -1 * calc_angle(coords1, coords2)
-    angle_rad = math.radians(angle_deg)
-
-    h, w, *_ = image_array.shape
-    rot_origin = (w / 2, h / 2)
-
-    keyp_from_rot_origin = [(coord_x - rot_origin[0], coord_y - rot_origin[1])
-                            for (coord_x, coord_y)
-                            in corner_keypoints]
-
-    after_rot_keypoints = [((coord_y * math.sin(angle_rad) +
-                            coord_x * math.cos(angle_rad) + rot_origin[0]),
-                            (coord_y * math.cos(angle_rad) -
-                            coord_x * math.sin(angle_rad)) + rot_origin[1])
-                           for (coord_x, coord_y)
-                           in keyp_from_rot_origin]
-
-    # Create rotation matrix and rotate the image around the center
-    rot_mat = cv2.getRotationMatrix2D(rot_origin, angle_deg, 1)
-    rot_image = cv2.warpAffine(image_array, rot_mat, (w, h), cv2.BORDER_CONSTANT,
-                               borderMode=cv2.BORDER_CONSTANT,
-                               borderValue=(255, 255, 255))
-
-    return (rot_image, after_rot_keypoints)
-
-
-def shift_image(image, corner_keypoints):
-    """Roll the image such that QR occupies coords
-       specified by the template."""
-    corner_keypoints = np.array(corner_keypoints)
-    h, w, *_ = image.shape
-
-    xkeypoints = np.array([keypoint[0] for keypoint in corner_keypoints])
-    ykeypoints = np.array([keypoint[1] for keypoint in corner_keypoints])
-
-    is_left_half = xkeypoints < (w / 2)
-    is_top_half = ykeypoints < (h / 2)
-
-    # Get pixel locations to translate to. Currently only works with A4 sized
-    # paper
-    # TODO Add US letter functionality
-    x0 = 10/210 * w
-    y0 = 10/297 * h
-
-    # If there is a keypoint in the topleft, take that point as starting point
-    # for the translation
-    topleft = corner_keypoints[is_left_half & is_top_half]
-    if(len(topleft) == 1):
-        x = topleft[0][0]
-        y = topleft[0][1]
-    else:
-
-        # If there is no keypoint in the topleft, try to check if there is one
-        # in the bottom left and bottom right. If so, infer the topleft
-        # coordinates from their coordinates
-        topright = corner_keypoints[~is_left_half & is_top_half]
-        bottomleft = corner_keypoints[is_left_half & ~is_top_half]
-        if(len(topright) == 1 & len(bottomleft) == 1):
-            x = bottomleft[0][0]
-            y = topright[0][1]
-
-        else:
-            # We can only end here if something went wrong with the detection
-            # of corner markers. If so, just don't shift at all.
-            x = x0
-            y = y0
-
-    shift = np.round((y0-y, x0-x)).astype(int)
-    shifted_image = np.roll(image, shift[0], axis=0)
-    shifted_image = np.roll(shifted_image, shift[1], axis=1)
-
-    # Workaround of https://github.com/python-pillow/Pillow/issues/3109
-    if shifted_image.dtype == bool:
-        shifted_image = shifted_image * np.uint8(255)
-
-    return shifted_image
 
 
 def guess_student(exam_token, copy_number, app_config=None, force=False):
@@ -775,3 +689,91 @@ def check_corner_keypoints(image_array, keypoints):
 
     if max(corners.values()) > 1:
         raise RuntimeError("Found multiple corner markers in the same corner")
+
+
+def realign_image(image_array, keypoints=None, page_format="A4"):
+    """
+    Transform the image so that the keypoints match the reference.
+
+    params
+    ------
+    image_array : numpy.array
+        The image in the form of a numpy array.
+    keypoints : List[(int,int)]
+        tuples of coordinates of the found keypoints, (x,y), in pixels. Can be a set of 3 or 4 tuples.
+        if none are provided, they are found by using find_corner_marker_keypoints on the input image.
+    returns
+    -------
+    return_array: numpy.array
+        The image realigned properly.
+    """
+
+    if not keypoints:
+        keypoints = find_corner_marker_keypoints(image_array)
+
+    keypoints = np.asarray(keypoints)
+
+    if not len(keypoints):
+        raise RuntimeError("No keypoints provided for alignment.")
+
+    # generate the coordinates where the markers should be
+    dpi = guess_dpi(image_array)
+    reference_keypoints = original_corner_markers(page_format, dpi)
+
+    # create a matrix with the distances between each keypoint and match the keypoint sets
+    dists = spatial.distance.cdist(keypoints, reference_keypoints)
+
+    idxs = np.argmin(dists, 1)  # apply to column 1 so indices for input keypoints
+    adjusted_markers = reference_keypoints[idxs]
+
+    if len(adjusted_markers) == 1:
+        x_shift, y_shift = np.subtract(adjusted_markers[0], keypoints[0])
+        return shift_image(image_array, x_shift, y_shift)
+
+    rows, cols, _ = image_array.shape
+
+    # get the transformation matrix
+    M = cv2.estimateAffinePartial2D(keypoints, adjusted_markers)[0]
+
+    # apply the transformation matrix and fill in the new empty spaces with white
+    return_image = cv2.warpAffine(image_array, M, (cols, rows),
+                                  borderValue=(255, 255, 255, 255))
+
+    return return_image
+
+
+def original_corner_markers(format, dpi):
+    left_x = MARKER_FORMAT["margin"]/72 * dpi
+    top_y = MARKER_FORMAT["margin"]/72 * dpi
+    right_x = (PAGE_FORMATS[format][0] - MARKER_FORMAT["margin"])/72 * dpi
+    bottom_y = (PAGE_FORMATS[format][1] - MARKER_FORMAT["margin"])/72 * dpi
+
+    return np.round([(left_x, top_y),
+                     (right_x, top_y),
+                     (left_x, bottom_y),
+                     (right_x, bottom_y)])
+
+
+def shift_image(image_array, x_shift, y_shift):
+    """
+    take an image and shift it along the x and y axis using opencv
+
+    params:
+    -------
+    image_array: numpy.array
+        an array of the image to be shifted
+    x_shift: int
+        indicates how many pixels it has to be shifted on the x-axis, so from left to right
+    y_shift: int
+        indicates how many pixels it has to be shifted on the y-axis, so from top to bottom
+    returns:
+    --------
+    a numpy array of the image shifted where empty spaces are filled with white
+
+    """
+
+    M = np.float32([[1, 0, x_shift],
+                   [0, 1, y_shift]])
+    h, w, _ = image_array.shape
+    return cv2.warpAffine(image_array, M, (w, h),
+                          borderValue=(255, 255, 255, 255))

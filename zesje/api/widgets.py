@@ -1,7 +1,7 @@
 from flask_restful import Resource
 from flask import request
 
-from ..database import db, Widget, ExamWidget
+from ..database import db, Widget, ExamWidget, MultipleChoiceOption
 
 
 class Widgets(Resource):
@@ -15,6 +15,8 @@ class Widgets(Resource):
             return dict(status=404, message=msg), 404
         elif isinstance(widget, ExamWidget) and widget.exam.finalized:
             return dict(status=403, message=f'Exam is finalized'), 403
+        elif isinstance(widget, MultipleChoiceOption) and widget.feedback.problem.exam.finalized:
+            return dict(status=405, message=f'Exam is finalized'), 405
 
         # will 400 on malformed json
         body = request.get_json()

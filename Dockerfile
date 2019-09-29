@@ -1,12 +1,12 @@
-FROM continuumio/miniconda3
+# A Dockerfile containing the production deployment for Zesje
 
-RUN apt-get update -y && apt-get install -y libdmtx0a libmagickwand-dev
+FROM continuumio/miniconda3
 
 RUN apt-get update && \
     apt-get install -y \
         curl \
         poppler-utils build-essential libgl1-mesa-glx \
-        imagemagick libsm-dev libdmtx-dev libdmtx0a libmagickwand-dev \
+        imagemagick libsm-dev libdmtx-dev libdmtx0b \
         && \
     apt-get -y --quiet install git supervisor nginx
 

@@ -30,6 +30,7 @@ class Grade extends React.Component {
   componentDidMount = () => {
     // If we change the keybindings here we should also remember to
     // update the tooltips for the associated widgets (in render()).
+    // Also add the shortcut to ./client/commponents/help/ShortcutsHelp.md
     this.props.bindShortcut(['left', 'h'], this.prev)
     this.props.bindShortcut(['right', 'l'], this.next)
     this.props.bindShortcut(['a'], this.approve)
@@ -49,6 +50,7 @@ class Grade extends React.Component {
       event.preventDefault()
       this.nextProblem()
     })
+    this.props.bindShortcut('f', this.toggleFullPage)
     this.props.bindShortcut('ctrl', () => this.setState({showTooltips: true}), 'keydown')
     this.props.bindShortcut('ctrl', () => this.setState({showTooltips: false}), 'keyup')
     let key = 0
@@ -173,9 +175,9 @@ class Grade extends React.Component {
       })
   }
 
-  toggleFullPage = (event) => {
+  toggleFullPage = () => {
     this.setState({
-      fullPage: event.target.checked
+      fullPage: !this.state.fullPage
     })
   }
 
@@ -320,29 +322,37 @@ class Grade extends React.Component {
                   </article> : null
                 }
 
+                <div className='level'>
+                  <div className='level-left'>
+                    <div className='level-item'>
+                      <div>
+                        {solution.graded_at
+                          ? <div>Graded by: {solution.graded_by.name} <i>({gradedTime.toLocaleString()})</i></div>
+                          : <div>Ungraded</div>
+                        }
+                      </div>
+                    </div>
+                  </div>
+                  <div className='level-right'>
+                    <div className='level-item'>
+                      <button className={'button is-info is-outlined' + (this.state.showTooltips ? ' tooltip is-tooltip-active' : '')}
+                        data-tooltip='f' onClick={this.toggleFullPage}>
+                        {this.state.fullPage ? 'Focus problem' : 'View full page'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
                 <p className={'box' + (solution.graded_at ? ' is-graded' : '')}>
                   <img src={exam.id ? ('api/images/solutions/' + exam.id + '/' +
                     problem.id + '/' + submission.id + '/' + (this.state.fullPage ? '1' : '0')) + '?' +
                     this.getLocationHash(problem) : ''} alt='' />
                 </p>
-                <div className={
-                  'graded info' + (this.state.showTooltips ? ' tooltip is-tooltip-active is-tooltip-left' : ''
-                  )} data-tooltip='a to approve' >
-                  {solution.graded_at
-                    ? <div>Graded by: {solution.graded_by.name} <i>({gradedTime.toLocaleString()})</i></div>
-                    : <div>Ungraded</div>
-                  }
-                </div>
-                <label className='checkbox'>
-                  <input checked={this.state.fullPage} onChange={this.toggleFullPage} type='checkbox' />
-                  View full page
-                </label>
 
               </div>
             </div>
           </div>
         </section>
-
       </div>
     )
   }

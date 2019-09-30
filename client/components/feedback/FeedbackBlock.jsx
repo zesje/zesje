@@ -2,6 +2,26 @@ import React from 'react'
 
 import * as api from '../../api.jsx'
 
+const Tooltip = (props) => {
+  if (!props.text) {
+    return null
+  }
+
+  let tooltipClass = 'icon tooltip is-tooltip-right '
+  if (props.text.length > 100) {
+    tooltipClass += 'is-tooltip-multiline '
+  }
+
+  return (
+    <span
+      className={tooltipClass}
+      data-tooltip={props.text}
+    >
+      <i className='fa fa-comment' />
+    </span>
+  )
+}
+
 class FeedbackBlock extends React.Component {
   state = {
     hover: false
@@ -49,6 +69,7 @@ class FeedbackBlock extends React.Component {
         <span style={{ width: '80%' }}>
           {this.props.feedback.name}
         </span>
+        <Tooltip text={this.props.feedback.description} />
         <div className='field is-grouped'>
           <div className='control'>
             <div className='tags has-addons'>

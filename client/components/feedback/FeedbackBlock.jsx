@@ -8,7 +8,7 @@ const Tooltip = (props) => {
   }
 
   let tooltipClass = 'icon tooltip is-tooltip-right '
-  if (props.text.length > 100) {
+  if (props.text.length > 45) {
     tooltipClass += 'is-tooltip-multiline '
   }
 

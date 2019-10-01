@@ -2,22 +2,25 @@ import React from 'react'
 import Switch from 'react-bulma-switch/full'
 import './PanelMCQ.css'
 
+const LABEL_TYPES = {
+  NONE: 0, // No labels
+  TRUE_FALSE: 1, // True or false
+  LETTERS: 2, // A, B, C, ...
+  NUMERIC: 3 // 1, 2, 3, ...
+}
+
+const LABEL_TYPE_STRINGS = ['None', 'True/False', 'A, B, C ...', '1, 2, 3 ...']
+
 /**
  * PanelMCQ is a component that allows the user to generate mc questions and options
  */
 class PanelMCQ extends React.Component {
   constructor (props) {
     super(props)
-    this.onChangeNPA = this.onChangeNPA.bind(this)
-    this.onChangeLabelType = this.onChangeLabelType.bind(this)
-    this.generateLabels = this.generateLabels.bind(this)
-    this.updateNumberOptions = this.updateNumberOptions.bind(this)
-    this.operationInProgress = this.operationInProgress.bind(this)
 
     this.state = {
-      chosenLabelType: 2,
-      nrPossibleAnswers: 2,
-      labelTypes: ['None', 'True/False', 'A, B, C ...', '1, 2, 3 ...']
+      chosenLabelType: LABEL_TYPES.LETTERS,
+      nrPossibleAnswers: 2
     }
   }
 
@@ -43,16 +46,16 @@ class PanelMCQ extends React.Component {
    */
   static deriveLabelType (options) {
     if (options.length === 0) {
-      return 2
+      return LABEL_TYPES.LETTERS
     } else if (options.length === 2 && ((options[0].label === 'T' && options[1].label === 'F') ||
       (options[0].label === 'F' && options[1].label === 'T'))) {
-      return 1
+      return LABEL_TYPES.TRUE_FALSE
     } else if (options[0].label.match(/[A-Z]/)) {
-      return 2
+      return LABEL_TYPES.LETTERS
     } else if (parseInt(options[0].label)) {
-      return 3
+      return LABEL_TYPES.NUMERIC
     } else {
-      return 0
+      return LABEL_TYPES.NONE
     }
   }
 
@@ -60,14 +63,14 @@ class PanelMCQ extends React.Component {
    * Check if a change is currently in progress.
    * @returns {boolean} true if there's a change operation in progress, false otherwise
    */
-  operationInProgress () {
+  operationInProgress = () => {
     let prob = this.props.problem
     return this.state.chosenLabelType !== PanelMCQ.deriveLabelType(prob.mc_options) ||
       this.state.nrPossibleAnswers !== prob.mc_options.length
   }
 
   // this functions calculates
-  updateNumberOptions () {
+  updateNumberOptions = () => {
     let difference = this.state.nrPossibleAnswers - this.props.problem.mc_options.length
     if (difference > 0) {
       let startingAt = this.props.problem.mc_options.length
@@ -81,12 +84,12 @@ class PanelMCQ extends React.Component {
   }
 
   // this function is called when the input is changed for the number of possible answers
-  onChangeNPA (e) {
+  onChangeNPA = (e) => {
     if (this.operationInProgress()) return // finish the first operation first to ensure consistency
 
     let value = parseInt(e.target.value)
     if (!isNaN(value) && value <= this.props.totalNrAnswers) {
-      if (this.state.chosenLabelType === 1) {
+      if (this.state.chosenLabelType === LABEL_TYPES.TRUE_FALSE) {
         value = 2
       }
       this.setState({
@@ -96,13 +99,13 @@ class PanelMCQ extends React.Component {
   }
 
   // this function is called when the input is changed for the desired label type
-  onChangeLabelType (e) {
+  onChangeLabelType = (e) => {
     if (this.operationInProgress()) return // finish the first operation first to ensure consistency
 
     let value = parseInt(e.target.value)
     if (!isNaN(value)) {
       // if the label type is True/False then reduce the number of mc options to 2
-      if (parseInt(value) === 1) {
+      if (parseInt(value) === LABEL_TYPES.TRUE_FALSE) {
         this.setState({
           nrPossibleAnswers: 2,
           chosenLabelType: value
@@ -127,16 +130,16 @@ class PanelMCQ extends React.Component {
    * @param startingAt at which number/character to start generating labels
    * @returns {any[]|string[]|number[]}
    */
-  generateLabels (nrLabels, startingAt) {
+  generateLabels = (nrLabels, startingAt) => {
     let type = this.state.chosenLabelType
 
     switch (type) {
-      case 1:
+      case LABEL_TYPES.TRUE_FALSE:
         return ['T', 'F'].slice(startingAt)
-      case 2:
+      case LABEL_TYPES.LETTERS:
         return Array.from(Array(nrLabels).keys()).map(
           (e) => String.fromCharCode(e + 65 + startingAt))
-      case 3:
+      case LABEL_TYPES.NUMERIC:
         return Array.from(Array(nrLabels).keys()).map(e => String(e + 1 + startingAt))
       default:
         return Array(nrLabels).fill(' ')
@@ -173,18 +176,13 @@ class PanelMCQ extends React.Component {
               <div className='inline-mcq-edit'>
                 <label>Labels</label>
                 <div className='select is-hovered is-fullwidth'>
-                  {(function () {
-                    var optionList = this.state.labelTypes.map(
-                      (label, i) => <option key={i} value={String(i)}>{label}</option>
-                    )
-                    return (
-                      <div className='select is-hovered is-fullwidth'>
-                        <select value={this.state.chosenLabelType} onChange={this.onChangeLabelType}>
-                          {optionList}
-                        </select>
-                      </div>
-                    )
-                  }.bind(this)())}
+                  <div className='select is-hovered is-fullwidth'>
+                    <select value={this.state.chosenLabelType} onChange={this.onChangeLabelType}>
+                      {
+                        LABEL_TYPE_STRINGS.map((label, i) => <option key={i} value={String(i)}>{label}</option>)
+                      }
+                    </select>
+                  </div>
                 </div>
               </div>
             </div>

@@ -65,6 +65,12 @@ def run_migrations_online():
                                 prefix='sqlalchemy.',
                                 poolclass=pool.NullPool)
 
+    # Create database directory if it does not exist yet
+    db_url = config.get_main_option("sqlalchemy.url")
+    db_path = db_url.replace('sqlite:///', '')
+    db_dir = os.path.dirname(db_path)
+    os.makedirs(db_dir, exist_ok=True)
+
     connection = engine.connect()
     context.configure(connection=connection,
                       target_metadata=target_metadata,

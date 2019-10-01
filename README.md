@@ -4,9 +4,35 @@
 
 Zesje is an online grading system for written exams.
 
+## Running Zesje
+
+### Running Zesje using Docker
+Running Zesje using Docker is the easiest method to run Zesje
+yourself with minimal technical knowledge required. For this approach 
+we assume that you already have [Docker](https://www.docker.com/) 
+installed, cloned the Zesje repository and entered its directory.
+
+First create a volume to store the data:
+
+    docker volume create zesje
+
+Then build the Docker image using the following below. Anytime you 
+update Zesje by pulling the repository you have to run this command again.
+
+    docker build -f auto.Dockerfile . -t zesje:auto
+
+Finally, you can run the container to start Zesje using:
+
+    docker run -p 8881:80 --volume zesje:/app/data-dev -it zesje:auto
+
+Zesje should be available at http://127.0.0.1:8881. If you get 
+the error `502 - Bad Gateway` it means that Zesje is still starting.
+
 ## Development
 
 ### Setting up a development environment
+*Zesje currently doesn't support native Windows, but WSL works.*
+
 We recommend using the Conda tool for managing your development
 environment. If you already have Anaconda or Miniconda installed,
 you may skip this step.
@@ -37,15 +63,14 @@ manually for now (we are working to bring this dependency into the
 Conda ecosystem). You can install this dependency in the following way
 on different platforms:
 
-| OS            | Command                      |
-|---------------|------------------------------|
-| macOS         | `brew install libdmtx`       |
-| Debian/Ubuntu | `sudo apt install libdmtx0a` |
-| Arch          | `pacman -S libdmtx`          |
-| Fedora        | `dnf install libdmtx`        |
-| openSUSE      | `zypper install libdmtx0`    |
-| Windows       | *not necessary*              |
-
+| OS                            | Command                   |
+|-------------------------------|---------------------------|
+| macOS                         | `brew install libdmtx`    |
+| Debian <= 9, Ubuntu <= 19.04  | `apt install libdmtx0a`   |
+| Debian >= 10, Ubuntu >= 19.10 | `apt install libdmtx0b`   |
+| Arch                          | `pacman -S libdmtx`       |
+| Fedora                        | `dnf install libdmtx`     |
+| openSUSE                      | `zypper install libdmtx0` |
 
 
 ### Running a development server

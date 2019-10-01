@@ -305,7 +305,6 @@ class Exams extends React.Component {
           updateWidget={this.updateWidget}
           updateMCOsInState={this.updateMCOsInState}
           selectedWidgetId={this.state.selectedWidgetId}
-          repositionMCO={this.repositionMCO}
           highlightFeedback={(widget, feedbackId) => {
             let index = widget.problem.feedback.findIndex(e => { return e.id === feedbackId })
             let feedback = widget.problem.feedback[index]
@@ -402,7 +401,6 @@ class Exams extends React.Component {
    */
   generateMCOs = (problemWidget, labels, index, xPos, yPos) => {
     if (labels.length === index) {
-      this.repositionMCO(problemWidget.id, {x: problemWidget.x, y: problemWidget.y})
       return true
     }
 
@@ -432,8 +430,6 @@ class Exams extends React.Component {
     formData.append('y', data.widget.y + data.cbOffsetY)
     formData.append('problem_id', data.problem_id)
     formData.append('label', data.label)
-    formData.append('fb_description', feedback.description)
-    formData.append('fb_score', feedback.score)
     return api.put('mult-choice/', formData).then(result => {
       data.id = result.mult_choice_id
       data.feedback_id = result.feedback_id
@@ -493,9 +489,10 @@ class Exams extends React.Component {
 
     return api.del('mult-choice/' + option.id)
       .then(res => {
-        let feedback = widget.problem.feedback[index]
+        let indexFb = widget.problem.feedback.findIndex(e => { return e.id === option.feedback_id })
+        let feedback = widget.problem.feedback[indexFb]
         feedback.deleted = true
-        this.updateFeedbackAtIndex(feedback, widget, index)
+        this.updateFeedbackAtIndex(feedback, widget, indexFb)
         return new Promise((resolve) => {
           this.setState((prevState) => {
             return {
@@ -527,47 +524,6 @@ class Exams extends React.Component {
           return Promise.resolve(false)
         })
       })
-  }
-
-  /**
-   * This function updates the position of the mc options inside when the corresponding problem widget changes in
-   * size or position. Note that the positions in the database are not updated. These should be updated once when the
-   * action (resizing/dragging/other) is finalized.
-   * @param widget the problem widget containing mc options
-   * @param data the new data about the new size/position of the problem widget
-   */
-  repositionMCO = (widgetId, data) => {
-    let widget = this.state.widgets[widgetId]
-    if (widget.problem.mc_options.length > 0) {
-      let oldX = widget.problem.mc_options[0].widget.x
-      let oldY = widget.problem.mc_options[0].widget.y
-      let newX = oldX
-      let newY = oldY
-      let widthOption = widget.problem.widthMCO * widget.problem.mc_options.length
-      let heightOption = widget.problem.heightMCO
-      let widthProblem = data.width ? data.width : widget.width
-      let heightProblem = data.height ? data.height : widget.height
-
-      if (newX < data.x || widthOption >= widthProblem) {
-        newX = data.x
-      } else if (newX + widthOption > data.x + widthProblem) {
-        newX = data.x + widget.width - widthOption
-      }
-
-      if (newY < data.y || heightOption >= heightProblem) {
-        newY = data.y
-      } else if (newY + heightOption > data.y + heightProblem) {
-        newY = data.y + widget.height - heightOption
-      }
-
-      let changed = (oldX !== newX) || (oldY !== newY) // update the state only if the mc options were moved
-      if (changed) {
-        this.updateMCOsInState(widget, {
-          x: Math.round(newX),
-          y: Math.round(newY)
-        })
-      }
-    }
   }
 
   /**

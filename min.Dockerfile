@@ -1,14 +1,8 @@
-# A Dockerfile containing the production deployment for Zesje
+# A Dockerfile containing the bare minimum to run Zesje
 
 FROM continuumio/miniconda3
 
-RUN apt-get update && \
-    apt-get install -y \
-        curl \
-        poppler-utils build-essential libgl1-mesa-glx \
-        imagemagick libsm-dev libdmtx-dev libdmtx0b \
-        && \
-    apt-get -y --quiet install git supervisor nginx
+RUN apt-get update -y && apt-get install -y libdmtx0b
 
 WORKDIR /app
 

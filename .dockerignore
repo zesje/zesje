@@ -1,0 +1,5 @@
+cov.html
+data
+data-dev
+node_modules/
+*.Dockerfile

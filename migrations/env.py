@@ -7,6 +7,8 @@ import os
 from alembic import context
 from sqlalchemy import engine_from_config, pool
 from logging.config import fileConfig
+from datetime import datetime
+from shutil import copy
 
 
 from flask import current_app
@@ -78,6 +80,18 @@ def run_migrations_online():
                       target_metadata=target_metadata,
                       process_revision_directives=process_revision_directives,
                       **current_app.extensions['migrate'].configure_args)
+
+    to_revision = context.get_head_revision()
+    from_revision = context.get_context().get_current_revision()
+
+    # Create database backup if a migration is pending
+    if is_sqlite and os.path.isfile(db_path):
+        db_file = os.path.basename(db_path)
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        db_backup_file = 'backup_{}_{}'.format(timestamp, db_file)
+        db_backup_path = os.path.join(db_dir, db_backup_file)
+        if not os.path.isfile(db_backup_path) and from_revision != to_revision:
+            copy(db_path, db_backup_path)
 
     try:
         with context.begin_transaction():

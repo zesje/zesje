@@ -8,9 +8,7 @@ Revises: 4204f4a83863
 Create Date: 2019-05-15 15:41:56.615076
 """
 import sqlalchemy as sa
-import shutil
 from alembic import op
-from flask import current_app
 
 
 # revision identifiers, used by Alembic.
@@ -20,20 +18,7 @@ branch_labels = None
 depends_on = None
 
 
-def backup_db():
-    """
-    Creates a backup of the current database by making a copy
-    of the SQLite file.
-    """
-    db_url = current_app.config.get('SQLALCHEMY_DATABASE_URI')
-    db_path = db_url.replace('sqlite:///', '')
-
-    shutil.copy2(db_path, db_path + '.old')
-
-
 def upgrade():
-    backup_db()
-
     #
     # Create the multiple choice question table
     #
@@ -100,8 +85,6 @@ def upgrade():
 
 
 def downgrade():
-    backup_db()
-
     #
     # Remove the multiple choice question table
     #

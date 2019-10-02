@@ -126,6 +126,22 @@ def set_auto_grader(solution):
 
 
 def is_blank(problem, page_img, sub):
+    """
+    A function that determines if a solution is blank
+
+    Params
+    ------
+    problem: Problem
+        An instance of the problem to be checked
+    page_img: np.array
+        A numpy array of the image scan
+    sub: Submission
+        An instance of the submission to be checked
+
+    Returns
+    ------
+    True if the solution is blank, else False
+    """
     dpi = guess_dpi(page_img)
 
     # get the box where we think the box is
@@ -179,7 +195,7 @@ def box_is_filled(box, page_img, threshold=225, cut_padding=0.05, box_size=9):
     box_size: int
         the size of the checkbox in points.
 
-    Output
+    Returns
     ------
     True if the box is marked, else False.
     """

@@ -8,6 +8,10 @@ from .images import guess_dpi, get_box
 from .pdf_generation import CHECKBOX_FORMAT
 
 
+AUTOGRADER_NAME = 'Zesje'
+BLANK_FEEDBACK_NAME = 'Blank'
+
+
 def grade_problem(sub, page, page_img):
     """
     Automatically checks if a problem is blank, and adds a feedback option
@@ -26,7 +30,7 @@ def grade_problem(sub, page, page_img):
     """
     solutions_to_grade = [
         sol for sol in sub.solutions
-        if (not sol.graded_by or sol.graded_by.name == 'Zesje') and sol.problem.widget.page == page
+        if (not sol.graded_by or sol.graded_by.name == AUTOGRADER_NAME) and sol.problem.widget.page == page
     ]
 
     for sol in solutions_to_grade:
@@ -90,10 +94,10 @@ def grade_as_blank(sol):
         set_auto_grader(sol)
 
     feedback = FeedbackOption.query.filter(FeedbackOption.problem_id == sol.problem.id,
-                                           FeedbackOption.text == 'blank').one_or_none()
+                                           FeedbackOption.text == BLANK_FEEDBACK_NAME).one_or_none()
 
     if not feedback:
-        feedback = FeedbackOption(problem_id=sol.problem.id, text='blank', score=0)
+        feedback = FeedbackOption(problem_id=sol.problem.id, text=BLANK_FEEDBACK_NAME, score=0)
         db.session.add(feedback)
 
     sol.feedback.append(feedback)
@@ -114,7 +118,7 @@ def set_auto_grader(solution):
     solution : Solution
         The solution
     """
-    zesje_grader = Grader.query.filter(Grader.name == 'Zesje').one_or_none() or Grader(name='Zesje')
+    zesje_grader = Grader.query.filter(Grader.name == AUTOGRADER_NAME).one_or_none() or Grader(name=AUTOGRADER_NAME)
 
     solution.graded_by = zesje_grader
     solution.graded_at = datetime.now()

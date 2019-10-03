@@ -273,9 +273,9 @@ class Grade extends React.Component {
                               return (['id'])
                             } else {
                               return ([
-                            'student.id',
-                            'student.firstName',
-                            'student.lastName'
+                                'student.id',
+                                'student.firstName',
+                                'student.lastName'
                               ])
                             }
                           }}
@@ -289,16 +289,16 @@ class Grade extends React.Component {
                           }}
                           renderSuggestion={(submission) => {
                             const stud = submission.student
-                              if (anonymous) {
-                                return (
-                                  <div className='flex-parent'>
-                                    <b className='flex-child fixed'>
-                                      #{submission.id}
-                                    </b>
-                                  </div>
-                                )
-                              } else {
-                                return (
+                            if (anonymous) {
+                              return (
+                                <div className='flex-parent'>
+                                  <b className='flex-child fixed'>
+                                    #{submission.id}
+                                  </b>
+                                </div>
+                              )
+                            } else {
+                              return (
                                 <div className='flex-parent'>
                                   <b className='flex-child truncated'>
                                     {`${stud.firstName} ${stud.lastName}`}

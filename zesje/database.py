@@ -70,6 +70,7 @@ class Exam(db.Model):
     widgets = db.relationship('ExamWidget', backref='exam', cascade='all',
                               order_by='ExamWidget.id', lazy=True)
     finalized = Column(Boolean, default=False, server_default='f')
+    gradeAnonymous = Column(Boolean, default=False, server_default='f')
 
 
 class Submission(db.Model):

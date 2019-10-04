@@ -210,6 +210,7 @@ class Exams(Resource):
                 } for widget in exam.widgets  # Sorted by widget.id
             ],
             'finalized': exam.finalized,
+            'gradeAnonymous': exam.gradeAnonymous,
         }
 
     post_parser = reqparse.RequestParser()
@@ -280,20 +281,27 @@ class Exams(Resource):
         }
 
     def put(self, exam_id, attr):
-        if attr == 'finalized':
-            exam = Exam.query.get(exam_id)
-            if exam is None:
-                return dict(status=404, message='Exam does not exist.'), 404
+        exam = Exam.query.get(exam_id)
+        if exam is None:
+            return dict(status=404, message='Exam does not exist.'), 404
 
-            bodyStr = request.data.decode('utf-8')
+        bodyStr = request.data.decode('utf-8')
+        if bodyStr not in ['true', 'false']:
+            return dict(status=400, message=f'Body should be "true" or "false"'), 400
+
+        if attr == 'finalized':
             if bodyStr == 'true':
                 exam.finalized = True
                 db.session.commit()
-            elif bodyStr == 'false':
-                if exam.finalized:
-                    return dict(status=403, message=f'Exam already finalized'), 403
+                return dict(status=200, message="ok"), 200
             else:
-                return dict(status=400, message=f'Body should be "true" or "false"'), 400
+                return dict(status=403, message=f'Exam can not be unfinalized'), 403
+        elif attr == 'gradeAnonymous':
+            if bodyStr == 'true':
+                exam.gradeAnonymous = True
+            else:
+                exam.gradeAnonymous = False
+            db.session.commit()
             return dict(status=200, message="ok"), 200
         else:
             return dict(status=400, message=f'Attribute {attr} not allowed'), 400

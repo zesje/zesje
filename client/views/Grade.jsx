@@ -275,7 +275,8 @@ class Grade extends React.Component {
                               return ([
                                 'student.id',
                                 'student.firstName',
-                                'student.lastName'
+                                'student.lastName',
+                                'id'
                               ])
                             }
                           }}
@@ -304,7 +305,7 @@ class Grade extends React.Component {
                                     {`${stud.firstName} ${stud.lastName}`}
                                   </b>
                                   <i className='flex-child fixed'>
-                                    ({stud.id})
+                                    ({stud.id}, #{submission.id})
                                   </i>
                                 </div>
                               )

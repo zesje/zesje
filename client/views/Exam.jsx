@@ -572,6 +572,9 @@ class Exams extends React.Component {
   }
 
   PanelGradeAnonymous = (props) => {
+    if (!this.props.exam.finalized) {
+      return null
+    }
     return (
       <nav className='panel'>
         <p className='panel-heading'>

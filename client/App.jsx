@@ -136,7 +136,6 @@ class App extends React.Component {
   }
 
   render () {
-    this.state.exam.gradeAnonymous = true
     const exam = this.state.exam
     const grader = this.state.grader
 

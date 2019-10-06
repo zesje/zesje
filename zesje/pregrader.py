@@ -3,7 +3,7 @@ import numpy as np
 from datetime import datetime
 
 from .blanks import get_blank
-from .database import db, Grader, FeedbackOption, GradingPolicy
+from .database import db, Grader, FeedbackOption, GradingPolicy, Submission, Solution
 from .images import guess_dpi, get_box
 from .pdf_generation import CHECKBOX_FORMAT
 
@@ -251,3 +251,29 @@ def box_is_filled(box, page_img, threshold=225, cut_padding=0.05, box_size=9):
     if res_x < 0.333 * box_size_px or res_y < 0.333 * box_size_px:
         return True
     return np.average(res_rect) < threshold
+
+
+def ungrade_multiple_sub(student_id, exam_id, commit=True):
+    """
+    Ungrade all solutions of a specific student if they have more than one submission.
+
+    This function does not remove the selected feedback options, but sets the
+    graded_at and grader_id fields to None such that it has to be approved again.
+
+    Params
+    ------
+    student_id: int
+        The student number of the student to check
+    exam_id: int
+        The exam to perform the check on
+    """
+    submission_ids = [sub.id for sub in Submission.query.filter(Submission.student_id == student_id,
+                                                                Submission.exam_id == exam_id).all()]
+    if len(submission_ids) > 1:
+        Solution.query \
+                .filter(Solution.submission_id.in_(submission_ids)) \
+                .update({Solution.grader_id: None, Solution.graded_at: None},
+                        synchronize_session='fetch')
+
+        if commit:
+            db.session.commit()

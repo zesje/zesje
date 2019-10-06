@@ -94,7 +94,7 @@ def grade_as_blank(sol):
         set_auto_grader(sol)
 
     feedback = FeedbackOption.query.filter(FeedbackOption.problem_id == sol.problem.id,
-                                           FeedbackOption.text == BLANK_FEEDBACK_NAME).one_or_none()
+                                           FeedbackOption.text == BLANK_FEEDBACK_NAME).first()
 
     if not feedback:
         feedback = FeedbackOption(problem_id=sol.problem.id, text=BLANK_FEEDBACK_NAME, score=0)

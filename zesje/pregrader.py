@@ -158,6 +158,7 @@ def is_blank(problem, page_img, sub):
 
     reference = get_blank(problem, dpi, widget_area_in, sub)
 
+    # Convert the images to grayscale and transform into a 1D array
     blank_image = np.array(reference)
     blank_image = cv2.cvtColor(blank_image, cv2.COLOR_BGR2GRAY)
     blank_image = np.array(blank_image)
@@ -168,12 +169,14 @@ def is_blank(problem, page_img, sub):
     n = 0
     max = input_image.shape[0]
 
+    # Check if the submission is darker than the reference, 50 pixels at a time
     while n + 50 < max:
         m = n + 50
         if np.average(~input_image[n: m]) > (1.03 * np.average(~blank_image[n: m])):
             return False
         n = m
 
+    # Return if the remaining pixels < 50 pixels are darker than the reference
     return not(np.average(~input_image[n: max-1]) > (1.03 * np.average(~blank_image[n: max-1])))
 
 

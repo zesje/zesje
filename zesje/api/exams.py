@@ -210,7 +210,7 @@ class Exams(Resource):
                 } for widget in exam.widgets  # Sorted by widget.id
             ],
             'finalized': exam.finalized,
-            'gradeAnonymous': exam.gradeAnonymous,
+            'gradeAnonymous': exam.grade_anonymous,
         }
 
     post_parser = reqparse.RequestParser()
@@ -298,9 +298,9 @@ class Exams(Resource):
                 return dict(status=403, message=f'Exam can not be unfinalized'), 403
         elif attr == 'gradeAnonymous':
             if bodyStr == 'true':
-                exam.gradeAnonymous = True
+                exam.grade_anonymous = True
             else:
-                exam.gradeAnonymous = False
+                exam.grade_anonymous = False
             db.session.commit()
             return dict(status=200, message="ok"), 200
         else:

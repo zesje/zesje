@@ -334,8 +334,13 @@ class Grade extends React.Component {
                 {multiple
                   ? <article className='message is-info'>
                     <div className='message-body'>
-                      This student has multiple submissions!
-                      Make sure that each applicable feedback option is only selected once.
+                      <p>
+                        This student has multiple submissions: (#{submission.id},
+                        {exam.submissions.filter((sub) => (
+                          sub.id !== submission.id && sub.student && sub.student.id === submission.student.id)
+                        ).map((sub) => ' #' + sub.id)})!
+                        Make sure that each applicable feedback option is only selected once.
+                      </p>
                     </div>
                   </article> : null
                 }

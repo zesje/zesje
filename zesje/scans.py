@@ -18,7 +18,7 @@ from .database import db, Scan, Exam, Page, Student, Submission, Solution, ExamW
 from .datamatrix import decode_raw_datamatrix
 from .images import guess_dpi, get_box
 from .factory import make_celery
-from .pregrader import grade_problem
+from .pregrader import grade_problem, ungrade_multiple_sub
 from .image_extraction import extract_images
 
 from .pdf_generation import MARKER_FORMAT, PAGE_FORMATS
@@ -224,6 +224,9 @@ def process_page(image_data, exam_config, output_dir=None, strict=False):
         )
     else:
         description = "Scanned page doesn't contain student number."
+
+    if sub.student:
+        ungrade_multiple_sub(sub.student.id, sub.exam_id)
 
     return True, description
 

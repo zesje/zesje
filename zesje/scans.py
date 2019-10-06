@@ -134,6 +134,21 @@ def exam_metadata(exam_id):
         )
 
 
+def exam_student_id_widget(exam_id, app_config=None):
+    if app_config is None:
+        app_config = {}
+
+    student_id_widget = ExamWidget.query.filter(ExamWidget.exam_id == exam_id,
+                                                ExamWidget.name == "student_id_widget").one()
+    student_id_widget_coords = [
+        student_id_widget.y,  # top
+        student_id_widget.y + app_config.get('ID_GRID_HEIGHT', 181),  # bottom
+        student_id_widget.x,  # left
+        student_id_widget.x + app_config.get('ID_GRID_WIDTH', 313),  # right
+    ]
+    return student_id_widget, student_id_widget_coords
+
+
 def extract_images(filename):
     """Yield all images from a PDF file.
 
@@ -496,14 +511,7 @@ def guess_student(exam_token, copy_number, app_config=None, force=False):
     image_path = Page.query.filter(Page.submission_id == sub.id,
                                    Page.number == 0).one().path
 
-    student_id_widget = ExamWidget.query.filter(ExamWidget.exam_id == exam.id,
-                                                ExamWidget.name == "student_id_widget").one()
-    student_id_widget_coords = [
-            student_id_widget.y,  # top
-            student_id_widget.y + app_config.get('ID_GRID_HEIGHT', 181),  # bottom
-            student_id_widget.x,  # left
-            student_id_widget.x + app_config.get('ID_GRID_WIDTH', 313),  # right
-        ]
+    student_id_widget, student_id_widget_coords = exam_student_id_widget(exam.id, app_config)
 
     if sub.signature_validated and not force:
         return "Signature already validated"

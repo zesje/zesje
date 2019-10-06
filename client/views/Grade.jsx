@@ -215,7 +215,7 @@ class Grade extends React.Component {
     const problem = exam.problems[this.state.pIndex]
     const progress = exam.submissions.map(sub => sub.problems[this.state.pIndex])
     const multipleString = exam.submissions.filter((sub) => (
-      sub.id !== submission.id && sub.student && sub.student.id === submission.student.id)
+      sub.id !== submission.id && submission.student && sub.student && sub.student.id === submission.student.id)
     ).map((sub) => ' #' + sub.id)
     const multiple = multipleString.length > 0
     const anonymous = exam.gradeAnonymous
@@ -290,15 +290,7 @@ class Grade extends React.Component {
                           }}
                           renderSuggestion={(submission) => {
                             const stud = submission.student
-                            if (anonymous) {
-                              return (
-                                <div className='flex-parent'>
-                                  <b className='flex-child fixed'>
-                                    #{submission.id}
-                                  </b>
-                                </div>
-                              )
-                            } else {
+                            if (stud && !anonymous) {
                               return (
                                 <div className='flex-parent'>
                                   <b className='flex-child truncated'>
@@ -307,6 +299,14 @@ class Grade extends React.Component {
                                   <i className='flex-child fixed'>
                                     ({stud.id}, #{submission.id})
                                   </i>
+                                </div>
+                              )
+                            } else {
+                              return (
+                                <div className='flex-parent'>
+                                  <b className='flex-child fixed'>
+                                    #{submission.id}
+                                  </b>
                                 </div>
                               )
                             }

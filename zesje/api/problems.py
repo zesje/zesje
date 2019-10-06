@@ -4,6 +4,7 @@ import os
 
 from flask_restful import Resource, reqparse, current_app
 from ..database import db, Exam, Problem, ProblemWidget, Solution, FeedbackOption, GradingPolicy
+from ..pregrader import BLANK_FEEDBACK_NAME
 from zesje.pdf_reader import guess_problem_title, get_problem_page
 
 
@@ -72,10 +73,8 @@ class Problems(Resource):
             if guessed_title:
                 problem.name = guessed_title
 
-            db.session.commit()
+            problem.feedback_options.append(FeedbackOption(text=BLANK_FEEDBACK_NAME, score=0))
 
-            new_feedback_option = FeedbackOption(problem_id=problem.id, text='blank', score=0)
-            db.session.add(new_feedback_option)
             db.session.commit()
 
             return {

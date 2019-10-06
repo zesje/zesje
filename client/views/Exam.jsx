@@ -216,8 +216,7 @@ class Exams extends React.Component {
     const newPolicy = e.target.value
 
     api.put('problems/' + problem.id, { grading_policy: newPolicy })
-      .catch(e => Notification.error('Could not change grading policy: ' + e))
-      .then(this.setState(prevState => ({
+      .then(success => this.setState(prevState => ({
         widgets: update(prevState.widgets, {
           [selectedWidgetId]: {
             problem: {
@@ -227,7 +226,15 @@ class Exams extends React.Component {
             }
           }
         })
-      })))
+      })), error => {
+        error.json().then(res => {
+          let message = res.message
+          if (typeof message === 'object') {
+            message = Object.values(message)[0]
+          }
+          Notification.error('Could not change grading policy: ' + message)
+        })
+      })
   }
 
   createNewWidget = (widgetData) => {
@@ -730,6 +737,8 @@ class Exams extends React.Component {
                 <select value={props.problem.grading_policy} onChange={this.onChangeAutoApproveType.bind(this)}>
                   <option value='0'>Nothing</option>
                   <option value='1'>Blanks</option>
+                  <option value='3'>Error 1</option>
+                  <option value='4'>Error 2</option>
                   {props.problem.mc_options.length !== 0 && <option value='2'>One answer/blanks</option>}
                 </select>
               </div>

@@ -510,8 +510,8 @@ def guess_student(exam_token, copy_number, app_config=None, force=False):
 
     try:
         number = get_student_number(image_path, student_id_widget_coords)
-    except Exception:
-        return "Failed to extract student number"
+    except Exception as e:
+        return "Failed to extract student number: " + str(e)
 
     student = Student.query.get(int(number))
     if student is not None:
@@ -574,6 +574,9 @@ def get_student_number(image_path, student_id_widget_coords):
     detector = cv2.SimpleBlobDetector_create(params)
 
     keypoints = detector.detect(im_out)
+    if len(keypoints) <= 2:
+        raise ValueError('Blob detector did not detect enough keypoints.')
+
     centers = np.array(sorted([kp.pt for kp in keypoints])).astype(int)
     diameters = np.array([kp.size for kp in keypoints])
     r = int(np.median(diameters)/4)

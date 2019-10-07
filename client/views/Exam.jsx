@@ -589,7 +589,7 @@ class Exams extends React.Component {
           <div className='field'>
             <Switch color='info' value={this.props.exam.gradeAnonymous} onChange={(e) => {
               let body = this.props.exam.gradeAnonymous ? 'false' : 'true'
-              api.put(`exams/${this.props.examID}/gradeAnonymous`, body)
+              api.put(`exams/${this.props.examID}/grade_anonymous`, body)
                 .then(() => {
                   this.props.updateExam(this.props.examID)
                 })

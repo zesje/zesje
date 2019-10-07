@@ -296,7 +296,7 @@ class Exams(Resource):
                 return dict(status=200, message="ok"), 200
             else:
                 return dict(status=403, message=f'Exam can not be unfinalized'), 403
-        elif attr == 'gradeAnonymous':
+        elif attr == 'grade_anonymous':
             if bodyStr == 'true':
                 exam.grade_anonymous = True
             else:

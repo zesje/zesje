@@ -4,8 +4,9 @@ import numpy as np
 import cv2
 
 from ..images import get_box, guess_dpi
-from ..database import Exam, Submission, Problem, Page, Solution, ExamWidget
+from ..database import Exam, Submission, Problem, Page, Solution
 from ..pdf_generation import CHECKBOX_FORMAT
+from ..scans import exam_student_id_widget
 
 
 def get(exam_id, problem_id, submission_id, full_page=False):
@@ -60,12 +61,10 @@ def get(exam_id, problem_id, submission_id, full_page=False):
 
     dpi = guess_dpi(page_im)
 
-    if exam.grade_anonymous is True and page.number == 0:
-        from ..scans import exam_student_id_widget
+    if exam.grade_anonymous and page.number == 0:
         student_id_widget, coords = exam_student_id_widget(exam.id)
         # coords are [ymin, ymax, xmin, xmax]
         page_im = _grey_out_student_widget(page_im, coords, dpi)
-
 
     # pregrade highliting
     solution = Solution.query.filter(Solution.submission_id == sub.id,
@@ -106,4 +105,3 @@ def _grey_out_student_widget(page_im, coords, dpi):
     height = coords[1] - coords[0]
     page_im = cv2.rectangle(page_im, (coords[2], coords[0]), (coords[3], int(coords[1] - height * 0.45)), grey, -1)
     return page_im
-

@@ -72,22 +72,7 @@ def test_decode_barcode(
     image = np.array(PIL.Image.open(image_path))
 
     assert decode_barcode(image, exam_config) == (expected, False)
-
-
-# Page Generation Functions
-
-
-def generate_page(width=592, height=842):
-    """
-    Generate blank page
-    by default 72 DPI such that pixels match points
-    """
-    return PIL.Image.new('RGB', (width, height), (255, 255, 255))
-
-
-def generate_multiple_pages(pages=5):
-    return [generate_page() for _ in range(pages)]
-
+    
 
 # Helper functions
 

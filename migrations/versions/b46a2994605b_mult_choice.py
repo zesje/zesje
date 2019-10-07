@@ -1,4 +1,4 @@
-"""
+""" Add multiple choice and grading policy
 - Save multiple choice question data
 - Add grading policy to problem table
 - Add unique constraint to grader name
@@ -19,21 +19,18 @@ depends_on = None
 
 
 def upgrade():
-    #
     # Create the multiple choice question table
-    #
-    op.create_table('mc_option',
-                    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
-                    sa.Column('label', sa.String(), nullable=True),
-                    sa.Column('feedback_id', sa.Integer(), nullable=False),
-                    sa.ForeignKeyConstraint(['feedback_id'], ['feedback_option.id'], ),
-                    sa.ForeignKeyConstraint(['id'], ['widget.id'], ),
-                    sa.PrimaryKeyConstraint('id')
-                    )
+    op.create_table(
+        'mc_option',
+        sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
+        sa.Column('label', sa.String(), nullable=True),
+        sa.Column('feedback_id', sa.Integer(), nullable=False),
+        sa.ForeignKeyConstraint(['feedback_id'], ['feedback_option.id'], ),
+        sa.ForeignKeyConstraint(['id'], ['widget.id'], ),
+        sa.PrimaryKeyConstraint('id')
+    )
 
-    #
     # Add grading policy to problem
-    #
     op.create_table(
         'problem_copy',
         sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
@@ -51,9 +48,7 @@ def upgrade():
     op.drop_table('problem')
     op.rename_table('problem_copy', 'problem')
 
-    #
     # Set grader name to unique
-    #
     conn = op.get_bind()
 
     graders = conn.execute('SELECT id, name FROM grader').fetchall()
@@ -85,14 +80,10 @@ def upgrade():
 
 
 def downgrade():
-    #
     # Remove the multiple choice question table
-    #
     op.drop_table('mc_option')
 
-    #
     # Remove grading policy from problem
-    #
     op.create_table(
         'problem_copy',
         sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
@@ -108,9 +99,7 @@ def downgrade():
     op.drop_table('problem')
     op.rename_table('problem_copy', 'problem')
 
-    #
     # Remove uniqueness from grader
-    #
     op.create_table(
         'grader_copy',
         sa.Column('id', sa.Integer(), nullable=False),

@@ -737,8 +737,6 @@ class Exams extends React.Component {
                 <select value={props.problem.grading_policy} onChange={this.onChangeAutoApproveType.bind(this)}>
                   <option value='0'>Nothing</option>
                   <option value='1'>Blanks</option>
-                  <option value='3'>Error 1</option>
-                  <option value='4'>Error 2</option>
                   {props.problem.mc_options.length !== 0 && <option value='2'>One answer/blanks</option>}
                 </select>
               </div>

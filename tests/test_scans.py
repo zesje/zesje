@@ -72,7 +72,7 @@ def test_decode_barcode(
     image = np.array(PIL.Image.open(image_path))
 
     assert decode_barcode(image, exam_config) == (expected, False)
-    
+
 
 # Helper functions
 

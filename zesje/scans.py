@@ -533,7 +533,13 @@ def get_student_number(image_path, student_id_widget_coords):
     image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
     # TODO: use points as base unit
     student_id_widget_coords_in = np.asarray(student_id_widget_coords) / 72
-    image = get_box(image, student_id_widget_coords_in, padding=0.3)
+    image_raw = get_box(image, student_id_widget_coords_in, padding=0.3)
+
+    # Add a 1 pixel border to floodfill from all sides
+    h, w, *_ = image_raw.shape
+    image = np.full((h+2, w+2), 255, np.uint8)
+    image[1:-1, 1:-1] = image_raw
+
     _, thresholded = cv2.threshold(image, 150, 255, cv2.THRESH_BINARY)
     thresholded = cv2.bitwise_not(thresholded)
 
@@ -542,8 +548,7 @@ def get_student_number(image_path, student_id_widget_coords):
 
     # Mask used to flood filling.
     # Notice the size needs to be 2 pixels than the image.
-    h, w, *_ = thresholded.shape
-    mask = np.zeros((h+2, w+2), np.uint8)
+    mask = np.zeros((h+4, w+4), np.uint8)
 
     # Floodfill from point (0, 0)
     cv2.floodFill(im_floodfill, mask, (0, 0), 255)

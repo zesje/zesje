@@ -578,23 +578,18 @@ class Exams extends React.Component {
     return (
       <nav className='panel'>
         <p className='panel-heading'>
-          Toggle anonymous grading
+          Anonymous grading
         </p>
         <div className='panel-block'>
-          <p style={{ margin: '0.625em 0', minHeight: '3em' }}>
-            Anonymous grading hides student number and name while grading.
-          </p>
-        </div>
-        <div className='panel-block'>
-          <div className='field'>
+          <div className='field flex-input'>
+            <label>Hide student info when grading</label>
             <Switch color='info' value={this.props.exam.gradeAnonymous} onChange={(e) => {
               let body = this.props.exam.gradeAnonymous ? 'false' : 'true'
               api.put(`exams/${this.props.examID}/grade_anonymous`, body)
                 .then(() => {
                   this.props.updateExam(this.props.examID)
                 })
-            }
-            } />
+            }} />
           </div>
         </div>
       </nav>

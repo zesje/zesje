@@ -66,3 +66,16 @@ div.mcq-option img.mcq-box {
   border-top: 1px solid hsl(217, 71%, 53%);
   border-bottom: 1px solid hsl(217, 71%, 53%);
 }
+.field.flex-input {
+  display: flex;
+  width: 100%;
+}
+
+.field.flex-input > * {
+  flex-grow: 1
+}
+
+.field.flex-input > .field, .field.flex-input > input {
+  flex-grow: 0;
+}
+

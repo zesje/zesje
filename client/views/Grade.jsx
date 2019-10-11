@@ -214,10 +214,10 @@ class Grade extends React.Component {
     const solution = submission.problems[this.state.pIndex]
     const problem = exam.problems[this.state.pIndex]
     const progress = exam.submissions.map(sub => sub.problems[this.state.pIndex])
-    const multipleString = exam.submissions.filter((sub) => (
+    const otherSubmissions = exam.submissions.filter((sub) => (
       sub.id !== submission.id && submission.student && sub.student && sub.student.id === submission.student.id)
     ).map((sub) => ' #' + sub.id)
-    const multiple = multipleString.length > 0
+    const multiple = otherSubmissions.length > 0
     const anonymous = exam.gradeAnonymous
     const gradedTime = new Date(solution.graded_at)
 
@@ -335,7 +335,7 @@ class Grade extends React.Component {
                   ? <article className='message is-info'>
                     <div className='message-body'>
                       <p>
-                        This student has multiple submissions: (#{submission.id}, {multipleString})
+                        This student has multiple submissions: (#{submission.id}, {otherSubmissions})
                         Make sure that each applicable feedback option is only selected once.
                       </p>
                     </div>

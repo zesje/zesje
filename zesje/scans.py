@@ -135,6 +135,12 @@ def exam_metadata(exam_id):
 
 
 def exam_student_id_widget(exam_id, app_config=None):
+    """
+    Get the student id widget and an array of it's coordinates for an exam.
+    :param exam_id: the id of the exam to get the widget for
+    :param app_config: optionally the flask appconfig, which contains widget height and width.
+    :return: the student id widget, and an array of coordinates [ymin, ymax, xmin, xmax]
+    """
     if app_config is None:
         app_config = {}
 

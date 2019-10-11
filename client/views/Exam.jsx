@@ -584,8 +584,7 @@ class Exams extends React.Component {
           <div className='field flex-input'>
             <label>Hide student info when grading</label>
             <Switch color='info' value={this.props.exam.gradeAnonymous} onChange={(e) => {
-              let body = this.props.exam.gradeAnonymous ? 'false' : 'true'
-              api.put(`exams/${this.props.examID}/grade_anonymous`, body)
+              api.put(`exams/${this.props.examID}`, {grade_anonymous: !this.props.exam.gradeAnonymous})
                 .then(() => {
                   this.props.updateExam(this.props.examID)
                 })
@@ -743,7 +742,7 @@ class Exams extends React.Component {
       actionsBody =
         <this.PanelConfirm
           onYesClick={() =>
-            api.put(`exams/${this.props.examID}/finalized`, 'true')
+            api.put(`exams/${this.props.examID}`, {finalized: true})
               .then(() => {
                 this.props.updateExam(this.props.examID)
                 this.setState({ previewing: false })

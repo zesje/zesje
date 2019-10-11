@@ -280,31 +280,29 @@ class Exams(Resource):
             'id': exam.id
         }
 
-    def put(self, exam_id, attr):
+    put_parser = reqparse.RequestParser()
+    put_parser.add_argument('finalized', type=bool, required=False)
+    put_parser.add_argument('grade_anonymous', type=bool, required=False)
+
+    def put(self, exam_id):
         exam = Exam.query.get(exam_id)
         if exam is None:
             return dict(status=404, message='Exam does not exist.'), 404
 
-        bodyStr = request.data.decode('utf-8')
-        if bodyStr not in ['true', 'false']:
-            return dict(status=400, message=f'Body should be "true" or "false"'), 400
+        args = self.put_parser.parse_args()
 
-        if attr == 'finalized':
-            if bodyStr == 'true':
-                exam.finalized = True
-                db.session.commit()
-                return dict(status=200, message="ok"), 200
-            else:
-                return dict(status=403, message=f'Exam can not be unfinalized'), 403
-        elif attr == 'grade_anonymous':
-            if bodyStr == 'true':
-                exam.grade_anonymous = True
-            else:
-                exam.grade_anonymous = False
+        if args['finalized']:
+            exam.finalized = True
+            db.session.commit()
+            return dict(status=200, message="ok"), 200
+        if args['finalized'] is False:
+            return dict(status=403, message=f'Exam can not be unfinalized'), 403
+        if args['grade_anonymous'] is not None:
+            exam.grade_anonymous = args['grade_anonymous']
             db.session.commit()
             return dict(status=200, message="ok"), 200
         else:
-            return dict(status=400, message=f'Attribute {attr} not allowed'), 400
+            return dict(status=400, message=f'One of finalized or anonymous must be present'), 400
 
 
 class ExamSource(Resource):

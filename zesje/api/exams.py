@@ -291,18 +291,21 @@ class Exams(Resource):
 
         args = self.put_parser.parse_args()
 
-        if args['finalized']:
+        if args['finalized'] is None:
+            pass
+        elif args['finalized']:
             exam.finalized = True
             db.session.commit()
             return dict(status=200, message="ok"), 200
-        if args['finalized'] is False:
+        else:
             return dict(status=403, message=f'Exam can not be unfinalized'), 403
+
         if args['grade_anonymous'] is not None:
             exam.grade_anonymous = args['grade_anonymous']
             db.session.commit()
             return dict(status=200, message="ok"), 200
-        else:
-            return dict(status=400, message=f'One of finalized or anonymous must be present'), 400
+
+        return dict(status=400, message=f'One of finalized or anonymous must be present'), 400
 
 
 class ExamSource(Resource):

@@ -247,7 +247,6 @@ class EmailEveryoneControls extends React.Component {
           onSend={this.sendEmail}
           disabled={disabled}
         />
-        <button onClick={this.disableAnonymousMode}> abc</button>
       </div>
     )
   }

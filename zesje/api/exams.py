@@ -4,7 +4,7 @@ import zipfile
 from io import BytesIO
 from tempfile import TemporaryFile
 
-from flask import current_app as app, send_file, request
+from flask import current_app as app, send_file
 from flask_restful import Resource, reqparse
 from werkzeug.datastructures import FileStorage
 from sqlalchemy.orm import selectinload

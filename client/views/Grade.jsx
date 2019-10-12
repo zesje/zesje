@@ -214,10 +214,11 @@ class Grade extends React.Component {
     const solution = submission.problems[this.state.pIndex]
     const problem = exam.problems[this.state.pIndex]
     const progress = exam.submissions.map(sub => sub.problems[this.state.pIndex])
-    const multiple = submission.student && exam.submissions.some(sub =>
-      (sub.id !== submission.id && sub.student && sub.student.id === submission.student.id)
-    )
-
+    const otherSubmissions = exam.submissions.filter((sub) => (
+      sub.id !== submission.id && submission.student && sub.student && sub.student.id === submission.student.id)
+    ).map((sub) => ' #' + sub.id)
+    const multiple = otherSubmissions.length > 0
+    const anonymous = exam.gradeAnonymous
     const gradedTime = new Date(solution.graded_at)
 
     return (
@@ -267,14 +268,21 @@ class Grade extends React.Component {
                           placeholder='Search for a submission'
                           selected={submission}
                           options={exam.submissions}
-                          suggestionKeys={[
-                            'student.id',
-                            'student.firstName',
-                            'student.lastName'
-                          ]}
+                          suggestionKeys={() => {
+                            if (anonymous) {
+                              return (['id'])
+                            } else {
+                              return ([
+                                'student.id',
+                                'student.firstName',
+                                'student.lastName',
+                                'id'
+                              ])
+                            }
+                          }}
                           setSelected={this.setSubmission}
                           renderSelected={({id, student}) => {
-                            if (student) {
+                            if (student && !anonymous) {
                               return `${student.firstName} ${student.lastName} (${student.id})`
                             } else {
                               return `#${id}`
@@ -282,16 +290,26 @@ class Grade extends React.Component {
                           }}
                           renderSuggestion={(submission) => {
                             const stud = submission.student
-                            return (
-                              <div className='flex-parent'>
-                                <b className='flex-child truncated'>
-                                  {`${stud.firstName} ${stud.lastName}`}
-                                </b>
-                                <i className='flex-child fixed'>
-                                  ({stud.id})
-                                </i>
-                              </div>
-                            )
+                            if (stud && !anonymous) {
+                              return (
+                                <div className='flex-parent'>
+                                  <b className='flex-child truncated'>
+                                    {`${stud.firstName} ${stud.lastName}`}
+                                  </b>
+                                  <i className='flex-child fixed'>
+                                    ({stud.id}, #{submission.id})
+                                  </i>
+                                </div>
+                              )
+                            } else {
+                              return (
+                                <div className='flex-parent'>
+                                  <b className='flex-child fixed'>
+                                    #{submission.id}
+                                  </b>
+                                </div>
+                              )
+                            }
                           }}
                         />
                       </div>
@@ -316,8 +334,10 @@ class Grade extends React.Component {
                 {multiple
                   ? <article className='message is-info'>
                     <div className='message-body'>
-                      This student has multiple submissions!
-                      Make sure that each applicable feedback option is only selected once.
+                      <p>
+                        This student has multiple submissions: (#{submission.id}, {otherSubmissions})
+                        Make sure that each applicable feedback option is only selected once.
+                      </p>
                     </div>
                   </article> : null
                 }

@@ -166,7 +166,7 @@ class EmailEveryoneControls extends React.Component {
         Notification.info(
           <div>
             <p>
-              'Disabled anonymous mode for this exam'
+              'Turned off anonymous grading for this exam'
             </p>
             <a onClick={() => api.put(`exams/${this.props.exam.id}`, {grade_anonymous: true})}>
               (undo)

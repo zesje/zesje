@@ -126,7 +126,7 @@ def generate_pdf(exam_config, pages):
             NamedTemporaryFile(suffix='.pdf') as generated:
         pdf[0].save(blank.name, save_all=True, append_images=pdf[1:])
         pdf_generation.generate_pdfs(
-            blank.name, token, [145], [generated.name],
+            blank.name, [145], [generated.name], token,
             200, 200, datamatrix_x, datamatrix_y)
         genPDF = makeflatpdf(generated.name)
         return genPDF

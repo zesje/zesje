@@ -11,6 +11,7 @@ from sqlalchemy.orm import selectinload
 
 from ..pdf_generation import generate_pdfs, output_pdf_filename_format, join_pdfs
 from ..pdf_generation import page_is_size, save_with_even_pages, PAGE_FORMATS
+from ..pdf_generation import write_finalized_exam
 from ..database import db, Exam, ExamWidget, Submission, token_length
 
 
@@ -290,6 +291,8 @@ class Exams(Resource):
             if bodyStr == 'true':
                 exam.finalized = True
                 db.session.commit()
+                exam_dir, student_id_widget, _, exam_path, cb_data = _exam_generate_data(exam)
+                write_finalized_exam(exam_dir, exam_path, student_id_widget.x, student_id_widget.y, cb_data)
             elif bodyStr == 'false':
                 if exam.finalized:
                     return dict(status=403, message=f'Exam already finalized'), 403
@@ -337,37 +340,15 @@ class ExamGeneratedPdfs(Resource):
         return pdf_paths, copy_nums
 
     def _generate_exam_pdfs(self, exam, pdf_paths, copy_nums):
-        exam_dir = _get_exam_dir(exam.id)
-
-        student_id_widget = next(
-            widget
-            for widget
-            in exam.widgets
-            if widget.name == 'student_id_widget'
-        )
-
-        barcode_widget = next(
-            widget
-            for widget
-            in exam.widgets
-            if widget.name == 'barcode_widget'
-        )
-
-        exam_path = os.path.join(exam_dir, 'exam.pdf')
-
-        generated_pdfs_dir = self._get_generated_exam_dir(exam_dir)
-        os.makedirs(generated_pdfs_dir, exist_ok=True)
-
-        cb_data = checkboxes(exam)
+        exam_dir, _, barcode_widget, exam_path, _ = _exam_generate_data(exam)
 
         generate_pdfs(
-            exam_path,
-            exam.token,
-            copy_nums,
-            pdf_paths,
-            student_id_widget.x, student_id_widget.y,
-            barcode_widget.x, barcode_widget.y,
-            cb_data
+            exam_pdf_file=exam_path,
+            copy_nums=copy_nums,
+            output_paths=pdf_paths,
+            exam_token=exam.token,
+            datamatrix_x=barcode_widget.x,
+            datamatrix_y=barcode_widget.y
         )
 
     post_parser = reqparse.RequestParser()
@@ -375,7 +356,7 @@ class ExamGeneratedPdfs(Resource):
     post_parser.add_argument('copies_end', type=int, required=True)
 
     def post(self, exam_id):
-        """Generates the exams with corner markers and Widgets.
+        """Generates the exams with datamatrices and copy numbers.
 
         A range is given. Ranges should be starting from 1.
 
@@ -420,6 +401,8 @@ class ExamGeneratedPdfs(Resource):
         if copies_start <= 0:
             msg = f'copies_start should be larger than 0'
             return dict(status=400, message=msg), 400
+
+        os.makedirs(generated_pdfs_dir, exist_ok=True)
 
         pdf_paths, copy_nums = self._get_paths_for_range(generated_pdfs_dir, copies_start, copies_end)
 
@@ -497,35 +480,31 @@ class ExamPreview(Resource):
         if exam is None:
             return dict(status=404, message='Exam does not exist.'), 404
 
+        intermediate_file = BytesIO()
+
+        exam_dir, student_id_widget, barcode_widget, exam_path, cb_data = _exam_generate_data(exam)
+
+        # Generate generic overlay
+        generate_pdfs(
+            exam_pdf_file=exam_path,
+            copy_nums=[None],
+            output_paths=[intermediate_file],
+            id_grid_x=student_id_widget.x,
+            id_grid_y=student_id_widget.y,
+            cb_data=cb_data
+        )
+
+        intermediate_file.seek(0)
         output_file = BytesIO()
 
-        exam_dir = _get_exam_dir(exam.id)
-
-        student_id_widget = next(
-            widget
-            for widget
-            in exam.widgets
-            if widget.name == 'student_id_widget'
-        )
-
-        barcode_widget = next(
-            widget
-            for widget
-            in exam.widgets
-            if widget.name == 'barcode_widget'
-        )
-
-        exam_path = os.path.join(exam_dir, 'exam.pdf')
-
-        cb_data = checkboxes(exam)
+        # Generate copy overlay
         generate_pdfs(
-            exam_path,
-            "A" * token_length,
-            [1559],
-            [output_file],
-            student_id_widget.x, student_id_widget.y,
-            barcode_widget.x, barcode_widget.y,
-            cb_data
+            exam_pdf_file=intermediate_file,
+            copy_nums=[1559],
+            output_paths=[output_file],
+            exam_token="A" * token_length,
+            datamatrix_x=barcode_widget.x,
+            datamatrix_y=barcode_widget.y,
         )
 
         output_file.seek(0)
@@ -534,3 +513,27 @@ class ExamPreview(Resource):
             output_file,
             cache_timeout=0,
             mimetype='application/pdf')
+
+
+def _exam_generate_data(exam):
+    exam_dir = _get_exam_dir(exam.id)
+
+    student_id_widget = next(
+        widget
+        for widget
+        in exam.widgets
+        if widget.name == 'student_id_widget'
+    )
+
+    barcode_widget = next(
+        widget
+        for widget
+        in exam.widgets
+        if widget.name == 'barcode_widget'
+    )
+
+    exam_path = os.path.join(exam_dir, 'exam.pdf')
+
+    cb_data = checkboxes(exam)
+
+    return exam_dir, student_id_widget, barcode_widget, exam_path, cb_data

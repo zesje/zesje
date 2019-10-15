@@ -1,6 +1,8 @@
 from tempfile import NamedTemporaryFile
 
 import PIL
+import shutil
+import os
 from pdfrw import PdfReader, PdfWriter, PageMerge
 from pylibdmtx.pylibdmtx import encode
 from reportlab.lib.units import mm
@@ -29,10 +31,13 @@ PAGE_FORMATS = {
 }
 
 
-def generate_pdfs(exam_pdf_file, exam_id, copy_nums, output_paths, id_grid_x,
-                  id_grid_y, datamatrix_x, datamatrix_y, cb_data=None):
+def generate_pdfs(exam_pdf_file, copy_nums, output_paths, exam_token=None, id_grid_x=0,
+                  id_grid_y=0, datamatrix_x=0, datamatrix_y=0, cb_data=None):
     """
-    Generate the final PDFs from the original exam PDF.
+    Generates an overlay onto the exam PDF file and saves it at the output path.
+
+    Can be used to generate either a generic overlay (corner markers and student grid)
+    or a copy specific overlay (datamatrix and copy number), depending on copy_nums
 
     To ensure the page information fits into the datamatrix grid, adhere to
     (# of letters in exam ID) + 2 * (# of digits in exam ID) = C for a certain
@@ -46,10 +51,12 @@ def generate_pdfs(exam_pdf_file, exam_id, copy_nums, output_paths, id_grid_x,
     ----------
     exam_pdf_file : file object or str
         The exam PDF file or its filename
-    exam_id : str
+    exam_token : str
         The identifier of the exam
-    copy_nums : [int]
-        copy numbers of the generated pdfs. These are integers greater than 1
+    copy_nums : [int | None]
+        Copy numbers of the generated pdfs. These are integers greater than 1
+        If None is given, the generic part of the overlay is generated.
+        If an integer is given, only copy specific parts are generated.
     output_paths : [str]
         Output file paths of the generated pdfs
     id_grid_x : int
@@ -74,9 +81,14 @@ def generate_pdfs(exam_pdf_file, exam_id, copy_nums, output_paths, id_grid_x,
         with NamedTemporaryFile() as overlay_file:
             # Generate overlay
             overlay_canv = canvas.Canvas(overlay_file.name, pagesize=pagesize)
-            _generate_overlay(overlay_canv, pagesize, exam_id, copy_num,
-                              len(exam_pdf.pages), id_grid_x, id_grid_y,
-                              datamatrix_x, datamatrix_y, cb_data)
+            if copy_num is None:
+                # Draw corner markers and student id grid
+                _generate_generic_overlay(overlay_canv, pagesize, len(exam_pdf.pages),
+                                          id_grid_x, id_grid_y, cb_data)
+            else:
+                # Draw the datamatric and copy number
+                _generate_copy_overlay(overlay_canv, pagesize, exam_token, copy_num,
+                                       len(exam_pdf.pages), datamatrix_x, datamatrix_y)
             overlay_canv.save()
 
             # Merge overlay and exam
@@ -99,6 +111,23 @@ def generate_pdfs(exam_pdf_file, exam_id, copy_nums, output_paths, id_grid_x,
                 exam_merge.render()
 
             PdfWriter(output_path, trailer=exam_pdf).write()
+
+
+def write_finalized_exam(exam_dir, exam_pdf_file, id_grid_x, id_grid_y, cb_data=None):
+    original_pdf_file = os.path.join(exam_dir, 'original.pdf')
+    shutil.move(exam_pdf_file, original_pdf_file)
+
+    generate_pdfs(
+        exam_pdf_file=original_pdf_file,
+        exam_token=None,
+        copy_nums=[None],
+        output_paths=[exam_pdf_file],
+        id_grid_x=id_grid_x,
+        id_grid_y=id_grid_y,
+        cb_data=cb_data
+    )
+
+    os.remove(original_pdf_file)
 
 
 def join_pdfs(output_filename, pdf_paths):
@@ -200,7 +229,7 @@ def add_checkbox(canvas, x, y, label):
     canvas.rect(x, box_y, CHECKBOX_FORMAT["box_size"], CHECKBOX_FORMAT["box_size"])
 
 
-def generate_datamatrix(exam_id, page_num, copy_num):
+def generate_datamatrix(exam_token, page_num, copy_num):
     """
     Generates a DataMatrix code to be used on a page.
 
@@ -215,7 +244,7 @@ def generate_datamatrix(exam_id, page_num, copy_num):
 
     Parameters
     ----------
-    exam_id : str
+    exam_token : str
         The identifier of the exam
     page_num : int
         The page number
@@ -229,7 +258,7 @@ def generate_datamatrix(exam_id, page_num, copy_num):
         don't need to add a quiet zone yourself)
     """
 
-    data = f'{exam_id}/{copy_num:04d}/{page_num:02d}'
+    data = f'{exam_token}/{copy_num:04d}/{page_num:02d}'
 
     encoded = encode(data.encode('utf-8'), size='18x18')
     datamatrix = PIL.Image.frombytes('RGB', (encoded.width, encoded.height), encoded.pixels)
@@ -237,20 +266,10 @@ def generate_datamatrix(exam_id, page_num, copy_num):
     return datamatrix
 
 
-def _generate_overlay(canv, pagesize, exam_id, copy_num, num_pages, id_grid_x,
-                      id_grid_y, datamatrix_x, datamatrix_y, cb_data=None):
+def _generate_generic_overlay(canv, pagesize, num_pages, id_grid_x, id_grid_y, cb_data=None):
     """
-    Generates an overlay ('watermark') PDF, which can then be overlaid onto
-    the exam PDF.
-
-    To ensure the page information fits into the datamatrix grid in the overlay,
-    adhere to (# of letters in exam ID) + 2 * (# of digits in exam ID) = C for
-    a certain constant C. The reason for this is that pylibdmtx encodes two
-    digits in as much space as one letter.
-
-    If maximum interchangeability with version 1 QR codes is desired (error
-    correction level M), use exam IDs composed of only uppercase letters, and
-    composed of at most 12 letters.
+    Generates generic overlay PDF, which can then be overlaid onto
+    the exam PDF. Only generates non copy specific data.
 
     Parameters
     ----------
@@ -258,25 +277,18 @@ def _generate_overlay(canv, pagesize, exam_id, copy_num, num_pages, id_grid_x,
         The empty ReportLab canvas on which the overlay should be generated
     pagesize : (float, float)
         The ReportLab-style (i.e. (width, height)) page size of the canvas
-    exam_id : str
-        The identifier of the exam
     copy_num : int
-        The copy number for which the overlay is being generated
+        The copy number for which the overlay is being generated.
+        The datamatrix is not generated when this is None.
     num_pages : int
         The amount of pages that the generated overlay should count
     id_grid_x : int
         The x coordinate where the student ID grid should be placed
     id_grid_y : int
         The y coordinate where the student ID grid should be placed
-    datamatrix_x : int
-        The x coordinate where the DataMatrix codes should be placed
-    datamatrix_y : int
-        The y coordinate where the DataMatrix codes should be placed
     cb_data : list[ (int, int, int, str)]
         The data needed for drawing a checkbox, namely: the x coordinate; y coordinate; page number and label
-
     """
-
     # transform y-cooridate to different origin location
     id_grid_y = pagesize[1] - id_grid_y
 
@@ -293,14 +305,56 @@ def _generate_overlay(canv, pagesize, exam_id, copy_num, num_pages, id_grid_x,
     else:
         index = 0
         max_index = 0
+
+    for page_num in range(num_pages):
+        _add_corner_markers_and_bottom_bar(canv, pagesize)
+
+        # call generate for all checkboxes that belong to the current page
+        while index < max_index and cb_data[index][2] <= page_num:
+            x, y, _, label = cb_data[index]
+            add_checkbox(canv, x, y, label)
+            index += 1
+
+        canv.showPage()
+
+
+def _generate_copy_overlay(canv, pagesize, exam_token, copy_num, num_pages, datamatrix_x, datamatrix_y):
+    """
+    Generates an overlay ('watermark') PDF, which can then be overlaid onto
+    the exam PDF. Only generates copy specific data.
+
+    To ensure the page information fits into the datamatrix grid in the overlay,
+    adhere to (# of letters in exam ID) + 2 * (# of digits in exam ID) = C for
+    a certain constant C. The reason for this is that pylibdmtx encodes two
+    digits in as much space as one letter.
+
+    If maximum interchangeability with version 1 QR codes is desired (error
+    correction level M), use exam IDs composed of only uppercase letters, and
+    composed of at most 12 letters.
+
+    Parameters
+    ----------
+    canv : ReportLab Canvas object
+        The empty ReportLab canvas on which the overlay should be generated
+    pagesize : (float, float)
+        The ReportLab-style (i.e. (width, height)) page size of the canvas
+    exam_token : str
+        The identifier of the exam
+    copy_num : int
+        The copy number for which the overlay is being generated.
+    num_pages : int
+        The amount of pages that the generated overlay should count
+    datamatrix_x : int
+        The x coordinate where the DataMatrix codes should be placed
+    datamatrix_y : int
+        The y coordinate where the DataMatrix codes should be placed
+    """
     # Font settings for the copy number (printed under the datamatrix)
     fontsize = 12
     canv.setFont('Helvetica', fontsize)
 
     for page_num in range(num_pages):
-        _add_corner_markers_and_bottom_bar(canv, pagesize)
-
-        datamatrix = generate_datamatrix(exam_id, page_num, copy_num)
+        datamatrix = generate_datamatrix(exam_token, page_num, copy_num)
 
         # transform y-cooridate to different origin location
         datamatrix_y_adjusted = pagesize[1] - datamatrix_y - datamatrix.height
@@ -310,12 +364,6 @@ def _generate_overlay(canv, pagesize, exam_id, copy_num, num_pages, id_grid_x,
             datamatrix_x, datamatrix_y_adjusted - (fontsize * 0.66),
             f" # {copy_num}"
         )
-
-        # call generate for all checkboxes that belong to the current page
-        while index < max_index and cb_data[index][2] <= page_num:
-            x, y, _, label = cb_data[index]
-            add_checkbox(canv, x, y, label)
-            index += 1
 
         canv.showPage()
 

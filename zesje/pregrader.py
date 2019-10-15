@@ -39,7 +39,7 @@ def grade_problem(sub, page, page_img):
 
         if problem.mc_options:
             grade_mcq(sol, page_img)
-        elif is_blank(problem, page_img, sub):
+        elif is_blank(problem, page_img):
             grade_as_blank(sol)
 
     db.session.commit()
@@ -125,7 +125,7 @@ def set_auto_grader(solution):
     db.session.commit()
 
 
-def is_blank(problem, page_img, sub):
+def is_blank(problem, page_img):
     """
     A function that determines if a solution is blank
 
@@ -135,8 +135,6 @@ def is_blank(problem, page_img, sub):
         An instance of the problem to be checked
     page_img: np.array
         A numpy array of the image scan
-    sub: Submission
-        An instance of the submission to be checked
 
     Returns
     ------
@@ -156,7 +154,7 @@ def is_blank(problem, page_img, sub):
 
     cut_im = get_box(page_img, widget_area_in, padding=0)
 
-    reference = get_blank(problem, dpi, widget_area_in, sub)
+    reference = get_blank(problem, dpi, widget_area_in)
 
     # Convert the images to grayscale and transform into a 1D array
     blank_image = np.array(reference)

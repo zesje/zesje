@@ -159,6 +159,23 @@ class EmailEveryoneControls extends React.Component {
     attachPDF: true,
     sending: false
   }
+  disableAnonymousMode = () => {
+    console.log(this.props.exam)
+    if (this.props.exam.gradeAnonymous) {
+      api.put(`exams/${this.props.exam.id}`, {grade_anonymous: false}).then(
+        Notification.info(
+          <div>
+            <p>
+              'Turned off anonymous grading for this exam'
+            </p>
+            <a onClick={() => api.put(`exams/${this.props.exam.id}`, {grade_anonymous: true})}>
+              (undo)
+            </a>
+          </div>
+        )
+      )
+    }
+  }
 
   sendEmail = async () => {
     this.setState({ sending: true })
@@ -212,6 +229,7 @@ class EmailEveryoneControls extends React.Component {
       }
     } finally {
       this.setState({ sending: false })
+      this.disableAnonymousMode()
     }
   }
 

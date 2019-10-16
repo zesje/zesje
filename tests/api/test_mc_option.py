@@ -139,7 +139,7 @@ def test_update_finalized_exam(test_client, add_test_data):
 
     assert data['mult_choice_id']
 
-    test_client.put('api/exams/1/finalized', data='true')
+    test_client.put('api/exams/1', data={'finalized': 'true'})
 
     id = data['mult_choice_id']
 
@@ -240,7 +240,7 @@ def test_delete_finalized_exam(test_client, add_test_data):
     data = json.loads(response.data)
     mc_id = data['mult_choice_id']
 
-    test_client.put('api/exams/1/finalized', data='true')
+    test_client.put('api/exams/1', data={'finalized': 'true'})
 
     response = test_client.delete(f'/api/mult-choice/{mc_id}')
     data = json.loads(response.data)

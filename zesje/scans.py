@@ -132,6 +132,27 @@ def exam_metadata(exam_id):
         )
 
 
+def exam_student_id_widget(exam_id, app_config=None):
+    """
+    Get the student id widget and an array of it's coordinates for an exam.
+    :param exam_id: the id of the exam to get the widget for
+    :param app_config: optionally the flask appconfig, which contains widget height and width.
+    :return: the student id widget, and an array of coordinates [ymin, ymax, xmin, xmax]
+    """
+    if app_config is None:
+        app_config = {}
+
+    student_id_widget = ExamWidget.query.filter(ExamWidget.exam_id == exam_id,
+                                                ExamWidget.name == "student_id_widget").one()
+    student_id_widget_coords = [
+        student_id_widget.y,  # top
+        student_id_widget.y + app_config.get('ID_GRID_HEIGHT', 181),  # bottom
+        student_id_widget.x,  # left
+        student_id_widget.x + app_config.get('ID_GRID_WIDTH', 313),  # right
+    ]
+    return student_id_widget, student_id_widget_coords
+
+
 def write_pdf_status(scan_id, status, message):
     scan = Scan.query.get(scan_id)
     scan.status = status
@@ -369,22 +390,15 @@ def guess_student(exam_token, copy_number, app_config=None, force=False):
     image_path = Page.query.filter(Page.submission_id == sub.id,
                                    Page.number == 0).one().path
 
-    student_id_widget = ExamWidget.query.filter(ExamWidget.exam_id == exam.id,
-                                                ExamWidget.name == "student_id_widget").one()
-    student_id_widget_coords = [
-            student_id_widget.y,  # top
-            student_id_widget.y + app_config.get('ID_GRID_HEIGHT', 181),  # bottom
-            student_id_widget.x,  # left
-            student_id_widget.x + app_config.get('ID_GRID_WIDTH', 313),  # right
-        ]
+    student_id_widget, student_id_widget_coords = exam_student_id_widget(exam.id, app_config)
 
     if sub.signature_validated and not force:
         return "Signature already validated"
 
     try:
         number = get_student_number(image_path, student_id_widget_coords)
-    except Exception:
-        return "Failed to extract student number"
+    except Exception as e:
+        return "Failed to extract student number: " + str(e)
 
     student = Student.query.get(int(number))
     if student is not None:
@@ -447,6 +461,9 @@ def get_student_number(image_path, student_id_widget_coords):
     detector = cv2.SimpleBlobDetector_create(params)
 
     keypoints = detector.detect(im_out)
+    if len(keypoints) <= 2:
+        raise ValueError('Blob detector did not detect enough keypoints.')
+
     centers = np.array(sorted([kp.pt for kp in keypoints])).astype(int)
     diameters = np.array([kp.size for kp in keypoints])
     r = int(np.median(diameters)/4)

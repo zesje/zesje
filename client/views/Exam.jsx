@@ -13,6 +13,7 @@ import ExamFinalizeMarkdown from './ExamFinalize.md'
 import ConfirmationModal from '../components/ConfirmationModal.jsx'
 import FeedbackPanel from '../components/feedback/FeedbackPanel.jsx'
 import EditPanel from '../components/feedback/EditPanel.jsx'
+import Switch from 'react-bulma-switch/full'
 
 import * as api from '../api.jsx'
 
@@ -600,10 +601,34 @@ class Exams extends React.Component {
           saveProblemName={this.saveProblemName}
         />
         <this.PanelExamActions />
+        <this.PanelGradeAnonymous />
       </React.Fragment>
     )
   }
 
+  PanelGradeAnonymous = (props) => {
+    if (!this.props.exam.finalized) {
+      return null
+    }
+    return (
+      <nav className='panel'>
+        <p className='panel-heading'>
+          Anonymous grading
+        </p>
+        <div className='panel-block'>
+          <div className='field flex-input'>
+            <label>Hide student info when grading</label>
+            <Switch color='info' value={this.props.exam.gradeAnonymous} onChange={(e) => {
+              api.put(`exams/${this.props.examID}`, {grade_anonymous: !this.props.exam.gradeAnonymous})
+                .then(() => {
+                  this.props.updateExam(this.props.examID)
+                })
+            }} />
+          </div>
+        </div>
+      </nav>
+    )
+  }
   PanelEdit = (props) => {
     const selectedWidgetId = this.state.selectedWidgetId
     let totalNrAnswers = 9 // the upper limit for the nr of possible answer boxes
@@ -766,7 +791,7 @@ class Exams extends React.Component {
       actionsBody =
         <this.PanelConfirm
           onYesClick={() =>
-            api.put(`exams/${this.props.examID}/finalized`, 'true')
+            api.put(`exams/${this.props.examID}`, {finalized: true})
               .then(() => {
                 this.props.updateExam(this.props.examID)
                 this.setState({ previewing: false })

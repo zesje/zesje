@@ -4,7 +4,7 @@ import zipfile
 from io import BytesIO
 from tempfile import TemporaryFile
 
-from flask import current_app as app, send_file, request
+from flask import current_app as app, send_file
 from flask_restful import Resource, reqparse
 from werkzeug.datastructures import FileStorage
 from sqlalchemy.orm import selectinload
@@ -212,6 +212,7 @@ class Exams(Resource):
                 } for widget in exam.widgets  # Sorted by widget.id
             ],
             'finalized': exam.finalized,
+            'gradeAnonymous': exam.grade_anonymous,
         }
 
     post_parser = reqparse.RequestParser()
@@ -281,26 +282,35 @@ class Exams(Resource):
             'id': exam.id
         }
 
-    def put(self, exam_id, attr):
-        if attr == 'finalized':
-            exam = Exam.query.get(exam_id)
-            if exam is None:
-                return dict(status=404, message='Exam does not exist.'), 404
+    put_parser = reqparse.RequestParser()
+    put_parser.add_argument('finalized', type=bool, required=False)
+    put_parser.add_argument('grade_anonymous', type=bool, required=False)
 
-            bodyStr = request.data.decode('utf-8')
-            if bodyStr == 'true':
-                exam.finalized = True
-                db.session.commit()
-                exam_dir, student_id_widget, _, exam_path, cb_data = _exam_generate_data(exam)
-                write_finalized_exam(exam_dir, exam_path, student_id_widget.x, student_id_widget.y, cb_data)
-            elif bodyStr == 'false':
-                if exam.finalized:
-                    return dict(status=403, message=f'Exam already finalized'), 403
-            else:
-                return dict(status=400, message=f'Body should be "true" or "false"'), 400
+    def put(self, exam_id):
+        exam = Exam.query.get(exam_id)
+        if exam is None:
+            return dict(status=404, message='Exam does not exist.'), 404
+
+        args = self.put_parser.parse_args()
+
+        if args['finalized'] is None:
+            pass
+        elif args['finalized']:
+            exam_dir, student_id_widget, _, exam_path, cb_data = _exam_generate_data(exam)
+            write_finalized_exam(exam_dir, exam_path, student_id_widget.x, student_id_widget.y, cb_data)
+
+            exam.finalized = True
+            db.session.commit()
             return dict(status=200, message="ok"), 200
         else:
-            return dict(status=400, message=f'Attribute {attr} not allowed'), 400
+            return dict(status=403, message=f'Exam can not be unfinalized'), 403
+
+        if args['grade_anonymous'] is not None:
+            exam.grade_anonymous = args['grade_anonymous']
+            db.session.commit()
+            return dict(status=200, message="ok"), 200
+
+        return dict(status=400, message=f'One of finalized or anonymous must be present'), 400
 
 
 class ExamSource(Resource):

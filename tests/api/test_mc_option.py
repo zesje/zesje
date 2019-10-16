@@ -2,7 +2,8 @@ import pytest
 
 from flask import json
 
-from zesje.database import db, Exam, Problem, ProblemWidget
+from zesje.database import db, Exam, Problem, ProblemWidget, ExamWidget
+import zesje
 
 
 @pytest.fixture
@@ -41,6 +42,17 @@ def mco_json():
         'name': 'test'
     }
 
+
+@pytest.fixture
+def monkeypatch_write_finalized_exam(monkeypatch):
+    def mock_exam_generate_data(exam):
+        return None, ExamWidget(), None, None, None
+
+    def mock_write_finalized_exam(*args):
+        pass
+
+    monkeypatch.setattr(zesje.api.exams, '_exam_generate_data', mock_exam_generate_data)
+    monkeypatch.setattr(zesje.api.exams, 'write_finalized_exam', mock_write_finalized_exam)
 
 # Actual tests
 
@@ -128,7 +140,7 @@ def test_update_patch(test_client, add_test_data):
     assert data['status'] == 200
 
 
-def test_update_finalized_exam(test_client, add_test_data):
+def test_update_finalized_exam(test_client, add_test_data, monkeypatch_write_finalized_exam):
     req = mco_json()
 
     # Link mc_option to finalized exam
@@ -233,7 +245,7 @@ def test_add_finalized_exam(test_client, add_test_data):
     assert data['status'] == 405
 
 
-def test_delete_finalized_exam(test_client, add_test_data):
+def test_delete_finalized_exam(test_client, add_test_data, monkeypatch_write_finalized_exam):
     req = mco_json()
 
     response = test_client.put('/api/mult-choice/', data=req)

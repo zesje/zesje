@@ -101,13 +101,13 @@ class GradingPolicy(enum.IntEnum):
     Enum for the grading policy of a problem
 
     The grading policy of a problem means:
-        0: Manually grade everything
-        1: Manually grade blank solutions only
-        2: Manually grade blank solutions or multiple choice solutions with one option
+        0: Don't grade automatically
+        1: Automatically grade blank solutions
+        2: Automatically grade multiple choice solutions with one selected answer
     """
     set_nothing = 0
     set_blank = 1
-    set_blank_single = 2
+    set_single = 2
 
 
 class Problem(db.Model):

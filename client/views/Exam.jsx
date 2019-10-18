@@ -13,6 +13,7 @@ import ExamFinalizeMarkdown from './ExamFinalize.md'
 import ConfirmationModal from '../components/ConfirmationModal.jsx'
 import FeedbackPanel from '../components/feedback/FeedbackPanel.jsx'
 import EditPanel from '../components/feedback/EditPanel.jsx'
+import Tooltip from '../components/Tooltip.jsx'
 import Switch from 'react-bulma-switch/full'
 
 import * as api from '../api.jsx'
@@ -599,6 +600,7 @@ class Exams extends React.Component {
             }))
           }}
           saveProblemName={this.saveProblemName}
+          setHelpPage={this.props.setHelpPage}
         />
         <this.PanelExamActions />
         <this.PanelGradeAnonymous />
@@ -758,6 +760,12 @@ class Exams extends React.Component {
           <React.Fragment>
             <div className='panel-block mcq-block'>
               <b>Auto-approve</b>
+              <Tooltip
+                icon='question-circle'
+                location='top'
+                text='Approve answers automatically. Click for more info.'
+                clickAction={() => this.props.setHelpPage('gradingPolicy')}
+              />
               <div className='select is-hovered is-fullwidth'>
                 <select value={props.problem.grading_policy} onChange={this.onChangeAutoApproveType.bind(this)}>
                   <option value='0'>Nothing</option>
@@ -887,7 +895,10 @@ class Exams extends React.Component {
                 numPages={this.state.numPages}
                 setPage={this.setPage}
               />
-              <this.SidePanel examID={this.state.examID} />
+              <this.SidePanel
+                examID={this.state.examID}
+                setHelpPage={this.props.setHelpPage}
+              />
             </div>
             <div className='column is-narrow editor-content' >
               {this.renderContent()}

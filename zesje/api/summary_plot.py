@@ -117,7 +117,7 @@ def get(exam_id):
     ax.set_yticks(np.arange(0, -len(problem_scores.columns), -1))
     ax.set_yticklabels(
         [(f'{i} ' + f'($Rir={corrs[i]:.2f}$)' * (not np.isnan(corrs[i]))) for i
-         in problem_scores.columns[:-1]]
+         in problem_scores.columns if i != 'total']
         + ['total ' + f'($\\alpha = {alpha:.2f}$)' * (not np.isnan(alpha))]
     )
 

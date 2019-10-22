@@ -23,4 +23,5 @@ def upgrade():
 
 def downgrade():
     # Drop grade_anonymous column
-    op.drop_column('exam', 'grade_anonymous')
+    with op.batch_alter_table('exam') as batch_op:
+        batch_op.drop_column('grade_anonymous')

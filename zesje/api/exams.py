@@ -526,6 +526,26 @@ class ExamPreview(Resource):
 
 
 def _exam_generate_data(exam):
+    """ Retrieve data necessary to generate exam PDFs
+
+    Parameters
+    ----------
+    exam : Exam
+        The exam to retrieve the data for
+
+    Returns
+    -------
+    exam_dir : path
+        Directory with the exam data
+    student_id_widget : ExamWidget
+        The student id widget
+    barcode_widget : ExamWidget
+        The barcode widget
+    exam_path : path
+        The path to the exam PDF file
+    cb_data : list of tuples
+        List of tuples with checkbox data, each tuple represented as (x, y, page, label)
+    """
     exam_dir = _get_exam_dir(exam.id)
 
     student_id_widget = next(

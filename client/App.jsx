@@ -88,6 +88,20 @@ class App extends React.Component {
         }
       })
   }
+  updateSubmissionByID = (submissionID) => {
+    api.get('submissions/' + this.state.exam.id + '/' + submissionID)
+      .then(sub => {
+        let newList = this.state.exam.submissions
+        const index = newList.map(sub => sub.id).indexOf(submissionID)
+        newList[index] = sub
+        this.setState({
+          exam: {
+            ...this.state.exam,
+            submissions: newList
+          }
+        })
+      })
+  }
 
   updateSubmission = (index, sub) => {
     if (index === undefined) {
@@ -166,7 +180,7 @@ class App extends React.Component {
             <Route path='/grade' render={() => (
               exam.submissions.length && grader
                 ? <Grade exam={exam} graderID={this.state.grader.id}
-                  updateSubmission={this.updateSubmission} updateExam={this.updateExam} />
+                  updateSubmissionByID={this.updateSubmissionByID} updateExam={this.updateExam} />
                 : <Fail message='No exams uploaded or no grader selected. Please do not bookmark URLs' />
             )} />
             <Route path='/overview' render={() => (

@@ -72,7 +72,7 @@ class Grade extends React.Component {
       this.setState({
         sIndex: newIndex
       })
-      this.props.updateSubmission(newIndex)
+      this.props.updateSubmissionByID(this.state.submissions[newIndex].id)
     }
   }
 
@@ -143,30 +143,31 @@ class Grade extends React.Component {
     this.setProblemIndex(newIndex)
   }
 
-  //TODO
   toggleOption = (index) => {
     const exam = this.props.exam
+    const submission = this.state.submissions[this.state.sIndex]
     const problem = exam.problems[this.state.pIndex]
     if (index + 1 > problem.feedback.length) return
 
     const optionURI = this.state.examID + '/' +
-      exam.submissions[this.state.sIndex].id + '/' +
+      submission.id + '/' +
       problem.id
     api.put('solution/' + optionURI, {
       id: problem.feedback[index].id,
       graderID: this.props.graderID
     })
       .then(result => {
-        this.props.updateSubmission(this.state.sIndex)
+        this.props.updateSubmissionByID(submission.id)
       })
   }
 
-  //TODO
   approve = () => {
     const exam = this.props.exam
+    const submission = this.state.submissions[this.state.sIndex]
     const problem = exam.problems[this.state.pIndex]
+
     const optionURI = this.state.examID + '/' +
-      exam.submissions[this.state.sIndex].id + '/' +
+      submission.id + '/' +
       problem.id
     api.put('solution/approve/' + optionURI, {
       graderID: this.props.graderID
@@ -175,7 +176,7 @@ class Grade extends React.Component {
         resp.json().then(body => Notification.error('Could not approve feedback: ' + body.message))
       })
       .then(result => {
-        this.props.updateSubmission(this.state.sIndex)
+        this.props.updateSubmissionByID(submission.id)
       })
   }
 
@@ -245,8 +246,8 @@ class Grade extends React.Component {
                     : <FeedbackPanel examID={exam.id} submissionID={submission.id}
                       problem={problem} solution={solution} graderID={this.props.graderID}
                       editFeedback={this.editFeedback} showTooltips={this.state.showTooltips}
-                      updateSubmission={() => {
-                        this.props.updateSubmission(this.state.sIndex)
+                      updateSubmissionByID={() => {
+                        this.props.updateSubmissionByID(submission.id)
                       }} grading />
                   }
                 </nav>

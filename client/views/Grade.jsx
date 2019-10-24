@@ -211,6 +211,7 @@ class Grade extends React.Component {
         submissions: SeededShuffle.shuffle(newProps.exam.submissions, newProps.graderID, true)
       }
     }
+    return {submissions: SeededShuffle.shuffle(newProps.exam.submissions, newProps.graderID, true)}
   }
 
   render () {

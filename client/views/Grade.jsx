@@ -1,5 +1,6 @@
 import React from 'react'
 import Notification from 'react-bulma-notification'
+import SeededShuffle from 'seededshuffle'
 
 import Hero from '../components/Hero.jsx'
 
@@ -24,7 +25,8 @@ class Grade extends React.Component {
     pIndex: 0,
     examID: null,
     fullPage: false,
-    showTooltips: false
+    showTooltips: false,
+    submissions: SeededShuffle.shuffle(this.props.exam.submissions, this.props.graderID, true)
   }
 
   componentDidMount = () => {
@@ -66,7 +68,7 @@ class Grade extends React.Component {
    * This updates the submission to a new one.
    */
   setSubmissionIndex = (newIndex) => {
-    if (newIndex >= 0 && newIndex < this.props.exam.submissions.length) {
+    if (newIndex >= 0 && newIndex < this.state.submissions.length) {
       this.setState({
         sIndex: newIndex
       })
@@ -85,7 +87,7 @@ class Grade extends React.Component {
 
   prevUngraded = () => {
     for (let i = this.state.sIndex - 1; i >= 0; i--) {
-      if (this.props.exam.submissions[i].problems[this.state.pIndex].graded_by === null) {
+      if (this.state.submissions[i].problems[this.state.pIndex].graded_by === null) {
         this.setSubmissionIndex(i)
         return
       }
@@ -93,8 +95,8 @@ class Grade extends React.Component {
   }
 
   nextUngraded = () => {
-    for (let i = this.state.sIndex + 1; i < this.props.exam.submissions.length; i++) {
-      if (this.props.exam.submissions[i].problems[this.state.pIndex].graded_by === null) {
+    for (let i = this.state.sIndex + 1; i < this.state.submissions.length; i++) {
+      if (this.state.submissions[i].problems[this.state.pIndex].graded_by === null) {
         this.setSubmissionIndex(i)
         return
       }
@@ -115,7 +117,7 @@ class Grade extends React.Component {
   }
 
   setSubmission = (id) => {
-    const i = this.props.exam.submissions.findIndex(sub => sub.id === id)
+    const i = this.state.submissions.findIndex(sub => sub.id === id)
     this.setSubmissionIndex(i)
   }
   changeProblem = (event) => {
@@ -141,6 +143,7 @@ class Grade extends React.Component {
     this.setProblemIndex(newIndex)
   }
 
+  //TODO
   toggleOption = (index) => {
     const exam = this.props.exam
     const problem = exam.problems[this.state.pIndex]
@@ -158,6 +161,7 @@ class Grade extends React.Component {
       })
   }
 
+  //TODO
   approve = () => {
     const exam = this.props.exam
     const problem = exam.problems[this.state.pIndex]
@@ -202,19 +206,20 @@ class Grade extends React.Component {
       return {
         sIndex: 0,
         pIndex: 0,
-        examID: newProps.exam.id
+        examID: newProps.exam.id,
+        submissions: SeededShuffle.shuffle(newProps.exam.submissions, newProps.graderID, true)
       }
     }
-    return null
   }
 
   render () {
     const exam = this.props.exam
-    const submission = exam.submissions[this.state.sIndex]
+    const submission = this.state.submissions[this.state.sIndex]
+    const submissions = this.state.submissions
     const solution = submission.problems[this.state.pIndex]
     const problem = exam.problems[this.state.pIndex]
-    const progress = exam.submissions.map(sub => sub.problems[this.state.pIndex])
-    const otherSubmissions = exam.submissions.filter((sub) => (
+    const progress = this.state.submissions.map(sub => sub.problems[this.state.pIndex])
+    const otherSubmissions = this.state.submissions.filter((sub) => (
       sub.id !== submission.id && submission.student && sub.student && sub.student.id === submission.student.id)
     ).map((sub) => ' #' + sub.id)
     const multiple = otherSubmissions.length > 0
@@ -267,7 +272,7 @@ class Grade extends React.Component {
                         <SearchBox
                           placeholder='Search for a submission'
                           selected={submission}
-                          options={exam.submissions}
+                          options={submissions}
                           suggestionKeys={(anonymous ? ['id'] : [
                             'student.id',
                             'student.firstName',

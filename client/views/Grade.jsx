@@ -268,18 +268,12 @@ class Grade extends React.Component {
                           placeholder='Search for a submission'
                           selected={submission}
                           options={exam.submissions}
-                          suggestionKeys={() => {
-                            if (anonymous) {
-                              return (['id'])
-                            } else {
-                              return ([
-                                'student.id',
-                                'student.firstName',
-                                'student.lastName',
-                                'id'
-                              ])
-                            }
-                          }}
+                          suggestionKeys={(anonymous ? ['id'] : [
+                            'student.id',
+                            'student.firstName',
+                            'student.lastName',
+                            'id'
+                          ])}
                           setSelected={this.setSubmission}
                           renderSelected={({id, student}) => {
                             if (student && !anonymous) {

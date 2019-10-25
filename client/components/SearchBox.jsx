@@ -80,7 +80,7 @@ class SearchBox extends React.Component {
       distance: 100,
       maxPatternLength: 32,
       minMatchCharLength: 1,
-      keys: this.props.suggestionKeys()
+      keys: this.props.suggestionKeys
     }
     const fuse = new Fuse(this.props.options, options)
     const result = fuse.search(value)

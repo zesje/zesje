@@ -5,7 +5,7 @@ import random
 import string
 
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean, ForeignKey, Enum
+from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean, ForeignKey, Enum, false
 from flask_sqlalchemy.model import BindMetaMixin, Model
 from sqlalchemy.ext.declarative import DeclarativeMeta, declarative_base
 from sqlalchemy.orm import backref
@@ -71,7 +71,7 @@ class Exam(db.Model):
     widgets = db.relationship('ExamWidget', backref='exam', cascade='all',
                               order_by='ExamWidget.id', lazy=True)
     finalized = Column(Boolean, default=False, server_default='f')
-    grade_anonymous = Column(Boolean, default=False, server_default='f')
+    grade_anonymous = Column(Boolean, default=False, server_default=false())
 
 
 class Submission(db.Model):

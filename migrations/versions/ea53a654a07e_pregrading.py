@@ -3,7 +3,7 @@ Add grading policy to problem table
 Add unique constraint to grader name
 
 Revision ID: ea53a654a07e
-Revises: d6c3d4e65bd6
+Revises: ccd9d39aed6f
 
 """
 from alembic import op
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = 'ea53a654a07e'
-down_revision = 'd6c3d4e65bd6'
+down_revision = 'ccd9d39aed6f'
 branch_labels = None
 depends_on = None
 

@@ -4,7 +4,7 @@ from datetime import datetime
 
 from .blanks import reference_image
 from .database import db, Grader, FeedbackOption, GradingPolicy, Submission, Solution
-from .images import guess_dpi, get_box, widget_area
+from .images import guess_dpi, get_box, widget_area, blockshaped
 from .pdf_generation import CHECKBOX_FORMAT
 
 
@@ -156,18 +156,21 @@ def is_blank(problem, page_img):
     input_image = cv2.cvtColor(input_image, cv2.COLOR_BGR2GRAY)
     input_image = np.array(input_image)
 
-    n = 0
-    max = input_image.shape[0]
+    block_size_cm = 1.0
+    block_size_inch = block_size_cm * 0.3937
+    block_size_pixels = int(block_size_inch * dpi)
 
-    # Check if the submission is darker than the reference, 50 pixels at a time
-    while n + 50 < max:
-        m = n + 50
-        if np.average(~input_image[n: m]) > (1.03 * np.average(~blank_image[n: m])):
-            return False
-        n = m
+    height = (blank_image.shape[0] // block_size_pixels) * block_size_pixels
+    width = (blank_image.shape[1] // block_size_pixels) * block_size_pixels
 
-    # Return if the remaining pixels < 50 pixels are darker than the reference
-    return not(np.average(~input_image[n: max-1]) > (1.03 * np.average(~blank_image[n: max-1])))
+    blank_image = blank_image[:height, :width]
+    input_image = input_image[:height, :width]
+
+    return not any(
+        np.sum(blank_box) > 1.03 * np.sum(input_box)
+        for blank_box, input_box
+        in zip(blockshaped(blank_image, block_size_pixels, block_size_pixels),
+               blockshaped(input_image, block_size_pixels, block_size_pixels)))
 
 
 def box_is_filled(box, page_img, threshold=225, cut_padding=0.05, box_size=9):

@@ -2,9 +2,9 @@ import cv2
 import numpy as np
 from datetime import datetime
 
-from .blanks import get_blank
+from .blanks import reference_image
 from .database import db, Grader, FeedbackOption, GradingPolicy, Submission, Solution
-from .images import guess_dpi, get_box
+from .images import guess_dpi, get_box, widget_area
 from .pdf_generation import CHECKBOX_FORMAT
 
 
@@ -142,19 +142,11 @@ def is_blank(problem, page_img):
     """
     dpi = guess_dpi(page_img)
 
-    # get the box where we think the box is
-    widget_area = np.asarray([
-        problem.widget.y,  # top
-        problem.widget.y + problem.widget.height,  # bottom
-        problem.widget.x,  # left
-        problem.widget.x + problem.widget.width,  # right
-    ])
-
-    widget_area_in = widget_area / 72
+    widget_area_in = widget_area(problem)
 
     cut_im = get_box(page_img, widget_area_in, padding=0)
 
-    reference = get_blank(problem, dpi, widget_area_in)
+    reference = reference_image(problem, dpi, widget_area_in)
 
     # Convert the images to grayscale and transform into a 1D array
     blank_image = np.array(reference)

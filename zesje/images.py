@@ -34,3 +34,28 @@ def get_box(image_array, box, padding=0.3):
     top, bottom = max(0, min(box[0], h)), max(1, min(box[1], h))
     left, right = max(0, min(box[2], w)), max(1, min(box[3], w))
     return image_array[top:bottom, left:right]
+
+
+def widget_area(problem):
+    """Get the coordinates of the widget area of a problem in inches
+
+    Parameters
+    ----------
+    problem: Problem
+        An instance of the problem to get the widget area for
+
+    Returns
+    ------
+    widget_area_in : numpy array
+        An array with consisting of [top, bottom, left, right] in inches
+    """
+    widget_area = np.asarray([
+        problem.widget.y,  # top
+        problem.widget.y + problem.widget.height,  # bottom
+        problem.widget.x,  # left
+        problem.widget.x + problem.widget.width,  # right
+    ])
+
+    widget_area_in = widget_area / 72
+
+    return widget_area_in

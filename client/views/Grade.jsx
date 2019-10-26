@@ -23,6 +23,7 @@ class Grade extends React.Component {
     feedbackToEdit: null,
     sIndex: 0,
     pIndex: 0,
+    graderID: this.props.graderID,
     examID: null,
     fullPage: false,
     showTooltips: false,
@@ -208,10 +209,18 @@ class Grade extends React.Component {
         sIndex: 0,
         pIndex: 0,
         examID: newProps.exam.id,
+        graderID: newProps.graderID,
         submissions: SeededShuffle.shuffle(newProps.exam.submissions, newProps.graderID, true)
       }
     }
-    return {submissions: SeededShuffle.shuffle(newProps.exam.submissions, newProps.graderID, true)}
+    // If the grader ID changes, submissions need to be reshuffled
+    if (newProps.graderID !== prevState.graderID) {
+      return {
+        graderID: newProps.graderID,
+        submissions: SeededShuffle.shuffle(newProps.exam.submissions, newProps.graderID, true)
+      }
+    }
+    return null
   }
 
   render () {

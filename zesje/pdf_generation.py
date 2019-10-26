@@ -51,14 +51,14 @@ def generate_pdfs(exam_pdf_file, copy_nums, output_paths, exam_token=None, id_gr
     ----------
     exam_pdf_file : file object or str
         The exam PDF file or its filename
-    exam_token : str
-        The identifier of the exam
     copy_nums : [int | None]
         Copy numbers of the generated pdfs. These are integers greater than 1
         If None is given, the generic part of the overlay is generated.
         If an integer is given, only copy specific parts are generated.
     output_paths : [str]
         Output file paths of the generated pdfs
+    exam_token : str
+        The identifier of the exam
     id_grid_x : int
         The x coordinate where the student ID grid should be placed
     id_grid_y : int

@@ -1,4 +1,5 @@
 import React from 'react'
+import Notification from 'react-bulma-notification'
 
 import Hero from '../components/Hero.jsx'
 
@@ -32,6 +33,7 @@ class Grade extends React.Component {
     // Also add the shortcut to ./client/commponents/help/ShortcutsHelp.md
     this.props.bindShortcut(['left', 'h'], this.prev)
     this.props.bindShortcut(['right', 'l'], this.next)
+    this.props.bindShortcut(['a'], this.approve)
     this.props.bindShortcut(['shift+left', 'shift+h'], (event) => {
       event.preventDefault()
       this.prevUngraded()
@@ -156,6 +158,23 @@ class Grade extends React.Component {
       })
   }
 
+  approve = () => {
+    const exam = this.props.exam
+    const problem = exam.problems[this.state.pIndex]
+    const optionURI = this.state.examID + '/' +
+      exam.submissions[this.state.sIndex].id + '/' +
+      problem.id
+    api.put('solution/approve/' + optionURI, {
+      graderID: this.props.graderID
+    })
+      .catch(resp => {
+        resp.json().then(body => Notification.error('Could not approve feedback: ' + body.message))
+      })
+      .then(result => {
+        this.props.updateSubmission(this.state.sIndex)
+      })
+  }
+
   toggleFullPage = () => {
     this.setState({
       fullPage: !this.state.fullPage
@@ -195,10 +214,11 @@ class Grade extends React.Component {
     const solution = submission.problems[this.state.pIndex]
     const problem = exam.problems[this.state.pIndex]
     const progress = exam.submissions.map(sub => sub.problems[this.state.pIndex])
-    const multiple = submission.student && exam.submissions.some(sub =>
-      (sub.id !== submission.id && sub.student && sub.student.id === submission.student.id)
-    )
-
+    const otherSubmissions = exam.submissions.filter((sub) => (
+      sub.id !== submission.id && submission.student && sub.student && sub.student.id === submission.student.id)
+    ).map((sub) => ' #' + sub.id)
+    const multiple = otherSubmissions.length > 0
+    const anonymous = exam.gradeAnonymous
     const gradedTime = new Date(solution.graded_at)
 
     return (
@@ -248,14 +268,15 @@ class Grade extends React.Component {
                           placeholder='Search for a submission'
                           selected={submission}
                           options={exam.submissions}
-                          suggestionKeys={[
+                          suggestionKeys={(anonymous ? ['id'] : [
                             'student.id',
                             'student.firstName',
-                            'student.lastName'
-                          ]}
+                            'student.lastName',
+                            'id'
+                          ])}
                           setSelected={this.setSubmission}
                           renderSelected={({id, student}) => {
-                            if (student) {
+                            if (student && !anonymous) {
                               return `${student.firstName} ${student.lastName} (${student.id})`
                             } else {
                               return `#${id}`
@@ -263,16 +284,26 @@ class Grade extends React.Component {
                           }}
                           renderSuggestion={(submission) => {
                             const stud = submission.student
-                            return (
-                              <div className='flex-parent'>
-                                <b className='flex-child truncated'>
-                                  {`${stud.firstName} ${stud.lastName}`}
-                                </b>
-                                <i className='flex-child fixed'>
-                                  ({stud.id})
-                                </i>
-                              </div>
-                            )
+                            if (stud && !anonymous) {
+                              return (
+                                <div className='flex-parent'>
+                                  <b className='flex-child truncated'>
+                                    {`${stud.firstName} ${stud.lastName}`}
+                                  </b>
+                                  <i className='flex-child fixed'>
+                                    ({stud.id}, #{submission.id})
+                                  </i>
+                                </div>
+                              )
+                            } else {
+                              return (
+                                <div className='flex-parent'>
+                                  <b className='flex-child fixed'>
+                                    #{submission.id}
+                                  </b>
+                                </div>
+                              )
+                            }
                           }}
                         />
                       </div>
@@ -297,8 +328,10 @@ class Grade extends React.Component {
                 {multiple
                   ? <article className='message is-info'>
                     <div className='message-body'>
-                      This student has multiple submissions!
-                      Make sure that each applicable feedback option is only selected once.
+                      <p>
+                        This student has multiple submissions: (#{submission.id}, {otherSubmissions})
+                        Make sure that each applicable feedback option is only selected once.
+                      </p>
                     </div>
                   </article> : null
                 }
@@ -306,7 +339,8 @@ class Grade extends React.Component {
                 <div className='level'>
                   <div className='level-left'>
                     <div className='level-item'>
-                      <div>
+                      <div className={(this.state.showTooltips ? ' tooltip is-tooltip-active is-tooltip-top' : '')}
+                        data-tooltip='approve feedback: a' >
                         {solution.graded_at
                           ? <div>Graded by: {solution.graded_by.name} <i>({gradedTime.toLocaleString()})</i></div>
                           : <div>Ungraded</div>

@@ -37,6 +37,7 @@
     "babel-plugin-transform-class-properties": "^6.24.1",
     "babel-plugin-transform-object-rest-spread": "^6.26.0",
     "bulma": "^0.7.1",
+    "bulma-switch": "^2.0.0",
     "bulma-tooltip": "^2.0.1",
     "concurrently": "^3.6.0",
     "css-loader": "^1.0.0",
@@ -56,6 +57,7 @@
     "react": "^16.4.0",
     "react-autosuggest": "^9.3.4",
     "react-bulma-notification": "^1.1.0",
+    "react-bulma-switch": "^0.0.3",
     "react-dom": "^16.4.0",
     "react-dropzone": "^4.2.13",
     "react-hot-loader": "^4.3.3",
@@ -86,7 +88,7 @@
     "react-test-renderer": "^16.3.2",
     "snazzy": "^7.1.1",
     "standard": "^11.0.1",
-    "webpack-bundle-analyzer": "^2.13.1",
+    "webpack-bundle-analyzer": "^3.6.0",
     "webpack-dev-server": "^3.1.4"
   }
 }

@@ -1,6 +1,32 @@
+div.mcq-widget {
+    display:inline-flex;
+    box-sizing: content-box;
+}
+
+div.mcq-option {
+    display: block;
+    width: var(--width-mco);
+    box-sizing: content-box;
+    height: var(--height-mco);
+}
+
+div.mcq-option div.mcq-option-label {
+    display:block;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 12px;
+    text-align: center;
+}
+
+div.mcq-option img.mcq-box {
+    display: block;
+    margin:auto;
+}
+
+
 .editor-content {
   background-color: #ddd;
-  border-radius: 10px
+  border-radius: 10px;
+  height: 100%;
 }
 
 .selection-area {
@@ -26,6 +52,10 @@
   background-color: hsla(171, 100%, 41%, 0.2)
 }
 
+.widget.selected .mcq-option:hover {
+    background-color: rgb(25, 149, 216);
+}
+
 .editor-side-panel {
   background: #fff;
   margin: 0.75em;
@@ -36,3 +66,16 @@
   border-top: 1px solid hsl(217, 71%, 53%);
   border-bottom: 1px solid hsl(217, 71%, 53%);
 }
+.field.flex-input {
+  display: flex;
+  width: 100%;
+}
+
+.field.flex-input > * {
+  flex-grow: 1
+}
+
+.field.flex-input > .field, .field.flex-input > input {
+  flex-grow: 0;
+}
+

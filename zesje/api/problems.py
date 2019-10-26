@@ -1,8 +1,11 @@
 """ REST api for problems """
 
-from flask_restful import Resource, reqparse
+import os
 
-from ..database import db, Exam, Problem, ProblemWidget, Solution
+from flask_restful import Resource, reqparse, current_app
+
+from zesje.database import db, Exam, Problem, ProblemWidget, Solution
+from zesje.pdf_reader import guess_problem_title, get_problem_page
 
 
 class Problems(Resource):
@@ -58,11 +61,21 @@ class Problems(Resource):
             db.session.commit()
             widget.name = f'problem_{problem.id}'
 
+            data_dir = current_app.config.get('DATA_DIRECTORY', 'data')
+            pdf_path = os.path.join(data_dir, f'{problem.exam_id}_data', 'exam.pdf')
+
+            page = get_problem_page(problem, pdf_path)
+            guessed_title = guess_problem_title(problem, page)
+
+            if guessed_title:
+                problem.name = guessed_title
+
             db.session.commit()
 
             return {
                 'id': problem.id,
                 'widget_id': widget.id,
+                'problem_name': problem.name
             }
 
     put_parser = reqparse.RequestParser()

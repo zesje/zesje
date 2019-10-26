@@ -9,9 +9,28 @@ from reportlab.pdfgen import canvas
 
 output_pdf_filename_format = '{0:05d}.pdf'
 
+# the size of the markers in points
+MARKER_FORMAT = {
+    "margin": 10 * mm,
+    "marker_line_length": 8 * mm,
+    "marker_line_width": 1 * mm,
+    "bar_length": 40 * mm
+}
+
+# the parameters of drawing checkboxes
+CHECKBOX_FORMAT = {
+    "margin": 5,
+    "font_size": 11,
+    "box_size": 9
+}
+PAGE_FORMATS = {
+    "A4": (595.276, 841.89),
+    "US letter": (612, 792),
+}
+
 
 def generate_pdfs(exam_pdf_file, exam_id, copy_nums, output_paths, id_grid_x,
-                  id_grid_y, datamatrix_x, datamatrix_y):
+                  id_grid_y, datamatrix_x, datamatrix_y, cb_data=None):
     """
     Generate the final PDFs from the original exam PDF.
 
@@ -23,7 +42,6 @@ def generate_pdfs(exam_pdf_file, exam_id, copy_nums, output_paths, id_grid_x,
     If maximum interchangeability with version 1 QR codes is desired (error
     correction level M), use exam IDs composed of only uppercase letters, and
     composed of at most 12 letters.
-
     Parameters
     ----------
     exam_pdf_file : file object or str
@@ -42,6 +60,9 @@ def generate_pdfs(exam_pdf_file, exam_id, copy_nums, output_paths, id_grid_x,
         The x coordinate where the DataMatrix code should be placed
     datamatrix_y : int
         The y coordinate where the DataMatrix code should be placed
+    cb_data : list[ (int, int, int, str)]
+        The data needed for drawing a checkbox, namely: the x coordinate; y coordinate; page number and label
+
     """
     exam_pdf = PdfReader(exam_pdf_file)
     mediabox = exam_pdf.pages[0].MediaBox
@@ -55,7 +76,7 @@ def generate_pdfs(exam_pdf_file, exam_id, copy_nums, output_paths, id_grid_x,
             overlay_canv = canvas.Canvas(overlay_file.name, pagesize=pagesize)
             _generate_overlay(overlay_canv, pagesize, exam_id, copy_num,
                               len(exam_pdf.pages), id_grid_x, id_grid_y,
-                              datamatrix_x, datamatrix_y)
+                              datamatrix_x, datamatrix_y, cb_data)
             overlay_canv.save()
 
             # Merge overlay and exam
@@ -150,6 +171,35 @@ def generate_id_grid(canv, x, y):
               textboxwidth, textboxheight)
 
 
+def add_checkbox(canvas, x, y, label):
+    """
+    draw a checkbox and draw a single character on top of the checkbox
+
+    Parameters
+    ----------
+    canvas : reportlab canvas object
+
+    x : int
+        the x coordinate of the top left corner of the box in points (pt)
+    y : int
+        the y coordinate of the top left corner of the box in points (pt)
+    label: str
+        A string representing the label that is drawn on top of the box, will only take the first character
+
+    """
+    x_label = x + 1  # location of the label
+    y_label = y + CHECKBOX_FORMAT["margin"]  # remove fontsize from the y label since we draw from the bottom left up
+    box_y = y - CHECKBOX_FORMAT["box_size"]  # remove the markboxsize because the y is the coord of the top
+    # and reportlab prints from the bottom
+
+    # check that there is a label to print
+    if (label and not (len(label) == 0)):
+        canvas.setFont('Helvetica', CHECKBOX_FORMAT["font_size"])
+        canvas.drawString(x_label, y_label, label[0])
+
+    canvas.rect(x, box_y, CHECKBOX_FORMAT["box_size"], CHECKBOX_FORMAT["box_size"])
+
+
 def generate_datamatrix(exam_id, page_num, copy_num):
     """
     Generates a DataMatrix code to be used on a page.
@@ -188,7 +238,7 @@ def generate_datamatrix(exam_id, page_num, copy_num):
 
 
 def _generate_overlay(canv, pagesize, exam_id, copy_num, num_pages, id_grid_x,
-                      id_grid_y, datamatrix_x, datamatrix_y):
+                      id_grid_y, datamatrix_x, datamatrix_y, cb_data=None):
     """
     Generates an overlay ('watermark') PDF, which can then be overlaid onto
     the exam PDF.
@@ -222,6 +272,9 @@ def _generate_overlay(canv, pagesize, exam_id, copy_num, num_pages, id_grid_x,
         The x coordinate where the DataMatrix codes should be placed
     datamatrix_y : int
         The y coordinate where the DataMatrix codes should be placed
+    cb_data : list[ (int, int, int, str)]
+        The data needed for drawing a checkbox, namely: the x coordinate; y coordinate; page number and label
+
     """
 
     # transform y-cooridate to different origin location
@@ -230,6 +283,16 @@ def _generate_overlay(canv, pagesize, exam_id, copy_num, num_pages, id_grid_x,
     # ID grid on first page only
     generate_id_grid(canv, id_grid_x, id_grid_y)
 
+    # create index for list of checkbox data and sort the data on page
+    if cb_data:
+        index = 0
+        max_index = len(cb_data)
+        cb_data = sorted(cb_data, key=lambda tup: tup[2])
+        # invert the y axis
+        cb_data = [(cb[0], pagesize[1] - cb[1], cb[2], cb[3]) for cb in cb_data]
+    else:
+        index = 0
+        max_index = 0
     # Font settings for the copy number (printed under the datamatrix)
     fontsize = 12
     canv.setFont('Helvetica', fontsize)
@@ -247,6 +310,13 @@ def _generate_overlay(canv, pagesize, exam_id, copy_num, num_pages, id_grid_x,
             datamatrix_x, datamatrix_y_adjusted - (fontsize * 0.66),
             f" # {copy_num}"
         )
+
+        # call generate for all checkboxes that belong to the current page
+        while index < max_index and cb_data[index][2] <= page_num:
+            x, y, _, label = cb_data[index]
+            add_checkbox(canv, x, y, label)
+            index += 1
+
         canv.showPage()
 
 
@@ -264,15 +334,14 @@ def _add_corner_markers_and_bottom_bar(canv, pagesize):
     """
     page_width = pagesize[0]
     page_height = pagesize[1]
-    margin = 10 * mm
-    marker_line_length = 8 * mm
-    bar_length = 40 * mm
+    marker_line_length = MARKER_FORMAT["marker_line_length"]
+    bar_length = MARKER_FORMAT["bar_length"]
 
     # Calculate coordinates offset from page edge
-    left = margin
-    bottom = margin
-    right = page_width - margin
-    top = page_height - margin
+    left = MARKER_FORMAT["margin"]
+    bottom = MARKER_FORMAT["margin"]
+    right = page_width - MARKER_FORMAT["margin"]
+    top = page_height - MARKER_FORMAT["margin"]
 
     # Calculate start and end coordinates of bottom bar
     bar_start = page_width / 2 - bar_length / 2
@@ -336,3 +405,23 @@ def page_is_size(exam_pdf_file, shape, tolerance=0):
         pass
 
     return not invalid
+
+
+def save_with_even_pages(pdf_path, exam_pdf_file):
+    exam_pdf = PdfReader(exam_pdf_file)
+    pagecount = len(exam_pdf.pages)
+
+    if (pagecount % 2 == 0):
+        exam_pdf_file.seek(0)
+        exam_pdf_file.save(pdf_path)
+        return
+
+    new = PdfWriter()
+    new.addpages(exam_pdf.pages)
+    blank = PageMerge()
+    box = exam_pdf.pages[0].MediaBox
+    blank.mbox = box
+    blank = blank.render()
+    new.addpage(blank)
+
+    new.write(pdf_path)

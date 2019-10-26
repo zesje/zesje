@@ -39,6 +39,7 @@ dependencies:
         - opencv-python
         - pikepdf
         - pylibdmtx
+        - pdfminer3
 
         # Exporting
         - pandas

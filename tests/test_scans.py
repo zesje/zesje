@@ -3,11 +3,14 @@ import os
 import pytest
 import numpy as np
 import PIL.Image
+import cv2
 from tempfile import NamedTemporaryFile
 from flask import Flask
 from io import BytesIO
 import wand.image
 from pikepdf import Pdf
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import A4
 
 from zesje.scans import decode_barcode, ExamMetadata, ExtractedBarcode
 from zesje.database import db, _generate_exam_token
@@ -71,23 +74,6 @@ def test_decode_barcode(
     assert decode_barcode(image, exam_config) == (expected, False)
 
 
-# Page Generation Functions
-
-
-def generate_page(width=592, height=842):
-    """
-    Generate blank page
-    by default 72 DPI such that pixels match points
-    """
-    pdf = np.zeros((height, width))
-    pdf.fill(255)
-    return PIL.Image.fromarray(pdf).convert("RGB")
-
-
-def generate_multiple_pages(pages=5):
-    return [generate_page() for _ in range(pages)]
-
-
 # Helper functions
 
 
@@ -102,7 +88,7 @@ def new_exam(db_empty):
         token = _generate_exam_token()
         e = Exam(name="testExam", token=token)
         sub = Submission(copy_number=145, exam=e)
-        widget = ExamWidget(exam=e, name='student_id_widget', x=0, y=0)
+        widget = ExamWidget(exam=e, name='student_id_widget', x=50, y=50)
         exam_config = ExamMetadata(
             token=token,
             barcode_coords=[40, 90, 510, 560],  # in points (not pixels!)
@@ -119,25 +105,26 @@ def generate_pdf(exam_config, pages):
     token = exam_config.token
     datamatrix_x = exam_config.barcode_coords[2]
     datamatrix_y = exam_config.barcode_coords[0]
-    pdf = generate_multiple_pages(pages)  # Returns PIL white paper
     with NamedTemporaryFile(suffix='.pdf') as blank, \
             NamedTemporaryFile(suffix='.pdf') as generated:
-        pdf[0].save(blank.name, save_all=True, append_images=pdf[1:])
+        pdf = canvas.Canvas(blank.name, pagesize=A4)
+        for _ in range(pages):
+            pdf.showPage()
+        pdf.save()
         pdf_generation.generate_pdfs(
             blank.name, token, [145], [generated.name],
-            200, 200, datamatrix_x, datamatrix_y)
+            50, 50, datamatrix_x, datamatrix_y)
         genPDF = makeflatpdf(generated.name)
         return genPDF
 
 
 def makeflatpdf(pdf):
-    with wand.image.Image(file=open(pdf, 'rb')) as img:
-        images = [wand.image.Image(i) for i in img.sequence]
-        for image in images:
-            image.format = 'jpg'
+    with wand.image.Image(file=open(pdf, 'rb'), resolution=150) as img:
         output_pdf = wand.image.Image()
-        for image in images:
+        for image in img.sequence:
+            image.format = 'jpg'
             output_pdf.sequence.append(image)
+            image.destroy()
         return output_pdf
 
 
@@ -154,8 +141,6 @@ def makeImage(img):
 
 def apply_whitenoise(img, threshold=0.02):
     pix = np.array(img)
-    print(pix)
-    print(pix.shape)
     noise = 1 - threshold * np.random.rand(*pix.shape)
     data = pix * noise
     return PIL.Image.fromarray(np.uint8(data))
@@ -175,7 +160,7 @@ def apply_scan(img, rotation=0, scale=1, skew=(0, 0)):
     dst = PIL.Image.new("RGBA", img.size, "white")
     new_size = (int(scale * width), int(scale * height))
     img = img.convert("RGBA")
-    img = img.resize(new_size, resample=1)
+    img = img.resize(new_size, resample=PIL.Image.LANCZOS)
     img = img.rotate(rotation)
     dst.paste(img, skew, mask=img)
     return dst.convert("RGB")
@@ -201,7 +186,7 @@ def test_pipeline(new_exam, datadir):
 @pytest.mark.parametrize('threshold, expected', [
     (0.02, True),
     (0.12, True),
-    (0.92, False)],
+    (0.28, True)],
     ids=['Low noise', 'Medium noise', 'High noise'])
 def test_noise(new_exam, datadir, threshold, expected):
     genPDF = generate_pdf(new_exam, 1)
@@ -215,13 +200,12 @@ def test_noise(new_exam, datadir, threshold, expected):
     (-2, True),
     (0.5, True),
     (0.8, True),
-    (2, False)],
-    ids=['Large rot', 'Small rot', 'Medium rot', 'failing rot'])
+    (2, True)],
+    ids=['Large rot', 'Small rot', 'Medium rot', 'Large counterclockwise rot'])
 def test_rotate(new_exam, datadir, rotation, expected):
     genPDF = generate_pdf(new_exam, 1)
     for image in makeImage(genPDF):
         image = apply_scan(img=image, rotation=rotation)
-        #  image.show()
         success, reason = scans.process_page(image, new_exam, datadir)
         assert success is expected, reason
 
@@ -234,7 +218,6 @@ def test_scale(new_exam, datadir, scale, expected):
     genPDF = generate_pdf(new_exam, 1)
     for image in makeImage(genPDF):
         image = apply_scan(img=image, scale=scale)
-        #  image.show()
         success, reason = scans.process_page(image, new_exam, datadir)
         assert success is expected, reason
 
@@ -247,7 +230,6 @@ def test_skew(new_exam, datadir, skew, expected):
     genPDF = generate_pdf(new_exam, 1)
     for image in makeImage(genPDF):
         image = apply_scan(img=image, skew=skew)
-        #  image.show()
         success, reason = scans.process_page(image, new_exam, datadir)
         assert success is expected, reason
 
@@ -263,7 +245,6 @@ def test_all_effects(
     for image in makeImage(genPDF):
         image = apply_scan(
             img=image, rotation=rotation, scale=scale, skew=skew)
-        #  image.show()
         success, reason = scans.process_page(image, new_exam, datadir)
         assert success is expected, reason
 
@@ -299,3 +280,64 @@ def test_image_extraction(datadir, filename):
         assert img is not None
         assert np.average(np.array(img)) == 255
     assert page == 2
+
+
+@pytest.mark.parametrize('file_name, markers', [("a4-rotated.png", [(59, 59), (1181, 59), (59, 1695), (1181, 1695)]),
+                                                ("a4-3-markers.png", [(1181, 59), (59, 1695), (1181, 1695)]),
+                                                ("a4-rotated-3-markers.png", [(1181, 59), (59, 1695), (1181, 1695)]),
+                                                ("a4-rotated-2-markers.png", [(1181, 59), (59, 1695)]),
+                                                ("a4-rotated-2-bottom-markers.png", [(59, 1695), (1181, 1695)]),
+                                                ("a4-shifted-1-marker.png", [(59, 1695)])
+                                                ])
+def test_realign_image(datadir, file_name, markers):
+    dir_name = "cornermarkers"
+    epsilon = 1
+
+    test_file = os.path.join(datadir, dir_name, file_name)
+    test_image = np.array(PIL.Image.open(test_file))
+
+    result_image = scans.realign_image(test_image)
+
+    result_corner_markers = scans.find_corner_marker_keypoints(result_image)
+    assert result_corner_markers is not None
+    for i in range(len(markers)):
+        diff = np.absolute(np.subtract(markers[i], result_corner_markers[i]))
+        assert diff[0] <= epsilon
+        assert diff[1] <= epsilon
+
+
+def test_incomplete_reference_realign_image(datadir):
+    dir_name = "cornermarkers"
+    epsilon = 1
+    test_file = os.path.join(datadir, dir_name, "a4-rotated.png")
+    test_image = cv2.imread(test_file)
+
+    correct_corner_markers = [(59, 59), (1181, 59), (59, 1695), (1181, 1695)]
+
+    result_image = scans.realign_image(test_image)
+    result_corner_markers = scans.find_corner_marker_keypoints(result_image)
+
+    assert result_corner_markers is not None
+    for i in range(4):
+        diff = np.absolute(np.subtract(correct_corner_markers[i], result_corner_markers[i]))
+        assert diff[0] <= epsilon
+        assert diff[1] <= epsilon
+
+
+def test_shift_image(datadir):
+    dir_name = "cornermarkers"
+    epsilon = 1
+    test_file = os.path.join(datadir, dir_name, "a4-1-marker.png")
+    test_image = cv2.imread(test_file)
+
+    bottom_left = (59, 1695)
+    shift_x, shift_y = 20, -30
+    shift_keypoint = (bottom_left[0] + shift_x, bottom_left[1] + shift_y)
+
+    test_image = scans.shift_image(test_image, shift_x, shift_y)
+    # test_image = scans.shift_image(test_image, bottom_left, shift_keypoint)
+    keypoints = scans.find_corner_marker_keypoints(test_image)
+
+    diff = np.absolute(np.subtract(shift_keypoint, keypoints[0]))
+    assert diff[0] <= epsilon
+    assert diff[1] <= epsilon

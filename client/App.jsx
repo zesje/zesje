@@ -112,45 +112,6 @@ class App extends React.Component {
       }))
   }
 
-  updateSubmission = (index, sub) => {
-    if (index === undefined) {
-      api.get('submissions/' + this.state.exam.id)
-        .then(subs => this.setState({
-          exam: {
-            ...this.state.exam,
-            submissions: subs
-          }
-        }))
-    } else {
-      if (sub) {
-        if (JSON.stringify(sub) !== JSON.stringify(this.state.exam.submissions[index])) {
-          let newList = this.state.exam.submissions
-          newList[index] = sub
-          this.setState({
-            exam: {
-              ...this.state.exam,
-              submissions: newList
-            }
-          })
-        }
-      } else {
-        api.get('submissions/' + this.state.exam.id + '/' + this.state.exam.submissions[index].id)
-          .then(sub => {
-            if (JSON.stringify(sub) !== JSON.stringify(this.state.exam.submissions[index])) {
-              let newList = this.state.exam.submissions
-              newList[index] = sub
-              this.setState({
-                exam: {
-                  ...this.state.exam,
-                  submissions: newList
-                }
-              })
-            }
-          })
-      }
-    }
-  }
-
   changeGrader = (grader) => {
     this.setState({
       grader: grader

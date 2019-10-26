@@ -204,6 +204,7 @@ class Grade extends React.Component {
   }
 
   static getDerivedStateFromProps = (newProps, prevState) => {
+    // if the exam changes, the state of the grading page should change.
     if (newProps.exam.id !== prevState.examID && newProps.exam.submissions.length) {
       return {
         sIndex: 0,
@@ -217,6 +218,12 @@ class Grade extends React.Component {
     if (newProps.graderID !== prevState.graderID) {
       return {
         graderID: newProps.graderID,
+        submissions: SeededShuffle.shuffle(newProps.exam.submissions, newProps.graderID, true)
+      }
+    }
+    // If this submissions have changed, update the state to reflect this.
+    if (newProps.submissions !== prevState.submissions) {
+      return {
         submissions: SeededShuffle.shuffle(newProps.exam.submissions, newProps.graderID, true)
       }
     }

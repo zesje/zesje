@@ -94,7 +94,7 @@ class ExamEditor extends React.Component {
           widthMCO: 20,
           heightMCO: 34,
           isMCQ: false,
-          grading_policy: 0
+          grading_policy: 1
         }
         const widgetData = {
           x: Math.round(selectionBox.left),

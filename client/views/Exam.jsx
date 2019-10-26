@@ -13,6 +13,7 @@ import ExamFinalizeMarkdown from './ExamFinalize.md'
 import ConfirmationModal from '../components/ConfirmationModal.jsx'
 import FeedbackPanel from '../components/feedback/FeedbackPanel.jsx'
 import EditPanel from '../components/feedback/EditPanel.jsx'
+import Tooltip from '../components/Tooltip.jsx'
 import Switch from 'react-bulma-switch/full'
 
 import * as api from '../api.jsx'
@@ -48,6 +49,7 @@ class Exams extends React.Component {
             page: problem.page,
             name: problem.name,
             graded: problem.graded,
+            grading_policy: problem.grading_policy,
             feedback: problem.feedback || [],
             mc_options: problem.mc_options.map((option) => {
               // the database stores the positions of the checkboxes but the front end uses the top-left position
@@ -196,11 +198,45 @@ class Exams extends React.Component {
     const problem = changedWidget.problem
     if (!problem) return
 
-    api.put('problems/' + problem.id + '/name', { name: problem.name })
+    api.put('problems/' + problem.id, { name: problem.name })
       .catch(e => Notification.error('Could not save new problem name: ' + e))
       .then(this.setState({
         changedWidgetId: null
       }))
+  }
+
+  onChangeAutoApproveType (e) {
+    const selectedWidgetId = this.state.selectedWidgetId
+    if (!selectedWidgetId) return
+
+    const selectedWidget = this.state.widgets[selectedWidgetId]
+    if (!selectedWidget) return
+
+    const problem = selectedWidget.problem
+    if (!problem) return
+
+    const newPolicy = e.target.value
+
+    api.put('problems/' + problem.id, { grading_policy: newPolicy })
+      .then(success => this.setState(prevState => ({
+        widgets: update(prevState.widgets, {
+          [selectedWidgetId]: {
+            problem: {
+              grading_policy: {
+                $set: newPolicy
+              }
+            }
+          }
+        })
+      })), error => {
+        error.json().then(res => {
+          let message = res.message
+          if (typeof message === 'object') {
+            message = Object.values(message)[0]
+          }
+          Notification.error('Could not change grading policy: ' + message)
+        })
+      })
   }
 
   createNewWidget = (widgetData) => {
@@ -564,6 +600,7 @@ class Exams extends React.Component {
             }))
           }}
           saveProblemName={this.saveProblemName}
+          setHelpPage={this.props.setHelpPage}
         />
         <this.PanelExamActions />
         <this.PanelGradeAnonymous />
@@ -719,6 +756,26 @@ class Exams extends React.Component {
             }
           </React.Fragment>
         )}
+        {props.problem &&
+          <React.Fragment>
+            <div className='panel-block mcq-block'>
+              <b>Auto-approve</b>
+              <Tooltip
+                icon='question-circle'
+                location='top'
+                text='Approve answers automatically. Click for more info.'
+                clickAction={() => this.props.setHelpPage('gradingPolicy')}
+              />
+              <div className='select is-hovered is-fullwidth'>
+                <select value={props.problem.grading_policy} onChange={this.onChangeAutoApproveType.bind(this)}>
+                  <option value='set_nothing'>Nothing</option>
+                  <option value='set_blank'>Blanks</option>
+                  {props.problem.mc_options.length !== 0 && <option value='set_single'>One answer</option>}
+                </select>
+              </div>
+            </div>
+          </React.Fragment>
+        }
         <div className='panel-block'>
           <button
             disabled={props.disabledDelete}
@@ -838,7 +895,10 @@ class Exams extends React.Component {
                 numPages={this.state.numPages}
                 setPage={this.setPage}
               />
-              <this.SidePanel examID={this.state.examID} />
+              <this.SidePanel
+                examID={this.state.examID}
+                setHelpPage={this.props.setHelpPage}
+              />
             </div>
             <div className='column is-narrow editor-content' >
               {this.renderContent()}

@@ -2,6 +2,7 @@ from flask_restful import Resource, reqparse
 from sqlalchemy.orm import selectinload
 
 from ..database import db, Exam, Submission, Student, Page
+from ..pregrader import ungrade_multiple_sub
 
 
 def sub_to_data(sub, all_pages):
@@ -131,8 +132,15 @@ class Submissions(Resource):
             msg = f'Student {args.studentID} does not exist'
             return dict(status=404, message=msg), 404
 
+        old_student_id = sub.student.id if sub.student else -1
+
         sub.student = student
         sub.signature_validated = True
+
+        # Mark all solutions of this student as ungraded if a new student is assigned
+        if args.studentID != old_student_id:
+            ungrade_multiple_sub(args.studentID, sub.exam_id, commit=False)
+
         db.session.commit()
         return {
             'id': sub.copy_number,

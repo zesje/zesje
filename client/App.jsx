@@ -152,7 +152,8 @@ class App extends React.Component {
                 updateExam={this.updateExam}
                 deleteExam={this.deleteExam}
                 updateSubmission={this.updateSubmission}
-                leave={() => history.push('/')} />} />
+                leave={() => history.push('/')}
+                setHelpPage={this.menu.current ? this.menu.current.setHelpPage : null} />} />
             <Route path='/exams' render={({ history }) =>
               <AddExam updateExamList={this.menu.current ? this.menu.current.updateExamList : null} changeURL={history.push} />} />
             <Route path='/submissions/:examID' render={({ match }) =>

@@ -96,18 +96,18 @@ class Page(db.Model):
     number = Column(Integer, nullable=False)
 
 
-class GradingPolicy(enum.IntEnum):
-    """
-    Enum for the grading policy of a problem
+"""
+Enum for the grading policy of a problem
 
-    The grading policy of a problem means:
-        0: Don't grade automatically
-        1: Automatically grade blank solutions
-        2: Automatically grade multiple choice solutions with one selected answer
-    """
-    set_nothing = 0
-    set_blank = 1
-    set_single = 2
+The grading policy of a problem means:
+    set_nothing: Don't grade automatically
+    set_blank:   Automatically grade blank solutions
+    set_single:  Automatically grade multiple choice solutions with one selected answer
+"""
+GradingPolicy = enum.Enum(
+    'GradingPolicy',
+    'set_nothing set_blank set_single'
+)
 
 
 class Problem(db.Model):

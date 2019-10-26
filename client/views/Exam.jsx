@@ -768,9 +768,9 @@ class Exams extends React.Component {
               />
               <div className='select is-hovered is-fullwidth'>
                 <select value={props.problem.grading_policy} onChange={this.onChangeAutoApproveType.bind(this)}>
-                  <option value='0'>Nothing</option>
-                  <option value='1'>Blanks</option>
-                  {props.problem.mc_options.length !== 0 && <option value='2'>One answer</option>}
+                  <option value='set_nothing'>Nothing</option>
+                  <option value='set_blank'>Blanks</option>
+                  {props.problem.mc_options.length !== 0 && <option value='set_single'>One answer</option>}
                 </select>
               </div>
             </div>

@@ -19,8 +19,6 @@ class Problems(Resource):
     post_parser.add_argument('y', type=int, required=True, location='form')
     post_parser.add_argument('width', type=int, required=True, location='form')
     post_parser.add_argument('height', type=int, required=True, location='form')
-    post_parser.add_argument('grading_policy', type=int, required=True, location='form',
-                             choices=list(map(int, GradingPolicy)))
 
     def post(self):
         """Add a new problem.
@@ -49,8 +47,7 @@ class Problems(Resource):
             problem = Problem(
                 exam=exam,
                 name=args['name'],
-                widget=widget,
-                grading_policy=GradingPolicy(args['grading_policy'])
+                widget=widget
             )
 
             # Widget is also added because it is used in problem
@@ -80,12 +77,14 @@ class Problems(Resource):
             return {
                 'id': problem.id,
                 'widget_id': widget.id,
-                'problem_name': problem.name
+                'problem_name': problem.name,
+                'grading_policy': problem.grading_policy.name
             }
 
     put_parser = reqparse.RequestParser()
     put_parser.add_argument('name', type=str)
-    put_parser.add_argument('grading_policy', type=int, choices=list(map(int, GradingPolicy)))
+    put_parser.add_argument('grading_policy', type=str,
+                            choices=[policy.name for policy in GradingPolicy])
 
     def put(self, problem_id):
         """PUT to a problem

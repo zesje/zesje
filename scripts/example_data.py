@@ -1,12 +1,17 @@
+import math
+import random
 import os
 import sys
 import argparse
+from io import BytesIO, FileIO
 
+import lorem
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
 from tempfile import NamedTemporaryFile
 
-import lorem
+from lorem.text import TextLorem
+from zesje.database import db
 
 sys.path.append(os.getcwd())
 import zesje  # noqa: E402
@@ -24,32 +29,83 @@ if 'ZESJE_SETTINGS' not in os.environ:
 app = zesje.factory.create_app()
 app.register_blueprint(zesje.api.api_bp, url_prefix='/api')
 
-client = app.test_client()
+app.config.update(
+    SQLALCHEMY_DATABASE_URI='sqlite:///' + '../scripts/data-dev/course.sqlite',
+    SQLALCHEMY_TRACK_MODIFICATIONS=False  # Suppress future deprecation warning
+)
+
+db.init_app(app)
+
+with app.app_context():
+    db.drop_all()
+    db.create_all()
+
+lorem_name = TextLorem(srange=(1, 3))
 
 
-def generate_exam_page(pdf, page_num):
-    for problem_num in range(3):
-        generate_problem(pdf, 75, 600 - (170 * problem_num), 3 * page_num + problem_num + 1)
-    pdf.showPage()
+def generate_exam_pdf(pdf_file, exam_name, problems):
+    pdf = canvas.Canvas(pdf_file.name, pagesize=A4)
+    for i in range(args.pages):
+        generate_exam_page(pdf, exam_name, page_num=i, problems=problems)
+        pdf.showPage()
+    pdf.save()
 
 
-def generate_problem(pdf, x, y, problem_num):
+def generate_exam_page(pdf, exam_name, page_num, problems):
+    pdf.drawString(20, 20, exam_name)
+    for i in range(3):
+        problem_num = 3 * page_num + i
+        generate_problem(pdf, problems[problem_num])
+
+
+def generate_problem(pdf, problem):
     margin = 5
-    box_size = {'w': 450, 'h': 100}
-    question = lorem.sentence().replace('.', '?')
-    pdf.drawString(x, y, f'{problem_num}: {question}')
-    pdf.rect(x, y - box_size['h'] - margin, box_size['w'], box_size['h'])
+
+    pdf.drawString(problem['x'], problem['y'], str(problem['num']) + ": " + problem['question'])
+    pdf.rect(problem['x'], problem['y'] - problem['h'] - margin, problem['w'], problem['h'])
 
 
-def generate_exam_pdf():
+def create_exam():
     with NamedTemporaryFile() as pdf_file:
-        pdf = canvas.Canvas(pdf_file.name, pagesize=A4)
-        for i in range(args.pages):
-            generate_exam_page(pdf, page_num=i)
-        pdf.save()
+        exam_name = lorem_name.sentence().replace('.', '')
+        problems = [{
+            'question': lorem.sentence().replace('.', '?'),
+            'num': i + 1,
+            'x': 75, 'y': 600 - (170 * (i % 3)),
+            'w': 450, 'h': 120
+        } for i in range(args.pages * 3)]
+        generate_exam_pdf(pdf_file, exam_name, problems)
+        with app.test_client() as client:
+            exam_id = client.post('/api/exams',
+                                  content_type='multipart/form-data',
+                                  data={
+                                      'exam_name': exam_name,
+                                      'pdf': pdf_file}).get_json()['id']
+
+            for problem in problems:
+                problem_id = client.post('api/problems', data={
+                    'exam_id': exam_id,
+                    'name': problem['question'],
+                    'page': math.floor((problem['num'] - 1) / 3),
+                    # add some padding to x, y, w, h
+                    'x': problem['x'] - 20,
+                    'y': problem['y'] - 30,
+                    'width': problem['w'] + 40,
+                    'height': problem['h'] + 60
+                }).get_json()['id']
+                for _ in range(random.randint(2, 6)):
+                    client.post('api/feedback/' + str(problem_id), data={
+                        'name': lorem_name.sentence(),
+                        'description': (lorem.sentence() if random.choice([True, False]) else ''),
+                        'score': random.randint(-4, 4)
+                    })
+            client.put('/api/exams/' + str(exam_id), data={
+                'finalized': True
+            })
+            exam_data = client.get('/api/exams/' + str(exam_id)).get_json()
+            print(exam_data)
 
 
-for _ in range(args.exams):
-    generate_exam_pdf()
-
-
+if __name__ == '__main__':
+    for _ in range(args.exams):
+        create_exam()

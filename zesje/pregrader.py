@@ -160,17 +160,11 @@ def is_blank(problem, page_img):
     block_size_inch = block_size_cm * 0.3937
     block_size_pixels = int(block_size_inch * dpi)
 
-    height = (blank_image.shape[0] // block_size_pixels) * block_size_pixels
-    width = (blank_image.shape[1] // block_size_pixels) * block_size_pixels
-
-    blank_image = blank_image[:height, :width]
-    input_image = input_image[:height, :width]
-
-    return not any(
-        np.sum(blank_box) > 1.03 * np.sum(input_box)
+    return all(
+        1.03 * np.sum(input_box) > np.sum(blank_box)
         for blank_box, input_box
-        in zip(blockshaped(blank_image, block_size_pixels, block_size_pixels),
-               blockshaped(input_image, block_size_pixels, block_size_pixels)))
+        in zip(blockshaped(blank_image, block_size_pixels),
+               blockshaped(input_image, block_size_pixels)))
 
 
 def box_is_filled(box, page_img, threshold=225, cut_padding=0.05, box_size=9):

@@ -61,16 +61,21 @@ def widget_area(problem):
     return widget_area_in
 
 
-# From https://stackoverflow.com/a/16873755
-def blockshaped(arr, nrows, ncols):
+# Modified from https://stackoverflow.com/a/16873755
+def blockshaped(arr, block_size):
     """
-    Return an array of shape (n, nrows, ncols) where
-    n * nrows * ncols = arr.size
+    Return an array of shape (a * b, block_size, block_size)
+    where a and b are the largest possible integers such that
+    a * block_size  <= arr.shape[0], b * block_size  <= arr.shape[1]
 
     If arr is a 2D array, the returned array looks like n subblocks with
     each subblock preserving the "physical" layout of arr.
     """
-    h, w = arr.shape
-    return (arr.reshape(h//nrows, nrows, -1, ncols)
+    height = (arr.shape[0] // block_size) * block_size
+    width = (arr.shape[1] // block_size) * block_size
+
+    cut = arr[:height, :width]
+
+    return (cut.reshape(height//block_size, block_size, -1, block_size)
                .swapaxes(1, 2)
-               .reshape(-1, nrows, ncols))
+               .reshape(-1, block_size, block_size))

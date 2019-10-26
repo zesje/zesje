@@ -102,6 +102,15 @@ class App extends React.Component {
         })
       })
   }
+  updateAllSubmissions = () => {
+    api.get('submissions/' + this.state.exam.id)
+      .then(subs => this.setState({
+        exam: {
+          ...this.state.exam,
+          submissions: subs
+        }
+      }))
+  }
 
   updateSubmission = (index, sub) => {
     if (index === undefined) {
@@ -174,7 +183,7 @@ class App extends React.Component {
                 exam={exam}
                 urlID={match.params.examID}
                 updateExam={this.updateExam}
-                updateSubmission={this.updateSubmission} />} />
+                updateAllSubmissions={this.updateAllSubmissions} />} />
             <Route path='/students' render={() =>
               <Students exam={exam} updateSubmission={this.updateSubmission} />} />
             <Route path='/grade' render={() => (

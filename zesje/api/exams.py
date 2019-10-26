@@ -350,6 +350,22 @@ class ExamGeneratedPdfs(Resource):
         return pdf_paths, copy_nums
 
     def _generate_exam_pdfs(self, exam, pdf_paths, copy_nums):
+        """
+        Generate and save separate exam PDFs for each copy to
+        prepare for the user downloading them.
+
+        This function retrieves the data necessary to generate
+        the PDFs and calls the appropriate generation function.
+
+        Parameters
+        ----------
+        exam : Exam
+            The exam to generate the PDFs for
+        pdf_paths : list of paths
+            The location to save each PDF
+        copy_nums: list of ints
+            The copy numbers to generate
+        """
         exam_dir, _, barcode_widget, exam_path, _ = _exam_generate_data(exam)
 
         generate_pdfs(

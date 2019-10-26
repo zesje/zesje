@@ -47,7 +47,7 @@ class Problems(Resource):
             problem = Problem(
                 exam=exam,
                 name=args['name'],
-                widget=widget
+                widget=widget,
             )
 
             # Widget is also added because it is used in problem

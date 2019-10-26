@@ -134,28 +134,4 @@ class Submissions(Resource):
         sub.student = student
         sub.signature_validated = True
         db.session.commit()
-        return {
-            'id': sub.copy_number,
-            'student':
-                {
-                    'id': sub.student.id,
-                    'firstName': sub.student.first_name,
-                    'lastName': sub.student.last_name,
-                    'email': sub.student.email
-                } if sub.student else None,
-            'validated': sub.signature_validated,
-            'problems': [
-                    {
-                        'id': sol.problem.id,
-                        'graded_by': {
-                            'id': sol.graded_by.id,
-                            'name': sol.graded_by.name
-                        } if sol.graded_by else None,
-                        'graded_at': sol.graded_at.isoformat() if sol.graded_at else None,
-                        'feedback': [
-                            fb.id for fb in sol.feedback
-                        ],
-                        'remark': sol.remarks
-                    } for sol in sub.solutions  # Sorted by sol.problem_id
-                    ]
-        }
+        return dict(status=200, message=f'Student {student.id} matched to submission {sub.copy_number}'), 200

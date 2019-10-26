@@ -125,8 +125,8 @@ class CheckStudents extends React.Component {
     if (!this.props.exam.submissions.length) return
 
     api.put('submissions/' + this.props.exam.id + '/' + this.props.exam.submissions[this.state.index].id, { studentID: stud.id })
-      .then(sub => {
-        this.props.updateSubmission(this.state.index, sub)
+      .then(resp => {
+        this.props.updateSubmissionByID(this.props.exam.submissions[this.state.index].id)
         this.nextUnchecked()
       })
       .catch(err => {

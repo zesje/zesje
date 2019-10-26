@@ -71,11 +71,12 @@ def blockshaped(arr, block_size):
     If arr is a 2D array, the returned array looks like n subblocks with
     each subblock preserving the "physical" layout of arr.
     """
-    height = (arr.shape[0] // block_size) * block_size
-    width = (arr.shape[1] // block_size) * block_size
+    blocks_y, blocks_x = np.array(arr.shape) // block_size
+    height = blocks_y * block_size
+    width = blocks_x * block_size
 
     cut = arr[:height, :width]
 
-    return (cut.reshape(height//block_size, block_size, -1, block_size)
+    return (cut.reshape(blocks_y, block_size, blocks_x, block_size)
                .swapaxes(1, 2)
                .reshape(-1, block_size, block_size))

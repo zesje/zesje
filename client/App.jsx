@@ -91,13 +91,13 @@ class App extends React.Component {
   updateSubmission = (submissionID) => {
     api.get('submissions/' + this.state.exam.id + '/' + submissionID)
       .then(sub => {
-        let newList = this.state.exam.submissions
-        const index = newList.map(sub => sub.id).indexOf(submissionID)
-        newList[index] = sub
+        let newSubmissions = this.state.exam.submissions
+        const index = newSubmissions.map(sub => sub.id).indexOf(submissionID)
+        newSubmissions[index] = sub
         this.setState({
           exam: {
             ...this.state.exam,
-            submissions: newList
+            submissions: newSubmissions
           }
         })
       })

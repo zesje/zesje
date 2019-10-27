@@ -25,7 +25,7 @@ class FeedbackBlock extends React.Component {
         graderID: this.props.graderID
       })
         .then(result => {
-          this.props.updateSubmission(this.props.submissionID)
+          this.props.updateAllSubmissions()
         })
     }
   }

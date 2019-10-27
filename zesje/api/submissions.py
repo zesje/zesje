@@ -200,7 +200,5 @@ class MissingPages(Resource):
                 'id': sub.copy_number,
                 'missing_pages': sorted(all_pages - set(page.number for page in sub.pages)),
             } for sub
-            in (Submission.query
-                .filter(Submission.exam_id == exam_id)
-                .order_by(Submission.copy_number).all())
+            in exam.submissions
         ]

@@ -65,7 +65,7 @@ class CheckStudents extends React.Component {
         index: newIndex,
         input: this.props.exam.submissions[newIndex].id
       })
-      this.props.updateSubmissionByID(this.props.exam.submissions[newIndex].id)
+      this.props.updateSubmission(this.props.exam.submissions[newIndex].id)
     }
   }
   next = () => {
@@ -76,7 +76,7 @@ class CheckStudents extends React.Component {
         index: newIndex,
         input: this.props.exam.submissions[newIndex].id
       })
-      this.props.updateSubmissionByID(this.props.exam.submissions[newIndex].id)
+      this.props.updateSubmission(this.props.exam.submissions[newIndex].id)
     }
   }
 
@@ -87,7 +87,7 @@ class CheckStudents extends React.Component {
           input: this.props.exam.submissions[i].id,
           index: i
         })
-        this.props.updateSubmissionByID(this.props.exam.submissions[i].id)
+        this.props.updateSubmission(this.props.exam.submissions[i].id)
         return
       }
     }
@@ -99,7 +99,7 @@ class CheckStudents extends React.Component {
           input: this.props.exam.submissions[i].id,
           index: i
         })
-        this.props.updateSubmissionByID(this.props.exam.submissions[i].id)
+        this.props.updateSubmission(this.props.exam.submissions[i].id)
         return
       }
     }
@@ -110,7 +110,7 @@ class CheckStudents extends React.Component {
     this.setState({
       index: i
     })
-    this.props.updateSubmissionByID(id)
+    this.props.updateSubmission(id)
   }
 
   setSubInput = (event) => {
@@ -126,7 +126,7 @@ class CheckStudents extends React.Component {
 
     api.put('submissions/' + this.props.exam.id + '/' + this.props.exam.submissions[this.state.index].id, { studentID: stud.id })
       .then(resp => {
-        this.props.updateSubmissionByID(this.props.exam.submissions[this.state.index].id)
+        this.props.updateSubmission(this.props.exam.submissions[this.state.index].id)
         this.nextUnchecked()
       })
       .catch(err => {
@@ -147,7 +147,7 @@ class CheckStudents extends React.Component {
         editActive: !this.state.editActive,
         editStud: null
       })
-      this.props.updateSubmissionByID(this.props.exam.submissions[this.state.index].id)
+      this.props.updateSubmission(this.props.exam.submissions[this.state.index].id)
     }
   }
 

@@ -73,7 +73,7 @@ class Grade extends React.Component {
       this.setState({
         sIndex: newIndex
       })
-      this.props.updateSubmissionByID(this.state.submissions[newIndex].id)
+      this.props.updateSubmission(this.state.submissions[newIndex].id)
     }
   }
 
@@ -158,7 +158,7 @@ class Grade extends React.Component {
       graderID: this.props.graderID
     })
       .then(result => {
-        this.props.updateSubmissionByID(submission.id)
+        this.props.updateSubmission(submission.id)
       })
   }
 
@@ -177,7 +177,7 @@ class Grade extends React.Component {
         resp.json().then(body => Notification.error('Could not approve feedback: ' + body.message))
       })
       .then(result => {
-        this.props.updateSubmissionByID(submission.id)
+        this.props.updateSubmission(submission.id)
       })
   }
 
@@ -263,8 +263,11 @@ class Grade extends React.Component {
                     : <FeedbackPanel examID={exam.id} submissionID={submission.id}
                       problem={problem} solution={solution} graderID={this.props.graderID}
                       editFeedback={this.editFeedback} showTooltips={this.state.showTooltips}
-                      updateSubmissionByID={() => {
-                        this.props.updateSubmissionByID(submission.id)
+                      updateSubmission={() => {
+                        console.log('updating ' + submission.id)
+                        console.log('before: ' + submission.problems[0].feedback)
+                        this.props.updateSubmission(submission.id)
+                        console.log('after: ' + submission.problems[0].feedback)
                       }} grading />
                   }
                 </nav>

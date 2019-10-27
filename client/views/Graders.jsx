@@ -26,7 +26,9 @@ class Graders extends React.Component {
         this.props.updateGraderList()
       })
       .catch(resp => {
-        Notification.error('Could not save grader (see Javascript console for details)')
+        resp.json().then(e => {
+          Notification.error(e.message)
+        })
         console.error('Error saving grader:', resp)
       })
 

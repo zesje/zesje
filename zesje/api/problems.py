@@ -3,8 +3,8 @@
 import os
 
 from flask_restful import Resource, reqparse, current_app
-
-from zesje.database import db, Exam, Problem, ProblemWidget, Solution
+from ..database import db, Exam, Problem, ProblemWidget, Solution, FeedbackOption, GradingPolicy
+from ..pregrader import BLANK_FEEDBACK_NAME
 from zesje.pdf_reader import guess_problem_title, get_problem_page
 
 
@@ -70,40 +70,47 @@ class Problems(Resource):
             if guessed_title:
                 problem.name = guessed_title
 
+            problem.feedback_options.append(FeedbackOption(text=BLANK_FEEDBACK_NAME, score=0))
+
             db.session.commit()
 
             return {
                 'id': problem.id,
                 'widget_id': widget.id,
-                'problem_name': problem.name
+                'problem_name': problem.name,
+                'grading_policy': problem.grading_policy.name
             }
 
     put_parser = reqparse.RequestParser()
-    put_parser.add_argument('name', type=str, required=True)
+    put_parser.add_argument('name', type=str)
+    put_parser.add_argument('grading_policy', type=str,
+                            choices=[policy.name for policy in GradingPolicy])
 
-    def put(self, problem_id, attr):
+    def put(self, problem_id):
         """PUT to a problem
 
-        As of writing this method only supports putting the name property
+        This method accepts both the problem name and the grading policy.
 
         problem_id: int
             the problem id to put to
         attr: str
-            the attribute (or property) to put to (only supports 'name' now)
+            the attribute (or property) to put to
 
         Returns
-            HTTP 200 on success
+            HTTP 200 on success, 404 if the problem does not exist
         """
 
         args = self.put_parser.parse_args()
 
-        name = args['name']
         problem = Problem.query.get(problem_id)
-        if problem is None:
-            msg = f"Problem with id {problem_id} doesn't exist"
-            return dict(status=404, message=msg), 404
 
-        problem.name = name
+        if problem is None:
+            return dict(status=404, message=f"Problem with id {problem_id} doesn't exist"), 404
+
+        for attr, value in args.items():
+            if value is not None:
+                setattr(problem, attr, value)
+
         db.session.commit()
 
         return dict(status=200, message="ok"), 200

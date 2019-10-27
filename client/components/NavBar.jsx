@@ -6,6 +6,7 @@ import * as api from '../api.jsx'
 
 import HelpModal from './help/HelpModal.jsx'
 import shortcutsMarkdown from './help/ShortcutsHelp.md'
+import gradingPolicyMarkdown from './help/GradingPolicyHelp.md'
 
 const BurgerButton = (props) => (
   <button className={'button navbar-burger' + (props.foldOut ? ' is-active' : '')}
@@ -90,7 +91,8 @@ const ExportDropdown = (props) => {
 
 class NavBar extends React.Component {
   pages = {
-    shortcuts: { title: 'Shortcuts', content: shortcutsMarkdown }
+    shortcuts: { title: 'Shortcuts', content: shortcutsMarkdown },
+    gradingPolicy: { title: 'Auto-approve', content: gradingPolicyMarkdown }
   }
 
   state = {
@@ -144,6 +146,10 @@ class NavBar extends React.Component {
     })
   }
 
+  setHelpPage = (helpPage) => {
+    this.setState({ helpPage: helpPage })
+  }
+
   render () {
     const gradingEnabled = this.props.exam.submissions.length > 0 && this.props.grader !== null
     const overviewEnabled = this.props.exam.submissions.length > 0
@@ -181,7 +187,7 @@ class NavBar extends React.Component {
             <Link className='navbar-item' disabled={!overviewEnabled} to='/overview'>Overview</Link>
             <Link className='navbar-item' disabled={!emailEnabled} to='/email'>Email</Link>
             <ExportDropdown className='navbar-item' disabled={!exportEnabled} exam={this.props.exam} />
-            <a className='navbar-item' onClick={() => this.setState({ helpPage: 'shortcuts' })}>
+            <a className='navbar-item' onClick={() => this.setHelpPage('shortcuts')}>
               {this.pages['shortcuts'].title}
             </a>
           </div>

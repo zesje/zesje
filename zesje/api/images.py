@@ -1,9 +1,8 @@
 from flask import abort, Response
 
-import numpy as np
 import cv2
 
-from ..images import get_box, guess_dpi
+from ..images import get_box, guess_dpi, widget_area
 from ..database import Exam, Submission, Problem, Page, Solution
 from ..pdf_generation import CHECKBOX_FORMAT
 from ..scans import exam_student_id_widget
@@ -39,15 +38,8 @@ def get(exam_id, problem_id, submission_id, full_page=False):
     if sub is None:
         abort(404, 'Submission does not exist.')
 
-    widget_area = np.asarray([
-        problem.widget.y,  # top
-        problem.widget.y + problem.widget.height,  # bottom
-        problem.widget.x,  # left
-        problem.widget.x + problem.widget.width,  # right
-    ])
-
     # TODO: use points as base unit
-    widget_area_in = widget_area / 72
+    widget_area_in = widget_area(problem)
 
     #  get the page
     page = Page.query.filter(Page.submission_id == sub.id, Page.number == problem.widget.page).first()

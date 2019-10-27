@@ -91,7 +91,6 @@ class App extends React.Component {
   updateSubmission = (submissionID) => {
     api.get('submissions/' + this.state.exam.id + '/' + submissionID)
       .then(sub => {
-        console.log(sub.problems[0].feedback)
         let newList = this.state.exam.submissions
         const index = newList.map(sub => sub.id).indexOf(submissionID)
         newList[index] = sub
@@ -101,7 +100,6 @@ class App extends React.Component {
             submissions: newList
           }
         })
-        console.log(this.state.exam.submissions[index].problems[0].feedback)
       })
   }
   updateAllSubmissions = () => {

@@ -264,10 +264,7 @@ class Grade extends React.Component {
                       problem={problem} solution={solution} graderID={this.props.graderID}
                       editFeedback={this.editFeedback} showTooltips={this.state.showTooltips}
                       updateSubmission={() => {
-                        console.log('updating ' + submission.id)
-                        console.log('before: ' + submission.problems[0].feedback)
                         this.props.updateSubmission(submission.id)
-                        console.log('after: ' + submission.problems[0].feedback)
                       }} grading />
                   }
                 </nav>

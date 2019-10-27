@@ -111,7 +111,7 @@ class FeedbackPanel extends React.Component {
         {this.props.problem.feedback.map((feedback, index) =>
           <FeedbackBlock key={feedback.id} uri={blockURI} graderID={this.props.graderID}
             feedback={feedback} checked={this.props.grading && this.props.solution.feedback.includes(feedback.id)}
-            editFeedback={() => this.props.editFeedback(feedback)} updateSubmission={this.props.updateSubmission}
+            editFeedback={() => this.props.editFeedback(feedback)} updateAllSubmissions={this.props.updateAllSubmissions}
             ref={(selectedFeedbackId === feedback.id) ? this.feedbackBlock : null} grading={this.props.grading}
             submissionID={this.props.submissionID} selected={selectedFeedbackId === feedback.id || feedback.highlight}
             showIndex={this.props.showTooltips} index={index + 1} />

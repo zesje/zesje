@@ -1,7 +1,6 @@
 import React from 'react'
 import Notification from 'react-bulma-notification'
-import SeededShuffle from 'seededshuffle'
-
+import hash from 'object-hash'
 import Hero from '../components/Hero.jsx'
 
 import FeedbackPanel from '../components/feedback/FeedbackPanel.jsx'
@@ -27,7 +26,7 @@ class Grade extends React.Component {
     examID: null,
     fullPage: false,
     showTooltips: false,
-    submissions: SeededShuffle.shuffle(this.props.exam.submissions, this.props.graderID, true)
+    submissions: Grade.shuffleSubmissions(this.props.exam.submissions, this.props.graderID)
   }
 
   componentDidMount = () => {
@@ -187,16 +186,28 @@ class Grade extends React.Component {
     })
   }
 
-  getLocationHash = (problem) => {
-    var wid = problem.widget
-    var hashStr = wid.x + '.' + wid.y + '.' + wid.width + '.' + wid.height
+  static shuffleSubmissions = (submissions, graderID) => {
+    const shuffle = [...submissions].sort((a, b) => {
+      return Grade.hashString(hash.MD5([a.id, graderID])) - Grade.hashString(hash.MD5([b.id, graderID]))
+    })
+    console.log(shuffle.map(sub => sub.id))
+    return shuffle
+  }
+
+  static getLocationHash = (problem) => {
+    const wid = problem.widget
+    const hashStr = wid.x + '.' + wid.y + '.' + wid.width + '.' + wid.height
+    return Grade.hashString(hashStr)
+  }
+
+  static hashString = (str) => {
     // Function to calculate hash from a string, from:
     // https://stackoverflow.com/questions/7616461/generate-a-hash-from-string-in-javascript
-    var hash = 0
-    if (hashStr.length === 0) return hash
-    var chr
-    for (var i = 0; i < hashStr.length; i++) {
-      chr = hashStr.charCodeAt(i)
+    let hash = 0
+    if (str.length === 0) return hash
+    let chr
+    for (let i = 0; i < str.length; i++) {
+      chr = str.charCodeAt(i)
       hash = ((hash << 5) - hash) + chr
       hash |= 0 // Convert to 32bit integer
     }
@@ -211,20 +222,20 @@ class Grade extends React.Component {
         pIndex: 0,
         examID: newProps.exam.id,
         graderID: newProps.graderID,
-        submissions: SeededShuffle.shuffle(newProps.exam.submissions, newProps.graderID, true)
+        submissions: Grade.shuffleSubmissions(newProps.exam.submissions, newProps.graderID)
       }
     }
     // If the grader ID changes, submissions need to be reshuffled
     if (newProps.graderID !== prevState.graderID) {
       return {
         graderID: newProps.graderID,
-        submissions: SeededShuffle.shuffle(newProps.exam.submissions, newProps.graderID, true)
+        submissions: Grade.shuffleSubmissions(newProps.exam.submissions, newProps.graderID)
       }
     }
     // If this submissions have changed, update the state to reflect this.
     if (newProps.submissions !== prevState.submissions) {
       return {
-        submissions: SeededShuffle.shuffle(newProps.exam.submissions, newProps.graderID, true)
+        submissions: Grade.shuffleSubmissions(newProps.exam.submissions, newProps.graderID)
       }
     }
     return null
@@ -263,9 +274,8 @@ class Grade extends React.Component {
                     : <FeedbackPanel examID={exam.id} submissionID={submission.id}
                       problem={problem} solution={solution} graderID={this.props.graderID}
                       editFeedback={this.editFeedback} showTooltips={this.state.showTooltips}
-                      updateSubmission={() => {
-                        this.props.updateSubmission(submission.id)
-                      }} grading />
+                      updateAllSubmissions={this.props.updateAllSubmissions}
+                      updateSubmission={this.props.updateSubmission} grading />
                   }
                 </nav>
               </div>
@@ -384,7 +394,7 @@ class Grade extends React.Component {
                 <p className={'box' + (solution.graded_at ? ' is-graded' : '')}>
                   <img src={exam.id ? ('api/images/solutions/' + exam.id + '/' +
                     problem.id + '/' + submission.id + '/' + (this.state.fullPage ? '1' : '0')) + '?' +
-                    this.getLocationHash(problem) : ''} alt='' />
+                    Grade.getLocationHash(problem) : ''} alt='' />
                 </p>
 
               </div>

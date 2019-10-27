@@ -5,7 +5,7 @@ from ..database import db, Exam, Submission, Student, Page
 from ..pregrader import ungrade_multiple_sub
 
 
-def sub_to_data(sub, all_pages):
+def sub_to_data(sub):
     """Transform a submission into a data structure frontend expects."""
     return {
         'id': sub.copy_number,
@@ -62,10 +62,10 @@ class Submissions(Resource):
             if sub is None:
                 return dict(status=404, message='Submission does not exist.'), 404
 
-            return sub_to_data(sub, True)
+            return sub_to_data(sub)
 
         return [
-            sub_to_data(sub, True) for sub
+            sub_to_data(sub) for sub
             in (Submission.query
                 .filter(Submission.exam_id == exam_id)
                 .order_by(Submission.copy_number).all())

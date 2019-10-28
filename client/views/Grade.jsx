@@ -186,6 +186,19 @@ class Grade extends React.Component {
     })
   }
 
+  /*
+   * Updates all submissions.
+   * Because a new submissions changes the index of the current submission
+   * if it's added before the current submission,
+   * the function also makes sure the sIndex points to the same submission
+   */
+  updateAllSubmissions = async () => {
+    const currentSubmissionID = this.state.submissions[this.state.sIndex].id
+    await this.props.updateAllSubmissions()
+    const newIndex = this.state.submissions.map(sub => sub.id).indexOf(currentSubmissionID)
+    this.setSubmissionIndex(newIndex)
+  }
+
   static shuffleSubmissions = (submissions, graderID) => {
     return submissions.map(sub => [hash.MD5(sub.id, graderID), sub]).sort().map(x => x[1])
   }
@@ -270,7 +283,7 @@ class Grade extends React.Component {
                     : <FeedbackPanel examID={exam.id} submissionID={submission.id}
                       problem={problem} solution={solution} graderID={this.props.graderID}
                       editFeedback={this.editFeedback} showTooltips={this.state.showTooltips}
-                      updateAllSubmissions={this.props.updateAllSubmissions}
+                      updateAllSubmissions={this.updateAllSubmissions}
                       updateSubmission={this.props.updateSubmission} grading />
                   }
                 </nav>

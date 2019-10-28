@@ -102,8 +102,8 @@ class App extends React.Component {
         })
       })
   }
-  updateAllSubmissions = () => {
-    api.get('submissions/' + this.state.exam.id)
+  updateAllSubmissions = async () => {
+    await api.get('submissions/' + this.state.exam.id)
       .then(subs => this.setState({
         exam: {
           ...this.state.exam,

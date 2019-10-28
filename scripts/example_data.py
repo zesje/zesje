@@ -6,6 +6,7 @@ import argparse
 from io import BytesIO, FileIO
 
 import lorem
+import names
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
 from tempfile import NamedTemporaryFile
@@ -20,6 +21,7 @@ parser = argparse.ArgumentParser(description='Create example exam data in the da
 parser.add_argument('--exams', type=int, default=1, help='number of exams to add')
 parser.add_argument('--pages', type=int, default=3, help='number of pages per exam')
 parser.add_argument('--students', type=int, default=60, help='number of students per exam')
+parser.add_argument('--graders', type=int, default=4, help='number of graders')
 
 args = parser.parse_args(sys.argv[1:])
 
@@ -93,6 +95,7 @@ def create_exam():
                     'width': problem['w'] + 40,
                     'height': problem['h'] + 60
                 }).get_json()['id']
+                client.put('problems/' + str(problem_id) + '/name', data={'name': problem['question']})
                 for _ in range(random.randint(2, 6)):
                     client.post('api/feedback/' + str(problem_id), data={
                         'name': lorem_name.sentence(),
@@ -103,6 +106,9 @@ def create_exam():
                 'finalized': True
             })
             exam_data = client.get('/api/exams/' + str(exam_id)).get_json()
+            for _ in range(args.graders):
+                client.post('/api/graders', data={'name': names.get_full_name()}).get_json()
+            client.put()
             print(exam_data)
 
 

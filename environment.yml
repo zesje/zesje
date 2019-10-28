@@ -34,7 +34,10 @@ dependencies:
         - reportlab
         - Wand
         - Pillow  # also scan processing
+
+        # Sandbox data generation
         - lorem # For random text
+        - names # For random names
 
         # Scan processing
         - opencv-python

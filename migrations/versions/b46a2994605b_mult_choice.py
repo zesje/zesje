@@ -1,12 +1,11 @@
-"""Adds multiple choice question checkboxes
+""" Add multiple choice options
 
 Revision ID: b46a2994605b
 Revises: 4204f4a83863
 Create Date: 2019-05-15 15:41:56.615076
-
 """
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 
 
 # revision identifiers, used by Alembic.
@@ -18,14 +17,15 @@ depends_on = None
 
 def upgrade():
     # Create the multiple choice question table
-    op.create_table('mc_option',
-                    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
-                    sa.Column('label', sa.String(), nullable=True),
-                    sa.Column('feedback_id', sa.Integer(), nullable=False),
-                    sa.ForeignKeyConstraint(['feedback_id'], ['feedback_option.id'], ),
-                    sa.ForeignKeyConstraint(['id'], ['widget.id'], ),
-                    sa.PrimaryKeyConstraint('id')
-                    )
+    op.create_table(
+        'mc_option',
+        sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
+        sa.Column('label', sa.String(), nullable=True),
+        sa.Column('feedback_id', sa.Integer(), nullable=False),
+        sa.ForeignKeyConstraint(['feedback_id'], ['feedback_option.id'], ),
+        sa.ForeignKeyConstraint(['id'], ['widget.id'], ),
+        sa.PrimaryKeyConstraint('id')
+    )
 
 
 def downgrade():

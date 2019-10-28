@@ -1,10 +1,11 @@
 """ db.Models used in the db """
 
+import enum
 import random
 import string
 
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean, ForeignKey, false
+from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean, ForeignKey, Enum, false
 from flask_sqlalchemy.model import BindMetaMixin, Model
 from sqlalchemy.ext.declarative import DeclarativeMeta, declarative_base
 from sqlalchemy.orm import backref
@@ -54,7 +55,7 @@ class Grader(db.Model):
     """Graders can be created by any user at any time, but are immutable once they are created"""
     __tablename__ = 'grader'
     id = Column(Integer, primary_key=True, autoincrement=True)
-    name = Column(Text, nullable=False)
+    name = Column(Text, nullable=False, unique=True)
     graded_solutions = db.relationship('Solution', backref='graded_by', lazy=True)
 
 
@@ -95,12 +96,28 @@ class Page(db.Model):
     number = Column(Integer, nullable=False)
 
 
+"""
+Enum for the grading policy of a problem
+
+The grading policy of a problem means:
+    set_nothing: Don't grade automatically
+    set_blank:   Automatically grade blank solutions
+    set_single:  Automatically grade multiple choice solutions with one selected answer
+"""
+GradingPolicy = enum.Enum(
+    'GradingPolicy',
+    'set_nothing set_blank set_single'
+)
+
+
 class Problem(db.Model):
     """this will be initialized @ app initialization and immutable from then on."""
     __tablename__ = 'problem'
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(Text, nullable=False)
     exam_id = Column(Integer, ForeignKey('exam.id'), nullable=False)
+    grading_policy = Column('grading_policy', Enum(GradingPolicy), server_default='set_blank',
+                            default=GradingPolicy.set_blank, nullable=False)
     feedback_options = db.relationship('FeedbackOption', backref='problem', cascade='all',
                                        order_by='FeedbackOption.id', lazy=True)
     solutions = db.relationship('Solution', backref='problem', cascade='all', lazy=True)

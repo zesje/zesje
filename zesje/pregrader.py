@@ -1,14 +1,23 @@
 import cv2
 import numpy as np
+from datetime import datetime
 
-from .database import db
-from .images import guess_dpi, get_box
+from .blanks import reference_image
+from .database import db, Grader, FeedbackOption, GradingPolicy, Submission, Solution
+from .images import guess_dpi, get_box, widget_area, blockshaped
 from .pdf_generation import CHECKBOX_FORMAT
 
 
-def grade_mcq(sub, page, page_img):
+AUTOGRADER_NAME = 'Zesje'
+BLANK_FEEDBACK_NAME = 'Blank'
+
+
+def grade_problem(sub, page, page_img):
     """
-    Adds the multiple choice options that are identified as marked as a feedback option to a solution
+    Automatically checks if a problem is blank, and adds a feedback option
+    'blank' if so.
+    For multiple choice problems, a feedback option is added for each checkbox
+    that is identified as filled in is created.
 
     Parameters
     ------
@@ -21,18 +30,141 @@ def grade_mcq(sub, page, page_img):
     """
     solutions_to_grade = [
         sol for sol in sub.solutions
-        if not sol.graded_at and sol.problem.widget.page == page
+        if (not sol.graded_by or sol.graded_by.name == AUTOGRADER_NAME) and sol.problem.widget.page == page
     ]
 
     for sol in solutions_to_grade:
-        for mc_option in sol.problem.mc_options:
-            box = (mc_option.x, mc_option.y)
+        sol.feedback = []
+        problem = sol.problem
 
-            if box_is_filled(box, page_img, box_size=CHECKBOX_FORMAT["box_size"]):
-                feedback = mc_option.feedback
-                sol.feedback.append(feedback)
+        if problem.mc_options:
+            grade_mcq(sol, page_img)
+        elif is_blank(problem, page_img):
+            grade_as_blank(sol)
 
     db.session.commit()
+
+
+def grade_mcq(sol, page_img):
+    """
+    Pre-grades a multiple choice problem.
+    This function does either of two things:
+    - Adds a feedback option 'blank' if no option has been detected as filled
+    - Adds a feedback option for every option that has been detected as filled
+
+    In both cases, a grader named 'Zesje' is set for this problem.
+
+    Parameters
+    ----------
+    sol : Solution
+        The solution to the multiple choice question
+    page_img: np.array
+        A numpy array of the image scan
+    """
+    box_size = CHECKBOX_FORMAT["box_size"]
+    problem = sol.problem
+    mc_filled_counter = 0
+
+    for mc_option in problem.mc_options:
+        box = (mc_option.x, mc_option.y)
+
+        if box_is_filled(box, page_img, box_size=box_size):
+            feedback = mc_option.feedback
+            sol.feedback.append(feedback)
+            mc_filled_counter += 1
+
+    if mc_filled_counter == 0:
+        grade_as_blank(sol)
+    elif mc_filled_counter == 1 and problem.grading_policy == GradingPolicy.set_single:
+        set_auto_grader(sol)
+
+    db.session.commit()
+
+
+def grade_as_blank(sol):
+    """
+    Pre-grades a solution as identified as blank.
+
+    Parameters
+    ----------
+    sol : Solution
+        The solution to pre-grade
+    """
+    if sol.problem.grading_policy == GradingPolicy.set_blank:
+        set_auto_grader(sol)
+
+    feedback = FeedbackOption.query.filter(FeedbackOption.problem_id == sol.problem.id,
+                                           FeedbackOption.text == BLANK_FEEDBACK_NAME).first()
+
+    if not feedback:
+        feedback = FeedbackOption(problem_id=sol.problem.id, text=BLANK_FEEDBACK_NAME, score=0)
+        db.session.add(feedback)
+
+    sol.feedback.append(feedback)
+    db.session.commit()
+
+
+def set_auto_grader(solution):
+    """
+    Sets the grader to 'Zesje', meaning that a question is
+    considered automatically graded.
+
+    To ensure a solution is graded manually, the grader of a solution
+    is set to a grader named Zesje. That way, the detected option is
+    not set as 'ungraded'.
+
+    Parameters
+    ----------
+    solution : Solution
+        The solution
+    """
+    zesje_grader = Grader.query.filter(Grader.name == AUTOGRADER_NAME).one_or_none() or Grader(name=AUTOGRADER_NAME)
+
+    solution.graded_by = zesje_grader
+    solution.graded_at = datetime.now()
+    db.session.commit()
+
+
+def is_blank(problem, page_img):
+    """
+    A function that determines if a solution is blank
+
+    Params
+    ------
+    problem: Problem
+        An instance of the problem to be checked
+    page_img: np.array
+        A numpy array of the image scan
+
+    Returns
+    ------
+    True if the solution is blank, else False
+    """
+    dpi = guess_dpi(page_img)
+
+    widget_area_in = widget_area(problem)
+
+    cut_im = get_box(page_img, widget_area_in, padding=0)
+
+    reference = reference_image(problem, dpi, widget_area_in)
+
+    # Convert the images to grayscale and transform into a 1D array
+    blank_image = np.array(reference)
+    blank_image = cv2.cvtColor(blank_image, cv2.COLOR_BGR2GRAY)
+    blank_image = np.array(blank_image)
+    input_image = np.array(cut_im)
+    input_image = cv2.cvtColor(input_image, cv2.COLOR_BGR2GRAY)
+    input_image = np.array(input_image)
+
+    block_size_cm = 1.0
+    block_size_inch = block_size_cm * 0.3937
+    block_size_pixels = int(block_size_inch * dpi)
+
+    return all(
+        1.03 * np.sum(input_box) > np.sum(blank_box)
+        for blank_box, input_box
+        in zip(blockshaped(blank_image, block_size_pixels),
+               blockshaped(input_image, block_size_pixels)))
 
 
 def box_is_filled(box, page_img, threshold=225, cut_padding=0.05, box_size=9):
@@ -53,7 +185,7 @@ def box_is_filled(box, page_img, threshold=225, cut_padding=0.05, box_size=9):
     box_size: int
         the size of the checkbox in points.
 
-    Output
+    Returns
     ------
     True if the box is marked, else False.
     """
@@ -109,3 +241,29 @@ def box_is_filled(box, page_img, threshold=225, cut_padding=0.05, box_size=9):
     if res_x < 0.333 * box_size_px or res_y < 0.333 * box_size_px:
         return True
     return np.average(res_rect) < threshold
+
+
+def ungrade_multiple_sub(student_id, exam_id, commit=True):
+    """
+    Ungrade all solutions of a specific student if they have more than one submission.
+
+    This function does not remove the selected feedback options, but sets the
+    graded_at and grader_id fields to None such that it has to be approved again.
+
+    Params
+    ------
+    student_id: int
+        The student number of the student to check
+    exam_id: int
+        The exam to perform the check on
+    """
+    submission_ids = [sub.id for sub in Submission.query.filter(Submission.student_id == student_id,
+                                                                Submission.exam_id == exam_id).all()]
+    if len(submission_ids) > 1:
+        Solution.query \
+                .filter(Solution.submission_id.in_(submission_ids)) \
+                .update({Solution.grader_id: None, Solution.graded_at: None},
+                        synchronize_session='fetch')
+
+        if commit:
+            db.session.commit()

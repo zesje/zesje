@@ -13,6 +13,7 @@ from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
 
 from zesje.scans import decode_barcode, ExamMetadata, ExtractedBarcode
+from zesje.image_extraction import extract_image_pikepdf
 from zesje.database import db, _generate_exam_token
 from zesje.database import Exam, ExamWidget, Submission
 from zesje import scans
@@ -112,7 +113,7 @@ def generate_pdf(exam_config, pages):
             pdf.showPage()
         pdf.save()
         pdf_generation.generate_pdfs(
-            blank.name, token, [145], [generated.name],
+            blank.name, [145], [generated.name], token,
             50, 50, datamatrix_x, datamatrix_y)
         genPDF = makeflatpdf(generated.name)
         return genPDF
@@ -261,9 +262,9 @@ def test_image_extraction_pike(datadir, filename, expected):
         for pagenr in range(len(pdf_reader.pages)):
             if expected is not None:
                 with pytest.raises(expected):
-                    scans.extract_image_pikepdf(pagenr, pdf_reader)
+                    extract_image_pikepdf(pagenr, pdf_reader)
             else:
-                img = scans.extract_image_pikepdf(pagenr, pdf_reader)
+                img = extract_image_pikepdf(pagenr, pdf_reader)
                 assert img is not None
 
 

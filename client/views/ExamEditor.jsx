@@ -114,6 +114,7 @@ class ExamEditor extends React.Component {
           widgetData.id = result.widget_id
           problemData.id = result.id
           problemData.name = result.problem_name
+          problemData.grading_policy = result.grading_policy
           widgetData.problem = problemData
 
           this.props.createNewWidget(widgetData)

@@ -102,19 +102,15 @@ class App extends React.Component {
         })
       })
   }
-  updateAllSubmissions = (callback) => {
-    api.get('submissions/' + this.state.exam.id)
-      .then(subs => {
-        this.setState({
-          exam: {
-            ...this.state.exam,
-            submissions: subs
-          }
-        })
-        if (callback) {
-          callback()
+  updateAllSubmissions = () => {
+    return api.get('submissions/' + this.state.exam.id).then(subs => {
+      this.setState({
+        exam: {
+          ...this.state.exam,
+          submissions: subs
         }
       })
+    })
   }
 
   changeGrader = (grader) => {

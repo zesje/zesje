@@ -194,7 +194,7 @@ class Grade extends React.Component {
    */
   updateAllSubmissions = () => {
     const currentSubmissionID = this.state.submissions[this.state.sIndex].id
-    this.props.updateAllSubmissions(() => {
+    this.props.updateAllSubmissions().then(() => {
       const newIndex = this.state.submissions.map(sub => sub.id).indexOf(currentSubmissionID)
       this.setSubmissionIndex(newIndex)
     })

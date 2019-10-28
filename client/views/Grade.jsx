@@ -192,11 +192,12 @@ class Grade extends React.Component {
    * if it's added before the current submission,
    * the function also makes sure the sIndex points to the same submission
    */
-  updateAllSubmissions = async () => {
+  updateAllSubmissions = () => {
     const currentSubmissionID = this.state.submissions[this.state.sIndex].id
-    await this.props.updateAllSubmissions()
-    const newIndex = this.state.submissions.map(sub => sub.id).indexOf(currentSubmissionID)
-    this.setSubmissionIndex(newIndex)
+    this.props.updateAllSubmissions(() => {
+      const newIndex = this.state.submissions.map(sub => sub.id).indexOf(currentSubmissionID)
+      this.setSubmissionIndex(newIndex)
+    })
   }
 
   static shuffleSubmissions = (submissions, graderID) => {

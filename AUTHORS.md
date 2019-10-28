@@ -11,6 +11,12 @@
 * Hidde Leistra
 * Pim Otte
 * Luc Enthoven
+* Otto Kaaij
+* Lucas Holten
+* Robin Bijl
+* Ruben Young On
+* Timotei Jugariu
+* Richard van de Kuilen
 
 <!--
 Execute

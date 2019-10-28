@@ -187,11 +187,7 @@ class Grade extends React.Component {
   }
 
   static shuffleSubmissions = (submissions, graderID) => {
-    const shuffle = [...submissions].sort((a, b) => {
-      return Grade.hashString(hash.MD5([a.id, graderID])) - Grade.hashString(hash.MD5([b.id, graderID]))
-    })
-    console.log(shuffle.map(sub => sub.id))
-    return shuffle
+    return submissions.map(sub => [hash.MD5(sub.id, graderID), sub]).sort().map(x => x[1])
   }
 
   static getLocationHash = (problem) => {

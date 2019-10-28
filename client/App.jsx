@@ -88,44 +88,29 @@ class App extends React.Component {
         }
       })
   }
-
-  updateSubmission = (index, sub) => {
-    if (index === undefined) {
-      api.get('submissions/' + this.state.exam.id)
-        .then(subs => this.setState({
+  updateSubmission = (submissionID) => {
+    api.get('submissions/' + this.state.exam.id + '/' + submissionID)
+      .then(sub => {
+        let newSubmissions = this.state.exam.submissions
+        const index = newSubmissions.map(sub => sub.id).indexOf(submissionID)
+        newSubmissions[index] = sub
+        this.setState({
           exam: {
             ...this.state.exam,
-            submissions: subs
+            submissions: newSubmissions
           }
-        }))
-    } else {
-      if (sub) {
-        if (JSON.stringify(sub) !== JSON.stringify(this.state.exam.submissions[index])) {
-          let newList = this.state.exam.submissions
-          newList[index] = sub
-          this.setState({
-            exam: {
-              ...this.state.exam,
-              submissions: newList
-            }
-          })
+        })
+      })
+  }
+  updateAllSubmissions = (callback) => {
+    api.get('submissions/' + this.state.exam.id).then(subs => {
+      this.setState({
+        exam: {
+          ...this.state.exam,
+          submissions: subs
         }
-      } else {
-        api.get('submissions/' + this.state.exam.id + '/' + this.state.exam.submissions[index].id)
-          .then(sub => {
-            if (JSON.stringify(sub) !== JSON.stringify(this.state.exam.submissions[index])) {
-              let newList = this.state.exam.submissions
-              newList[index] = sub
-              this.setState({
-                exam: {
-                  ...this.state.exam,
-                  submissions: newList
-                }
-              })
-            }
-          })
-      }
-    }
+      }, callback)
+    })
   }
 
   changeGrader = (grader) => {
@@ -161,13 +146,13 @@ class App extends React.Component {
                 exam={exam}
                 urlID={match.params.examID}
                 updateExam={this.updateExam}
-                updateSubmission={this.updateSubmission} />} />
+                updateAllSubmissions={this.updateAllSubmissions} />} />
             <Route path='/students' render={() =>
               <Students exam={exam} updateSubmission={this.updateSubmission} />} />
             <Route path='/grade' render={() => (
               exam.submissions.length && grader
                 ? <Grade exam={exam} graderID={this.state.grader.id}
-                  updateSubmission={this.updateSubmission} updateExam={this.updateExam} />
+                  updateSubmission={this.updateSubmission} updateAllSubmissions={this.updateAllSubmissions} updateExam={this.updateExam} />
                 : <Fail message='No exams uploaded or no grader selected. Please do not bookmark URLs' />
             )} />
             <Route path='/overview' render={() => (

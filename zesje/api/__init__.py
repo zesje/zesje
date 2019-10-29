@@ -33,8 +33,7 @@ api.add_resource(Submissions,
                  '/submissions/<int:exam_id>',
                  '/submissions/<int:exam_id>/<int:submission_id>')
 api.add_resource(MissingPages,
-                 '/submissions/missing_pages/<int:exam_id>',
-                 '/submissions/missing_pages/<int:exam_id>/<int:submission_id>')
+                 '/submissions/missing_pages/<int:exam_id>')
 api.add_resource(Problems,
                  '/problems',
                  '/problems/<int:problem_id>')

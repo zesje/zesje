@@ -128,7 +128,7 @@ class Submissions(Resource):
 
 class MissingPages(Resource):
 
-    def get(self, exam_id, submission_id=None):
+    def get(self, exam_id):
 
         """get missing pages for each submissino in a given exam, or for a specific
         submission if submission_id is specified.
@@ -136,14 +136,10 @@ class MissingPages(Resource):
         Parameters
         ----------
         exam_id : int
-        submission_id : int, optional
-            The copy number of the submission. This uniquely identifies
-            the submission *within a given exam*.
 
         Returns
         -------
-        If 'submission_id' provided provides a single instance of
-        (otherwise a list of):
+        Provides a list of:
             copyID: int
             missing_pages: list of ints
         """
@@ -161,21 +157,9 @@ class MissingPages(Resource):
                                                      .join(Exam, isouter=True)
                                                      .filter(Exam.id == exam.id)
                                                      .distinct(Page.number).all())
-
-        if submission_id is not None:
-            sub = Submission.query.filter(Submission.exam_id == exam_id,
-                                          Submission.copy_number == submission_id).one_or_none()
-            if sub is None:
-                return dict(status=404, message='Submission does not exist.'), 404
-            return {
-                'id': sub.copy_number,
-                'missing_pages': sorted(all_pages - set(page.number for page in sub.pages)),
-            }
-
         return [
             {
                 'id': sub.copy_number,
                 'missing_pages': sorted(all_pages - set(page.number for page in sub.pages)),
-            } for sub
-            in exam.submissions
+            } for sub in exam.submissions
         ]

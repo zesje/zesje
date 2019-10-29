@@ -1,6 +1,9 @@
+import os
+
+from flask import current_app as app
 from flask_restful import Resource, reqparse
 from sqlalchemy.orm import selectinload
-
+from pdfrw import PdfReader
 from ..database import db, Exam, Submission, Student, Page
 from ..pregrader import ungrade_multiple_sub
 
@@ -150,13 +153,10 @@ class MissingPages(Resource):
         if exam is None:
             return dict(status=404, message='Exam does not exist.'), 404
 
-        # Some pages might not have a problem widget (e.g. title page) and some
-        # pages might not have been uploaded yet.
-        all_pages = set(prob.widget.page for prob in exam.problems)\
-            .union(page.number for page in Page.query.join(Submission, isouter=True)
-                                                     .join(Exam, isouter=True)
-                                                     .filter(Exam.id == exam.id)
-                                                     .distinct(Page.number).all())
+        all_pages = set(range(len(
+            PdfReader(os.path.join(app.config['DATA_DIRECTORY'], f'{exam_id}_data/exam.pdf')).pages)
+        ))
+
         return [
             {
                 'id': sub.copy_number,

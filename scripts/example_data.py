@@ -93,22 +93,27 @@ def create_exam():
                     'x': problem['x'] - 20,
                     'y': problem['y'] - 30,
                     'width': problem['w'] + 40,
-                    'height': problem['h'] + 60
+                    'height': problem['h'] + 60,
                 }).get_json()['id']
-                client.put('problems/' + str(problem_id) + '/name', data={'name': problem['question']})
+                # Have to put name again, because the endpoint first guesses a name.
+                client.put('api/problems/' + str(problem_id),
+                           data={'name': problem['question'], 'grading_policy': 'set_nothing'})
                 for _ in range(random.randint(2, 6)):
                     client.post('api/feedback/' + str(problem_id), data={
                         'name': lorem_name.sentence(),
                         'description': (lorem.sentence() if random.choice([True, False]) else ''),
                         'score': random.randint(-4, 4)
                     })
+
             client.put('/api/exams/' + str(exam_id), data={
                 'finalized': True
             })
-            exam_data = client.get('/api/exams/' + str(exam_id)).get_json()
+            graders = None
             for _ in range(args.graders):
-                client.post('/api/graders', data={'name': names.get_full_name()}).get_json()
-            client.put()
+                graders = client.post('/api/graders', data={'name': names.get_full_name()}).get_json()
+
+            exam_data = client.get('/api/exams/' + str(exam_id)).get_json()
+
             print(exam_data)
 
 

@@ -132,9 +132,8 @@ class Submissions(Resource):
 class MissingPages(Resource):
 
     def get(self, exam_id):
-
-        """get missing pages for each submissino in a given exam, or for a specific
-        submission if submission_id is specified.
+        """
+        Compute which submissions are missing which pages
 
         Parameters
         ----------

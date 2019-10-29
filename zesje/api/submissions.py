@@ -60,6 +60,10 @@ class Submissions(Resource):
                 True if the assigned student has been validated by a human.
             problems: list of problems
         """
+        exam = Exam.query.get(exam_id)
+        if exam is None:
+            return dict(status=404, message='Exam does not exist.'), 404
+
         if submission_id is not None:
             sub = Submission.query.filter(Submission.exam_id == exam_id,
                                           Submission.copy_number == submission_id).one_or_none()
@@ -68,12 +72,7 @@ class Submissions(Resource):
 
             return sub_to_data(sub)
 
-        return [
-            sub_to_data(sub) for sub
-            in (Submission.query
-                .filter(Submission.exam_id == exam_id)
-                .order_by(Submission.copy_number).all())
-        ]
+        return [sub_to_data(sub) for sub in exam.submissions]
 
     put_parser = reqparse.RequestParser()
     put_parser.add_argument('studentID', type=int, required=True)

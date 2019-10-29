@@ -137,6 +137,7 @@ class MissingPages(Resource):
         Parameters
         ----------
         exam_id : int
+            The id of the exam for which the missing pages must be computing.
 
         Returns
         -------

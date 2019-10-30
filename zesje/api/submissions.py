@@ -45,6 +45,7 @@ class Submissions(Resource):
         Parameters
         ----------
         exam_id : int
+            The id of the exam for which the missing pages must be computed.
         submission_id : int, optional
             The copy number of the submission. This uniquely identifies
             the submission *within a given exam*.
@@ -132,12 +133,12 @@ class MissingPages(Resource):
 
     def get(self, exam_id):
         """
-        Compute which submissions are missing which pages
+        Compute which submissions are missing which pages.
 
         Parameters
         ----------
         exam_id : int
-            The id of the exam for which the missing pages must be computing.
+            The id of the exam for which the missing pages must be computed.
 
         Returns
         -------
@@ -154,7 +155,6 @@ class MissingPages(Resource):
         all_pages = set(range(len(
             PdfReader(os.path.join(app.config['DATA_DIRECTORY'], f'{exam_id}_data/exam.pdf')).pages)
         ))
-
         return [
             {
                 'id': sub.copy_number,

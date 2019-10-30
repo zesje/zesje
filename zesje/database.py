@@ -73,6 +73,10 @@ class Exam(db.Model):
     finalized = Column(Boolean, default=False, server_default='f')
     grade_anonymous = Column(Boolean, default=False, server_default=false())
 
+    # Any migration that alters (and thus recreates) the exam table should explicitly
+    # specify this keyword to ensure it will be used for the new table
+    __table_args__ = {'sqlite_autoincrement': True}
+
 
 class Submission(db.Model):
     """Typically created when adding a new exam."""

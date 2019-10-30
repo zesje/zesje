@@ -2,9 +2,9 @@ import os
 
 from flask import current_app as app
 from flask_restful import Resource, reqparse
-from sqlalchemy.orm import selectinload
 from pdfrw import PdfReader
-from ..database import db, Exam, Submission, Student, Page
+
+from ..database import db, Exam, Submission, Student
 from ..pregrader import ungrade_multiple_sub
 
 
@@ -145,7 +145,7 @@ class MissingPages(Resource):
             copyID: int
             missing_pages: list of ints
         """
-        
+
         exam = Exam.query.get(exam_id)
 
         if exam is None:

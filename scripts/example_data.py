@@ -3,8 +3,6 @@ import random
 import os
 import sys
 import argparse
-from io import BytesIO, FileIO
-from time import sleep
 
 import lorem
 import names
@@ -13,7 +11,9 @@ from reportlab.lib.pagesizes import A4
 from tempfile import NamedTemporaryFile
 
 from lorem.text import TextLorem
-from zesje.database import db
+
+from zesje.database import db, Exam, Scan
+from zesje.scans import _process_pdf
 
 sys.path.append(os.getcwd())
 import zesje  # noqa: E402
@@ -71,6 +71,29 @@ def generate_problem(pdf, problem):
     pdf.rect(problem['x'], problem['y'] - problem['h'] - margin, problem['w'], problem['h'])
 
 
+def handle_pdf_processing(exam_id, pdf):
+    exam = Exam.query.get(exam_id)
+    scan = Scan(exam=exam, name=pdf.name,
+                status='processing', message='Waiting...')
+
+    db.session.add(scan)
+    db.session.commit()
+
+    path = os.path.join(app.config['SCAN_DIRECTORY'], f'{scan.id}.pdf')
+    with open(path, 'wb') as outfile:
+        outfile.write(pdf.read())
+        pdf.seek(0)
+
+    _process_pdf(scan_id=scan.id, app_config=app.config)
+
+    return {
+        'id': scan.id,
+        'name': scan.name,
+        'status': scan.status,
+        'message': scan.message
+    }
+
+
 def create_exam():
     exam_name = lorem_name.sentence().replace('.', '')
     problems = [{
@@ -126,16 +149,14 @@ def create_exam():
 
         with open('./test.pdf', mode='w+b') as submissionPDFs:
             submissionPDFs.write(generated.data)
-            client.post(f'api/scans/{exam_id}',
-                        content_type='multipart/form-data',
-                        data={
-                            'exam_id': exam_id,
-                            'pdf': submissionPDFs})
+            submissionPDFs.seek(0)
+            handle_pdf_processing(exam_id, submissionPDFs)
 
         scans = client.get(f'api/scans/{exam_id}').get_json()
-        while not all([scan['status'] == 'finished' for scan in scans]):
-            sleep(1)
-            scans = client.get(f'api/scans/{exam_id}').get_json()
+        print(scans)
+        # while not all([scan['status'] == 'finished' for scan in scans]):
+        #     sleep(1)
+        #     scans = client.get(f'api/scans/{exam_id}').get_json()
 
         exam_data = client.get('/api/exams/' + str(exam_id)).get_json()
         print(exam_data)

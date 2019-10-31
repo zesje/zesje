@@ -1,6 +1,7 @@
 import math
 import random
 import os
+import shutil
 import sys
 import argparse
 
@@ -36,7 +37,8 @@ app.config.update(
     SQLALCHEMY_DATABASE_URI='sqlite:///' + '../scripts/data-dev/course.sqlite',
     SQLALCHEMY_TRACK_MODIFICATIONS=False  # Suppress future deprecation warning
 )
-
+if os.path.exists(app.config['DATA_DIRECTORY']):
+    shutil.rmtree(app.config['DATA_DIRECTORY'])
 os.makedirs(app.config['DATA_DIRECTORY'], exist_ok=True)
 os.makedirs(app.config['SCAN_DIRECTORY'], exist_ok=True)
 
@@ -147,16 +149,11 @@ def create_exam():
         generated = client.get(f'api/exams/{exam_id}/generated_pdfs',
                                data={"copies_start": 1, "copies_end": args.students, 'type': 'pdf'})
 
-        with open('./test.pdf', mode='w+b') as submissionPDFs:
+        with NamedTemporaryFile(mode='w+b') as submissionPDFs:
             submissionPDFs.write(generated.data)
             submissionPDFs.seek(0)
+            print('Processing PDFs. This may take a while.')
             handle_pdf_processing(exam_id, submissionPDFs)
-
-        scans = client.get(f'api/scans/{exam_id}').get_json()
-        print(scans)
-        # while not all([scan['status'] == 'finished' for scan in scans]):
-        #     sleep(1)
-        #     scans = client.get(f'api/scans/{exam_id}').get_json()
 
         exam_data = client.get('/api/exams/' + str(exam_id)).get_json()
         print(exam_data)

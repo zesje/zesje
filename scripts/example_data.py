@@ -73,6 +73,15 @@ def generate_problem(pdf, problem):
     pdf.rect(problem['x'], problem['y'] - problem['h'] - margin, problem['w'], problem['h'])
 
 
+def generate_students():
+    return [{
+        'studentID': str(i + 1000001),
+        'firstName': names.get_first_name(),
+        'lastName': names.get_last_name(),
+        'email': str(i + 1000000) + '@student.tudelft.nl'
+    } for i in range(args.students)]
+
+
 def handle_pdf_processing(exam_id, pdf):
     exam = Exam.query.get(exam_id)
     scan = Scan(exam=exam, name=pdf.name,
@@ -104,60 +113,64 @@ def create_exam():
         'x': 75, 'y': 600 - (170 * (i % 3)),
         'w': 450, 'h': 120
     } for i in range(args.pages * 3)]
-    with app.test_client() as client:
-        with NamedTemporaryFile() as pdf_file:
-            generate_exam_pdf(pdf_file, exam_name, problems)
-            exam_id = client.post('/api/exams',
-                                  content_type='multipart/form-data',
-                                  data={
-                                      'exam_name': exam_name,
-                                      'pdf': pdf_file}).get_json()['id']
+    with NamedTemporaryFile() as pdf_file:
+        generate_exam_pdf(pdf_file, exam_name, problems)
+        exam_id = client.post('/api/exams',
+                              content_type='multipart/form-data',
+                              data={
+                                  'exam_name': exam_name,
+                                  'pdf': pdf_file}).get_json()['id']
 
-        # Create problems
-        for problem in problems:
-            problem_id = client.post('api/problems', data={
-                'exam_id': exam_id,
-                'name': problem['question'],
-                'page': math.floor((problem['num'] - 1) / 3),
-                # add some padding to x, y, w, h
-                'x': problem['x'] - 20,
-                'y': problem['y'] - 30,
-                'width': problem['w'] + 40,
-                'height': problem['h'] + 60,
-            }).get_json()['id']
-            # Have to put name again, because the endpoint first guesses a name.
-            client.put('api/problems/' + str(problem_id),
-                       data={'name': problem['question'], 'grading_policy': 'set_nothing'})
-            for _ in range(random.randint(2, 6)):
-                client.post('api/feedback/' + str(problem_id), data={
-                    'name': lorem_name.sentence(),
-                    'description': (lorem.sentence() if random.choice([True, False]) else ''),
-                    'score': random.randint(-4, 4)
-                })
+    # Create problems
+    for problem in problems:
+        problem_id = client.post('api/problems', data={
+            'exam_id': exam_id,
+            'name': problem['question'],
+            'page': math.floor((problem['num'] - 1) / 3),
+            # add some padding to x, y, w, h
+            'x': problem['x'] - 20,
+            'y': problem['y'] - 30,
+            'width': problem['w'] + 40,
+            'height': problem['h'] + 60,
+        }).get_json()['id']
+        # Have to put name again, because the endpoint first guesses a name.
+        client.put('api/problems/' + str(problem_id),
+                   data={'name': problem['question'], 'grading_policy': 'set_nothing'})
+        for _ in range(random.randint(2, 6)):
+            client.post('api/feedback/' + str(problem_id), data={
+                'name': lorem_name.sentence(),
+                'description': (lorem.sentence() if random.choice([True, False]) else ''),
+                'score': random.randint(-4, 4)
+            })
 
-        client.put('api/exams/' + str(exam_id), data={
-            'finalized': True
-        })
-        # create graders
-        graders = None
-        for _ in range(args.graders):
-            graders = client.post('/api/graders', data={'name': names.get_full_name()}).get_json()
+    client.put('api/exams/' + str(exam_id), data={
+        'finalized': True
+    })
+    # create graders
+    graders = None
+    for _ in range(args.graders):
+        graders = client.post('/api/graders', data={'name': names.get_full_name()}).get_json()
 
-        # Generate PDFs
-        client.post(f'api/exams/{exam_id}/generated_pdfs', data={"copies_start": 1, "copies_end": args.students})
-        # Download PDFs
-        generated = client.get(f'api/exams/{exam_id}/generated_pdfs',
-                               data={"copies_start": 1, "copies_end": args.students, 'type': 'pdf'})
+    # Generate PDFs
+    client.post(f'api/exams/{exam_id}/generated_pdfs', data={"copies_start": 1, "copies_end": args.students})
+    # Download PDFs
+    generated = client.get(f'api/exams/{exam_id}/generated_pdfs',
+                           data={"copies_start": 1, "copies_end": args.students, 'type': 'pdf'})
 
-        with NamedTemporaryFile(mode='w+b') as submissionPDFs:
-            submissionPDFs.write(generated.data)
-            submissionPDFs.seek(0)
-            print('Processing PDFs. This may take a while.')
-            handle_pdf_processing(exam_id, submissionPDFs)
+    with NamedTemporaryFile(mode='w+b') as submissionPDFs:
+        submissionPDFs.write(generated.data)
+        submissionPDFs.seek(0)
+        print('Processing PDFs. This may take a while.')
+        handle_pdf_processing(exam_id, submissionPDFs)
 
-        exam_data = client.get('/api/exams/' + str(exam_id)).get_json()
-        print(exam_data)
+    exam_data = client.get('/api/exams/' + str(exam_id)).get_json()
+    print(exam_data)
 
 
-for _ in range(args.exams):
-    create_exam()
+with app.test_client() as client:
+    for student in generate_students():
+        print(client.put('api/students', data=student).get_json())
+
+    for _ in range(args.exams):
+        create_exam()
+

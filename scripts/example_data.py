@@ -1,3 +1,4 @@
+import itertools
 import math
 import random
 import os
@@ -22,8 +23,10 @@ import zesje  # noqa: E402
 parser = argparse.ArgumentParser(description='Create example exam data in the database.')
 parser.add_argument('--exams', type=int, default=1, help='number of exams to add')
 parser.add_argument('--pages', type=int, default=3, help='number of pages per exam')
-parser.add_argument('--students', type=int, default=1, help='number of students per exam')
+parser.add_argument('--students', type=int, default=60, help='number of students per exam')
 parser.add_argument('--graders', type=int, default=4, help='number of graders')
+parser.add_argument('--grade', type=str, default='partial', choices=['nothing', 'partial', 'all'],
+                    help='how much of the exam to grade')
 
 args = parser.parse_args(sys.argv[1:])
 
@@ -105,6 +108,25 @@ def handle_pdf_processing(exam_id, pdf):
     }
 
 
+def grade_problems(exam_id, graders, problems, submission_ids):
+    if args.grade == 'nothing':
+        return
+
+    for submission_id in submission_ids:
+        # Only grade half the problems for each submission if grading partially.
+        problems = random.sample(problems, math.ceil(len(problems)/2)) if args.grade == 'all' else problems
+        for problem in problems:
+            # Exclude the 'blank' option
+            feedback_options = problem['feedback'][1:]
+            n_options_to_click = random.randint(1, len(feedback_options))
+            options_to_click = [opt['id'] for opt in random.sample(feedback_options, n_options_to_click)]
+            for option in options_to_click:
+                client.put(f"/api/solution/{exam_id}/{submission_id}/{problem['id']}",
+                           json={
+                               'id': option,
+                               'graderID': random.choice(graders)['id']
+                           })
+
 def create_exam():
     exam_name = lorem_name.sentence().replace('.', '')
     problems = [{
@@ -157,11 +179,17 @@ def create_exam():
     generated = client.get(f'api/exams/{exam_id}/generated_pdfs',
                            data={"copies_start": 1, "copies_end": args.students, 'type': 'pdf'})
 
-    with NamedTemporaryFile(mode='w+b') as submissionPDFs:
-        submissionPDFs.write(generated.data)
-        submissionPDFs.seek(0)
+    # Upload submissions
+    with NamedTemporaryFile(mode='w+b') as submission_pdf:
+        submission_pdf.write(generated.data)
+        submission_pdf.seek(0)
         print('Processing PDFs. This may take a while.')
-        handle_pdf_processing(exam_id, submissionPDFs)
+        handle_pdf_processing(exam_id, submission_pdf)
+
+    submission_ids = [sub['id'] for sub in client.get(f'api/submissions/{exam_id}').get_json()]
+    problems = client.get('/api/exams/' + str(exam_id)).get_json()['problems']
+
+    grade_problems(exam_id, graders, problems, submission_ids)
 
     exam_data = client.get('/api/exams/' + str(exam_id)).get_json()
     print(exam_data)
@@ -169,8 +197,7 @@ def create_exam():
 
 with app.test_client() as client:
     for student in generate_students():
-        print(client.put('api/students', data=student).get_json())
+        client.put('api/students', data=student).get_json()
 
     for _ in range(args.exams):
         create_exam()
-

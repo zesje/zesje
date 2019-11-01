@@ -50,7 +50,7 @@ def checkboxes(exam):
     return cb_data
 
 
-def _generate_exam_token(exam_id, exam_name, exam_pdf):
+def generate_exam_token(exam_id, exam_name, exam_pdf):
     hasher = hashlib.sha1()
     hasher.update(exam_pdf)
     hasher.update(f'{exam_id},{exam_name}'.encode('utf-8'))

@@ -52,8 +52,8 @@ def checkboxes(exam):
 
 def _generate_exam_token(exam_id, exam_name, exam_pdf):
     hasher = hashlib.sha1()
-    token_string = str(exam_id) + str(exam_name) + str(exam_pdf)
-    hasher.update(token_string.encode('utf-8'))
+    hasher.update(exam_pdf)
+    hasher.update(f'{exam_id},{exam_name}'.encode('utf-8'))
     return hasher.hexdigest()[0:12]
 
 

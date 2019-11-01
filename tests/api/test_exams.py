@@ -2,7 +2,7 @@ import pytest
 
 from flask import json
 from zesje.database import db, Exam, Problem, ProblemWidget
-from zesje.api.exams import _generate_exam_token
+from zesje.api.exams import generate_exam_token
 
 
 @pytest.fixture
@@ -59,8 +59,8 @@ def test_get_exams(test_client, add_test_data):
     ([0, 0], ['Final', 'Final'], [b'EXAM PDF DATA', b'DIFFERENT PDF DATA'], False),
 ], ids=['Same everything', 'Different ids', 'Different names', 'Different pdfs'])
 def test_exam_generate_token_same(ids, names, pdfs, tokens_equal):
-    token_a = _generate_exam_token(ids[0], names[0], pdfs[0])
-    token_b = _generate_exam_token(ids[1], names[1], pdfs[1])
+    token_a = generate_exam_token(ids[0], names[0], pdfs[0])
+    token_b = generate_exam_token(ids[1], names[1], pdfs[1])
 
     assert len(token_a) == len(token_b) == 12
     assert (token_a == token_b) is tokens_equal

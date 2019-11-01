@@ -277,7 +277,7 @@ class Exams(Resource):
 
         db.session.add(exam)
         db.session.commit()  # so exam gets an id
-        exam.token = _generate_exam_token(exam.id, exam_name, pdf_data)
+        exam.token = generate_exam_token(exam.id, exam_name, pdf_data)
         db.session.commit()
 
         exam_dir = _get_exam_dir(exam.id)

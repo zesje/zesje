@@ -15,7 +15,7 @@ from reportlab.lib.pagesizes import A4
 from zesje.scans import decode_barcode, ExamMetadata, ExtractedBarcode
 from zesje.image_extraction import extract_image_pikepdf
 from zesje.database import db
-from zesje.api.exams import _generate_exam_token
+from zesje.api.exams import generate_exam_token
 from zesje.database import Exam, ExamWidget, Submission
 from zesje import scans
 from zesje import pdf_generation
@@ -88,7 +88,7 @@ def new_exam(db_empty):
     """
     with db_empty.app_context():
         e = Exam(name="testExam")
-        e.token = _generate_exam_token(e.id, e.name, b'EXAM PDF DATA')
+        e.token = generate_exam_token(e.id, e.name, b'EXAM PDF DATA')
         sub = Submission(copy_number=145, exam=e)
         widget = ExamWidget(exam=e, name='student_id_widget', x=50, y=50)
         exam_config = ExamMetadata(

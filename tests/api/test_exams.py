@@ -1,8 +1,9 @@
 import pytest
 
-from flask import json, Flask
+from flask import json
 from zesje.database import db, Exam, Problem, ProblemWidget
 from zesje.api.exams import _generate_exam_token
+
 
 @pytest.fixture
 def add_test_data(app):

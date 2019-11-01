@@ -1,6 +1,7 @@
 import itertools
 import os
 import zipfile
+import hashlib
 from io import BytesIO
 from tempfile import TemporaryFile
 
@@ -47,6 +48,13 @@ def checkboxes(exam):
         cb_data += [(cb.x, cb.y, page, cb.label) for cb in problem.mc_options]
 
     return cb_data
+
+
+def generate_exam_token(exam_id, exam_name, exam_pdf):
+    hasher = hashlib.sha1()
+    hasher.update(exam_pdf)
+    hasher.update(f'{exam_id},{exam_name}'.encode('utf-8'))
+    return hasher.hexdigest()[0:12]
 
 
 class Exams(Resource):
@@ -269,6 +277,8 @@ class Exams(Resource):
 
         db.session.add(exam)
         db.session.commit()  # so exam gets an id
+        exam.token = generate_exam_token(exam.id, exam_name, pdf_data)
+        db.session.commit()
 
         exam_dir = _get_exam_dir(exam.id)
         pdf_path = os.path.join(exam_dir, 'exam.pdf')

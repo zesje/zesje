@@ -50,9 +50,9 @@ def checkboxes(exam):
     return cb_data
 
 
-def _generate_exam_token(exam_id, exam_name):
+def _generate_exam_token(exam_id, exam_name, exam_pdf):
     hasher = hashlib.sha1()
-    token_string = str(exam_id) + str(exam_name)
+    token_string = str(exam_id) + str(exam_name) + str(exam_pdf)
     hasher.update(token_string.encode('utf-8'))
     return hasher.hexdigest()[0:12]
 
@@ -277,7 +277,8 @@ class Exams(Resource):
 
         db.session.add(exam)
         db.session.commit()  # so exam gets an id
-        exam.token = _generate_exam_token(exam.id, exam_name)
+        exam.token = _generate_exam_token(exam.id, exam_name, pdf_data)
+        db.session.commit()
 
         exam_dir = _get_exam_dir(exam.id)
         pdf_path = os.path.join(exam_dir, 'exam.pdf')

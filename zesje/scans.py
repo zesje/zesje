@@ -207,9 +207,8 @@ def process_page(image_data, exam_config, output_dir=None, strict=False):
         # Handle possible horizontal image orientation.
         image_array = np.array(np.rot90(image_array, -1))
 
-    corner_keypoints = find_corner_marker_keypoints(image_array)
     try:
-        check_corner_keypoints(image_array, corner_keypoints)
+        corner_keypoints = find_corner_marker_keypoints(image_array)
         image_array = realign_image(image_array, corner_keypoints)
     except RuntimeError as e:
         if strict:
@@ -511,69 +510,101 @@ def calc_angle(keyp1, keyp2):
             return math.degrees(math.atan(ydiff / xdiff))
 
 
-def find_corner_marker_keypoints(image_array):
+def find_corner_marker_keypoints(image_array, start_fraction=8, end_fraction=5):
     """Generates a list of OpenCV keypoints which resemble corner markers.
     This is done using a SimpleBlobDetector
+
+    It starts by searching in a box with size fraction 1/`start_fraction`
+    of the full page. If not enough keypoints are found, the
+    search area is increased step by step to 1/`end_fraction`.
 
     Parameters:
     -----------
     image_data: Source image
 
+    start_fraction : int
+        1/fraction to use at the start for searching the keypoitns
+    end_fraction : int
+        1/fraction to stop for searching the keypoitns
     """
     h, w, *_ = image_array.shape
     marker_length = .8 / 2.54 * guess_dpi(image_array)  # 8 mm in inches × dpi
     marker_width = .1 / 2.54 * guess_dpi(image_array)  # should get exact width
 
-    # Filter out everything in the center of the image
-    tb = slice(0, h//8), slice(7*h//8, h)
-    lr = slice(0, w//8), slice(7*w//8, w)
-    corner_points = []
-    for corner in itertools.product(tb, lr):
-        gray_im = cv2.cvtColor(image_array[corner], cv2.COLOR_BGR2GRAY)
-        _, bin_im = cv2.threshold(gray_im, 150, 255, cv2.THRESH_BINARY)
-        img = bin_im
-        ret, labels = cv2.connectedComponents(~img)
-        for label in range(1, ret):
-            new_img = (labels == label)
-            if np.sum(new_img) > marker_length * marker_width * 2:
-                continue  # The blob is too large
-            lines = cv2.HoughLines(new_img.astype(np.uint8), 1, np.pi/180, int(marker_length * .9))
-            if lines is None:
-                continue  # Didn't find any lines
-            lines = lines.reshape(-1, 2).T
+    best_points = None
 
-            # One of the lines is nearly horizontal, can have both theta ≈ 0 or theta ≈ π;
-            # here we flip those points to ensure that we end up with two reasonably contiguous regions.
-            to_flip = lines[1] > 3*np.pi/4
-            lines[1, to_flip] -= np.pi
-            lines[0, to_flip] *= -1
-            v = (lines[1] > np.pi/4)
-            if np.all(v) or not np.any(v):
-                continue
-            rho1, theta1 = np.average(lines[:, v], axis=1)
-            rho2, theta2 = np.average(lines[:, ~v], axis=1)
-            y, x = np.linalg.solve([[np.cos(theta1), np.sin(theta1)], [np.cos(theta2), np.sin(theta2)]], [rho1, rho2])
-            # TODO: add failsafes
-            if np.isnan(x) or np.isnan(y):
-                continue
-            corner_points.append((int(y) + corner[1].start, int(x) + corner[0].start))
+    for fraction in range(start_fraction, end_fraction + 1, -1):
+        # Filter out everything in the center of the image
+        tb = slice(0, h//fraction), slice((fraction-1)*h//fraction, h)
+        lr = slice(0, w//fraction), slice((fraction-1)*w//fraction, w)
+        corner_points = []
+        for corner in itertools.product(tb, lr):
+            gray_im = cv2.cvtColor(image_array[corner], cv2.COLOR_BGR2GRAY)
+            _, bin_im = cv2.threshold(gray_im, 150, 255, cv2.THRESH_BINARY)
+            img = bin_im
+            ret, labels = cv2.connectedComponents(~img)
+            for label in range(1, ret):
+                new_img = (labels == label)
+                if np.sum(new_img) > marker_length * marker_width * 2:
+                    continue  # The blob is too large
+                lines = cv2.HoughLines(new_img.astype(np.uint8), 1, np.pi/180, int(marker_length * .9))
+                if lines is None:
+                    continue  # Didn't find any lines
+                lines = lines.reshape(-1, 2).T
+
+                # One of the lines is nearly horizontal, can have both theta ≈ 0 or theta ≈ π;
+                # here we flip those points to ensure that we end up with two reasonably contiguous regions.
+                to_flip = lines[1] > 3*np.pi/4
+                lines[1, to_flip] -= np.pi
+                lines[0, to_flip] *= -1
+                v = (lines[1] > np.pi/4)
+                if np.all(v) or not np.any(v):
+                    continue
+                rho1, theta1 = np.average(lines[:, v], axis=1)
+                rho2, theta2 = np.average(lines[:, ~v], axis=1)
+                y, x = np.linalg.solve([[np.cos(theta1), np.sin(theta1)], [np.cos(theta2), np.sin(theta2)]],
+                                       [rho1, rho2])
+                # TODO: add failsafes
+                if np.isnan(x) or np.isnan(y):
+                    continue
+                corner_points.append((int(y) + corner[1].start, int(x) + corner[0].start))
+
+        try:
+            check_corner_keypoints(image_array, corner_points, minimum=2)
+            # Save these points as the best attempt so far
+            best_points = corner_points
+        except RuntimeError:
+            pass
+
+        try:
+            check_corner_keypoints(image_array, corner_points)
+            # Keypoints are valid and thus return them
+            return corner_points
+        except RuntimeError as e:
+            # If this is the last iteration, attempt to return the
+            # best points found so far, otherwise raise.
+            if fraction == end_fraction:
+                if best_points:
+                    return best_points
+                raise e
 
     return corner_points
 
 
-def check_corner_keypoints(image_array, keypoints):
+def check_corner_keypoints(image_array, keypoints, minimum=3):
     """Checks whether the corner markers are valid.
 
-    1. Checks that there are between 3 and 4 corner markers.
+    1. Checks that there are between minimum (default 3) and 4 corner markers.
     2. Checks that no 2 corner markers are the same corner of the image.
 
     Parameters:
     -----------
     image_array : source image
     keypoints : list of tuples containing the coordinates of keypoints
+    minimum : minimum number of keypoints to not raise an error
     """
     total = len(keypoints)
-    if total < 3:
+    if total < minimum:
         raise RuntimeError(f"Too few corner markers found ({total}).")
     elif total > 4:
         raise RuntimeError(f"Too many corner markers found ({total}).")

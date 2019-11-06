@@ -523,9 +523,13 @@ def find_corner_marker_keypoints(image_array, start_fraction=8, end_fraction=5):
     image_data: Source image
 
     start_fraction : int
-        1/fraction to use at the start for searching the keypoitns
+        1/fraction to use at the start for searching the keypoints
     end_fraction : int
-        1/fraction to stop for searching the keypoitns
+        1/fraction to stop for searching the keypoints
+
+    Raises
+    ------
+    RuntimeError if no valid set of keypoints are found
     """
     h, w, *_ = image_array.shape
     marker_length = .8 / 2.54 * guess_dpi(image_array)  # 8 mm in inches × dpi

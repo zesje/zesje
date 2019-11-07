@@ -1,8 +1,6 @@
 """ db.Models used in the db """
 
 import enum
-import random
-import string
 
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean, ForeignKey, Enum, false
@@ -23,20 +21,6 @@ db = SQLAlchemy(model_class=declarative_base(
 
 token_length = 12
 
-# Helper functions #
-# Have to appear at the top of the file, because otherwise they won't be defined when the db.Models are defined
-
-
-def _generate_exam_token():
-    """Generate an exam token which is not already present in the database. The token consists of 12 randomly generated
-    uppercase letters."""
-    chars = string.ascii_uppercase
-
-    while True:
-        rand_string = ''.join(random.choices(chars, k=token_length))
-
-        if Exam.query.filter(Exam.token == rand_string).first() is None:  # no collision
-            return rand_string
 
 # db.Models #
 
@@ -64,7 +48,7 @@ class Exam(db.Model):
     __tablename__ = 'exam'
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(Text, nullable=False)
-    token = Column(String(token_length), unique=True, default=_generate_exam_token)
+    token = Column(String(token_length), unique=True)
     submissions = db.relationship('Submission', backref='exam', cascade='all', lazy=True)
     problems = db.relationship('Problem', backref='exam', cascade='all', order_by='Problem.id', lazy=True)
     scans = db.relationship('Scan', backref='exam', cascade='all', lazy=True)

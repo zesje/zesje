@@ -58,6 +58,10 @@ Install all of the Javascript dependencies:
 
     yarn install
 
+Afterwards, initialize the database using the following command:
+
+    yarn migrate:dev
+
 Unfortunately there is also another dependency that must be installed
 manually for now (we are working to bring this dependency into the
 Conda ecosystem). You can install this dependency in the following way

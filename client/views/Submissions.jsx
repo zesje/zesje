@@ -50,7 +50,7 @@ class Submissions extends React.Component {
   }
 
   updateSubmissions = () => {
-    api.get('submissions/' + this.props.exam.id)
+    api.get('submissions/missing_pages/' + this.props.exam.id)
       .then(submissions => {
         this.setState({
           submissions: submissions.map(sub => ({

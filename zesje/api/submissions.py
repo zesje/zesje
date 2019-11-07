@@ -1,11 +1,14 @@
-from flask_restful import Resource, reqparse
-from sqlalchemy.orm import selectinload
+import os
 
-from ..database import db, Exam, Submission, Student, Page
+from flask import current_app as app
+from flask_restful import Resource, reqparse
+from pdfrw import PdfReader
+
+from ..database import db, Exam, Submission, Student
 from ..pregrader import ungrade_multiple_sub
 
 
-def sub_to_data(sub, all_pages):
+def sub_to_data(sub):
     """Transform a submission into a data structure frontend expects."""
     return {
         'id': sub.copy_number,
@@ -29,8 +32,7 @@ def sub_to_data(sub, all_pages):
                 ],
                 'remark': sol.remarks if sol.remarks else ""
             } for sol in sub.solutions  # Sorted by sol.problem_id
-        ],
-        'missing_pages': sorted(all_pages - set(page.number for page in sub.pages)),
+        ]
     }
 
 
@@ -43,6 +45,7 @@ class Submissions(Resource):
         Parameters
         ----------
         exam_id : int
+            The id of the exam for which the missing pages must be computed.
         submission_id : int, optional
             The copy number of the submission. This uniquely identifies
             the submission *within a given exam*.
@@ -57,39 +60,20 @@ class Submissions(Resource):
             validated: bool
                 True if the assigned student has been validated by a human.
             problems: list of problems
-            missing_pages: list of int
-                pages that are missing from submission
         """
-
-        # Load exam using the following most efficient strategy
-        exam = Exam.query.options(selectinload(Exam.submissions).
-                                  subqueryload(Submission.solutions)).get(exam_id)
+        exam = Exam.query.get(exam_id)
         if exam is None:
             return dict(status=404, message='Exam does not exist.'), 404
 
-        #
-        # Some pages might not have a problem widget (e.g. title page) and some
-        # pages might not have been uploaded yet.
-        all_pages = set(prob.widget.page for prob in exam.problems)\
-            .union(page.number for page in Page.query.join(Submission, isouter=True)
-                                                     .join(Exam, isouter=True)
-                                                     .filter(Exam.id == exam.id)
-                                                     .distinct(Page.number).all())
-
         if submission_id is not None:
-            sub = Submission.query.filter(Submission.exam_id == exam.id,
+            sub = Submission.query.filter(Submission.exam_id == exam_id,
                                           Submission.copy_number == submission_id).one_or_none()
             if sub is None:
                 return dict(status=404, message='Submission does not exist.'), 404
 
-            return sub_to_data(sub, all_pages)
+            return sub_to_data(sub)
 
-        return [
-            sub_to_data(sub, all_pages) for sub
-            in (Submission.query
-                .filter(Submission.exam == exam)
-                .order_by(Submission.copy_number).all())
-        ]
+        return [sub_to_data(sub) for sub in exam.submissions]
 
     put_parser = reqparse.RequestParser()
     put_parser.add_argument('studentID', type=int, required=True)
@@ -143,3 +127,37 @@ class Submissions(Resource):
 
         db.session.commit()
         return dict(status=200, message=f'Student {student.id} matched to submission {sub.copy_number}'), 200
+
+
+class MissingPages(Resource):
+
+    def get(self, exam_id):
+        """
+        Compute which submissions are missing which pages.
+
+        Parameters
+        ----------
+        exam_id : int
+            The id of the exam for which the missing pages must be computed.
+
+        Returns
+        -------
+        Provides a list of:
+            copyID: int
+            missing_pages: list of ints
+        """
+
+        exam = Exam.query.get(exam_id)
+
+        if exam is None:
+            return dict(status=404, message='Exam does not exist.'), 404
+
+        all_pages = set(range(len(
+            PdfReader(os.path.join(app.config['DATA_DIRECTORY'], f'{exam_id}_data/exam.pdf')).pages)
+        ))
+        return [
+            {
+                'id': sub.copy_number,
+                'missing_pages': sorted(all_pages - set(page.number for page in sub.pages)),
+            } for sub in exam.submissions
+        ]

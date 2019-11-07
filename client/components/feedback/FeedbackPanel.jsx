@@ -129,7 +129,7 @@ class FeedbackPanel extends React.Component {
         )}
         {this.props.grading &&
           <div className='panel-block'>
-            <textarea className='textarea' rows='2' placeholder='Remark' value={this.state.remark} onBlur={this.saveRemark} onChange={this.changeRemark} onKeyDown={this.keyMap}/>
+            <textarea className='textarea' rows='2' placeholder='Remark' value={this.state.remark} onBlur={this.saveRemark} onChange={this.changeRemark} onKeyDown={this.keyMap} />
           </div>
         }
         <div className='panel-block'>

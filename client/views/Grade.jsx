@@ -1,14 +1,13 @@
 import React from 'react'
 import Notification from 'react-bulma-notification'
-import hash from 'object-hash'
 import Hero from '../components/Hero.jsx'
 
 import FeedbackPanel from '../components/feedback/FeedbackPanel.jsx'
 import ProblemSelector from './grade/ProblemSelector.jsx'
 import EditPanel from '../components/feedback/EditPanel.jsx'
-import SearchBox from '../components/SearchBox.jsx'
 import ProgressBar from '../components/ProgressBar.jsx'
 import withShortcuts from '../components/ShortcutBinder.jsx'
+import GradeNavigation from './grade/GradeNavigation.jsx'
 
 import * as api from '../api.jsx'
 
@@ -270,7 +269,6 @@ class Grade extends React.Component {
       sub.id !== submission.id && submission.student && sub.student && sub.student.id === submission.student.id)
     ).map((sub) => ' #' + sub.id)
     const multiple = otherSubmissions.length > 0
-    const anonymous = this.props.gradeAnonymous
     const gradedTime = new Date(solution.graded_at)
 
     return (
@@ -305,79 +303,18 @@ class Grade extends React.Component {
               </div>
 
               <div className='column'>
-                <div className='level'>
-                  <div className='level-item make-wider'>
-                    <div className='field has-addons is-mobile'>
-                      <div className='control'>
-                        <button type='submit'
-                          className={'button is-info is-rounded is-hidden-mobile' +
-                            (this.state.showTooltips ? ' tooltip is-tooltip-active' : '')}
-                          data-tooltip='shift + ←'
-                          onClick={this.prevUngraded}>ungraded</button>
-                        <button type='submit'
-                          className={'button is-link' +
-                            (this.state.showTooltips ? ' tooltip is-tooltip-active' : '')}
-                          data-tooltip='←'
-                          onClick={this.prev}>Previous</button>
-                      </div>
-                      <div className='control is-wider'>
-                        <SearchBox
-                          placeholder='Search for a submission'
-                          setSelected={this.updateSubmission}
-                          selected={submission}
-                          options={submissions}
-                          suggestionKeys={(anonymous ? ['id'] : [
-                            'student.id',
-                            'student.firstName',
-                            'student.lastName',
-                            'id'
-                          ])}
-                          renderSelected={({id, student}) => {
-                            if (student && !anonymous) {
-                              return `${student.firstName} ${student.lastName} (${student.id})`
-                            } else {
-                              return `#${id}`
-                            }
-                          }}
-                          renderSuggestion={({id, student}) => {
-                            if (student && !anonymous) {
-                              return (
-                                <div className='flex-parent'>
-                                  <b className='flex-child truncated'>
-                                    {`${student.firstName} ${student.lastName}`}
-                                  </b>
-                                  <i className='flex-child fixed'>
-                                    ({student.id}, #{id})
-                                  </i>
-                                </div>
-                              )
-                            } else {
-                              return (
-                                <div className='flex-parent'>
-                                  <b className='flex-child fixed'>
-                                    #{id}
-                                  </b>
-                                </div>
-                              )
-                            }
-                          }}
-                        />
-                      </div>
-                      <div className='control'>
-                        <button type='submit'
-                          className={'button is-link' +
-                            (this.state.showTooltips ? ' tooltip is-tooltip-active' : '')}
-                          data-tooltip='→'
-                          onClick={this.next}>Next</button>
-                        <button type='submit'
-                          className={'button is-info is-rounded is-hidden-mobile' +
-                            (this.state.showTooltips ? ' tooltip is-tooltip-active' : '')}
-                          data-tooltip='shift + →'
-                          onClick={this.nextUngraded}>ungraded</button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+
+                <GradeNavigation
+                  submission={submission}
+                  submissions={submissions}
+                  updateSubmission={this.updateSubmission}
+                  prevUngraded={this.prevUngraded}
+                  prev={this.prev}
+                  next={this.next}
+                  nextUngraded={this.nextUngraded}
+                  anonymous={this.props.gradeAnonymous}
+                  showToolTips={this.state.showTooltips}
+                />
 
                 <ProgressBar done={problem.n_graded} total={submissions.length} />
 

@@ -1,6 +1,10 @@
 import React from 'react'
 
 class ProblemSelector extends React.Component {
+  changeProblem = (event) => {
+    console.log('change')
+    this.props.setProblemID(event.target.value)
+  }
   render () {
     return (
       <div className='field'>
@@ -9,10 +13,10 @@ class ProblemSelector extends React.Component {
           data-tooltip='previous problem: shift + ↑ next problem: shift + ↓'>
           <div className='select is-fullwidth'>
             <select
-              value={this.props.current}
-              onChange={this.props.changeProblem}>
-              {this.props.problems.map((problem, i) =>
-                <option key={problem.id} value={i}>{problem.name}</option>
+              value={this.props.current.id}
+              onChange={this.changeProblem}>
+              {this.props.problems.map((problem) =>
+                <option key={problem.id} value={problem.id}>{problem.name}</option>
               )}
             </select>
           </div>

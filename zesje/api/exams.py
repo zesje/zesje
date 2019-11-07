@@ -10,6 +10,7 @@ from flask_restful import Resource, reqparse
 from werkzeug.datastructures import FileStorage
 from sqlalchemy.orm import selectinload
 
+from zesje.api.problems import problem_to_data
 from ..pdf_generation import generate_pdfs, output_pdf_filename_format, join_pdfs
 from ..pdf_generation import page_is_size, save_with_even_pages, PAGE_FORMATS
 from ..pdf_generation import write_finalized_exam
@@ -168,48 +169,7 @@ class Exams(Resource):
             'id': exam_id,
             'name': exam.name,
             'submissions': submissions,
-            'problems': [
-                {
-                    'id': prob.id,
-                    'name': prob.name,
-                    'feedback': [
-                        {
-                            'id': fb.id,
-                            'name': fb.text,
-                            'description': fb.description,
-                            'score': fb.score,
-                            'used': len(fb.solutions)
-                        }
-                        for fb
-                        in prob.feedback_options  # Sorted by fb.id
-                    ],
-                    'page': prob.widget.page,
-                    'widget': {
-                        'id': prob.widget.id,
-                        'name': prob.widget.name,
-                        'x': prob.widget.x,
-                        'y': prob.widget.y,
-                        'width': prob.widget.width,
-                        'height': prob.widget.height,
-                        'type': prob.widget.type
-                    },
-                    'graded': any([sol.graded_by is not None for sol in prob.solutions]),
-                    'grading_policy': prob.grading_policy.name,
-                    'mc_options': [
-                        {
-                            'id': mc_option.id,
-                            'label': mc_option.label,
-                            'feedback_id': mc_option.feedback_id,
-                            'widget': {
-                                'name': mc_option.name,
-                                'x': mc_option.x,
-                                'y': mc_option.y,
-                                'type': mc_option.type
-                            }
-                        } for mc_option in prob.mc_options
-                    ]
-                } for prob in exam.problems  # Sorted by prob.id
-            ],
+            'problems': [problem_to_data(prob) for prob in exam.problems],  # Sorted by prob.id
             'widgets': [
                 {
                     'id': widget.id,

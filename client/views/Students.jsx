@@ -154,6 +154,8 @@ class CheckStudents extends React.Component {
   render () {
     const exam = this.props.exam
     const subm = exam.submissions[this.state.index]
+    const total = exam.submissions.length
+    const done = exam.submissions.filter(s => s.student).length
 
     return (
       <div>
@@ -233,7 +235,7 @@ class CheckStudents extends React.Component {
                     </div>
                   </div>
 
-                  <ProgressBar progress={this.props.exam.submissions} value={'validated'} />
+                  <ProgressBar done={done} total={total} />
 
                   <p className='box'>
                     <img src={'api/images/signature/' + this.props.exam.id + '/' + subm.id} alt='' />

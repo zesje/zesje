@@ -17,19 +17,12 @@ import './grade/Grade.css'
 import '../components/SubmissionNavigation.css'
 
 class Grade extends React.Component {
-  state = {
-    editActive: false,
-    feedbackToEdit: null,
-    sIndex: 0,
-    pIndex: 0,
-    graderID: this.props.graderID,
-    examID: null,
-    fullPage: false,
-    showTooltips: false,
-    submissions: Grade.shuffleSubmissions(this.props.exam.submissions, this.props.graderID)
+  constructor (props) {
+    super(props)
+    this.state = {}
   }
-
   componentDidMount = () => {
+    this.updateSubmission()
     // If we change the keybindings here we should also remember to
     // update the tooltips for the associated widgets (in render()).
     // Also add the shortcut to ./client/commponents/help/ShortcutsHelp.md
@@ -64,43 +57,73 @@ class Grade extends React.Component {
     }
   }
 
-  /*
-   * This updates the submission to a new one.
-   */
-  setSubmissionIndex = (newIndex) => {
-    if (newIndex >= 0 && newIndex < this.state.submissions.length) {
+  navigate = (direction, ungraded) => {
+    api.get(`grade/submissions/${this.props.examID}/${this.state.submission.id}/${this.state.problem.id}` +
+      '?direction=' + direction +
+      '&grader_id=' + this.props.graderID +
+      '&ungraded=' + ungraded).then(sub =>
       this.setState({
-        sIndex: newIndex
+        submission: sub
       })
-      this.props.updateSubmission(this.state.submissions[newIndex].id)
-    }
+    )
   }
-
   prev = () => {
-    const newIndex = this.state.sIndex - 1
-    this.setSubmissionIndex(newIndex)
+    this.navigate('prev', 'false')
   }
   next = () => {
-    const newIndex = this.state.sIndex + 1
-    this.setSubmissionIndex(newIndex)
+    this.navigate('next', 'false')
   }
 
   prevUngraded = () => {
-    for (let i = this.state.sIndex - 1; i >= 0; i--) {
-      if (this.state.submissions[i].problems[this.state.pIndex].graded_by === null) {
-        this.setSubmissionIndex(i)
-        return
-      }
-    }
+    this.navigate('prev', 'true')
   }
 
   nextUngraded = () => {
-    for (let i = this.state.sIndex + 1; i < this.state.submissions.length; i++) {
-      if (this.state.submissions[i].problems[this.state.pIndex].graded_by === null) {
-        this.setSubmissionIndex(i)
-        return
-      }
-    }
+    this.navigate('next', 'true')
+  }
+  /**
+   * Updates the grading pages current submission.
+   * Also updates the metadata for all other submissions.
+   * If no submissionID is specified, defaults to the first submission in the metadata.
+   * If no problem is currently in the state, defaults to the first problem in the metadata.
+  */
+  updateSubmission = (id) => {
+    api.get(`grade/metadata/${this.props.examID}`).then(metadata => {
+      const examID = metadata.exam_id
+      const submissionID = id || metadata.submissions[0].id
+      const problemID = this.state.problem ? this.state.problem.id : metadata.problems[0].id
+      Promise.all([
+        api.get(`submissions/${examID}/${submissionID}`),
+        api.get(`problems/${problemID}`)
+      ]).then(values => {
+        const submission = values[0]
+        const problem = values[1]
+        this.setState({
+          submission: submission,
+          problem: problem,
+          submissions: metadata.submissions,
+          problems: metadata.problems
+        })
+      })
+    })
+  }
+
+  updateProblem = (id) => {
+    api.get(`problems/${id}`).then(problem => {
+      this.setState({
+        problem: problem
+      })
+    })
+  }
+  prevProblem = () => {
+    const currentIndex = this.state.problems.findIndex(p => p.id === this.state.problemID) + 1
+    const newId = this.state.problems[currentIndex + 1].id
+    this.updateProblem(newId)
+  }
+  nextProblem = () => {
+    const currentIndex = this.state.problems.findIndex(p => p.id === this.state.problemID) + 1
+    const newId = this.state.problems[currentIndex - 1].id
+    this.updateProblem(newId)
   }
 
   editFeedback = (feedback) => {
@@ -110,93 +133,40 @@ class Grade extends React.Component {
     })
   }
   backToFeedback = () => {
-    this.props.updateExam(this.props.exam.id)
+    this.updateProblem(this.state.problem.id)
     this.setState({
       editActive: false
     })
   }
 
-  setSubmission = (id) => {
-    const i = this.state.submissions.findIndex(sub => sub.id === id)
-    this.setSubmissionIndex(i)
-  }
-  changeProblem = (event) => {
-    this.setState({
-      pIndex: event.target.value
-    })
-  }
+  toggleOption = (id) => {
+    const submission = this.state.submission
+    const problem = this.state.problem
 
-  setProblemIndex = (newIndex) => {
-    if (newIndex >= 0 && newIndex < this.props.exam.problems.length) {
-      this.setState({
-        pIndex: newIndex
-      })
-    }
-  }
-
-  prevProblem = () => {
-    const newIndex = this.state.pIndex - 1
-    this.setProblemIndex(newIndex)
-  }
-  nextProblem = () => {
-    const newIndex = this.state.pIndex + 1
-    this.setProblemIndex(newIndex)
-  }
-
-  toggleOption = (index) => {
-    const exam = this.props.exam
-    const submission = this.state.submissions[this.state.sIndex]
-    const problem = exam.problems[this.state.pIndex]
-    if (index + 1 > problem.feedback.length) return
-
-    const optionURI = this.state.examID + '/' +
-      submission.id + '/' +
-      problem.id
-    api.put('solution/' + optionURI, {
-      id: problem.feedback[index].id,
+    api.put(`solution/${this.props.examID}/${submission.id}/${problem.id}`, {
+      id: id,
       graderID: this.props.graderID
+    }).then(result => {
+      this.updateSubmission(submission.id)
     })
-      .then(result => {
-        this.props.updateSubmission(submission.id)
-      })
   }
 
   approve = () => {
-    const exam = this.props.exam
-    const submission = this.state.submissions[this.state.sIndex]
-    const problem = exam.problems[this.state.pIndex]
+    const submission = this.state.submission
+    const problem = this.state.problem
 
-    const optionURI = this.state.examID + '/' +
-      submission.id + '/' +
-      problem.id
-    api.put('solution/approve/' + optionURI, {
+    api.put(`solution/approve/${this.props.examID}/${submission.id}/${problem.id}`, {
       graderID: this.props.graderID
+    }).catch(resp => {
+      resp.json().then(body => Notification.error('Could not approve feedback: ' + body.message))
+    }).then(result => {
+      this.updateSubmission(submission.id)
     })
-      .catch(resp => {
-        resp.json().then(body => Notification.error('Could not approve feedback: ' + body.message))
-      })
-      .then(result => {
-        this.props.updateSubmission(submission.id)
-      })
   }
 
   toggleFullPage = () => {
     this.setState({
       fullPage: !this.state.fullPage
-    })
-  }
-
-  /*
-   * Updates all submissions.
-   * Because a new submissions changes the index of the current submission
-   * if it's added before the current submission,
-   * the function also makes sure the sIndex points to the same submission
-   */
-  updateAllSubmissions = () => {
-    const currentSubmissionID = this.state.submissions[this.state.sIndex].id
-    this.props.updateAllSubmissions(() => {
-      const newIndex = this.state.submissions.map(sub => sub.id).indexOf(currentSubmissionID)
-      this.setSubmissionIndex(newIndex)
     })
   }
 
@@ -224,45 +194,22 @@ class Grade extends React.Component {
     return Math.abs(hash)
   }
 
-  static getDerivedStateFromProps = (newProps, prevState) => {
-    // if the exam changes, the state of the grading page should change.
-    if (newProps.exam.id !== prevState.examID && newProps.exam.submissions.length) {
-      return {
-        sIndex: 0,
-        pIndex: 0,
-        examID: newProps.exam.id,
-        graderID: newProps.graderID,
-        submissions: Grade.shuffleSubmissions(newProps.exam.submissions, newProps.graderID)
-      }
-    }
-    // If the grader ID changes, submissions need to be reshuffled
-    if (newProps.graderID !== prevState.graderID) {
-      return {
-        graderID: newProps.graderID,
-        submissions: Grade.shuffleSubmissions(newProps.exam.submissions, newProps.graderID)
-      }
-    }
-    // If this submissions have changed, update the state to reflect this.
-    if (newProps.submissions !== prevState.submissions) {
-      return {
-        submissions: Grade.shuffleSubmissions(newProps.exam.submissions, newProps.graderID)
-      }
-    }
-    return null
-  }
-
   render () {
-    const exam = this.props.exam
-    const submission = this.state.submissions[this.state.sIndex]
+    if (!this.state.submission) {
+      return null
+    }
+    const examID = this.props.examID
+    const graderID = this.props.graderID
+    const submission = this.state.submission
+    const problem = this.state.problem
     const submissions = this.state.submissions
-    const solution = submission.problems[this.state.pIndex]
-    const problem = exam.problems[this.state.pIndex]
-    const progress = this.state.submissions.map(sub => sub.problems[this.state.pIndex])
+    const problems = this.state.problems
+    const solution = submission.problems.find(p => p.id === problem.id)
     const otherSubmissions = this.state.submissions.filter((sub) => (
       sub.id !== submission.id && submission.student && sub.student && sub.student.id === submission.student.id)
     ).map((sub) => ' #' + sub.id)
     const multiple = otherSubmissions.length > 0
-    const anonymous = exam.gradeAnonymous
+    const anonymous = this.props.gradeAnonymous
     const gradedTime = new Date(solution.graded_at)
 
     return (
@@ -275,17 +222,23 @@ class Grade extends React.Component {
           <div className='container'>
             <div className='columns'>
               <div className='column is-one-quarter-desktop is-one-third-tablet'>
-                <ProblemSelector problems={exam.problems} changeProblem={this.changeProblem}
-                  current={this.state.pIndex} showTooltips={this.state.showTooltips} />
+                <ProblemSelector
+                  problems={problems}
+                  setProblemID={this.updateProblem}
+                  current={problem}
+                  showTooltips={this.state.showTooltips} />
                 <nav className='panel'>
                   {this.state.editActive
-                    ? <EditPanel problemID={problem.id} feedback={this.state.feedbackToEdit}
+                    ? <EditPanel
+                      problemID={problem.id}
+                      feedback={this.state.feedbackToEdit}
                       goBack={this.backToFeedback} />
-                    : <FeedbackPanel examID={exam.id} submissionID={submission.id}
-                      problem={problem} solution={solution} graderID={this.props.graderID}
-                      editFeedback={this.editFeedback} showTooltips={this.state.showTooltips}
-                      updateAllSubmissions={this.updateAllSubmissions}
-                      updateSubmission={this.props.updateSubmission} grading />
+                    : <FeedbackPanel
+                      examID={examID} submissionID={submission.id} graderID={graderID}
+                      problem={problem} solution={solution}
+                      showTooltips={this.state.showTooltips} grading
+                      editFeedback={this.editFeedback}
+                      toggleOption={this.toggleOption} />
                   }
                 </nav>
               </div>
@@ -309,6 +262,7 @@ class Grade extends React.Component {
                       <div className='control is-wider'>
                         <SearchBox
                           placeholder='Search for a submission'
+                          setSelected={this.updateSubmission}
                           selected={submission}
                           options={submissions}
                           suggestionKeys={(anonymous ? ['id'] : [
@@ -317,7 +271,6 @@ class Grade extends React.Component {
                             'student.lastName',
                             'id'
                           ])}
-                          setSelected={this.setSubmission}
                           renderSelected={({id, student}) => {
                             if (student && !anonymous) {
                               return `${student.firstName} ${student.lastName} (${student.id})`
@@ -325,16 +278,15 @@ class Grade extends React.Component {
                               return `#${id}`
                             }
                           }}
-                          renderSuggestion={(submission) => {
-                            const stud = submission.student
-                            if (stud && !anonymous) {
+                          renderSuggestion={({id, student}) => {
+                            if (student && !anonymous) {
                               return (
                                 <div className='flex-parent'>
                                   <b className='flex-child truncated'>
-                                    {`${stud.firstName} ${stud.lastName}`}
+                                    {`${student.firstName} ${student.lastName}`}
                                   </b>
                                   <i className='flex-child fixed'>
-                                    ({stud.id}, #{submission.id})
+                                    ({student.id}, #{id})
                                   </i>
                                 </div>
                               )
@@ -342,7 +294,7 @@ class Grade extends React.Component {
                               return (
                                 <div className='flex-parent'>
                                   <b className='flex-child fixed'>
-                                    #{submission.id}
+                                    #{id}
                                   </b>
                                 </div>
                               )
@@ -366,7 +318,7 @@ class Grade extends React.Component {
                   </div>
                 </div>
 
-                <ProgressBar progress={progress} value={'graded_by'} />
+                <ProgressBar done={problem.n_graded} total={submissions.length} />
 
                 {multiple
                   ? <article className='message is-info'>
@@ -376,7 +328,8 @@ class Grade extends React.Component {
                         Make sure that each applicable feedback option is only selected once.
                       </p>
                     </div>
-                  </article> : null
+                  </article>
+                  : null
                 }
 
                 <div className='level'>
@@ -402,7 +355,7 @@ class Grade extends React.Component {
                 </div>
 
                 <p className={'box' + (solution.graded_at ? ' is-graded' : '')}>
-                  <img src={exam.id ? ('api/images/solutions/' + exam.id + '/' +
+                  <img src={examID ? ('api/images/solutions/' + examID + '/' +
                     problem.id + '/' + submission.id + '/' + (this.state.fullPage ? '1' : '0')) + '?' +
                     Grade.getLocationHash(problem) : ''} alt='' />
                 </p>

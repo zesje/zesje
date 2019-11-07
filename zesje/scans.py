@@ -537,7 +537,7 @@ def find_corner_marker_keypoints(image_array, start_fraction=8, end_fraction=5):
 
     best_points = None
 
-    for fraction in range(start_fraction, end_fraction + 1, -1):
+    for fraction in range(start_fraction, end_fraction - 1, -1):
         # Filter out everything in the center of the image
         tb = slice(0, h//fraction), slice((fraction-1)*h//fraction, h)
         lr = slice(0, w//fraction), slice((fraction-1)*w//fraction, w)
@@ -591,8 +591,6 @@ def find_corner_marker_keypoints(image_array, start_fraction=8, end_fraction=5):
                 if best_points:
                     return best_points
                 raise e
-
-    return corner_points
 
 
 def check_corner_keypoints(image_array, keypoints, minimum=3):

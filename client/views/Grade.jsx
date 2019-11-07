@@ -53,8 +53,11 @@ class Grade extends React.Component {
       this.nextProblem()
     })
     this.props.bindShortcut('f', this.toggleFullPage)
-    this.props.bindShortcut('ctrl', () => this.setState({showTooltips: true}), 'keydown')
-    this.props.bindShortcut('ctrl', () => this.setState({showTooltips: false}), 'keyup')
+    this.props.bindShortcut('ctrl', (event) => {
+      event.preventDefault()
+      event.stopPropagation()
+      this.setState({showTooltips: !this.state.showTooltips})
+    }, 'keydown')
     let key = 0
     let prefix = ''
     for (let i = 1; i < 21; i++) {

@@ -535,7 +535,7 @@ def find_corner_marker_keypoints(image_array, start_fraction=8, end_fraction=5):
     marker_length = .8 / 2.54 * guess_dpi(image_array)  # 8 mm in inches × dpi
     marker_width = .1 / 2.54 * guess_dpi(image_array)  # should get exact width
 
-    best_points = None
+    best_points = []
 
     for fraction in range(start_fraction, end_fraction - 1, -1):
         # Filter out everything in the center of the image
@@ -574,9 +574,11 @@ def find_corner_marker_keypoints(image_array, start_fraction=8, end_fraction=5):
                 corner_points.append((int(y) + corner[1].start, int(x) + corner[0].start))
 
         try:
-            check_corner_keypoints(image_array, corner_points, minimum=2)
-            # Save these points as the best attempt so far
-            best_points = corner_points
+            check_corner_keypoints(image_array, corner_points, minimum=1)
+
+            if len(corner_points) > len(best_points):
+                # Save these points as the best attempt so far
+                best_points = corner_points
         except RuntimeError:
             pass
 
@@ -654,6 +656,10 @@ def realign_image(image_array, keypoints=None, page_format="A4"):
     idxs = np.argmin(dists, 1)  # apply to column 1 so indices for input keypoints
     adjusted_markers = reference_keypoints[idxs]
 
+    if len(adjusted_markers) == 1:
+        x_shift, y_shift = np.subtract(adjusted_markers[0], keypoints[0])
+        return shift_image(image_array, x_shift, y_shift)
+
     rows, cols, _ = image_array.shape
 
     # get the transformation matrix
@@ -676,3 +682,28 @@ def original_corner_markers(format, dpi):
                      (right_x, top_y),
                      (left_x, bottom_y),
                      (right_x, bottom_y)])
+
+
+def shift_image(image_array, x_shift, y_shift):
+    """
+    take an image and shift it along the x and y axis using opencv
+
+    params:
+    -------
+    image_array: numpy.array
+        an array of the image to be shifted
+    x_shift: int
+        indicates how many pixels it has to be shifted on the x-axis, so from left to right
+    y_shift: int
+        indicates how many pixels it has to be shifted on the y-axis, so from top to bottom
+    returns:
+    --------
+    a numpy array of the image shifted where empty spaces are filled with white
+
+    """
+
+    M = np.float32([[1, 0, x_shift],
+                   [0, 1, y_shift]])
+    h, w, _ = image_array.shape
+    return cv2.warpAffine(image_array, M, (w, h),
+                          borderValue=(255, 255, 255, 255))

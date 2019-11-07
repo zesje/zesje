@@ -17,12 +17,20 @@ import './grade/Grade.css'
 import '../components/SubmissionNavigation.css'
 
 class Grade extends React.Component {
+  /**
+   * Constructor sets empty state, and calls updateSubmission.
+   * This call will get all metadata and current submission and problem.
+   */
   constructor (props) {
     super(props)
     this.state = {}
-  }
-  componentDidMount = () => {
     this.updateSubmission()
+  }
+
+  /**
+   * React lifecycle method. Binds all shortcuts.
+   */
+  componentDidMount = () => {
     // If we change the keybindings here we should also remember to
     // update the tooltips for the associated widgets (in render()).
     // Also add the shortcut to ./client/commponents/help/ShortcutsHelp.md
@@ -53,10 +61,15 @@ class Grade extends React.Component {
     for (let i = 1; i < 21; i++) {
       key = i % 10
       prefix = i > 10 ? 'shift+' : ''
-      this.props.bindShortcut(prefix + key, () => this.toggleOption(i - 1))
+      this.props.bindShortcut(prefix + key, () => this.toggleFeedbackOptionIndex(i - 1))
     }
   }
 
+  /**
+   * Navigates the current submission forwards or backwards, and either just to the next, or to the next ungraded.
+   * @param direction either 'prev' or 'next'
+   * @param ungraded either 'true' or 'false'
+   */
   navigate = (direction, ungraded) => {
     api.get(`grade/submissions/${this.props.examID}/${this.state.submission.id}/${this.state.problem.id}` +
       '?direction=' + direction +
@@ -67,13 +80,15 @@ class Grade extends React.Component {
       })
     )
   }
+  /**
+   * Sugar methods for navigate.
+   */
   prev = () => {
     this.navigate('prev', 'false')
   }
   next = () => {
     this.navigate('next', 'false')
   }
-
   prevUngraded = () => {
     this.navigate('prev', 'true')
   }
@@ -81,6 +96,7 @@ class Grade extends React.Component {
   nextUngraded = () => {
     this.navigate('next', 'true')
   }
+
   /**
    * Updates the grading pages current submission.
    * Also updates the metadata for all other submissions.
@@ -108,6 +124,11 @@ class Grade extends React.Component {
     })
   }
 
+  /**
+   * Updates the current problem to the problem with the passed id.
+   * Does not update the metadata, as then the progress bar might update confusingly.
+   * @param id the id of the problem to update to.
+   */
   updateProblem = (id) => {
     api.get(`problems/${id}`).then(problem => {
       this.setState({
@@ -115,23 +136,38 @@ class Grade extends React.Component {
       })
     })
   }
+  /**
+   * Finds the index of the current problem and moves to the previous one.
+   */
   prevProblem = () => {
     const currentIndex = this.state.problems.findIndex(p => p.id === this.state.problemID) + 1
     const newId = this.state.problems[currentIndex + 1].id
     this.updateProblem(newId)
   }
+  /**
+   * Finds the index of the current problem and moves to the next one.
+   */
   nextProblem = () => {
     const currentIndex = this.state.problems.findIndex(p => p.id === this.state.problemID) + 1
     const newId = this.state.problems[currentIndex - 1].id
     this.updateProblem(newId)
   }
-
+  /**
+   * Enter the feedback editing view for a feedback option.
+   * todo: move into feedbackpanel.
+   * @param feedback the feedback to edit.
+   */
   editFeedback = (feedback) => {
     this.setState({
       editActive: true,
       feedbackToEdit: feedback
     })
   }
+  /**
+   * Go back to all the feedback options.
+   * Updates the problem to make sure changes to feedback options are reflected.
+   * todo: move into feedbackpanel.
+   */
   backToFeedback = () => {
     this.updateProblem(this.state.problem.id)
     this.setState({
@@ -139,7 +175,20 @@ class Grade extends React.Component {
     })
   }
 
-  toggleOption = (id) => {
+  /**
+   * Toggles a feedback option by it's index in the problems list of feedback.
+   * @param index the index of the feedback option.
+   */
+  toggleFeedbackOptionIndex (index) {
+    this.toggleFeedbackOption(this.state.problem.feedback[index].id)
+  }
+
+  /**
+   * Toggles a feedback option.
+   * Updates the submission afterwards, to make sure changes are reflected.
+   * @param id the id of the feedback option to change.
+   */
+  toggleFeedbackOption = (id) => {
     const submission = this.state.submission
     const problem = this.state.problem
 
@@ -150,7 +199,9 @@ class Grade extends React.Component {
       this.updateSubmission(submission.id)
     })
   }
-
+  /**
+   * Approves the current submission.
+   */
   approve = () => {
     const submission = this.state.submission
     const problem = this.state.problem
@@ -164,25 +215,33 @@ class Grade extends React.Component {
     })
   }
 
+  /**
+   * Toggles full page view.
+   */
   toggleFullPage = () => {
     this.setState({
       fullPage: !this.state.fullPage
     })
   }
 
-  static shuffleSubmissions = (submissions, graderID) => {
-    return submissions.map(sub => [hash.MD5([sub.id, graderID]), sub]).sort().map(x => x[1])
-  }
-
+  /**
+   * Hashes the location of the current problems widget.
+   * @param problem the problem to hash the widget location for.
+   * @returns the hashed string value
+   */
   static getLocationHash = (problem) => {
     const wid = problem.widget
     const hashStr = wid.x + '.' + wid.y + '.' + wid.width + '.' + wid.height
     return Grade.hashString(hashStr)
   }
 
+  /**
+   * Function to calculate hash from a string, from:
+   * https://stackoverflow.com/questions/7616461/generate-a-hash-from-string-in-javascript
+   * @param str the string to hash.
+   * @returns the hashed string value.
+   */
   static hashString = (str) => {
-    // Function to calculate hash from a string, from:
-    // https://stackoverflow.com/questions/7616461/generate-a-hash-from-string-in-javascript
     let hash = 0
     if (str.length === 0) return hash
     let chr
@@ -195,6 +254,8 @@ class Grade extends React.Component {
   }
 
   render () {
+    // Have to not render if no submission exists in the state yet, to prevent crashes.
+    // This should only happen while the initial call to update submission in the constructor is still pending.
     if (!this.state.submission) {
       return null
     }
@@ -238,7 +299,7 @@ class Grade extends React.Component {
                       problem={problem} solution={solution}
                       showTooltips={this.state.showTooltips} grading
                       editFeedback={this.editFeedback}
-                      toggleOption={this.toggleOption} />
+                      toggleOption={this.toggleFeedbackOption} />
                   }
                 </nav>
               </div>

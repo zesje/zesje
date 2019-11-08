@@ -544,9 +544,8 @@ def find_corner_marker_keypoints(image_array, start_fraction=8, end_fraction=5):
         corner_points = []
         for corner in itertools.product(tb, lr):
             gray_im = cv2.cvtColor(image_array[corner], cv2.COLOR_BGR2GRAY)
-            _, bin_im = cv2.threshold(gray_im, 150, 255, cv2.THRESH_BINARY)
-            img = bin_im
-            ret, labels = cv2.connectedComponents(~img)
+            _, inv_im = cv2.threshold(gray_im, 150, 255, cv2.THRESH_BINARY_INV)
+            ret, labels = cv2.connectedComponents(inv_im)
             for label in range(1, ret):
                 new_img = (labels == label)
                 if np.sum(new_img) > marker_length * marker_width * 2:

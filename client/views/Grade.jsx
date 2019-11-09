@@ -126,6 +126,7 @@ class Grade extends React.Component {
     this.setState({
       pIndex: event.target.value
     })
+    event.target.blur()
   }
 
   setProblemIndex = (newIndex) => {

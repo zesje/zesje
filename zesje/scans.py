@@ -520,7 +520,7 @@ def find_corner_marker_keypoints(image_array, start_fraction=8, end_fraction=5):
 
     Parameters:
     -----------
-    image_data: Source image
+    image_data: 3d numpy array
 
     start_fraction : int
         1/fraction to use at the start for searching the keypoints
@@ -602,7 +602,7 @@ def check_corner_keypoints(image_array, keypoints, minimum=3):
 
     Parameters:
     -----------
-    image_array : source image
+    image_array : numpy array
     keypoints : list of tuples containing the coordinates of keypoints
     minimum : minimum number of keypoints to not raise an error
     """

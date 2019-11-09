@@ -7,38 +7,43 @@ from PIL import Image
 from flask import current_app
 
 
-def reference_image(problem, dpi, widget_area_in):
-    """Returns a reference image for a problem
+def reference_image(page, dpi, widget_area_in=None):
+    """Returns a reference image for a specified area
 
     The reference image is a flattened image of the
     problem on the original PDF
 
     Parameters
     ----------
-    problem : Problem
-        The problem to get the reference image for
+    page : Page
+        The Page object to get the reference image for
     dpi : int
         The desired DPI of the image
-    base_path : string
-        The folder corresponding to a correct exam.
+    widget_area_in : numpy array
+        The widget coordinates as numpy array
+        If None, return the full page
 
     Returns
     -------
     image_path : string
         Location of the image.
     """
-    page = problem.widget.page
 
     app_config = current_app.config
     data_directory = app_config.get('DATA_DIRECTORY', 'data')
-    generated_path = os.path.join(data_directory, f'{problem.exam_id}_data', 'blanks', f'{dpi}')
+    generated_path = os.path.join(data_directory, f'{page.exam_id}_data', 'blanks', f'{dpi}')
 
     if not os.path.exists(generated_path):
-        _extract_reference_images(dpi, problem.exam_id)
+        _extract_reference_images(dpi, page.exam_id)
 
     image_path = os.path.join(generated_path, f'page{page:02d}.jpg')
     blank_page = Image.open(image_path)
-    return get_box(np.array(blank_page), widget_area_in, padding=0)
+    blank_img_array = np.array(blank_page)
+
+    if widget_area_in:
+        return get_box(blank_img_array, widget_area_in, padding=0)
+    else:
+        return blank_img_array
 
 
 def _extract_reference_images(dpi, exam_id):

@@ -42,18 +42,16 @@ def find_submission(exam_id, submission_id, problem_id, args):
     # If direction is next, search submissions from the one after the old, up to the end of the list.
     # If direction is previous search from the start to the old, in reverse order.
     submissions_to_search = shuffled_submissions[old_submission_index + 1:] if args.direction == 'next' \
-        else shuffled_submissions[:old_submission_index][::-1]
+        else shuffled_submissions[old_submission_index - 1::-1]
 
     if len(submissions_to_search) == 0:
         return sub_to_data(old_submission)
 
-    # For each submission, get the solution for which the problem id is ours. If that is not graded, return it.
-    for submission in submissions_to_search:
-        solution = next(filter(lambda s: s.problem.id == problem_id, submission.solutions))
-        if not solution.graded_by:
-            return sub_to_data(submission)
-
-    return sub_to_data(old_submission)
+    # Get the next submission for which the solution to our problem was not graded yet
+    submission = next((submission for submission in submissions_to_search if
+                      any(sol.problem_id == problem_id and not sol.graded_by for sol in submission.solutions)),
+                      old_submission)  # Returns the old submission in case no suitable submission was found
+    return sub_to_data(submission)
 
 
 class Navigation(Resource):

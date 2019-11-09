@@ -510,22 +510,20 @@ def calc_angle(keyp1, keyp2):
             return math.degrees(math.atan(ydiff / xdiff))
 
 
-def find_corner_marker_keypoints(image_array, start_fraction=8, end_fraction=5):
+def find_corner_marker_keypoints(image_array, corner_sizes=[0.125, 0.25, 0.5]):
     """Generates a list of OpenCV keypoints which resemble corner markers.
     This is done using a SimpleBlobDetector
 
-    It starts by searching in a box with size fraction 1/`start_fraction`
-    of the full page. If not enough keypoints are found, the
-    search area is increased step by step to 1/`end_fraction`.
+    For each corner size it tries to find enough corner markers.
+    If not enough are detected it continues with the next corner size
+    until the list is depleted and raises a RunTimeError.
 
     Parameters:
     -----------
     image_data: 3d numpy array
 
-    start_fraction : int
-        1/fraction to use at the start for searching the keypoints
-    end_fraction : int
-        1/fraction to stop for searching the keypoints
+    corner_sizes : list of float
+        The corner sizes to search the corner markers in
 
     Raises
     ------
@@ -537,10 +535,10 @@ def find_corner_marker_keypoints(image_array, start_fraction=8, end_fraction=5):
 
     best_points = []
 
-    for fraction in range(start_fraction, end_fraction - 1, -1):
+    for corner_size in corner_sizes:
         # Filter out everything in the center of the image
-        tb = slice(0, h//fraction), slice((fraction-1)*h//fraction, h)
-        lr = slice(0, w//fraction), slice((fraction-1)*w//fraction, w)
+        tb = slice(0, int(h*corner_size)), slice(int(h*(1-corner_size)), h)
+        lr = slice(0, int(w*corner_size)), slice(int(w*(1-corner_size)), w)
         corner_points = []
         for corner in itertools.product(tb, lr):
             gray_im = cv2.cvtColor(image_array[corner], cv2.COLOR_BGR2GRAY)
@@ -588,7 +586,7 @@ def find_corner_marker_keypoints(image_array, start_fraction=8, end_fraction=5):
         except RuntimeError as e:
             # If this is the last iteration, attempt to return the
             # best points found so far, otherwise raise.
-            if fraction == end_fraction:
+            if corner_size == corner_sizes[-1]:
                 if best_points:
                     return best_points
                 raise e

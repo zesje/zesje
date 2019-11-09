@@ -19,6 +19,23 @@ class FeedbackPanel extends React.Component {
     problemID: null
   }
 
+  componentDidMount = () => {
+    if (this.props.grading) {
+      this.props.bindShortcut(['up', 'k'], (event) => {
+        event.preventDefault()
+        this.prevOption()
+      })
+      this.props.bindShortcut(['down', 'j'], (event) => {
+        event.preventDefault()
+        this.nextOption()
+      })
+      this.props.bindShortcut(['space'], (event) => {
+        event.preventDefault()
+        this.toggleSelectedOption()
+      })
+    }
+  }
+
   static getDerivedStateFromProps (nextProps, prevState) {
     if (prevState.problemID !== nextProps.problem.id || prevState.submissionID !== nextProps.submissionID) {
       return {
@@ -29,23 +46,6 @@ class FeedbackPanel extends React.Component {
       }
     } else return null
   }
-
- componentDidMount = () => {
-   if (this.props.grading) {
-     this.props.bindShortcut(['up', 'k'], (event) => {
-       event.preventDefault()
-       this.prevOption()
-     })
-     this.props.bindShortcut(['down', 'j'], (event) => {
-       event.preventDefault()
-       this.nextOption()
-     })
-     this.props.bindShortcut(['space'], (event) => {
-       event.preventDefault()
-       this.toggleSelectedOption()
-     })
-   }
- }
 
   setOptionIndex = (newIndex) => {
     if (this.props.problem.feedback.length === 0) return

@@ -2,7 +2,6 @@ import React from 'react'
 
 class ProblemSelector extends React.Component {
   changeProblem = (event) => {
-    console.log('change')
     this.props.setProblemID(event.target.value)
   }
   render () {

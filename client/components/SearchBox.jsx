@@ -67,7 +67,6 @@ class SearchBox extends React.Component {
     event.target.select()
   }
   onSuggestionSelected = (event, { suggestion }) => {
-    console.log(suggestion)
     this.props.setSelected(suggestion.id)
   }
 

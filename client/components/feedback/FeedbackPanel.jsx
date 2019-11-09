@@ -12,25 +12,40 @@ class FeedbackPanel extends React.Component {
 
   state = {
     selectedFeedbackIndex: null,
-    remark: ''
+    remark: '',
+    // Have to keep submissionID and problemID in state,
+    // to be able to decide when to derive remark from properties.
+    submissionID: null,
+    problemID: null
   }
 
-  componentDidMount = () => {
-    if (this.props.grading) {
-      this.props.bindShortcut(['up', 'k'], (event) => {
-        event.preventDefault()
-        this.prevOption()
-      })
-      this.props.bindShortcut(['down', 'j'], (event) => {
-        event.preventDefault()
-        this.nextOption()
-      })
-      this.props.bindShortcut(['space'], (event) => {
-        event.preventDefault()
-        this.toggleSelectedOption()
-      })
-    }
+  static getDerivedStateFromProps (nextProps, prevState) {
+    if (prevState.problemID !== nextProps.problem.id || prevState.submissionID !== nextProps.submissionID) {
+      return {
+        remark: nextProps.grading && nextProps.solution.remark,
+        selectedFeedbackIndex: null,
+        submissionID: nextProps.submissionID,
+        problemID: nextProps.problem.id
+      }
+    } else return null
   }
+
+ componentDidMount = () => {
+   if (this.props.grading) {
+     this.props.bindShortcut(['up', 'k'], (event) => {
+       event.preventDefault()
+       this.prevOption()
+     })
+     this.props.bindShortcut(['down', 'j'], (event) => {
+       event.preventDefault()
+       this.nextOption()
+     })
+     this.props.bindShortcut(['space'], (event) => {
+       event.preventDefault()
+       this.toggleSelectedOption()
+     })
+   }
+ }
 
   setOptionIndex = (newIndex) => {
     if (this.props.problem.feedback.length === 0) return
@@ -87,7 +102,6 @@ class FeedbackPanel extends React.Component {
 
     let selectedFeedbackId = this.state.selectedFeedbackIndex !== null &&
       this.props.problem.feedback[this.state.selectedFeedbackIndex].id
-
     return (
       <React.Fragment>
         {this.props.grading &&

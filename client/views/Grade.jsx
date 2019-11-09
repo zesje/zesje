@@ -296,6 +296,7 @@ class Grade extends React.Component {
                       examID={examID} submissionID={submission.id} graderID={graderID}
                       problem={problem} solution={solution}
                       showTooltips={this.state.showTooltips} grading
+                      updateSubmission={this.updateSubmission}
                       editFeedback={this.editFeedback}
                       toggleOption={this.toggleFeedbackOption} />
                   }

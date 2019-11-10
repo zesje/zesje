@@ -56,7 +56,7 @@ class Grade extends React.Component {
     this.props.bindShortcut('ctrl', (event) => {
       event.preventDefault()
       this.setState({showTooltips: !this.state.showTooltips})
-    }, 'keydown')
+    })
     let key = 0
     let prefix = ''
     for (let i = 1; i < 21; i++) {

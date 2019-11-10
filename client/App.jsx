@@ -135,8 +135,8 @@ class App extends React.Component {
               <Submissions
                 exam={exam}
                 urlID={match.params.examID}
-                updateExam={this.updateExam}
-                updateAllSubmissions={this.updateAllSubmissions} />} />
+                updateExam={this.updateExam} />}
+            />
             <Route path='/students' render={() =>
               <Students exam={exam} updateSubmission={this.updateSubmission} />} />
             <Route path='/grade' render={() => (

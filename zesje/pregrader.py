@@ -47,7 +47,11 @@ def grade_problem(sub, page, page_img):
         reference_img = reference_image(sub.exam_id, page, dpi)
 
     for sol in solutions_to_grade:
+        # Completely reset the solution and pregrade with a fresh start
         sol.feedback = []
+        sol.grader_id = None
+        sol.graded_at = None
+
         problem = sol.problem
 
         if not is_misaligned(problem, page_img, reference_img):

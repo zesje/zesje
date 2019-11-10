@@ -17,13 +17,30 @@ import '../components/SubmissionNavigation.css'
 
 class Grade extends React.Component {
   /**
-   * Constructor sets empty state, and calls setSubmission.
-   * This call will get all metadata and current submission and problem.
+   * Constructor sets empty state, and requests metadata for the exam.
+   * After getting this metadata, requests and sets the submission and the problem.
    */
   constructor (props) {
     super(props)
     this.state = {}
-    this.setSubmission()
+    api.get(`grade/metadata/${this.props.examID}`).then(metadata => {
+      const examID = metadata.exam_id
+      const submissionID = metadata.submissions[0].id
+      const problemID = metadata.problems[0].id
+      Promise.all([
+        api.get(`submissions/${examID}/${submissionID}`),
+        api.get(`problems/${problemID}`)
+      ]).then(values => {
+        const submission = values[0]
+        const problem = values[1]
+        this.setState({
+          submission: submission,
+          problem: problem,
+          submissions: metadata.submissions,
+          problems: metadata.problems
+        })
+      })
+    })
   }
 
   /**
@@ -78,6 +95,7 @@ class Grade extends React.Component {
         submission: sub
       })
     )
+    this.updateMetadata()
   }
   /**
    * Sugar methods for navigate.
@@ -97,43 +115,40 @@ class Grade extends React.Component {
   }
 
   /**
-   * Sets the current submission to the submission with the passed id.
-   * This also updates the submission from the server.
-   * Also updates the metadata for all other submissions.
-   * If no submissionID is specified, defaults to the first submission in the metadata.
-   * If no problem is currently in the state, defaults to the first problem in the metadata.
+   * Updates the submission from the server, and sets it as the current submission.
+   * @param id the id of the submission to update to.
   */
   setSubmission = (id) => {
-    api.get(`grade/metadata/${this.props.examID}`).then(metadata => {
-      const examID = metadata.exam_id
-      const submissionID = id || metadata.submissions[0].id
-      const problemID = this.state.problem ? this.state.problem.id : metadata.problems[0].id
-      Promise.all([
-        api.get(`submissions/${examID}/${submissionID}`),
-        api.get(`problems/${problemID}`)
-      ]).then(values => {
-        const submission = values[0]
-        const problem = values[1]
-        this.setState({
-          submission: submission,
-          problem: problem,
-          submissions: metadata.submissions,
-          problems: metadata.problems
-        })
+    api.get(`submissions/${this.props.examID}/${id}`).then(sub => {
+      this.setState({
+        submission: sub
       })
     })
   }
-
   /**
-   * Sets the current problem to the problem with the passed id.
-   * This also updates the problem from the server.
-   * Does not update the metadata, as then the progress bar might update confusingly.
+   * Updates the problem from the server, and sets it as the current problem.
+   * Also updates the metadata.
    * @param id the id of the problem to update to.
    */
   setProblem = (id) => {
     api.get(`problems/${id}`).then(problem => {
       this.setState({
         problem: problem
+      })
+    })
+    this.updateMetadata()
+  }
+  /**
+   * Updates the metadata for the current exam.
+   * This metadata has:
+   * id, student for each submission in the exam and
+   * id, name for each problem in the exam.
+   */
+  updateMetadata = () => {
+    api.get(`grade/metadata/${this.props.examID}`).then(metadata => {
+      this.setState({
+        submissions: metadata.submissions,
+        problems: metadata.problems
       })
     })
   }

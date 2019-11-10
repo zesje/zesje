@@ -1,6 +1,5 @@
 import React from 'react'
 
-import * as api from '../../api.jsx'
 import Tooltip from '../Tooltip.jsx'
 
 class FeedbackBlock extends React.Component {

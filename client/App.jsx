@@ -140,7 +140,7 @@ class App extends React.Component {
             <Route path='/students' render={() =>
               <Students exam={exam} updateSubmission={this.updateSubmission} />} />
             <Route path='/grade' render={() => (
-              exam.submissions.length && grader
+              exam.submissions.length && exam.problems.length && grader
                 ? <Grade examID={exam.id} gradeAnonymous={exam.gradeAnonymous} graderID={this.state.grader.id} />
                 : <Fail message='No exams uploaded or no grader selected. Please do not bookmark URLs' />
             )} />

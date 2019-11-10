@@ -11,6 +11,9 @@ from .pdf_generation import CHECKBOX_FORMAT
 AUTOGRADER_NAME = 'Zesje'
 BLANK_FEEDBACK_NAME = 'Blank'
 
+MAX_ALIGNMENT_ERROR_MM = 1
+MIN_ANSWER_SIZE_MM2 = 4
+
 mm_per_inch = inch / mm
 
 
@@ -137,7 +140,7 @@ def is_misaligned(problem, student_img, reference_img):
     """Checks if an image is correctly aligned against the reference
 
     This is done by thickening the lines in the student image and
-    checking if this thickend image fully covers the reference image.
+    checking if this thickened image fully covers the reference image.
 
     Params
     ------
@@ -157,8 +160,8 @@ def is_misaligned(problem, student_img, reference_img):
     padding_pixels = int(padding_inch * dpi)
 
     # The diameter of the kernel to thicken the lines width
-    kernel_size_mm = 2
-    kernel_size = int(kernel_size_mm * dpi / 25.4)
+    kernel_size_mm = 2 * MAX_ALIGNMENT_ERROR_MM
+    kernel_size = int(kernel_size_mm * dpi / mm_per_inch)
 
     student = get_box(student_img, widget_area_in, padding=padding_inch)
     reference = get_box(reference_img, widget_area_in, padding=padding_inch)
@@ -193,11 +196,10 @@ def is_blank(problem, page_img, reference_img):
     padding_pixels = int(padding_inch * dpi)
 
     # The diameter of the kernel to thicken the lines width
-    kernel_size_mm = 2
+    kernel_size_mm = 2 * MAX_ALIGNMENT_ERROR_MM
     kernel_size = int(kernel_size_mm * dpi / mm_per_inch)
 
-    min_answer_area_mm2 = 4
-    min_answer_area_pixels = int(min_answer_area_mm2 * dpi**2 / (mm_per_inch)**2)
+    min_answer_area_pixels = int(MIN_ANSWER_SIZE_MM2 * dpi**2 / (mm_per_inch)**2)
 
     student = get_box(page_img, widget_area_in, padding=padding_inch)
     reference = get_box(reference_img, widget_area_in, padding=padding_inch)

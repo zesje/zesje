@@ -662,7 +662,7 @@ def realign_image(image_array, keypoints=None, page_format="A4"):
         # Let opencv estimate the transformation matrix
         M = cv2.estimateAffinePartial2D(keypoints, adjusted_markers)[0]
 
-    rows, cols, _ = image_array.shape
+    cols, rows = original_page_size(page_format, dpi)
 
     # apply the transformation matrix and fill in the new empty spaces with white
     return_image = cv2.warpAffine(image_array, M, (cols, rows),
@@ -681,3 +681,10 @@ def original_corner_markers(format, dpi):
                      (right_x, top_y),
                      (left_x, bottom_y),
                      (right_x, bottom_y)])
+
+
+def original_page_size(format, dpi):
+    w = (PAGE_FORMATS[format][0])/72 * dpi
+    h = (PAGE_FORMATS[format][1])/72 * dpi
+
+    return np.rint([w, h]).astype(int)

@@ -49,7 +49,7 @@ class CheckStudents extends React.Component {
   static getDerivedStateFromProps = (newProps, prevState) => {
     if (newProps.exam.id !== prevState.examID && newProps.exam.submissions.length) {
       return {
-        input: newProps.exam.submissions[0].id,
+        input: newProps.exam.submissions[0].copy,
         index: 0,
         examID: newProps.exam.id
       }
@@ -63,7 +63,7 @@ class CheckStudents extends React.Component {
     if (newIndex >= 0 && newIndex < this.props.exam.submissions.length) {
       this.setState({
         index: newIndex,
-        input: this.props.exam.submissions[newIndex].id
+        input: this.props.exam.submissions[newIndex].copy
       })
       this.props.updateSubmission(this.props.exam.submissions[newIndex].copy)
     }
@@ -74,7 +74,7 @@ class CheckStudents extends React.Component {
     if (newIndex >= 0 && newIndex < this.props.exam.submissions.length) {
       this.setState({
         index: newIndex,
-        input: this.props.exam.submissions[newIndex].id
+        input: this.props.exam.submissions[newIndex].copy
       })
       this.props.updateSubmission(this.props.exam.submissions[newIndex].copy)
     }
@@ -84,7 +84,7 @@ class CheckStudents extends React.Component {
     for (let i = this.state.index - 1; i >= 0; i--) {
       if (this.props.exam.submissions[i].validated === false) {
         this.setState({
-          input: this.props.exam.submissions[i].id,
+          input: this.props.exam.submissions[i].copy,
           index: i
         })
         this.props.updateSubmission(this.props.exam.submissions[i].copy)
@@ -96,7 +96,7 @@ class CheckStudents extends React.Component {
     for (let i = this.state.index + 1; i < this.props.exam.submissions.length; i++) {
       if (this.props.exam.submissions[i].validated === false) {
         this.setState({
-          input: this.props.exam.submissions[i].id,
+          input: this.props.exam.submissions[i].copy,
           index: i
         })
         this.props.updateSubmission(this.props.exam.submissions[i].copy)

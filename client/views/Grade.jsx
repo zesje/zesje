@@ -376,7 +376,7 @@ class Grade extends React.Component {
 
                 <p className={'box' + (solution.graded_at ? ' is-graded' : '')}>
                   <img src={examID ? ('api/images/solutions/' + examID + '/' +
-                    problem.id + '/' + submission.id + '/' + (this.state.fullPage ? '1' : '0')) + '?' +
+                    problem.id + '/' + submission.copy + '/' + (this.state.fullPage ? '1' : '0')) + '?' +
                     Grade.getLocationHash(problem) : ''} alt='' />
                 </p>
 

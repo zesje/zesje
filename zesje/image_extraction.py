@@ -16,7 +16,7 @@ def extract_images(filename, dpi=300):
     with Pdf.open(filename) as pdf_reader:
         use_wand = False
 
-        for index, page in enumerate(pdf_reader.pages):
+        for page_number, page in enumerate(pdf_reader.pages):
             if not use_wand:
                 try:
                     # Try to use PikePDF, but catch any error it raises
@@ -32,7 +32,7 @@ def extract_images(filename, dpi=300):
             if img.mode == 'L':
                 img = img.convert('RGB')
 
-            yield img, index + 1
+            yield img, page_number + 1
 
 
 def extract_image_pikepdf(page):

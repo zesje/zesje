@@ -65,7 +65,7 @@ class CheckStudents extends React.Component {
         index: newIndex,
         input: this.props.exam.submissions[newIndex].id
       })
-      this.props.updateSubmission(this.props.exam.submissions[newIndex].id)
+      this.props.updateSubmission(this.props.exam.submissions[newIndex].copy)
     }
   }
   next = () => {
@@ -76,7 +76,7 @@ class CheckStudents extends React.Component {
         index: newIndex,
         input: this.props.exam.submissions[newIndex].id
       })
-      this.props.updateSubmission(this.props.exam.submissions[newIndex].id)
+      this.props.updateSubmission(this.props.exam.submissions[newIndex].copy)
     }
   }
 
@@ -87,7 +87,7 @@ class CheckStudents extends React.Component {
           input: this.props.exam.submissions[i].id,
           index: i
         })
-        this.props.updateSubmission(this.props.exam.submissions[i].id)
+        this.props.updateSubmission(this.props.exam.submissions[i].copy)
         return
       }
     }
@@ -99,18 +99,18 @@ class CheckStudents extends React.Component {
           input: this.props.exam.submissions[i].id,
           index: i
         })
-        this.props.updateSubmission(this.props.exam.submissions[i].id)
+        this.props.updateSubmission(this.props.exam.submissions[i].copy)
         return
       }
     }
   }
 
-  setSubmission = (id) => {
-    const i = this.props.exam.submissions.findIndex(sub => sub.id === id)
+  setSubmission = (copy) => {
+    const i = this.props.exam.submissions.findIndex(sub => sub.copy === copy)
     this.setState({
       index: i
     })
-    this.props.updateSubmission(id)
+    this.props.updateSubmission(copy)
   }
 
   setSubInput = (event) => {
@@ -124,9 +124,9 @@ class CheckStudents extends React.Component {
   matchStudent = (stud) => {
     if (!this.props.exam.submissions.length) return
 
-    api.put('submissions/' + this.props.exam.id + '/' + this.props.exam.submissions[this.state.index].id, { studentID: stud.id })
+    api.put('submissions/' + this.props.exam.id + '/' + this.props.exam.submissions[this.state.index].copy, { studentID: stud.id })
       .then(resp => {
-        this.props.updateSubmission(this.props.exam.submissions[this.state.index].id)
+        this.props.updateSubmission(this.props.exam.submissions[this.state.index].copy)
         this.nextUnchecked()
       })
       .catch(err => {
@@ -147,7 +147,7 @@ class CheckStudents extends React.Component {
         editActive: !this.state.editActive,
         editStud: null
       })
-      this.props.updateSubmission(this.props.exam.submissions[this.state.index].id)
+      this.props.updateSubmission(this.props.exam.submissions[this.state.index].copy)
     }
   }
 
@@ -192,17 +192,17 @@ class CheckStudents extends React.Component {
                             selected={subm}
                             options={exam.submissions}
                             suggestionKeys={[
-                              'id',
+                              'copy',
                               'student.firstName',
                               'student.lastName',
                               'student.id'
                             ]}
                             setSelected={this.setSubmission}
-                            renderSelected={({id, student}) => {
+                            renderSelected={({copy, student}) => {
                               if (student) {
-                                return `#${id}: ${student.firstName} ${student.lastName} (${student.id})`
+                                return `#${copy}: ${student.firstName} ${student.lastName} (${student.id})`
                               } else {
-                                return `#${id}`
+                                return `#${copy}`
                               }
                             }}
                             renderSuggestion={(submission) => {
@@ -211,7 +211,7 @@ class CheckStudents extends React.Component {
                                 return (
                                   <div className='flex-parent'>
                                     <span className='flex-child truncated'>
-                                      <b>#{submission.id}</b>
+                                      <b>#{submission.copy}</b>
                                       {` ${stud.firstName} ${stud.lastName}`}
                                     </span>
                                     <i className='flex-child fixed'>
@@ -220,7 +220,7 @@ class CheckStudents extends React.Component {
                                   </div>
                                 )
                               } else {
-                                return `#${submission.id}: No student`
+                                return `#${submission.copy}: No student`
                               }
                             }}
                           />
@@ -238,7 +238,7 @@ class CheckStudents extends React.Component {
                   <ProgressBar done={done} total={total} />
 
                   <p className='box'>
-                    <img src={'api/images/signature/' + this.props.exam.id + '/' + subm.id} alt='' />
+                    <img src={'api/images/signature/' + this.props.exam.id + '/' + subm.copy} alt='' />
                   </p>
 
                 </div>

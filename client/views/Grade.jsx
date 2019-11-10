@@ -70,7 +70,7 @@ class Grade extends React.Component {
    * @param ungraded either 'true' or 'false'
    */
   navigate = (direction, ungraded) => {
-    api.get(`grade/submissions/${this.props.examID}/${this.state.submission.id}/${this.state.problem.id}` +
+    api.get(`grade/navigation/${this.props.examID}/${this.state.submission.id}/${this.state.problem.id}` +
       '?direction=' + direction +
       '&grader_id=' + this.props.graderID +
       '&ungraded=' + ungraded).then(sub =>

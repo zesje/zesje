@@ -24,7 +24,7 @@ api_bp = Blueprint(__name__, __name__)
 api = Api(api_bp)
 
 api.add_resource(Graders, '/graders')
-api.add_resource(Navigation, '/grade/submissions/<int:exam_id>/<int:submission_id>/<int:problem_id>')
+api.add_resource(Navigation, '/grade/navigation/<int:exam_id>/<int:submission_id>/<int:problem_id>')
 api.add_resource(Metadata, '/grade/metadata/<int:exam_id>')
 api.add_resource(Exams, '/exams', '/exams/<int:exam_id>', '/exams/<int:exam_id>/<string:attr>')
 api.add_resource(ExamSource, '/exams/<int:exam_id>/source_pdf')

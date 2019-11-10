@@ -88,11 +88,11 @@ class App extends React.Component {
         }
       })
   }
-  updateSubmission = (submissionID) => {
-    api.get('submissions/' + this.state.exam.id + '/' + submissionID)
+  updateSubmission = (submissionCopy) => {
+    api.get('submissions/' + this.state.exam.id + '/' + submissionCopy)
       .then(sub => {
         let newSubmissions = this.state.exam.submissions
-        const index = newSubmissions.map(sub => sub.id).indexOf(submissionID)
+        const index = newSubmissions.map(sub => sub.copy).indexOf(submissionCopy)
         newSubmissions[index] = sub
         this.setState({
           exam: {

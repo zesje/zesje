@@ -26,14 +26,14 @@ class Navigation(Resource):
     get_parser.add_argument('grader_id', type=int, required=True)
     get_parser.add_argument('direction', type=str, required=True, choices=['prev', 'next'])
 
-    def get(self, exam_id, submission_id, problem_id):
+    def get(self, exam_id, submission_copy, problem_id):
         """
         Calculates what submission the graded should get next, and returns that submission.
-        First finds the Exam and Submission by exam_id, submission_id, and then shuffles exam.submissions
+        First finds the Exam and Submission by exam_id, submission_copy, and then shuffles exam.submissions
         uniquely for each graderID.
         Then finds the next/previous graded/ungraded submission, based on the the request arguments.
         :param exam_id: exam_id to find submission for
-        :param submission_id: the old submission copy number, to base what is 'next' on.
+        :param submission_copy: the old submission copy number, to base what is 'next' on.
         :param problem_id: the current problem_id.
         :return: the next (un)graded submission in the specified direction, or the old submission if none exists.
         """
@@ -45,7 +45,7 @@ class Navigation(Resource):
             return dict(status=404, message='Exam does not exist.'), 404
 
         old_submission = Submission.query.filter(Submission.exam_id == exam.id,
-                                                 Submission.copy_number == submission_id).one_or_none()
+                                                 Submission.copy_number == submission_copy).one_or_none()
         if old_submission is None:
             return dict(status=404, message='Submission does not exist.'), 404
 

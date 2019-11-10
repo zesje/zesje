@@ -39,14 +39,14 @@ def sub_to_data(sub):
 class Submissions(Resource):
     """Getting a list of submissions, and assigning students to them."""
 
-    def get(self, exam_id, submission_id=None):
+    def get(self, exam_id, submission_copy=None):
         """get submissions for the given exam, ordered by copy number.
 
         Parameters
         ----------
         exam_id : int
             The id of the exam for which the missing pages must be computed.
-        submission_id : int, optional
+        submission_copy : int, optional
             The copy number of the submission. This uniquely identifies
             the submission *within a given exam*.
 
@@ -65,9 +65,9 @@ class Submissions(Resource):
         if exam is None:
             return dict(status=404, message='Exam does not exist.'), 404
 
-        if submission_id is not None:
+        if submission_copy is not None:
             sub = Submission.query.filter(Submission.exam_id == exam_id,
-                                          Submission.copy_number == submission_id).one_or_none()
+                                          Submission.copy_number == submission_copy).one_or_none()
             if sub is None:
                 return dict(status=404, message='Submission does not exist.'), 404
 
@@ -78,7 +78,7 @@ class Submissions(Resource):
     put_parser = reqparse.RequestParser()
     put_parser.add_argument('studentID', type=int, required=True)
 
-    def put(self, exam_id, submission_id=None):
+    def put(self, exam_id, submission_copy=None):
         """Assign a student to the given submission.
 
         Expects a json payload in the format::
@@ -89,15 +89,15 @@ class Submissions(Resource):
         Parameters
         ----------
         exam_id : int
-        submission_id : int
+        submission_copy : int
             The copy number of the submission. This uniquely identifies
             the submission *within a given exam*.
 
         """
         # have to allow 'submission_id' to be optional in the signature
         # because otherwise we just 500 if it's not provided.
-        if submission_id is None:
-            msg = "Submission ID must be provided when assigning student"
+        if submission_copy is None:
+            msg = "Submission copy must be provided when assigning student"
             return dict(status=400, message=msg), 400
 
         args = self.put_parser.parse_args()
@@ -107,7 +107,7 @@ class Submissions(Resource):
             return dict(status=404, message='Exam does not exist.'), 404
 
         sub = Submission.query.filter(Submission.exam_id == exam.id,
-                                      Submission.copy_number == submission_id).one_or_none()
+                                      Submission.copy_number == copy).one_or_none()
         if sub is None:
             return dict(status=404, message='Submission does not exist.'), 404
 

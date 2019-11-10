@@ -83,6 +83,8 @@ class Grade extends React.Component {
 
   /**
    * Navigates the current submission forwards or backwards, and either just to the next, or to the next ungraded.
+   * Also updates the metadata, and the current problem, to make sure that the
+   * progress bar and feedback options are both up to date.
    * @param direction either 'prev' or 'next'
    * @param ungraded either 'true' or 'false'
    */
@@ -96,6 +98,7 @@ class Grade extends React.Component {
       })
     )
     this.updateMetadata()
+    this.setProblem(this.state.problem.id)
   }
   /**
    * Sugar methods for navigate.

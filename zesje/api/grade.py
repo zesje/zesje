@@ -1,12 +1,13 @@
 from flask_restful import Resource, reqparse
 from flask_restful.inputs import boolean
+from hashlib import md5
 
 from zesje.api.submissions import sub_to_data
 from zesje.database import Exam, Submission
 
 
 def _shuffle(submissions, grader_id):
-    return sorted(submissions, key=lambda s: hash((str(s.id), grader_id)))
+    return sorted(submissions, key=lambda s: md5(f'{s.id}, {grader_id}'.encode('utf-8')).digest())
 
 
 class Navigation(Resource):
@@ -68,11 +69,12 @@ class Navigation(Resource):
 class Metadata(Resource):
     """Api endpoint for metadata for an exam"""
 
-    def get(self, exam_id):
+    def get(self, exam_id, grader_id):
         """ Serves metadata for an exam.
-
+        Shuffles submissions based on the grader ID.
 
         :param exam_id: id of exam to get metadata for.
+        :param grader_id: id of the grader.
         :return: the exam metadata.
         """
         exam = Exam.query.get(exam_id)
@@ -90,7 +92,7 @@ class Metadata(Resource):
                         'lastName': sub.student.last_name,
                         'email': sub.student.email
                     } if sub.student else None
-                } for sub in exam.submissions
+                } for sub in _shuffle(exam.submissions, grader_id)
             ],
             'problems': [
                 {

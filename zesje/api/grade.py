@@ -9,12 +9,14 @@ from zesje.database import Exam, Submission
 def _shuffle(submissions, grader_id):
     return sorted(submissions, key=lambda s: md5(f'{s.id}, {grader_id}'.encode('utf-8')).digest())
 
+
 # Returns True iff the given problem is ungraded for the given submission
 def _ungraded(submission, problem_id):
     for sol in submission.solutions:
         if sol.problem_id == problem_id:
             return not sol.graded_by
     return False
+
 
 class Navigation(Resource):
     """Api endpoint for navigation in the grade page"""
@@ -67,7 +69,7 @@ class Navigation(Resource):
 
         # Get the next submission for which the solution to our problem was not graded yet
         submission = next((submission for submission in submissions_to_search if
-                            _ungraded(submission, problem_id)),
+                           _ungraded(submission, problem_id)),
                           old_submission)  # Returns the old submission in case no suitable submission was found
         return sub_to_data(submission)
 
@@ -91,7 +93,7 @@ class Metadata(Resource):
             'exam_id': exam.id,
             'submissions': [
                 {
-                    'id': sub.copy_number,
+                    'copy': sub.copy_number,
                     'student': {
                         'id': sub.student.id,
                         'firstName': sub.student.first_name,

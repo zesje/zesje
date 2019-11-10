@@ -11,7 +11,7 @@ from ..pregrader import ungrade_multiple_sub
 def sub_to_data(sub):
     """Transform a submission into a data structure frontend expects."""
     return {
-        'id': sub.copy_number,
+        'copy': sub.copy_number,
         'student': {
             'id': sub.student.id,
             'firstName': sub.student.first_name,

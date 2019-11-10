@@ -11,7 +11,10 @@ from .pdf_generation import CHECKBOX_FORMAT
 AUTOGRADER_NAME = 'Zesje'
 BLANK_FEEDBACK_NAME = 'Blank'
 
+# Allow up to 1 mm misalignment in any direction
 MAX_ALIGNMENT_ERROR_MM = 1
+# Make sure a roughly 1 cm long line written with
+# a ballpoint pen is regarded as not blank.
 MIN_ANSWER_SIZE_MM2 = 4
 
 mm_per_inch = inch / mm
@@ -159,7 +162,8 @@ def is_misaligned(problem, student_img, reference_img):
     padding_inch = 0.2
     padding_pixels = int(padding_inch * dpi)
 
-    # The diameter of the kernel to thicken the lines width
+    # The diameter of the kernel to thicken the lines with. This allows
+    # misalignment up to the max alignment error in any direction.
     kernel_size_mm = 2 * MAX_ALIGNMENT_ERROR_MM
     kernel_size = int(kernel_size_mm * dpi / mm_per_inch)
 
@@ -195,7 +199,8 @@ def is_blank(problem, page_img, reference_img):
     padding_inch = 0.2
     padding_pixels = int(padding_inch * dpi)
 
-    # The diameter of the kernel to thicken the lines width
+    # The diameter of the kernel to thicken the lines with. This allows
+    # misalignment up to the max alignment error in any direction.
     kernel_size_mm = 2 * MAX_ALIGNMENT_ERROR_MM
     kernel_size = int(kernel_size_mm * dpi / mm_per_inch)
 

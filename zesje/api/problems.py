@@ -33,7 +33,6 @@ def problem_to_data(problem):
             'height': problem.widget.height,
             'type': problem.widget.type
         },
-        'graded': any([sol.graded_by is not None for sol in problem.solutions]),
         'n_graded': len([sol for sol in problem.solutions if sol.graded_by is not None]),
         'grading_policy': problem.grading_policy.name,
         'mc_options': [

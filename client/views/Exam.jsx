@@ -48,7 +48,7 @@ class Exams extends React.Component {
             id: problem.id,
             page: problem.page,
             name: problem.name,
-            graded: problem.graded,
+            n_graded: problem.n_graded,
             grading_policy: problem.grading_policy,
             feedback: problem.feedback || [],
             mc_options: problem.mc_options.map((option) => {
@@ -573,7 +573,7 @@ class Exams extends React.Component {
     let selectedWidget = selectedWidgetId && this.state.widgets[selectedWidgetId]
     let problem = selectedWidget && selectedWidget.problem
     let widgetEditDisabled = (this.state.previewing || !problem)
-    let isGraded = problem && problem.graded
+    let isGraded = problem && problem.n_graded > 0
     let widgetDeleteDisabled = widgetEditDisabled || isGraded
 
     return (

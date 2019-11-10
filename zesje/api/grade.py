@@ -9,12 +9,6 @@ from zesje.database import Exam, Submission, Problem
 def _shuffle(submissions, grader_id):
     return sorted(submissions, key=lambda s: md5(f'{s.id}, {grader_id}'.encode('utf-8')).digest())
 
-# Returns True iff the given problem is ungraded for the given submission
-def _ungraded(submission, problem_id):
-    for sol in submission.solutions:
-        if sol.problem_id == problem_id:
-            return not sol.graded_by
-    return False
 
 class Navigation(Resource):
     """Api endpoint for navigation in the grade page"""

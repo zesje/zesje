@@ -9,8 +9,8 @@ class Submission:
     def __repr__(self):
         return f"submission: {self.id}"
 
-def test_shuffle_same_grader():
 
+def test_shuffle_same_grader():
     submissions = [Submission(i) for i in range(5)]
 
     # Assert that shuffled is the same when called twice with the same ID
@@ -23,7 +23,5 @@ def test_shuffle_different_grader():
     submissions = [Submission(i) for i in range(5)]
     # Assert that shuffled is different when called with different ID's, but has the same elements
     submissions0 = _shuffle(submissions, 0)
-    # Why does this line modify the order
-    _ = _shuffle(submissions, 0)
-    print(submissions)
-    # assert submissions0 != submissions1 #and set(submissions0) == set(submissions1)
+    submissions1 = _shuffle(submissions, 1)
+    assert submissions0 != submissions1 and set(submissions0) == set(submissions1)

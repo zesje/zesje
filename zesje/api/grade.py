@@ -3,7 +3,7 @@ from flask_restful.inputs import boolean
 from hashlib import md5
 
 from zesje.api.submissions import sub_to_data
-from zesje.database import Exam, Submission
+from zesje.database import Exam, Submission, Problem
 
 
 def _shuffle(submissions, grader_id):
@@ -49,28 +49,33 @@ class Navigation(Resource):
         if old_submission is None:
             return dict(status=404, message='Submission does not exist.'), 404
 
-        shuffled_submissions = _shuffle(exam.submissions, args.grader_id)
-        old_submission_index = shuffled_submissions.index(old_submission)
+        problem = Problem.query.get(problem_id)
+
+        if problem is None:
+            return dict(status=404, message='Problem does not exist.'), 404
+
+        shuffled_solutions = _shuffle(problem.solutions, args.grader_id)
+        old_submission_index = next(i for i, s in enumerate(shuffled_solutions) if s.submission_id == old_submission.id)
 
         if (old_submission_index == 0 and args.direction == 'prev') or \
-                (old_submission_index == len(shuffled_submissions) - 1 and args.direction == 'next'):
+                (old_submission_index == len(shuffled_solutions) - 1 and args.direction == 'next'):
             return sub_to_data(old_submission)
 
         if not args.ungraded:
-            offset = 1 if args.direction == 'next' else - 1
-            return sub_to_data(shuffled_submissions[old_submission_index + offset])
+            offset = 1 if args.direction == 'next' else -1
+            return sub_to_data(shuffled_solutions[old_submission_index + offset].submission)
 
         # If direction is next, search submissions from the one after the old, up to the end of the list.
         # If direction is previous search from the start to the old, in reverse order.
-        submissions_to_search = shuffled_submissions[old_submission_index + 1:] if args.direction == 'next' \
-            else shuffled_submissions[old_submission_index - 1::-1]
+        solutions_to_search = shuffled_solutions[old_submission_index + 1:] if args.direction == 'next' \
+            else shuffled_solutions[old_submission_index - 1::-1]
 
-        if len(submissions_to_search) == 0:
+        if len(solutions_to_search) == 0:
             return sub_to_data(old_submission)
 
         # Get the next submission for which the solution to our problem was not graded yet
-        submission = next((submission for submission in submissions_to_search if
-                           _ungraded(submission, problem_id)),
+        submission = next((solution.submission for solution in solutions_to_search if
+                           solution.graded_by is None),
                           old_submission)  # Returns the old submission in case no suitable submission was found
         return sub_to_data(submission)
 

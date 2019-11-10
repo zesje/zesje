@@ -50,12 +50,13 @@ class Navigation(Resource):
         shuffled_submissions = _shuffle(exam.submissions, args.grader_id)
         old_submission_index = shuffled_submissions.index(old_submission)
 
+        if (old_submission_index == 0 and args.direction == 'prev') or \
+                (old_submission_index == len(shuffled_submissions) - 1 and args.direction == 'next'):
+            return sub_to_data(old_submission)
+
         if not args.ungraded:
             offset = 1 if args.direction == 'next' else - 1
-            new_index = old_submission_index + offset
-            if 0 <= new_index < len(shuffled_submissions):
-                return sub_to_data(shuffled_submissions[old_submission_index + offset])
-            return sub_to_data(old_submission)
+            return sub_to_data(shuffled_submissions[old_submission_index + offset])
 
         # If direction is next, search submissions from the one after the old, up to the end of the list.
         # If direction is previous search from the start to the old, in reverse order.

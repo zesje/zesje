@@ -55,7 +55,7 @@ def find_submission(exam_id, submission_id, problem_id, args):
 
 
 class Navigation(Resource):
-    """Api endpoint for the grade page"""
+    """Api endpoint for navigation in the grade page"""
 
     get_parser = reqparse.RequestParser()
     get_parser.add_argument('ungraded', type=str, required=True, choices=['true', 'false'])
@@ -72,11 +72,9 @@ class Metadata(Resource):
 
     def get(self, exam_id):
         """ Serves metadata for an exam.
-        this metadata is:
 
-
-        :param exam_id:
-        :return:
+        :param exam_id: id of exam to get metadata for.
+        :return: the exam metadata.
         """
         exam = Exam.query.get(exam_id)
         if exam is None:

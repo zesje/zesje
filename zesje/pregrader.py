@@ -163,9 +163,9 @@ def is_misaligned(problem, student_img, reference_img):
     student = get_box(student_img, widget_area_in, padding=padding_inch)
     reference = get_box(reference_img, widget_area_in, padding=padding_inch)
 
-    return not _is_covered(student, reference,
-                           padding_pixels=padding_pixels,
-                           kernel_size=kernel_size)
+    return not covers(student, reference,
+                      padding_pixels=padding_pixels,
+                      kernel_size=kernel_size)
 
 
 def is_blank(problem, page_img, reference_img):
@@ -202,14 +202,14 @@ def is_blank(problem, page_img, reference_img):
     student = get_box(page_img, widget_area_in, padding=padding_inch)
     reference = get_box(reference_img, widget_area_in, padding=padding_inch)
 
-    return _is_covered(reference, student,
-                       padding_pixels=padding_pixels,
-                       kernel_size=kernel_size,
-                       threshold=min_answer_area_pixels)
+    return covers(reference, student,
+                  padding_pixels=padding_pixels,
+                  kernel_size=kernel_size,
+                  threshold=min_answer_area_pixels)
 
 
-def _is_covered(cover_img, to_cover_img, padding_pixels=0, threshold=0, kernel_size=9):
-    """Check if an image is covered by another image
+def covers(cover_img, to_cover_img, padding_pixels=0, threshold=0, kernel_size=9):
+    """Check if an image covers another image
 
     First, both images are converted to binary. Then, all the content
     in `cover_img` is dilated. Finally it checks if the dilated cover

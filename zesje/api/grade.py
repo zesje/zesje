@@ -61,7 +61,7 @@ class Navigation(Resource):
 
         # Get the next submission for which the solution to our problem was not graded yet
         submission = next((submission for submission in submissions_to_search if
-                           any(sol.problem_id == problem_id and not sol.graded_by for sol in submission.solutions)),
+                            _ungraded(submission, problem_id)),
                           old_submission)  # Returns the old submission in case no suitable submission was found
         return sub_to_data(submission)
 

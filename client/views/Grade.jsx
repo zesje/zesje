@@ -139,16 +139,22 @@ class Grade extends React.Component {
    * Finds the index of the current problem and moves to the previous one.
    */
   prevProblem = () => {
-    const currentIndex = this.state.problems.findIndex(p => p.id === this.state.problem.id) + 1
-    const newId = this.state.problems[currentIndex + 1].id
+    const currentIndex = this.state.problems.findIndex(p => p.id === this.state.problem.id)
+    if (currentIndex === 0) {
+      return
+    }
+    const newId = this.state.problems[currentIndex - 1].id
     this.updateProblem(newId)
   }
   /**
    * Finds the index of the current problem and moves to the next one.
    */
   nextProblem = () => {
-    const currentIndex = this.state.problems.findIndex(p => p.id === this.state.problem.id) + 1
-    const newId = this.state.problems[currentIndex - 1].id
+    const currentIndex = this.state.problems.findIndex(p => p.id === this.state.problem.id)
+    if (currentIndex === this.state.problems.length - 1) {
+      return
+    }
+    const newId = this.state.problems[currentIndex + 1].id
     this.updateProblem(newId)
   }
   /**

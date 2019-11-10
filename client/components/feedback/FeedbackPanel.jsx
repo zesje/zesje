@@ -74,11 +74,11 @@ class FeedbackPanel extends React.Component {
 
   saveRemark = () => {
     if (!this.props.solution.graded_at && this.state.remark.replace(/\s/g, '').length === 0) return
-    api.post('solution/' + this.props.examID + '/' + this.props.submissionID + '/' + this.props.problem.id, {
+    api.post('solution/' + this.props.examID + '/' + this.props.submissionCopy + '/' + this.props.problem.id, {
       remark: this.state.remark,
       graderID: this.props.graderID
     }).then(success => {
-      this.props.setSubmission(this.props.submissionID)
+      this.props.setSubmission(this.props.submissionCopy)
       if (!success) Notification.error('Remark not saved!')
     })
   }
@@ -90,7 +90,7 @@ class FeedbackPanel extends React.Component {
   }
 
   render () {
-    const blockURI = this.props.examID + '/' + this.props.submissionID + '/' + this.props.problem.id
+    const blockURI = this.props.examID + '/' + this.props.submissionCopy + '/' + this.props.problem.id
 
     let totalScore = 0
     if (this.props.grading) {
@@ -113,7 +113,7 @@ class FeedbackPanel extends React.Component {
             feedback={feedback} checked={this.props.grading && this.props.solution.feedback.includes(feedback.id)}
             editFeedback={() => this.props.editFeedback(feedback)} toggleOption={this.props.toggleOption}
             ref={(selectedFeedbackId === feedback.id) ? this.feedbackBlock : null} grading={this.props.grading}
-            submissionID={this.props.submissionID} selected={selectedFeedbackId === feedback.id || feedback.highlight}
+            selected={selectedFeedbackId === feedback.id || feedback.highlight}
             showIndex={this.props.showTooltips} index={index + 1} />
         )}
         {this.props.grading &&

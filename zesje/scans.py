@@ -207,9 +207,8 @@ def process_page(image_data, exam_config, output_dir=None, strict=False):
         # Handle possible horizontal image orientation.
         image_array = np.array(np.rot90(image_array, -1))
 
-    corner_keypoints = find_corner_marker_keypoints(image_array)
     try:
-        check_corner_keypoints(image_array, corner_keypoints)
+        corner_keypoints = find_corner_marker_keypoints(image_array)
         image_array = realign_image(image_array, corner_keypoints)
     except RuntimeError as e:
         if strict:
@@ -511,69 +510,102 @@ def calc_angle(keyp1, keyp2):
             return math.degrees(math.atan(ydiff / xdiff))
 
 
-def find_corner_marker_keypoints(image_array):
+def find_corner_marker_keypoints(image_array, corner_sizes=[0.125, 0.25, 0.5]):
     """Generates a list of OpenCV keypoints which resemble corner markers.
     This is done using a SimpleBlobDetector
 
+    For each corner size it tries to find enough corner markers.
+    If not enough are detected it continues with the next corner size
+    until the list is depleted and raises a RunTimeError.
+
     Parameters:
     -----------
-    image_data: Source image
+    image_data: 3d numpy array
 
+    corner_sizes : list of float
+        The corner sizes to search the corner markers in
+
+    Raises
+    ------
+    RuntimeError if no valid set of keypoints are found
     """
     h, w, *_ = image_array.shape
     marker_length = .8 / 2.54 * guess_dpi(image_array)  # 8 mm in inches × dpi
     marker_width = .1 / 2.54 * guess_dpi(image_array)  # should get exact width
 
-    # Filter out everything in the center of the image
-    tb = slice(0, h//8), slice(7*h//8, h)
-    lr = slice(0, w//8), slice(7*w//8, w)
-    corner_points = []
-    for corner in itertools.product(tb, lr):
-        gray_im = cv2.cvtColor(image_array[corner], cv2.COLOR_BGR2GRAY)
-        _, bin_im = cv2.threshold(gray_im, 150, 255, cv2.THRESH_BINARY)
-        img = bin_im
-        ret, labels = cv2.connectedComponents(~img)
-        for label in range(1, ret):
-            new_img = (labels == label)
-            if np.sum(new_img) > marker_length * marker_width * 2:
-                continue  # The blob is too large
-            lines = cv2.HoughLines(new_img.astype(np.uint8), 1, np.pi/180, int(marker_length * .9))
-            if lines is None:
-                continue  # Didn't find any lines
-            lines = lines.reshape(-1, 2).T
+    best_points = []
 
-            # One of the lines is nearly horizontal, can have both theta ≈ 0 or theta ≈ π;
-            # here we flip those points to ensure that we end up with two reasonably contiguous regions.
-            to_flip = lines[1] > 3*np.pi/4
-            lines[1, to_flip] -= np.pi
-            lines[0, to_flip] *= -1
-            v = (lines[1] > np.pi/4)
-            if np.all(v) or not np.any(v):
-                continue
-            rho1, theta1 = np.average(lines[:, v], axis=1)
-            rho2, theta2 = np.average(lines[:, ~v], axis=1)
-            y, x = np.linalg.solve([[np.cos(theta1), np.sin(theta1)], [np.cos(theta2), np.sin(theta2)]], [rho1, rho2])
-            # TODO: add failsafes
-            if np.isnan(x) or np.isnan(y):
-                continue
-            corner_points.append((int(y) + corner[1].start, int(x) + corner[0].start))
+    for corner_size in corner_sizes:
+        # Filter out everything in the center of the image
+        tb = slice(0, int(h*corner_size)), slice(int(h*(1-corner_size)), h)
+        lr = slice(0, int(w*corner_size)), slice(int(w*(1-corner_size)), w)
+        corner_points = []
+        for corner in itertools.product(tb, lr):
+            gray_im = cv2.cvtColor(image_array[corner], cv2.COLOR_BGR2GRAY)
+            _, inv_im = cv2.threshold(gray_im, 150, 255, cv2.THRESH_BINARY_INV)
+            ret, labels = cv2.connectedComponents(inv_im)
+            for label in range(1, ret):
+                new_img = (labels == label)
+                if np.sum(new_img) > marker_length * marker_width * 2:
+                    continue  # The blob is too large
+                lines = cv2.HoughLines(new_img.astype(np.uint8), 1, np.pi/180, int(marker_length * .9))
+                if lines is None:
+                    continue  # Didn't find any lines
+                lines = lines.reshape(-1, 2).T
 
-    return corner_points
+                # One of the lines is nearly horizontal, can have both theta ≈ 0 or theta ≈ π;
+                # here we flip those points to ensure that we end up with two reasonably contiguous regions.
+                to_flip = lines[1] > 3*np.pi/4
+                lines[1, to_flip] -= np.pi
+                lines[0, to_flip] *= -1
+                v = (lines[1] > np.pi/4)
+                if np.all(v) or not np.any(v):
+                    continue
+                rho1, theta1 = np.average(lines[:, v], axis=1)
+                rho2, theta2 = np.average(lines[:, ~v], axis=1)
+                y, x = np.linalg.solve([[np.cos(theta1), np.sin(theta1)], [np.cos(theta2), np.sin(theta2)]],
+                                       [rho1, rho2])
+                # TODO: add failsafes
+                if np.isnan(x) or np.isnan(y):
+                    continue
+                corner_points.append((int(y) + corner[1].start, int(x) + corner[0].start))
+
+        try:
+            check_corner_keypoints(image_array, corner_points, minimum=1)
+
+            if len(corner_points) > len(best_points):
+                # Save these points as the best attempt so far
+                best_points = corner_points
+        except RuntimeError:
+            pass
+
+        try:
+            check_corner_keypoints(image_array, corner_points)
+            # Keypoints are valid and thus return them
+            return corner_points
+        except RuntimeError as e:
+            # If this is the last iteration, attempt to return the
+            # best points found so far, otherwise raise.
+            if corner_size == corner_sizes[-1]:
+                if best_points:
+                    return best_points
+                raise e
 
 
-def check_corner_keypoints(image_array, keypoints):
+def check_corner_keypoints(image_array, keypoints, minimum=3):
     """Checks whether the corner markers are valid.
 
-    1. Checks that there are between 3 and 4 corner markers.
+    1. Checks that there are between minimum (default 3) and 4 corner markers.
     2. Checks that no 2 corner markers are the same corner of the image.
 
     Parameters:
     -----------
-    image_array : source image
+    image_array : numpy array
     keypoints : list of tuples containing the coordinates of keypoints
+    minimum : minimum number of keypoints to not raise an error
     """
     total = len(keypoints)
-    if total < 3:
+    if total < minimum:
         raise RuntimeError(f"Too few corner markers found ({total}).")
     elif total > 4:
         raise RuntimeError(f"Too many corner markers found ({total}).")
@@ -622,13 +654,15 @@ def realign_image(image_array, keypoints=None, page_format="A4"):
     adjusted_markers = reference_keypoints[idxs]
 
     if len(adjusted_markers) == 1:
+        # Transformation matrix is just shifting
         x_shift, y_shift = np.subtract(adjusted_markers[0], keypoints[0])
-        return shift_image(image_array, x_shift, y_shift)
+        M = np.float32([[1, 0, x_shift],
+                        [0, 1, y_shift]])
+    else:
+        # Let opencv estimate the transformation matrix
+        M = cv2.estimateAffinePartial2D(keypoints, adjusted_markers)[0]
 
-    rows, cols, _ = image_array.shape
-
-    # get the transformation matrix
-    M = cv2.estimateAffinePartial2D(keypoints, adjusted_markers)[0]
+    cols, rows = original_page_size(page_format, dpi)
 
     # apply the transformation matrix and fill in the new empty spaces with white
     return_image = cv2.warpAffine(image_array, M, (cols, rows),
@@ -649,26 +683,8 @@ def original_corner_markers(format, dpi):
                      (right_x, bottom_y)])
 
 
-def shift_image(image_array, x_shift, y_shift):
-    """
-    take an image and shift it along the x and y axis using opencv
+def original_page_size(format, dpi):
+    w = (PAGE_FORMATS[format][0])/72 * dpi
+    h = (PAGE_FORMATS[format][1])/72 * dpi
 
-    params:
-    -------
-    image_array: numpy.array
-        an array of the image to be shifted
-    x_shift: int
-        indicates how many pixels it has to be shifted on the x-axis, so from left to right
-    y_shift: int
-        indicates how many pixels it has to be shifted on the y-axis, so from top to bottom
-    returns:
-    --------
-    a numpy array of the image shifted where empty spaces are filled with white
-
-    """
-
-    M = np.float32([[1, 0, x_shift],
-                   [0, 1, y_shift]])
-    h, w, _ = image_array.shape
-    return cv2.warpAffine(image_array, M, (w, h),
-                          borderValue=(255, 255, 255, 255))
+    return np.rint([w, h]).astype(int)

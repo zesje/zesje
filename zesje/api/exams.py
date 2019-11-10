@@ -15,6 +15,7 @@ from ..pdf_generation import generate_pdfs, output_pdf_filename_format, join_pdf
 from ..pdf_generation import page_is_size, save_with_even_pages, PAGE_FORMATS
 from ..pdf_generation import write_finalized_exam
 from ..database import db, Exam, ExamWidget, Submission, token_length
+from .submissions import sub_to_data
 
 
 def _get_exam_dir(exam_id):
@@ -131,32 +132,8 @@ class Exams(Resource):
         if exam is None:
             return dict(status=404, message='Exam does not exist.'), 404
 
-        submissions = [
-                {
-                    'id': sub.copy_number,
-                    'student': {
-                            'id': sub.student.id,
-                            'firstName': sub.student.first_name,
-                            'lastName': sub.student.last_name,
-                            'email': sub.student.email
-                    } if sub.student else None,
-                    'validated': sub.signature_validated,
-                    'problems': [
-                        {
-                            'id': sol.problem.id,
-                            'graded_by': {
-                                'id': sol.graded_by.id,
-                                'name': sol.graded_by.name
-                            } if sol.graded_by else None,
-                            'graded_at': sol.graded_at.isoformat() if sol.graded_at else None,
-                            'feedback': [
-                                fb.id for fb in sol.feedback
-                            ],
-                            'remark': sol.remarks if sol.remarks else ""
-                        } for sol in sub.solutions  # Sorted by sol.problem_id
-                    ],
-                } for sub in exam.submissions
-        ]
+        submissions = [sub_to_data(sub) for sub in exam.submissions]
+
         # Sort submissions by selecting those with students assigned, then by
         # student number, then by copy number.
         # TODO: This is a minimal fix of #166, to be replaced later.

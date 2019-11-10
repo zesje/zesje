@@ -45,8 +45,7 @@ test_args = [
     ('sample_exam.jpg', 4),
     ('shifted.jpg', 4),
     ('tilted.jpg', 4),
-    ('messy_three_corners.jpg', 3),
-    ('blank.jpg', 0)]
+    ('messy_three_corners.jpg', 3)]
 
 
 @pytest.mark.parametrize(
@@ -58,15 +57,17 @@ def test_detect_enough_cornermarkers(name, expected, datadir):
     assert(len(keypoints) == expected)
 
 
+def test_detect_few_cornermarkers(datadir):
+    image = generate_image('blank.jpg', datadir)
+    with pytest.raises(RuntimeError):
+        scans.find_corner_marker_keypoints(image)
+
+
 # Tests whether the detected keypoints are actually corner markers.
 # This is done by checking whether they are close enough to the corner
 # of the image. Only A4 is considered as there is no test data yet for
 # US letter size.
-@pytest.mark.parametrize('name', os.listdir(
-                                 os.path.join('tests',
-                                              'data', 'scanned_pdfs')),
-                         ids=os.listdir(
-                            os.path.join('tests', 'data', 'scanned_pdfs')))
+@pytest.mark.parametrize('name', map(lambda tup: tup[0], test_args))
 def test_detect_valid_cornermarkers(name, datadir):
     image = generate_image(name, datadir)
     keypoints = scans.find_corner_marker_keypoints(image)

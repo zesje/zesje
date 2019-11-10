@@ -59,24 +59,3 @@ def widget_area(problem):
     widget_area_in = widget_area / 72
 
     return widget_area_in
-
-
-# Modified from https://stackoverflow.com/a/16873755
-def blockshaped(arr, block_size):
-    """
-    Return an array of shape (a * b, block_size, block_size)
-    where a and b are the largest possible integers such that
-    a * block_size <= arr.shape[0], b * block_size <= arr.shape[1]
-
-    If arr is a 2D array, the returned array looks like n subblocks with
-    each subblock preserving the "physical" layout of arr.
-    """
-    blocks_y, blocks_x = np.array(arr.shape) // block_size
-    height = blocks_y * block_size
-    width = blocks_x * block_size
-
-    cut = arr[:height, :width]
-
-    return (cut.reshape(blocks_y, block_size, blocks_x, block_size)
-               .swapaxes(1, 2)
-               .reshape(-1, block_size, block_size))

@@ -53,7 +53,7 @@ class Submissions extends React.Component {
       .then(submissions => {
         this.setState({
           submissions: submissions.map(sub => ({
-            copy: sub['copy'],
+            id: sub['id'],
             missing: sub['missing_pages']
           }))
         })
@@ -113,8 +113,8 @@ class Submissions extends React.Component {
           </p>
           <ul className='menu-list'>
             {missingSubmissions.map(sub =>
-              <li key={sub.copy}>
-                Copy {sub.copy} is missing pages {sub.missing.join(',')}
+              <li key={sub.id}>
+                Copy {sub.id} is missing pages {sub.missing.join(',')}
               </li>
             )}
           </ul>

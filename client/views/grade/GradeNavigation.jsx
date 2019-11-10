@@ -28,20 +28,20 @@ class GradeNavigation extends React.Component {
                 setSelected={this.props.setSubmission}
                 selected={submission}
                 options={submissions}
-                suggestionKeys={(this.props.anonymous ? ['copy'] : [
+                suggestionKeys={(this.props.anonymous ? ['id'] : [
                   'student.id',
                   'student.firstName',
                   'student.lastName',
-                  'copy'
+                  'id'
                 ])}
-                renderSelected={({copy, student}) => {
+                renderSelected={({id, student}) => {
                   if (student && !this.props.anonymous) {
                     return `${student.firstName} ${student.lastName} (${student.id})`
                   } else {
-                    return `#${copy}`
+                    return `#${id}`
                   }
                 }}
-                renderSuggestion={({copy, student}) => {
+                renderSuggestion={({id, student}) => {
                   if (student && !this.props.anonymous) {
                     return (
                       <div className='flex-parent'>
@@ -49,7 +49,7 @@ class GradeNavigation extends React.Component {
                           {`${student.firstName} ${student.lastName}`}
                         </b>
                         <i className='flex-child fixed'>
-                        ({student.id}, #{copy})
+                        ({student.id}, #{id})
                         </i>
                       </div>
                     )
@@ -57,7 +57,7 @@ class GradeNavigation extends React.Component {
                     return (
                       <div className='flex-parent'>
                         <b className='flex-child fixed'>
-                        #{copy}
+                        #{id}
                         </b>
                       </div>
                     )

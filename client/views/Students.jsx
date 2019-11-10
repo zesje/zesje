@@ -49,7 +49,7 @@ class CheckStudents extends React.Component {
   static getDerivedStateFromProps = (newProps, prevState) => {
     if (newProps.exam.id !== prevState.examID && newProps.exam.submissions.length) {
       return {
-        input: newProps.exam.submissions[0].copy,
+        input: newProps.exam.submissions[0].id,
         index: 0,
         examID: newProps.exam.id
       }
@@ -63,9 +63,9 @@ class CheckStudents extends React.Component {
     if (newIndex >= 0 && newIndex < this.props.exam.submissions.length) {
       this.setState({
         index: newIndex,
-        input: this.props.exam.submissions[newIndex].copy
+        input: this.props.exam.submissions[newIndex].id
       })
-      this.props.updateSubmission(this.props.exam.submissions[newIndex].copy)
+      this.props.updateSubmission(this.props.exam.submissions[newIndex].id)
     }
   }
   next = () => {
@@ -74,9 +74,9 @@ class CheckStudents extends React.Component {
     if (newIndex >= 0 && newIndex < this.props.exam.submissions.length) {
       this.setState({
         index: newIndex,
-        input: this.props.exam.submissions[newIndex].copy
+        input: this.props.exam.submissions[newIndex].id
       })
-      this.props.updateSubmission(this.props.exam.submissions[newIndex].copy)
+      this.props.updateSubmission(this.props.exam.submissions[newIndex].id)
     }
   }
 
@@ -84,10 +84,10 @@ class CheckStudents extends React.Component {
     for (let i = this.state.index - 1; i >= 0; i--) {
       if (this.props.exam.submissions[i].validated === false) {
         this.setState({
-          input: this.props.exam.submissions[i].copy,
+          input: this.props.exam.submissions[i].id,
           index: i
         })
-        this.props.updateSubmission(this.props.exam.submissions[i].copy)
+        this.props.updateSubmission(this.props.exam.submissions[i].id)
         return
       }
     }
@@ -96,21 +96,21 @@ class CheckStudents extends React.Component {
     for (let i = this.state.index + 1; i < this.props.exam.submissions.length; i++) {
       if (this.props.exam.submissions[i].validated === false) {
         this.setState({
-          input: this.props.exam.submissions[i].copy,
+          input: this.props.exam.submissions[i].id,
           index: i
         })
-        this.props.updateSubmission(this.props.exam.submissions[i].copy)
+        this.props.updateSubmission(this.props.exam.submissions[i].id)
         return
       }
     }
   }
 
-  setSubmission = (copy) => {
-    const i = this.props.exam.submissions.findIndex(sub => sub.copy === copy)
+  setSubmission = (id) => {
+    const i = this.props.exam.submissions.findIndex(sub => sub.id === id)
     this.setState({
       index: i
     })
-    this.props.updateSubmission(copy)
+    this.props.updateSubmission(id)
   }
 
   setSubInput = (event) => {
@@ -124,9 +124,9 @@ class CheckStudents extends React.Component {
   matchStudent = (stud) => {
     if (!this.props.exam.submissions.length) return
 
-    api.put('submissions/' + this.props.exam.id + '/' + this.props.exam.submissions[this.state.index].copy, { studentID: stud.id })
+    api.put('submissions/' + this.props.exam.id + '/' + this.props.exam.submissions[this.state.index].id, { studentID: stud.id })
       .then(resp => {
-        this.props.updateSubmission(this.props.exam.submissions[this.state.index].copy)
+        this.props.updateSubmission(this.props.exam.submissions[this.state.index].id)
         this.nextUnchecked()
       })
       .catch(err => {
@@ -147,7 +147,7 @@ class CheckStudents extends React.Component {
         editActive: !this.state.editActive,
         editStud: null
       })
-      this.props.updateSubmission(this.props.exam.submissions[this.state.index].copy)
+      this.props.updateSubmission(this.props.exam.submissions[this.state.index].id)
     }
   }
 
@@ -192,17 +192,17 @@ class CheckStudents extends React.Component {
                             selected={subm}
                             options={exam.submissions}
                             suggestionKeys={[
-                              'copy',
+                              'id',
                               'student.firstName',
                               'student.lastName',
                               'student.id'
                             ]}
                             setSelected={this.setSubmission}
-                            renderSelected={({copy, student}) => {
+                            renderSelected={({id, student}) => {
                               if (student) {
-                                return `#${copy}: ${student.firstName} ${student.lastName} (${student.id})`
+                                return `#${id}: ${student.firstName} ${student.lastName} (${student.id})`
                               } else {
-                                return `#${copy}`
+                                return `#${id}`
                               }
                             }}
                             renderSuggestion={(submission) => {
@@ -211,7 +211,7 @@ class CheckStudents extends React.Component {
                                 return (
                                   <div className='flex-parent'>
                                     <span className='flex-child truncated'>
-                                      <b>#{submission.copy}</b>
+                                      <b>#{submission.id}</b>
                                       {` ${stud.firstName} ${stud.lastName}`}
                                     </span>
                                     <i className='flex-child fixed'>
@@ -220,7 +220,7 @@ class CheckStudents extends React.Component {
                                   </div>
                                 )
                               } else {
-                                return `#${submission.copy}: No student`
+                                return `#${submission.id}: No student`
                               }
                             }}
                           />
@@ -238,7 +238,7 @@ class CheckStudents extends React.Component {
                   <ProgressBar done={done} total={total} />
 
                   <p className='box'>
-                    <img src={'api/images/signature/' + this.props.exam.id + '/' + subm.copy} alt='' />
+                    <img src={'api/images/signature/' + this.props.exam.id + '/' + subm.id} alt='' />
                   </p>
 
                 </div>

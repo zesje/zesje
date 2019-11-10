@@ -139,7 +139,7 @@ class Exams(Resource):
         # TODO: This is a minimal fix of #166, to be replaced later.
         submissions = sorted(
             submissions,
-            key=(lambda s: (bool(s['student']) and -s['student']['id'], s['copy']))
+            key=(lambda s: (bool(s['student']) and -s['student']['id'], s['id']))
         )
 
         return {

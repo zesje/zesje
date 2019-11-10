@@ -7,13 +7,13 @@ from ..images import get_box
 from ..database import Exam, Submission
 
 
-def get(exam_id, submission_copy):
+def get(exam_id, submission_id):
     """get student signature for the given submission.
 
     Parameters
     ----------
     exam_id : int
-    submission_copy : int
+    submission_id : int
         The copy number of the submission. This uniquely identifies
         the submission *within a given exam*.
 
@@ -28,9 +28,9 @@ def get(exam_id, submission_copy):
         return dict(status=404, message='Exam does not exist.'), 404
 
     sub = Submission.query.filter(Submission.exam_id == exam.id,
-                                  Submission.copy_number == submission_copy).one_or_none()
+                                  Submission.copy_number == submission_id).one_or_none()
     if sub is None:
-        return dict(status=404, message=f'Submission with id #{submission_copy} not found'), 404
+        return dict(status=404, message=f'Submission with id #{submission_id} not found'), 404
 
     student_id_widget = next(
         widget

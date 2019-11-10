@@ -10,7 +10,7 @@ from ..database import db, Exam, Submission, Problem, Solution, FeedbackOption, 
 class Solutions(Resource):
     """ Solution provided on a specific problem and exam """
 
-    def get(self, exam_id, submission_copy, problem_id):
+    def get(self, exam_id, submission_id, problem_id):
         """get solution to problem
 
         Returns
@@ -31,7 +31,7 @@ class Solutions(Resource):
             return dict(status=404, message='Exam does not exist.'), 404
 
         sub = Submission.query.filter(Submission.exam_id == exam.id,
-                                      Submission.copy_number == submission_copy).one_or_none()
+                                      Submission.copy_number == submission_id).one_or_none()
         if sub is None:
             return dict(status=404, message=f'Submission does not exist.'), 404
 
@@ -54,7 +54,7 @@ class Solutions(Resource):
     post_parser.add_argument('remark', type=str, required=True)
     post_parser.add_argument('graderID', type=int, required=True)
 
-    def post(self, exam_id, submission_copy, problem_id):
+    def post(self, exam_id, submission_id, problem_id):
         """Change the remark of a solution
 
         Parameters
@@ -78,7 +78,7 @@ class Solutions(Resource):
             return dict(status=404, message='Exam does not exist.'), 404
 
         sub = Submission.query.filter(Submission.exam_id == exam.id,
-                                      Submission.copy_number == submission_copy).one_or_none()
+                                      Submission.copy_number == submission_id).one_or_none()
         if sub is None:
             return dict(status=404, message='Submission does not exist.'), 404
 
@@ -96,7 +96,7 @@ class Solutions(Resource):
     put_parser.add_argument('id', type=int, required=True)
     put_parser.add_argument('graderID', type=int, required=True)
 
-    def put(self, exam_id, submission_copy, problem_id):
+    def put(self, exam_id, submission_id, problem_id):
         """Toggles an existing feedback option
 
         Parameters
@@ -115,7 +115,7 @@ class Solutions(Resource):
             return dict(status=404, message='Grader does not exist.'), 404
 
         sub = Submission.query.filter(Submission.exam_id == exam_id,
-                                      Submission.copy_number == submission_copy).one_or_none()
+                                      Submission.copy_number == submission_id).one_or_none()
         if sub is None:
             return dict(status=404, message='Submission does not exist.'), 404
 
@@ -154,9 +154,9 @@ class Approve(Resource):
     put_parser = reqparse.RequestParser()
     put_parser.add_argument('graderID', type=int, required=True)
 
-    def put(self, exam_id, submission_copy, problem_id):
+    def put(self, exam_id, submission_id, problem_id):
         """Takes an existing feedback checks if it is valid then gives the current graders id to the solution this is
-        useful for approving pre graded solutions
+        usefull for approving pre graded solutions
 
         Parameters
         ----------
@@ -171,7 +171,7 @@ class Approve(Resource):
         grader = Grader.query.get(args.graderID)
 
         sub = Submission.query.filter(Submission.exam_id == exam_id,
-                                      Submission.copy_number == submission_copy).one_or_none()
+                                      Submission.copy_number == submission_id).one_or_none()
         if sub is None:
             return dict(status=404, message='Submission does not exist.'), 404
 

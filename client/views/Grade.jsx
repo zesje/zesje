@@ -25,10 +25,10 @@ class Grade extends React.Component {
     this.state = {}
     api.get(`grade/metadata/${this.props.examID}/${this.props.graderID}`).then(metadata => {
       const examID = metadata.exam_id
-      const submissionCopy = metadata.submissions[0].copy
+      const submissionID = metadata.submissions[0].id
       const problemID = metadata.problems[0].id
       Promise.all([
-        api.get(`submissions/${examID}/${submissionCopy}`),
+        api.get(`submissions/${examID}/${submissionID}`),
         api.get(`problems/${problemID}`)
       ]).then(values => {
         const submission = values[0]
@@ -89,7 +89,7 @@ class Grade extends React.Component {
    * @param ungraded either 'true' or 'false'
    */
   navigate = (direction, ungraded) => {
-    api.get(`grade/navigation/${this.props.examID}/${this.state.submission.copy}/${this.state.problem.id}` +
+    api.get(`grade/navigation/${this.props.examID}/${this.state.submission.id}/${this.state.problem.id}` +
       '?direction=' + direction +
       '&grader_id=' + this.props.graderID +
       '&ungraded=' + ungraded).then(sub =>
@@ -119,10 +119,10 @@ class Grade extends React.Component {
 
   /**
    * Updates the submission from the server, and sets it as the current submission.
-   * @param copy the copy number of the submission to update to.
+   * @param id the id of the submission to update to.
   */
-  setSubmission = (copy) => {
-    api.get(`submissions/${this.props.examID}/${copy}`).then(sub => {
+  setSubmission = (id) => {
+    api.get(`submissions/${this.props.examID}/${id}`).then(sub => {
       this.setState({
         submission: sub
       })
@@ -179,6 +179,7 @@ class Grade extends React.Component {
   }
   /**
    * Enter the feedback editing view for a feedback option.
+   * todo: move into feedbackpanel.
    * @param feedback the feedback to edit.
    */
   editFeedback = (feedback) => {
@@ -190,6 +191,7 @@ class Grade extends React.Component {
   /**
    * Go back to all the feedback options.
    * Updates the problem to make sure changes to feedback options are reflected.
+   * todo: move into feedbackpanel.
    */
   backToFeedback = () => {
     this.setProblem(this.state.problem.id)
@@ -215,11 +217,11 @@ class Grade extends React.Component {
     const submission = this.state.submission
     const problem = this.state.problem
 
-    api.put(`solution/${this.props.examID}/${submission.copy}/${problem.id}`, {
+    api.put(`solution/${this.props.examID}/${submission.id}/${problem.id}`, {
       id: id,
       graderID: this.props.graderID
     }).then(result => {
-      this.setSubmission(submission.copy)
+      this.setSubmission(submission.id)
     })
   }
   /**
@@ -229,12 +231,12 @@ class Grade extends React.Component {
     const submission = this.state.submission
     const problem = this.state.problem
 
-    api.put(`solution/approve/${this.props.examID}/${submission.copy}/${problem.id}`, {
+    api.put(`solution/approve/${this.props.examID}/${submission.id}/${problem.id}`, {
       graderID: this.props.graderID
     }).catch(resp => {
       resp.json().then(body => Notification.error('Could not approve feedback: ' + body.message))
     }).then(result => {
-      this.setSubmission(submission.copy)
+      this.setSubmission(submission.id)
     })
   }
 
@@ -290,8 +292,8 @@ class Grade extends React.Component {
     const problems = this.state.problems
     const solution = submission.problems.find(p => p.id === problem.id)
     const otherSubmissions = this.state.submissions.filter((sub) => (
-      sub.copy !== submission.copy && submission.student && sub.student && sub.student.id === submission.student.id)
-    ).map((sub) => ' #' + sub.copy)
+      sub.id !== submission.id && submission.student && sub.student && sub.student.id === submission.student.id)
+    ).map((sub) => ' #' + sub.id)
     const multiple = otherSubmissions.length > 0
     const gradedTime = new Date(solution.graded_at)
 
@@ -317,7 +319,7 @@ class Grade extends React.Component {
                       feedback={this.state.feedbackToEdit}
                       goBack={this.backToFeedback} />
                     : <FeedbackPanel
-                      examID={examID} submissionCopy={submission.copy} graderID={graderID}
+                      examID={examID} submissionID={submission.id} graderID={graderID}
                       problem={problem} solution={solution}
                       showTooltips={this.state.showTooltips} grading
                       setSubmission={this.setSubmission}
@@ -347,7 +349,7 @@ class Grade extends React.Component {
                   ? <article className='message is-info'>
                     <div className='message-body'>
                       <p>
-                        This student has multiple submissions: (#{submission.copy}, {otherSubmissions})
+                        This student has multiple submissions: (#{submission.id}, {otherSubmissions})
                         Make sure that each applicable feedback option is only selected once.
                       </p>
                     </div>
@@ -379,7 +381,7 @@ class Grade extends React.Component {
 
                 <p className={'box' + (solution.graded_at ? ' is-graded' : '')}>
                   <img src={examID ? ('api/images/solutions/' + examID + '/' +
-                    problem.id + '/' + submission.copy + '/' + (this.state.fullPage ? '1' : '0')) + '?' +
+                    problem.id + '/' + submission.id + '/' + (this.state.fullPage ? '1' : '0')) + '?' +
                     Grade.getLocationHash(problem) : ''} alt='' />
                 </p>
 

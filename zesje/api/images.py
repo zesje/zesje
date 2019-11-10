@@ -8,14 +8,14 @@ from ..pdf_generation import CHECKBOX_FORMAT
 from ..scans import exam_student_id_widget
 
 
-def get(exam_id, problem_id, submission_copy, full_page=False):
+def get(exam_id, problem_id, submission_id, full_page=False):
     """get image for the given problem.
 
     Parameters
     ----------
     exam_id : int
     problem_id : int
-    submission_copy : int
+    submission_id : int
         The copy number of the submission. This uniquely identifies
         the submission *within a given exam*.
     full_page : bool
@@ -34,7 +34,7 @@ def get(exam_id, problem_id, submission_copy, full_page=False):
         abort(404, 'Problem does not exist.')
 
     sub = Submission.query.filter(Submission.exam_id == exam.id,
-                                  Submission.copy_number == submission_copy).one_or_none()
+                                  Submission.copy_number == submission_id).one_or_none()
     if sub is None:
         abort(404, 'Submission does not exist.')
 
@@ -45,7 +45,7 @@ def get(exam_id, problem_id, submission_copy, full_page=False):
     page = Page.query.filter(Page.submission_id == sub.id, Page.number == problem.widget.page).first()
 
     if page is None:
-        abort(404, f'Page #{problem.widget.page} is missing for copy #{submission_copy}.')
+        abort(404, f'Page #{problem.widget.page} is missing for copy #{submission_id}.')
 
     page_path = page.path
 

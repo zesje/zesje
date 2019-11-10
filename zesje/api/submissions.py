@@ -157,7 +157,7 @@ class MissingPages(Resource):
         ))
         return [
             {
-                'id': sub.copy_number,
+                'copy': sub.copy_number,
                 'missing_pages': sorted(all_pages - set(page.number for page in sub.pages)),
             } for sub in exam.submissions
         ]

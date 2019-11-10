@@ -1,4 +1,5 @@
 from flask_restful import Resource, reqparse
+from flask_restful.inputs import boolean
 
 from zesje.api.submissions import sub_to_data
 from zesje.database import Exam, Submission
@@ -32,7 +33,7 @@ def find_submission(exam_id, submission_id, problem_id, args):
     shuffled_submissions = _shuffle(exam.submissions, args.grader_id)
     old_submission_index = shuffled_submissions.index(old_submission)
 
-    if args.ungraded == 'false':
+    if not args.ungraded:
         offset = 1 if args.direction == 'next' else - 1
         new_index = old_submission_index + offset
         if 0 <= new_index < len(shuffled_submissions):
@@ -58,7 +59,7 @@ class Navigation(Resource):
     """Api endpoint for navigation in the grade page"""
 
     get_parser = reqparse.RequestParser()
-    get_parser.add_argument('ungraded', type=str, required=True, choices=['true', 'false'])
+    get_parser.add_argument('ungraded', type=boolean, required=True)
     get_parser.add_argument('grader_id', type=int, required=True)
     get_parser.add_argument('direction', type=str, required=True, choices=['prev', 'next'])
 

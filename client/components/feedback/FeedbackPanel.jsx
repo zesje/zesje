@@ -78,7 +78,7 @@ class FeedbackPanel extends React.Component {
       remark: this.state.remark,
       graderID: this.props.graderID
     }).then(success => {
-      this.props.updateSubmission(this.props.submissionID)
+      this.props.setSubmission(this.props.submissionID)
       if (!success) Notification.error('Remark not saved!')
     })
   }

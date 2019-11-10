@@ -17,13 +17,13 @@ import '../components/SubmissionNavigation.css'
 
 class Grade extends React.Component {
   /**
-   * Constructor sets empty state, and calls updateSubmission.
+   * Constructor sets empty state, and calls setSubmission.
    * This call will get all metadata and current submission and problem.
    */
   constructor (props) {
     super(props)
     this.state = {}
-    this.updateSubmission()
+    this.setSubmission()
   }
 
   /**
@@ -97,12 +97,13 @@ class Grade extends React.Component {
   }
 
   /**
-   * Updates the grading pages current submission.
+   * Sets the current submission to the submission with the passed id.
+   * This also updates the submission from the server.
    * Also updates the metadata for all other submissions.
    * If no submissionID is specified, defaults to the first submission in the metadata.
    * If no problem is currently in the state, defaults to the first problem in the metadata.
   */
-  updateSubmission = (id) => {
+  setSubmission = (id) => {
     api.get(`grade/metadata/${this.props.examID}`).then(metadata => {
       const examID = metadata.exam_id
       const submissionID = id || metadata.submissions[0].id
@@ -124,11 +125,12 @@ class Grade extends React.Component {
   }
 
   /**
-   * Updates the current problem to the problem with the passed id.
+   * Sets the current problem to the problem with the passed id.
+   * This also updates the problem from the server.
    * Does not update the metadata, as then the progress bar might update confusingly.
    * @param id the id of the problem to update to.
    */
-  updateProblem = (id) => {
+  setProblem = (id) => {
     api.get(`problems/${id}`).then(problem => {
       this.setState({
         problem: problem
@@ -144,7 +146,7 @@ class Grade extends React.Component {
       return
     }
     const newId = this.state.problems[currentIndex - 1].id
-    this.updateProblem(newId)
+    this.setProblem(newId)
   }
   /**
    * Finds the index of the current problem and moves to the next one.
@@ -155,7 +157,7 @@ class Grade extends React.Component {
       return
     }
     const newId = this.state.problems[currentIndex + 1].id
-    this.updateProblem(newId)
+    this.setProblem(newId)
   }
   /**
    * Enter the feedback editing view for a feedback option.
@@ -174,7 +176,7 @@ class Grade extends React.Component {
    * todo: move into feedbackpanel.
    */
   backToFeedback = () => {
-    this.updateProblem(this.state.problem.id)
+    this.setProblem(this.state.problem.id)
     this.setState({
       editActive: false
     })
@@ -201,7 +203,7 @@ class Grade extends React.Component {
       id: id,
       graderID: this.props.graderID
     }).then(result => {
-      this.updateSubmission(submission.id)
+      this.setSubmission(submission.id)
     })
   }
   /**
@@ -216,7 +218,7 @@ class Grade extends React.Component {
     }).catch(resp => {
       resp.json().then(body => Notification.error('Could not approve feedback: ' + body.message))
     }).then(result => {
-      this.updateSubmission(submission.id)
+      this.setSubmission(submission.id)
     })
   }
 
@@ -289,7 +291,7 @@ class Grade extends React.Component {
               <div className='column is-one-quarter-desktop is-one-third-tablet'>
                 <ProblemSelector
                   problems={problems}
-                  setProblemID={this.updateProblem}
+                  setProblemID={this.setProblem}
                   current={problem}
                   showTooltips={this.state.showTooltips} />
                 <nav className='panel'>
@@ -302,7 +304,7 @@ class Grade extends React.Component {
                       examID={examID} submissionID={submission.id} graderID={graderID}
                       problem={problem} solution={solution}
                       showTooltips={this.state.showTooltips} grading
-                      updateSubmission={this.updateSubmission}
+                      setSubmission={this.setSubmission}
                       editFeedback={this.editFeedback}
                       toggleOption={this.toggleFeedbackOption} />
                   }
@@ -314,7 +316,7 @@ class Grade extends React.Component {
                 <GradeNavigation
                   submission={submission}
                   submissions={submissions}
-                  updateSubmission={this.updateSubmission}
+                  setSubmission={this.setSubmission}
                   prevUngraded={this.prevUngraded}
                   prev={this.prev}
                   next={this.next}

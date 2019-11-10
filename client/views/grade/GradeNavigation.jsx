@@ -25,7 +25,7 @@ class GradeNavigation extends React.Component {
             <div className='control is-wider'>
               <SearchBox
                 placeholder='Search for a submission'
-                setSelected={this.props.updateSubmission}
+                setSelected={this.props.setSubmission}
                 selected={submission}
                 options={submissions}
                 suggestionKeys={(this.props.anonymous ? ['id'] : [

@@ -4,7 +4,7 @@
 .is-tooltip-active::before, .is-tooltip-active::after {
     z-index: 1 !important
 }
-div.control::after {
+#search::after {
     display: none !important
 }
 .input {

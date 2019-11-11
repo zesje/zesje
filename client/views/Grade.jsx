@@ -310,7 +310,7 @@ class Grade extends React.Component {
                           onClick={this.prev}>Previous</button>
                       </div>
                       <div id='search' className={'control is-wider ' + (this.state.showTooltips ? 'tooltip is-tooltip-active' : '')}
-                           data-tooltip='Press ctrl to hide shortcuts'>
+                       data-tooltip='Press ctrl to hide shortcuts'>
                         <SearchBox
                           placeholder='Search for a submission'
                           selected={submission}

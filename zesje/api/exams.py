@@ -64,13 +64,13 @@ class Exams(Resource):
 
     get_parser = reqparse.RequestParser()
     get_parser.add_argument('only_metadata', type=boolean, required=False)
-    get_parser.add_argument('grader_id', type=int, required=False)
+    get_parser.add_argument('shuffle_seed', type=int, required=False)
 
     def get(self, exam_id=None):
         args = self.get_parser.parse_args()
         if exam_id:
             if args.only_metadata:
-                return self._get_single_metadata(exam_id, args.grader_id)
+                return self._get_single_metadata(exam_id, args.shuffle_seed)
             return self._get_single(exam_id)
         else:
             return self._get_all()
@@ -168,7 +168,7 @@ class Exams(Resource):
             'gradeAnonymous': exam.grade_anonymous,
         }
 
-    def _get_single_metadata(self, exam_id, grader_id):
+    def _get_single_metadata(self, exam_id, shuffle_seed):
         exam = Exam.query.get(exam_id)
         if exam is None:
             return dict(status=404, message='Exam does not exist.'), 404
@@ -184,7 +184,7 @@ class Exams(Resource):
                         'lastName': sub.student.last_name,
                         'email': sub.student.email
                     } if sub.student else None
-                } for sub in _shuffle_submissions(exam.submissions, grader_id)
+                } for sub in _shuffle_submissions(exam.submissions, shuffle_seed)
             ],
             'problems': [
                 {

@@ -92,7 +92,7 @@ class Grade extends React.Component {
   navigate = (direction, ungraded) => {
     api.get(`submissions/${this.props.examID}/${this.state.submission.id}` +
       '?problem_id=' + this.state.problem.id +
-      '&grader_id=' + this.props.graderID +
+      '&shuffle_seed=' + this.props.graderID +
       '&direction=' + direction +
       '&ungraded=' + ungraded).then(sub =>
       this.setState({
@@ -151,7 +151,7 @@ class Grade extends React.Component {
    */
   updateMetadata = () => {
     api.get(`exams/${this.props.examID}?only_metadata=true` +
-    `&grader_id=${this.props.graderID}`).then(metadata => {
+    `&shuffle_seed=${this.props.graderID}`).then(metadata => {
       this.setState({
         submissions: metadata.submissions,
         problems: metadata.problems

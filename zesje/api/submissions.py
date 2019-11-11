@@ -46,13 +46,13 @@ def _shuffle_submissions(submissions, shuffle_seed):
     return sorted(submissions, key=lambda s: md5(f'{s.id}, {shuffle_seed}'.encode('utf-8')).digest())
 
 
-def _find_submission(old_submission, problem_id, grader_id, direction, ungraded):
+def _find_submission(old_submission, problem_id, shuffle_seed, direction, ungraded):
     problem = Problem.query.get(problem_id)
 
     if problem is None:
         return dict(status=404, message='Problem does not exist.'), 404
 
-    shuffled_solutions = _shuffle_solutions(problem.solutions, grader_id)
+    shuffled_solutions = _shuffle_solutions(problem.solutions, shuffle_seed)
     old_submission_index = next(i for i, s in enumerate(shuffled_solutions) if s.submission_id == old_submission.id)
 
     if (old_submission_index == 0 and direction == 'prev') or \
@@ -83,7 +83,7 @@ class Submissions(Resource):
 
     get_parser = reqparse.RequestParser()
     get_parser.add_argument('problem_id', type=int, required=False)
-    get_parser.add_argument('grader_id', type=int, required=False)
+    get_parser.add_argument('shuffle_seed', type=int, required=False)
     get_parser.add_argument('ungraded', type=boolean, required=False)
     get_parser.add_argument('direction', type=str, required=False, choices=["next", "prev"])
 
@@ -123,7 +123,7 @@ class Submissions(Resource):
             if args.direction:
                 if args.problem_id is None or args.grader_id is None or args.ungraded is None:
                     return dict(status=400, message='One of problem_id, grader_id, ungraded, direction not provided')
-                return _find_submission(sub, args.problem_id, args.grader_id, args.direction, args.ungraded)
+                return _find_submission(sub, args.problem_id, args.shuffle_seed, args.direction, args.ungraded)
 
             return sub_to_data(sub)
 

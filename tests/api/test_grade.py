@@ -1,4 +1,3 @@
-import pytest
 from zesje.api.grade import _shuffle
 
 

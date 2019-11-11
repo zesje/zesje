@@ -38,8 +38,12 @@ def sub_to_data(sub):
     }
 
 
-def _shuffle(solutions, shuffle_seed):
+def _shuffle_solutions(solutions, shuffle_seed):
     return sorted(solutions, key=lambda s: md5(f'{s.submission.id}, {shuffle_seed}'.encode('utf-8')).digest())
+
+
+def _shuffle_submissions(submissions, shuffle_seed):
+    return sorted(submissions, key=lambda s: md5(f'{s.id}, {shuffle_seed}'.encode('utf-8')).digest())
 
 
 def _find_submission(old_submission, problem_id, grader_id, direction, ungraded):
@@ -48,7 +52,7 @@ def _find_submission(old_submission, problem_id, grader_id, direction, ungraded)
     if problem is None:
         return dict(status=404, message='Problem does not exist.'), 404
 
-    shuffled_solutions = _shuffle(problem.solutions, grader_id)
+    shuffled_solutions = _shuffle_solutions(problem.solutions, grader_id)
     old_submission_index = next(i for i, s in enumerate(shuffled_solutions) if s.submission_id == old_submission.id)
 
     if (old_submission_index == 0 and direction == 'prev') or \

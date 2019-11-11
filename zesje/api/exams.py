@@ -16,7 +16,7 @@ from ..pdf_generation import generate_pdfs, output_pdf_filename_format, join_pdf
 from ..pdf_generation import page_is_size, save_with_even_pages, PAGE_FORMATS
 from ..pdf_generation import write_finalized_exam
 from ..database import db, Exam, ExamWidget, Submission, token_length
-from .submissions import sub_to_data, _shuffle
+from .submissions import sub_to_data, _shuffle_submissions
 
 
 def _get_exam_dir(exam_id):
@@ -184,7 +184,7 @@ class Exams(Resource):
                         'lastName': sub.student.last_name,
                         'email': sub.student.email
                     } if sub.student else None
-                } for sub in _shuffle(exam.submissions, grader_id)
+                } for sub in _shuffle_submissions(exam.submissions, grader_id)
             ],
             'problems': [
                 {

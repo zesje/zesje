@@ -39,7 +39,7 @@ def sub_to_data(sub):
 
 
 def _shuffle_solutions(solutions, shuffle_seed):
-    return sorted(solutions, key=lambda s: md5(f'{s.submission.id}, {shuffle_seed}'.encode('utf-8')).digest())
+    return sorted(solutions, key=lambda s: md5(f'{s.submission_id}, {shuffle_seed}'.encode('utf-8')).digest())
 
 
 def _shuffle_submissions(submissions, shuffle_seed):

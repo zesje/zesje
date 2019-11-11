@@ -2,9 +2,11 @@ import os
 
 from flask import current_app as app
 from flask_restful import Resource, reqparse
+from flask_restful.inputs import boolean
 from pdfrw import PdfReader
+from hashlib import md5
 
-from ..database import db, Exam, Submission, Student
+from ..database import db, Exam, Submission, Student, Problem
 from ..pregrader import ungrade_multiple_sub
 
 
@@ -36,8 +38,50 @@ def sub_to_data(sub):
     }
 
 
+def _shuffle(submissions, shuffle_seed):
+    return sorted(submissions, key=lambda s: md5(f'{s.id}, {shuffle_seed}'.encode('utf-8')).digest())
+
+
+def _find_submission(old_submission, problem_id, grader_id, direction, ungraded):
+    problem = Problem.query.get(problem_id)
+
+    if problem is None:
+        return dict(status=404, message='Problem does not exist.'), 404
+
+    shuffled_solutions = _shuffle(problem.solutions, grader_id)
+    old_submission_index = next(i for i, s in enumerate(shuffled_solutions) if s.submission_id == old_submission.id)
+
+    if (old_submission_index == 0 and direction == 'prev') or \
+            (old_submission_index == len(shuffled_solutions) - 1 and direction == 'next'):
+        return sub_to_data(old_submission)
+
+    if not ungraded:
+        offset = 1 if direction == 'next' else -1
+        return sub_to_data(shuffled_solutions[old_submission_index + offset].submission)
+
+    # If direction is next, search submissions from the one after the old, up to the end of the list.
+    # If direction is previous search from the start to the old, in reverse order.
+    solutions_to_search = shuffled_solutions[old_submission_index + 1:] if direction == 'next' \
+        else shuffled_solutions[old_submission_index - 1::-1]
+
+    if len(solutions_to_search) == 0:
+        return sub_to_data(old_submission)
+
+    # Get the next submission for which the solution to our problem was not graded yet
+    submission = next((solution.submission for solution in solutions_to_search if
+                       solution.graded_by is None),
+                      old_submission)  # Returns the old submission in case no suitable submission was found
+    return sub_to_data(submission)
+
+
 class Submissions(Resource):
     """Getting a list of submissions, and assigning students to them."""
+
+    get_parser = reqparse.RequestParser()
+    get_parser.add_argument('problem_id', type=int, required=False)
+    get_parser.add_argument('grader_id', type=int, required=False)
+    get_parser.add_argument('ungraded', type=boolean, required=False)
+    get_parser.add_argument('direction', type=str, required=False, choices=["next", "prev"])
 
     def get(self, exam_id, submission_id=None):
         """get submissions for the given exam, ordered by copy number.
@@ -61,6 +105,7 @@ class Submissions(Resource):
                 True if the assigned student has been validated by a human.
             problems: list of problems
         """
+        args = self.get_parser.parse_args()
         exam = Exam.query.get(exam_id)
         if exam is None:
             return dict(status=404, message='Exam does not exist.'), 404
@@ -70,6 +115,11 @@ class Submissions(Resource):
                                           Submission.copy_number == submission_id).one_or_none()
             if sub is None:
                 return dict(status=404, message='Submission does not exist.'), 404
+
+            if args.direction:
+                if args.problem_id is None or args.grader_id is None or args.ungraded is None:
+                    return dict(status=400, message='One of problem_id, grader_id, ungraded, direction not provided')
+                return _find_submission(sub, args.problem_id, args.grader_id, args.direction, args.ungraded)
 
             return sub_to_data(sub)
 

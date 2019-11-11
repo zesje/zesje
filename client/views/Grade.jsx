@@ -89,9 +89,10 @@ class Grade extends React.Component {
    * @param ungraded either 'true' or 'false'
    */
   navigate = (direction, ungraded) => {
-    api.get(`grade/navigation/${this.props.examID}/${this.state.submission.id}/${this.state.problem.id}` +
-      '?direction=' + direction +
+    api.get(`submissions/${this.props.examID}/${this.state.submission.id}` +
+      '?problem_id=' + this.state.problem.id +
       '&grader_id=' + this.props.graderID +
+      '&direction=' + direction +
       '&ungraded=' + ungraded).then(sub =>
       this.setState({
         submission: sub
@@ -148,7 +149,8 @@ class Grade extends React.Component {
    * id, name for each problem in the exam.
    */
   updateMetadata = () => {
-    api.get(`grade/metadata/${this.props.examID}/${this.props.graderID}`).then(metadata => {
+    api.get(`exams/${this.props.examID}&only_metadata=true` +
+    `&grader_id=${this.props.graderID}`).then(metadata => {
       this.setState({
         submissions: metadata.submissions,
         problems: metadata.problems

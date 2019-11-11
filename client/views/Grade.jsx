@@ -309,7 +309,8 @@ class Grade extends React.Component {
                           data-tooltip='shift + ←'
                           onClick={this.prev}>Previous</button>
                       </div>
-                      <div className='control is-wider'>
+                      <div className={'control is-wider ' + (this.state.showTooltips ? 'tooltip is-tooltip-active' : '')}
+                           data-tooltip='Press ctrl to hide shortcuts'>
                         <SearchBox
                           placeholder='Search for a submission'
                           selected={submission}
@@ -409,7 +410,6 @@ class Grade extends React.Component {
                     problem.id + '/' + submission.id + '/' + (this.state.fullPage ? '1' : '0')) + '?' +
                     Grade.getLocationHash(problem) : ''} alt='' />
                 </p>
-
               </div>
             </div>
           </div>

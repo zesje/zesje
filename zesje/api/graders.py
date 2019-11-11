@@ -7,6 +7,7 @@ from ..database import db
 
 from ._helpers import required_string
 from ..database import Grader
+from ..pregrader import AUTOGRADER_NAME
 
 
 # TODO: when making new database structure, have only a single
@@ -29,7 +30,7 @@ class Graders(Resource):
                 'id': g.id,
                 'name': g.name
             }
-            for g in Grader.query.all()
+            for g in Grader.query.filter(Grader.name != AUTOGRADER_NAME).all()
         ]
 
     post_parser = reqparse.RequestParser()

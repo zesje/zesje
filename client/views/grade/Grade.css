@@ -7,3 +7,6 @@
 div.control::after {
     display: none !important
 }
+.input {
+    resize: vertical;
+}

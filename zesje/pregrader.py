@@ -1,15 +1,23 @@
 import cv2
 import numpy as np
 from datetime import datetime
+from reportlab.lib.units import inch, mm
 
 from .blanks import reference_image
 from .database import db, Grader, FeedbackOption, GradingPolicy, Submission, Solution
-from .images import guess_dpi, get_box, widget_area, blockshaped
+from .images import guess_dpi, get_box, widget_area
 from .pdf_generation import CHECKBOX_FORMAT
-
 
 AUTOGRADER_NAME = 'Zesje'
 BLANK_FEEDBACK_NAME = 'Blank'
+
+# Allow up to 1 mm misalignment in any direction
+MAX_ALIGNMENT_ERROR_MM = 1
+# Make sure a roughly 1 cm long line written with
+# a ballpoint pen is regarded as not blank.
+MIN_ANSWER_SIZE_MM2 = 4
+
+mm_per_inch = inch / mm
 
 
 def grade_problem(sub, page, page_img):
@@ -33,14 +41,24 @@ def grade_problem(sub, page, page_img):
         if (not sol.graded_by or sol.graded_by.name == AUTOGRADER_NAME) and sol.problem.widget.page == page
     ]
 
+    if solutions_to_grade:
+        dpi = guess_dpi(page_img)
+        page = solutions_to_grade[0].problem.widget.page
+        reference_img = reference_image(sub.exam_id, page, dpi)
+
     for sol in solutions_to_grade:
+        # Completely reset the solution and pregrade with a fresh start
         sol.feedback = []
+        sol.grader_id = None
+        sol.graded_at = None
+
         problem = sol.problem
 
-        if problem.mc_options:
-            grade_mcq(sol, page_img)
-        elif is_blank(problem, page_img):
-            grade_as_blank(sol)
+        if not is_misaligned(problem, page_img, reference_img):
+            if problem.mc_options:
+                grade_mcq(sol, page_img)
+            elif is_blank(problem, page_img, reference_img):
+                grade_as_blank(sol)
 
     db.session.commit()
 
@@ -125,46 +143,118 @@ def set_auto_grader(solution):
     db.session.commit()
 
 
-def is_blank(problem, page_img):
-    """
-    A function that determines if a solution is blank
+def is_misaligned(problem, student_img, reference_img):
+    """Checks if an image is correctly aligned against the reference
+
+    This is done by thickening the lines in the student image and
+    checking if this thickened image fully covers the reference image.
 
     Params
     ------
     problem: Problem
         An instance of the problem to be checked
     page_img: np.array
-        A numpy array of the image scan
+        A numpy array of the full page image scan
+    reference_img: np.array
+        A numpy array of the full page reference image
+    """
+    widget_area_in = widget_area(problem)
+    dpi = guess_dpi(student_img)
+
+    # Extra padding to ensure any content is not cut off
+    # in only one of the two images
+    padding_inch = 0.2
+    padding_pixels = int(padding_inch * dpi)
+
+    # The diameter of the kernel to thicken the lines with. This allows
+    # misalignment up to the max alignment error in any direction.
+    kernel_size_mm = 2 * MAX_ALIGNMENT_ERROR_MM
+    kernel_size = int(kernel_size_mm * dpi / mm_per_inch)
+
+    student = get_box(student_img, widget_area_in, padding=padding_inch)
+    reference = get_box(reference_img, widget_area_in, padding=padding_inch)
+
+    return not covers(student, reference,
+                      padding_pixels=padding_pixels,
+                      kernel_size=kernel_size)
+
+
+def is_blank(problem, page_img, reference_img):
+    """Determines if a solution is blank
+
+    Params
+    ------
+    problem: Problem
+        An instance of the problem to be checked
+    page_img: np.array
+        A numpy array of the full page image scan
+    reference_img: np.array
+        A numpy array of the full page reference image
 
     Returns
     ------
     True if the solution is blank, else False
     """
+    widget_area_in = widget_area(problem)
     dpi = guess_dpi(page_img)
 
-    widget_area_in = widget_area(problem)
+    # Extra padding to ensure any content is not cut off
+    # in only one of the two images
+    padding_inch = 0.2
+    padding_pixels = int(padding_inch * dpi)
 
-    cut_im = get_box(page_img, widget_area_in, padding=0)
+    # The diameter of the kernel to thicken the lines with. This allows
+    # misalignment up to the max alignment error in any direction.
+    kernel_size_mm = 2 * MAX_ALIGNMENT_ERROR_MM
+    kernel_size = int(kernel_size_mm * dpi / mm_per_inch)
 
-    reference = reference_image(problem, dpi, widget_area_in)
+    min_answer_area_pixels = int(MIN_ANSWER_SIZE_MM2 * dpi**2 / (mm_per_inch)**2)
 
-    # Convert the images to grayscale and transform into a 1D array
-    blank_image = np.array(reference)
-    blank_image = cv2.cvtColor(blank_image, cv2.COLOR_BGR2GRAY)
-    blank_image = np.array(blank_image)
-    input_image = np.array(cut_im)
-    input_image = cv2.cvtColor(input_image, cv2.COLOR_BGR2GRAY)
-    input_image = np.array(input_image)
+    student = get_box(page_img, widget_area_in, padding=padding_inch)
+    reference = get_box(reference_img, widget_area_in, padding=padding_inch)
 
-    block_size_cm = 1.0
-    block_size_inch = block_size_cm * 0.3937
-    block_size_pixels = int(block_size_inch * dpi)
+    return covers(reference, student,
+                  padding_pixels=padding_pixels,
+                  kernel_size=kernel_size,
+                  threshold=min_answer_area_pixels)
 
-    return all(
-        1.03 * np.sum(input_box) > np.sum(blank_box)
-        for blank_box, input_box
-        in zip(blockshaped(blank_image, block_size_pixels),
-               blockshaped(input_image, block_size_pixels)))
+
+def covers(cover_img, to_cover_img, padding_pixels=0, threshold=0, kernel_size=9):
+    """Check if an image covers another image
+
+    First, both images are converted to binary. Then, all the content
+    in `cover_img` is dilated. Finally it checks if the dilated cover
+    image covers `to_cover_img` up to a threshold in pixels.
+
+    This function handles white as open space, black as filled space.
+
+    Params
+    ------
+    cover_img: np.array
+        The image that is used as cover
+    to_cover_img: np.array
+        The image that is going to be covered
+    padding_pixels: int
+        The amount of padding to remove before checking if it is covered
+    threshold: int
+        The amount of pixels that are allowed to not be covered
+    kernel_size: int
+        The diameter in pixels of the kernel that is used to thicken the lines
+    """
+    cover = cv2.cvtColor(cover_img, cv2.COLOR_BGR2GRAY)
+    _, cover_bin = cv2.threshold(cover, 150, 255, cv2.THRESH_BINARY)
+
+    to_cover = cv2.cvtColor(to_cover_img, cv2.COLOR_BGR2GRAY)
+    _, to_cover_bin = cv2.threshold(to_cover, 150, 255, cv2.THRESH_BINARY)
+
+    kernel = np.ones((kernel_size, kernel_size), dtype=np.uint8)
+    cover_thick = cv2.erode(cover_bin, kernel, iterations=1)
+
+    difference = ~(cover_thick - to_cover_bin)[padding_pixels:-padding_pixels, padding_pixels:-padding_pixels]
+
+    non_covered_pixels = np.count_nonzero(difference == 0)
+
+    return non_covered_pixels <= threshold
 
 
 def box_is_filled(box, page_img, threshold=225, cut_padding=0.05, box_size=9):

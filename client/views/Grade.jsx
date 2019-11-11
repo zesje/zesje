@@ -23,7 +23,8 @@ class Grade extends React.Component {
   constructor (props) {
     super(props)
     this.state = {}
-    api.get(`grade/metadata/${this.props.examID}/${this.props.graderID}`).then(metadata => {
+    api.get(`exams/${this.props.examID}?only_metadata=true` +
+      `&grader_id=${this.props.graderID}`).then(metadata => {
       const examID = metadata.exam_id
       const submissionID = metadata.submissions[0].id
       const problemID = metadata.problems[0].id
@@ -149,7 +150,7 @@ class Grade extends React.Component {
    * id, name for each problem in the exam.
    */
   updateMetadata = () => {
-    api.get(`exams/${this.props.examID}&only_metadata=true` +
+    api.get(`exams/${this.props.examID}?only_metadata=true` +
     `&grader_id=${this.props.graderID}`).then(metadata => {
       this.setState({
         submissions: metadata.submissions,

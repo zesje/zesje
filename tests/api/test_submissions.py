@@ -1,4 +1,4 @@
-from zesje.api.grade import _shuffle
+from zesje.api.submissions import _shuffle
 
 
 class Submission:

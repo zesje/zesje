@@ -7,5 +7,5 @@
 
 /* Add darker borders to every 5th feedback item */
 nav > a.feedback-item:nth-child(5n+6):not(:last-of-type) {
-    border-bottom: 1px solid #222;
+    border-bottom-width: 3px;
 }

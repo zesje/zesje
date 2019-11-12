@@ -24,14 +24,14 @@ from .scans import exam_student_id_widget
 
 
 def solution_pdf(exam_id, student_id, anonymous=False):
-    """Send a dict of messages
+    """Build a (anonymous) pdf from student's solution images of an exam
 
     Parameters
     ----------
     exam_id : int
     student_id : int
     anonymous : bool, optional
-        whether the pdfs and filenames need to be anonymized
+        whether the solution images needs to be anonymized
 
     Returns
     -------

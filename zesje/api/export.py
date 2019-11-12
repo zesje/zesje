@@ -79,6 +79,7 @@ def exam(file_format, exam_id):
 
 def zipped_exam_solutions_generator(exam_id, anonymous, current_app):
     """Generator for exam solutions as a zip of (anonymized) pdfs
+
     Should only load the student solutions one at a time to decrease memory load.
 
     Parameters

@@ -34,7 +34,7 @@ class FeedbackBlock extends React.Component {
     const shortcut = (this.props.index < 11 ? '' : 'shift + ') + this.props.index % 10
     return (
       <a
-        className={this.props.grading ? 'panel-block is-active' : 'panel-block'}
+        className={'panel-block feedback-item' + (this.props.grading ? ' is-active' : '')}
         onClick={this.props.grading ? this.toggle : this.props.editFeedback}
         style={this.props.selected ? {backgroundColor: '#209cee'} : {}}
       >
@@ -48,7 +48,7 @@ class FeedbackBlock extends React.Component {
           }
         </span>
         <span style={{ width: '80%' }}>
-          {this.props.index + ' - ' + this.props.feedback.name}
+          {this.props.feedback.name}
         </span>
         <Tooltip text={this.props.feedback.description} />
         <div className='field is-grouped'>

@@ -2,7 +2,7 @@ import React from 'react'
 
 class ProblemSelector extends React.Component {
   changeProblem = (event) => {
-    this.props.setProblemID(event.target.value)
+    this.props.setProblemUpdateMetadata(event.target.value)
   }
   render () {
     return (

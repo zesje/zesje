@@ -99,8 +99,7 @@ class Grade extends React.Component {
         submission: sub
       })
     )
-    this.updateMetadata()
-    this.setProblem(this.state.problem.id)
+    this.setProblemUpdateMetadata(this.state.problem.id)
   }
   /**
    * Sugar methods for navigate.
@@ -135,7 +134,7 @@ class Grade extends React.Component {
    * Also updates the metadata.
    * @param id the id of the problem to update to.
    */
-  setProblem = (id) => {
+  setProblemUpdateMetadata = (id) => {
     api.get(`problems/${id}`).then(problem => {
       this.setState({
         problem: problem
@@ -167,7 +166,7 @@ class Grade extends React.Component {
       return
     }
     const newId = this.state.problems[currentIndex - 1].id
-    this.setProblem(newId)
+    this.setProblemUpdateMetadata(newId)
   }
   /**
    * Finds the index of the current problem and moves to the next one.
@@ -178,7 +177,7 @@ class Grade extends React.Component {
       return
     }
     const newId = this.state.problems[currentIndex + 1].id
-    this.setProblem(newId)
+    this.setProblemUpdateMetadata(newId)
   }
   /**
    * Enter the feedback editing view for a feedback option.
@@ -195,7 +194,7 @@ class Grade extends React.Component {
    * Updates the problem to make sure changes to feedback options are reflected.
    */
   backToFeedback = () => {
-    this.setProblem(this.state.problem.id)
+    this.setProblemUpdateMetadata(this.state.problem.id)
     this.setState({
       editActive: false
     })
@@ -311,7 +310,7 @@ class Grade extends React.Component {
               <div className='column is-one-quarter-desktop is-one-third-tablet'>
                 <ProblemSelector
                   problems={problems}
-                  setProblemID={this.setProblem}
+                  setProblemUpdateMetadata={this.setProblemUpdateMetadata}
                   current={problem}
                   showTooltips={this.state.showTooltips} />
                 <nav className='panel'>

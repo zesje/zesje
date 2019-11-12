@@ -88,6 +88,17 @@ class FeedbackPanel extends React.Component {
     })
   }
 
+  /**
+   * Blurs the remark box when pressing escape or enter (shift+enter preserves newlines)
+   * @param event the event
+   */
+  keyMap = (event) => {
+    if (event.keyCode === 27 || (event.keyCode === 13 && !event.shiftKey)) {
+      event.preventDefault()
+      event.target.blur()
+    }
+  }
+
   render () {
     const blockURI = this.props.examID + '/' + this.props.submissionID + '/' + this.props.problem.id
 
@@ -118,7 +129,7 @@ class FeedbackPanel extends React.Component {
         )}
         {this.props.grading &&
           <div className='panel-block'>
-            <textarea className='textarea' rows='2' placeholder='remark' value={this.state.remark} onBlur={this.saveRemark} onChange={this.changeRemark} />
+            <textarea className='textarea' rows='2' placeholder='Remark' value={this.state.remark} onBlur={this.saveRemark} onChange={this.changeRemark} onKeyDown={this.keyMap} />
           </div>
         }
         <div className='panel-block'>

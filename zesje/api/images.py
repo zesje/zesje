@@ -1,6 +1,7 @@
 from flask import abort, Response
 
 import cv2
+import numpy as np
 
 from ..images import get_box, guess_dpi, widget_area
 from ..database import Exam, Submission, Problem, Page, Solution
@@ -90,10 +91,13 @@ def _grey_out_student_widget(page_im, coords, dpi):
     :returns the page image with the widget greyed out
 
     """
-    # coords are [ymin, ymax, xmin, xmax]
     grey = (150, 150, 150)
-    coords = list(map(lambda c: int(c / 72 * dpi), coords))
-    page_im = cv2.rectangle(page_im, (coords[2], coords[0]), (int(coords[3] / 2), coords[1]), grey, -1)
-    height = coords[1] - coords[0]
-    page_im = cv2.rectangle(page_im, (coords[2], coords[0]), (coords[3], int(coords[1] - height * 0.45)), grey, -1)
+    ymin, ymax, xmin, xmax = (np.array(coords) / 72 * dpi).astype(int)
+    height, width = ymax - ymin, xmax - xmin
+
+    xmiddle = int(xmin + 0.5 * width)
+    ymiddle = int(ymin + 0.55 * height)
+
+    page_im = cv2.rectangle(page_im, (xmin, ymin), (xmiddle, ymax), grey, -1)
+    page_im = cv2.rectangle(page_im, (xmiddle, ymin), (xmax, ymiddle), grey, -1)
     return page_im

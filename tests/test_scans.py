@@ -252,7 +252,7 @@ def test_all_effects(
 
 
 @pytest.mark.parametrize('filename,expected', [
-    ['blank-a4-2pages.pdf', AttributeError],
+    ['blank-a4-2pages.pdf', ValueError],
     ['single-image-a4.pdf', ValueError],
     ['two-images-a4.pdf', ValueError],
     ['flattened-a4-2pages.pdf', None]],
@@ -260,12 +260,12 @@ def test_all_effects(
 def test_image_extraction_pike(datadir, filename, expected):
     file = os.path.join(datadir, filename)
     with Pdf.open(file) as pdf_reader:
-        for pagenr in range(len(pdf_reader.pages)):
+        for page in pdf_reader.pages:
             if expected is not None:
                 with pytest.raises(expected):
-                    extract_image_pikepdf(pagenr, pdf_reader)
+                    extract_image_pikepdf(page)
             else:
-                img = extract_image_pikepdf(pagenr, pdf_reader)
+                img = extract_image_pikepdf(page)
                 assert img is not None
 
 

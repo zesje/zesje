@@ -102,8 +102,9 @@ def zipped_exam_solutions_generator(exam_id, anonymous, current_app):
 
         for student in students:
             if anonymous:
+                copy_numbers = sorted(s.copy_number for s in student.submissions)
                 file_name = f'cop{"y" if len(student.submissions) == 1 else "ies"}-' \
-                       f'{"-".join(str(s.id) for s in student.submissions)}.pdf'
+                            f'{"-".join(str(number) for number in copy_numbers)}.pdf'
             else:
                 file_name = f'student-{student.id}.pdf'
 

@@ -39,7 +39,7 @@ def solution_pdf(exam_id, student_id, anonymous=False):
     """
     subs = Submission.query.filter(Submission.exam_id == exam_id,
                                    Submission.student_id == student_id).all()
-    pages = sorted((p for s in subs for p in s.pages), key=(lambda p: (p.submission.id, p.number)))
+    pages = sorted((p for s in subs for p in s.pages), key=(lambda p: (p.submission.copy_number, p.number)))
 
     from flask import current_app
     page_format = current_app.config.get('PAGE_FORMAT', 'A4')  # TODO Remove default value

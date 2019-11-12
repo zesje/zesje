@@ -27,4 +27,3 @@ def _shuffle(to_shuffle, shuffle_seed, key_extractor=lambda v: v):
     :return: a copy of to_shuffle, sorted uniquely based on it's own key and shuffle_seed.
     """
     return sorted(to_shuffle, key=lambda s: md5(f'{key_extractor(s)}, {shuffle_seed}'.encode('utf-8')).digest())
-

@@ -13,16 +13,17 @@ class GradeNavigation extends React.Component {
             <div className='control'>
               <button type='submit'
                 className={'button is-info is-rounded is-hidden-mobile' +
-                    (this.props.showTooltips ? ' tooltip is-tooltip-active' : '')}
-                data-tooltip='shift + ←'
-                onClick={this.props.prevUngraded}>ungraded</button>
+                      (this.props.showTooltips ? ' tooltip is-tooltip-active' : '')}
+                data-tooltip='←'
+                onClick={this.prevUngraded}>Ungraded</button>
               <button type='submit'
                 className={'button is-link' +
-                    (this.props.showTooltips ? ' tooltip is-tooltip-active' : '')}
-                data-tooltip='←'
-                onClick={this.props.prev}>Previous</button>
+                      (this.props.showTooltips ? ' tooltip is-tooltip-active' : '')}
+                data-tooltip='shift + ←'
+                onClick={this.prev}>Previous</button>
             </div>
-            <div className='control is-wider'>
+            <div id='search' className={'control is-wider ' + (this.props.showTooltips ? 'tooltip is-tooltip-active tooltip-no-arrow' : '')}
+              data-tooltip='Press ctrl to hide shortcuts'>
               <SearchBox
                 placeholder='Search for a submission'
                 setSelected={this.props.setSubmission}
@@ -75,7 +76,7 @@ class GradeNavigation extends React.Component {
                 className={'button is-info is-rounded is-hidden-mobile' +
                     (this.props.showTooltips ? ' tooltip is-tooltip-active' : '')}
                 data-tooltip='shift + →'
-                onClick={this.props.nextUngraded}>ungraded</button>
+                onClick={this.props.nextUngraded}>Ungraded</button>
             </div>
           </div>
         </div>

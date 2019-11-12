@@ -50,15 +50,15 @@ class Grade extends React.Component {
   componentDidMount = () => {
     // If we change the keybindings here we should also remember to
     // update the tooltips for the associated widgets (in render()).
-    // Also add the shortcut to ./client/commponents/help/ShortcutsHelp.md
-    this.props.bindShortcut(['left', 'h'], this.prev)
-    this.props.bindShortcut(['right', 'l'], this.next)
+    // Also add the shortcut to ./client/components/help/ShortcutsHelp.md
+    this.props.bindShortcut(['shift+left', 'shift+h'], this.prev)
+    this.props.bindShortcut(['shift+right', 'shift+l'], this.next)
     this.props.bindShortcut(['a'], this.approve)
-    this.props.bindShortcut(['shift+left', 'shift+h'], (event) => {
+    this.props.bindShortcut(['left', 'h'], (event) => {
       event.preventDefault()
       this.prevUngraded()
     })
-    this.props.bindShortcut(['shift+right', 'shift+l'], (event) => {
+    this.props.bindShortcut(['right', 'l'], (event) => {
       event.preventDefault()
       this.nextUngraded()
     })
@@ -71,8 +71,10 @@ class Grade extends React.Component {
       this.nextProblem()
     })
     this.props.bindShortcut('f', this.toggleFullPage)
-    this.props.bindShortcut('ctrl', () => this.setState({showTooltips: true}), 'keydown')
-    this.props.bindShortcut('ctrl', () => this.setState({showTooltips: false}), 'keyup')
+    this.props.bindShortcut('ctrl', (event) => {
+      event.preventDefault()
+      this.setState({showTooltips: !this.state.showTooltips})
+    })
     let key = 0
     let prefix = ''
     for (let i = 1; i < 21; i++) {
@@ -331,7 +333,6 @@ class Grade extends React.Component {
               </div>
 
               <div className='column'>
-
                 <GradeNavigation
                   submission={submission}
                   submissions={submissions}
@@ -385,7 +386,6 @@ class Grade extends React.Component {
                     problem.id + '/' + submission.id + '/' + (this.state.fullPage ? '1' : '0')) + '?' +
                     Grade.getLocationHash(problem) : ''} alt='' />
                 </p>
-
               </div>
             </div>
           </div>

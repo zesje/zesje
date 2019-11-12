@@ -3,6 +3,7 @@ import React from 'react'
 class ProblemSelector extends React.Component {
   changeProblem = (event) => {
     this.props.setProblemUpdateMetadata(event.target.value)
+    event.target.blur()
   }
   render () {
     return (

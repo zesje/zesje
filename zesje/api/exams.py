@@ -170,6 +170,14 @@ class Exams(Resource):
         }
 
     def _get_single_metadata(self, exam_id, shuffle_seed):
+        """ Serves metadata for an exam.
+        Shuffles submissions based on the grader ID.
+
+        :param exam_id: id of exam to get metadata for.
+        :param grader_id: id of the grader.
+        :return: the exam metadata.
+        """
+
         exam = Exam.query.get(exam_id)
         if exam is None:
             return dict(status=404, message='Exam does not exist.'), 404

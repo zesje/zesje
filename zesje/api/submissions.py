@@ -39,6 +39,20 @@ def sub_to_data(sub):
 
 
 def _find_submission(old_submission, problem_id, shuffle_seed, direction, ungraded):
+    """
+    Finds a submission based on the parameters of the function.
+    Finds all solutions for the problem, and shuffles them based on the shuffle_seed.
+    Then finds the first (ungraded) submission, either in 'next' or 'prev' direction.
+
+    If no such submission exists, returns the old submission.
+    :param old_submission: the submission to base next or prev on.
+    :param problem_id: id of the current problem.
+    :param shuffle_seed: the seed to shuffle the submissions on.
+    :param direction: either 'next' or 'prev'
+    :param ungraded: boolean value indicating whether the found submission should be ungraded.
+    :return: a new submission, or the old if no new submission matching the criteria is found.
+    """
+
     problem = Problem.query.get(problem_id)
 
     if problem is None:
@@ -81,6 +95,9 @@ class Submissions(Resource):
 
     def get(self, exam_id, submission_id=None):
         """get submissions for the given exam, ordered by copy number.
+
+        if args.direction is specified, returns a submission based on
+        the _find_submissions function.
 
         Parameters
         ----------

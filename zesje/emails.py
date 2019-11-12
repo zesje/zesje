@@ -36,7 +36,7 @@ def solution_pdf(exam_id, student_id, anonymous=False):
     Returns
     -------
     result : BytesIO
-        the students solution in pdf format.
+        the student's solution in pdf format.
     """
     subs = Submission.query.filter(Submission.exam_id == exam_id,
                                    Submission.student_id == student_id).all()

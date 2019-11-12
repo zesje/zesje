@@ -43,14 +43,24 @@ def _find_submission(old_submission, problem_id, shuffle_seed, direction, ungrad
     Finds a submission based on the parameters of the function.
     Finds all solutions for the problem, and shuffles them based on the shuffle_seed.
     Then finds the first (ungraded) submission, either in 'next' or 'prev' direction.
-
     If no such submission exists, returns the old submission.
-    :param old_submission: the submission to base next or prev on.
-    :param problem_id: id of the current problem.
-    :param shuffle_seed: the seed to shuffle the submissions on.
-    :param direction: either 'next' or 'prev'
-    :param ungraded: boolean value indicating whether the found submission should be ungraded.
-    :return: a new submission, or the old if no new submission matching the criteria is found.
+
+    Parameters
+    ----------
+    old_submission : submission
+        the submission to base next or prev on.
+    problem_id : int
+        id of the current problem.
+    shuffle_seed : int
+        the seed to shuffle the submissions on.
+    direction : string
+        either 'next' or 'prev'
+    ungraded : bool
+        value indicating whether the found submission should be ungraded.
+    Returns
+    -------
+    A new submission, or the old one if no submission matching the criteria is found.
+
     """
 
     problem = Problem.query.get(problem_id)

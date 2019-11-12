@@ -21,9 +21,16 @@ def abort(status, **kwargs):
 def _shuffle(to_shuffle, shuffle_seed, key_extractor=lambda v: v):
     """
     Uniquely sorts a list based on some seed.
-    :param to_shuffle: the list to shuffle.
-    :param shuffle_seed: the seed to shuffle this list with.
-    :param key_extractor: function to extract the key to sort on from the objects in to_shuffle.
-    :return: a copy of to_shuffle, sorted uniquely based on it's own key and shuffle_seed.
+    Parameters
+    ----------
+    to_shuffle : iterable
+        the list to shuffle.
+    shuffle_seed : int
+        the seed to shuffle this list with.
+    key_extractor : lambda
+        function to extract the key to sort on from the objects in to_shuffle.
+    Returns
+    -------
+    a copy of to_shuffle, sorted uniquely based on it's own key and shuffle_seed.
     """
     return sorted(to_shuffle, key=lambda s: md5(f'{key_extractor(s)}, {shuffle_seed}'.encode('utf-8')).digest())

@@ -342,7 +342,7 @@ class Grade extends React.Component {
                   next={this.next}
                   nextUngraded={this.nextUngraded}
                   anonymous={this.props.gradeAnonymous}
-                  showToolTips={this.state.showTooltips}
+                  showTooltips={this.state.showTooltips}
                 />
 
                 <ProgressBar done={problem.n_graded} total={submissions.length} />

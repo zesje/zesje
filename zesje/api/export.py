@@ -97,7 +97,7 @@ def zipped_exam_solutions_generator(exam_id, anonymous, current_app):
     with current_app.app_context():
         z = zipstream.ZipFile(mode='w')
 
-        subs = Submission.query.filter_by(exam_id=exam_id).all()
+        subs = Submission.query.filter(Submission.exam_id == exam_id).all()
         students = set(sub.student for sub in subs)
 
         for student in students:

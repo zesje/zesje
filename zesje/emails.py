@@ -37,8 +37,7 @@ def solution_pdf(exam_id, student_id, anonymous=False):
     result : BytesIO
         the students solution in pdf format.
     """
-    subs = Submission.query.filter(Submission.exam_id == exam_id,
-                                   Submission.student_id == student_id).all()
+    subs = Submission.query.filter_by(exam_id=exam_id, student_id=student_id).all()
     pages = sorted((p for s in subs for p in s.pages), key=(lambda p: (p.submission.copy_number, p.number)))
 
     from flask import current_app

@@ -173,9 +173,17 @@ class Exams(Resource):
         """ Serves metadata for an exam.
         Shuffles submissions based on the grader ID.
 
-        :param exam_id: id of exam to get metadata for.
-        :param grader_id: id of the grader.
-        :return: the exam metadata.
+        Parameters
+        ----------
+        exam_id : int
+            id of exam to get metadata for.
+        shuffle_seed : int
+            id of the grader.
+
+        Returns
+        -------
+        the exam metadata.
+
         """
 
         exam = Exam.query.get(exam_id)

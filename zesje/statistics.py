@@ -1,5 +1,3 @@
-from collections import ChainMap
-
 from sqlalchemy.orm.exc import NoResultFound
 
 import numpy as np
@@ -49,9 +47,14 @@ def solution_data(exam_id, student_id):
                                               if sol.remarks)
         results.append(problem_data)
 
-    student = student.__dict__
+    student = {
+        'id': student.id,
+        'first_name': student.first_name,
+        'last_name': student.last_name,
+        'email': student.email,
+        'total': sum(i['score'] for i in results if not np.isnan(i['score']))
+    }
 
-    student['total'] = sum(i['score'] for i in results if not np.isnan(i['score']))
     return student, results
 
 
@@ -80,20 +83,23 @@ def full_exam_data(exam_id):
         result = pandas.DataFrame(columns=pandas.MultiIndex.from_tuples(columns))
         return result
 
-    students = pandas.DataFrame({i[0]['id']: i[0] for i in data}).T
-    del students['id']
-
     results = {}
-    for result in data:
-        for problem in result[1]:
+    for student, problems in data:
+        for problem in problems:
             name = problem.pop('name')
             problem[(name, 'remarks')] = problem.pop('remarks')
             for fo in problem.pop('feedback'):
                 problem[(name, fo['short'])] = fo['score']
             problem[(name, 'total')] = problem.pop('score')
             problem.pop('max_score')
-        results[result[0]['id']] = dict(ChainMap({('total', 'total'):
-                                                  result[0]['total']},
-                                                 *result[1]))
+
+        results[student['id']] = {
+            **{
+                field: entry
+                for problem in problems
+                for field, entry in problem.items()
+            },
+            ('total', 'total'): student['total']
+        }
 
     return pandas.DataFrame(results).T

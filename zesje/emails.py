@@ -33,7 +33,7 @@ def solution_pdf(exam_id, student_id, anonymous=False):
         whether the pdfs and filenames need to be anonymized
 
     Returns
-    ----------
+    -------
     result : BytesIO
         the students solution in pdf format.
     """

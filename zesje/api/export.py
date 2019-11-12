@@ -34,7 +34,7 @@ def exam(file_format, exam_id):
     exam_id : int
 
     Returns
-    ----------
+    -------
     response : flask Response
         response containing exam in specified file format.
     """
@@ -90,7 +90,7 @@ def zipped_exam_solutions_generator(exam_id, anonymous, current_app):
         the current flask app as obtained by ``flask.current_app._get_current_object()``.
 
     Returns
-    ----------
+    -------
     response : generator
         generator that yields parts of the zip.
     """
@@ -122,7 +122,7 @@ def exam_pdf(exam_id):
     exam_id : int
 
     Returns
-    ----------
+    -------
     response : flask Response
         response streaming a zip containing (anonymized) pdfs of all student solutions.
     """

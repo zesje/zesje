@@ -21,6 +21,7 @@ def abort(status, **kwargs):
 def _shuffle(to_shuffle, shuffle_seed, key_extractor=lambda v: v):
     """
     Uniquely sorts a list based on some seed.
+
     Parameters
     ----------
     to_shuffle : iterable

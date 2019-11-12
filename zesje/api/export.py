@@ -1,6 +1,6 @@
 from io import BytesIO
 
-from flask import abort, send_file, current_app as app, Response
+from flask import abort, send_file, Response, current_app as app
 import zipstream
 
 from ..database import Exam, Submission

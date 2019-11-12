@@ -182,7 +182,6 @@ class Grade extends React.Component {
   }
   /**
    * Enter the feedback editing view for a feedback option.
-   * todo: move into feedbackpanel.
    * @param feedback the feedback to edit.
    */
   editFeedback = (feedback) => {
@@ -194,7 +193,6 @@ class Grade extends React.Component {
   /**
    * Go back to all the feedback options.
    * Updates the problem to make sure changes to feedback options are reflected.
-   * todo: move into feedbackpanel.
    */
   backToFeedback = () => {
     this.setProblem(this.state.problem.id)

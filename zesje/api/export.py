@@ -3,7 +3,7 @@ from io import BytesIO
 from flask import abort, send_file, current_app as app, Response
 import zipstream
 
-from ..database import Exam, Submission
+from ..database import Exam, Submission, Student
 from ..statistics import full_exam_data
 from ..emails import solution_pdf
 
@@ -81,10 +81,16 @@ def _generator(exam_id, anonymous, current_app):
         z = zipstream.ZipFile(mode='w')
 
         subs = Submission.query.filter(Submission.exam_id == exam_id)
-        student_ids = sorted(set(sub.student.id for sub in subs))
+        students = set(sub.student for sub in subs)
 
-        for counter, student_id in enumerate(student_ids):
-            z.write_iter(f'student{counter}.pdf', solution_pdf(exam_id, student_id, anonymous))
+        for student in students:
+            if anonymous:
+                file_name = f'cop{"y" if len(student.submissions) == 1 else "ies"}-' \
+                       f'{"-".join(str(s.id) for s in student.submissions)}.pdf'
+            else:
+                file_name = f'student-{student.id}.pdf'
+
+            z.write_iter(file_name, solution_pdf(exam_id, student.id, anonymous))
             yield from z.flush()
 
         yield from z
@@ -95,6 +101,7 @@ def exam_pdf(exam_id):
     if exam_data is None:
         abort(404)
 
-    response = Response(_generator(exam_id, exam_data.grade_anonymous, app._get_current_object()), mimetype='application/zip')
-    response.headers['Content-Disposition'] = 'attachment; filename={}'.format('files.zip')
+    response = Response(_generator(exam_id, exam_data.grade_anonymous,
+                                   app._get_current_object()), mimetype='application/zip')
+    response.headers['Content-Disposition'] = f'attachment; filename=exam{exam_id}.zip'
     return response

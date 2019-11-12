@@ -43,7 +43,6 @@ class Submissions extends React.Component {
           this.setState({
             scans: scans
           })
-          this.props.updateAllSubmissions()
           this.updateSubmissions()
         }
       })

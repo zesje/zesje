@@ -11,10 +11,12 @@ class FeedbackPanel extends React.Component {
   feedbackBlock = React.createRef();
 
   state = {
+    selectedFeedbackIndex: null,
     remark: '',
-    problemID: null,
+    // Have to keep submissionID and problemID in state,
+    // to be able to decide when to derive remark from properties.
     submissionID: null,
-    selectedFeedbackIndex: null
+    problemID: null
   }
 
   componentDidMount = () => {
@@ -38,9 +40,9 @@ class FeedbackPanel extends React.Component {
     if (prevState.problemID !== nextProps.problem.id || prevState.submissionID !== nextProps.submissionID) {
       return {
         remark: nextProps.grading && nextProps.solution.remark,
-        problemID: nextProps.problem.id,
+        selectedFeedbackIndex: null,
         submissionID: nextProps.submissionID,
-        selectedFeedbackIndex: null
+        problemID: nextProps.problem.id
       }
     } else return null
   }
@@ -75,11 +77,10 @@ class FeedbackPanel extends React.Component {
     api.post('solution/' + this.props.examID + '/' + this.props.submissionID + '/' + this.props.problem.id, {
       remark: this.state.remark,
       graderID: this.props.graderID
+    }).then(success => {
+      this.props.setSubmission(this.props.submissionID)
+      if (!success) Notification.error('Remark not saved!')
     })
-      .then(success => {
-        this.props.updateAllSubmissions()
-        if (!success) Notification.error('Remark not saved!')
-      })
   }
 
   changeRemark = (event) => {
@@ -112,7 +113,6 @@ class FeedbackPanel extends React.Component {
 
     let selectedFeedbackId = this.state.selectedFeedbackIndex !== null &&
       this.props.problem.feedback[this.state.selectedFeedbackIndex].id
-
     return (
       <React.Fragment>
         {this.props.grading &&
@@ -122,7 +122,7 @@ class FeedbackPanel extends React.Component {
         {this.props.problem.feedback.map((feedback, index) =>
           <FeedbackBlock key={feedback.id} uri={blockURI} graderID={this.props.graderID}
             feedback={feedback} checked={this.props.grading && this.props.solution.feedback.includes(feedback.id)}
-            editFeedback={() => this.props.editFeedback(feedback)} updateAllSubmissions={this.props.updateAllSubmissions}
+            editFeedback={() => this.props.editFeedback(feedback)} toggleOption={this.props.toggleOption}
             ref={(selectedFeedbackId === feedback.id) ? this.feedbackBlock : null} grading={this.props.grading}
             submissionID={this.props.submissionID} selected={selectedFeedbackId === feedback.id || feedback.highlight}
             showIndex={this.props.showTooltips} index={index + 1} />

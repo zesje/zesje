@@ -102,16 +102,6 @@ class App extends React.Component {
         })
       })
   }
-  updateAllSubmissions = (callback) => {
-    api.get('submissions/' + this.state.exam.id).then(subs => {
-      this.setState({
-        exam: {
-          ...this.state.exam,
-          submissions: subs
-        }
-      }, callback)
-    })
-  }
 
   changeGrader = (grader) => {
     this.setState({
@@ -145,14 +135,13 @@ class App extends React.Component {
               <Submissions
                 exam={exam}
                 urlID={match.params.examID}
-                updateExam={this.updateExam}
-                updateAllSubmissions={this.updateAllSubmissions} />} />
+                updateExam={this.updateExam} />}
+            />
             <Route path='/students' render={() =>
               <Students exam={exam} updateSubmission={this.updateSubmission} />} />
             <Route path='/grade' render={() => (
-              exam.submissions.length && grader
-                ? <Grade exam={exam} graderID={this.state.grader.id}
-                  updateSubmission={this.updateSubmission} updateAllSubmissions={this.updateAllSubmissions} updateExam={this.updateExam} />
+              exam.submissions.length && exam.problems.length && grader
+                ? <Grade examID={exam.id} gradeAnonymous={exam.gradeAnonymous} graderID={this.state.grader.id} />
                 : <Fail message='No exams uploaded or no grader selected. Please do not bookmark URLs' />
             )} />
             <Route path='/overview' render={() => (

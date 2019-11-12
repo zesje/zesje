@@ -1,14 +1,13 @@
 import React from 'react'
 import Notification from 'react-bulma-notification'
-import hash from 'object-hash'
 import Hero from '../components/Hero.jsx'
 
 import FeedbackPanel from '../components/feedback/FeedbackPanel.jsx'
 import ProblemSelector from './grade/ProblemSelector.jsx'
 import EditPanel from '../components/feedback/EditPanel.jsx'
-import SearchBox from '../components/SearchBox.jsx'
 import ProgressBar from '../components/ProgressBar.jsx'
 import withShortcuts from '../components/ShortcutBinder.jsx'
+import GradeNavigation from './grade/GradeNavigation.jsx'
 
 import * as api from '../api.jsx'
 
@@ -17,18 +16,37 @@ import './grade/Grade.css'
 import '../components/SubmissionNavigation.css'
 
 class Grade extends React.Component {
-  state = {
-    editActive: false,
-    feedbackToEdit: null,
-    sIndex: 0,
-    pIndex: 0,
-    graderID: this.props.graderID,
-    examID: null,
-    fullPage: false,
-    showTooltips: false,
-    submissions: Grade.shuffleSubmissions(this.props.exam.submissions, this.props.graderID)
+  /**
+   * Constructor sets empty state, and requests metadata for the exam.
+   * After getting this metadata, requests and sets the submission and the problem.
+   */
+  constructor (props) {
+    super(props)
+    this.state = {}
+    api.get(`exams/${this.props.examID}?only_metadata=true` +
+      `&shuffle_seed=${this.props.graderID}`).then(metadata => {
+      const examID = metadata.exam_id
+      const submissionID = metadata.submissions[0].id
+      const problemID = metadata.problems[0].id
+      Promise.all([
+        api.get(`submissions/${examID}/${submissionID}`),
+        api.get(`problems/${problemID}`)
+      ]).then(values => {
+        const submission = values[0]
+        const problem = values[1]
+        this.setState({
+          submission: submission,
+          problem: problem,
+          submissions: metadata.submissions,
+          problems: metadata.problems
+        })
+      })
+    })
   }
 
+  /**
+   * React lifecycle method. Binds all shortcuts.
+   */
   componentDidMount = () => {
     // If we change the keybindings here we should also remember to
     // update the tooltips for the associated widgets (in render()).
@@ -62,160 +80,195 @@ class Grade extends React.Component {
     for (let i = 1; i < 21; i++) {
       key = i % 10
       prefix = i > 10 ? 'shift+' : ''
-      this.props.bindShortcut(prefix + key, () => this.toggleOption(i - 1))
+      this.props.bindShortcut(prefix + key, () => this.toggleFeedbackOptionIndex(i - 1))
     }
   }
 
-  /*
-   * This updates the submission to a new one.
+  /**
+   * Navigates the current submission forwards or backwards, and either just to the next, or to the next ungraded.
+   * Also updates the metadata, and the current problem, to make sure that the
+   * progress bar and feedback options are both up to date.
+   * @param direction either 'prev' or 'next'
+   * @param ungraded either 'true' or 'false'
    */
-  setSubmissionIndex = (newIndex) => {
-    if (newIndex >= 0 && newIndex < this.state.submissions.length) {
+  navigate = (direction, ungraded) => {
+    api.get(`submissions/${this.props.examID}/${this.state.submission.id}` +
+      '?problem_id=' + this.state.problem.id +
+      '&shuffle_seed=' + this.props.graderID +
+      '&direction=' + direction +
+      '&ungraded=' + ungraded).then(sub =>
       this.setState({
-        sIndex: newIndex
+        submission: sub
       })
-      this.props.updateSubmission(this.state.submissions[newIndex].id)
-    }
+    )
+    this.setProblemUpdateMetadata(this.state.problem.id)
   }
-
+  /**
+   * Sugar methods for navigate.
+   */
   prev = () => {
-    const newIndex = this.state.sIndex - 1
-    this.setSubmissionIndex(newIndex)
+    this.navigate('prev', 'false')
   }
   next = () => {
-    const newIndex = this.state.sIndex + 1
-    this.setSubmissionIndex(newIndex)
+    this.navigate('next', 'false')
   }
-
   prevUngraded = () => {
-    for (let i = this.state.sIndex - 1; i >= 0; i--) {
-      if (this.state.submissions[i].problems[this.state.pIndex].graded_by === null) {
-        this.setSubmissionIndex(i)
-        return
-      }
-    }
+    this.navigate('prev', 'true')
   }
 
   nextUngraded = () => {
-    for (let i = this.state.sIndex + 1; i < this.state.submissions.length; i++) {
-      if (this.state.submissions[i].problems[this.state.pIndex].graded_by === null) {
-        this.setSubmissionIndex(i)
-        return
-      }
-    }
+    this.navigate('next', 'true')
   }
 
+  /**
+   * Updates the submission from the server, and sets it as the current submission.
+   * @param id the id of the submission to update to.
+  */
+  setSubmission = (id) => {
+    api.get(`submissions/${this.props.examID}/${id}`).then(sub => {
+      this.setState({
+        submission: sub
+      })
+    })
+  }
+  /**
+   * Updates the problem from the server, and sets it as the current problem.
+   * Also updates the metadata.
+   * @param id the id of the problem to update to.
+   */
+  setProblemUpdateMetadata = (id) => {
+    api.get(`problems/${id}`).then(problem => {
+      this.setState({
+        problem: problem
+      })
+    })
+    this.updateMetadata()
+  }
+  /**
+   * Updates the metadata for the current exam.
+   * This metadata has:
+   * id, student for each submission in the exam and
+   * id, name for each problem in the exam.
+   */
+  updateMetadata = () => {
+    api.get(`exams/${this.props.examID}?only_metadata=true` +
+    `&shuffle_seed=${this.props.graderID}`).then(metadata => {
+      this.setState({
+        submissions: metadata.submissions,
+        problems: metadata.problems
+      })
+    })
+  }
+  /**
+   * Finds the index of the current problem and moves to the previous one.
+   */
+  prevProblem = () => {
+    const currentIndex = this.state.problems.findIndex(p => p.id === this.state.problem.id)
+    if (currentIndex === 0) {
+      return
+    }
+    const newId = this.state.problems[currentIndex - 1].id
+    this.setProblemUpdateMetadata(newId)
+  }
+  /**
+   * Finds the index of the current problem and moves to the next one.
+   */
+  nextProblem = () => {
+    const currentIndex = this.state.problems.findIndex(p => p.id === this.state.problem.id)
+    if (currentIndex === this.state.problems.length - 1) {
+      return
+    }
+    const newId = this.state.problems[currentIndex + 1].id
+    this.setProblemUpdateMetadata(newId)
+  }
+  /**
+   * Enter the feedback editing view for a feedback option.
+   * @param feedback the feedback to edit.
+   */
   editFeedback = (feedback) => {
     this.setState({
       editActive: true,
       feedbackToEdit: feedback
     })
   }
+  /**
+   * Go back to all the feedback options.
+   * Updates the problem to make sure changes to feedback options are reflected.
+   */
   backToFeedback = () => {
-    this.props.updateExam(this.props.exam.id)
+    this.setProblemUpdateMetadata(this.state.problem.id)
     this.setState({
       editActive: false
     })
   }
 
-  setSubmission = (id) => {
-    const i = this.state.submissions.findIndex(sub => sub.id === id)
-    this.setSubmissionIndex(i)
-  }
-  changeProblem = (event) => {
-    this.setState({
-      pIndex: event.target.value
-    })
-    event.target.blur()
+  /**
+   * Toggles a feedback option by it's index in the problems list of feedback.
+   * @param index the index of the feedback option.
+   */
+  toggleFeedbackOptionIndex (index) {
+    this.toggleFeedbackOption(this.state.problem.feedback[index].id)
   }
 
-  setProblemIndex = (newIndex) => {
-    if (newIndex >= 0 && newIndex < this.props.exam.problems.length) {
-      this.setState({
-        pIndex: newIndex
-      })
-    }
-  }
+  /**
+   * Toggles a feedback option.
+   * Updates the submission afterwards, to make sure changes are reflected.
+   * @param id the id of the feedback option to change.
+   */
+  toggleFeedbackOption = (id) => {
+    const submission = this.state.submission
+    const problem = this.state.problem
 
-  prevProblem = () => {
-    const newIndex = this.state.pIndex - 1
-    this.setProblemIndex(newIndex)
-  }
-  nextProblem = () => {
-    const newIndex = this.state.pIndex + 1
-    this.setProblemIndex(newIndex)
-  }
-
-  toggleOption = (index) => {
-    const exam = this.props.exam
-    const submission = this.state.submissions[this.state.sIndex]
-    const problem = exam.problems[this.state.pIndex]
-    if (index + 1 > problem.feedback.length) return
-
-    const optionURI = this.state.examID + '/' +
-      submission.id + '/' +
-      problem.id
-    api.put('solution/' + optionURI, {
-      id: problem.feedback[index].id,
+    api.put(`solution/${this.props.examID}/${submission.id}/${problem.id}`, {
+      id: id,
       graderID: this.props.graderID
+    }).then(result => {
+      this.setSubmission(submission.id)
     })
-      .then(result => {
-        this.props.updateSubmission(submission.id)
-      })
   }
-
+  /**
+   * Approves the current submission.
+   */
   approve = () => {
-    const exam = this.props.exam
-    const submission = this.state.submissions[this.state.sIndex]
-    const problem = exam.problems[this.state.pIndex]
+    const submission = this.state.submission
+    const problem = this.state.problem
 
-    const optionURI = this.state.examID + '/' +
-      submission.id + '/' +
-      problem.id
-    api.put('solution/approve/' + optionURI, {
+    api.put(`solution/approve/${this.props.examID}/${submission.id}/${problem.id}`, {
       graderID: this.props.graderID
+    }).catch(resp => {
+      resp.json().then(body => Notification.error('Could not approve feedback: ' + body.message))
+    }).then(result => {
+      this.setSubmission(submission.id)
     })
-      .catch(resp => {
-        resp.json().then(body => Notification.error('Could not approve feedback: ' + body.message))
-      })
-      .then(result => {
-        this.props.updateSubmission(submission.id)
-      })
   }
 
+  /**
+   * Toggles full page view.
+   */
   toggleFullPage = () => {
     this.setState({
       fullPage: !this.state.fullPage
     })
   }
 
-  /*
-   * Updates all submissions.
-   * Because a new submissions changes the index of the current submission
-   * if it's added before the current submission,
-   * the function also makes sure the sIndex points to the same submission
+  /**
+   * Hashes the location of the current problems widget.
+   * @param problem the problem to hash the widget location for.
+   * @returns the hashed string value
    */
-  updateAllSubmissions = () => {
-    const currentSubmissionID = this.state.submissions[this.state.sIndex].id
-    this.props.updateAllSubmissions(() => {
-      const newIndex = this.state.submissions.map(sub => sub.id).indexOf(currentSubmissionID)
-      this.setSubmissionIndex(newIndex)
-    })
-  }
-
-  static shuffleSubmissions = (submissions, graderID) => {
-    return submissions.map(sub => [hash.MD5([sub.id, graderID]), sub]).sort().map(x => x[1])
-  }
-
   static getLocationHash = (problem) => {
     const wid = problem.widget
     const hashStr = wid.x + '.' + wid.y + '.' + wid.width + '.' + wid.height
     return Grade.hashString(hashStr)
   }
 
+  /**
+   * Function to calculate hash from a string, from:
+   * https://stackoverflow.com/questions/7616461/generate-a-hash-from-string-in-javascript
+   * @param str the string to hash.
+   * @returns the hashed string value.
+   */
   static hashString = (str) => {
-    // Function to calculate hash from a string, from:
-    // https://stackoverflow.com/questions/7616461/generate-a-hash-from-string-in-javascript
     let hash = 0
     if (str.length === 0) return hash
     let chr
@@ -227,150 +280,72 @@ class Grade extends React.Component {
     return Math.abs(hash)
   }
 
-  static getDerivedStateFromProps = (newProps, prevState) => {
-    // if the exam changes, the state of the grading page should change.
-    if (newProps.exam.id !== prevState.examID && newProps.exam.submissions.length) {
-      return {
-        sIndex: 0,
-        pIndex: 0,
-        examID: newProps.exam.id,
-        graderID: newProps.graderID,
-        submissions: Grade.shuffleSubmissions(newProps.exam.submissions, newProps.graderID)
-      }
-    }
-    // If the grader ID changes, submissions need to be reshuffled
-    if (newProps.graderID !== prevState.graderID) {
-      return {
-        graderID: newProps.graderID,
-        submissions: Grade.shuffleSubmissions(newProps.exam.submissions, newProps.graderID)
-      }
-    }
-    // If this submissions have changed, update the state to reflect this.
-    if (newProps.submissions !== prevState.submissions) {
-      return {
-        submissions: Grade.shuffleSubmissions(newProps.exam.submissions, newProps.graderID)
-      }
-    }
-    return null
-  }
-
   render () {
-    const exam = this.props.exam
-    const submission = this.state.submissions[this.state.sIndex]
+    const hero = (<Hero title='Grade' subtitle='Assign feedback to each solution' />)
+    // Have to not render if no submission exists in the state yet, to prevent crashes.
+    // This should only happen while the initial call to update submission in the constructor is still pending.
+    if (!this.state.submission) {
+      return hero
+    }
+    const examID = this.props.examID
+    const graderID = this.props.graderID
+    const submission = this.state.submission
+    const problem = this.state.problem
     const submissions = this.state.submissions
-    const solution = submission.problems[this.state.pIndex]
-    const problem = exam.problems[this.state.pIndex]
-    const progress = this.state.submissions.map(sub => sub.problems[this.state.pIndex])
+    const problems = this.state.problems
+    const solution = submission.problems.find(p => p.id === problem.id)
     const otherSubmissions = this.state.submissions.filter((sub) => (
       sub.id !== submission.id && submission.student && sub.student && sub.student.id === submission.student.id)
     ).map((sub) => ' #' + sub.id)
     const multiple = otherSubmissions.length > 0
-    const anonymous = exam.gradeAnonymous
     const gradedTime = new Date(solution.graded_at)
 
     return (
       <div>
 
-        <Hero title='Grade' subtitle='Assign feedback to each solution' />
+        {hero}
 
         <section className='section'>
 
           <div className='container'>
             <div className='columns'>
               <div className='column is-one-quarter-desktop is-one-third-tablet'>
-                <ProblemSelector problems={exam.problems} changeProblem={this.changeProblem}
-                  current={this.state.pIndex} showTooltips={this.state.showTooltips} />
+                <ProblemSelector
+                  problems={problems}
+                  setProblemUpdateMetadata={this.setProblemUpdateMetadata}
+                  current={problem}
+                  showTooltips={this.state.showTooltips} />
                 <nav className='panel'>
                   {this.state.editActive
-                    ? <EditPanel problemID={problem.id} feedback={this.state.feedbackToEdit}
+                    ? <EditPanel
+                      problemID={problem.id}
+                      feedback={this.state.feedbackToEdit}
                       goBack={this.backToFeedback} />
-                    : <FeedbackPanel examID={exam.id} submissionID={submission.id}
-                      problem={problem} solution={solution} graderID={this.props.graderID}
-                      editFeedback={this.editFeedback} showTooltips={this.state.showTooltips}
-                      updateAllSubmissions={this.updateAllSubmissions}
-                      updateSubmission={this.props.updateSubmission} grading />
+                    : <FeedbackPanel
+                      examID={examID} submissionID={submission.id} graderID={graderID}
+                      problem={problem} solution={solution}
+                      showTooltips={this.state.showTooltips} grading
+                      setSubmission={this.setSubmission}
+                      editFeedback={this.editFeedback}
+                      toggleOption={this.toggleFeedbackOption} />
                   }
                 </nav>
               </div>
 
               <div className='column'>
-                <div className='level'>
-                  <div className='level-item make-wider'>
-                    <div className='field has-addons is-mobile'>
-                      <div className='control'>
-                        <button type='submit'
-                          className={'button is-info is-rounded is-hidden-mobile' +
-                            (this.state.showTooltips ? ' tooltip is-tooltip-active' : '')}
-                          data-tooltip='←'
-                          onClick={this.prevUngraded}>Ungraded</button>
-                        <button type='submit'
-                          className={'button is-link' +
-                            (this.state.showTooltips ? ' tooltip is-tooltip-active' : '')}
-                          data-tooltip='shift + ←'
-                          onClick={this.prev}>Previous</button>
-                      </div>
-                      <div id='search' className={'control is-wider ' + (this.state.showTooltips ? 'tooltip is-tooltip-active tooltip-no-arrow' : '')}
-                        data-tooltip='Press ctrl to hide shortcuts'>
-                        <SearchBox
-                          placeholder='Search for a submission'
-                          selected={submission}
-                          options={submissions}
-                          suggestionKeys={(anonymous ? ['id'] : [
-                            'student.id',
-                            'student.firstName',
-                            'student.lastName',
-                            'id'
-                          ])}
-                          setSelected={this.setSubmission}
-                          renderSelected={({id, student}) => {
-                            if (student && !anonymous) {
-                              return `${student.firstName} ${student.lastName} (${student.id})`
-                            } else {
-                              return `#${id}`
-                            }
-                          }}
-                          renderSuggestion={(submission) => {
-                            const stud = submission.student
-                            if (stud && !anonymous) {
-                              return (
-                                <div className='flex-parent'>
-                                  <b className='flex-child truncated'>
-                                    {`${stud.firstName} ${stud.lastName}`}
-                                  </b>
-                                  <i className='flex-child fixed'>
-                                    ({stud.id}, #{submission.id})
-                                  </i>
-                                </div>
-                              )
-                            } else {
-                              return (
-                                <div className='flex-parent'>
-                                  <b className='flex-child fixed'>
-                                    #{submission.id}
-                                  </b>
-                                </div>
-                              )
-                            }
-                          }}
-                        />
-                      </div>
-                      <div className='control'>
-                        <button type='submit'
-                          className={'button is-link' +
-                            (this.state.showTooltips ? ' tooltip is-tooltip-active' : '')}
-                          data-tooltip='shift + →'
-                          onClick={this.next}>Next</button>
-                        <button type='submit'
-                          className={'button is-info is-rounded is-hidden-mobile' +
-                            (this.state.showTooltips ? ' tooltip is-tooltip-active' : '')}
-                          data-tooltip='→'
-                          onClick={this.nextUngraded}>Ungraded</button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                <GradeNavigation
+                  submission={submission}
+                  submissions={submissions}
+                  setSubmission={this.setSubmission}
+                  prevUngraded={this.prevUngraded}
+                  prev={this.prev}
+                  next={this.next}
+                  nextUngraded={this.nextUngraded}
+                  anonymous={this.props.gradeAnonymous}
+                  showTooltips={this.state.showTooltips}
+                />
 
-                <ProgressBar progress={progress} value={'graded_by'} />
+                <ProgressBar done={problem.n_graded} total={submissions.length} />
 
                 {multiple
                   ? <article className='message is-info'>
@@ -380,7 +355,8 @@ class Grade extends React.Component {
                         Make sure that each applicable feedback option is only selected once.
                       </p>
                     </div>
-                  </article> : null
+                  </article>
+                  : null
                 }
 
                 <div className='level'>
@@ -406,7 +382,7 @@ class Grade extends React.Component {
                 </div>
 
                 <p className={'box' + (solution.graded_at ? ' is-graded' : '')}>
-                  <img src={exam.id ? ('api/images/solutions/' + exam.id + '/' +
+                  <img src={examID ? ('api/images/solutions/' + examID + '/' +
                     problem.id + '/' + submission.id + '/' + (this.state.fullPage ? '1' : '0')) + '?' +
                     Grade.getLocationHash(problem) : ''} alt='' />
                 </p>

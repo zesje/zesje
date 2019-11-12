@@ -7,9 +7,12 @@ from tempfile import TemporaryFile
 
 from flask import current_app as app, send_file
 from flask_restful import Resource, reqparse
+from flask_restful.inputs import boolean
 from werkzeug.datastructures import FileStorage
 from sqlalchemy.orm import selectinload
 
+from zesje.api._helpers import _shuffle
+from zesje.api.problems import problem_to_data
 from ..pdf_generation import generate_pdfs, output_pdf_filename_format, join_pdfs
 from ..pdf_generation import page_is_size, save_with_even_pages, PAGE_FORMATS
 from ..pdf_generation import write_finalized_exam
@@ -60,8 +63,15 @@ def generate_exam_token(exam_id, exam_name, exam_pdf):
 
 class Exams(Resource):
 
+    get_parser = reqparse.RequestParser()
+    get_parser.add_argument('only_metadata', type=boolean, required=False)
+    get_parser.add_argument('shuffle_seed', type=int, required=False)
+
     def get(self, exam_id=None):
+        args = self.get_parser.parse_args()
         if exam_id:
+            if args.only_metadata:
+                return self._get_single_metadata(exam_id, args.shuffle_seed)
             return self._get_single(exam_id)
         else:
             return self._get_all()
@@ -145,48 +155,7 @@ class Exams(Resource):
             'id': exam_id,
             'name': exam.name,
             'submissions': submissions,
-            'problems': [
-                {
-                    'id': prob.id,
-                    'name': prob.name,
-                    'feedback': [
-                        {
-                            'id': fb.id,
-                            'name': fb.text,
-                            'description': fb.description,
-                            'score': fb.score,
-                            'used': len(fb.solutions)
-                        }
-                        for fb
-                        in prob.feedback_options  # Sorted by fb.id
-                    ],
-                    'page': prob.widget.page,
-                    'widget': {
-                        'id': prob.widget.id,
-                        'name': prob.widget.name,
-                        'x': prob.widget.x,
-                        'y': prob.widget.y,
-                        'width': prob.widget.width,
-                        'height': prob.widget.height,
-                        'type': prob.widget.type
-                    },
-                    'graded': any([sol.graded_by is not None for sol in prob.solutions]),
-                    'grading_policy': prob.grading_policy.name,
-                    'mc_options': [
-                        {
-                            'id': mc_option.id,
-                            'label': mc_option.label,
-                            'feedback_id': mc_option.feedback_id,
-                            'widget': {
-                                'name': mc_option.name,
-                                'x': mc_option.x,
-                                'y': mc_option.y,
-                                'type': mc_option.type
-                            }
-                        } for mc_option in prob.mc_options
-                    ]
-                } for prob in exam.problems  # Sorted by prob.id
-            ],
+            'problems': [problem_to_data(prob) for prob in exam.problems],  # Sorted by prob.id
             'widgets': [
                 {
                     'id': widget.id,
@@ -198,6 +167,48 @@ class Exams(Resource):
             ],
             'finalized': exam.finalized,
             'gradeAnonymous': exam.grade_anonymous,
+        }
+
+    def _get_single_metadata(self, exam_id, shuffle_seed):
+        """ Serves metadata for an exam.
+        Shuffles submissions based on the grader ID.
+
+        Parameters
+        ----------
+        exam_id : int
+            id of exam to get metadata for.
+        shuffle_seed : int
+            id of the grader.
+
+        Returns
+        -------
+        the exam metadata.
+
+        """
+
+        exam = Exam.query.get(exam_id)
+        if exam is None:
+            return dict(status=404, message='Exam does not exist.'), 404
+
+        return {
+            'exam_id': exam.id,
+            'submissions': [
+                {
+                    'id': sub.copy_number,
+                    'student': {
+                        'id': sub.student.id,
+                        'firstName': sub.student.first_name,
+                        'lastName': sub.student.last_name,
+                        'email': sub.student.email
+                    } if sub.student else None
+                } for sub in _shuffle(exam.submissions, shuffle_seed, key_extractor=lambda s: s.id)
+            ],
+            'problems': [
+                {
+                    'id': problem.id,
+                    'name': problem.name,
+                } for problem in exam.problems]
+
         }
 
     post_parser = reqparse.RequestParser()

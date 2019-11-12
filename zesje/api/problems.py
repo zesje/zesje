@@ -8,8 +8,59 @@ from ..pregrader import BLANK_FEEDBACK_NAME
 from zesje.pdf_reader import guess_problem_title, get_problem_page
 
 
+def problem_to_data(problem):
+    return {
+        'id': problem.id,
+        'name': problem.name,
+        'feedback': [
+            {
+                'id': fb.id,
+                'name': fb.text,
+                'description': fb.description,
+                'score': fb.score,
+                'used': len(fb.solutions)
+            }
+            for fb
+            in problem.feedback_options  # Sorted by fb.id
+        ],
+        'page': problem.widget.page,
+        'widget': {
+            'id': problem.widget.id,
+            'name': problem.widget.name,
+            'x': problem.widget.x,
+            'y': problem.widget.y,
+            'width': problem.widget.width,
+            'height': problem.widget.height,
+            'type': problem.widget.type
+        },
+        'n_graded': len([sol for sol in problem.solutions if sol.graded_by is not None]),
+        'grading_policy': problem.grading_policy.name,
+        'mc_options': [
+            {
+                'id': mc_option.id,
+                'label': mc_option.label,
+                'feedback_id': mc_option.feedback_id,
+                'widget': {
+                    'name': mc_option.name,
+                    'x': mc_option.x,
+                    'y': mc_option.y,
+                    'type': mc_option.type
+                }
+            } for mc_option in problem.mc_options
+        ]
+    }
+
+
 class Problems(Resource):
     """ List of problems associated with a particular exam_id """
+
+    def get(self, problem_id):
+        problem = Problem.query.get(problem_id)
+
+        if problem is None:
+            return dict(status=404, message=f"Problem with id {problem_id} doesn't exist"), 404
+
+        return problem_to_data(problem)
 
     post_parser = reqparse.RequestParser()
     post_parser.add_argument('exam_id', type=int, required=True, location='form')

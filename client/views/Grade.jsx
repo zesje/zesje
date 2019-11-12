@@ -280,10 +280,11 @@ class Grade extends React.Component {
   }
 
   render () {
+    const hero = (<Hero title='Grade' subtitle='Assign feedback to each solution' />)
     // Have to not render if no submission exists in the state yet, to prevent crashes.
     // This should only happen while the initial call to update submission in the constructor is still pending.
     if (!this.state.submission) {
-      return null
+      return hero
     }
     const examID = this.props.examID
     const graderID = this.props.graderID
@@ -301,7 +302,7 @@ class Grade extends React.Component {
     return (
       <div>
 
-        <Hero title='Grade' subtitle='Assign feedback to each solution' />
+        {hero}
 
         <section className='section'>
 

@@ -8,6 +8,7 @@ from email.mime.base import MIMEBase
 from email import encoders
 
 import jinja2
+from flask import current_app
 
 from reportlab.pdfgen import canvas
 from reportlab.lib.utils import ImageReader
@@ -41,7 +42,6 @@ def solution_pdf(exam_id, student_id, anonymous=False):
                                    Submission.student_id == student_id).all()
     pages = sorted((p for s in subs for p in s.pages), key=(lambda p: (p.submission.copy_number, p.number)))
 
-    from flask import current_app
     page_format = current_app.config.get('PAGE_FORMAT', 'A4')  # TODO Remove default value
     page_size = PAGE_FORMATS[page_format]
 

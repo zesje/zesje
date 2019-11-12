@@ -48,7 +48,7 @@ class FeedbackBlock extends React.Component {
           }
         </span>
         <span style={{ width: '80%' }}>
-          {this.props.feedback.name}
+          {this.props.index + ' - ' + this.props.feedback.name}
         </span>
         <Tooltip text={this.props.feedback.description} />
         <div className='field is-grouped'>

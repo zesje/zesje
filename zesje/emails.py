@@ -23,6 +23,20 @@ from .scans import exam_student_id_widget
 
 
 def solution_pdf(exam_id, student_id, anonymous=False):
+    """Send a dict of messages
+
+    Parameters
+    ----------
+    exam_id : int
+    student_id : int
+    anonymous : bool, optional
+        whether the pdfs and filenames need to be anonymized
+
+    Returns
+    ----------
+    result : BytesIO
+        the students solution in pdf format.
+    """
     subs = Submission.query.filter(Submission.exam_id == exam_id,
                                    Submission.student_id == student_id).all()
     pages = sorted((p for s in subs for p in s.pages), key=(lambda p: (p.submission.id, p.number)))

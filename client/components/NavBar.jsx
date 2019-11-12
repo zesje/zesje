@@ -62,7 +62,7 @@ const ExportDropdown = (props) => {
     { label: 'Excel Spreadsheet', format: 'xlsx' },
     { label: 'Detailed Excel Spreadsheet', format: 'xlsx_detailed' },
     { label: 'Pandas Dataframe', format: 'dataframe' },
-    { label: 'Zip of pdf files', format: 'pdf' }
+    { label: 'Zip of (anonymized) pdf files', format: 'pdf' }
   ]
 
   const exportUrl = format => `/api/export/${format}/${props.exam.id}`

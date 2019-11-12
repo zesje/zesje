@@ -25,17 +25,18 @@ def full():
 
 
 def exam(file_format, exam_id):
-    """Export exam data as a pandas dataframe
+    """Export exam data in a file format
 
     Parameters
     ----------
     file_format : string
-        One of "dataframe", "xlsx", "xlsx_detailed", "pdf"
+        One of "dataframe", "xlsx", "xlsx_detailed", "pdf".
     exam_id : int
 
     Returns
-    -------
-    exam.pd : pickled pandas dataframe
+    ----------
+    response : flask Response
+        response containing exam in specified file format.
     """
     if file_format == 'pdf':
         return exam_pdf(exam_id)
@@ -76,7 +77,23 @@ def exam(file_format, exam_id):
     )
 
 
-def _generator(exam_id, anonymous, current_app):
+def zipped_exam_solutions_generator(exam_id, anonymous, current_app):
+    """Generator for exam solutions as a zip of (anonymized) pdfs
+    Should only load the student solutions one at a time to decrease memory load.
+
+    Parameters
+    ----------
+    exam_id : int
+    anonymous : bool
+        whether the pdfs and filenames need to be anonymized.
+    current_app : flask app
+        the current flask app as obtained by ``flask.current_app._get_current_object()``.
+
+    Returns
+    ----------
+    response : generator
+        generator that yields parts of the zip.
+    """
     with current_app.app_context():
         z = zipstream.ZipFile(mode='w')
 
@@ -97,11 +114,22 @@ def _generator(exam_id, anonymous, current_app):
 
 
 def exam_pdf(exam_id):
+    """Export exam solutions as a zip of (anonymized) pdfs
+
+    Parameters
+    ----------
+    exam_id : int
+
+    Returns
+    ----------
+    response : flask Response
+        response streaming a zip containing (anonymized) pdfs of all student solutions.
+    """
     exam_data = Exam.query.get(exam_id)
     if exam_data is None:
         abort(404)
 
-    response = Response(_generator(exam_id, exam_data.grade_anonymous,
-                                   app._get_current_object()), mimetype='application/zip')
+    generator = zipped_exam_solutions_generator(exam_id, exam_data.grade_anonymous, app._get_current_object())
+    response = Response(generator, mimetype='application/zip')
     response.headers['Content-Disposition'] = f'attachment; filename=exam{exam_id}.zip'
     return response

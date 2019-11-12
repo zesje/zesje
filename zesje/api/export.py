@@ -1,6 +1,6 @@
 from io import BytesIO
 
-from flask import abort, send_file, Response, current_app as app
+from flask import abort, send_file, Response, current_app
 import zipstream
 
 from ..database import Exam, Submission
@@ -17,7 +17,7 @@ def full():
         response containing the ``course.sqlite``
     """
     return send_file(
-        app.config['DB_PATH'],
+        current_app.config['DB_PATH'],
         as_attachment=True,
         mimetype="application/x-sqlite3",
         cache_timeout=0,
@@ -130,7 +130,7 @@ def exam_pdf(exam_id):
     if exam_data is None:
         abort(404)
 
-    generator = zipped_exam_solutions_generator(exam_id, exam_data.grade_anonymous, app._get_current_object())
+    generator = zipped_exam_solutions_generator(exam_id, exam_data.grade_anonymous, current_app._get_current_object())
     response = Response(generator, mimetype='application/zip')
     response.headers['Content-Disposition'] = f'attachment; filename=exam{exam_id}.zip'
     return response

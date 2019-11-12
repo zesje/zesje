@@ -30,6 +30,7 @@ def _shuffle(to_shuffle, shuffle_seed, key_extractor=lambda v: v):
         the seed to shuffle this list with.
     key_extractor : lambda
         function to extract the key to sort on from the objects in to_shuffle.
+
     Returns
     -------
     a copy of to_shuffle, sorted uniquely based on it's own key and shuffle_seed.

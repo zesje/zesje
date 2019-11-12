@@ -121,7 +121,7 @@ class Submissions(Resource):
                 return dict(status=404, message='Submission does not exist.'), 404
 
             if args.direction:
-                if args.problem_id is None or args.grader_id is None or args.ungraded is None:
+                if args.problem_id is None or args.shuffle_seed is None or args.ungraded is None:
                     return dict(status=400, message='One of problem_id, grader_id, ungraded, direction not provided')
                 return _find_submission(sub, args.problem_id, args.shuffle_seed, args.direction, args.ungraded)
 

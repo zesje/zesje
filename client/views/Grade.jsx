@@ -24,7 +24,7 @@ class Grade extends React.Component {
     super(props)
     this.state = {}
     api.get(`exams/${this.props.examID}?only_metadata=true` +
-      `&grader_id=${this.props.graderID}`).then(metadata => {
+      `&shuffle_seed=${this.props.graderID}`).then(metadata => {
       const examID = metadata.exam_id
       const submissionID = metadata.submissions[0].id
       const problemID = metadata.problems[0].id

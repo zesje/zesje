@@ -4,8 +4,8 @@ from flask import current_app as app
 from flask_restful import Resource, reqparse
 from flask_restful.inputs import boolean
 from pdfrw import PdfReader
-from hashlib import md5
 
+from zesje.api._helpers import _shuffle
 from ..database import db, Exam, Submission, Student, Problem
 from ..pregrader import ungrade_multiple_sub
 
@@ -38,21 +38,13 @@ def sub_to_data(sub):
     }
 
 
-def _shuffle_solutions(solutions, shuffle_seed):
-    return sorted(solutions, key=lambda s: md5(f'{s.submission_id}, {shuffle_seed}'.encode('utf-8')).digest())
-
-
-def _shuffle_submissions(submissions, shuffle_seed):
-    return sorted(submissions, key=lambda s: md5(f'{s.id}, {shuffle_seed}'.encode('utf-8')).digest())
-
-
 def _find_submission(old_submission, problem_id, shuffle_seed, direction, ungraded):
     problem = Problem.query.get(problem_id)
 
     if problem is None:
         return dict(status=404, message='Problem does not exist.'), 404
 
-    shuffled_solutions = _shuffle_solutions(problem.solutions, shuffle_seed)
+    shuffled_solutions = _shuffle(problem.solutions, shuffle_seed, key_extractor=lambda s: s.submission_id)
     old_submission_index = next(i for i, s in enumerate(shuffled_solutions) if s.submission_id == old_submission.id)
 
     if (old_submission_index == 0 and direction == 'prev') or \

@@ -3,7 +3,7 @@ from io import BytesIO
 from flask import abort, send_file, Response, current_app as app
 import zipstream
 
-from ..database import Exam, Submission, Student
+from ..database import Exam, Submission
 from ..statistics import full_exam_data
 from ..emails import solution_pdf
 

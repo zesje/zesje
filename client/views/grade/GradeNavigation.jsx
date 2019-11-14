@@ -15,12 +15,12 @@ class GradeNavigation extends React.Component {
                 className={'button is-info is-rounded is-hidden-mobile' +
                       (this.props.showTooltips ? ' tooltip is-tooltip-active' : '')}
                 data-tooltip='←'
-                onClick={this.prevUngraded}>Ungraded</button>
+                onClick={this.props.prevUngraded}>Ungraded</button>
               <button type='submit'
                 className={'button is-link' +
                       (this.props.showTooltips ? ' tooltip is-tooltip-active' : '')}
                 data-tooltip='shift + ←'
-                onClick={this.prev}>Previous</button>
+                onClick={this.props.prev}>Previous</button>
             </div>
             <div id='search' className={'control is-wider ' + (this.props.showTooltips ? 'tooltip is-tooltip-active tooltip-no-arrow' : '')}
               data-tooltip='Press ctrl to hide shortcuts'>

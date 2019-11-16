@@ -5,10 +5,9 @@
 # +
 from getpass import getpass
 from textwrap import dedent
-from collections import defaultdict
 
 from ipywidgets import Button, ToggleButtons, Output, VBox
-from IPython.display import display_markdown, Markdown
+from IPython.display import display, Markdown
 import gitlab
 # -
 
@@ -101,7 +100,9 @@ def submit_and_next(event):
 
     current_issue = next_issue()
 
+
 submit.on_click(submit_and_next)
+
 
 VBox(
     children=[description] + list(selector.values()) + [submit]

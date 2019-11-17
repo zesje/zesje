@@ -57,6 +57,10 @@ class Exam(db.Model):
     finalized = Column(Boolean, default=False, server_default='f')
     grade_anonymous = Column(Boolean, default=False, server_default=false())
 
+    @hybrid_property
+    def copies(self):
+        return [copy for sub in self.submissions for copy in sub.copies]
+
     # Any migration that alters (and thus recreates) the exam table should explicitly
     # specify this keyword to ensure it will be used for the new table
     __table_args__ = {'sqlite_autoincrement': True}
@@ -66,22 +70,48 @@ class Submission(db.Model):
     """Typically created when adding a new exam."""
     __tablename__ = 'submission'
     id = Column(Integer, primary_key=True, autoincrement=True)
-    copy_number = Column(Integer, nullable=False)
     exam_id = Column(Integer, ForeignKey('exam.id'), nullable=False)
     solutions = db.relationship('Solution', backref='submission', cascade='all',
                                 order_by='Solution.problem_id', lazy=True)
-    pages = db.relationship('Page', backref='submission', cascade='all', lazy=True)
+    copies = db.relationship('Copy', backref='submission', lazy=True)
     student_id = Column(Integer, ForeignKey('student.id'), nullable=True)
+
+    # TODO Unique constraint (exam_id, student_id)
+
+
+class Copy(db.Model):
+    """A copy holding multiple pages"""
+    __tablename__ = 'copy'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    number = Column(Integer, nullable=False)
+    submission_id = Column(Integer, ForeignKey('submission.id'), nullable=False)
+    pages = db.relationship('Page', backref='copy', lazy=True)
     signature_validated = Column(Boolean, default=False, server_default='f', nullable=False)
+
+    @hybrid_property
+    def student(self):
+        return self.submission.student
+
+    @hybrid_property
+    def exam(self):
+        return self.submission.exam
 
 
 class Page(db.Model):
-    """Page of an exam"""
+    """Page of a copy"""
     __tablename__ = 'page'
     id = Column(Integer, primary_key=True, autoincrement=True)
     path = Column(Text, nullable=False)
-    submission_id = Column(Integer, ForeignKey('submission.id'), nullable=True)
+    copy_id = Column(Integer, ForeignKey('copy.id'), nullable=False)
     number = Column(Integer, nullable=False)
+
+    @hybrid_property
+    def copy_number(self):
+        return self.copy.number
+
+    @hybrid_property
+    def submission(self):
+        return self.copy.submission
 
 
 """

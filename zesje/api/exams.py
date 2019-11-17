@@ -108,7 +108,7 @@ class Exams(Resource):
             {
                 'id': ex.id,
                 'name': ex.name,
-                'submissions': len(ex.submissions)
+                'submissions': len(ex.submissions)  # TODO Should this be copies or submissions?
             }
             for ex in Exam.query.order_by(Exam.id).all()
         ]
@@ -194,7 +194,7 @@ class Exams(Resource):
             'exam_id': exam.id,
             'submissions': [
                 {
-                    'id': sub.copy_number,
+                    'id': sub.id,
                     'student': {
                         'id': sub.student.id,
                         'firstName': sub.student.first_name,

@@ -41,6 +41,9 @@ def reference_image(exam_id, page, dpi, widget_area_in=None, padding=0):
         _extract_reference_images(dpi, exam_id)
 
     image_path = os.path.join(generated_path, f'page{page:02d}.jpg')
+    if not os.path.exists(image_path):
+        _extract_reference_images(dpi, exam_id)
+
     blank_page = Image.open(image_path)
     blank_img_array = np.array(blank_page)
 

@@ -34,6 +34,7 @@ def mock_get_box_return_original(monkeypatch, datadir):
 @pytest.fixture(scope="module")
 def db_setup():
     app = Flask(__name__, static_folder=None)
+    app.config.from_object('zesje_default_cfg')
     app.config.update(
         SQLALCHEMY_DATABASE_URI='sqlite:///:memory:',
         SQLALCHEMY_TRACK_MODIFICATIONS=False  # Suppress future deprecation warning

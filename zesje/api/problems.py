@@ -112,7 +112,7 @@ class Problems(Resource):
             db.session.commit()
             widget.name = f'problem_{problem.id}'
 
-            data_dir = current_app.config.get('DATA_DIRECTORY', 'data')
+            data_dir = current_app.config['DATA_DIRECTORY']
             pdf_path = os.path.join(data_dir, f'{problem.exam_id}_data', 'exam.pdf')
 
             page = get_problem_page(problem, pdf_path)

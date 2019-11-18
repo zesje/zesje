@@ -5,7 +5,7 @@ import hashlib
 from io import BytesIO
 from tempfile import TemporaryFile
 
-from flask import current_app as app, send_file
+from flask import current_app, send_file
 from flask_restful import Resource, reqparse
 from flask_restful.inputs import boolean
 from werkzeug.datastructures import FileStorage
@@ -22,7 +22,7 @@ from .submissions import sub_to_data
 
 def _get_exam_dir(exam_id):
     return os.path.join(
-        app.config['DATA_DIRECTORY'],
+        current_app.config['DATA_DIRECTORY'],
         f'{exam_id}_data',
     )
 
@@ -235,7 +235,7 @@ class Exams(Resource):
         exam_name = args['exam_name']
         pdf_data = args['pdf']
 
-        format = app.config.get('PAGE_FORMAT', 'A4')
+        format = current_app.config['PAGE_FORMAT']
 
         if not page_is_size(pdf_data, PAGE_FORMATS[format], tolerance=0.01):
             return (

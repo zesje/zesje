@@ -1,5 +1,5 @@
 import os
-from os.path import abspath, dirname
+from os.path import abspath, dirname, pardir
 
 from flask import Flask
 from celery import Celery
@@ -13,12 +13,14 @@ STATIC_FOLDER_PATH = os.path.join(abspath(dirname(__file__)), 'static')
 def create_app():
     app = Flask(__name__, static_folder=STATIC_FOLDER_PATH)
 
+    app.config.from_object('zesje_default_cfg')
+
     if 'ZESJE_SETTINGS' in os.environ:
         app.config.from_envvar('ZESJE_SETTINGS')
 
-    # Default settings
+    # Make absolute path
     app.config.update(
-        DATA_DIRECTORY=abspath(app.config.get('DATA_DIRECTORY', 'data')),
+        DATA_DIRECTORY=abspath(app.config['DATA_DIRECTORY']),
     )
 
     # These reference DATA_DIRECTORY, so they need to be in a separate update
@@ -36,6 +38,8 @@ def create_app():
         CELERY_BROKER_URL='redis://localhost:6479',
         CELERY_RESULT_BACKEND='redis://localhost:6479'
     )
+
+    print(app.config['SQLALCHEMY_DATABASE_URI'])
 
     db.init_app(app)
     Migrate(app, db)

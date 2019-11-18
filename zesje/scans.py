@@ -8,6 +8,7 @@ import signal
 import cv2
 import numpy as np
 from scipy import spatial
+from flask import current_app
 
 from PIL import Image
 from pikepdf import Pdf
@@ -43,9 +44,6 @@ def process_pdf(scan_id):
     def raise_exit(signo, frame):
         raise SystemExit('PDF processing was killed by an external signal')
 
-    from flask import current_app
-    app_config = current_app.config
-
     # We want to trigger an exit from within Python when a signal is received.
     # The default behaviour for SIGTERM is to terminate the process without
     # calling 'atexit' handlers, and SIGINT raises keyboard interrupt.
@@ -53,7 +51,7 @@ def process_pdf(scan_id):
         signal.signal(signal_type, raise_exit)
 
     try:
-        _process_pdf(scan_id, app_config)
+        _process_pdf(scan_id)
     except BaseException as error:
         # TODO: When #182 is implemented, properly separate user-facing
         #       messages (written to DB) from developer-facing messages,
@@ -61,8 +59,8 @@ def process_pdf(scan_id):
         write_pdf_status(scan_id, 'error', "Unexpected error: " + str(error))
 
 
-def _process_pdf(scan_id, app_config):
-    data_directory = app_config.get('DATA_DIRECTORY', 'data')
+def _process_pdf(scan_id):
+    data_directory = current_app.config['DATA_DIRECTORY']
 
     report_error = functools.partial(write_pdf_status, scan_id, 'error')
     report_progress = functools.partial(write_pdf_status, scan_id, 'processing')
@@ -618,7 +616,7 @@ def check_corner_keypoints(image_array, keypoints, minimum=3):
         raise RuntimeError("Found multiple corner markers in the same corner")
 
 
-def realign_image(image_array, keypoints=None, page_format="A4"):
+def realign_image(image_array, keypoints=None):
     """
     Transform the image so that the keypoints match the reference.
 
@@ -645,7 +643,7 @@ def realign_image(image_array, keypoints=None, page_format="A4"):
 
     # generate the coordinates where the markers should be
     dpi = guess_dpi(image_array)
-    reference_keypoints = original_corner_markers(page_format, dpi)
+    reference_keypoints = original_corner_markers(dpi)
 
     # create a matrix with the distances between each keypoint and match the keypoint sets
     dists = spatial.distance.cdist(keypoints, reference_keypoints)
@@ -662,7 +660,7 @@ def realign_image(image_array, keypoints=None, page_format="A4"):
         # Let opencv estimate the transformation matrix
         M = cv2.estimateAffinePartial2D(keypoints, adjusted_markers)[0]
 
-    cols, rows = original_page_size(page_format, dpi)
+    cols, rows = original_page_size(dpi)
 
     # apply the transformation matrix and fill in the new empty spaces with white
     return_image = cv2.warpAffine(image_array, M, (cols, rows),
@@ -671,7 +669,9 @@ def realign_image(image_array, keypoints=None, page_format="A4"):
     return return_image
 
 
-def original_corner_markers(format, dpi):
+def original_corner_markers(dpi):
+    format = current_app.config['PAGE_FORMAT']
+
     left_x = MARKER_FORMAT["margin"]/72 * dpi
     top_y = MARKER_FORMAT["margin"]/72 * dpi
     right_x = (PAGE_FORMATS[format][0] - MARKER_FORMAT["margin"])/72 * dpi
@@ -683,7 +683,9 @@ def original_corner_markers(format, dpi):
                      (right_x, bottom_y)])
 
 
-def original_page_size(format, dpi):
+def original_page_size(dpi):
+    format = current_app.config['PAGE_FORMAT']
+
     w = (PAGE_FORMATS[format][0])/72 * dpi
     h = (PAGE_FORMATS[format][1])/72 * dpi
 

@@ -1,4 +1,4 @@
-from flask import abort, Response, current_app
+from flask import abort, Response
 
 import numpy as np
 import cv2

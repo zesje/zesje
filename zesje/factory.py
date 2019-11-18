@@ -1,5 +1,5 @@
 import os
-from os.path import abspath, dirname, pardir
+from os.path import abspath, dirname
 
 from flask import Flask
 from celery import Celery

@@ -5,7 +5,7 @@ import textwrap
 from jinja2 import Template, TemplateSyntaxError, UndefinedError
 
 import werkzeug.exceptions
-from flask import current_app as app
+from flask import current_app
 from flask_restful import Resource, reqparse
 
 from .. import emails
@@ -36,7 +36,7 @@ default_email_template = str.strip(textwrap.dedent("""
 
 
 def template_path(exam_id):
-    data_dir = Path(app.config['DATA_DIRECTORY'])
+    data_dir = Path(current_app.config['DATA_DIRECTORY'])
     template_file = data_dir / f'{exam_id}_data' / 'email_template.j2'
     return template_file
 
@@ -167,23 +167,23 @@ class Email(Resource):
             return self._send_all(exam_id, template, attach)
 
     def _send_single(self, exam_id, student_id, template, attach, copy_to):
-        if not (app.config.get('SMTP_SERVER') and app.config.get('FROM_ADDRESS')):
+        if not (current_app.config.get('SMTP_SERVER') and current_app.config.get('FROM_ADDRESS')):
             abort(
                 500,
                 message='Sending email is not configured'
             )
         message = build_email(
             exam_id, student_id, template,
-            attach, app.config['FROM_ADDRESS'], copy_to,
+            attach, current_app.config['FROM_ADDRESS'], copy_to,
         )
         failed = emails.send(
             {student_id: message},
-            server=app.config['SMTP_SERVER'],
-            from_address=app.config['FROM_ADDRESS'],
-            port=app.config.get('SMTP_PORT'),
-            user=app.config.get('SMTP_USERNAME'),
-            password=app.config.get('SMTP_PASSWORD'),
-            use_ssl=app.config.get('USE_SSL'),
+            server=current_app.config['SMTP_SERVER'],
+            from_address=current_app.config['FROM_ADDRESS'],
+            port=current_app.config.get('SMTP_PORT'),
+            user=current_app.config.get('SMTP_USERNAME'),
+            password=current_app.config.get('SMTP_PASSWORD'),
+            use_ssl=current_app.config.get('USE_SSL'),
         )
         if failed:
             abort(
@@ -193,7 +193,7 @@ class Email(Resource):
         return dict(status=200)
 
     def _send_all(self, exam_id, template, attach):
-        if not (app.config.get('SMTP_SERVER') and app.config.get('FROM_ADDRESS')):
+        if not (current_app.config.get('SMTP_SERVER') and current_app.config.get('FROM_ADDRESS')):
             abort(
                 500,
                 message='Sending email is not configured'
@@ -212,7 +212,7 @@ class Email(Resource):
             try:
                 to_send[student_id] = build_email(
                     exam_id, student_id, template,
-                    attach, app.config['FROM_ADDRESS'],
+                    attach, current_app.config['FROM_ADDRESS'],
                 )
             except werkzeug.exceptions.Conflict:
                 # No email address provided. Any other failures are errors,
@@ -221,12 +221,12 @@ class Email(Resource):
 
         failed_to_send = emails.send(
             to_send,
-            server=app.config['SMTP_SERVER'],
-            from_address=app.config['FROM_ADDRESS'],
-            port=app.config.get('SMTP_PORT'),
-            user=app.config.get('SMTP_USERNAME'),
-            password=app.config.get('SMTP_PASSWORD'),
-            use_ssl=app.config.get('USE_SSL'),
+            server=current_app.config['SMTP_SERVER'],
+            from_address=current_app.config['FROM_ADDRESS'],
+            port=current_app.config.get('SMTP_PORT'),
+            user=current_app.config.get('SMTP_USERNAME'),
+            password=current_app.config.get('SMTP_PASSWORD'),
+            use_ssl=current_app.config.get('USE_SSL'),
         )
 
         sent = set(student_ids) - (set(failed_to_send) | set(failed_to_build))

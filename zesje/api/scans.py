@@ -1,6 +1,6 @@
 import os
 
-from flask import current_app as app
+from flask import current_app
 from flask_restful import Resource, reqparse
 from werkzeug.datastructures import FileStorage
 
@@ -72,7 +72,7 @@ class Scans(Resource):
         db.session.commit()
 
         try:
-            path = os.path.join(app.config['SCAN_DIRECTORY'], f'{scan.id}.pdf')
+            path = os.path.join(current_app.config['SCAN_DIRECTORY'], f'{scan.id}.pdf')
             args['pdf'].save(path)
         except Exception:
             scan = Scan.query.get(scan.id)

@@ -29,7 +29,7 @@ def extract_images(filename, dpi=300):
             if use_wand:
                 img = extract_image_wand(page, dpi)
 
-            if img.mode == 'L':
+            if img.mode != 'RGB':
                 img = img.convert('RGB')
 
             yield img, page_number

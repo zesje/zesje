@@ -136,13 +136,20 @@ def exam_student_id_widget(exam_id):
     :param exam_id: the id of the exam to get the widget for
     :return: the student id widget, and an array of coordinates [ymin, ymax, xmin, xmax]
     """
+
+    fontsize = current_app.config['ID_GRID_FONTSIZE']
+    margin = current_app.config['ID_GRID_MARGIN']
+    digits = current_app.config['ID_GRID_DIGITS']
+    id_grid_height = 12 * margin + 11 * fontsize
+    id_grid_width = 5 * margin + 16 * fontsize + digits * (fontsize + margin)
+
     student_id_widget = ExamWidget.query.filter(ExamWidget.exam_id == exam_id,
                                                 ExamWidget.name == "student_id_widget").one()
     student_id_widget_coords = [
         student_id_widget.y,  # top
-        student_id_widget.y + current_app.config['ID_GRID_HEIGHT'],  # bottom
+        student_id_widget.y + id_grid_height,  # bottom
         student_id_widget.x,  # left
-        student_id_widget.x + current_app.config['ID_GRID_WIDTH'],  # right
+        student_id_widget.x + id_grid_width,  # right
     ]
     return student_id_widget, student_id_widget_coords
 

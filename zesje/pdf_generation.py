@@ -3,6 +3,7 @@ from tempfile import NamedTemporaryFile
 import PIL
 import shutil
 import os
+from flask import current_app
 from pdfrw import PdfReader, PdfWriter, PageMerge
 from pylibdmtx.pylibdmtx import encode
 from reportlab.lib.units import mm
@@ -162,15 +163,15 @@ def generate_id_grid(canv, x, y):
     x : int
         The y coordinate where the grid should be drawn
     """
+    fontsize = current_app.config['ID_GRID_FONTSIZE']  # Size of font
+    margin = current_app.config['ID_GRID_MARGIN']  # Margin between elements and sides
+    digits = current_app.config['ID_GRID_DIGITS']  # Max amount of digits you want for student numbers
 
-    fontsize = 11  # Size of font
-    margin = 5  # Margin between elements and sides
-    markboxsize = fontsize - 2  # Size of student number boxes
-    textboxwidth = fontsize * 15  # Width of textbox
-    textboxheight = markboxsize * 2 + margin + 2  # Height of textbox
-    digits = 7  # Max amount of digits you want for student numbers
+    mark_box_size = fontsize - 2  # Size of student number boxes
+    text_box_width = fontsize * 15  # Width of textbox
+    text_box_height = mark_box_size * 2 + margin + 2  # Height of textbox
 
-    canv.setFont('Helvetica', fontsize)
+    canv.setFont(current_app.config['ID_GRID_FONT'], fontsize)
 
     # Draw numbers and boxes for student number
     canv.drawString(x + margin, y - fontsize - margin, "Student number :")
@@ -181,7 +182,7 @@ def generate_id_grid(canv, x, y):
         for j in range(digits):
             canv.rect(x + (j + 1) * (fontsize + margin),
                       y - (i + 2) * (fontsize + margin) - 1,
-                      markboxsize, markboxsize)
+                      mark_box_size, mark_box_size)
 
     # Draw first name text and box
     canv.drawString(x + (digits + 1) * (fontsize + margin) + 3 * margin - 1,
@@ -189,7 +190,7 @@ def generate_id_grid(canv, x, y):
 
     canv.rect(x + (digits + 1) * (fontsize + margin) + 3 * margin,
               y - fontsize * 3 - 3 * margin - 1,
-              textboxwidth, textboxheight)
+              text_box_width, text_box_height)
 
     # Draw last name text and box
     canv.drawString(x + (digits + 1) * (fontsize + margin) + 3 * margin - 1,
@@ -197,7 +198,7 @@ def generate_id_grid(canv, x, y):
 
     canv.rect(x + (digits + 1) * (fontsize + margin) + 3 * margin,
               y - fontsize * 6 - 6 * margin - 1,
-              textboxwidth, textboxheight)
+              text_box_width, text_box_height)
 
 
 def add_checkbox(canvas, x, y, label):

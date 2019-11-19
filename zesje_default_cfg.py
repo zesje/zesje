@@ -4,5 +4,7 @@ DATA_DIRECTORY = 'data'
 PAGE_FORMAT = 'A4'
 
 # student id widget
-ID_GRID_HEIGHT = 181
-ID_GRID_WIDTH = 313
+ID_GRID_FONTSIZE = 11  # Size of font
+ID_GRID_FONT = 'Helvetica'
+ID_GRID_MARGIN = 5  # Margin between elements and sides
+ID_GRID_DIGITS = 7  # Max amount of digits you want for student numbers

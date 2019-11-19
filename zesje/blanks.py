@@ -74,7 +74,7 @@ def _extract_reference_images(dpi, exam_id):
     pages = extract_images(pdf_path, dpi)
 
     for image, page in pages:
-        _save_image(np.array(image), page, dpi, output_directory)
+        _save_image(image, page, dpi, output_directory)
 
 
 def _save_image(image, page, dpi, output_directory):
@@ -85,7 +85,7 @@ def _save_image(image, page, dpi, output_directory):
 
     Parameters
     ----------
-    image : numpy array
+    image : PIL Image
         Image data.
     page : int
         The corresponding page number, starting at 1.
@@ -103,5 +103,5 @@ def _save_image(image, page, dpi, output_directory):
     submission_path = os.path.join(output_directory, 'blanks', f'{dpi}')
     os.makedirs(submission_path, exist_ok=True)
     image_path = os.path.join(submission_path, f'page{page-1:02d}.jpg')
-    Image.fromarray(image).save(image_path)
+    image.save(image_path)
     return image_path

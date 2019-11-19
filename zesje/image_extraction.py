@@ -29,8 +29,14 @@ def extract_images(filename, dpi=300):
             if use_wand:
                 img = extract_image_wand(page, dpi)
 
-            if img.mode == 'L':
+            if img.mode == 'L' or img.mode == 'CMYK' or img.mode == 'HSV':
                 img = img.convert('RGB')
+            elif img.mode == 'RGBA':
+                # Create a white background, and paste the RGBA image
+                # on top of it with the alpha channel as the mask
+                background = Image.new('RGB', img.size, (255, 255, 255))
+                background.paste(img, mask=img.split()[-1])
+                img = background
 
             yield img, page_number
 

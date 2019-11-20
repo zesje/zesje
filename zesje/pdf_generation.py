@@ -351,8 +351,9 @@ def _generate_copy_overlay(canv, pagesize, exam_token, copy_num, num_pages, data
         The y coordinate where the DataMatrix codes should be placed
     """
     # Font settings for the copy number (printed under the datamatrix)
-    fontsize = 12
-    canv.setFont('Helvetica', fontsize)
+    fontsize = current_app.config['COPY_NUMBER_FONTSIZE']
+
+    canv.setFont(current_app.config['COPY_NUMBER_FONT'], fontsize)
 
     for page_num in range(num_pages):
         datamatrix = generate_datamatrix(exam_token, page_num, copy_num)

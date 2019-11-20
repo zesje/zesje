@@ -5,7 +5,6 @@ import numpy as np
 import PIL.Image
 import cv2
 from tempfile import NamedTemporaryFile
-from flask import Flask
 from io import BytesIO
 import wand.image
 from pikepdf import Pdf
@@ -27,29 +26,6 @@ def mock_get_box_return_original(monkeypatch, datadir):
     def mock_return(image, widget, padding):
         return image
     monkeypatch.setattr(scans, 'get_box', mock_return)
-
-
-# Return a mock DB which can be used in the testing enviroment
-# Module scope ensures it is ran only once
-@pytest.fixture(scope="module")
-def db_setup():
-    app = Flask(__name__, static_folder=None)
-    app.config.from_object('zesje_default_cfg')
-    app.config.update(
-        SQLALCHEMY_DATABASE_URI='sqlite:///:memory:',
-        SQLALCHEMY_TRACK_MODIFICATIONS=False  # Suppress future deprecation warning
-    )
-    db.init_app(app)
-    return app
-
-
-# Fixture which empties the database
-@pytest.fixture
-def db_empty(db_setup):
-    with db_setup.app_context():
-        db.drop_all()
-        db.create_all()
-    return db_setup
 
 
 # Tests whether the output of calc angle is correct
@@ -81,13 +57,13 @@ def test_decode_barcode(
 
 
 @pytest.fixture
-def new_exam(db_empty):
+def new_exam(empty_app):
     """
     Default code for generating a database entry
     This needs to be ran at the start of every pipeline test
     TODO: rewrite to a fixture
     """
-    with db_empty.app_context():
+    with empty_app.app_context():
         e = Exam(name="testExam")
         e.token = generate_exam_token(e.id, e.name, b'EXAM PDF DATA')
         sub = Submission(copy_number=145, exam=e)
@@ -100,7 +76,7 @@ def new_exam(db_empty):
         db.session.commit()
 
     # Push the current app context for all tests so the database can be used
-    db_empty.app_context().push()
+    empty_app.app_context().push()
     return exam_config
 
 

@@ -16,6 +16,7 @@ def datadir():
 def app():
     app = Flask(__name__, static_folder=None)
 
+    app.config.from_object('zesje_default_cfg')
     app.config.update(
         SQLALCHEMY_DATABASE_URI='sqlite:///:memory:',
         SQLALCHEMY_TRACK_MODIFICATIONS=False  # Suppress future deprecation warning

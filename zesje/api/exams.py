@@ -13,8 +13,8 @@ from sqlalchemy.orm import selectinload
 
 from zesje.api._helpers import _shuffle
 from zesje.api.problems import problem_to_data
-from ..pdf_generation import generate_pdfs, output_pdf_filename_format, join_pdfs
-from ..pdf_generation import page_is_size, save_with_even_pages, PAGE_FORMATS
+from ..pdf_generation import generate_pdfs, join_pdfs
+from ..pdf_generation import page_is_size, save_with_even_pages
 from ..pdf_generation import write_finalized_exam
 from ..database import db, Exam, ExamWidget, Submission, token_length
 from .submissions import sub_to_data
@@ -237,7 +237,7 @@ class Exams(Resource):
 
         format = current_app.config['PAGE_FORMAT']
 
-        if not page_is_size(pdf_data, PAGE_FORMATS[format], tolerance=0.01):
+        if not page_is_size(pdf_data, current_app.config['PAGE_FORMATS'][format], tolerance=0.01):
             return (
                 dict(status=400,
                      message=f'PDF page size is not {format}.'),
@@ -342,7 +342,7 @@ class ExamGeneratedPdfs(Resource):
         pdf_paths = [
             os.path.join(
                 generated_pdfs_dir,
-                output_pdf_filename_format.format(copy_num))
+                current_app.config['OUTPUT_PDF_FILENAME_FORMAT'].format(copy_num))
             for copy_num
             in copy_nums
         ]

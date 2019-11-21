@@ -17,7 +17,6 @@ from PIL import Image
 
 from .database import Submission
 from . import statistics
-from .api.exams import PAGE_FORMATS
 from .images import guess_dpi
 from .api.images import _grey_out_student_widget
 from .scans import exam_student_id_widget
@@ -42,8 +41,7 @@ def solution_pdf(exam_id, student_id, anonymous=False):
                                    Submission.student_id == student_id).all()
     pages = sorted((p for s in subs for p in s.pages), key=(lambda p: (p.submission.copy_number, p.number)))
 
-    page_format = current_app.config['PAGE_FORMAT']
-    page_size = PAGE_FORMATS[page_format]
+    page_size = current_app.config['PAGE_FORMATS'][current_app.config['PAGE_FORMAT']]
 
     result = BytesIO()
     pdf = canvas.Canvas(result, pagesize=page_size)

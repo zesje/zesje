@@ -22,8 +22,6 @@ from .factory import make_celery
 from .pregrader import grade_problem, ungrade_multiple_sub
 from .image_extraction import extract_images
 
-from .pdf_generation import MARKER_FORMAT, PAGE_FORMATS
-
 ExtractedBarcode = namedtuple('ExtractedBarcode', ['token', 'copy', 'page'])
 
 ExamMetadata = namedtuple('ExamMetadata', ['token', 'barcode_coords'])
@@ -669,12 +667,13 @@ def realign_image(image_array, keypoints=None):
 
 
 def original_corner_markers(dpi):
-    format = current_app.config['PAGE_FORMAT']
+    page_size = current_app.config['PAGE_FORMATS'][current_app.config['PAGE_FORMAT']]
 
-    left_x = MARKER_FORMAT["margin"]/72 * dpi
-    top_y = MARKER_FORMAT["margin"]/72 * dpi
-    right_x = (PAGE_FORMATS[format][0] - MARKER_FORMAT["margin"])/72 * dpi
-    bottom_y = (PAGE_FORMATS[format][1] - MARKER_FORMAT["margin"])/72 * dpi
+    margin = current_app.config['MARKER_FORMAT']['margin']
+    left_x = margin/72 * dpi
+    top_y = margin/72 * dpi
+    right_x = (page_size[0] - margin)/72 * dpi
+    bottom_y = (page_size[1] - margin)/72 * dpi
 
     return np.round([(left_x, top_y),
                      (right_x, top_y),
@@ -683,9 +682,9 @@ def original_corner_markers(dpi):
 
 
 def original_page_size(dpi):
-    format = current_app.config['PAGE_FORMAT']
+    page_size = current_app.config['PAGE_FORMATS'][current_app.config['PAGE_FORMAT']]
 
-    w = (PAGE_FORMATS[format][0])/72 * dpi
-    h = (PAGE_FORMATS[format][1])/72 * dpi
+    w = (page_size[0])/72 * dpi
+    h = (page_size[1])/72 * dpi
 
     return np.rint([w, h]).astype(int)

@@ -6,30 +6,7 @@ import os
 from flask import current_app
 from pdfrw import PdfReader, PdfWriter, PageMerge
 from pylibdmtx.pylibdmtx import encode
-from reportlab.lib.units import mm
 from reportlab.pdfgen import canvas
-
-
-output_pdf_filename_format = '{0:05d}.pdf'
-
-# the size of the markers in points
-MARKER_FORMAT = {
-    "margin": 10 * mm,
-    "marker_line_length": 8 * mm,
-    "marker_line_width": 1 * mm,
-    "bar_length": 40 * mm
-}
-
-# the parameters of drawing checkboxes
-CHECKBOX_FORMAT = {
-    "margin": 5,
-    "font_size": 11,
-    "box_size": 9
-}
-PAGE_FORMATS = {
-    "A4": (595.276, 841.89),
-    "US letter": (612, 792),
-}
 
 
 def generate_pdfs(exam_pdf_file, copy_nums, output_paths, exam_token=None, id_grid_x=0,
@@ -217,17 +194,19 @@ def add_checkbox(canvas, x, y, label):
         A string representing the label that is drawn on top of the box, will only take the first character
 
     """
+    box_size = current_app.config['CHECKBOX_FORMAT']["box_size"]
+    margin = current_app.config['CHECKBOX_FORMAT']["margin"]
     x_label = x + 1  # location of the label
-    y_label = y + CHECKBOX_FORMAT["margin"]  # remove fontsize from the y label since we draw from the bottom left up
-    box_y = y - CHECKBOX_FORMAT["box_size"]  # remove the markboxsize because the y is the coord of the top
+    y_label = y + margin  # remove fontsize from the y label since we draw from the bottom left up
+    box_y = y - box_size  # remove the markboxsize because the y is the coord of the top
     # and reportlab prints from the bottom
 
     # check that there is a label to print
     if (label and not (len(label) == 0)):
-        canvas.setFont('Helvetica', CHECKBOX_FORMAT["font_size"])
+        canvas.setFont('Helvetica', current_app.config['CHECKBOX_FORMAT']["font_size"])
         canvas.drawString(x_label, y_label, label[0])
 
-    canvas.rect(x, box_y, CHECKBOX_FORMAT["box_size"], CHECKBOX_FORMAT["box_size"])
+    canvas.rect(x, box_y, box_size, box_size)
 
 
 def generate_datamatrix(exam_token, page_num, copy_num):
@@ -384,14 +363,15 @@ def _add_corner_markers_and_bottom_bar(canv, pagesize):
     """
     page_width = pagesize[0]
     page_height = pagesize[1]
-    marker_line_length = MARKER_FORMAT["marker_line_length"]
-    bar_length = MARKER_FORMAT["bar_length"]
+    marker_line_length = current_app.config['MARKER_FORMAT']["marker_line_length"]
+    bar_length = current_app.config['MARKER_FORMAT']["bar_length"]
 
     # Calculate coordinates offset from page edge
-    left = MARKER_FORMAT["margin"]
-    bottom = MARKER_FORMAT["margin"]
-    right = page_width - MARKER_FORMAT["margin"]
-    top = page_height - MARKER_FORMAT["margin"]
+    margin = current_app.config['MARKER_FORMAT']["margin"]
+    left = margin
+    bottom = margin
+    right = page_width - margin
+    top = page_height - margin
 
     # Calculate start and end coordinates of bottom bar
     bar_start = page_width / 2 - bar_length / 2

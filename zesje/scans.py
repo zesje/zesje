@@ -699,6 +699,9 @@ def resize_image(image_array, page_format="A4"):
 
     h, w = image_array.shape[:2]
 
+    if h == sh and w == sw:
+        return image_array
+
     # interpolation method
     if h > sh or w > sw:  # shrinking image
         interp = cv2.INTER_AREA
@@ -719,10 +722,14 @@ def resize_image(image_array, page_format="A4"):
 
     elif (saspect < aspect) or ((saspect == 1) and (aspect >= 1)):  # new vertical image
         new_w = sw
-        new_h = np.round(float(new_w) / aspect).astype(int)
+        new_h = np.round(new_w / aspect).astype(int)
         pad_vert = float(sh - new_h) / 2
         pad_top, pad_bot = np.floor(pad_vert).astype(int), np.ceil(pad_vert).astype(int)
         pad_left, pad_right = 0, 0
+
+    else:  # only resize
+        new_w, new_h = sw, sh
+        pad_top, pad_bot, pad_left, pad_right = 0, 0, 0, 0
 
     # resize and and add border
     resized_img = cv2.resize(image_array, (new_w, new_h), interpolation=interp)

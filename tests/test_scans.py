@@ -40,9 +40,9 @@ def db_app():
     return app
 
 
-# Fixture which empties the database
 @pytest.fixture(scope='module')
 def db_empty_app(db_app):
+    """Empties the database and creates a temporary data directory"""
     with db_app.app_context():
         db.drop_all()
         db.create_all()
@@ -55,7 +55,8 @@ def db_empty_app(db_app):
 @pytest.fixture(scope='module')
 def full_app(db_empty_app):
     """
-    Default code for generating a database entry
+    Default code for generating a database entry and writing
+    a finalized exam pdf.
     This needs to be ran at the start of every pipeline test
     """
     with db_empty_app.app_context():
@@ -86,6 +87,7 @@ def full_app(db_empty_app):
 
 
 def generate_flat_scan_data(copy_number=145):
+    """Generates a submission PDF and flattens it"""
     exam = Exam.query.first()
     exam_dir, _, barcode_widget, exam_path, _ = _exam_generate_data(exam)
 
@@ -112,7 +114,6 @@ def original_page_size(format, dpi):
     return np.rint([h, w]).astype(int)
 
 
-# Tests whether the output of calc angle is correct
 @pytest.mark.parametrize('image_filename, token, expected', [
     ('COOLTOKEN_0005_01.png', 'COOLTOKEN',
         ExtractedBarcode('COOLTOKEN',   5,   1)),
@@ -173,7 +174,7 @@ def apply_scan(img, rotation=0, scale=1, skew=(0, 0)):
 #     2. Make database entry
 #     3. Generate PDF with DB token
 #     4. Yield generated pdf pages
-#     5. Apply transormations (optional)
+#     5. Apply transformations (optional)
 #     6. Verify scans can be read (or not)
 
 

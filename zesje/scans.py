@@ -213,6 +213,9 @@ def process_page(image_data, exam_config, output_dir=None, strict=False):
     except RuntimeError as e:
         if strict:
             return False, str(e)
+        else:
+            # Resize the image to match the reference
+            image_array = resize_image(image_array)
 
     try:
         barcode, upside_down = decode_barcode(image_array, exam_config)
@@ -669,6 +672,71 @@ def realign_image(image_array, keypoints=None, page_format="A4"):
                                   borderValue=(255, 255, 255, 255))
 
     return return_image
+
+
+# Based on https://stackoverflow.com/a/49406095
+def resize_image(image_array, page_format="A4"):
+    """
+    Resize the image such that the dimensions match the reference.
+
+    This is a fallback for realign image, when no keypoints are found.
+    It maintains the aspect ratio and adds a white border when needed.
+
+    params
+    ------
+    image_array : numpy.array
+        The image in the form of a numpy array.
+    page_format : str
+        The desired page format
+
+    returns
+    -------
+    return_array: numpy.array
+        The image resized properly.
+    """
+    dpi = guess_dpi(image_array)
+    sw, sh = original_page_size(page_format, dpi)
+
+    h, w = image_array.shape[:2]
+
+    if (h, w) == (sh, sw):
+        return image_array
+
+    # interpolation method
+    if h > sh or w > sw:  # shrinking image
+        interp = cv2.INTER_AREA
+
+    else:  # stretching image
+        interp = cv2.INTER_CUBIC
+
+    # aspect ratio of image
+    aspect = float(w)/h
+    saspect = float(sw)/sh
+
+    if (saspect > aspect):  # padding left and right
+        new_h = sh
+        new_w = np.round(new_h * aspect).astype(int)
+        pad_horz = float(sw - new_w) / 2
+        pad_left, pad_right = np.floor(pad_horz).astype(int), np.ceil(pad_horz).astype(int)
+        pad_top, pad_bot = 0, 0
+
+    elif (saspect < aspect):  # padding top and bottom
+        new_w = sw
+        new_h = np.round(new_w / aspect).astype(int)
+        pad_vert = float(sh - new_h) / 2
+        pad_top, pad_bot = np.floor(pad_vert).astype(int), np.ceil(pad_vert).astype(int)
+        pad_left, pad_right = 0, 0
+
+    else:  # only resize
+        new_w, new_h = sw, sh
+        pad_top, pad_bot, pad_left, pad_right = 0, 0, 0, 0
+
+    # resize and and add border
+    resized_img = cv2.resize(image_array, (new_w, new_h), interpolation=interp)
+    resized_img = cv2.copyMakeBorder(resized_img, pad_top, pad_bot, pad_left, pad_right,
+                                     borderType=cv2.BORDER_CONSTANT, value=(255, 255, 255))
+
+    return resized_img
 
 
 def original_corner_markers(format, dpi):

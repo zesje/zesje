@@ -699,7 +699,7 @@ def resize_image(image_array, page_format="A4"):
 
     h, w = image_array.shape[:2]
 
-    if h == sh and w == sw:
+    if (h, w) == (sh, sw):
         return image_array
 
     # interpolation method

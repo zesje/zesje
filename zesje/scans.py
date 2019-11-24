@@ -713,14 +713,14 @@ def resize_image(image_array, page_format="A4"):
     aspect = float(w)/h
     saspect = float(sw)/sh
 
-    if (saspect > aspect) or ((saspect == 1) and (aspect <= 1)):  # new horizontal image
+    if (saspect > aspect):  # padding left and right
         new_h = sh
         new_w = np.round(new_h * aspect).astype(int)
         pad_horz = float(sw - new_w) / 2
         pad_left, pad_right = np.floor(pad_horz).astype(int), np.ceil(pad_horz).astype(int)
         pad_top, pad_bot = 0, 0
 
-    elif (saspect < aspect) or ((saspect == 1) and (aspect >= 1)):  # new vertical image
+    elif (saspect < aspect):  # padding top and bottom
         new_w = sw
         new_h = np.round(new_w / aspect).astype(int)
         pad_vert = float(sh - new_h) / 2

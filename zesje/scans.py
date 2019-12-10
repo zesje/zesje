@@ -17,18 +17,16 @@ from sqlalchemy.exc import InternalError
 from .database import db, Scan, Exam, Page, Student, Submission, Solution, ExamWidget
 from .datamatrix import decode_raw_datamatrix
 from .images import guess_dpi, get_box
-from .factory import make_celery
 from .pregrader import grade_problem, ungrade_multiple_sub
 from .image_extraction import extract_images
 from .blanks import reference_image
+from . import celery
 
 from .pdf_generation import MARKER_FORMAT, PAGE_FORMATS
 
 ExtractedBarcode = namedtuple('ExtractedBarcode', ['token', 'copy', 'page'])
 
 ExamMetadata = namedtuple('ExamMetadata', ['token', 'barcode_coords'])
-
-celery = make_celery()
 
 
 @celery.task()

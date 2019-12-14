@@ -155,7 +155,7 @@ class CheckStudents extends React.Component {
     const exam = this.props.exam
     const subm = exam.submissions[this.state.index]
     const total = exam.submissions.length
-    const done = exam.submissions.filter(s => s.student).length
+    const done = exam.submissions.filter(s => s.validated).length
 
     return (
       <div>

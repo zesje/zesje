@@ -80,15 +80,20 @@ def render(exam_id, student_id, template):
     return template.render(student=student, results=results)
 
 
-def build_solution_attachment(exam_id, student_id):
+def build_solution_attachment(exam_id, student_id, file_name=None):
     solution = solution_pdf(exam_id, student_id)
     maintype, subtype = 'application', 'pdf'
     pdf = MIMEBase(maintype, subtype)
     pdf.set_payload(solution.read())
     encoders.encode_base64(pdf)
+    
+    if file_name is None:
+        # construct the default filename is non is provided
+        file_name = f"{student_id}.pdf"
+        
     # Set the filename parameter
     pdf.add_header('Content-Disposition', 'attachment',
-                   filename=f"{student_id}.pdf")
+                   filename=file_name)
     return pdf
 
 

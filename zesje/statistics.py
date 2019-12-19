@@ -119,7 +119,7 @@ def grader_data(exam_id):
 
         for solution in solutions:
             gid = solution.grader_id
-            if not gid in graders
+            if not gid in graders:
                 name = Grader.query.get(gid)
                 graders[gid] = { 
                     "grader_name": name,

@@ -3,7 +3,7 @@ from sqlalchemy.orm.exc import NoResultFound
 import numpy as np
 import pandas
 
-from .database import Exam, Student
+from .database import Exam, Student, Grader
 
 
 def solution_data(exam_id, student_id):
@@ -57,7 +57,6 @@ def solution_data(exam_id, student_id):
 
     return student, results
 
-
 def full_exam_data(exam_id):
     """Compute all grades of an exam as a pandas DataFrame."""
     exam = Exam.query.get(exam_id)
@@ -103,3 +102,61 @@ def full_exam_data(exam_id):
         }
 
     return pandas.DataFrame(results).T
+
+def grader_data(exam_id):
+    """ Compute the grader statistics for a given exam. """
+    exam = Exam.query.get(exam_id)
+    if exam is None:
+        raise KeyError("No such exam.")
+
+    data = [ ]
+    for problem in exam.problems:
+        solutions = problem.solutions
+        prob = {
+            "problem_id": problem.id,
+            "max_score": max(fb.score for fb in problem.feedback_options) or 0 }
+        graders = { }
+
+        for solution in solutions:
+            gid = solution.grader_id
+            if not gid in graders
+                name = Grader.query.get(gid)
+                graders[gid] = { 
+                    "grader_name": name,
+                    "graded": 0,
+                    "avg_score": 0,
+                    "max_score": 0,
+                    "min_score": 0,
+                    "first_grade_at": np.inf,
+                    "last_grade_at": -1
+                }
+            
+            graders[gid]["graded"] += 1
+            if solution.graded_at:
+                graded_at_in_s = int(solution.graded_at.timestamp())
+                graders[gid]["first_grade_at"] = min(graders[gid]["first_grade_at"], graded_at_in_s)
+                graders[gid]["last_grade_at"] = max(graders[gid]["last_grade_at"], graded_at_in_s)
+
+            for feedback in solution.feedback_options:
+                if feedback.score == 0:
+                    graders[gid]["min_score"] += 1
+                elif feedback.score == prob["max_score"]:
+                    graders[gid]["max_score"] += 1
+                
+                graders[gid]["avg_score"] += feedback.score
+        
+        for gid in graders.keys():
+            graders[gid]["avg_score"] /= graders[gid]["graded"]
+
+            if graders[gid]["last_grade_at"] < np.inf and graders[gid]["first_grade_at"] > -1:
+                graders[gid]["elapsed_time_in_sec"] = graders[gid]["last_grade_at"] - graders[gid]["first_grade_at"]
+            else:
+                graders[gid]["elapsed_time_in_sec"] = "NaN"
+            
+            del graders[gid]["last_grade_at"]
+            del graders[gid]["first_grade_at"]
+
+        prob["graders"] = graders
+        data.append(prob)
+
+    return {"exam" : exam_id, "problems": data}

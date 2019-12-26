@@ -3,7 +3,7 @@ from sqlalchemy.orm.exc import NoResultFound
 import numpy as np
 import pandas
 
-from .database import Exam, Student, Grader
+from .database import Exam, Student, Grader, Solution
 
 
 def solution_data(exam_id, student_id):
@@ -57,6 +57,7 @@ def solution_data(exam_id, student_id):
 
     return student, results
 
+
 def full_exam_data(exam_id):
     """Compute all grades of an exam as a pandas DataFrame."""
     exam = Exam.query.get(exam_id)
@@ -103,60 +104,79 @@ def full_exam_data(exam_id):
 
     return pandas.DataFrame(results).T
 
+
 def grader_data(exam_id):
     """ Compute the grader statistics for a given exam. """
     exam = Exam.query.get(exam_id)
     if exam is None:
         raise KeyError("No such exam.")
 
-    data = [ ]
+    data = []
     for problem in exam.problems:
         solutions = problem.solutions
-        prob = {
-            "problem_id": problem.id,
-            "max_score": max(fb.score for fb in problem.feedback_options) or 0 }
-        graders = { }
+        graders = {}
+
+        max_score = max(fb.score for fb in problem.feedback_options) or 0
 
         for solution in solutions:
             gid = solution.grader_id
-            if not gid in graders:
+            if not gid:
+                # solution has not been graded yet
+                continue
+
+            if gid not in graders:
                 name = Grader.query.get(gid)
-                graders[gid] = { 
+                graders[gid] = {
+                    "grader_id": gid,
                     "grader_name": name,
                     "graded": 0,
                     "avg_score": 0,
                     "max_score": 0,
                     "min_score": 0,
-                    "first_grade_at": np.inf,
-                    "last_grade_at": -1
+                    "avg_grading_time": 0
                 }
-            
+
             graders[gid]["graded"] += 1
-            if solution.graded_at:
-                graded_at_in_s = int(solution.graded_at.timestamp())
-                graders[gid]["first_grade_at"] = min(graders[gid]["first_grade_at"], graded_at_in_s)
-                graders[gid]["last_grade_at"] = max(graders[gid]["last_grade_at"], graded_at_in_s)
+            graders[gid]["avg_grading_time"] = estimate_grading_time(problem.id, gid)
 
             for feedback in solution.feedback_options:
                 if feedback.score == 0:
                     graders[gid]["min_score"] += 1
-                elif feedback.score == prob["max_score"]:
+                elif feedback.score == max_score:
                     graders[gid]["max_score"] += 1
-                
+
                 graders[gid]["avg_score"] += feedback.score
-        
+
         for gid in graders.keys():
             graders[gid]["avg_score"] /= graders[gid]["graded"]
 
-            if graders[gid]["last_grade_at"] < np.inf and graders[gid]["first_grade_at"] > -1:
-                graders[gid]["elapsed_time_in_sec"] = graders[gid]["last_grade_at"] - graders[gid]["first_grade_at"]
-            else:
-                graders[gid]["elapsed_time_in_sec"] = "NaN"
-            
-            del graders[gid]["last_grade_at"]
-            del graders[gid]["first_grade_at"]
+        data.append({
+            "problem_id": problem.id,
+            "max_score": max_score,
+            "graders": graders.values()
+        })
 
-        prob["graders"] = graders
-        data.append(prob)
+    return {"exam": exam_id, "problems": data}
 
-    return {"exam" : exam_id, "problems": data}
+
+ELAPSED_TIME_THRESHOLD = 3600   # 1 hour in seconds
+
+
+def estimate_grading_time(problem_id, grader_id, threshold=ELAPSED_TIME_THRESHOLD):
+    # get the datetime data for all Solutions graded by the same grader ordered in ascending order
+    graded_timings = Solution.query(Solution.graded_at)\
+        .filter(Solution.problem_id == problem_id, Solution.grader_id == grader_id)\
+        .order_by(Solution.graded_at)
+
+    subs_graded = graded_timings.count()
+
+    if subs_graded < 2:
+        # only one submission was graded, cannot evaluate the time spent
+        return 0
+
+    elapsed_times = np.zeros(subs_graded - 1)
+    for k in range(1, subs_graded):
+        elapsed_times[k-1] = int(graded_timings[k].graded_at.timestamp() - graded_timings[k-1].graded_at.timestamp())
+
+    # evaluate the average time excluding intermediate breaks
+    return np.mean(elapsed_times[elapsed_times < threshold])

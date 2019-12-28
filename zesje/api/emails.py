@@ -68,10 +68,10 @@ def build_email(exam_id, student_id, template, attach, from_address, copy_to=Non
             409,
             message=f'Student #{student_id} has no email address'
         )
-        
+
     exam = Exam.query.get(exam_id)
     if exam is not None:
-        file_name = f"{student_id}_{exam.name}"
+        file_name = f"{student_id}_{exam.name}.pdf"
     else:
         file_name = None
 

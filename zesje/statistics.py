@@ -161,25 +161,33 @@ def grader_data(exam_id):
     return {"exam_id": exam_id, "exam_name": exam.name, "problems": data}
 
 
-ELAPSED_TIME_THRESHOLD = 3600   # 1 hour in seconds
+ELAPSED_TIME_BREAK = 12 * 3600   # 12 hours in seconds
 
 
-def estimate_grading_time(problem_id, grader_id, threshold=ELAPSED_TIME_THRESHOLD):
+def estimate_grading_time(problem_id, grader_id):
     # get the datetime data for all Solutions graded by the same grader ordered in ascending order
-    graded_timings = [
-        it.graded_at.timestamp()
-        for it in Solution.query.filter(Solution.problem_id == problem_id, Solution.grader_id == grader_id)
-        .order_by(Solution.graded_at)
+    graded_timings = np.array([
+        [it.problem_id, it.graded_at.timestamp()]
+        for it in Solution.query.filter(Solution.grader_id == grader_id).order_by(Solution.graded_at)
         if it.graded_at
-    ]
+    ])
 
     if len(graded_timings) < 2:
         # only one (or none) submission was graded, cannot evaluate the time spent
         return 0
 
-    elapsed_times = np.zeros(len(graded_timings) - 1)
-    for k in range(1, len(graded_timings)):
-        elapsed_times[k-1] = graded_timings[k] - graded_timings[k-1]
+    # since a grader might evaluate different problems at once,
+    # compute the interval as the time range between the grading of the specified problem
+    # and the previous problem graded
+    selected_problem = graded_timings[:, 0] == problem_id
+    elapsed_times = graded_timings[selected_problem, 1] - graded_timings[np.roll(selected_problem, -1), 1]
 
-    # evaluate the average time in seconds excluding intermediate breaks
-    return int(np.mean(elapsed_times[elapsed_times < threshold]))
+    # exclude very long breaks
+    elapsed_times = elapsed_times[elapsed_times < ELAPSED_TIME_BREAK]
+    if len(elapsed_times) == 0:
+        return 0
+
+    mean, std = np.mean(elapsed_times), np.std(elapsed_times)
+
+    # evaluate the average time in seconds excluding long breaks
+    return int(np.mean(elapsed_times[elapsed_times <= mean + 2 * std]))

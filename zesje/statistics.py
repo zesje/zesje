@@ -2,6 +2,7 @@ from sqlalchemy.orm.exc import NoResultFound
 
 import numpy as np
 import pandas
+from sqlalchemy import between
 
 from .database import Exam, Student, Grader, Solution
 
@@ -165,29 +166,42 @@ ELAPSED_TIME_BREAK = 12 * 3600   # 12 hours in seconds
 
 
 def estimate_grading_time(problem_id, grader_id):
+    query_per_problem = Solution.query.filter(Solution.grader_id == grader_id, Solution.problem_id == problem_id)\
+        .order_by(Solution.graded_at)
+    first_grade, last_grade = query_per_problem[0].graded_at, query_per_problem[-1].graded_at
+
+    if query_per_problem.count() == 0:
+        # if none submission was graded, cannot evaluate the time spent
+        return 0
+    elif query_per_problem.count() == 1:
+        previous_grade = Solution.query.filter(Solution.grader_id == grader_id, Solution.graded_at < first_grade)\
+            .order_by(Solution.graded_at)[-1]
+
+        elapsed_time = int(first_grade.timestamp() - previous_grade.graded_at.timestamp())
+
+        return elapsed_time if elapsed_time < ELAPSED_TIME_BREAK else 0
+
     # get the datetime data for all Solutions graded by the same grader ordered in ascending order
     graded_timings = np.array([
         [it.problem_id, it.graded_at.timestamp()]
-        for it in Solution.query.filter(Solution.grader_id == grader_id).order_by(Solution.graded_at)
+        for it in Solution.query
+        .filter(Solution.grader_id == grader_id, between(Solution.graded_at, first_grade, last_grade))
+        .order_by(Solution.graded_at)
         if it.graded_at
     ])
-
-    if len(graded_timings) < 2:
-        # only one (or none) submission was graded, cannot evaluate the time spent
-        return 0
 
     # since a grader might evaluate different problems at once,
     # compute the interval as the time range between the grading of the specified problem
     # and the previous problem graded
     selected_problem = graded_timings[:, 0] == problem_id
-    elapsed_times = graded_timings[selected_problem, 1] - graded_timings[np.roll(selected_problem, -1), 1]
+    elapsed_times = graded_timings[selected_problem, 1] - np.roll(graded_timings[np.roll(selected_problem, 1), 1], 1)
+    elapsed_times = elapsed_times[1:]
 
-    # exclude very long breaks
     elapsed_times = elapsed_times[elapsed_times < ELAPSED_TIME_BREAK]
     if len(elapsed_times) == 0:
         return 0
 
+    # exclude very long breaks
     mean, std = np.mean(elapsed_times), np.std(elapsed_times)
-
     # evaluate the average time in seconds excluding long breaks
     return int(np.mean(elapsed_times[elapsed_times <= mean + 2 * std]))

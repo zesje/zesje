@@ -70,11 +70,11 @@ class Submission(db.Model):
     """Typically created when adding a new exam."""
     __tablename__ = 'submission'
     id = Column(Integer, primary_key=True, autoincrement=True)
-    exam_id = Column(Integer, ForeignKey('exam.id'), nullable=False)
+    exam_id = Column(Integer, ForeignKey('exam.id'), nullable=False)  # backref exam
     solutions = db.relationship('Solution', backref='submission', cascade='all',
                                 order_by='Solution.problem_id', lazy=True)
     copies = db.relationship('Copy', backref='submission', lazy=True)
-    student_id = Column(Integer, ForeignKey('student.id'), nullable=True)
+    student_id = Column(Integer, ForeignKey('student.id'), nullable=True)  # backref student
 
     # TODO Unique constraint (exam_id, student_id)
 
@@ -84,7 +84,7 @@ class Copy(db.Model):
     __tablename__ = 'copy'
     id = Column(Integer, primary_key=True, autoincrement=True)
     number = Column(Integer, nullable=False)
-    submission_id = Column(Integer, ForeignKey('submission.id'), nullable=False)
+    submission_id = Column(Integer, ForeignKey('submission.id'), nullable=False)  # backref submission
     pages = db.relationship('Page', backref='copy', lazy=True)
     signature_validated = Column(Boolean, default=False, server_default='f', nullable=False)
 
@@ -102,7 +102,7 @@ class Page(db.Model):
     __tablename__ = 'page'
     id = Column(Integer, primary_key=True, autoincrement=True)
     path = Column(Text, nullable=False)
-    copy_id = Column(Integer, ForeignKey('copy.id'), nullable=False)
+    copy_id = Column(Integer, ForeignKey('copy.id'), nullable=False)  # backref copy
     number = Column(Integer, nullable=False)
 
     @hybrid_property

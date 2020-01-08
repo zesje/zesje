@@ -6,7 +6,7 @@
     "dev": "concurrently --kill-others --names \"WEBPACK,PYTHON,CELERY,REDIS\" --prefix-colors \"bgBlue.bold,bgGreen.bold,bgRed.bold,bgYellow.bold\" \"yarn dev:webpack\" \"yarn start\" \"yarn dev:celery\" \"yarn dev:redis\"",
     "dev:backend": "concurrently --kill-others --names \"PYTHON,CELERY,REDIS\" --prefix-colors \"bgGreen.bold,bgRed.bold,bgYellow.bold\" \"yarn start\" \"yarn dev:celery\" \"yarn dev:redis\"",
     "dev:webpack": "webpack-dev-server --hot --inline --progress --config webpack.dev.js",
-    "dev:celery": "ZESJE_SETTINGS=$(pwd)/zesje.dev.cfg celery -A zesje.celery worker -l info --autoscale=4,1 --max-tasks-per-child=16",
+    "dev:celery": "ZESJE_SETTINGS=$(pwd)/zesje.dev.cfg celery -A zesje.wsgi.celery worker -l info --autoscale=4,1 --max-tasks-per-child=16",
     "dev:redis": "redis-server redis.conf",
     "build": "webpack --config webpack.prod.js",
     "ci": "yarn lint; yarn test",
@@ -18,11 +18,11 @@
     "test:py": "python3 -m pytest -v -W error::RuntimeWarning",
     "start": "ZESJE_SETTINGS=$(pwd)/zesje.dev.cfg python3 zesje",
     "analyze": "webpack --config webpack.prod.js --profile --json > stats.json; webpack-bundle-analyzer stats.json zesje/static",
-    "migrate:dev": "ZESJE_SETTINGS=$(pwd)/zesje.dev.cfg FLASK_APP=zesje/__init__.py flask db upgrade",
-    "migrate": "FLASK_APP=zesje/__init__.py flask db upgrade",
-    "prepare-migration": "ZESJE_SETTINGS=$(pwd)/zesje.dev.cfg FLASK_APP=zesje/__init__.py flask db migrate",
+    "migrate:dev": "ZESJE_SETTINGS=$(pwd)/zesje.dev.cfg FLASK_APP=zesje.wsgi:app flask db upgrade",
+    "migrate": "FLASK_APP=zesje.wsgi:app flask db upgrade",
+    "prepare-migration": "ZESJE_SETTINGS=$(pwd)/zesje.dev.cfg FLASK_APP=zesje.wsgi:app flask db migrate",
     "test:py:cov": "python3 -m pytest -v -W error::RuntimeWarning --cov=zesje --cov-report=xml:cov.xml --cov-report=html:cov.html --cov-report=term tests/",
-    "migrate-down": "FLASK_APP=zesje/__init__.py flask db downgrade"
+    "migrate-down": "FLASK_APP=zesje.wsgi:app flask db downgrade"
   },
   "standard": {
     "parser": "babel-eslint",

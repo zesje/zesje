@@ -144,7 +144,7 @@ class Exams(Resource):
         submissions = [sub_to_data(sub) for sub in exam.submissions]
 
         # Sort submissions by selecting those with students assigned, then by
-        # student number, then by copy number.
+        # student number, then by submission id.
         # TODO: This is a minimal fix of #166, to be replaced later.
         submissions = sorted(
             submissions,

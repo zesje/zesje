@@ -14,7 +14,7 @@ from pikepdf import Pdf
 from pylibdmtx import pylibdmtx
 from sqlalchemy.exc import InternalError
 
-from .database import db, Scan, Exam, Page, Student, Submission, Solution, ExamWidget
+from .database import db, Scan, Exam, Page, Student, Submission, Copy, Solution, ExamWidget
 from .datamatrix import decode_raw_datamatrix
 from .images import guess_dpi, get_box
 from .pregrader import grade_problem, ungrade_multiple_sub
@@ -302,17 +302,21 @@ def update_database(image_path, barcode):
     if exam is None:
         raise RuntimeError('Invalid exam token.')
 
-    sub = Submission.query.filter(Submission.copy_number == barcode.copy, Submission.exam_id == exam.id).one_or_none()
-    if sub is None:
-        sub = Submission(copy_number=barcode.copy, exam=exam)
+    copy = Copy.query.filter(Copy.number == barcode.copy, Copy.exam == exam)
+    if copy is None:
+        # Copy does not yet exist, so we create it together with a new submission
+        copy = Copy(number=barcode.copy)
+        sub = Submission(exam=exam, copies=[copy])
         db.session.add(sub)
+
+        # Add a solution for each problem
         for problem in exam.problems:
             db.session.add(Solution(problem=problem, submission=sub))
 
     # We may have added this page in previous uploads but we only want a single
     # 'Page' entry regardless
-    if Page.query.filter(Page.submission == sub, Page.number == barcode.page).one_or_none() is None:
-        db.session.add(Page(path=image_path, submission=sub, number=barcode.page))
+    if Page.query.filter(Page.copy == copy, Page.number == barcode.page).one_or_none() is None:
+        db.session.add(Page(path=image_path, copy=copy, number=barcode.page))
 
     db.session.commit()
 

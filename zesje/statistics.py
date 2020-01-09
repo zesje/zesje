@@ -129,8 +129,8 @@ def grader_data(exam_id):
                 grader = Grader.query.get(gid)
 
                 graders[gid] = {
-                    "grader_id": gid,
-                    "grader_name": grader.name,
+                    "id": gid,
+                    "name": grader.name,
                     "graded": 0,
                     "avg_score": 0,
                     "max_score": 0,
@@ -153,8 +153,8 @@ def grader_data(exam_id):
             graders[gid]["avg_grading_time"] = estimate_grading_time(problem.id, gid)
 
         data.append({
-            "problem_id": problem.id,
-            "problem_name": problem.name,
+            "id": problem.id,
+            "name": problem.name,
             "max_score": max_score,
             "graders": list(graders.values())
         })

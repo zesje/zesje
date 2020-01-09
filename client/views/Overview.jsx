@@ -2,6 +2,7 @@ import React from 'react'
 import 'bulma-tooltip/dist/css/bulma-tooltip.min.css'
 
 import Hero from '../components/Hero.jsx'
+import * as api from '../api.jsx'
 
 const Tooltip = (props) => {
   if (!props.text) {
@@ -55,7 +56,70 @@ const ProblemSummary = (props) => (
   </React.Fragment>
 )
 
+const displayGradingTime = (time) => {
+  if (time > 59) {
+    return `${Math.floor(time / 60)}min ${(time % 60)}s`
+  } else {
+    return `${time}s`
+  }
+}
+
+const GradersSummary = (props) => (
+  <React.Fragment>
+    <h3 className='has-text-centered'>
+      {/^\d/.test(props.problem.name) ? 'Problem ' : null}
+      {props.problem.name}
+    </h3>
+    <table className='table is-striped'>
+      <thead>
+        <tr>
+          <th> Name </th>
+          <th> #&nbsp;Graded </th>
+          <th> Avg. Score </th>
+          <th> #&nbsp;Max/Min Grade </th>
+          <th> Avg. Grading Time </th>
+        </tr>
+      </thead>
+      <tbody>
+        {
+          props.problem.graders.map((grader, i) => {
+            return <tr key={i}>
+              <td> {grader.name} </td>
+              <td> {grader.graded} </td>
+              <td> {Math.round(grader.avg_score * 100) / 100} </td>
+              <td> {grader.max_score} / {grader.min_score} </td>
+              <td> {displayGradingTime(grader.avg_grading_time)} </td>
+            </tr>
+          })
+        }
+      </tbody>
+    </table>
+  </React.Fragment>
+)
+
 class Overview extends React.Component {
+  state = {
+    graderStatistics: null,
+    statsLoaded: false
+  }
+
+  constructor (props) {
+    super(props)
+    this.state = {
+      graderStatistics: null
+    }
+  }
+
+  componentWillMount () {
+    api.get(`export/graders/${this.props.exam.id}`)
+      .then(stats => {
+        this.setState({
+          graderStatistics: stats,
+          statsLoaded: true
+        })
+      })
+  }
+
   render () {
     return (
       <div>
@@ -84,6 +148,17 @@ class Overview extends React.Component {
               ))
             }
           </div>
+        </section>
+
+        <section>
+          <h3 className='title is-size-3 has-text-centered'> Grader Details </h3>
+          { this.state.statsLoaded &&
+              this.state.graderStatistics.problems.map((problem, i) => (
+                <div className='content' key={i}>
+                  <GradersSummary problem={problem} />
+                </div>
+              ))
+          }
         </section>
 
       </div >

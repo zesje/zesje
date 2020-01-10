@@ -670,7 +670,7 @@ def realign_image(image_array, page_shape, keypoints=None, page_format='A4'):
                         [0, 1, y_shift]])
     else:
         # Let opencv estimate the transformation matrix
-        M = cv2.estimateAffinePartial2D(keypoints, adjusted_markers)[0]
+        M = cv2.estimateAffinePartial2D(keypoints, adjusted_markers, method=cv2.LMEDS)[0]
 
     rows, cols = page_shape
 

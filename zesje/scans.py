@@ -238,6 +238,7 @@ def process_page(image_data, exam_config, output_dir=None, strict=False):
     else:
         return True, "Testing, image not saved and database not updated."
 
+    # This submission can additionally point to copies other than this one
     sub = update_database(image_path, barcode)
 
     try:
@@ -379,7 +380,7 @@ def guess_student(exam_token, copy_number, app_config=None, force=False):
     exam_token : string
         Unique exam identifier (see database schema).
     copy_number : int
-        The copy number of the submission.
+        The copy number.
     app_config : Flask config
         Optional.
     force : bool
@@ -394,16 +395,21 @@ def guess_student(exam_token, copy_number, app_config=None, force=False):
     if app_config is None:
         app_config = {}
 
+    # TODO: Implement this
+    if force:
+        raise NotImplementedError(
+            'Setting the student for a validated copy is not implemented yet.')
+
     # Throws exception if zero or more than one of Exam, Submission or Page found
     exam = Exam.query.filter(Exam.token == exam_token).one()
-    sub = Submission.query.filter(Submission.copy_number == copy_number,
-                                  Submission.exam_id == exam.id).one()
-    image_path = Page.query.filter(Page.submission_id == sub.id,
+    copy = Copy.query.filter(Copy.number == copy_number,
+                             Copy.exam_id == exam.id).one()
+    image_path = Page.query.filter(Page.copy_id == copy.id,
                                    Page.number == 0).one().path
 
     student_id_widget, student_id_widget_coords = exam_student_id_widget(exam.id, app_config)
 
-    if sub.signature_validated and not force:
+    if copy.signature_validated and not force:
         return "Signature already validated"
 
     try:
@@ -413,9 +419,7 @@ def guess_student(exam_token, copy_number, app_config=None, force=False):
 
     student = Student.query.get(int(number))
     if student is not None:
-        exam = Exam.query.filter(Exam.token == exam_token).one()
-        sub = Submission.query.filter(Submission.copy_number == copy_number, Submission.exam_id == exam.id).one()
-        sub.student = student
+        copy.student = student
         db.session.commit()
         return "Successfully extracted student number"
     else:

@@ -3,7 +3,8 @@
 import enum
 
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean, ForeignKey, Enum, false
+from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean, ForeignKey, Enum
+from sqlalchemy import false, select, join
 from flask_sqlalchemy.model import BindMetaMixin, Model
 from sqlalchemy.ext.declarative import DeclarativeMeta, declarative_base
 from sqlalchemy.orm import backref
@@ -59,7 +60,24 @@ class Exam(db.Model):
 
     @hybrid_property
     def copies(self):
-        return [copy for sub in self.submissions for copy in sub.copies]
+        # Ordered by copy number, ascending
+        return Copy.query.select_from(Exam).\
+               join(Exam.submissions).join(Submission.copies).\
+               filter(Exam.id == self.id).\
+               order_by(Copy.number.asc()).all()
+        # TODO For clarity, I rather want this to be something like:
+        # [copy for sub in self.submissions for copy in sub.copies]
+        # but only use this when all the objects are already loaded
+        # and use the query above otherwise.
+
+    # TODO Is this SQL expression really needed?
+    @copies.expression
+    def copies(cls):
+        return select([Copy.id, Copy.number, Copy.submission_id, Copy.signature_validated]).\
+               select_from(
+                   join(Copy, Submission)
+               ).\
+               where(Submission.exam_id == cls.id)
 
     # Any migration that alters (and thus recreates) the exam table should explicitly
     # specify this keyword to ensure it will be used for the new table

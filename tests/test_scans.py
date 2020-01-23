@@ -4,31 +4,100 @@ import pytest
 import numpy as np
 import PIL.Image
 import cv2
-from tempfile import NamedTemporaryFile
-from io import BytesIO
-import wand.image
+from tempfile import NamedTemporaryFile, TemporaryDirectory
 from pikepdf import Pdf
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
 
-from zesje.scans import decode_barcode, ExamMetadata, ExtractedBarcode
-from zesje.image_extraction import extract_image_pikepdf
+from zesje.scans import decode_barcode, ExamMetadata, ExtractedBarcode, exam_metadata, guess_dpi
+from zesje.image_extraction import extract_image_pikepdf, extract_images
 from zesje.database import db
-from zesje.api.exams import generate_exam_token
-from zesje.database import Exam, ExamWidget, Submission
+from zesje.api.exams import generate_exam_token, _get_exam_dir, _exam_generate_data
+from zesje.pdf_generation import write_finalized_exam, generate_pdfs
+from zesje.database import Exam, ExamWidget
 from zesje import scans
-from zesje import pdf_generation
+from zesje_default_cfg import PAGE_FORMATS
 
 
 # Returns the original image instead of retrieving a box from it
 @pytest.fixture
-def mock_get_box_return_original(monkeypatch, datadir):
+def mock_get_box_return_original(monkeypatch):
     def mock_return(image, widget, padding):
         return image
     monkeypatch.setattr(scans, 'get_box', mock_return)
 
 
-# Tests whether the output of calc angle is correct
+@pytest.fixture(scope='module')
+def db_empty_app(db_app):
+    with db_app.app_context():
+        db.drop_all()
+        db.create_all()
+
+    return db_app
+
+
+@pytest.fixture(scope='module')
+def full_app(db_empty_app):
+    """
+    Default code for generating a database entry and writing
+    a finalized exam pdf.
+    This needs to be ran at the start of every pipeline test
+    """
+    with db_empty_app.app_context():
+        exam = Exam(name='Exam')
+        db.session.add(exam)
+        db.session.commit()
+
+        exam.token = generate_exam_token(exam.id, exam.name, b'EXAM PDF DATA')
+        student_id_widget = ExamWidget(exam=exam, name='student_id_widget', x=50, y=50)
+        ExamWidget(exam=exam, name='barcode_widget', x=40, y=510)
+
+        db.session.commit()
+
+        exam_dir = _get_exam_dir(exam.id)
+        os.makedirs(exam_dir, exist_ok=True)
+
+        exam_path = os.path.join(exam_dir, 'exam.pdf')
+        pdf = canvas.Canvas(exam_path, pagesize=A4)
+        for _ in range(2):
+            pdf.showPage()
+        pdf.save()
+
+        write_finalized_exam(exam_dir, exam_path, student_id_widget.x, student_id_widget.y, [])
+
+    # Push the current app context for all tests so the database can be used
+    db_empty_app.app_context().push()
+    return db_empty_app
+
+
+def generate_flat_scan_data(copy_number=145):
+    """Generates a submission PDF and flattens it"""
+    exam = Exam.query.first()
+    exam_dir, _, barcode_widget, exam_path, _ = _exam_generate_data(exam)
+
+    exam_config = exam_metadata(exam.id)
+
+    with NamedTemporaryFile() as scan_pdf:
+        generate_pdfs(
+            exam_pdf_file=exam_path,
+            copy_nums=[copy_number],
+            output_paths=[scan_pdf.name],
+            exam_token=exam.token,
+            datamatrix_x=barcode_widget.x,
+            datamatrix_y=barcode_widget.y
+        )
+
+        for image, _ in extract_images(scan_pdf.name, dpi=150):
+            yield image, exam_config, exam_dir
+
+
+def original_page_size(format, dpi):
+    h = (PAGE_FORMATS[format][1])/72 * dpi
+    w = (PAGE_FORMATS[format][0])/72 * dpi
+
+    return np.rint([h, w]).astype(int)
+
+
 @pytest.mark.parametrize('image_filename, token, expected', [
     ('COOLTOKEN_0005_01.png', 'COOLTOKEN',
         ExtractedBarcode('COOLTOKEN',   5,   1)),
@@ -51,68 +120,6 @@ def test_decode_barcode(
     image = np.array(PIL.Image.open(image_path))
 
     assert decode_barcode(image, exam_config) == (expected, False)
-
-
-# Helper functions
-
-
-@pytest.fixture
-def new_exam(empty_app):
-    """
-    Default code for generating a database entry
-    This needs to be ran at the start of every pipeline test
-    TODO: rewrite to a fixture
-    """
-    with empty_app.app_context():
-        e = Exam(name="testExam")
-        e.token = generate_exam_token(e.id, e.name, b'EXAM PDF DATA')
-        sub = Submission(copy_number=145, exam=e)
-        widget = ExamWidget(exam=e, name='student_id_widget', x=50, y=50)
-        exam_config = ExamMetadata(
-            token=e.token,
-            barcode_coords=[40, 90, 510, 560],  # in points (not pixels!)
-        )
-        db.session.add_all([e, sub, widget])
-        db.session.commit()
-
-    # Push the current app context for all tests so the database can be used
-    empty_app.app_context().push()
-    return exam_config
-
-
-def generate_pdf(exam_config, pages):
-    token = exam_config.token
-    datamatrix_x = exam_config.barcode_coords[2]
-    datamatrix_y = exam_config.barcode_coords[0]
-    with NamedTemporaryFile(suffix='.pdf') as blank, \
-            NamedTemporaryFile(suffix='.pdf') as generated:
-        pdf = canvas.Canvas(blank.name, pagesize=A4)
-        for _ in range(pages):
-            pdf.showPage()
-        pdf.save()
-        pdf_generation.generate_pdfs(
-            blank.name, [145], [generated.name], token,
-            50, 50, datamatrix_x, datamatrix_y)
-        genPDF = makeflatpdf(generated.name)
-        return genPDF
-
-
-def makeflatpdf(pdf):
-    with wand.image.Image(file=open(pdf, 'rb'), resolution=150) as img:
-        output_pdf = wand.image.Image()
-        for image in img.sequence:
-            image.format = 'jpg'
-            output_pdf.sequence.append(image)
-            image.destroy()
-        return output_pdf
-
-
-def makeImage(img):
-    images = [wand.image.Image(i) for i in img.sequence]
-    for image in images:
-        img = PIL.Image.open(BytesIO(image.make_blob("png")))
-        img = img.convert('RGB')
-        yield img
 
 
 # Noise transformations
@@ -151,14 +158,13 @@ def apply_scan(img, rotation=0, scale=1, skew=(0, 0)):
 #     2. Make database entry
 #     3. Generate PDF with DB token
 #     4. Yield generated pdf pages
-#     5. Apply transormations (optional)
+#     5. Apply transformations (optional)
 #     6. Verify scans can be read (or not)
 
 
-def test_pipeline(new_exam, datadir):
-    genPDF = generate_pdf(new_exam, 5)
-    for image in makeImage(genPDF):
-        success, reason = scans.process_page(image, new_exam, datadir)
+def test_pipeline(full_app):
+    for image, exam_config, exam_dir in generate_flat_scan_data():
+        success, reason = scans.process_page(image, exam_config, exam_dir)
         assert success is True, reason
 
 
@@ -167,11 +173,10 @@ def test_pipeline(new_exam, datadir):
     (0.12, True),
     (0.28, True)],
     ids=['Low noise', 'Medium noise', 'High noise'])
-def test_noise(new_exam, datadir, threshold, expected):
-    genPDF = generate_pdf(new_exam, 1)
-    for image in makeImage(genPDF):
+def test_noise(full_app, threshold, expected):
+    for image, exam_config, _ in generate_flat_scan_data():
         image = apply_whitenoise(image, threshold)
-        success, reason = scans.process_page(image, new_exam, datadir)
+        success, reason = scans.process_page(image, exam_config)
         assert success is expected, reason
 
 
@@ -181,23 +186,21 @@ def test_noise(new_exam, datadir, threshold, expected):
     (0.8, True),
     (2, True)],
     ids=['Large rot', 'Small rot', 'Medium rot', 'Large counterclockwise rot'])
-def test_rotate(new_exam, datadir, rotation, expected):
-    genPDF = generate_pdf(new_exam, 1)
-    for image in makeImage(genPDF):
+def test_rotate(full_app, rotation, expected):
+    for image, exam_config, _ in generate_flat_scan_data():
         image = apply_scan(img=image, rotation=rotation)
-        success, reason = scans.process_page(image, new_exam, datadir)
+        success, reason = scans.process_page(image, exam_config)
         assert success is expected, reason
 
 
 @pytest.mark.parametrize('scale, expected', [
     (0.99, True),
-    (1.1, False)],
+    (1.1, True)],
     ids=['smaller scale', 'larger scale'])
-def test_scale(new_exam, datadir, scale, expected):
-    genPDF = generate_pdf(new_exam, 1)
-    for image in makeImage(genPDF):
+def test_scale(full_app, scale, expected):
+    for image, exam_config, _ in generate_flat_scan_data():
         image = apply_scan(img=image, scale=scale)
-        success, reason = scans.process_page(image, new_exam, datadir)
+        success, reason = scans.process_page(image, exam_config)
         assert success is expected, reason
 
 
@@ -205,11 +208,10 @@ def test_scale(new_exam, datadir, scale, expected):
     ((10, 10), True),
     ((-10, -5), True)],
     ids=['small skew', 'larger skew'])
-def test_skew(new_exam, datadir, skew, expected):
-    genPDF = generate_pdf(new_exam, 1)
-    for image in makeImage(genPDF):
+def test_skew(full_app, skew, expected):
+    for image, exam_config, _ in generate_flat_scan_data():
         image = apply_scan(img=image, skew=skew)
-        success, reason = scans.process_page(image, new_exam, datadir)
+        success, reason = scans.process_page(image, exam_config)
         assert success is expected, reason
 
 
@@ -217,14 +219,11 @@ def test_skew(new_exam, datadir, skew, expected):
     (0.5, 0.99, (10, 10), True),
     (0.5, 1.01, (-10, -5), True)],
     ids=['1st full test', 'second full test'])
-def test_all_effects(
-        new_exam, datadir, rotation,
-        scale, skew, expected):
-    genPDF = generate_pdf(new_exam, 1)
-    for image in makeImage(genPDF):
+def test_all_effects(full_app, rotation, scale, skew, expected):
+    for image, exam_config, _ in generate_flat_scan_data():
         image = apply_scan(
             img=image, rotation=rotation, scale=scale, skew=skew)
-        success, reason = scans.process_page(image, new_exam, datadir)
+        success, reason = scans.process_page(image, exam_config)
         assert success is expected, reason
 
 
@@ -275,10 +274,14 @@ def test_realign_image(datadir, file_name, markers):
     test_file = os.path.join(datadir, dir_name, file_name)
     test_image = np.array(PIL.Image.open(test_file))
 
-    result_image = scans.realign_image(test_image)
+    dpi = guess_dpi(test_image)
+    page_shape = np.array(original_page_size('A4', dpi))
+
+    result_image = scans.realign_image(test_image, page_shape)
 
     result_corner_markers = scans.find_corner_marker_keypoints(result_image)
     assert result_corner_markers is not None
+    assert len(result_corner_markers) == len(markers)
     for i in range(len(markers)):
         diff = np.absolute(np.subtract(markers[i], result_corner_markers[i]))
         assert diff[0] <= epsilon
@@ -293,10 +296,15 @@ def test_incomplete_reference_realign_image(datadir):
 
     correct_corner_markers = [(59, 59), (1181, 59), (59, 1695), (1181, 1695)]
 
-    result_image = scans.realign_image(test_image)
+    dpi = guess_dpi(test_image)
+    page_shape = np.array(original_page_size('A4', dpi))
+
+    result_image = scans.realign_image(test_image, page_shape)
     result_corner_markers = scans.find_corner_marker_keypoints(result_image)
 
     assert result_corner_markers is not None
+    assert len(result_corner_markers) == len(correct_corner_markers)
+
     for i in range(4):
         diff = np.absolute(np.subtract(correct_corner_markers[i], result_corner_markers[i]))
         assert diff[0] <= epsilon

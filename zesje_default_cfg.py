@@ -19,8 +19,7 @@ OUTPUT_PDF_FILENAME_FORMAT = '{0:05d}.pdf'
 MARKER_FORMAT = {
     "margin": 10 * mm,
     "marker_line_length": 8 * mm,
-    "marker_line_width": 1 * mm,
-    "bar_length": 40 * mm
+    "marker_line_width": 1 * mm
 }
 
 # the parameters of drawing checkboxes

@@ -19,8 +19,6 @@ const PDFOverlay = (props) => {
   let lengthMm = 8
   let lengthPt = lengthMm / mmPerInch * ptPerInch
   let widthPt = 1
-  let barLengthMm = 40
-  let barLengthPt = barLengthMm / mmPerInch * ptPerInch
 
   const style = {
     position: 'absolute',
@@ -46,8 +44,6 @@ const PDFOverlay = (props) => {
       {/* bottom right */}
       <line x1={width - marginPt} y1={height - marginPt} x2={width - marginPt - lengthPt} y2={height - marginPt} style={lineStyle} />
       <line x1={width - marginPt} y1={height - marginPt} x2={width - marginPt} y2={height - marginPt - lengthPt} style={lineStyle} />
-      {/* bottom right */}
-      <line x1={width / 2 - barLengthPt / 2} y1={height - marginPt} x2={width / 2 + barLengthPt / 2} y2={height - marginPt} style={lineStyle} />
     </svg>
   )
 }

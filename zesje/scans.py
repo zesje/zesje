@@ -18,15 +18,14 @@ from sqlalchemy.exc import InternalError
 from .database import db, Scan, Exam, Page, Student, Submission, Solution, ExamWidget
 from .datamatrix import decode_raw_datamatrix
 from .images import guess_dpi, get_box
-from .factory import make_celery
 from .pregrader import grade_problem, ungrade_multiple_sub
 from .image_extraction import extract_images
+from .blanks import reference_image
+from . import celery
 
 ExtractedBarcode = namedtuple('ExtractedBarcode', ['token', 'copy', 'page'])
 
 ExamMetadata = namedtuple('ExamMetadata', ['token', 'barcode_coords'])
-
-celery = make_celery()
 
 
 @celery.task()
@@ -207,13 +206,6 @@ def process_page(image_data, exam_config, output_dir=None, strict=False):
         image_array = np.array(np.rot90(image_array, -1))
 
     try:
-        corner_keypoints = find_corner_marker_keypoints(image_array)
-        image_array = realign_image(image_array, corner_keypoints)
-    except RuntimeError as e:
-        if strict:
-            return False, str(e)
-
-    try:
         barcode, upside_down = decode_barcode(image_array, exam_config)
         if upside_down:
             # TODO: check if view errors appear
@@ -223,6 +215,22 @@ def process_page(image_data, exam_config, output_dir=None, strict=False):
 
     if barcode.token != exam_config.token:
         raise ValueError("PDF is not from this exam")
+
+    dpi = guess_dpi(image_array)
+    exam = Exam.query.filter(Exam.token == exam_config.token).one()
+
+    reference = reference_image(exam.id, barcode.page, dpi)
+    reference_shape = reference.shape[0:2]
+
+    try:
+        corner_keypoints = find_corner_marker_keypoints(image_array)
+        image_array = realign_image(image_array, reference_shape, corner_keypoints)
+    except RuntimeError as e:
+        if strict:
+            return False, str(e)
+        else:
+            # Resize the image to match the reference
+            image_array = resize_image(image_array, reference_shape)
 
     if output_dir is not None:
         image_path = save_image(image_array, barcode=barcode, base_path=output_dir)
@@ -319,8 +327,8 @@ def decode_barcode(image, exam_config):
     barcode_coords_in = np.asarray(barcode_coords) / 72
     rotated = np.rot90(image, k=2)
     step_sizes = (1, 2)
-    image_crop = get_box(image, barcode_coords_in, padding=1.3)
-    image_crop_rotated = get_box(rotated, barcode_coords_in, padding=1.3)
+    image_crop = get_box(image, barcode_coords_in, padding=1.5)
+    image_crop_rotated = get_box(rotated, barcode_coords_in, padding=1.5)
 
     images = [
         (image[::step, ::step], ud)
@@ -613,7 +621,7 @@ def check_corner_keypoints(image_array, keypoints, minimum=3):
         raise RuntimeError("Found multiple corner markers in the same corner")
 
 
-def realign_image(image_array, keypoints=None):
+def realign_image(image_array, page_shape, keypoints=None):
     """
     Transform the image so that the keypoints match the reference.
 
@@ -621,6 +629,8 @@ def realign_image(image_array, keypoints=None):
     ------
     image_array : numpy.array
         The image in the form of a numpy array.
+    page_shape : numpy.array
+        The desired shape of the realigned image in pixels
     keypoints : List[(int,int)]
         tuples of coordinates of the found keypoints, (x,y), in pixels. Can be a set of 3 or 4 tuples.
         if none are provided, they are found by using find_corner_marker_keypoints on the input image.
@@ -655,15 +665,81 @@ def realign_image(image_array, keypoints=None):
                         [0, 1, y_shift]])
     else:
         # Let opencv estimate the transformation matrix
-        M = cv2.estimateAffinePartial2D(keypoints, adjusted_markers)[0]
+        M = cv2.estimateAffinePartial2D(keypoints, adjusted_markers, method=cv2.LMEDS)[0]
 
-    cols, rows = original_page_size(dpi)
+    rows, cols = page_shape
 
     # apply the transformation matrix and fill in the new empty spaces with white
     return_image = cv2.warpAffine(image_array, M, (cols, rows),
                                   borderValue=(255, 255, 255, 255))
 
     return return_image
+
+
+# Based on https://stackoverflow.com/a/49406095
+def resize_image(image_array, page_shape):
+    """
+    Resize the image such that the dimensions match the reference.
+
+    This is a fallback for realign image, when no keypoints are found.
+    It maintains the aspect ratio and adds a white border when needed.
+
+    params
+    ------
+    image_array : numpy.array
+        The image in the form of a numpy array.
+    page_shape : numpy.array
+        The desired shape of the realigned image in pixels
+    page_format : str
+        The desired page format
+
+    returns
+    -------
+    return_array: numpy.array
+        The image resized properly.
+    """
+    sh, sw = page_shape
+
+    h, w = image_array.shape[:2]
+
+    if (h, w) == (sh, sw):
+        return image_array
+
+    # interpolation method
+    if h > sh or w > sw:  # shrinking image
+        interp = cv2.INTER_AREA
+
+    else:  # stretching image
+        interp = cv2.INTER_CUBIC
+
+    # aspect ratio of image
+    aspect = float(w)/h
+    saspect = float(sw)/sh
+
+    if (saspect > aspect):  # padding left and right
+        new_h = sh
+        new_w = np.round(new_h * aspect).astype(int)
+        pad_horz = float(sw - new_w) / 2
+        pad_left, pad_right = np.floor(pad_horz).astype(int), np.ceil(pad_horz).astype(int)
+        pad_top, pad_bot = 0, 0
+
+    elif (saspect < aspect):  # padding top and bottom
+        new_w = sw
+        new_h = np.round(new_w / aspect).astype(int)
+        pad_vert = float(sh - new_h) / 2
+        pad_top, pad_bot = np.floor(pad_vert).astype(int), np.ceil(pad_vert).astype(int)
+        pad_left, pad_right = 0, 0
+
+    else:  # only resize
+        new_w, new_h = sw, sh
+        pad_top, pad_bot, pad_left, pad_right = 0, 0, 0, 0
+
+    # resize and and add border
+    resized_img = cv2.resize(image_array, (new_w, new_h), interpolation=interp)
+    resized_img = cv2.copyMakeBorder(resized_img, pad_top, pad_bot, pad_left, pad_right,
+                                     borderType=cv2.BORDER_CONSTANT, value=(255, 255, 255))
+
+    return resized_img
 
 
 def original_corner_markers(dpi):
@@ -679,12 +755,3 @@ def original_corner_markers(dpi):
                      (right_x, top_y),
                      (left_x, bottom_y),
                      (right_x, bottom_y)])
-
-
-def original_page_size(dpi):
-    page_size = current_app.config['PAGE_FORMATS'][current_app.config['PAGE_FORMAT']]
-
-    w = (page_size[0])/72 * dpi
-    h = (page_size[1])/72 * dpi
-
-    return np.rint([w, h]).astype(int)

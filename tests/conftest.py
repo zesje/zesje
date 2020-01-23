@@ -1,4 +1,5 @@
 import os
+from tempfile import TemporaryDirectory
 
 import pytest
 from flask import Flask
@@ -12,8 +13,10 @@ def datadir():
     return os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
 
 
+# Return a mock DB which can be used in the testing enviroment
+# Module scope ensures it is ran only once
 @pytest.fixture(scope="module")
-def app():
+def db_app():
     app = Flask(__name__, static_folder=None)
 
     app.config.from_object('zesje_default_cfg')
@@ -23,12 +26,19 @@ def app():
     )
     db.init_app(app)
 
-    with app.app_context():
+    with TemporaryDirectory() as temp_dir:
+        app.config.update(DATA_DIRECTORY=str(temp_dir))
+        yield app
+
+
+@pytest.fixture(scope="module")
+def app(db_app):
+    with db_app.app_context():
         db.create_all()
 
-    app.register_blueprint(api_bp, url_prefix='/api')
+    db_app.register_blueprint(api_bp, url_prefix='/api')
 
-    return app
+    return db_app
 
 
 @pytest.fixture
@@ -40,15 +50,6 @@ def test_client(app):
     with app.app_context():
         db.drop_all()
         db.create_all()
-
-
-@pytest.fixture
-def empty_app(app):
-    with app.app_context():
-        db.drop_all()
-        db.create_all()
-
-    return app
 
 
 @pytest.fixture

@@ -69,11 +69,11 @@ def assert_pdf_and_images_are_equal(pdf_filename, images,
     (A4, 'a4'),
     ((200 * mm, 200 * mm), 'square')
 ], ids=['a4', 'square'])
-def test_add_corner_markers_and_bottom_bar(datadir, tmpdir, pagesize, name):
+def test_add_corner_markers(datadir, tmpdir, pagesize, name):
     pdf_filename = os.path.join(tmpdir, 'file.pdf')
 
     canv = RLCanvas(pdf_filename, pagesize=pagesize)
-    pdf_generation._add_corner_markers_and_bottom_bar(canv, pagesize)
+    pdf_generation._add_corner_markers(canv, pagesize)
     canv.save()
 
     image_filename = os.path.join(datadir, 'cornermarkers', f'{name}.png')

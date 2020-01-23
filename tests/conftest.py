@@ -5,6 +5,7 @@ import pytest
 from flask import Flask
 from zesje.api import api_bp
 from zesje.database import db
+from zesje.factory import create_config
 
 
 # Adapted from https://stackoverflow.com/a/46062148/1062698
@@ -19,7 +20,7 @@ def datadir():
 def db_app():
     app = Flask(__name__, static_folder=None)
 
-    app.config.from_object('zesje_default_cfg')
+    create_config(app.config, None)
     app.config.update(
         SQLALCHEMY_DATABASE_URI='sqlite:///:memory:',
         SQLALCHEMY_TRACK_MODIFICATIONS=False  # Suppress future deprecation warning

@@ -64,15 +64,21 @@ def attach_celery(app, celery):
 
 
 def create_config(config_instance, extra_config):
+    # use default config as base
     config_instance.from_object('zesje_default_cfg')
 
+    # apply user config
     if 'ZESJE_SETTINGS' in os.environ:
         config_instance.from_envvar('ZESJE_SETTINGS')
 
+    # overwrite user config with constants
+    config_instance.from_object('zesje.constants')
+
+    # extra config?
     if extra_config is not None:
         config_instance.update(extra_config)
 
-    # Default settings
+    # Make DATA_DIRECTORY absolute
     config_instance.update(
         DATA_DIRECTORY=abspath(config_instance['DATA_DIRECTORY']),
     )
@@ -84,11 +90,5 @@ def create_config(config_instance, extra_config):
     )
 
     config_instance.update(
-        SQLALCHEMY_DATABASE_URI='sqlite:///' + config_instance['DB_PATH'],
-        SQLALCHEMY_TRACK_MODIFICATIONS=False  # Suppress future deprecation warning
-    )
-
-    config_instance.update(
-        CELERY_BROKER_URL='redis://localhost:6479',
-        CELERY_RESULT_BACKEND='redis://localhost:6479'
+        SQLALCHEMY_DATABASE_URI='sqlite:///' + config_instance['DB_PATH']
     )

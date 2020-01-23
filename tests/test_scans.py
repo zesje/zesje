@@ -4,7 +4,7 @@ import pytest
 import numpy as np
 import PIL.Image
 import cv2
-from tempfile import NamedTemporaryFile, TemporaryDirectory
+from tempfile import NamedTemporaryFile
 from pikepdf import Pdf
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
@@ -16,7 +16,7 @@ from zesje.api.exams import generate_exam_token, _get_exam_dir, _exam_generate_d
 from zesje.pdf_generation import write_finalized_exam, generate_pdfs
 from zesje.database import Exam, ExamWidget
 from zesje import scans
-from zesje_default_cfg import PAGE_FORMATS
+from zesje.constants import PAGE_FORMATS
 
 
 # Returns the original image instead of retrieving a box from it

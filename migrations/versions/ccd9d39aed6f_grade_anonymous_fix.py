@@ -22,7 +22,7 @@ def upgrade():
 
     # Then add it again to set it to the right value and add the check constraint
     with op.batch_alter_table('exam') as batch_op:
-        batch_op.add_column(sa.Column('grade_anonymous', sa.Boolean(), server_default=sa.false(), nullable=True))
+        batch_op.add_column(sa.Column('grade_anonymous', sa.Boolean(), server_default='0', nullable=True))
 
 
 def downgrade():

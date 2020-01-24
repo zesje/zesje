@@ -3,7 +3,7 @@
 import enum
 
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean, ForeignKey, Enum, false
+from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean, ForeignKey, Enum
 from flask_sqlalchemy.model import BindMetaMixin, Model
 from sqlalchemy.ext.declarative import DeclarativeMeta, declarative_base
 from sqlalchemy.orm import backref
@@ -54,8 +54,8 @@ class Exam(db.Model):
     scans = db.relationship('Scan', backref='exam', cascade='all', lazy=True)
     widgets = db.relationship('ExamWidget', backref='exam', cascade='all',
                               order_by='ExamWidget.id', lazy=True)
-    finalized = Column(Boolean, default=False, server_default='f')
-    grade_anonymous = Column(Boolean, default=False, server_default=false())
+    finalized = Column(Boolean, default=False, server_default='0')
+    grade_anonymous = Column(Boolean, default=False, server_default='0')
 
     # Any migration that alters (and thus recreates) the exam table should explicitly
     # specify this keyword to ensure it will be used for the new table
@@ -72,7 +72,7 @@ class Submission(db.Model):
                                 order_by='Solution.problem_id', lazy=True)
     pages = db.relationship('Page', backref='submission', cascade='all', lazy=True)
     student_id = Column(Integer, ForeignKey('student.id'), nullable=True)
-    signature_validated = Column(Boolean, default=False, server_default='f', nullable=False)
+    signature_validated = Column(Boolean, default=False, server_default='0', nullable=False)
 
 
 class Page(db.Model):

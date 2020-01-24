@@ -62,7 +62,7 @@ def upgrade():
         sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
         sa.Column('name', sa.Text(), nullable=False),
         sa.Column('token', sa.String(length=12), nullable=True),
-        sa.Column('finalized', sa.Boolean(), server_default='f', nullable=True),
+        sa.Column('finalized', sa.Boolean(), server_default='0', nullable=True),
         sa.PrimaryKeyConstraint('id'),
         sa.UniqueConstraint('token')
     )
@@ -77,7 +77,7 @@ def upgrade():
         sa.Column('id', sa.Integer(), nullable=False),
         sa.Column('first_name', sa.Text(), nullable=False),
         sa.Column('last_name', sa.Text(), nullable=False),
-        sa.Column('email', sa.Text(), nullable=True),
+        sa.Column('email', sa.String(length=200), nullable=True),
         sa.PrimaryKeyConstraint('id'),
         sa.UniqueConstraint('email')
     )
@@ -122,7 +122,7 @@ def upgrade():
         sa.Column('copy_number', sa.Integer(), nullable=False),
         sa.Column('exam_id', sa.Integer(), nullable=False),
         sa.Column('student_id', sa.Integer(), nullable=True),
-        sa.Column('signature_validated', sa.Boolean(), server_default='f', nullable=False),
+        sa.Column('signature_validated', sa.Boolean(), server_default='0', nullable=False),
         sa.ForeignKeyConstraint(['exam_id'], ['exam.id'], ),
         sa.ForeignKeyConstraint(['student_id'], ['student.id'], ),
         sa.PrimaryKeyConstraint('id')

@@ -18,7 +18,7 @@ depends_on = None
 
 def upgrade():
     # Create grade_anonymous column
-    op.add_column('exam', sa.Column('grade_anonymous', sa.Boolean(), server_default='f', nullable=True))
+    op.add_column('exam', sa.Column('grade_anonymous', sa.Boolean(), server_default='0', nullable=True))
 
 
 def downgrade():

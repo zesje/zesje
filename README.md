@@ -8,27 +8,56 @@ Zesje is an online grading system for written exams.
 
 ### Running Zesje using Docker
 Running Zesje using Docker is the easiest method to run Zesje
-yourself with minimal technical knowledge required. For this approach 
-we assume that you already have [Docker](https://www.docker.com/) 
+yourself with minimal technical knowledge required. For this approach
+we assume that you already have [Docker](https://www.docker.com/)
+and [Docker-Compose](https://docs.docker.com/compose/install/)
 installed, cloned the Zesje repository and entered its directory.
 
-First create a volume to store the data:
-
-    docker volume create zesje
-
-Then build the Docker image using the following below. Anytime you 
+Build the Docker image using the following below. Anytime you
 update Zesje by pulling the repository you have to run this command again.
 
-    docker build -f auto.Dockerfile . -t zesje:auto
+    docker-compose build
 
 Finally, you can run the container to start Zesje using:
 
-    docker run -p 8881:80 --volume zesje:/app/data-dev -it zesje:auto
+    docker-compose up
 
-Zesje should be available at http://127.0.0.1:8881. If you get 
+Zesje should be available at http://127.0.0.1:8881. If you get
 the error `502 - Bad Gateway` it means that Zesje is still starting.
 
+Once you stop working with Zesje, stop the container by running
+
+    docker-compose down
+
 ## Development
+
+### Setting up MySQL server
+
+If this is the first time that you will run Zesje with MySQL in
+development then first run the following command from the Zesje
+repository directory:
+
+    ./mysql-dev.sh
+
+This is a shorcut to the docker command that creates a container
+named `zesje-mysql-dev` and sets the needed MySQL environment variables.
+
+The container and MySQL is now ready and running but the database
+is still empty. In order to init the database tables run immeditaly after
+
+    yarn dev:migrate
+
+That's all, MySQL is now fully functional but remember to stop the
+container once you quit running
+
+    docker stop zesje-mysql-dev
+
+The next time you want to start the server just run
+
+    docker start zesje-mysql-dev
+
+before initiating the web server with `yarn`.
+
 
 ### Setting up a development environment
 *Zesje currently doesn't support native Windows, but WSL works.*
@@ -41,11 +70,11 @@ Install Miniconda by following the instructions on this page:
 
 https://conda.io/miniconda.html
 
-Make sure you cloned this repository and enter its directory. Then 
-create a Conda environment that will automatically install all 
+Make sure you cloned this repository and enter its directory. Then
+create a Conda environment that will automatically install all
 of zesje's Python dependencies:
 
-    conda env create  # Creates an environment from environment.yml 
+    conda env create  # Creates an environment from environment.yml
 
 Then, *activate* the conda environment:
 
@@ -57,10 +86,6 @@ This tells you that the environment is activated.
 Install all of the Javascript dependencies:
 
     yarn install
-
-Afterwards, initialize the database using the following command:
-
-    yarn migrate:dev
 
 Unfortunately there is also another dependency that must be installed
 manually for now (we are working to bring this dependency into the
@@ -91,7 +116,7 @@ or `zesje/`.
 You can run the tests by running
 
     yarn test
-    
+
 #### Viewing test coverage
 
 As a test coverage tool for Python tests, `pytest-cov` is used.
@@ -128,7 +153,7 @@ a first resort.
 
 ### Database modifications
 
-Zesje uses Flask-Migrate and Alembic for database versioning and migration. Flask-Migrate is an extension that handles SQLAlchemy database migrations for Flask applications using Alembic. 
+Zesje uses Flask-Migrate and Alembic for database versioning and migration. Flask-Migrate is an extension that handles SQLAlchemy database migrations for Flask applications using Alembic.
 
 To change something in the database schema, simply add this change to `zesje/database.py`. After that run the following command to prepare a new migration:
 

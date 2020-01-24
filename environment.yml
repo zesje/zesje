@@ -3,7 +3,7 @@ channels:
     - conda-forge
     - anaconda
 dependencies:
-    - python=3.6 
+    - python=3.6
     - yarn
     - gunicorn
     - redis
@@ -20,6 +20,8 @@ dependencies:
         - pyyaml
         - celery
         - redis
+        - cryptography
+        - PyMySQL
 
         # General utilities
         - numpy==1.15.4

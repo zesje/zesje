@@ -16,12 +16,14 @@ depends_on = None
 
 def upgrade():
     # Initiate a batch operation to force recreation with sqlite_autoincrement
+    op.execute('SET foreign_key_checks=0')
     with op.batch_alter_table(
                 'exam',
                 recreate='always',
                 table_kwargs={'sqlite_autoincrement': True}
             ):
         pass
+    op.execute('SET foreign_key_checks=1')
 
 
 def downgrade():

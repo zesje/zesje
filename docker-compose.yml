@@ -1,0 +1,30 @@
+version: '3'
+
+services:
+   db:
+     image: mysql:5.7
+     volumes:
+       - zesje_db:/var/lib/mysql
+     restart: always
+     environment:
+       MYSQL_ROOT_PASSWORD: zesje
+       MYSQL_DATABASE: course
+       MYSQL_USER: zesje
+       MYSQL_PASSWORD: zesje
+
+   app:
+     depends_on:
+       - db
+     build:
+       context: .
+       dockerfile: ./auto.Dockerfile
+     image: zesje:auto
+     ports:
+       - "8881:80"
+     restart: always
+     volumes:
+       - zesje_app:/app/data-dev
+
+volumes:
+    zesje_db:
+    zesje_app:

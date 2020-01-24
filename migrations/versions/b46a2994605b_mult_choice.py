@@ -20,7 +20,7 @@ def upgrade():
     op.create_table(
         'mc_option',
         sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
-        sa.Column('label', sa.String(), nullable=True),
+        sa.Column('label', sa.String(length=200), nullable=True),
         sa.Column('feedback_id', sa.Integer(), nullable=False),
         sa.ForeignKeyConstraint(['feedback_id'], ['feedback_option.id'], ),
         sa.ForeignKeyConstraint(['id'], ['widget.id'], ),

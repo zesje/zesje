@@ -51,6 +51,8 @@ def exam(file_format, exam_id):
 
     serialized = BytesIO()
 
+    data.index.name = 'Student ID'
+
     if file_format == 'xlsx':
         data = data.iloc[:, data.columns.get_level_values(1) == 'total']
         data.columns = data.columns.get_level_values(0)

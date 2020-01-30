@@ -31,7 +31,7 @@ class Student(db.Model):
     id = Column(Integer, primary_key=True)
     first_name = Column(Text, nullable=False)
     last_name = Column(Text, nullable=False)
-    email = Column(Text, unique=True)
+    email = Column(String(320), unique=True)
     submissions = db.relationship('Submission', backref='student', lazy=True)
 
 
@@ -181,7 +181,7 @@ class MultipleChoiceOption(Widget):
     __tablename__ = 'mc_option'
     id = Column(Integer, ForeignKey('widget.id'), primary_key=True, autoincrement=True)
 
-    label = Column(String, nullable=True)
+    label = Column(Text, nullable=True)
     feedback_id = Column(Integer, ForeignKey('feedback_option.id'), nullable=False)
 
     __mapper_args__ = {

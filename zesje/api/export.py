@@ -155,7 +155,7 @@ def grader_statistics(exam_id):
         data = grader_data(exam_id)
         data_str = json.dumps(data)
     except Exception:
-        abort(404)
+        abort(404, 'Failed to load grader data.')
 
     return Response(
         response=data_str,

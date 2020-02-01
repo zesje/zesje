@@ -24,12 +24,40 @@ const Tooltip = (props) => {
   )
 }
 
+const formatTime = (seconds) => {
+  let h = Math.floor(seconds / 3600)
+  let m = Math.floor((seconds % 3600) / 60)
+  let s = seconds % 60
+
+  let str = ''
+  if (h > 0) { str = h + 'h' }
+  if (m > 0) { str = str + ' ' + m + 'min' }
+  if (s > 0 && h === 0) { str = str + ' ' + s + 's' }
+
+  return str
+}
+
 const ProblemSummary = (props) => (
   <React.Fragment>
     <h3 className='has-text-centered'>
       {/^\d/.test(props.problem.name) ? 'Problem ' : null}
       {props.problem.name}
     </h3>
+    <ul>
+      {
+        props.graders.graders.map((grader, i) => {
+          return <li key={i}>
+            {grader.graded} solutions graded by {grader.name}
+            {grader.total_time > 0
+              ? ' in ' + formatTime(grader.total_time) +
+                (grader.graded > 1
+                  ? ' (about ' + formatTime(grader.avg_grading_time) + ' per solution)'
+                  : '')
+              : ''}
+          </li>
+        })
+      }
+    </ul>
     <table className='table is-striped'>
       <thead>
         <tr>
@@ -48,47 +76,6 @@ const ProblemSummary = (props) => (
               </td>
               <td> {option.score} </td>
               <td> {option.used} </td>
-            </tr>
-          })
-        }
-      </tbody>
-    </table>
-  </React.Fragment>
-)
-
-const displayGradingTime = (time) => {
-  if (time > 59) {
-    return `${Math.floor(time / 60)}min ${(time % 60)}s`
-  } else {
-    return `${time}s`
-  }
-}
-
-const GradersSummary = (props) => (
-  <React.Fragment>
-    <h3 className='has-text-centered'>
-      {/^\d/.test(props.problem.name) ? 'Problem ' : null}
-      {props.problem.name}
-    </h3>
-    <table className='table is-striped'>
-      <thead>
-        <tr>
-          <th> Name </th>
-          <th> #&nbsp;Graded </th>
-          <th> Avg. Score </th>
-          <th> #&nbsp;Max/Min Grade </th>
-          <th> Avg. Grading Time </th>
-        </tr>
-      </thead>
-      <tbody>
-        {
-          props.problem.graders.map((grader, i) => {
-            return <tr key={i}>
-              <td> {grader.name} </td>
-              <td> {grader.graded} </td>
-              <td> {Math.round(grader.avg_score * 100) / 100} </td>
-              <td> {grader.max_score} / {grader.min_score} </td>
-              <td> {displayGradingTime(grader.avg_grading_time)} </td>
             </tr>
           })
         }
@@ -138,29 +125,16 @@ class Overview extends React.Component {
         <section>
           <h3 className='title is-size-3 has-text-centered'> Problem Details </h3>
           <div className='columns is-tablet is-multiline'>
-            {
-              this.props.exam.problems.map((problem, i) => (
-                <div className='column is-one-half-tablet is-one-third-desktop' key={i}>
-                  <div className='content'>
-                    <ProblemSummary problem={problem} />
-                  </div>
+            { this.state.statsLoaded && this.props.exam.problems.map((problem, i) => (
+              <div className='column is-one-half-tablet is-one-third-desktop' key={i}>
+                <div className='content'>
+                  <ProblemSummary problem={problem} graders={this.state.graderStatistics.problems[i]} />
                 </div>
-              ))
+              </div>
+            ))
             }
           </div>
         </section>
-
-        <section>
-          <h3 className='title is-size-3 has-text-centered'> Grader Details </h3>
-          { this.state.statsLoaded &&
-              this.state.graderStatistics.problems.map((problem, i) => (
-                <div className='content' key={i}>
-                  <GradersSummary problem={problem} />
-                </div>
-              ))
-          }
-        </section>
-
       </div >
     )
   }

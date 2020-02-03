@@ -1,4 +1,3 @@
-import itertools
 import math
 import random
 import os
@@ -16,54 +15,46 @@ from lorem.text import TextLorem
 
 from zesje.database import db, Exam, Scan
 from zesje.scans import _process_pdf
+from zesje.factory import create_app
 
 sys.path.append(os.getcwd())
-import zesje  # noqa: E402
 
-parser = argparse.ArgumentParser(description='Create example exam data in the database.')
-parser.add_argument('--exams', type=int, default=1, help='number of exams to add')
-parser.add_argument('--pages', type=int, default=3, help='number of pages per exam')
-parser.add_argument('--students', type=int, default=60, help='number of students per exam')
-parser.add_argument('--graders', type=int, default=4, help='number of graders')
-parser.add_argument('--grade', type=str, default='partial', choices=['nothing', 'partial', 'all'],
-                    help='how much of the exam to grade')
-
-args = parser.parse_args(sys.argv[1:])
 
 if 'ZESJE_SETTINGS' not in os.environ:
     os.environ['ZESJE_SETTINGS'] = '../zesje.dev.cfg'
 
-app = zesje.factory.create_app()
-app.register_blueprint(zesje.api.api_bp, url_prefix='/api')
-
-app.config.update(
-    SQLALCHEMY_DATABASE_URI='sqlite:///' + '../scripts/data-dev/course.sqlite',
-    SQLALCHEMY_TRACK_MODIFICATIONS=False  # Suppress future deprecation warning
-)
-if os.path.exists(app.config['DATA_DIRECTORY']):
-    shutil.rmtree(app.config['DATA_DIRECTORY'])
-os.makedirs(app.config['DATA_DIRECTORY'], exist_ok=True)
-os.makedirs(app.config['SCAN_DIRECTORY'], exist_ok=True)
-
-db.init_app(app)
-
-with app.app_context():
-    db.drop_all()
-    db.create_all()
 
 lorem_name = TextLorem(srange=(1, 3))
 
 
-def generate_exam_pdf(pdf_file, exam_name, problems):
+def init_app(delete):
+    app = create_app()
+
+    if os.path.exists(app.config['DATA_DIRECTORY']) and delete:
+        shutil.rmtree(app.config['DATA_DIRECTORY'])
+
+    # ensure directories exists
+    os.makedirs(app.config['DATA_DIRECTORY'], exist_ok=True)
+    os.makedirs(app.config['SCAN_DIRECTORY'], exist_ok=True)
+
+    with app.app_context():
+        if delete:
+            db.drop_all()
+        db.create_all()
+
+    return app
+
+
+def generate_exam_pdf(pdf_file, exam_name, pages, problems):
     pdf = canvas.Canvas(pdf_file.name, pagesize=A4)
-    for i in range(args.pages):
+    for i in range(pages):
         generate_exam_page(pdf, exam_name, page_num=i, problems=problems)
         pdf.showPage()
     pdf.save()
 
 
 def generate_exam_page(pdf, exam_name, page_num, problems):
-    pdf.drawString(20, 20, exam_name)
+    pdf.drawString(250, 650, exam_name)
     for i in range(3):
         problem_num = 3 * page_num + i
         generate_problem(pdf, problems[problem_num])
@@ -72,17 +63,17 @@ def generate_exam_page(pdf, exam_name, page_num, problems):
 def generate_problem(pdf, problem):
     margin = 5
 
-    pdf.drawString(problem['x'], problem['y'], str(problem['num']) + ": " + problem['question'])
+    pdf.drawString(problem['x'], problem['y'], problem['question'])
     pdf.rect(problem['x'], problem['y'] - problem['h'] - margin, problem['w'], problem['h'])
 
 
-def generate_students():
+def generate_students(students):
     return [{
         'studentID': str(i + 1000001),
         'firstName': names.get_first_name(),
         'lastName': names.get_last_name(),
-        'email': str(i + 1000000) + '@student.tudelft.nl'
-    } for i in range(args.students)]
+        'email': str(i + 1000000) + '@fakestudent.tudelft.nl'
+    } for i in range(students)]
 
 
 def handle_pdf_processing(exam_id, pdf):
@@ -108,13 +99,17 @@ def handle_pdf_processing(exam_id, pdf):
     }
 
 
-def grade_problems(exam_id, graders, problems, submission_ids):
-    if args.grade == 'nothing':
+def grade_problems(exam_id, graders, problems, submission_ids, grade):
+    if grade == 'nothing':
         return
 
+    student_ids = [s['id'] for s in client.get(f'/api/students').get_json()]
+
     for submission_id in submission_ids:
+        # assign a student to each submission
+        client.put(f'/api/submissions/{exam_id}/{submission_id}', json={'studentID': student_ids.pop()})
         # Only grade half the problems for each submission if grading partially.
-        problems = random.sample(problems, math.ceil(len(problems)/2)) if args.grade == 'all' else problems
+        problems = random.sample(problems, math.ceil(len(problems)/2)) if grade == 'partial' else problems
         for problem in problems:
             # Exclude the 'blank' option
             feedback_options = problem['feedback'][1:]
@@ -127,16 +122,18 @@ def grade_problems(exam_id, graders, problems, submission_ids):
                                'graderID': random.choice(graders)['id']
                            })
 
-def create_exam():
+
+def create_exam(pages, students, grade):
     exam_name = lorem_name.sentence().replace('.', '')
     problems = [{
-        'question': lorem.sentence().replace('.', '?'),
+        'question': str(i + 1) + '. ' + lorem.sentence().replace('.', '?'),
         'num': i + 1,
-        'x': 75, 'y': 600 - (170 * (i % 3)),
+        'x': 75, 'y': 550 - (170 * (i % 3)),
         'w': 450, 'h': 120
-    } for i in range(args.pages * 3)]
+    } for i in range(pages * 3)]
+
     with NamedTemporaryFile() as pdf_file:
-        generate_exam_pdf(pdf_file, exam_name, problems)
+        generate_exam_pdf(pdf_file, exam_name, pages, problems)
         exam_id = client.post('/api/exams',
                               content_type='multipart/form-data',
                               data={
@@ -148,16 +145,16 @@ def create_exam():
         problem_id = client.post('api/problems', data={
             'exam_id': exam_id,
             'name': problem['question'],
-            'page': math.floor((problem['num'] - 1) / 3),
+            'page': (problem['num'] - 1) // 3,
             # add some padding to x, y, w, h
             'x': problem['x'] - 20,
-            'y': problem['y'] - 30,
+            'y': problem['y'] + 60,
             'width': problem['w'] + 40,
             'height': problem['h'] + 60,
         }).get_json()['id']
         # Have to put name again, because the endpoint first guesses a name.
-        client.put('api/problems/' + str(problem_id),
-                   data={'name': problem['question'], 'grading_policy': 'set_nothing'})
+        client.put(f'api/problems/{problem_id}', data={'name': problem['question'], 'grading_policy': 'set_nothing'})
+
         for _ in range(random.randint(2, 6)):
             client.post('api/feedback/' + str(problem_id), data={
                 'name': lorem_name.sentence(),
@@ -165,19 +162,13 @@ def create_exam():
                 'score': random.randint(-4, 4)
             })
 
-    client.put('api/exams/' + str(exam_id), data={
-        'finalized': True
-    })
-    # create graders
-    graders = None
-    for _ in range(args.graders):
-        graders = client.post('/api/graders', data={'name': names.get_full_name()}).get_json()
+    client.put(f'api/exams/{exam_id}', data={'finalized': True})
 
     # Generate PDFs
-    client.post(f'api/exams/{exam_id}/generated_pdfs', data={"copies_start": 1, "copies_end": args.students})
+    client.post(f'api/exams/{exam_id}/generated_pdfs', data={"copies_start": 1, "copies_end": students})
     # Download PDFs
     generated = client.get(f'api/exams/{exam_id}/generated_pdfs',
-                           data={"copies_start": 1, "copies_end": args.students, 'type': 'pdf'})
+                           data={"copies_start": 1, "copies_end": students, 'type': 'pdf'})
 
     # Upload submissions
     with NamedTemporaryFile(mode='w+b') as submission_pdf:
@@ -189,15 +180,36 @@ def create_exam():
     submission_ids = [sub['id'] for sub in client.get(f'api/submissions/{exam_id}').get_json()]
     problems = client.get('/api/exams/' + str(exam_id)).get_json()['problems']
 
-    grade_problems(exam_id, graders, problems, submission_ids)
+    graders = client.get('/api/graders').get_json()
+
+    grade_problems(exam_id, graders, problems, submission_ids, grade)
 
     exam_data = client.get('/api/exams/' + str(exam_id)).get_json()
     print(exam_data)
 
 
-with app.test_client() as client:
-    for student in generate_students():
-        client.put('api/students', data=student).get_json()
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Create example exam data in the database.')
+    parser.add_argument('-d', '--delete', action='store_true', help='delete previous data')
+    parser.add_argument('--exams', type=int, default=1, help='number of exams to add')
+    parser.add_argument('--pages', type=int, default=3, help='number of pages per exam')
+    parser.add_argument('--students', type=int, default=60, help='number of students per exam')
+    parser.add_argument('--graders', type=int, default=4, help='number of graders')
+    parser.add_argument('--grade', type=str, default='partial', choices=['nothing', 'partial', 'all'],
+                        help='how much of the exam to grade')
 
-    for _ in range(args.exams):
-        create_exam()
+    args = parser.parse_args(sys.argv[1:])
+
+    app = init_app(args.delete)
+
+    with app.test_client() as client:
+        # create students
+        for student in generate_students(args.students):
+            client.put('api/students', data=student)
+
+        # create graders
+        for _ in range(args.graders):
+            client.post('/api/graders', data={'name': names.get_full_name()})
+
+        for _ in range(args.exams):
+            create_exam(args.pages, args.students, args.grade)

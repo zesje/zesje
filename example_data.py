@@ -1,4 +1,26 @@
-import math
+'''
+Stript to generate a complete database of mock data for testing.
+For each exam it generates a pdf with 3 problems per page, where
+the number of pages is specified in the arguments.
+
+You can create the sample data by running `python example_data.py -h`:
+
+Usage:
+    example_data.py [-h] [-d] [--exams EXAMS] [--pages PAGES]
+                       [--students STUDENTS] [--graders GRADERS]
+                       [--grade {nothing,partial,all}]
+
+    optional arguments:
+      -h, --help            show this help message and exit
+      -d, --delete          delete previous data, if specified it removes all previously existing data
+      --exams EXAMS         number of exams to add, default to 1
+      --pages PAGES         number of pages per exam, default to 3
+      --students STUDENTS   number of students per exam, default to 60
+      --graders GRADERS     number of graders, default to 4
+      --grade {nothing,partial,all}
+                            how much of the exam to grade, default to partial
+'''
+
 import random
 import os
 import shutil
@@ -56,8 +78,7 @@ def generate_exam_pdf(pdf_file, exam_name, pages, problems):
 def generate_exam_page(pdf, exam_name, page_num, problems):
     pdf.drawString(250, 650, exam_name)
     for i in range(3):
-        problem_num = 3 * page_num + i
-        generate_problem(pdf, problems[problem_num])
+        generate_problem(pdf, problems[3 * page_num + i])
 
 
 def generate_problem(pdf, problem):
@@ -109,7 +130,7 @@ def grade_problems(exam_id, graders, problems, submission_ids, grade):
         # assign a student to each submission
         client.put(f'/api/submissions/{exam_id}/{submission_id}', json={'studentID': student_ids.pop()})
         # Only grade half the problems for each submission if grading partially.
-        problems = random.sample(problems, math.ceil(len(problems)/2)) if grade == 'partial' else problems
+        problems = random.sample(problems, (len(problems) // 2) + 1) if grade == 'partial' else problems
         for problem in problems:
             # Exclude the 'blank' option
             feedback_options = problem['feedback'][1:]

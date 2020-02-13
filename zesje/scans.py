@@ -17,7 +17,7 @@ from sqlalchemy.exc import InternalError
 from .database import db, Scan, Exam, Page, Student, Submission, Copy, Solution, ExamWidget
 from .datamatrix import decode_raw_datamatrix
 from .images import guess_dpi, get_box
-from .pregrader import grade_problem, ungrade_multiple_sub
+from .pregrader import grade_problem
 from .image_extraction import extract_images
 from .blanks import reference_image
 from . import celery
@@ -238,11 +238,10 @@ def process_page(image_data, exam_config, output_dir=None, strict=False):
     else:
         return True, "Testing, image not saved and database not updated."
 
-    # This submission can additionally point to copies other than this one
-    sub = update_database(image_path, barcode)
+    copy = update_database(image_path, barcode)
 
     try:
-        grade_problem(sub, barcode.page, image_array)
+        grade_problem(copy, barcode.page, image_array)
     except InternalError as e:
         if strict:
             return False, str(e)
@@ -253,9 +252,6 @@ def process_page(image_data, exam_config, output_dir=None, strict=False):
         )
     else:
         description = "Scanned page doesn't contain student number."
-
-    if sub.student:
-        ungrade_multiple_sub(sub.student.id, sub.exam_id)
 
     return True, description
 
@@ -296,8 +292,8 @@ def update_database(image_path, barcode):
 
     Returns
     -------
-    sub : Submission
-        the current submission
+    copy : Copy
+        the current copy
     """
     exam = Exam.query.filter(Exam.token == barcode.token).first()
     if exam is None:
@@ -321,7 +317,7 @@ def update_database(image_path, barcode):
 
     db.session.commit()
 
-    return sub
+    return copy
 
 
 def decode_barcode(image, exam_config):

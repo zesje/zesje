@@ -44,8 +44,8 @@ const ProblemSummary = (props) => (
       {props.problem.name}
     </h3>
     <ul>
-      {
-        props.graders.graders.map((grader, i) => {
+      {props.graders
+        ? props.graders.graders.map((grader, i) => {
           return <li key={i}>
             {grader.graded} solutions graded by {grader.name}
             {grader.total_time > 0
@@ -56,6 +56,7 @@ const ProblemSummary = (props) => (
               : ''}
           </li>
         })
+        : ''
       }
     </ul>
     <table className='table is-striped'>
@@ -125,10 +126,11 @@ class Overview extends React.Component {
         <section>
           <h3 className='title is-size-3 has-text-centered'> Problem Details </h3>
           <div className='columns is-tablet is-multiline'>
-            { this.state.statsLoaded && this.props.exam.problems.map((problem, i) => (
+            { this.props.exam.problems.map((problem, i) => (
               <div className='column is-one-half-tablet is-one-third-desktop' key={i}>
                 <div className='content'>
-                  <ProblemSummary problem={problem} graders={this.state.graderStatistics.problems[i]} />
+                  <ProblemSummary problem={problem}
+                    graders={this.state.statsLoaded ? this.state.graderStatistics.problems[i] : null} />
                 </div>
               </div>
             ))

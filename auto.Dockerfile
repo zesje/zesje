@@ -23,6 +23,9 @@ USER zesje
 VOLUME /app/data-dev
 EXPOSE 80
 
+RUN yarn mysql:create
+
 CMD sudo service nginx restart && \
     sudo chown -R zesje:zesje /app/data-dev && \
-    yarn prod:migrate && yarn prod:backend
+    nohup yarn mysql:start > /app/data-dev/mysql.log && \
+    yarn dev:migrate && yarn dev:backend

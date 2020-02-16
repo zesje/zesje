@@ -9,6 +9,8 @@ dependencies:
     - redis
     - pip
     - imagemagick
+    - mysql
+
     - pip:
         # Core components
         - flask
@@ -21,7 +23,6 @@ dependencies:
         - celery
         - redis
 
-        - mysql
         - cryptography
         - PyMySQL
 

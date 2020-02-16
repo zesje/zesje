@@ -84,7 +84,7 @@ def create_config(config_instance, extra_config):
     host = config_instance['MYSQL_HOST']
 
     config_instance.update(
-        SQLALCHEMY_DATABASE_URI=f'mysql+pymysql://root:zesje@{host}/course',
+        SQLALCHEMY_DATABASE_URI=f'mysql+pymysql://root:@{host}/course',
         SQLALCHEMY_PASSWORD='zesje',
         SQLALCHEMY_TRACK_MODIFICATIONS=False  # Suppress future deprecation warning
     )

@@ -10,53 +10,53 @@ Zesje is an online grading system for written exams.
 Running Zesje using Docker is the easiest method to run Zesje
 yourself with minimal technical knowledge required. For this approach
 we assume that you already have [Docker](https://www.docker.com/)
-and [Docker-Compose](https://docs.docker.com/compose/install/)
 installed, cloned the Zesje repository and entered its directory.
 
-Build the Docker image using the following below. Anytime you
+First create a volume to store the data:
+
+    docker volume create zesje
+
+Then build the Docker image using the following below. Anytime you
 update Zesje by pulling the repository you have to run this command again.
 
-    docker-compose build
+    docker build -f auto.Dockerfile . -t zesje:auto
 
 Finally, you can run the container to start Zesje using:
 
-    docker-compose up
+    docker run -p 8881:80 --volume zesje:/app/data-dev -it zesje:auto
 
 Zesje should be available at http://127.0.0.1:8881. If you get
 the error `502 - Bad Gateway` it means that Zesje is still starting.
-
-Once you stop working with Zesje, stop the container by running
-
-    docker-compose down
 
 ## Development
 
 ### Setting up MySQL server
 
 If this is the first time that you will run Zesje with MySQL in
-development then first run the following command from the Zesje
+development, then first run the following command from the Zesje
 repository directory:
 
-    ./mysql-dev.sh
+    yarn mysql:create
 
-This is a shorcut to the docker command that creates a container
-named `zesje-mysql-dev` and sets the needed MySQL environment variables.
+This creates the MySQL files in the data directory.
 
-The container and MySQL is now ready and running but the database
-is still empty. In order to init the database tables run immeditaly after
+Now MySQL is ready to run but empty so initialize it using
+
+    yarn mysql:start
+
+and, immeditaly after, migrate the database to create the tables and fill it
+with previous data running
 
     yarn dev:migrate
 
-That's all, MySQL is now fully functional but remember to stop the
-container once you quit running
+That's all, MySQL is now fully functional but remember to stop it
+once you quit the development process with
 
-    docker stop zesje-mysql-dev
+    yarn mysql:stop
 
 The next time you want to start the server just run
 
-    docker start zesje-mysql-dev
-
-before initiating the web server with `yarn`.
+    yarn dev
 
 
 ### Setting up a development environment
@@ -161,7 +161,7 @@ To change something in the database schema, simply add this change to `zesje/dat
 
 This uses Flask-Migrate to make a new migration script in `migrations/versions` which needs to be reviewed and edited. Please suffix the name of this file with something distinctive and add a short description at the top of the file. To apply the database migration run:
 
-    yarn migrate:dev # (for the development database)
+    yarn dev:migrate # (for the development database)
     yarn migrate # (for the production database)
 
 ### Building and running the production version

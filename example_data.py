@@ -31,6 +31,7 @@ import lorem
 import names
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
+from pdfrw import PdfReader, PdfWriter, PageMerge
 from tempfile import NamedTemporaryFile
 
 from lorem.text import TextLorem
@@ -120,6 +121,29 @@ def handle_pdf_processing(exam_id, pdf):
     }
 
 
+def solve_problems(pdf_file, pages, students, problems):
+    with NamedTemporaryFile() as sol_file:
+        pdf = canvas.Canvas(sol_file.name, pagesize=A4)
+        for s in range(students):
+            for p in range(pages):
+                for i in range(3):
+                    prob = problems[3 * p + i]
+                    pdf.drawString(prob['x'] + 100, prob['y'] + 100, lorem.sentence())
+                pdf.showPage()
+            if pages % 2 == 1:
+                pdf.showPage()
+        pdf.save()
+
+        exam_pdf = PdfReader(pdf_file)
+        overlay_pdf = PdfReader(sol_file)
+
+        for page_idx, exam_page in enumerate(exam_pdf.pages):
+            overlay_merge = PageMerge().add(overlay_pdf.pages[page_idx])[0]
+            exam_merge = PageMerge(exam_page).add(overlay_merge)
+            exam_merge.render()
+        PdfWriter(pdf_file.name, trailer=exam_pdf).write()
+
+
 def grade_problems(exam_id, graders, problems, submission_ids, grade):
     if grade == 'nothing':
         return
@@ -185,6 +209,7 @@ def create_exam(pages, students, grade):
 
     client.put(f'api/exams/{exam_id}', data={'finalized': True})
 
+    print('\tProcessing PDFs. This may take a while.')
     # Generate PDFs
     client.post(f'api/exams/{exam_id}/generated_pdfs', data={"copies_start": 1, "copies_end": students})
     # Download PDFs
@@ -195,7 +220,7 @@ def create_exam(pages, students, grade):
     with NamedTemporaryFile(mode='w+b') as submission_pdf:
         submission_pdf.write(generated.data)
         submission_pdf.seek(0)
-        print('Processing PDFs. This may take a while.')
+        solve_problems(submission_pdf, pages, students, problems)
         handle_pdf_processing(exam_id, submission_pdf)
 
     submission_ids = [sub['id'] for sub in client.get(f'api/submissions/{exam_id}').get_json()]
@@ -203,10 +228,11 @@ def create_exam(pages, students, grade):
 
     graders = client.get('/api/graders').get_json()
 
+    print('\tGrading problems.')
     grade_problems(exam_id, graders, problems, submission_ids, grade)
 
-    exam_data = client.get('/api/exams/' + str(exam_id)).get_json()
-    print(exam_data)
+    # exam_data = client.get('/api/exams/' + str(exam_id)).get_json()
+    # print(exam_data)
 
 
 if __name__ == '__main__':
@@ -218,6 +244,8 @@ if __name__ == '__main__':
     parser.add_argument('--graders', type=int, default=4, help='number of graders')
     parser.add_argument('--grade', type=str, default='partial', choices=['nothing', 'partial', 'all'],
                         help='how much of the exam to grade')
+    parser.add_argument('--solve', type=str, default='partial', choices=['nothing', 'partial', 'all'],
+                        help='how much of the exam to solve')
 
     args = parser.parse_args(sys.argv[1:])
 

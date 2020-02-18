@@ -36,13 +36,13 @@ If this is the first time that you will run Zesje with MySQL in
 development, then first run the following command from the Zesje
 repository directory:
 
-    yarn mysql:create
+    yarn mysql-create
 
 This creates the MySQL files in the data directory.
 
 Now MySQL is ready to run but empty so initialize it using
 
-    yarn dev:mysql:start
+    yarn dev:mysql-start
 
 and, immeditaly after, migrate the database to create the tables and fill it
 with previous data running
@@ -52,7 +52,7 @@ with previous data running
 That's all, MySQL is now fully functional but remember to stop it
 once you quit the development process with
 
-    yarn mysql:stop
+    yarn mysql-stop
 
 The next time you want to start the server just run
 

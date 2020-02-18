@@ -42,7 +42,7 @@ This creates the MySQL files in the data directory.
 
 Now MySQL is ready to run but empty so initialize it using
 
-    yarn mysql:start
+    yarn dev:mysql:start
 
 and, immeditaly after, migrate the database to create the tables and fill it
 with previous data running

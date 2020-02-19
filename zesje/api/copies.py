@@ -11,7 +11,7 @@ from ..pregrader import BLANK_FEEDBACK_NAME
 def copy_to_data(copy):
     sub = copy.submission
     return {
-        'copyID': copy.number,
+        'number': copy.number,
         'student': {
             'id': sub.student.id,
             'firstName': sub.student.first_name,
@@ -25,13 +25,15 @@ def copy_to_data(copy):
 class Copies(Resource):
     """Getting a list of copies, and assigning students to them."""
 
-    def get(self, exam_id, submission_id=None):
+    def get(self, exam_id, copy_number=None):
         """get all copies for the given exam
 
         Parameters
         ----------
         exam_id : int
-            The id of the exam for which the missing pages must be computed.
+            The id of the exam for which copies must be retrievevd
+        copy_number : int
+            Optionally, the specific copy number to retrieve
 
         Returns
         -------
@@ -46,8 +48,16 @@ class Copies(Resource):
         if exam is None:
             return dict(status=404, message='Exam does not exist.'), 404
 
-        # TODO: Ensure some kind of consistent ordering
-        return [copy_to_data(copy) for copy in exam.copies]
+        if copy_number:
+            copy = Copy.query.filter(Copy.exam == exam, Copy.number == copy_number).one_or_none()
+
+            if copy is None:
+                return dict(status=404, message='Copy does not exist.'), 404
+
+            return copy_to_data(copy)
+        else:
+            # TODO: Ensure some kind of consistent ordering
+            return [copy_to_data(copy) for copy in exam.copies]
 
     put_parser = reqparse.RequestParser()
     put_parser.add_argument('studentID', type=int, required=True)
@@ -86,7 +96,7 @@ class Copies(Resource):
 
         old_student = copy.student
         copies = validated_copies(student, exam)
-        copies_old_student = validated_copies(old_student, exam)
+        copies_old_student = validated_copies(old_student, exam) if old_student else []
 
         # If the corresponding submission has only one copy, we can simply
         # delete the submission or reuse it for the new student.
@@ -118,7 +128,7 @@ class Copies(Resource):
             if copies:
                 # Switch the copy from the old student submission to
                 # the new student submission
-                sub = copies[0].sub
+                sub = copies[0].submission
                 ungrade_submission(sub)
                 copy.submission = sub
             else:
@@ -131,16 +141,19 @@ class Copies(Resource):
             # TODO: Pregrade both submissions again
 
         db.session.commit()
-        return dict(status=200, message=f'Student {student.id} matched to submission {sub.copy_number}'), 200
+        return dict(status=200, message=f'Student {student.id} matched to copy {copy.number}'), 200
 
 
 def validated_copies(student, exam):
-    return [
-        copy for copy in
-        Submission.query.filter(Submission.exam == exam,
-                                Submission.student == student).one().copies
-        if copy.signature_validated
-    ]
+    submissions = Submission.query.filter(Submission.exam == exam,
+                                          Submission.student == student).all()
+    if submissions:
+        return [
+            copy for sub in submissions for copy in sub.copies
+            if copy.signature_validated
+        ]
+    else:
+        return []
 
 
 def merge_solutions(sub, sub_to_merge):
@@ -149,9 +162,9 @@ def merge_solutions(sub, sub_to_merge):
 
         # If one of the solutions has no feedback or only blank feedback,
         # then we can merge all the feedback options
-        if all(fb.name == BLANK_FEEDBACK_NAME for fb in sol.feedback) or \
-           all(fb.name == BLANK_FEEDBACK_NAME for fb in sol_to_merge.feedback):
-            sol.feedback = set(sol.feedback + sol_to_merge.feedback)
+        if all(fb.text == BLANK_FEEDBACK_NAME for fb in sol.feedback) or \
+           all(fb.text == BLANK_FEEDBACK_NAME for fb in sol_to_merge.feedback):
+            sol.feedback = list(set(sol.feedback + sol_to_merge.feedback))
 
             if not (sol.graded_by and sol_to_merge.graded_by):
                 sol.graded_by = None

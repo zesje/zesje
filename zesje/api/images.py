@@ -34,8 +34,6 @@ def get(exam_id, problem_id, submission_id, full_page=False):
     if problem is None:
         abort(404, 'Problem does not exist.')
 
-    # TODO Test if this code actually works
-
     sub = Submission.query.get(submission_id)
     if sub is None:
         abort(404, 'Submission does not exist.')

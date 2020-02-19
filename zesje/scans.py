@@ -299,7 +299,7 @@ def update_database(image_path, barcode):
     if exam is None:
         raise RuntimeError('Invalid exam token.')
 
-    copy = Copy.query.filter(Copy.number == barcode.copy, Copy.exam == exam)
+    copy = Copy.query.filter(Copy.number == barcode.copy, Copy.exam == exam).one_or_none()
     if copy is None:
         # Copy does not yet exist, so we create it together with a new submission
         copy = Copy(number=barcode.copy)
@@ -399,7 +399,7 @@ def guess_student(exam_token, copy_number, app_config=None, force=False):
     # Throws exception if zero or more than one of Exam, Submission or Page found
     exam = Exam.query.filter(Exam.token == exam_token).one()
     copy = Copy.query.filter(Copy.number == copy_number,
-                             Copy.exam_id == exam.id).one()
+                             Copy.exam == exam).one()
     image_path = Page.query.filter(Page.copy_id == copy.id,
                                    Page.number == 0).one().path
 

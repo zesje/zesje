@@ -138,7 +138,7 @@ class App extends React.Component {
                 updateExam={this.updateExam} />}
             />
             <Route path='/students' render={() =>
-              <Students exam={exam} updateSubmission={this.updateSubmission} />} />
+              <Students examID={exam.id} />} />
             <Route path='/grade' render={() => (
               exam.submissions.length && exam.problems.length && grader
                 ? <Grade examID={exam.id} gradeAnonymous={exam.gradeAnonymous} graderID={this.state.grader.id} />

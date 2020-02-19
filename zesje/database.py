@@ -110,9 +110,17 @@ class Copy(db.Model):
     def student(self):
         return self.submission.student
 
+    @student.expression
+    def student(cls):
+        return Submission.student
+
     @hybrid_property
     def exam(self):
         return self.submission.exam
+
+    @exam.expression
+    def exam(cls):
+        return Submission.exam
 
 
 class Page(db.Model):

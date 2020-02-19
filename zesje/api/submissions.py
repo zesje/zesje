@@ -15,7 +15,6 @@ def sub_to_data(sub):
             'lastName': sub.student.last_name,
             'email': sub.student.email
         } if sub.student else None,
-        'validated': sub.signature_validated,
         'problems': [
             {
                 'id': sol.problem.id,
@@ -129,8 +128,7 @@ class Submissions(Resource):
             return dict(status=404, message='Exam does not exist.'), 404
 
         if submission_id is not None:
-            sub = Submission.query.filter(Submission.exam_id == exam_id,
-                                          Submission.copy_number == submission_id).one_or_none()
+            sub = Submission.query.get(submission_id)
             if sub is None:
                 return dict(status=404, message='Submission does not exist.'), 404
 

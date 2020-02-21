@@ -9,6 +9,7 @@ from flask import Flask
 from pikepdf import Pdf
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
+import MySQLdb
 
 from zesje.scans import decode_barcode, ExamMetadata, ExtractedBarcode, exam_metadata, guess_dpi
 from zesje.image_extraction import extract_image_pikepdf, extract_images
@@ -29,14 +30,27 @@ def mock_get_box_return_original(monkeypatch, datadir):
 
 # Return a mock DB which can be used in the testing enviroment
 # Module scope ensures it is ran only once
-@pytest.fixture(scope="module")
-def db_app():
+@pytest.yield_fixture(scope="module")
+def db_app(request, mysql_proc):
+
+    mysqlconn = MySQLdb.connect(
+        host='localhost',
+        unix_socket=mysql_proc.unixsocket.strpath,
+        user='root',
+        passwd=''
+    )
+
+    mysqlconn.query('CREATE DATABASE IF NOT EXISTS course;')
+    mysqlconn.query('USE course;')
+    mysqlconn.close()
+
     app = Flask(__name__, static_folder=None)
     app.config.update(
-        SQLALCHEMY_DATABASE_URI='sqlite:///:memory:',
+        SQLALCHEMY_DATABASE_URI=f'mysql://root:@localhost/course?unix_socket={mysql_proc.unixsocket.strpath}',
         SQLALCHEMY_TRACK_MODIFICATIONS=False  # Suppress future deprecation warning
     )
     db.init_app(app)
+
     return app
 
 

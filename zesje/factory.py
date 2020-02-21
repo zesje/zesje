@@ -81,10 +81,12 @@ def create_config(config_instance, extra_config):
         DB_PATH=os.path.join(config_instance['DATA_DIRECTORY'], 'course.sqlite'),
     )
 
+    user = config_instance['MYSQL_USER']
+    psw = config_instance['MYSQL_PSW']
     host = config_instance['MYSQL_HOST']
 
     config_instance.update(
-        SQLALCHEMY_DATABASE_URI=f'mysql+pymysql://root:@{host}/course',
+        SQLALCHEMY_DATABASE_URI=f'mysql://{user}:{psw}@{host}/course',
         SQLALCHEMY_PASSWORD='zesje',
         SQLALCHEMY_TRACK_MODIFICATIONS=False  # Suppress future deprecation warning
     )

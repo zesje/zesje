@@ -39,7 +39,7 @@ class Grader(db.Model):
     """Graders can be created by any user at any time, but are immutable once they are created"""
     __tablename__ = 'grader'
     id = Column(Integer, primary_key=True, autoincrement=True)
-    name = Column(Text, nullable=False, unique=True)
+    name = Column(String(100), nullable=False, unique=True)
     graded_solutions = db.relationship('Solution', backref='graded_by', lazy=True)
 
 

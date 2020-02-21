@@ -3,8 +3,8 @@
   "main": "index.js",
   "license": "AGPL-3.0",
   "scripts": {
-    "dev": "concurrently --kill-others --names \"WEBPACK,MYSQL,PYTHON,CELERY,REDIS\" --prefix-colors \"bgBlue.bold,bgMagenta.bold,bgGreen.bold,bgRed.bold,bgYellow.bold\" \"yarn dev:webpack\" \"yarn dev:mysql-start\" \"yarn start\" \"yarn dev:celery\" \"yarn dev:redis\"",
-    "dev:backend": "concurrently --kill-others --names \"MYSQL,PYTHON,CELERY,REDIS\" --prefix-colors \"bgMagenta.bold,bgGreen.bold,bgRed.bold,bgYellow.bold\" \"yarn mysql-start\" \"yarn start\" \"yarn dev:celery\" \"yarn dev:redis\"",
+    "dev": "concurrently --kill-others --names \"WEBPACK,MYSQL,PYTHON,CELERY,REDIS\" --prefix-colors \"bgBlue.bold,bgMagenta.bold,bgGreen.bold,bgRed.bold,bgYellow.bold\" \"yarn dev:webpack\" \"yarn dev:mysql-start\" \"yarn dev:migrate; yarn start\" \"yarn dev:celery\" \"yarn dev:redis\"",
+    "dev:backend": "concurrently --kill-others --names \"MYSQL,PYTHON,CELERY,REDIS\" --prefix-colors \"bgMagenta.bold,bgGreen.bold,bgRed.bold,bgYellow.bold\" \"yarn mysql-start\" \"yarn dev:migrate; yarn start\" \"yarn dev:celery\" \"yarn dev:redis\"",
     "dev:webpack": "webpack-dev-server --hot --inline --progress --config webpack.dev.js",
     "dev:celery": "ZESJE_SETTINGS=$(pwd)/zesje.dev.cfg celery -A zesje.wsgi.celery worker -l info --autoscale=4,1 --max-tasks-per-child=16",
     "dev:redis": "redis-server redis.conf",
@@ -23,7 +23,7 @@
     "prepare-migration": "ZESJE_SETTINGS=$(pwd)/zesje.dev.cfg FLASK_APP=zesje.wsgi:app flask db migrate",
     "test:py:cov": "python3 -m pytest -v -W error::RuntimeWarning --cov=zesje --cov-report=xml:cov.xml --cov-report=html:cov.html --cov-report=term tests/",
     "migrate-down": "FLASK_APP=zesje.wsgi:app flask db downgrade",
-    "mysql-create": "mysqld --defaults-file=my.cnf --initialize-insecure",
+    "mysql-create": "if [ ! -d \"$(pwd)/data-dev/mysql\" ]; then mysqld --defaults-file=my.cnf --initialize-insecure; else echo \"MySql already exists. Skipping.\"; fi",
     "mysql-start": "mysqld --defaults-file=my.cnf --gdb --init-file=/app/myinit.sql",
     "dev:mysql-start": "mysqld --defaults-file=my.cnf --gdb",
     "mysql-stop": "mysqladmin -uroot shutdown"

@@ -2,7 +2,7 @@
 
 FROM continuumio/miniconda3
 
-RUN apt-get update -y && apt-get install -y libdmtx0b nginx sudo
+RUN apt-get update -y && apt-get install -y libdmtx0b nginx sudo gcc
 
 RUN echo "server { listen 80; location / { proxy_pass http://127.0.0.1:5000; } }" > /etc/nginx/sites-enabled/proxy.conf
 RUN rm /etc/nginx/sites-enabled/default
@@ -25,5 +25,4 @@ EXPOSE 80
 
 CMD sudo service nginx restart && \
     sudo chown -R zesje:zesje /app/data-dev && \
-    if [ ! -d "/app/data-dev/mysql" ]; then yarn mysql-create; fi && \
-    yarn concurrently "yarn dev:backend" "yarn dev:migrate"
+    yarn mysql-create && yarn dev:backend

@@ -17,8 +17,10 @@ Usage:
       --pages PAGES         number of pages per exam, default to 3
       --students STUDENTS   number of students per exam, default to 60
       --graders GRADERS     number of graders, default to 4
+      --solve {nothing,partial,all}
+                            how much of the solutions to solve, default to all
       --grade {nothing,partial,all}
-                            how much of the exam to grade, default to partial
+                            how much of the exam to grade, default to partial.
 '''
 
 import random
@@ -121,17 +123,34 @@ def handle_pdf_processing(exam_id, pdf):
     }
 
 
-def solve_problems(pdf_file, pages, students, problems):
+def generate_solution(pdf, problems, solve_all):
+    pages = len(problems) // 3
+
+    for p in range(pages):
+        pdf.setFillColorRGB(0, 0, 1)
+
+        for i in range(3):
+            prob = problems[3 * p + i]
+            if solve_all or random.random() < 0.5:
+                pdf.drawString(prob['x'] + 50, prob['y'] - 50, lorem.sentence())
+
+        pdf.showPage()
+
+
+def solve_problems(pdf_file, pages, students, problems, solve):
+    if solve == 'nothing':
+        return
+
     with NamedTemporaryFile() as sol_file:
         pdf = canvas.Canvas(sol_file.name, pagesize=A4)
+
         for s in range(students):
-            for p in range(pages):
-                for i in range(3):
-                    prob = problems[3 * p + i]
-                    pdf.drawString(prob['x'] + 100, prob['y'] + 100, lorem.sentence())
-                pdf.showPage()
+            generate_solution(pdf, problems, solve == 'all')
+
             if pages % 2 == 1:
+                # for an odd number of pages, zesje adds a blank page at the end
                 pdf.showPage()
+
         pdf.save()
 
         exam_pdf = PdfReader(pdf_file)
@@ -141,6 +160,7 @@ def solve_problems(pdf_file, pages, students, problems):
             overlay_merge = PageMerge().add(overlay_pdf.pages[page_idx])[0]
             exam_merge = PageMerge(exam_page).add(overlay_merge)
             exam_merge.render()
+
         PdfWriter(pdf_file.name, trailer=exam_pdf).write()
 
 
@@ -150,25 +170,26 @@ def grade_problems(exam_id, graders, problems, submission_ids, grade):
 
     student_ids = [s['id'] for s in client.get(f'/api/students').get_json()]
 
-    for submission_id in submission_ids:
+    for i in range(len(submission_ids)):
+        submission_id = submission_ids[i]
         # assign a student to each submission
         client.put(f'/api/submissions/{exam_id}/{submission_id}', json={'studentID': student_ids.pop()})
+
         # Only grade half the problems for each submission if grading partially.
+        # TODO: in patial mode, grade only those problems that are solved
         problems = random.sample(problems, (len(problems) // 2) + 1) if grade == 'partial' else problems
+
         for problem in problems:
-            # Exclude the 'blank' option
-            feedback_options = problem['feedback'][1:]
-            n_options_to_click = random.randint(1, len(feedback_options))
-            options_to_click = [opt['id'] for opt in random.sample(feedback_options, n_options_to_click)]
-            for option in options_to_click:
-                client.put(f"/api/solution/{exam_id}/{submission_id}/{problem['id']}",
-                           json={
-                               'id': option,
-                               'graderID': random.choice(graders)['id']
-                           })
+            feedback_options = problem['feedback']
+            option = feedback_options[random.randint(1, len(feedback_options) - 1)]
+            client.put(f"/api/solution/{exam_id}/{submission_id}/{problem['id']}",
+                       json={
+                           'id': option['id'],
+                           'graderID': random.choice(graders)['id']
+                       })
 
 
-def create_exam(pages, students, grade):
+def create_exam(pages, students, grade, solve):
     exam_name = lorem_name.sentence().replace('.', '')
     problems = [{
         'question': str(i + 1) + '. ' + lorem.sentence().replace('.', '?'),
@@ -204,12 +225,12 @@ def create_exam(pages, students, grade):
             client.post('api/feedback/' + str(problem_id), data={
                 'name': lorem_name.sentence(),
                 'description': (lorem.sentence() if random.choice([True, False]) else ''),
-                'score': random.randint(-4, 4)
+                'score': random.randint(0, 10)
             })
 
     client.put(f'api/exams/{exam_id}', data={'finalized': True})
 
-    print('\tProcessing PDFs. This may take a while.')
+    print('\tGenerating PDFs.')
     # Generate PDFs
     client.post(f'api/exams/{exam_id}/generated_pdfs', data={"copies_start": 1, "copies_end": students})
     # Download PDFs
@@ -220,7 +241,12 @@ def create_exam(pages, students, grade):
     with NamedTemporaryFile(mode='w+b') as submission_pdf:
         submission_pdf.write(generated.data)
         submission_pdf.seek(0)
-        solve_problems(submission_pdf, pages, students, problems)
+
+        print('\tSolving submissions.')
+        solve_problems(submission_pdf, pages, students, problems, solve)
+        submission_pdf.seek(0)
+        print('\tProcessing submissions. This may take a while.')
+
         handle_pdf_processing(exam_id, submission_pdf)
 
     submission_ids = [sub['id'] for sub in client.get(f'api/submissions/{exam_id}').get_json()]
@@ -243,9 +269,9 @@ if __name__ == '__main__':
     parser.add_argument('--students', type=int, default=60, help='number of students per exam')
     parser.add_argument('--graders', type=int, default=4, help='number of graders')
     parser.add_argument('--grade', type=str, default='partial', choices=['nothing', 'partial', 'all'],
-                        help='how much of the exam to grade')
-    parser.add_argument('--solve', type=str, default='partial', choices=['nothing', 'partial', 'all'],
-                        help='how much of the exam to solve')
+                        help='how much of the exam to grade.')
+    parser.add_argument('--solve', type=str, default='all', choices=['nothing', 'partial', 'all'],
+                        help='how much of the solutions to solve')
 
     args = parser.parse_args(sys.argv[1:])
 
@@ -261,4 +287,4 @@ if __name__ == '__main__':
             client.post('/api/graders', data={'name': names.get_full_name()})
 
         for _ in range(args.exams):
-            create_exam(args.pages, args.students, args.grade)
+            create_exam(args.pages, args.students, args.grade, args.solve)

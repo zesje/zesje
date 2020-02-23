@@ -11,16 +11,16 @@ Usage:
                        [--grade {nothing,partial,all}]
 
     optional arguments:
-      -h, --help            show this help message and exit
-      -d, --delete          delete previous data, if specified it removes all previously existing data
-      --exams EXAMS         number of exams to add, default to 1
-      --pages PAGES         number of pages per exam, default to 3
-      --students STUDENTS   number of students per exam, default to 60
-      --graders GRADERS     number of graders, default to 4
-      --solve {nothing,partial,all}
-                            how much of the solutions to solve, default to all
-      --grade {nothing,partial,all}
-                            how much of the exam to grade, default to partial.
+      -h, --help           show this help message and exit
+      -d, --delete         delete previous data
+      --exams (int)        number of exams to add
+      --pages (int)        number of pages per exam (min is 1)
+      --students (int)     number of students per exam
+      --graders (int)      number of graders (min is 1)
+      --solve (float)      how much of the solutions to solve
+      --grade (float)      how much of the exam to grade. Notice that only non-
+                           blank solutions will be considered for grading.
+
 '''
 
 import random
@@ -123,7 +123,7 @@ def handle_pdf_processing(exam_id, pdf):
     }
 
 
-def generate_solution(pdf, problems, solve_all):
+def generate_solution(pdf, problems, solve):
     pages = len(problems) // 3
 
     for p in range(pages):
@@ -131,21 +131,21 @@ def generate_solution(pdf, problems, solve_all):
 
         for i in range(3):
             prob = problems[3 * p + i]
-            if solve_all or random.random() < 0.5:
+            if random.random() < solve:
                 pdf.drawString(prob['x'] + 50, prob['y'] - 50, lorem.sentence())
 
         pdf.showPage()
 
 
 def solve_problems(pdf_file, pages, students, problems, solve):
-    if solve == 'nothing':
+    if solve < 0.0001:
         return
 
     with NamedTemporaryFile() as sol_file:
         pdf = canvas.Canvas(sol_file.name, pagesize=A4)
 
         for s in range(students):
-            generate_solution(pdf, problems, solve == 'all')
+            generate_solution(pdf, problems, solve)
 
             if pages % 2 == 1:
                 # for an odd number of pages, zesje adds a blank page at the end
@@ -164,29 +164,25 @@ def solve_problems(pdf_file, pages, students, problems, solve):
         PdfWriter(pdf_file.name, trailer=exam_pdf).write()
 
 
-def grade_problems(exam_id, graders, problems, submission_ids, grade):
-    if grade == 'nothing':
-        return
-
+def grade_problems(exam_id, graders, problems, submissions, grade):
     student_ids = [s['id'] for s in client.get(f'/api/students').get_json()]
 
-    for i in range(len(submission_ids)):
-        submission_id = submission_ids[i]
+    for sub in submissions:
+        submission_id = sub['id']
+
         # assign a student to each submission
         client.put(f'/api/submissions/{exam_id}/{submission_id}', json={'studentID': student_ids.pop()})
 
-        # Only grade half the problems for each submission if grading partially.
-        # TODO: in patial mode, grade only those problems that are solved
-        problems = random.sample(problems, (len(problems) // 2) + 1) if grade == 'partial' else problems
-
-        for problem in problems:
-            feedback_options = problem['feedback']
-            option = feedback_options[random.randint(1, len(feedback_options) - 1)]
-            client.put(f"/api/solution/{exam_id}/{submission_id}/{problem['id']}",
-                       json={
-                           'id': option['id'],
-                           'graderID': random.choice(graders)['id']
-                       })
+        for prob in sub['problems']:
+            # randomly select the problem if it is not blanck
+            if random.random() <= grade and len(prob['feedback']) == 0:
+                fo = next(filter(lambda p: p['id'] == prob['id'], problems))['feedback']
+                opt = fo[random.randint(1, len(fo) - 1)]
+                client.put(f"/api/solution/{exam_id}/{submission_id}/{prob['id']}",
+                           json={
+                               'id': opt['id'],
+                               'graderID': random.choice(graders)['id']
+                           })
 
 
 def create_exam(pages, students, grade, solve):
@@ -221,7 +217,7 @@ def create_exam(pages, students, grade, solve):
         # Have to put name again, because the endpoint first guesses a name.
         client.put(f'api/problems/{problem_id}', data={'name': problem['question'], 'grading_policy': 'set_nothing'})
 
-        for _ in range(random.randint(2, 6)):
+        for _ in range(random.randint(2, 10)):
             client.post('api/feedback/' + str(problem_id), data={
                 'name': lorem_name.sentence(),
                 'description': (lorem.sentence() if random.choice([True, False]) else ''),
@@ -242,20 +238,20 @@ def create_exam(pages, students, grade, solve):
         submission_pdf.write(generated.data)
         submission_pdf.seek(0)
 
-        print('\tSolving submissions.')
+        print('\tSolving problems.')
         solve_problems(submission_pdf, pages, students, problems, solve)
         submission_pdf.seek(0)
         print('\tProcessing submissions. This may take a while.')
 
         handle_pdf_processing(exam_id, submission_pdf)
 
-    submission_ids = [sub['id'] for sub in client.get(f'api/submissions/{exam_id}').get_json()]
+    submissions = client.get(f'api/submissions/{exam_id}').get_json()
     problems = client.get('/api/exams/' + str(exam_id)).get_json()['problems']
 
     graders = client.get('/api/graders').get_json()
 
     print('\tGrading problems.')
-    grade_problems(exam_id, graders, problems, submission_ids, grade)
+    grade_problems(exam_id, graders, problems, submissions, grade)
 
     # exam_data = client.get('/api/exams/' + str(exam_id)).get_json()
     # print(exam_data)
@@ -265,13 +261,12 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Create example exam data in the database.')
     parser.add_argument('-d', '--delete', action='store_true', help='delete previous data')
     parser.add_argument('--exams', type=int, default=1, help='number of exams to add')
-    parser.add_argument('--pages', type=int, default=3, help='number of pages per exam')
+    parser.add_argument('--pages', type=int, default=3, help='number of pages per exam (min is 1)')
     parser.add_argument('--students', type=int, default=60, help='number of students per exam')
-    parser.add_argument('--graders', type=int, default=4, help='number of graders')
-    parser.add_argument('--grade', type=str, default='partial', choices=['nothing', 'partial', 'all'],
-                        help='how much of the exam to grade.')
-    parser.add_argument('--solve', type=str, default='all', choices=['nothing', 'partial', 'all'],
-                        help='how much of the solutions to solve')
+    parser.add_argument('--graders', type=int, default=4, help='number of graders (min is 1)')
+    parser.add_argument('--solve', type=float, default=0.8, help='how much of the solutions to solve')
+    parser.add_argument('--grade', type=float, default=0.5, help='how much of the exam to grade. \
+                        Notice that only non-blank solutions will be considered for grading.')
 
     args = parser.parse_args(sys.argv[1:])
 
@@ -283,8 +278,8 @@ if __name__ == '__main__':
             client.put('api/students', data=student)
 
         # create graders
-        for _ in range(args.graders):
+        for _ in range(max(1, args.graders)):
             client.post('/api/graders', data={'name': names.get_full_name()})
 
         for _ in range(args.exams):
-            create_exam(args.pages, args.students, args.grade, args.solve)
+            create_exam(max(1, args.pages), args.students, args.grade, args.solve)

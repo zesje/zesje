@@ -748,8 +748,8 @@ def original_corner_markers(dpi):
     margin = current_app.config['MARKER_FORMAT']['margin']
     left_x = margin/72 * dpi
     top_y = margin/72 * dpi
-    right_x = (page_size[0] - margin)/72 * dpi
-    bottom_y = (page_size[1] - margin)/72 * dpi
+    right_x = (page_size[0] - margin) / 72 * dpi
+    bottom_y = (page_size[1] - margin) / 72 * dpi
 
     return np.round([(left_x, top_y),
                      (right_x, top_y),

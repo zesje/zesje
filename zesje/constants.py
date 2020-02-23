@@ -33,6 +33,3 @@ PAGE_FORMATS = {
 }
 
 SQLALCHEMY_TRACK_MODIFICATIONS = False  # Suppress future deprecation warning
-
-CELERY_BROKER_URL = 'redis://localhost:6479',
-CELERY_RESULT_BACKEND = 'redis://localhost:6479'

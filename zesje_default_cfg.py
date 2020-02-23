@@ -11,3 +11,6 @@ SMTP_PORT = None
 FROM_ADDRESS = None
 SMTP_USERNAME = None
 SMTP_PASSWORD = None
+
+CELERY_BROKER_URL = 'redis://localhost:6479',
+CELERY_RESULT_BACKEND = 'redis://localhost:6479'

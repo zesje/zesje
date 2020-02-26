@@ -1,9 +1,13 @@
 import os
+import sys
 
 import pytest
 from flask import Flask
-from zesje.api import api_bp
-from zesje.database import db
+from pathlib import Path
+
+sys.path.append(str(Path.cwd()))
+from zesje.api import api_bp  # noqa E402
+from zesje.database import db  # noqa E402
 
 
 # Adapted from https://stackoverflow.com/a/46062148/1062698

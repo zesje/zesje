@@ -53,8 +53,16 @@ def exam(file_format, exam_id):
 
     data.index.name = 'Student ID'
 
+    # move the student names to the first columns
+    cols = data.columns
+    cols_names = data.columns.get_level_values(0).isin(['First name', 'Last name'])
+    cols = list(cols[cols_names]) + list(cols[~cols_names])
+    data = data[cols]
+
     if file_format == 'xlsx':
-        data = data.iloc[:, data.columns.get_level_values(1) == 'total']
+        cols_total = data.columns.get_level_values(1) == 'total'
+        cols_total[:2] = True  # include student names
+        data = data.iloc[:, cols_total]
         data.columns = data.columns.get_level_values(0)
 
     if file_format == 'dataframe':

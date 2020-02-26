@@ -38,9 +38,11 @@ repository directory:
 
     yarn mysql-create
 
-This creates the MySQL files in the data directory.
+That's all it needs to create the MySQL files in the data directory.
+Although the database is now empty, it will automatically be populated
+with the previous `sqlite3` data once the app starts.
 
-Now MySQL is ready to run but empty so initialize it using
+In case you want to start MySQL without running the app use
 
     yarn dev:mysql-start
 
@@ -53,10 +55,6 @@ That's all, MySQL is now fully functional but remember to stop it
 once you quit the development process with
 
     yarn mysql-stop
-
-The next time you want to start the server just run
-
-    yarn dev
 
 
 ### Setting up a development environment

@@ -2,6 +2,7 @@ from io import BytesIO
 
 from flask import abort, send_file, Response, current_app
 import zipstream
+import subprocess as sp
 
 from ..database import Exam, Submission
 from ..statistics import full_exam_data
@@ -14,12 +15,21 @@ def full():
     Returns
     -------
     response : flask Response
-        response containing the ``course.sqlite``
+        response containing the ``course.sql``
     """
+
+    p = sp.Popen(['mysqldump', '-uroot', 'course'], stdin=sp.PIPE, stdout=sp.PIPE, stderr=sp.PIPE)
+    output, err = p.communicate()
+    rc = p.returncode
+
+    if rc != 0:
+        abort(404, f'mysqldump exited with error code {rc}')
+
     return send_file(
-        current_app.config['DB_PATH'],
+        BytesIO(output),
         as_attachment=True,
-        mimetype="application/x-sqlite3",
+        attachment_filename='course.sql',
+        mimetype="application/sql",
         cache_timeout=0,
     )
 

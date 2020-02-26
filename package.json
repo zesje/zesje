@@ -25,7 +25,7 @@
     "migrate-down": "FLASK_APP=zesje.wsgi:app flask db downgrade",
     "mysql-create": "if [ ! -d \"$(pwd)/data-dev/mysql\" ]; then mysqld --defaults-file=my.cnf --initialize-insecure; else echo \"MySql already exists. Skipping.\"; fi",
     "mysql-start": "mysqld --defaults-file=my.cnf --gdb --init-file=/app/myinit.sql",
-    "dev:mysql-start": "mysqld --defaults-file=my.cnf --gdb",
+    "dev:mysql-start": "mysqld --defaults-file=my.cnf --gdb --init-file=$(pwd)/myinit.sql",
     "mysql-stop": "mysqladmin -uroot shutdown"
   },
   "standard": {

@@ -140,7 +140,7 @@ def generate_id_grid(canv, x, y):
     x : int
         The y coordinate where the grid should be drawn
     """
-    fontsize = current_app.config['ID_GRID_FONTSIZE']  # Size of font
+    fontsize = current_app.config['ID_GRID_FONT_SIZE']  # Size of font
     margin = current_app.config['ID_GRID_MARGIN']  # Margin between elements and sides
     digits = current_app.config['ID_GRID_DIGITS']  # Max amount of digits you want for student numbers
 
@@ -194,8 +194,8 @@ def add_checkbox(canvas, x, y, label):
         A string representing the label that is drawn on top of the box, will only take the first character
 
     """
-    box_size = current_app.config['CHECKBOX_FORMAT']["box_size"]
-    margin = current_app.config['CHECKBOX_FORMAT']["margin"]
+    box_size = current_app.config['CHECKBOX_SIZE']
+    margin = current_app.config['CHECKBOX_MARGIN']
     x_label = x + 1  # location of the label
     y_label = y + margin  # remove fontsize from the y label since we draw from the bottom left up
     box_y = y - box_size  # remove the markboxsize because the y is the coord of the top
@@ -203,7 +203,7 @@ def add_checkbox(canvas, x, y, label):
 
     # check that there is a label to print
     if (label and not (len(label) == 0)):
-        canvas.setFont('Helvetica', current_app.config['CHECKBOX_FORMAT']["font_size"])
+        canvas.setFont(current_app.config['CHECKBOX_FONT'], current_app.config['CHECKBOX_FONT_SIZE'])
         canvas.drawString(x_label, y_label, label[0])
 
     canvas.rect(x, box_y, box_size, box_size)
@@ -363,10 +363,10 @@ def _add_corner_markers(canv, pagesize):
     """
     page_width = pagesize[0]
     page_height = pagesize[1]
-    marker_line_length = current_app.config['MARKER_FORMAT']["marker_line_length"]
+    marker_line_length = current_app.config['MARKER_LINE_LENGTH']
 
     # Calculate coordinates offset from page edge
-    margin = current_app.config['MARKER_FORMAT']["margin"]
+    margin = current_app.config['MARKER_MARGIN']
     left = margin
     bottom = margin
     right = page_width - margin

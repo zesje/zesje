@@ -71,12 +71,12 @@ def create_config(config_instance, extra_config):
     if 'ZESJE_SETTINGS' in os.environ:
         config_instance.from_envvar('ZESJE_SETTINGS')
 
-    # overwrite user config with constants
-    config_instance.from_object('zesje.constants')
-
     # extra config?
     if extra_config is not None:
         config_instance.update(extra_config)
+
+    # overwrite user config with constants
+    config_instance.from_object('zesje.constants')
 
     # Make DATA_DIRECTORY absolute
     config_instance.update(

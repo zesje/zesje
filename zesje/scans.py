@@ -134,7 +134,7 @@ def exam_student_id_widget(exam_id):
     :return: the student id widget, and an array of coordinates [ymin, ymax, xmin, xmax]
     """
 
-    fontsize = current_app.config['ID_GRID_FONTSIZE']
+    fontsize = current_app.config['ID_GRID_FONT_SIZE']
     margin = current_app.config['ID_GRID_MARGIN']
     digits = current_app.config['ID_GRID_DIGITS']
     id_grid_height = 12 * margin + 11 * fontsize
@@ -533,8 +533,8 @@ def find_corner_marker_keypoints(image_array, corner_sizes=[0.125, 0.25, 0.5]):
     RuntimeError if no valid set of keypoints are found
     """
     h, w, *_ = image_array.shape
-    marker_length = current_app.config['MARKER_FORMAT']["marker_line_length"]
-    marker_width = current_app.config['MARKER_FORMAT']["marker_line_width"]
+    marker_length = current_app.config['MARKER_LINE_LENGTH']
+    marker_width = current_app.config['MARKER_LINE_WIDTH']
 
     best_points = []
 
@@ -745,7 +745,7 @@ def resize_image(image_array, page_shape):
 def original_corner_markers(dpi):
     page_size = current_app.config['PAGE_FORMATS'][current_app.config['PAGE_FORMAT']]
 
-    margin = current_app.config['MARKER_FORMAT']['margin']
+    margin = current_app.config['MARKER_MARGIN']
     left_x = margin/72 * dpi
     top_y = margin/72 * dpi
     right_x = (page_size[0] - margin) / 72 * dpi

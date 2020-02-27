@@ -80,7 +80,7 @@ def grade_mcq(sol, page_img):
     page_img: np.array
         A numpy array of the image scan
     """
-    box_size = current_app.config['CHECKBOX_FORMAT']["box_size"]
+    box_size = current_app.config['CHECKBOX_SIZE']
     problem = sol.problem
     mc_filled_counter = 0
 

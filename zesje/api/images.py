@@ -67,7 +67,7 @@ def get(exam_id, problem_id, submission_id, full_page=False):
         if option.feedback_id in fb:
             x = int(option.x / 72 * dpi)
             y = int(option.y / 72 * dpi)
-            box_length = int(current_app.config['CHECKBOX_FORMAT']["box_size"] / 72 * dpi)
+            box_length = int(current_app.config['CHECKBOX_SIZE'] / 72 * dpi)
             x1 = x + box_length
             y1 = y + box_length
             page_im = cv2.rectangle(page_im, (x, y), (x1, y1), (0, 255, 0), 3)

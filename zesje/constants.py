@@ -1,7 +1,7 @@
 from reportlab.lib.units import mm
 
 # student id widget
-ID_GRID_FONTSIZE = 11  # Size of font
+ID_GRID_FONT_SIZE = 11  # Size of font
 ID_GRID_FONT = 'Helvetica'
 ID_GRID_MARGIN = 5  # Margin between elements and sides
 ID_GRID_DIGITS = 7  # Max amount of digits you want for student numbers
@@ -14,18 +14,15 @@ COPY_NUMBER_FONT = 'Helvetica'
 OUTPUT_PDF_FILENAME_FORMAT = '{0:05d}.pdf'
 
 # the size of the markers in points
-MARKER_FORMAT = {
-    "margin": 10 * mm,
-    "marker_line_length": 8 * mm,
-    "marker_line_width": 1
-}
+MARKER_MARGIN = 10 * mm
+MARKER_LINE_LENGTH = 8 * mm
+MARKER_LINE_WIDTH = 1
 
 # the parameters of drawing checkboxes
-CHECKBOX_FORMAT = {
-    "margin": 5,
-    "font_size": 11,
-    "box_size": 9
-}
+CHECKBOX_MARGIN = 5
+CHECKBOX_FONT_SIZE = 11
+CHECKBOX_FONT = 'Helvetica'
+CHECKBOX_SIZE = 9
 
 PAGE_FORMATS = {
     "A4": (595.276, 841.89),

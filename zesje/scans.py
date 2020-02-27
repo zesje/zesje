@@ -549,7 +549,8 @@ def find_corner_marker_keypoints(image_array, corner_sizes=[0.125, 0.25, 0.5]):
             ret, labels = cv2.connectedComponents(inv_im)
             for label in range(1, ret):
                 new_img = (labels == label)
-                if np.sum(new_img) > marker_length * marker_width * 2:
+                # multiplier determined to work well empirically
+                if np.sum(new_img) > marker_length * marker_width * 5.66:
                     continue  # The blob is too large
                 lines = cv2.HoughLines(new_img.astype(np.uint8), 1, np.pi/180, int(marker_length * .9))
                 if lines is None:

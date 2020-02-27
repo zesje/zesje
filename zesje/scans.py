@@ -533,8 +533,8 @@ def find_corner_marker_keypoints(image_array, corner_sizes=[0.125, 0.25, 0.5]):
     RuntimeError if no valid set of keypoints are found
     """
     h, w, *_ = image_array.shape
-    marker_length = current_app.config['MARKER_LINE_LENGTH']
-    marker_width = current_app.config['MARKER_LINE_WIDTH']
+    marker_length = current_app.config['MARKER_LINE_LENGTH'] * guess_dpi(image_array) / 72
+    marker_width = current_app.config['MARKER_LINE_WIDTH'] * guess_dpi(image_array) / 72
 
     best_points = []
 

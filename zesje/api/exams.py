@@ -57,7 +57,7 @@ def checkboxes(exam):
 
 def add_blank_feedback(problems):
     """
-    Move the blank option for MCQ to the end.
+    Add the blank feedback option to each problem.
     """
     for p in problems:
         db.session.add(FeedbackOption(problem_id=p.id, text=BLANK_FEEDBACK_NAME, score=0))

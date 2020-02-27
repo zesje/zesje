@@ -372,6 +372,7 @@ def _add_corner_markers(canv, pagesize):
     right = page_width - margin
     top = page_height - margin
 
+    canv.setLineWidth(current_app.config['MARKER_FORMAT']["marker_line_width"])
     canv.lines([
         # Bottom left corner marker
         (left, bottom, left + marker_line_length, bottom),

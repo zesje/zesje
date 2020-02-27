@@ -55,18 +55,13 @@ def checkboxes(exam):
     return cb_data
 
 
-def move_blank_to_end(problems):
+def add_blank_feedback(problems):
     """
     Move the blank option for MCQ to the end.
     """
     for p in problems:
-        if len(p.mc_options) > 0:
-            blanks = filter(lambda fo: fo.text == BLANK_FEEDBACK_NAME, p.feedback_options)
-            if blanks:
-                for b in blanks:
-                    db.session.delete(b)
+        db.session.add(FeedbackOption(problem_id=p.id, text=BLANK_FEEDBACK_NAME, score=0))
 
-            db.session.add(FeedbackOption(problem_id=p.id, text=BLANK_FEEDBACK_NAME, score=0))
     db.session.commit()
 
 
@@ -311,7 +306,7 @@ class Exams(Resource):
         if args['finalized'] is None:
             pass
         elif args['finalized']:
-            move_blank_to_end(exam.problems)
+            add_blank_feedback(exam.problems)
 
             exam_dir, student_id_widget, _, exam_path, cb_data = _exam_generate_data(exam)
             write_finalized_exam(exam_dir, exam_path, student_id_widget.x, student_id_widget.y, cb_data)

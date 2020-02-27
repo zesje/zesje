@@ -121,8 +121,6 @@ class Problems(Resource):
             if guessed_title:
                 problem.name = guessed_title
 
-            problem.feedback_options.append(FeedbackOption(text=BLANK_FEEDBACK_NAME, score=0))
-
             db.session.commit()
 
             return {

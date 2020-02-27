@@ -14,13 +14,20 @@ def datadir():
     return os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
 
 
+# Returns a Flask app with only the config initialized
+@pytest.fixture(scope="module")
+def config_app():
+    app = Flask(__name__, static_folder=None)
+    create_config(app.config, None)
+    return app
+
+
 # Return a mock DB which can be used in the testing enviroment
 # Module scope ensures it is ran only once
 @pytest.fixture(scope="module")
-def db_app():
-    app = Flask(__name__, static_folder=None)
+def db_app(config_app):
+    app = config_app
 
-    create_config(app.config, None)
     app.config.update(
         SQLALCHEMY_DATABASE_URI='sqlite:///:memory:',
         SQLALCHEMY_TRACK_MODIFICATIONS=False  # Suppress future deprecation warning

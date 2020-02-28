@@ -42,6 +42,7 @@ from zesje.database import db, Exam, Scan
 from zesje.scans import _process_pdf
 from zesje.factory import create_app
 
+
 sys.path.append(os.getcwd())
 
 
@@ -70,16 +71,23 @@ def init_app(delete):
     return app
 
 
-def generate_exam_pdf(pdf_file, exam_name, pages, problems):
+def generate_exam_pdf(pdf_file, exam_name, pages, problems, mc_problems):
     pdf = canvas.Canvas(pdf_file.name, pagesize=A4)
+
+    pdf.setFont("Helvetica-Bold", 18)
+    pdf.drawString(A4[0] / 2 - 100, 650, exam_name)
+    pdf.setFont("Helvetica", 11.5)
+
     for i in range(pages):
-        generate_exam_page(pdf, exam_name, page_num=i, problems=problems)
+        generate_exam_page(pdf, exam_name, page_num=i, problems=problems, mc_problems=mc_problems)
         pdf.showPage()
     pdf.save()
 
 
-def generate_exam_page(pdf, exam_name, page_num, problems):
-    pdf.drawString(250, 650, exam_name)
+def generate_exam_page(pdf, exam_name, page_num, problems, mc_problems):
+    if page_num > 0:
+        generate_problem(pdf, mc_problems[page_num - 1])
+
     for i in range(3):
         generate_problem(pdf, problems[3 * page_num + i])
 
@@ -123,11 +131,15 @@ def handle_pdf_processing(exam_id, pdf):
     }
 
 
-def generate_solution(pdf, problems, solve):
+def generate_solution(pdf, problems, mc_problems, solve):
     pages = len(problems) // 3
 
     for p in range(pages):
         pdf.setFillColorRGB(0, 0, 1)
+
+        if p > 0 and random.random() < solve:
+            o = random.choice(mc_problems[p - 1]['mc_options'])
+            pdf.rect(o['x'] + 2, o['y'] + 4, 5, 5, fill=1)
 
         for i in range(3):
             prob = problems[3 * p + i]
@@ -137,7 +149,7 @@ def generate_solution(pdf, problems, solve):
         pdf.showPage()
 
 
-def solve_problems(pdf_file, pages, students, problems, solve):
+def solve_problems(pdf_file, pages, students, problems, mc_problems, solve):
     if solve < 0.0001:
         return
 
@@ -145,7 +157,7 @@ def solve_problems(pdf_file, pages, students, problems, solve):
         pdf = canvas.Canvas(sol_file.name, pagesize=A4)
 
         for s in range(students):
-            generate_solution(pdf, problems, solve)
+            generate_solution(pdf, problems, mc_problems, solve)
 
             if pages % 2 == 1:
                 # for an odd number of pages, zesje adds a blank page at the end
@@ -189,13 +201,21 @@ def create_exam(pages, students, grade, solve):
     exam_name = lorem_name.sentence().replace('.', '')
     problems = [{
         'question': str(i + 1) + '. ' + lorem.sentence().replace('.', '?'),
-        'num': i + 1,
-        'x': 75, 'y': 550 - (170 * (i % 3)),
+        'page': (i // 3),
+        'x': 75, 'y': int(A4[1]) - 300 - (170 * (i % 3)),
         'w': 450, 'h': 120
     } for i in range(pages * 3)]
 
+    mc_problems = [{
+        'question': f'MC{i}. ' + lorem.sentence().replace('.', '?'),
+        'x': 75, 'y': int(A4[1]) - 150,
+        'w': 300, 'h': 75,
+        'page': i,
+        'mc_options': []
+    } for i in range(1, pages)]
+
     with NamedTemporaryFile() as pdf_file:
-        generate_exam_pdf(pdf_file, exam_name, pages, problems)
+        generate_exam_pdf(pdf_file, exam_name, pages, problems, mc_problems)
         exam_id = client.post('/api/exams',
                               content_type='multipart/form-data',
                               data={
@@ -207,7 +227,7 @@ def create_exam(pages, students, grade, solve):
         problem_id = client.post('api/problems', data={
             'exam_id': exam_id,
             'name': problem['question'],
-            'page': (problem['num'] - 1) // 3,
+            'page': problem['page'],
             # add some padding to x, y, w, h
             'x': problem['x'] - 20,
             'y': problem['y'] + 60,
@@ -218,11 +238,41 @@ def create_exam(pages, students, grade, solve):
         client.put(f'api/problems/{problem_id}', data={'name': problem['question'], 'grading_policy': 'set_nothing'})
 
         for _ in range(random.randint(2, 10)):
-            client.post('api/feedback/' + str(problem_id), data={
+            client.post(f'api/feedback/{problem_id}', data={
                 'name': lorem_name.sentence(),
                 'description': (lorem.sentence() if random.choice([True, False]) else ''),
                 'score': random.randint(0, 10)
             })
+
+    for problem in mc_problems:
+        problem_id = client.post('api/problems', data={
+            'exam_id': exam_id,
+            'name': problem['question'],
+            'page': problem['page'],
+            # add some padding to x, y, w, h
+            'x': problem['x'] - 20,
+            'y': int(A4[1]) - problem['y'] - 20,
+            'width': problem['w'] + 40,
+            'height': problem['h'] + 40,
+        }).get_json()['id']
+        # Have to put name again, because the endpoint first guesses a name.
+        client.put(f'api/problems/{problem_id}', data={'name': problem['question'], 'grading_policy': 'set_nothing'})
+
+        fops = []
+        for k in range(random.randint(2, 5)):
+            label = chr(65 + k)
+            x = problem['x'] + 20 * (k + 1)
+            problem['mc_options'].append({'name': label, 'x': x, 'y': problem['y'] - 50})
+            resp = client.put('api/mult-choice/', data={
+                'problem_id': problem_id,
+                'name': label, 'label': label,
+                'x': x,
+                'y': int(A4[1]) - problem['y'] + 40
+            })
+            fops.append((resp.get_json()['feedback_id'], chr(k + 65)))
+
+        correct = random.choice(fops)
+        client.put(f'api/feedback/{correct[0]}', data={'name': correct[1], 'score': 1})
 
     client.put(f'api/exams/{exam_id}', data={'finalized': True})
 
@@ -239,7 +289,7 @@ def create_exam(pages, students, grade, solve):
         submission_pdf.seek(0)
 
         print('\tSolving problems.')
-        solve_problems(submission_pdf, pages, students, problems, solve)
+        solve_problems(submission_pdf, pages, students, problems, mc_problems, solve)
         submission_pdf.seek(0)
         print('\tProcessing submissions. This may take a while.')
 

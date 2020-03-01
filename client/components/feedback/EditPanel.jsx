@@ -72,7 +72,7 @@ class EditPanel extends React.Component {
   }
 
   key = (event) => {
-    if (event.keyCode === 13 && this.state.name.length) {
+    if (!event.shiftKey && event.keyCode === 13 && this.state.name.length) {
       this.saveFeedback()
     }
   }

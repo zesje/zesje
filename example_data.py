@@ -272,7 +272,7 @@ def create_exam(pages, students, grade, solve):
             fops.append((resp.get_json()['feedback_id'], chr(k + 65)))
 
         correct = random.choice(fops)
-        client.put(f'api/feedback/{correct[0]}', data={'name': correct[1], 'score': 1})
+        client.put(f'api/feedback/{problem_id}', data={'id': correct[0], 'name': correct[1], 'score': 1})
 
     client.put(f'api/exams/{exam_id}', data={'finalized': True})
 

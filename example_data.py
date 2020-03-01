@@ -235,7 +235,7 @@ def create_exam(pages, students, grade, solve):
             'height': problem['h'] + 60,
         }).get_json()['id']
         # Have to put name again, because the endpoint first guesses a name.
-        client.put(f'api/problems/{problem_id}', data={'name': problem['question'], 'grading_policy': 'set_nothing'})
+        client.put(f'api/problems/{problem_id}', data={'name': problem['question'], 'grading_policy': 'set_blank'})
 
         for _ in range(random.randint(2, 10)):
             client.post(f'api/feedback/{problem_id}', data={
@@ -256,7 +256,7 @@ def create_exam(pages, students, grade, solve):
             'height': problem['h'] + 40,
         }).get_json()['id']
         # Have to put name again, because the endpoint first guesses a name.
-        client.put(f'api/problems/{problem_id}', data={'name': problem['question'], 'grading_policy': 'set_nothing'})
+        client.put(f'api/problems/{problem_id}', data={'name': problem['question'], 'grading_policy': 'set_single'})
 
         fops = []
         for k in range(random.randint(2, 5)):
@@ -314,8 +314,8 @@ if __name__ == '__main__':
     parser.add_argument('--pages', type=int, default=3, help='number of pages per exam (min is 1)')
     parser.add_argument('--students', type=int, default=60, help='number of students per exam')
     parser.add_argument('--graders', type=int, default=4, help='number of graders (min is 1)')
-    parser.add_argument('--solve', type=float, default=0.8, help='how much of the solutions to solve')
-    parser.add_argument('--grade', type=float, default=0.5, help='how much of the exam to grade. \
+    parser.add_argument('--solve', type=float, default=0.9, help='how much of the solutions to solve')
+    parser.add_argument('--grade', type=float, default=0.6, help='how much of the exam to grade. \
                         Notice that only non-blank solutions will be considered for grading.')
 
     args = parser.parse_args(sys.argv[1:])

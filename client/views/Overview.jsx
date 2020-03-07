@@ -1,6 +1,7 @@
 import React from 'react'
 import 'bulma-tooltip/dist/css/bulma-tooltip.min.css'
 
+import moment from 'moment'
 import Hero from '../components/Hero.jsx'
 import * as api from '../api.jsx'
 
@@ -25,16 +26,9 @@ const Tooltip = (props) => {
 }
 
 const formatTime = (seconds) => {
-  let h = Math.floor(seconds / 3600)
-  let m = Math.floor((seconds % 3600) / 60)
-  let s = seconds % 60
+  // returns human readable string showing the elapsed time
 
-  let str = ''
-  if (h > 0) { str = h + 'h' }
-  if (m > 0) { str = str + ' ' + m + 'min' }
-  if (s > 0 && h === 0) { str = str + ' ' + s + 's' }
-
-  return str
+  return moment.unix(seconds).from(0, true)
 }
 
 const ProblemSummary = (props) => (
@@ -43,22 +37,6 @@ const ProblemSummary = (props) => (
       {/^\d/.test(props.problem.name) ? 'Problem ' : null}
       {props.problem.name}
     </h3>
-    <ul>
-      {props.graders
-        ? props.graders.graders.map((grader, i) => {
-          return <li key={i}>
-            {grader.graded} solutions graded by {grader.name}
-            {grader.total_time > 0
-              ? ' in ' + formatTime(grader.total_time) +
-                (grader.graded > 1
-                  ? ' (about ' + formatTime(grader.avg_grading_time) + ' per solution)'
-                  : '')
-              : ''}
-          </li>
-        })
-        : ''
-      }
-    </ul>
     <table className='table is-striped'>
       <thead>
         <tr>
@@ -82,6 +60,24 @@ const ProblemSummary = (props) => (
         }
       </tbody>
     </table>
+    <ul>
+      {props.graders
+        ? props.graders.graders.map((grader, i) => {
+          if (grader.name === 'Zesje') return ''
+          return <li key={i}>
+            {grader.graded + ' ' + (grader.graded > 1 ? 'solutions ' : 'solution ')}
+            graded by {grader.name}
+            {grader.total_time > 0
+              ? ' in ' + formatTime(grader.total_time) +
+                (grader.graded > 1
+                  ? ' (' + formatTime(grader.avg_grading_time) + ' per solution)'
+                  : '')
+              : ''}.
+          </li>
+        })
+        : ''
+      }
+    </ul>
   </React.Fragment>
 )
 

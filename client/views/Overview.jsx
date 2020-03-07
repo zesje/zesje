@@ -1,7 +1,9 @@
 import React from 'react'
 import 'bulma-tooltip/dist/css/bulma-tooltip.min.css'
 
+import moment from 'moment'
 import Hero from '../components/Hero.jsx'
+import * as api from '../api.jsx'
 
 const Tooltip = (props) => {
   if (!props.text) {
@@ -21,6 +23,12 @@ const Tooltip = (props) => {
       <i className='fa fa-comment' />
     </span>
   )
+}
+
+const formatTime = (seconds) => {
+  // returns human readable string showing the elapsed time
+
+  return moment.unix(seconds).from(0, true)
 }
 
 const ProblemSummary = (props) => (
@@ -52,10 +60,50 @@ const ProblemSummary = (props) => (
         }
       </tbody>
     </table>
+    <ul>
+      {props.graders
+        ? props.graders.graders.map((grader, i) => {
+          if (grader.name === 'Zesje') return ''
+          return <li key={i}>
+            {grader.graded + ' ' + (grader.graded > 1 ? 'solutions ' : 'solution ')}
+            graded by {grader.name}
+            {grader.total_time > 0
+              ? ' in ' + formatTime(grader.total_time) +
+                (grader.graded > 1
+                  ? ' (' + formatTime(grader.avg_grading_time) + ' per solution)'
+                  : '')
+              : ''}.
+          </li>
+        })
+        : ''
+      }
+    </ul>
   </React.Fragment>
 )
 
 class Overview extends React.Component {
+  state = {
+    graderStatistics: null,
+    statsLoaded: false
+  }
+
+  constructor (props) {
+    super(props)
+    this.state = {
+      graderStatistics: null
+    }
+  }
+
+  componentWillMount () {
+    api.get(`export/graders/${this.props.exam.id}`)
+      .then(stats => {
+        this.setState({
+          graderStatistics: stats,
+          statsLoaded: true
+        })
+      })
+  }
+
   render () {
     return (
       <div>
@@ -74,18 +122,17 @@ class Overview extends React.Component {
         <section>
           <h3 className='title is-size-3 has-text-centered'> Problem Details </h3>
           <div className='columns is-tablet is-multiline'>
-            {
-              this.props.exam.problems.map((problem, i) => (
-                <div className='column is-one-half-tablet is-one-third-desktop' key={i}>
-                  <div className='content'>
-                    <ProblemSummary problem={problem} />
-                  </div>
+            { this.props.exam.problems.map((problem, i) => (
+              <div className='column is-one-half-tablet is-one-third-desktop' key={i}>
+                <div className='content'>
+                  <ProblemSummary problem={problem}
+                    graders={this.state.statsLoaded ? this.state.graderStatistics.problems[i] : null} />
                 </div>
-              ))
+              </div>
+            ))
             }
           </div>
         </section>
-
       </div >
     )
   }

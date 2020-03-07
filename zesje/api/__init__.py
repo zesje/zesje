@@ -89,3 +89,8 @@ api_bp.add_url_rule(
     'dataframe_export',
     export.exam,
 )
+api_bp.add_url_rule(
+    '/export/graders/<int:exam_id>',
+    'grader_statistics_export',
+    export.grader_statistics,
+)

@@ -51,13 +51,13 @@ test_args = [
 @pytest.mark.parametrize(
     'name,expected', test_args,
     ids=list(map(lambda e: f"{e[0]} ({e[1]} markers)", test_args)))
-def test_detect_enough_cornermarkers(name, expected, datadir):
+def test_detect_enough_cornermarkers(name, expected, datadir, config_app):
     image = generate_image(name, datadir)
     keypoints = scans.find_corner_marker_keypoints(image)
     assert(len(keypoints) == expected)
 
 
-def test_detect_few_cornermarkers(datadir):
+def test_detect_few_cornermarkers(datadir, config_app):
     image = generate_image('blank.jpg', datadir)
     with pytest.raises(RuntimeError):
         scans.find_corner_marker_keypoints(image)
@@ -68,7 +68,7 @@ def test_detect_few_cornermarkers(datadir):
 # of the image. Only A4 is considered as there is no test data yet for
 # US letter size.
 @pytest.mark.parametrize('name', map(lambda tup: tup[0], test_args))
-def test_detect_valid_cornermarkers(name, datadir):
+def test_detect_valid_cornermarkers(name, datadir, config_app):
     image = generate_image(name, datadir)
     keypoints = scans.find_corner_marker_keypoints(image)
 

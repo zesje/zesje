@@ -66,8 +66,8 @@ def full_app(db_empty_app):
         write_finalized_exam(exam_dir, exam_path, student_id_widget.x, student_id_widget.y, [])
 
     # Push the current app context for all tests so the database can be used
-    db_empty_app.app_context().push()
-    return db_empty_app
+    with db_empty_app.app_context():
+        yield db_empty_app
 
 
 def generate_flat_scan_data(copy_number=145):

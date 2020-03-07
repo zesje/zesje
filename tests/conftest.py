@@ -19,7 +19,8 @@ def datadir():
 def config_app():
     app = Flask(__name__, static_folder=None)
     create_config(app.config, None)
-    return app
+    with app.app_context():
+        yield app
 
 
 # Return a mock DB which can be used in the testing enviroment

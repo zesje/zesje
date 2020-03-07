@@ -14,11 +14,11 @@ Usage:
       -h, --help           show this help message and exit
       -d, --delete         delete previous data
       --exams (int)        number of exams to add
-      --pages (int)        number of pages per exam (min is 1)
+      --pages (int)        number of pages per exam
       --students (int)     number of students per exam
-      --graders (int)      number of graders (min is 1)
-      --solve (float)      how much of the solutions to solve
-      --grade (float)      how much of the exam to grade. Notice that only non-
+      --graders (int)      number of graders
+      --solve (float)      how much of the solutions to solve (between 0 and 100)
+      --grade (float)      how much of the exam to grade (between 0 and 100). Notice that only non-
                            blank solutions will be considered for grading.
 
 '''
@@ -150,7 +150,8 @@ def generate_solution(pdf, problems, mc_problems, solve):
 
 
 def solve_problems(pdf_file, pages, students, problems, mc_problems, solve):
-    if solve < 0.0001:
+    if solve < 0.01:
+        # nothing to solve
         return
 
     with NamedTemporaryFile() as sol_file:
@@ -178,6 +179,7 @@ def solve_problems(pdf_file, pages, students, problems, mc_problems, solve):
 
 def grade_problems(exam_id, graders, problems, submissions, grade):
     student_ids = [s['id'] for s in client.get(f'/api/students').get_json()]
+    random.shuffle(student_ids)
 
     for sub in submissions:
         submission_id = sub['id']
@@ -312,10 +314,10 @@ if __name__ == '__main__':
     parser.add_argument('-d', '--delete', action='store_true', help='delete previous data')
     parser.add_argument('--exams', type=int, default=1, help='number of exams to add')
     parser.add_argument('--pages', type=int, default=3, help='number of pages per exam (min is 1)')
-    parser.add_argument('--students', type=int, default=60, help='number of students per exam')
+    parser.add_argument('--students', type=int, default=30, help='number of students per exam')
     parser.add_argument('--graders', type=int, default=4, help='number of graders (min is 1)')
-    parser.add_argument('--solve', type=float, default=0.9, help='how much of the solutions to solve')
-    parser.add_argument('--grade', type=float, default=0.6, help='how much of the exam to grade. \
+    parser.add_argument('--solve', type=int, default=90, help='how much of the solutions to solve (between 0 and 100)')
+    parser.add_argument('--grade', type=int, default=60, help='how much of the exam to grade (between 0 and 100). \
                         Notice that only non-blank solutions will be considered for grading.')
 
     args = parser.parse_args(sys.argv[1:])
@@ -332,4 +334,4 @@ if __name__ == '__main__':
             client.post('/api/graders', data={'name': names.get_full_name()})
 
         for _ in range(args.exams):
-            create_exam(max(1, args.pages), args.students, args.grade, args.solve)
+            create_exam(max(1, args.pages), args.students, args.grade / 100, args.solve / 100)

@@ -8,15 +8,15 @@ Zesje is an online grading system for written exams.
 
 ### Running Zesje using Docker
 Running Zesje using Docker is the easiest method to run Zesje
-yourself with minimal technical knowledge required. For this approach 
-we assume that you already have [Docker](https://www.docker.com/) 
+yourself with minimal technical knowledge required. For this approach
+we assume that you already have [Docker](https://www.docker.com/)
 installed, cloned the Zesje repository and entered its directory.
 
 First create a volume to store the data:
 
     docker volume create zesje
 
-Then build the Docker image using the following below. Anytime you 
+Then build the Docker image using the following below. Anytime you
 update Zesje by pulling the repository you have to run this command again.
 
     docker build -f auto.Dockerfile . -t zesje:auto
@@ -25,7 +25,7 @@ Finally, you can run the container to start Zesje using:
 
     docker run -p 8881:80 --volume zesje:/app/data-dev -it zesje:auto
 
-Zesje should be available at http://127.0.0.1:8881. If you get 
+Zesje should be available at http://127.0.0.1:8881. If you get
 the error `502 - Bad Gateway` it means that Zesje is still starting.
 
 ## Development
@@ -41,11 +41,11 @@ Install Miniconda by following the instructions on this page:
 
 https://conda.io/miniconda.html
 
-Make sure you cloned this repository and enter its directory. Then 
-create a Conda environment that will automatically install all 
+Make sure you cloned this repository and enter its directory. Then
+create a Conda environment that will automatically install all
 of zesje's Python dependencies:
 
-    conda env create  # Creates an environment from environment.yml 
+    conda env create  # Creates an environment from environment.yml
 
 Then, *activate* the conda environment:
 
@@ -91,7 +91,7 @@ or `zesje/`.
 You can run the tests by running
 
     yarn test
-    
+
 #### Viewing test coverage
 
 As a test coverage tool for Python tests, `pytest-cov` is used.
@@ -128,7 +128,7 @@ a first resort.
 
 ### Database modifications
 
-Zesje uses Flask-Migrate and Alembic for database versioning and migration. Flask-Migrate is an extension that handles SQLAlchemy database migrations for Flask applications using Alembic. 
+Zesje uses Flask-Migrate and Alembic for database versioning and migration. Flask-Migrate is an extension that handles SQLAlchemy database migrations for Flask applications using Alembic.
 
 To change something in the database schema, simply add this change to `zesje/database.py`. After that run the following command to prepare a new migration:
 
@@ -181,6 +181,22 @@ The packages can be installed and updated in your environment by `conda` using
 Yarn keeps track of all the client-side dependancies in `package.json` when you install new packages with `yarn add [packageName]`. Yarn will install and update your packages if your run
 
     yarn install
+
+
+### Generate sample data
+
+The script `example_data.py` can be used to create a sample exam that mimics the appearance and behavior of a typical grading process in Zesje. The prototype exam consist on 3 open answer questions per page and 1 multiple choice question per page (excluding the first one). The script partially solves those questions and assigns random feedback to the answered questions while the not answered questions are processed as blank.
+
+The script is called from the command line with the following parameters:
+ - `-d, --delete`  If specified, removes any existing data and creates a new empty database. Otherwise, new exams are added without deleting previous data.
+ - `--exams (int)` the number of exams to add, default is 1.
+ - `--pages (int)` the number of pages per exam, default is 3.
+ - `--students (int)` the number of students per exam, default is 30
+ - `--graders (int)` the number of graders to add, default is 4.
+ - `--solve (float)` between 0 and 1, indicates the percentage of questions to answer (including MCQ), default is 90%.
+ - `--grade (float)` between 0 and 1, indicate the percentage of solved questions to grade (that is, excluding blank answers), default is 60%.
+
+The actual processing of the exam takes a while, specially when the number of students is large.
 
 ## License
 Zesje is licensed under AGPLv3, which can be found in `LICENSE`. An summary of this license with it's permissions, conditions and limitations can be found [here](https://choosealicense.com/licenses/agpl-3.0/).

@@ -1,6 +1,6 @@
 import os
 
-from flask import current_app as app
+from flask import current_app
 from flask_restful import Resource, reqparse
 from flask_restful.inputs import boolean
 from pdfrw import PdfReader
@@ -226,7 +226,7 @@ class MissingPages(Resource):
             return dict(status=404, message='Exam does not exist.'), 404
 
         all_pages = set(range(len(
-            PdfReader(os.path.join(app.config['DATA_DIRECTORY'], f'{exam_id}_data/exam.pdf')).pages)
+            PdfReader(os.path.join(current_app.config['DATA_DIRECTORY'], f'{exam_id}_data/exam.pdf')).pages)
         ))
         return [
             {

@@ -1,10 +1,11 @@
-from flask import abort, Response, current_app as app
+from flask import abort, Response
 
 import numpy as np
 import cv2
 
 from ..images import get_box
 from ..database import Exam, Submission
+from ..scans import exam_student_id_widget
 
 
 def get(exam_id, submission_id):
@@ -32,19 +33,8 @@ def get(exam_id, submission_id):
     if sub is None:
         return dict(status=404, message=f'Submission with id #{submission_id} not found'), 404
 
-    student_id_widget = next(
-        widget
-        for widget
-        in exam.widgets
-        if widget.name == 'student_id_widget'
-    )
-
-    widget_area = np.asarray([
-        student_id_widget.y,  # top
-        student_id_widget.y + app.config.get('ID_GRID_HEIGHT', 181),  # bottom
-        student_id_widget.x,  # left
-        student_id_widget.x + app.config.get('ID_GRID_WIDTH', 313),  # right
-    ])
+    _, student_id_widget_coords = exam_student_id_widget(exam_id)
+    widget_area = np.asarray(student_id_widget_coords)
 
     # TODO: use points as base unit
     widget_area_in = widget_area / 72

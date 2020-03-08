@@ -51,6 +51,7 @@ if 'ZESJE_SETTINGS' not in os.environ:
 
 
 lorem_name = TextLorem(srange=(1, 3))
+lorem_prob = TextLorem(srange=(2, 5))
 
 
 def init_app(delete):
@@ -101,7 +102,7 @@ def generate_problem(pdf, problem):
 
 def generate_students(students):
     return [{
-        'studentID': str(i + 1000001),
+        'studentID': str(i + 1000000),
         'firstName': names.get_first_name(),
         'lastName': names.get_last_name(),
         'email': str(i + 1000000) + '@fakestudent.tudelft.nl'
@@ -131,8 +132,15 @@ def handle_pdf_processing(exam_id, pdf):
     }
 
 
-def generate_solution(pdf, problems, mc_problems, solve):
+def generate_solution(pdf, student_id, problems, mc_problems, solve):
     pages = len(problems) // 3
+
+    pdf.setFillColorRGB(0, 0, 1)
+
+    sID = str(student_id)
+    for k in range(7):
+        d = int(sID[k])
+        pdf.rect(68 + k * 16, int(A4[1]) - 80 - d * 16, 5, 5, fill=1)
 
     for p in range(pages):
         pdf.setFillColorRGB(0, 0, 1)
@@ -149,7 +157,7 @@ def generate_solution(pdf, problems, mc_problems, solve):
         pdf.showPage()
 
 
-def solve_problems(pdf_file, pages, students, problems, mc_problems, solve):
+def solve_problems(pdf_file, pages, student_ids, problems, mc_problems, solve):
     if solve < 0.01:
         # nothing to solve
         return
@@ -157,8 +165,8 @@ def solve_problems(pdf_file, pages, students, problems, mc_problems, solve):
     with NamedTemporaryFile() as sol_file:
         pdf = canvas.Canvas(sol_file.name, pagesize=A4)
 
-        for s in range(students):
-            generate_solution(pdf, problems, mc_problems, solve)
+        for id in student_ids:
+            generate_solution(pdf, id, problems, mc_problems, solve)
 
             if pages % 2 == 1:
                 # for an odd number of pages, zesje adds a blank page at the end
@@ -177,15 +185,13 @@ def solve_problems(pdf_file, pages, students, problems, mc_problems, solve):
         PdfWriter(pdf_file.name, trailer=exam_pdf).write()
 
 
-def grade_problems(exam_id, graders, problems, submissions, grade):
-    student_ids = [s['id'] for s in client.get(f'/api/students').get_json()]
-    random.shuffle(student_ids)
-
-    for sub in submissions:
+def grade_problems(exam_id, graders, problems, submissions, student_ids, grade):
+    for k in range(len(submissions)):
+        sub = submissions[k]
         submission_id = sub['id']
 
         # assign a student to each submission
-        client.put(f'/api/submissions/{exam_id}/{submission_id}', json={'studentID': student_ids.pop()})
+        client.put(f'/api/submissions/{exam_id}/{submission_id}', json={'studentID': student_ids[k]})
 
         for prob in sub['problems']:
             # randomly select the problem if it is not blanck
@@ -202,14 +208,14 @@ def grade_problems(exam_id, graders, problems, submissions, grade):
 def create_exam(pages, students, grade, solve):
     exam_name = lorem_name.sentence().replace('.', '')
     problems = [{
-        'question': str(i + 1) + '. ' + lorem.sentence().replace('.', '?'),
+        'question': str(i + 1) + '. ' + lorem_prob.sentence().replace('.', '?'),
         'page': (i // 3),
         'x': 75, 'y': int(A4[1]) - 300 - (170 * (i % 3)),
         'w': 450, 'h': 120
     } for i in range(pages * 3)]
 
     mc_problems = [{
-        'question': f'MC{i}. ' + lorem.sentence().replace('.', '?'),
+        'question': f'MC{i}. ' + lorem_prob.sentence().replace('.', '?'),
         'x': 75, 'y': int(A4[1]) - 150,
         'w': 300, 'h': 75,
         'page': i,
@@ -224,6 +230,7 @@ def create_exam(pages, students, grade, solve):
                                   'exam_name': exam_name,
                                   'pdf': pdf_file}).get_json()['id']
 
+    print('\tDesigning a hard exam.')
     # Create problems
     for problem in problems:
         problem_id = client.post('api/problems', data={
@@ -278,23 +285,26 @@ def create_exam(pages, students, grade, solve):
 
     client.put(f'api/exams/{exam_id}', data={'finalized': True})
 
-    print('\tGenerating PDFs.')
     # Generate PDFs
     client.post(f'api/exams/{exam_id}/generated_pdfs', data={"copies_start": 1, "copies_end": students})
     # Download PDFs
     generated = client.get(f'api/exams/{exam_id}/generated_pdfs',
                            data={"copies_start": 1, "copies_end": students, 'type': 'pdf'})
 
+    student_ids = [s['id'] for s in client.get(f'/api/students').get_json()]
+    random.shuffle(student_ids)
+    student_ids = student_ids[:students]
+
     # Upload submissions
     with NamedTemporaryFile(mode='w+b') as submission_pdf:
         submission_pdf.write(generated.data)
         submission_pdf.seek(0)
 
-        print('\tSolving problems.')
-        solve_problems(submission_pdf, pages, students, problems, mc_problems, solve)
+        print('\tWaiting for students to solve it.')
+        solve_problems(submission_pdf, pages, student_ids, problems, mc_problems, solve)
         submission_pdf.seek(0)
-        print('\tProcessing submissions. This may take a while.')
 
+        print('\tProcessing scans (this may take a while).',)
         handle_pdf_processing(exam_id, submission_pdf)
 
     submissions = client.get(f'api/submissions/{exam_id}').get_json()
@@ -302,9 +312,10 @@ def create_exam(pages, students, grade, solve):
 
     graders = client.get('/api/graders').get_json()
 
-    print('\tGrading problems.')
-    grade_problems(exam_id, graders, problems, submissions, grade)
+    print('\tIt\'s grading time.')
+    grade_problems(exam_id, graders, problems, submissions, student_ids, grade)
 
+    print('\tAll done!')
     # exam_data = client.get('/api/exams/' + str(exam_id)).get_json()
     # print(exam_data)
 

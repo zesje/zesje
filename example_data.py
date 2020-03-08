@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 '''
 Script to generate a complete database of mock data for testing.
 For each exam it generates a pdf with 3 problems per page, where

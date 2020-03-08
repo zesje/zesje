@@ -77,7 +77,7 @@ def get(exam_id):
     # Information about rectangles to draw.
     data = np.array(
         [
-            (-i, (upper - lower) / n_students, lower/n_students, num/maxes.loc[i])
+            (-i, (upper - lower) / n_students, lower/n_students, num/maxes.iloc[i])
             for i, val in enumerate(vals)
             for num, upper, lower in zip(
                 val.index, list(val), [0] + list(val[:-1])

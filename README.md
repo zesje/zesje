@@ -76,7 +76,6 @@ on different platforms:
 | Fedora                        | `dnf install libdmtx`     |
 | openSUSE                      | `zypper install libdmtx0` |
 
-
 ### Running a development server
 Activate your zesje development environment and run
 
@@ -85,6 +84,21 @@ Activate your zesje development environment and run
 to start the development server, which you can access on http://127.0.0.1:8881.
 It will automatically reload whenever you change any source files in `client/`
 or `zesje/`.
+
+### Generate sample data
+
+The script `example_data.py` can be used to create a sample exam that mimics the appearance and behavior of a typical grading process in Zesje. The prototype exam consist on 3 open answer questions per page and 1 multiple choice question per page (excluding the first one). The script partially solves those questions and assigns random feedback to the answered questions while the not answered questions are processed as blank.
+
+The script is called from the command line with the following parameters:
+ - `-d, --delete`  If specified, removes any existing data and creates a new empty database. Otherwise, new exams are added without deleting previous data.
+ - `--exams (int)` the number of exams to add, default is 1.
+ - `--pages (int)` the number of pages per exam, default is 3.
+ - `--students (int)` the number of students per exam, default is 30
+ - `--graders (int)` the number of graders to add, default is 4.
+ - `--solve (float)` between 0 and 1, indicates the percentage of questions to answer (including MCQ), default is 90%.
+ - `--grade (float)` between 0 and 1, indicate the percentage of solved questions to grade (that is, excluding blank answers), default is 60%.
+
+The actual processing of the exam takes a while, specially when the number of students is large.
 
 ### Running the tests
 
@@ -141,7 +155,6 @@ This uses Flask-Migrate to make a new migration script in `migrations/versions` 
 
 ### Building and running the production version
 
-
 ### Code style
 
 #### Python
@@ -176,27 +189,10 @@ The packages can be installed and updated in your environment by `conda` using
 
     conda env update
 
-
 #### Client-side
 Yarn keeps track of all the client-side dependancies in `package.json` when you install new packages with `yarn add [packageName]`. Yarn will install and update your packages if your run
 
     yarn install
-
-
-### Generate sample data
-
-The script `example_data.py` can be used to create a sample exam that mimics the appearance and behavior of a typical grading process in Zesje. The prototype exam consist on 3 open answer questions per page and 1 multiple choice question per page (excluding the first one). The script partially solves those questions and assigns random feedback to the answered questions while the not answered questions are processed as blank.
-
-The script is called from the command line with the following parameters:
- - `-d, --delete`  If specified, removes any existing data and creates a new empty database. Otherwise, new exams are added without deleting previous data.
- - `--exams (int)` the number of exams to add, default is 1.
- - `--pages (int)` the number of pages per exam, default is 3.
- - `--students (int)` the number of students per exam, default is 30
- - `--graders (int)` the number of graders to add, default is 4.
- - `--solve (float)` between 0 and 1, indicates the percentage of questions to answer (including MCQ), default is 90%.
- - `--grade (float)` between 0 and 1, indicate the percentage of solved questions to grade (that is, excluding blank answers), default is 60%.
-
-The actual processing of the exam takes a while, specially when the number of students is large.
 
 ## License
 Zesje is licensed under AGPLv3, which can be found in `LICENSE`. An summary of this license with it's permissions, conditions and limitations can be found [here](https://choosealicense.com/licenses/agpl-3.0/).

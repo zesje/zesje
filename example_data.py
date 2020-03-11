@@ -49,7 +49,7 @@ sys.path.append(os.getcwd())
 
 
 if 'ZESJE_SETTINGS' not in os.environ:
-    os.environ['ZESJE_SETTINGS'] = '../zesje.dev.cfg'
+    os.environ['ZESJE_SETTINGS'] = '../zesje_dev_cfg.py'
 
 
 lorem_name = TextLorem(srange=(1, 3))
@@ -124,7 +124,7 @@ def handle_pdf_processing(exam_id, pdf):
         outfile.write(pdf.read())
         pdf.seek(0)
 
-    _process_pdf(scan_id=scan.id, app_config=app.config)
+    _process_pdf(scan_id=scan.id)
 
     return {
         'id': scan.id,

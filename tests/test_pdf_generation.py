@@ -69,11 +69,11 @@ def assert_pdf_and_images_are_equal(pdf_filename, images,
     (A4, 'a4'),
     ((200 * mm, 200 * mm), 'square')
 ], ids=['a4', 'square'])
-def test_add_corner_markers_and_bottom_bar(datadir, tmpdir, pagesize, name):
+def test_add_corner_markers(datadir, tmpdir, pagesize, name, config_app):
     pdf_filename = os.path.join(tmpdir, 'file.pdf')
 
     canv = RLCanvas(pdf_filename, pagesize=pagesize)
-    pdf_generation._add_corner_markers_and_bottom_bar(canv, pagesize)
+    pdf_generation._add_corner_markers(canv, pagesize)
     canv.save()
 
     image_filename = os.path.join(datadir, 'cornermarkers', f'{name}.png')
@@ -81,7 +81,7 @@ def test_add_corner_markers_and_bottom_bar(datadir, tmpdir, pagesize, name):
                                     [PIL.Image.open(image_filename)])
 
 
-def test_generate_id_grid(datadir, tmpdir):
+def test_generate_id_grid(datadir, tmpdir, config_app):
     pdf_filename = os.path.join(tmpdir, 'file.pdf')
 
     canv = RLCanvas(pdf_filename, pagesize=A4)
@@ -94,7 +94,7 @@ def test_generate_id_grid(datadir, tmpdir):
                                     ssim_threshold=0.95)
 
 
-def test_generate_pdfs_num_files(datadir, tmpdir):
+def test_generate_pdfs_num_files(datadir, tmpdir, config_app):
     blank_pdf = os.path.join(datadir, 'blank-a4-2pages.pdf')
 
     num_copies = 3
@@ -108,7 +108,7 @@ def test_generate_pdfs_num_files(datadir, tmpdir):
 
 @pytest.mark.parametrize('checkboxes', [[(300, 100, 1, 'c'), (500, 50, 0, 'd'), (500, 500, 0, 'a'), (250, 200, 1, 'b')],
                          [], [(250, 100, 0, None)]])
-def test_generate_checkboxes(datadir, tmpdir, checkboxes):
+def test_generate_checkboxes(datadir, tmpdir, checkboxes, config_app):
     blank_pdf = os.path.join(datadir, 'blank-a4-2pages.pdf')
 
     num_copies = 1

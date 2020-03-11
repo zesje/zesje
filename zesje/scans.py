@@ -8,6 +8,7 @@ import signal
 import cv2
 import numpy as np
 from scipy import spatial
+from flask import current_app
 
 from PIL import Image
 from pikepdf import Pdf
@@ -21,8 +22,6 @@ from .pregrader import grade_problem
 from .image_extraction import extract_images
 from .blanks import reference_image
 from . import celery
-
-from .pdf_generation import MARKER_FORMAT, PAGE_FORMATS
 
 ExtractedBarcode = namedtuple('ExtractedBarcode', ['token', 'copy', 'page'])
 
@@ -42,9 +41,6 @@ def process_pdf(scan_id):
     def raise_exit(signo, frame):
         raise SystemExit('PDF processing was killed by an external signal')
 
-    from flask import current_app
-    app_config = current_app.config
-
     # We want to trigger an exit from within Python when a signal is received.
     # The default behaviour for SIGTERM is to terminate the process without
     # calling 'atexit' handlers, and SIGINT raises keyboard interrupt.
@@ -52,7 +48,7 @@ def process_pdf(scan_id):
         signal.signal(signal_type, raise_exit)
 
     try:
-        _process_pdf(scan_id, app_config)
+        _process_pdf(scan_id)
     except BaseException as error:
         # TODO: When #182 is implemented, properly separate user-facing
         #       messages (written to DB) from developer-facing messages,
@@ -60,8 +56,8 @@ def process_pdf(scan_id):
         write_pdf_status(scan_id, 'error', "Unexpected error: " + str(error))
 
 
-def _process_pdf(scan_id, app_config):
-    data_directory = app_config.get('DATA_DIRECTORY', 'data')
+def _process_pdf(scan_id):
+    data_directory = current_app.config['DATA_DIRECTORY']
 
     report_error = functools.partial(write_pdf_status, scan_id, 'error')
     report_progress = functools.partial(write_pdf_status, scan_id, 'processing')
@@ -131,23 +127,26 @@ def exam_metadata(exam_id):
         )
 
 
-def exam_student_id_widget(exam_id, app_config=None):
+def exam_student_id_widget(exam_id):
     """
     Get the student id widget and an array of it's coordinates for an exam.
     :param exam_id: the id of the exam to get the widget for
-    :param app_config: optionally the flask appconfig, which contains widget height and width.
     :return: the student id widget, and an array of coordinates [ymin, ymax, xmin, xmax]
     """
-    if app_config is None:
-        app_config = {}
+
+    fontsize = current_app.config['ID_GRID_FONT_SIZE']
+    margin = current_app.config['ID_GRID_MARGIN']
+    digits = current_app.config['ID_GRID_DIGITS']
+    id_grid_height = 12 * margin + 11 * fontsize
+    id_grid_width = 5 * margin + 16 * fontsize + digits * (fontsize + margin)
 
     student_id_widget = ExamWidget.query.filter(ExamWidget.exam_id == exam_id,
                                                 ExamWidget.name == "student_id_widget").one()
     student_id_widget_coords = [
         student_id_widget.y,  # top
-        student_id_widget.y + app_config.get('ID_GRID_HEIGHT', 181),  # bottom
+        student_id_widget.y + id_grid_height,  # bottom
         student_id_widget.x,  # left
-        student_id_widget.x + app_config.get('ID_GRID_WIDTH', 313),  # right
+        student_id_widget.x + id_grid_width,  # right
     ]
     return student_id_widget, student_id_widget_coords
 
@@ -368,7 +367,7 @@ def decode_barcode(image, exam_config):
     raise RuntimeError("No barcode found.")
 
 
-def guess_student(exam_token, copy_number, app_config=None, force=False):
+def guess_student(exam_token, copy_number, force=False):
     """Update a submission with a guessed student number.
 
     Parameters
@@ -377,8 +376,6 @@ def guess_student(exam_token, copy_number, app_config=None, force=False):
         Unique exam identifier (see database schema).
     copy_number : int
         The copy number.
-    app_config : Flask config
-        Optional.
     force : bool
         Whether to update the student number of a submission with a validated
         signature, default False.
@@ -388,8 +385,6 @@ def guess_student(exam_token, copy_number, app_config=None, force=False):
     description : string
         Description of the outcome.
     """
-    if app_config is None:
-        app_config = {}
 
     # TODO: Implement this
     if force:
@@ -403,7 +398,7 @@ def guess_student(exam_token, copy_number, app_config=None, force=False):
     image_path = Page.query.filter(Page.copy_id == copy.id,
                                    Page.number == 0).one().path
 
-    student_id_widget, student_id_widget_coords = exam_student_id_widget(exam.id, app_config)
+    student_id_widget, student_id_widget_coords = exam_student_id_widget(exam.id)
 
     if copy.signature_validated and not force:
         return "Signature already validated"
@@ -542,8 +537,8 @@ def find_corner_marker_keypoints(image_array, corner_sizes=[0.125, 0.25, 0.5]):
     RuntimeError if no valid set of keypoints are found
     """
     h, w, *_ = image_array.shape
-    marker_length = .8 / 2.54 * guess_dpi(image_array)  # 8 mm in inches × dpi
-    marker_width = .1 / 2.54 * guess_dpi(image_array)  # should get exact width
+    marker_length = current_app.config['MARKER_LINE_LENGTH'] * guess_dpi(image_array) / 72
+    marker_width = current_app.config['MARKER_LINE_WIDTH'] * guess_dpi(image_array) / 72
 
     best_points = []
 
@@ -558,7 +553,8 @@ def find_corner_marker_keypoints(image_array, corner_sizes=[0.125, 0.25, 0.5]):
             ret, labels = cv2.connectedComponents(inv_im)
             for label in range(1, ret):
                 new_img = (labels == label)
-                if np.sum(new_img) > marker_length * marker_width * 2:
+                # multiplier determined to work well empirically
+                if np.sum(new_img) > marker_length * marker_width * 2.83:
                     continue  # The blob is too large
                 lines = cv2.HoughLines(new_img.astype(np.uint8), 1, np.pi/180, int(marker_length * .9))
                 if lines is None:
@@ -630,7 +626,7 @@ def check_corner_keypoints(image_array, keypoints, minimum=3):
         raise RuntimeError("Found multiple corner markers in the same corner")
 
 
-def realign_image(image_array, page_shape, keypoints=None, page_format='A4'):
+def realign_image(image_array, page_shape, keypoints=None):
     """
     Transform the image so that the keypoints match the reference.
 
@@ -659,7 +655,7 @@ def realign_image(image_array, page_shape, keypoints=None, page_format='A4'):
 
     # generate the coordinates where the markers should be
     dpi = guess_dpi(image_array)
-    reference_keypoints = original_corner_markers(page_format, dpi)
+    reference_keypoints = original_corner_markers(dpi)
 
     # create a matrix with the distances between each keypoint and match the keypoint sets
     dists = spatial.distance.cdist(keypoints, reference_keypoints)
@@ -674,7 +670,7 @@ def realign_image(image_array, page_shape, keypoints=None, page_format='A4'):
                         [0, 1, y_shift]])
     else:
         # Let opencv estimate the transformation matrix
-        M = cv2.estimateAffinePartial2D(keypoints, adjusted_markers)[0]
+        M = cv2.estimateAffinePartial2D(keypoints, adjusted_markers, method=cv2.LMEDS)[0]
 
     rows, cols = page_shape
 
@@ -686,7 +682,7 @@ def realign_image(image_array, page_shape, keypoints=None, page_format='A4'):
 
 
 # Based on https://stackoverflow.com/a/49406095
-def resize_image(image_array, page_shape, page_format="A4"):
+def resize_image(image_array, page_shape):
     """
     Resize the image such that the dimensions match the reference.
 
@@ -751,11 +747,14 @@ def resize_image(image_array, page_shape, page_format="A4"):
     return resized_img
 
 
-def original_corner_markers(format, dpi):
-    left_x = MARKER_FORMAT["margin"]/72 * dpi
-    top_y = MARKER_FORMAT["margin"]/72 * dpi
-    right_x = (PAGE_FORMATS[format][0] - MARKER_FORMAT["margin"])/72 * dpi
-    bottom_y = (PAGE_FORMATS[format][1] - MARKER_FORMAT["margin"])/72 * dpi
+def original_corner_markers(dpi):
+    page_size = current_app.config['PAGE_FORMATS'][current_app.config['PAGE_FORMAT']]
+
+    margin = current_app.config['MARKER_MARGIN']
+    left_x = margin/72 * dpi
+    top_y = margin/72 * dpi
+    right_x = (page_size[0] - margin) / 72 * dpi
+    bottom_y = (page_size[1] - margin) / 72 * dpi
 
     return np.round([(left_x, top_y),
                      (right_x, top_y),

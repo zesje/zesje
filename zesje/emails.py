@@ -17,7 +17,6 @@ from PIL import Image
 
 from .database import Submission
 from . import statistics
-from .api.exams import PAGE_FORMATS
 from .images import guess_dpi
 from .api.images import _grey_out_student_widget
 from .scans import exam_student_id_widget
@@ -42,8 +41,7 @@ def solution_pdf(exam_id, student_id, anonymous=False):
                                   Submission.student_id == student_id).one()
     pages = sorted((page for copy in sub.copies for page in copy.pages), key=(lambda p: (p.copy.number, p.number)))
 
-    page_format = current_app.config.get('PAGE_FORMAT', 'A4')  # TODO Remove default value
-    page_size = PAGE_FORMATS[page_format]
+    page_size = current_app.config['PAGE_FORMATS'][current_app.config['PAGE_FORMAT']]
 
     result = BytesIO()
     pdf = canvas.Canvas(result, pagesize=page_size)
@@ -80,15 +78,19 @@ def render(exam_id, student_id, template):
     return template.render(student=student, results=results)
 
 
-def build_solution_attachment(exam_id, student_id):
+def build_solution_attachment(exam_id, student_id, file_name=None):
     solution = solution_pdf(exam_id, student_id)
     maintype, subtype = 'application', 'pdf'
     pdf = MIMEBase(maintype, subtype)
     pdf.set_payload(solution.read())
     encoders.encode_base64(pdf)
+
+    if file_name is None:
+        # construct the default filename is non is provided
+        file_name = f"{student_id}.pdf"
+
     # Set the filename parameter
-    pdf.add_header('Content-Disposition', 'attachment',
-                   filename=f"{student_id}.pdf")
+    pdf.add_header('Content-Disposition', 'attachment', filename=file_name)
     return pdf
 
 

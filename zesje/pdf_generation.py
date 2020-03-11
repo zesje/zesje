@@ -3,32 +3,10 @@ from tempfile import NamedTemporaryFile
 import PIL
 import shutil
 import os
+from flask import current_app
 from pdfrw import PdfReader, PdfWriter, PageMerge
 from pylibdmtx.pylibdmtx import encode
-from reportlab.lib.units import mm
 from reportlab.pdfgen import canvas
-
-
-output_pdf_filename_format = '{0:05d}.pdf'
-
-# the size of the markers in points
-MARKER_FORMAT = {
-    "margin": 10 * mm,
-    "marker_line_length": 8 * mm,
-    "marker_line_width": 1 * mm,
-    "bar_length": 40 * mm
-}
-
-# the parameters of drawing checkboxes
-CHECKBOX_FORMAT = {
-    "margin": 5,
-    "font_size": 11,
-    "box_size": 9
-}
-PAGE_FORMATS = {
-    "A4": (595.276, 841.89),
-    "US letter": (612, 792),
-}
 
 
 def generate_pdfs(exam_pdf_file, copy_nums, output_paths, exam_token=None, id_grid_x=0,
@@ -162,15 +140,15 @@ def generate_id_grid(canv, x, y):
     x : int
         The y coordinate where the grid should be drawn
     """
+    fontsize = current_app.config['ID_GRID_FONT_SIZE']  # Size of font
+    margin = current_app.config['ID_GRID_MARGIN']  # Margin between elements and sides
+    digits = current_app.config['ID_GRID_DIGITS']  # Max amount of digits you want for student numbers
 
-    fontsize = 11  # Size of font
-    margin = 5  # Margin between elements and sides
-    markboxsize = fontsize - 2  # Size of student number boxes
-    textboxwidth = fontsize * 15  # Width of textbox
-    textboxheight = markboxsize * 2 + margin + 2  # Height of textbox
-    digits = 7  # Max amount of digits you want for student numbers
+    mark_box_size = fontsize - 2  # Size of student number boxes
+    text_box_width = fontsize * 15  # Width of textbox
+    text_box_height = mark_box_size * 2 + margin + 2  # Height of textbox
 
-    canv.setFont('Helvetica', fontsize)
+    canv.setFont(current_app.config['ID_GRID_FONT'], fontsize)
 
     # Draw numbers and boxes for student number
     canv.drawString(x + margin, y - fontsize - margin, "Student number :")
@@ -181,7 +159,7 @@ def generate_id_grid(canv, x, y):
         for j in range(digits):
             canv.rect(x + (j + 1) * (fontsize + margin),
                       y - (i + 2) * (fontsize + margin) - 1,
-                      markboxsize, markboxsize)
+                      mark_box_size, mark_box_size)
 
     # Draw first name text and box
     canv.drawString(x + (digits + 1) * (fontsize + margin) + 3 * margin - 1,
@@ -189,7 +167,7 @@ def generate_id_grid(canv, x, y):
 
     canv.rect(x + (digits + 1) * (fontsize + margin) + 3 * margin,
               y - fontsize * 3 - 3 * margin - 1,
-              textboxwidth, textboxheight)
+              text_box_width, text_box_height)
 
     # Draw last name text and box
     canv.drawString(x + (digits + 1) * (fontsize + margin) + 3 * margin - 1,
@@ -197,7 +175,7 @@ def generate_id_grid(canv, x, y):
 
     canv.rect(x + (digits + 1) * (fontsize + margin) + 3 * margin,
               y - fontsize * 6 - 6 * margin - 1,
-              textboxwidth, textboxheight)
+              text_box_width, text_box_height)
 
 
 def add_checkbox(canvas, x, y, label):
@@ -216,17 +194,19 @@ def add_checkbox(canvas, x, y, label):
         A string representing the label that is drawn on top of the box, will only take the first character
 
     """
+    box_size = current_app.config['CHECKBOX_SIZE']
+    margin = current_app.config['CHECKBOX_MARGIN']
     x_label = x + 1  # location of the label
-    y_label = y + CHECKBOX_FORMAT["margin"]  # remove fontsize from the y label since we draw from the bottom left up
-    box_y = y - CHECKBOX_FORMAT["box_size"]  # remove the markboxsize because the y is the coord of the top
+    y_label = y + margin  # remove fontsize from the y label since we draw from the bottom left up
+    box_y = y - box_size  # remove the markboxsize because the y is the coord of the top
     # and reportlab prints from the bottom
 
     # check that there is a label to print
     if (label and not (len(label) == 0)):
-        canvas.setFont('Helvetica', CHECKBOX_FORMAT["font_size"])
+        canvas.setFont(current_app.config['CHECKBOX_FONT'], current_app.config['CHECKBOX_FONT_SIZE'])
         canvas.drawString(x_label, y_label, label[0])
 
-    canvas.rect(x, box_y, CHECKBOX_FORMAT["box_size"], CHECKBOX_FORMAT["box_size"])
+    canvas.rect(x, box_y, box_size, box_size)
 
 
 def generate_datamatrix(exam_token, page_num, copy_num):
@@ -307,7 +287,7 @@ def _generate_generic_overlay(canv, pagesize, num_pages, id_grid_x, id_grid_y, c
         max_index = 0
 
     for page_num in range(num_pages):
-        _add_corner_markers_and_bottom_bar(canv, pagesize)
+        _add_corner_markers(canv, pagesize)
 
         # call generate for all checkboxes that belong to the current page
         while index < max_index and cb_data[index][2] <= page_num:
@@ -350,8 +330,9 @@ def _generate_copy_overlay(canv, pagesize, exam_token, copy_num, num_pages, data
         The y coordinate where the DataMatrix codes should be placed
     """
     # Font settings for the copy number (printed under the datamatrix)
-    fontsize = 12
-    canv.setFont('Helvetica', fontsize)
+    fontsize = current_app.config['COPY_NUMBER_FONTSIZE']
+
+    canv.setFont(current_app.config['COPY_NUMBER_FONT'], fontsize)
 
     for page_num in range(num_pages):
         datamatrix = generate_datamatrix(exam_token, page_num, copy_num)
@@ -368,9 +349,9 @@ def _generate_copy_overlay(canv, pagesize, exam_token, copy_num, num_pages, data
         canv.showPage()
 
 
-def _add_corner_markers_and_bottom_bar(canv, pagesize):
+def _add_corner_markers(canv, pagesize):
     """
-    Adds corner markers and a bottom bar to the given canvas.
+    Adds corner markers to the given canvas.
 
     Parameters
     ----------
@@ -382,19 +363,16 @@ def _add_corner_markers_and_bottom_bar(canv, pagesize):
     """
     page_width = pagesize[0]
     page_height = pagesize[1]
-    marker_line_length = MARKER_FORMAT["marker_line_length"]
-    bar_length = MARKER_FORMAT["bar_length"]
+    marker_line_length = current_app.config['MARKER_LINE_LENGTH']
 
     # Calculate coordinates offset from page edge
-    left = MARKER_FORMAT["margin"]
-    bottom = MARKER_FORMAT["margin"]
-    right = page_width - MARKER_FORMAT["margin"]
-    top = page_height - MARKER_FORMAT["margin"]
+    margin = current_app.config['MARKER_MARGIN']
+    left = margin
+    bottom = margin
+    right = page_width - margin
+    top = page_height - margin
 
-    # Calculate start and end coordinates of bottom bar
-    bar_start = page_width / 2 - bar_length / 2
-    bar_end = page_width / 2 + bar_length / 2
-
+    canv.setLineWidth(current_app.config['MARKER_LINE_WIDTH'])
     canv.lines([
         # Bottom left corner marker
         (left, bottom, left + marker_line_length, bottom),
@@ -407,9 +385,7 @@ def _add_corner_markers_and_bottom_bar(canv, pagesize):
         (right, top, right, top - marker_line_length),
         # Top left corner marker
         (left, top, left + marker_line_length, top),
-        (left, top, left, top - marker_line_length),
-        # Bottom bar
-        (bar_start, bottom, bar_end, bottom)
+        (left, top, left, top - marker_line_length)
     ])
 
 

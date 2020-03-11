@@ -2,9 +2,10 @@ from io import BytesIO
 
 from flask import abort, send_file, Response, current_app
 import zipstream
+import json
 
 from ..database import Exam, Submission
-from ..statistics import full_exam_data
+from ..statistics import full_exam_data, grader_data
 from ..emails import solution_pdf
 
 
@@ -50,6 +51,8 @@ def exam(file_format, exam_id):
         abort(404)
 
     serialized = BytesIO()
+
+    data.index.name = 'Student ID'
 
     if file_format == 'xlsx':
         data = data.iloc[:, data.columns.get_level_values(1) == 'total']
@@ -135,3 +138,43 @@ def exam_pdf(exam_id):
     response = Response(generator, mimetype='application/zip')
     response.headers['Content-Disposition'] = f'attachment; filename=exam{exam_id}.zip'
     return response
+
+
+def grader_statistics(exam_id):
+    """Export grader data in a txt file.
+
+    Parameters
+    ----------
+    exam_id : int
+
+    Returns
+    -------
+    response : flask Response
+        response containing grader statistics as JSON.
+    """
+
+    try:
+        data = grader_data(exam_id)
+        data_str = json.dumps(data)
+    except Exception:
+        abort(404, 'Failed to load grader data.')
+
+    return Response(
+        response=data_str,
+        status=200,
+        mimetype='application/json'
+    )
+
+    """
+    serialized = BytesIO()
+    serialized.write(data_str.encode('utf-8'))
+    serialized.seek(0)
+
+    return send_file(
+        serialized,
+        as_attachment=True,
+        attachment_filename=f'graders_exam{exam_id}.txt',
+        mimetype="text/plain",
+        cache_timeout=0,
+    )
+    """

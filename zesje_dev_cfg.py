@@ -1,8 +1,5 @@
+# Folder to save exam scans and database
 DATA_DIRECTORY = 'data-dev'
-DEBUG = 1
-
-# Page size supported by the printers, one of 'A4' or "US letter"
-PAGE_FORMAT = 'A4'
 
 # Email settings
 USE_SSL = False
@@ -11,3 +8,6 @@ SMTP_PORT = '25'
 FROM_ADDRESS = 'noreply@tudelft.nl'
 SMTP_USERNAME = ''
 SMTP_PASSWORD = ''
+
+# Enable debug mode
+DEBUG = 1

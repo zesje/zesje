@@ -36,6 +36,10 @@ dependencies:
         - Pillow  # also scan processing
         - zipstream-new
 
+        # Sandbox data generation
+        - lorem # For random text
+        - names # For random names
+
         # Scan processing
         - opencv-python
         - pikepdf

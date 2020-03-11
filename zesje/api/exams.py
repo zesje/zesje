@@ -5,7 +5,7 @@ import hashlib
 from io import BytesIO
 from tempfile import TemporaryFile
 
-from flask import current_app as app, send_file
+from flask import current_app, send_file
 from flask_restful import Resource, reqparse
 from flask_restful.inputs import boolean
 from werkzeug.datastructures import FileStorage
@@ -13,16 +13,17 @@ from sqlalchemy.orm import selectinload
 
 from zesje.api._helpers import _shuffle
 from zesje.api.problems import problem_to_data
-from ..pdf_generation import generate_pdfs, output_pdf_filename_format, join_pdfs
-from ..pdf_generation import page_is_size, save_with_even_pages, PAGE_FORMATS
+from ..pdf_generation import generate_pdfs, join_pdfs
+from ..pdf_generation import page_is_size, save_with_even_pages
 from ..pdf_generation import write_finalized_exam
-from ..database import db, Exam, ExamWidget, Submission, token_length
+from ..database import db, Exam, ExamWidget, Submission, FeedbackOption, token_length
 from .submissions import sub_to_data
+from ..pregrader import BLANK_FEEDBACK_NAME
 
 
 def _get_exam_dir(exam_id):
     return os.path.join(
-        app.config['DATA_DIRECTORY'],
+        current_app.config['DATA_DIRECTORY'],
         f'{exam_id}_data',
     )
 
@@ -52,6 +53,16 @@ def checkboxes(exam):
         cb_data += [(cb.x, cb.y, page, cb.label) for cb in problem.mc_options]
 
     return cb_data
+
+
+def add_blank_feedback(problems):
+    """
+    Add the blank feedback option to each problem.
+    """
+    for p in problems:
+        db.session.add(FeedbackOption(problem_id=p.id, text=BLANK_FEEDBACK_NAME, score=0))
+
+    db.session.commit()
 
 
 def generate_exam_token(exam_id, exam_name, exam_pdf):
@@ -235,9 +246,9 @@ class Exams(Resource):
         exam_name = args['exam_name']
         pdf_data = args['pdf']
 
-        format = app.config.get('PAGE_FORMAT', 'A4')
+        format = current_app.config['PAGE_FORMAT']
 
-        if not page_is_size(pdf_data, PAGE_FORMATS[format], tolerance=0.01):
+        if not page_is_size(pdf_data, current_app.config['PAGE_FORMATS'][format], tolerance=0.01):
             return (
                 dict(status=400,
                      message=f'PDF page size is not {format}.'),
@@ -295,6 +306,8 @@ class Exams(Resource):
         if args['finalized'] is None:
             pass
         elif args['finalized']:
+            add_blank_feedback(exam.problems)
+
             exam_dir, student_id_widget, _, exam_path, cb_data = _exam_generate_data(exam)
             write_finalized_exam(exam_dir, exam_path, student_id_widget.x, student_id_widget.y, cb_data)
 
@@ -342,7 +355,7 @@ class ExamGeneratedPdfs(Resource):
         pdf_paths = [
             os.path.join(
                 generated_pdfs_dir,
-                output_pdf_filename_format.format(copy_num))
+                current_app.config['OUTPUT_PDF_FILENAME_FORMAT'].format(copy_num))
             for copy_num
             in copy_nums
         ]

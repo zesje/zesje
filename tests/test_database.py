@@ -107,8 +107,6 @@ def test_cascades_copy(empty_app, exam, copy, page, submission):
     - Copy -> Page
     - Copy -> Submission (only `save-update`, not `delete`)
     """
-    empty_app.app_context().push()
-
     exam.submissions = [submission]
     copy.submission = submission
     copy.pages = [page]

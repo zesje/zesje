@@ -33,6 +33,7 @@ import argparse
 
 import lorem
 import names
+import flask_migrate
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
 from pdfrw import PdfReader, PdfWriter, PageMerge
@@ -64,9 +65,7 @@ def init_app(delete):
     os.makedirs(app.config['SCAN_DIRECTORY'], exist_ok=True)
 
     with app.app_context():
-        if delete:
-            db.drop_all()
-        db.create_all()
+        flask_migrate.upgrade(directory='migrations')
 
     return app
 

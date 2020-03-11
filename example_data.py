@@ -64,8 +64,11 @@ def init_app(delete):
     os.makedirs(app.config['DATA_DIRECTORY'], exist_ok=True)
     os.makedirs(app.config['SCAN_DIRECTORY'], exist_ok=True)
 
-    with app.app_context():
-        flask_migrate.upgrade(directory='migrations')
+    # Only create the database from migrations if it was deleted.
+    # Otherwise the user should migrate manually.
+    if delete:
+        with app.app_context():
+            flask_migrate.upgrade(directory='migrations')
 
     return app
 

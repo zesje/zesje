@@ -35,8 +35,10 @@ import lorem
 import names
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
+from reportlab.pdfbase import pdfmetrics
 from pdfrw import PdfReader, PdfWriter, PageMerge
 from tempfile import NamedTemporaryFile
+from pathlib import Path
 
 from lorem.text import TextLorem
 
@@ -143,6 +145,7 @@ def generate_solution(pdf, student_id, problems, mc_problems, solve):
 
     for p in range(pages):
         pdf.setFillColorRGB(0, 0, 1)
+        pdf.setFont('Ballpoint', 16)
 
         if p > 0 and random.random() < solve:
             o = random.choice(mc_problems[p - 1]['mc_options'])
@@ -151,7 +154,8 @@ def generate_solution(pdf, student_id, problems, mc_problems, solve):
         for i in range(3):
             prob = problems[3 * p + i]
             if random.random() < solve:
-                pdf.drawString(prob['x'] + 50, prob['y'] - 50, lorem.sentence())
+                for i in range(random.randint(1, 3)):
+                    pdf.drawString(prob['x'] + 20, prob['y'] - 30 - (20 * i), lorem.sentence())
 
         pdf.showPage()
 
@@ -220,6 +224,8 @@ def create_exam(pages, students, grade, solve):
         'page': i,
         'mc_options': []
     } for i in range(1, pages)]
+
+    register_fonts()
 
     with NamedTemporaryFile() as pdf_file:
         generate_exam_pdf(pdf_file, exam_name, pages, problems, mc_problems)
@@ -317,6 +323,25 @@ def create_exam(pages, students, grade, solve):
     print('\tAll done!')
     # exam_data = client.get('/api/exams/' + str(exam_id)).get_json()
     # print(exam_data)
+
+
+def register_fonts():
+    # Font name : file name
+    # File name should be the same as internal font name
+    fonts = {
+        'Ballpoint': 'Ballpointprint'
+    }
+
+    font_dir = Path.cwd() / 'tests' / 'data' / 'fonts'
+    for font_name, font_file in fonts.items():
+        font_path_afm = font_dir / (font_file + '.afm')
+        font_path_pfb = font_dir / (font_file + '.pfb')
+
+        face = pdfmetrics.EmbeddedType1Face(font_path_afm, font_path_pfb)
+        pdfmetrics.registerTypeFace(face)
+
+        font = pdfmetrics.Font(font_name, font_file, 'WinAnsiEncoding')
+        pdfmetrics.registerFont(font)
 
 
 if __name__ == '__main__':

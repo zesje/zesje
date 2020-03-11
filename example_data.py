@@ -45,9 +45,6 @@ from zesje.scans import _process_pdf
 from zesje.factory import create_app
 
 
-sys.path.append(os.getcwd())
-
-
 if 'ZESJE_SETTINGS' not in os.environ:
     os.environ['ZESJE_SETTINGS'] = '../zesje_dev_cfg.py'
 

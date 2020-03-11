@@ -91,7 +91,7 @@ class Submission(db.Model):
     exam_id = Column(Integer, ForeignKey('exam.id'), nullable=False)  # backref exam
     solutions = db.relationship('Solution', backref='submission', cascade='all',
                                 order_by='Solution.problem_id', lazy=True)
-    copies = db.relationship('Copy', backref='submission', lazy=True)
+    copies = db.relationship('Copy', backref='submission', cascade='all', lazy=True)
     student_id = Column(Integer, ForeignKey('student.id'), nullable=True)  # backref student
 
     # TODO Unique constraint (exam_id, student_id)
@@ -103,7 +103,7 @@ class Copy(db.Model):
     id = Column(Integer, primary_key=True, autoincrement=True)
     number = Column(Integer, nullable=False)
     submission_id = Column(Integer, ForeignKey('submission.id'), nullable=False)  # backref submission
-    pages = db.relationship('Page', backref='copy', lazy=True)
+    pages = db.relationship('Page', backref='copy', cascade='all', lazy=True)
     signature_validated = Column(Boolean, default=False, server_default='f', nullable=False)
 
     @hybrid_property

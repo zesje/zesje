@@ -1,6 +1,6 @@
 import pytest
 
-from zesje.database import db, Exam, Problem, ProblemWidget, Solution
+from zesje.database import db, Exam, Problem, ProblemWidget, Solution, Copy
 from zesje.database import Submission, Scan, Page, ExamWidget, FeedbackOption, MultipleChoiceOption
 
 
@@ -68,12 +68,12 @@ def test_cascades_problem(empty_app, exam, problem, submission, solution, proble
     assert feedback_option not in db.session
 
 
-def test_cascades_submission(empty_app, exam, problem, submission, solution, page):
+def test_cascades_submission(empty_app, exam, problem, submission, solution, copy):
     """Tests the cascades defined for a submission
 
     Tests the cascades for the following relations:
     - Submission -> Solution
-    - Submission -> Page
+    - Submission -> Copy
     """
     empty_app.app_context().push()
 
@@ -82,18 +82,44 @@ def test_cascades_submission(empty_app, exam, problem, submission, solution, pag
 
     solution.problem = problem
     solution.submission = submission
-    page.submission = submission
+    copy.submission = submission
 
     db.session.add_all([exam, problem, submission])
     db.session.commit()
 
     assert solution in db.session
-    assert page in db.session
+    assert copy in db.session
 
     db.session.delete(submission)
     db.session.commit()
 
     assert solution not in db.session
+    assert copy not in db.session
+
+
+def test_cascades_copy(empty_app, exam, copy, page, submission):
+    """Tests the cascades defined for a submission
+
+    Tests the cascades for the following relations:
+    - Copy -> Page
+    - Copy -> Submission (only `save-update`, not `delete`)
+    """
+    empty_app.app_context().push()
+
+    exam.submissions = [submission]
+    copy.submission = submission
+    copy.pages = [page]
+
+    db.session.add_all([exam, copy])
+    db.session.commit()
+
+    assert submission in db.session
+    assert page in db.session
+
+    db.session.delete(copy)
+    db.session.commit()
+
+    assert submission in db.session  # It should NOT delete the submission
     assert page not in db.session
 
 
@@ -154,7 +180,12 @@ def exam_widget():
 
 @pytest.fixture
 def submission():
-    return Submission(copy_number=0)
+    return Submission()
+
+
+@pytest.fixture
+def copy():
+    return Copy(number=0)
 
 
 @pytest.fixture

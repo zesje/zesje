@@ -54,6 +54,7 @@ class Grade extends React.Component {
     this.props.bindShortcut(['shift+left', 'shift+h'], this.prev)
     this.props.bindShortcut(['shift+right', 'shift+l'], this.next)
     this.props.bindShortcut(['a'], this.approve)
+    this.props.bindShortcut(['s'], this.setAside)
     this.props.bindShortcut(['left', 'h'], (event) => {
       event.preventDefault()
       this.prevUngraded()
@@ -243,6 +244,22 @@ class Grade extends React.Component {
   }
 
   /**
+   * Remove grader so that the solution appears as ungraded for future revision.
+   */
+   setAside = () => {
+     const submission = this.state.submission
+     const problem = this.state.problem
+
+     api.put(`solution/approve/${this.props.examID}/${submission.id}/${problem.id}`, {
+       graderID: null
+     }).catch(resp => {
+       resp.json().then(body => Notification.error('Could not set aside feedback: ' + body.message))
+     }).then(result => {
+       this.setSubmission(submission.id)
+     })
+   }
+
+  /**
    * Toggles full page view.
    */
   toggleFullPage = () => {
@@ -327,7 +344,9 @@ class Grade extends React.Component {
                       showTooltips={this.state.showTooltips} grading
                       setSubmission={this.setSubmission}
                       editFeedback={this.editFeedback}
-                      toggleOption={this.toggleFeedbackOption} />
+                      toggleOption={this.toggleFeedbackOption}
+                      approve={this.approve}
+                      setAside={this.setAside} />
                   }
                 </nav>
               </div>
@@ -363,7 +382,7 @@ class Grade extends React.Component {
                   <div className='level-left'>
                     <div className='level-item'>
                       <div className={(this.state.showTooltips ? ' tooltip is-tooltip-active is-tooltip-top' : '')}
-                        data-tooltip='approve feedback: a' >
+                        data-tooltip='approve feedback: a, set aside: s' >
                         {solution.graded_by
                           ? <div>Graded by: {solution.graded_by.name} <i>({gradedTime.toLocaleString()})</i></div>
                           : <div>Ungraded</div>

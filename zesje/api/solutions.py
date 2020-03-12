@@ -109,7 +109,6 @@ class Solutions(Resource):
             state: boolean
         """
         args = self.put_parser.parse_args()
-
         grader = Grader.query.get(args.graderID)
         if grader is None:
             return dict(status=404, message='Grader does not exist.'), 404
@@ -168,7 +167,7 @@ class Approve(Resource):
         """
         args = self.put_parser.parse_args()
 
-        grader = Grader.query.get(args.graderID)
+        grader = Grader.query.get(args.graderID) if args.graderID is not None else None
 
         sub = Submission.query.filter(Submission.exam_id == exam_id,
                                       Submission.copy_number == submission_id).one_or_none()
@@ -183,7 +182,7 @@ class Approve(Resource):
         graded = len(solution.feedback)
 
         if graded:
-            solution.graded_at = datetime.now()
+            solution.graded_at = datetime.now() if grader is not None else None
             solution.graded_by = grader
             db.session.commit()
         else:

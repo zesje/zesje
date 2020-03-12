@@ -116,9 +116,26 @@ class FeedbackPanel extends React.Component {
     return (
       <React.Fragment>
         {this.props.grading &&
-          <p className='panel-heading'>
-            Total:&nbsp;<b>{totalScore}</b>
-          </p>}
+          <div className='panel-heading level'>
+            <p className='level-left'>Total:&nbsp;<b>{totalScore}</b></p>
+            <div className='level-right'>
+              <div className={(this.props.showTooltips ? ' tooltip is-tooltip-active is-tooltip-top' : '')}
+                data-tooltip='Mark feedback for revision (s)' >
+                <button type='input'
+                  className='button is-link'
+                  disabled={this.props.solution.feedback.length === 0}
+                  onClick={this.props.setAside}>Set Aside</button>
+              </div>
+              <div className={(this.props.showTooltips ? ' tooltip is-tooltip-active is-tooltip-bottom' : '')}
+                data-tooltip='Approve selected feedback (a)' >
+                <button type='input'
+                  className='button is-info'
+                  disabled={this.props.solution.feedback.length === 0}
+                  onClick={this.props.approve}>Approve</button>
+              </div>
+            </div>
+          </div>
+        }
         {this.props.problem.feedback.map((feedback, index) =>
           <FeedbackBlock key={feedback.id} uri={blockURI} graderID={this.props.graderID}
             feedback={feedback} checked={this.props.grading && this.props.solution.feedback.includes(feedback.id)}

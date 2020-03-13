@@ -172,15 +172,11 @@ ELAPSED_TIME_BREAK = 21600   # 6 hours in seconds
 
 def estimate_grading_time(problem_id, grader_id):
     graded_timings = get_grade_timings(problem_id, grader_id)
-
+    if graded_timings is None:
+        return 0, 0
     # since a grader might evaluate different problems at once,
     # compute the interval as the time range between the grading of the specified problem
     # and the previous problem graded
-    '''
-    if graded_timings.shape[0] == 2:
-        elapsed_times = np.array([graded_timings[1, 1] - graded_timings[0, 1]])
-    else:
-    '''
     selected_problem = graded_timings[:, 0] == problem_id
     elapsed_times = graded_timings[selected_problem, 1] - np.roll(graded_timings[:, 1], 1)[selected_problem]
     if elapsed_times[0] < 0:
@@ -209,6 +205,8 @@ def get_grade_timings(problem_id, grader_id):
         # look for some other graded solution before first_grade
         previous_grade = Solution.query.filter(Solution.grader_id == grader_id, Solution.graded_at < first_grade)\
             .order_by(desc(Solution.graded_at)).first()
+        if previous_grade is None:
+            return None
 
         return np.array([[previous_grade.problem_id, previous_grade.graded_at.timestamp()],
                         [problem_id, first_grade.timestamp()]])

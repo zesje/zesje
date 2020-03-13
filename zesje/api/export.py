@@ -156,25 +156,17 @@ def grader_statistics(exam_id):
     try:
         data = grader_data(exam_id)
         data_str = json.dumps(data)
+
+        serialized = BytesIO()
+        serialized.write(data_str.encode('utf-8'))
+        serialized.seek(0)
     except Exception:
         abort(404, 'Failed to load grader data.')
-
-    return Response(
-        response=data_str,
-        status=200,
-        mimetype='application/json'
-    )
-
-    """
-    serialized = BytesIO()
-    serialized.write(data_str.encode('utf-8'))
-    serialized.seek(0)
 
     return send_file(
         serialized,
         as_attachment=True,
-        attachment_filename=f'graders_exam{exam_id}.txt',
+        attachment_filename=f'grader_statistics_exam_{exam_id}.txt',
         mimetype="text/plain",
         cache_timeout=0,
     )
-    """

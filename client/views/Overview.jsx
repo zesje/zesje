@@ -1,5 +1,7 @@
 import React from 'react'
 import 'bulma-tooltip/dist/css/bulma-tooltip.min.css'
+import Accordion from 'react-bootstrap/Accordion'
+import Card from 'react-bootstrap/Card'
 
 import moment from 'moment'
 import Hero from '../components/Hero.jsx'
@@ -33,51 +35,57 @@ const formatTime = (seconds) => {
 
 const ProblemSummary = (props) => (
   <React.Fragment>
-    <h3 className='has-text-centered'>
-      {/^\d/.test(props.problem.name) ? 'Problem ' : null}
-      {props.problem.name}
-    </h3>
-    <table className='table is-striped'>
-      <thead>
-        <tr>
-          <th> Feedback </th>
-          <th> Score </th>
-          <th> #&nbsp;Assigned</th>
-        </tr>
-      </thead>
-      <tbody>
-        {
-          props.problem.feedback.map((option, i) => {
-            return <tr key={i}>
-              <td>
-                {option.name}
-                <Tooltip text={option.description} />
-              </td>
-              <td> {option.score} </td>
-              <td> {option.used} </td>
-            </tr>
-          })
-        }
-      </tbody>
-    </table>
-    <ul>
-      {props.graders
-        ? props.graders.graders.map((grader, i) => {
-          if (grader.name === 'Zesje') return ''
-          return <li key={i}>
-            {grader.graded + ' ' + (grader.graded > 1 ? 'solutions ' : 'solution ')}
-            graded by {grader.name}
-            {grader.total_time > 0
-              ? ' in ' + formatTime(grader.total_time) +
-                (grader.graded > 1
-                  ? ' (' + formatTime(grader.avg_grading_time) + ' per solution)'
-                  : '')
-              : ''}.
-          </li>
-        })
-        : ''
-      }
-    </ul>
+    <Card>
+      <Accordion.Toggle as={Card.Header} eventKey={'' + props.index}>
+        {/^\d/.test(props.problem.name) ? 'Problem ' : null}
+        {props.problem.name}
+      </Accordion.Toggle>
+      <Accordion.Collapse eventKey={'' + props.index}>
+        <Card.Body>
+          <table className='table is-striped'>
+            <thead>
+              <tr>
+                <th> Feedback </th>
+                <th> Score </th>
+                <th> #&nbsp;Assigned</th>
+              </tr>
+            </thead>
+            <tbody>
+              {
+                props.problem.feedback.map((option, i) => {
+                  return <tr key={i}>
+                    <td>
+                      {option.name}
+                      <Tooltip text={option.description} />
+                    </td>
+                    <td> {option.score} </td>
+                    <td> {option.used} </td>
+                  </tr>
+                })
+              }
+            </tbody>
+          </table>
+          <ul>
+            {props.graders
+              ? props.graders.graders.map((grader, i) => {
+                if (grader.name === 'Zesje') return ''
+                return <li key={i}>
+                  {grader.graded + ' ' + (grader.graded > 1 ? 'solutions ' : 'solution ')}
+                  graded by {grader.name}
+                  {grader.total_time > 0
+                    ? ' in ' + formatTime(grader.total_time) +
+                      (grader.graded > 1
+                        ? ' (' + formatTime(grader.avg_grading_time) + ' per solution)'
+                        : '')
+                    : ''}.
+                </li>
+              })
+              : ''
+            }
+          </ul>
+        </Card.Body>
+      </Accordion.Collapse>
+    </Card>
   </React.Fragment>
 )
 
@@ -121,16 +129,15 @@ class Overview extends React.Component {
 
         <section>
           <h3 className='title is-size-3 has-text-centered'> Problem Details </h3>
-          <div className='columns is-tablet is-multiline'>
-            { this.props.exam.problems.map((problem, i) => (
-              <div className='column is-one-half-tablet is-one-third-desktop' key={i}>
-                <div className='content'>
-                  <ProblemSummary problem={problem}
-                    graders={this.state.statsLoaded ? this.state.graderStatistics.problems[i] : null} />
-                </div>
-              </div>
-            ))
-            }
+          <div className='container'>
+            <Accordion>
+              { this.props.exam.problems.map((problem, i) => (
+                <ProblemSummary index={i}
+                  problem={problem}
+                  graders={this.state.statsLoaded ? this.state.graderStatistics.problems[i] : null} />
+              ))
+              }
+            </Accordion>
           </div>
         </section>
       </div >

@@ -1,0 +1,15 @@
+.accordions .accordion .accordion-header {
+  background-color: #209cee;
+}
+
+.accordions .accordion .accordion-header+.accordion-body {
+  text-align: center;
+}
+
+.accordions .accordion .accordion-header+.accordion-body .accordion-content {
+  display: inline-block;
+}
+
+.container {
+  max-width: 600px;
+}

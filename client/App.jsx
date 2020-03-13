@@ -2,7 +2,7 @@ import React from 'react'
 import Loadable from 'react-loadable'
 import { hot } from 'react-hot-loader'
 import { BrowserRouter as Router, Route, Switch } from 'react-router-dom'
-import 'bootstrap/dist/css/bootstrap.min.css'
+
 import 'bulma/css/bulma.css'
 import 'react-bulma-notification/build/css/index.css'
 import 'font-awesome/css/font-awesome.css'

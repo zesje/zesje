@@ -259,7 +259,9 @@ class Grade extends React.Component {
      api.put(`solution/approve/${this.props.examID}/${submission.id}/${problem.id}`, {
        graderID: graderid
      }).catch(resp => {
-       resp.json().then(body => Notification.error('Could not set aside feedback: ' + body.message))
+       resp.json().then(body => {
+         Notification.error('Could not ' + (graderid === null ? 'set aside' : 'approve') + ' feedback: ' + body.message)
+       })
      }).then(result => {
        this.setSubmission(submission.id)
      })

@@ -388,13 +388,10 @@ class Grade extends React.Component {
                 <div className='level'>
                   <div className='level-left'>
                     <div className='level-item'>
-                      <div className={(this.state.showTooltips ? ' tooltip is-tooltip-active is-tooltip-top' : '')}
-                        data-tooltip='approve/set aside feedback: a' >
-                        {solution.graded_by
-                          ? <div>Graded by: {solution.graded_by.name} <i>({gradedTime.toLocaleString()})</i></div>
-                          : <div>Ungraded</div>
-                        }
-                      </div>
+                      {solution.graded_by
+                        ? <div>Graded by: {solution.graded_by.name} <i>({gradedTime.toLocaleString()})</i></div>
+                        : <div>Ungraded</div>
+                      }
                     </div>
                   </div>
                   <div className='level-right'>

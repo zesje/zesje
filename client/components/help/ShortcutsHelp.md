@@ -15,8 +15,7 @@ All the available shortcuts are listed below, grouped by page.
 | `shift` + `→`        | Next submission        |
 | `←`                  | Previous ungraded      |
 | `→`                  | Next ungraded          |
-| `a`                  | Approve feedback       |
-| `s`                  | Set aside feedback     |
+| `a`                  | Approve/Set aside feedback |
 | `f`                  | Toggle full page       |
 
 ### Students

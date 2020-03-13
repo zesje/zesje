@@ -119,19 +119,14 @@ class FeedbackPanel extends React.Component {
           <div className='panel-heading level'>
             <p className='level-left'>Total:&nbsp;<b>{totalScore}</b></p>
             <div className='level-right'>
-              <div className={(this.props.showTooltips ? ' tooltip is-tooltip-active is-tooltip-top' : '')}
-                data-tooltip='Mark feedback for revision (s)' >
-                <button type='input'
-                  className='button is-link'
-                  disabled={this.props.solution.feedback.length === 0}
-                  onClick={this.props.setAside}>Set Aside</button>
-              </div>
               <div className={(this.props.showTooltips ? ' tooltip is-tooltip-active is-tooltip-bottom' : '')}
-                data-tooltip='Approve selected feedback (a)' >
+                data-tooltip='Approve/Set aside feedback: a' >
                 <button type='input'
                   className='button is-info'
                   disabled={this.props.solution.feedback.length === 0}
-                  onClick={this.props.approve}>Approve</button>
+                  onClick={this.props.toggleApprove}>
+                  {this.props.solution.graded_by === null ? 'Approve' : 'Set aside'}
+                </button>
               </div>
             </div>
           </div>

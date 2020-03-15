@@ -151,11 +151,12 @@ class Solutions(Resource):
 class Approve(Resource):
     """Mark a solution as graded."""
     put_parser = reqparse.RequestParser()
-    put_parser.add_argument('graderID', type=int, required=True)
+    put_parser.add_argument('graderID', type=int, required=False)
 
     def put(self, exam_id, submission_id, problem_id):
-        """Takes an existing feedback checks if it is valid then gives the current graders id to the solution this is
-        usefull for approving pre graded solutions
+        """Takes an existing feedback, checks if it is valid, then gives the current graders id to the solution
+        if it is specified, otherwise the grader is set to None as well as the graded_at.
+        This is usefull for approving or setting aside pre graded solutions.
 
         Parameters
         ----------

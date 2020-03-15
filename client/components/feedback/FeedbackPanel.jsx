@@ -117,11 +117,13 @@ class FeedbackPanel extends React.Component {
       <React.Fragment>
         {this.props.grading &&
           <div className='panel-heading level' style={{marginBottom: 0 + 'px'}}>
-            <p className='level-left'>Total:&nbsp;<b>{totalScore}</b></p>
+            <div className='level-left'>
+              {this.props.solution.feedback.length !== 0 && <p>Total:&nbsp;<b>{totalScore}</b></p>}
+            </div>
             <div className='level-right'>
               <div className={this.props.showTooltips ? ' tooltip is-tooltip-active is-tooltip-top' : ''}
                 data-tooltip='approve/set aside feedback: a'>
-                <button title={this.props.solution.feedback.length === 0 && 'At least one feedback option must be selected'}
+                <button title={this.props.solution.feedback.length === 0 ? 'At least one feedback option must be selected' : ''}
                   className='button is-info'
                   disabled={this.props.solution.feedback.length === 0}
                   onClick={this.props.toggleApprove}>

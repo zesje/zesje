@@ -154,9 +154,11 @@ class Approve(Resource):
     put_parser.add_argument('graderID', type=int, required=False)
 
     def put(self, exam_id, submission_id, problem_id):
-        """Takes an existing feedback, checks if it is valid, then gives the current graders id to the solution
-        if it is specified, otherwise the grader is set to None as well as the graded_at.
-        This is usefull for approving or setting aside pre graded solutions.
+        """Approve a solution or set it aside for later grading.
+
+        If the grader id is provided, the solution is marked as being graded by that grader,
+        otherwise it is marked as ungraded. This refuses to mark as graded if no feedback
+        is assigned.
 
         Parameters
         ----------

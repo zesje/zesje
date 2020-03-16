@@ -53,7 +53,7 @@ class Grade extends React.Component {
     // Also add the shortcut to ./client/components/help/ShortcutsHelp.md
     this.props.bindShortcut(['shift+left', 'shift+h'], this.prev)
     this.props.bindShortcut(['shift+right', 'shift+l'], this.next)
-    this.props.bindShortcut(['a'], this.approve)
+    this.props.bindShortcut(['a'], this.toggleApprove)
     this.props.bindShortcut(['left', 'h'], (event) => {
       event.preventDefault()
       this.prevUngraded()
@@ -243,6 +243,31 @@ class Grade extends React.Component {
   }
 
   /**
+   * Toggle approve, if a solution is approved it removes the grader,
+   * otherwise a grader is added.
+   */
+   toggleApprove = () => {
+     const submission = this.state.submission
+     const problem = this.state.problem
+     const solution = submission.problems.find(p => p.id === problem.id)
+
+     let graderid = null
+     if (solution.graded_by === null) {
+       graderid = this.props.graderID
+     }
+
+     api.put(`solution/approve/${this.props.examID}/${submission.id}/${problem.id}`, {
+       graderID: graderid
+     }).catch(resp => {
+       resp.json().then(body => {
+         Notification.error('Could not ' + (graderid === null ? 'set aside' : 'approve') + ' feedback: ' + body.message)
+       })
+     }).then(result => {
+       this.setSubmission(submission.id)
+     })
+   }
+
+  /**
    * Toggles full page view.
    */
   toggleFullPage = () => {
@@ -327,7 +352,8 @@ class Grade extends React.Component {
                       showTooltips={this.state.showTooltips} grading
                       setSubmission={this.setSubmission}
                       editFeedback={this.editFeedback}
-                      toggleOption={this.toggleFeedbackOption} />
+                      toggleOption={this.toggleFeedbackOption}
+                      toggleApprove={this.toggleApprove} />
                   }
                 </nav>
               </div>
@@ -362,13 +388,10 @@ class Grade extends React.Component {
                 <div className='level'>
                   <div className='level-left'>
                     <div className='level-item'>
-                      <div className={(this.state.showTooltips ? ' tooltip is-tooltip-active is-tooltip-top' : '')}
-                        data-tooltip='approve feedback: a' >
-                        {solution.graded_by
-                          ? <div>Graded by: {solution.graded_by.name} <i>({gradedTime.toLocaleString()})</i></div>
-                          : <div>Ungraded</div>
-                        }
-                      </div>
+                      {solution.graded_by
+                        ? <div>Graded by: {solution.graded_by.name} <i>({gradedTime.toLocaleString()})</i></div>
+                        : <div>Ungraded</div>
+                      }
                     </div>
                   </div>
                   <div className='level-right'>

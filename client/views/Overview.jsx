@@ -44,7 +44,7 @@ const ProblemSummary = (props) => (
       </div>
       <div className='accordion-body'>
         <div className='accordion-content'>
-          <table className='table is-striped'>
+          <table className='table is-striped is-hoverable'>
             <thead>
               <tr>
                 <th> Feedback </th>
@@ -136,8 +136,8 @@ class Overview extends React.Component {
 
         <section>
           <h3 className='title is-size-1 has-text-centered'> Problem Details </h3>
-          <div className='container'>
-            <section className='accordions'>
+          <div className='container is-flex-desktop-only'>
+            <section className='accordions is-centered'>
               { this.props.exam.problems.map((problem, i) => (
                 <ProblemSummary index={i}
                   problem={problem}

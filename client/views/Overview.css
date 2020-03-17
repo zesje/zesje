@@ -9,7 +9,3 @@
 .accordions .accordion .accordion-header+.accordion-body .accordion-content {
   display: inline-block;
 }
-
-.container {
-  max-width: 600px;
-}

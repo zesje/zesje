@@ -24,6 +24,12 @@ CHECKBOX_FONT_SIZE = 11
 CHECKBOX_FONT = 'Helvetica'
 CHECKBOX_SIZE = 9
 
+# the size of the exam widgets
+EXAM_WIDGET_SIZE = {
+    'student_id_widget': (313, 181),
+    'barcode_widget': (44, 57)
+}
+
 PAGE_FORMATS = {
     "A4": (595.276, 841.89),
     "US letter": (612, 792),

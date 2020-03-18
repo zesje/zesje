@@ -2,7 +2,27 @@ from flask_restful import Resource
 from flask import current_app, request
 
 from ..database import db, Widget, ExamWidget, MultipleChoiceOption
-from ..constants import EXAM_WIDGET_SIZE, MARKER_MARGIN, PAGE_FORMATS, MARKER_LINE_WIDTH
+
+
+def get_exam_widget_size(name):
+    """ Calculates the size of the exam widgets from the app constants. """
+
+    if name == 'student_id_widget':
+        fontsize = current_app.config['ID_GRID_FONT_SIZE']  # Size of font
+        margin = current_app.config['ID_GRID_MARGIN']  # Margin between elements and sides
+        digits = current_app.config['ID_GRID_DIGITS']  # Max amount of digits you want for student numbers
+        mark_box_size = current_app.config['ID_GRID_BOX_SIZE']  # Size of student number boxes
+        text_box_width, text_box_height = current_app.config['ID_GRID_TEXT_BOX_SIZE']  # size of textbox
+
+        return ((digits + 1) * (fontsize + margin) + 4 * margin + text_box_width,
+                (fontsize + margin) * 11 + mark_box_size)
+    elif name == 'barcode_widget':
+        matrix_box = current_app.config['COPY_NUMBER_MATRIX_BOX']
+        fontsize = current_app.config['COPY_NUMBER_FONTSIZE']
+
+        return (matrix_box, matrix_box + fontsize + 1)
+
+    raise ValueError(f'Unknown exam widget with name {name}.')
 
 
 def check_exam_widget_position(widget, params):
@@ -12,9 +32,9 @@ def check_exam_widget_position(widget, params):
         # position is not being changed
         return params, False
 
-    size = EXAM_WIDGET_SIZE[widget.name]
-    page_size = PAGE_FORMATS[current_app.config['PAGE_FORMAT']]
-    margin = int(MARKER_MARGIN + MARKER_LINE_WIDTH)
+    size = get_exam_widget_size(widget.name)
+    page_size = current_app.config['PAGE_FORMATS'][current_app.config['PAGE_FORMAT']]
+    margin = int(current_app.config['MARKER_MARGIN'] + current_app.config['MARKER_LINE_WIDTH'])
 
     x = min(max(params['x'], margin), page_size[0] - size[0] - margin)
     y = min(max(params['y'], margin), page_size[1] - size[1] - margin)
@@ -59,7 +79,7 @@ class Widgets(Resource):
         db.session.commit()
 
         if changed:
-            # this forces the server to reload the widget position of it has been changed
+            # this response forces the client to move the widget to the specified position
             return dict(status=409,
                         message="The Exam widget has to lay between the corner markers region.",
                         widgetId=widget_id,

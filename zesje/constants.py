@@ -5,8 +5,11 @@ ID_GRID_FONT_SIZE = 11  # Size of font
 ID_GRID_FONT = 'Helvetica'
 ID_GRID_MARGIN = 5  # Margin between elements and sides
 ID_GRID_DIGITS = 7  # Max amount of digits you want for student numbers
+ID_GRID_BOX_SIZE = ID_GRID_FONT_SIZE - 2  # Size of student number boxes
+ID_GRID_TEXT_BOX_SIZE = (ID_GRID_FONT_SIZE * 15, ID_GRID_BOX_SIZE * 2 + ID_GRID_MARGIN + 2)  # size of textbox
 
 # copy number widget
+COPY_NUMBER_MATRIX_BOX = 44
 COPY_NUMBER_FONTSIZE = 12  # Size of font
 COPY_NUMBER_FONT = 'Helvetica'
 
@@ -23,12 +26,6 @@ CHECKBOX_MARGIN = 5
 CHECKBOX_FONT_SIZE = 11
 CHECKBOX_FONT = 'Helvetica'
 CHECKBOX_SIZE = 9
-
-# the size of the exam widgets
-EXAM_WIDGET_SIZE = {
-    'student_id_widget': (313, 181),
-    'barcode_widget': (44, 57)
-}
 
 PAGE_FORMATS = {
     "A4": (595.276, 841.89),

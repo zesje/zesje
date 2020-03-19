@@ -573,12 +573,13 @@ def find_corner_marker_keypoints(image_array, corner_sizes=[0.125, 0.25, 0.5]):
                 lines[0, to_flip] *= -1
                 v = (lines[1] > np.pi/4)
                 if np.all(v) or not np.any(v):
-                    continue
+                    continue  # All lines have roughly the same orientation
+
                 rho1, theta1 = np.average(lines[:, v], axis=1)
                 rho2, theta2 = np.average(lines[:, ~v], axis=1)
                 angle = np.abs(theta1 - theta2)
                 if np.abs(0.5*np.pi - angle) > 2 * np.pi/180:
-                    continue
+                    continue  # The two lines are not perpendicular
 
                 marker_boundings = bounding_box_corner_markers(marker_length, theta1, theta2, top, left)
                 for nonzero_axis, marker_bounding in zip(np.nonzero(new_img), marker_boundings):

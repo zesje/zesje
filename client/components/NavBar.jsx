@@ -83,7 +83,7 @@ const ExportDropdown = (props) => {
         )}
         <hr className='navbar-divider' />
         <a className='navbar-item' href={'/api/export/graders/' + props.exam.id}>
-          Export graders statistics
+          Export grade statistics
         </a>
         <hr className='navbar-divider' />
         <a className='navbar-item' href='/api/export/full'>

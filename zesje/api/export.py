@@ -53,6 +53,7 @@ def exam(file_format, exam_id):
     serialized = ResilientBytesIO()
 
     data.index.name = 'Student ID'
+    data = data.infer_objects()  # convert columns to numeric types if possible
 
     if file_format == 'xlsx':
         data = data.iloc[:, data.columns.get_level_values(1) == 'total']

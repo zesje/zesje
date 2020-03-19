@@ -535,6 +535,7 @@ def find_corner_marker_keypoints(image_array, corner_sizes=[0.125, 0.25, 0.5]):
     h, w, *_ = image_array.shape
     marker_length = current_app.config['MARKER_LINE_LENGTH'] * guess_dpi(image_array) / 72
     marker_width = current_app.config['MARKER_LINE_WIDTH'] * guess_dpi(image_array) / 72
+    marker_area = marker_length * marker_width * 2
 
     best_points = []
 
@@ -544,14 +545,22 @@ def find_corner_marker_keypoints(image_array, corner_sizes=[0.125, 0.25, 0.5]):
         lr = slice(0, int(w*corner_size)), slice(int(w*(1-corner_size)), w)
         corner_points = []
         for corner in itertools.product(tb, lr):
+            top = corner[0].start == 0
+            left = corner[1].start == 0
+
             gray_im = cv2.cvtColor(image_array[corner], cv2.COLOR_BGR2GRAY)
             _, inv_im = cv2.threshold(gray_im, 150, 255, cv2.THRESH_BINARY_INV)
             ret, labels = cv2.connectedComponents(inv_im)
             for label in range(1, ret):
                 new_img = (labels == label)
-                # multiplier determined to work well empirically
-                if np.sum(new_img) > marker_length * marker_width * 2.83:
-                    continue  # The blob is too large
+
+                # Relative error determined to work well empirically
+                max_error = 1.19
+
+                blob_area = np.sum(new_img)
+                if not blob_area < marker_area * max_error**2:
+                    continue  # The area of the blob is too small or too large
+
                 lines = cv2.HoughLines(new_img.astype(np.uint8), 1, np.pi/180, int(marker_length * .9))
                 if lines is None:
                     continue  # Didn't find any lines
@@ -567,6 +576,19 @@ def find_corner_marker_keypoints(image_array, corner_sizes=[0.125, 0.25, 0.5]):
                     continue
                 rho1, theta1 = np.average(lines[:, v], axis=1)
                 rho2, theta2 = np.average(lines[:, ~v], axis=1)
+                angle = np.abs(theta1 - theta2)
+                if np.abs(0.5*np.pi - angle) > 2 * np.pi/180:
+                    continue
+
+                marker_boundings = bounding_box_corner_markers(marker_length, theta1, theta2, top, left)
+                for nonzero_axis, marker_bounding in zip(np.nonzero(new_img), marker_boundings):
+                    start = np.min(nonzero_axis)
+                    end = np.max(nonzero_axis)
+                    blob_length = end - start
+
+                    if not marker_bounding / max_error < blob_length < marker_bounding * max_error:
+                        continue  # The dimensions of the blob are too large
+
                 y, x = np.linalg.solve([[np.cos(theta1), np.sin(theta1)], [np.cos(theta2), np.sin(theta2)]],
                                        [rho1, rho2])
                 # TODO: add failsafes
@@ -756,3 +778,56 @@ def original_corner_markers(dpi):
                      (right_x, top_y),
                      (left_x, bottom_y),
                      (right_x, bottom_y)])
+
+
+def bounding_box_corner_markers(marker_length, theta1, theta2, top, left):
+    """
+    Computes the theoretical bounding box of a tilted corner marker.
+
+    The result is only valid for a rotation up to 45 degrees.
+
+    params
+    ------
+    marker_length : int
+        The configured length of the corner marker in pixels
+    theta1 : int
+        Angle of the detected horizontal hough line
+    theta2 : int
+        Angle of the detected vertical hough line
+    top : bool
+        Whether the corner marker is at the top
+    left : bool
+        Whether the corner marker is at the left
+
+    returns
+    -------
+    bounding_x, bounding_y : (int, int)
+        The bounding box (in pixels) in x- and y-direction
+    """
+    bounding_x = marker_length * np.sin(theta1)
+    bounding_y = marker_length * np.cos(theta2)
+
+    bottom = ~top
+    right = ~left
+
+    if left and top and theta2 < 0:
+        bounding_x -= np.sin(theta2) * marker_length
+    if left and bottom and theta2 > 0:
+        bounding_x += np.sin(theta2) * marker_length
+
+    if right and top and theta2 > 0:
+        bounding_x += np.sin(theta2) * marker_length
+    if right and bottom and theta2 < 0:
+        bounding_x -= np.sin(theta2) * marker_length
+
+    if left and top and theta1 > np.pi/2:
+        bounding_y -= np.cos(theta1) * marker_length
+    if left and bottom and theta1 < np.pi/2:
+        bounding_y += np.cos(theta1) * marker_length
+
+    if right and top and theta1 < np.pi/2:
+        bounding_y += np.cos(theta1) * marker_length
+    if right and bottom and theta1 > np.pi/2:
+        bounding_y -= np.cos(theta1) * marker_length
+
+    return bounding_x, bounding_y

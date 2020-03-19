@@ -166,7 +166,7 @@ def grader_statistics(exam_id):
     return send_file(
         serialized,
         as_attachment=True,
-        attachment_filename=f'grader_statistics_exam_{exam_id}.txt',
-        mimetype="text/plain",
+        attachment_filename=f'grader_statistics_exam_{exam_id}.json',
+        mimetype='application/json',
         cache_timeout=0,
     )

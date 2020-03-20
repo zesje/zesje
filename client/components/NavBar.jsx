@@ -160,7 +160,7 @@ class NavBar extends React.Component {
       this.props.exam.problems.length &&
       this.props.grader !== null
     const overviewEnabled = this.props.exam.submissions.length > 0
-    const submissionsEnabled = this.props.exam.id !== null
+    const submissionsEnabled = this.props.exam.finalized
     const exportEnabled = this.props.exam.id !== null
     const emailEnabled = this.props.exam.id !== null
 

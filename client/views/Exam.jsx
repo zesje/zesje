@@ -892,15 +892,15 @@ class Exams extends React.Component {
             Exam details
           </p>
           <div className='panel-block'>
-            <p className='is-size-3'> {this.state.examName} </p>
-          </div>
-          <div className='panel-block'>
-            <button
-              className='button is-outlined is-link is-fullwidth'
-              onClick={() => this.setState({editingExamName: true})}
-            >
-              Edit exam name
-            </button>
+            <p className='is-size-3'>
+              {this.state.examName}
+            </p>
+            <Tooltip
+              icon='pencil'
+              location='top'
+              text='Click to edit the exam name.'
+              clickAction={() => this.setState({editingExamName: true})}
+            />
           </div>
         </nav>
       )

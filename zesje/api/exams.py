@@ -344,7 +344,7 @@ class Exams(Resource):
         if not args['name'].strip():
             return dict(status=400, message='Exam name is empty.'), 400
 
-        exam.name = args['name']
+        exam.name = args['name'].strip()
         db.session.commit()
 
         return dict(status=200, message='ok'), 200

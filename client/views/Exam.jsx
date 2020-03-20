@@ -21,6 +21,7 @@ import * as api from '../api.jsx'
 class Exams extends React.Component {
   state = {
     examID: null,
+    examName: null,
     page: 0,
     editActive: false,
     feedbackToEdit: null,
@@ -33,7 +34,8 @@ class Exams extends React.Component {
     deletingExam: false,
     deletingWidget: false,
     deletingMCWidget: false,
-    showPanelMCQ: false
+    showPanelMCQ: false,
+    editingExamName: false
   }
 
   static getDerivedStateFromProps = (newProps, prevState) => {
@@ -72,6 +74,7 @@ class Exams extends React.Component {
 
       return {
         examID: newProps.exam.id,
+        examName: newProps.exam.name,
         page: 0,
         numPages: null,
         selectedWidgetId: null,
@@ -881,6 +884,81 @@ class Exams extends React.Component {
     )
   }
 
+  PanelExamName = () => {
+    if (!this.state.editingExamName) {
+      return (
+        <nav className='panel'>
+          <p className='panel-heading'>
+            Exam details
+          </p>
+          <div className='panel-block'>
+            <p className='is-size-3'> {this.state.examName} </p>
+          </div>
+          <div className='panel-block'>
+            <button
+              className='button is-outlined is-link is-fullwidth'
+              onClick={() => this.setState({editingExamName: true})}
+            >
+              Edit exam name
+            </button>
+          </div>
+        </nav>
+      )
+    } else {
+      return (
+        <nav className='panel'>
+          <p className='panel-heading'>
+            Exam details
+          </p>
+          <div className='panel-block'>
+            <input className='input is-link'
+              type='text'
+              placeholder='Exam name'
+              value={this.state.examName}
+              onChange={(e) => {
+                this.setState({
+                  examName: e.target.value
+                })
+              }} />
+          </div>
+          <div className='panel-block field is-grouped'>
+            <button
+              className='button is-danger is-link is-fullwidth'
+              onClick={() => {
+                this.setState({
+                  examName: this.props.exam.name,
+                  editingExamName: false
+                })
+              }}
+            >
+              Cancel
+            </button>
+            <button
+              className='button is-link is-fullwidth'
+              disabled={this.state.examName === this.props.exam.name || this.state.examName === ''}
+              onClick={() => {
+                api.patch(`exams/${this.state.examID}`, {name: this.state.examName})
+                  .then(() => {
+                    this.setState({editingExamName: false})
+                    this.props.updateExam(this.state.examID)
+                    this.props.updateExamList()
+                  })
+                  .catch(err => {
+                    console.log(err)
+                    err.json().then(e => {
+                      Notification.error('Could not save exam name: ' + e.message)
+                    })
+                  })
+              }}
+            >
+              Save
+            </button>
+          </div>
+        </nav>
+      )
+    }
+  }
+
   render () {
     return <div>
       <Hero />
@@ -888,8 +966,7 @@ class Exams extends React.Component {
         <div className='container'>
           <div className='columns is-centered' >
             <div className='column is-one-quarter-widescreen is-one-third-desktop editor-side-panel' >
-              <p className='title is-1'>Exam details</p>
-              <p className='subtitle is-3'>{'Selected: ' + this.props.exam.name}</p>
+              <this.PanelExamName />
               <this.Pager
                 page={this.state.page}
                 numPages={this.state.numPages}

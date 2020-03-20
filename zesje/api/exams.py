@@ -324,6 +324,23 @@ class Exams(Resource):
 
         return dict(status=400, message=f'One of finalized or anonymous must be present'), 400
 
+    patch_parser = reqparse.RequestParser()
+    patch_parser.add_argument('name', type=str, required=True)
+
+    def patch(self, exam_id):
+        exam = Exam.query.get(exam_id)
+        if exam is None:
+            return dict(status=404, message='Exam does not exist.'), 404
+
+        args = self.patch_parser.parse_args()
+        if not args['name'].strip():
+            return dict(status=400, message='Exam name is empty.'), 400
+
+        exam.name = args['name']
+        db.session.commit()
+
+        return dict(status=200, message='ok'), 200
+
 
 class ExamSource(Resource):
 

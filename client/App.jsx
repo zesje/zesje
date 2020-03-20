@@ -79,13 +79,17 @@ class App extends React.Component {
     }
   }
 
+  updateExamList = () => {
+    if (this.menu.current) {
+      this.menu.current.updateExamList()
+    }
+  }
+
   deleteExam = (examID) => {
     return api
       .del('exams/' + examID)
       .then(() => {
-        if (this.menu.current) {
-          this.menu.current.updateExamList()
-        }
+        this.updateExamList()
       })
   }
   updateSubmission = (submissionID) => {
@@ -125,6 +129,7 @@ class App extends React.Component {
                 exam={exam}
                 examID={match.params.examID}
                 updateExam={this.updateExam}
+                updateExamList={this.updateExamList}
                 deleteExam={this.deleteExam}
                 updateSubmission={this.updateSubmission}
                 leave={() => history.push('/')}

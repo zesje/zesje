@@ -583,9 +583,9 @@ def find_corner_marker_keypoints(image_array, corner_sizes=[0.125, 0.25, 0.5]):
                     continue  # The two lines are not perpendicular
 
                 marker_boundings = bounding_box_corner_markers(marker_length, theta1, theta2, top, left)
-                for nonzero_axis, marker_bounding in zip(np.nonzero(new_img), marker_boundings):
-                    start = np.min(nonzero_axis)
-                    end = np.max(nonzero_axis)
+                for nonzero_indices, marker_bounding in zip(np.nonzero(new_img), marker_boundings):
+                    start = np.min(nonzero_indices)
+                    end = np.max(nonzero_indices)
                     blob_length = end - start
 
                     if not marker_bounding / max_error < blob_length < marker_bounding * max_error:

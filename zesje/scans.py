@@ -536,7 +536,7 @@ def find_corner_marker_keypoints(image_array, corner_sizes=[0.125, 0.25, 0.5]):
     marker_length = current_app.config['MARKER_LINE_LENGTH'] * guess_dpi(image_array) / 72
     marker_width = current_app.config['MARKER_LINE_WIDTH'] * guess_dpi(image_array) / 72
     marker_area = marker_length * marker_width * 2
-    marker_area_min = max(marker_length * (marker_width - 1) * 2, 0)
+    marker_area_min = max(marker_length * (marker_width - 1) * 2, 0)  # One pixel thinner due to possible aliasing
 
     best_points = []
 

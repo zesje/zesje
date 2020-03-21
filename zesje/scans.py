@@ -536,6 +536,7 @@ def find_corner_marker_keypoints(image_array, corner_sizes=[0.125, 0.25, 0.5]):
     marker_length = current_app.config['MARKER_LINE_LENGTH'] * guess_dpi(image_array) / 72
     marker_width = current_app.config['MARKER_LINE_WIDTH'] * guess_dpi(image_array) / 72
     marker_area = marker_length * marker_width * 2
+    marker_area_min = max(marker_length * (marker_width - 1) * 2, 0)
 
     best_points = []
 
@@ -558,7 +559,7 @@ def find_corner_marker_keypoints(image_array, corner_sizes=[0.125, 0.25, 0.5]):
                 max_error = 1.19
 
                 blob_area = np.sum(new_img)
-                if not blob_area < marker_area * max_error**2:
+                if not marker_area_min / max_error**2 < blob_area < marker_area * max_error**2:
                     continue  # The area of the blob is too small or too large
 
                 lines = cv2.HoughLines(new_img.astype(np.uint8), 1, np.pi/180, int(marker_length * .9))

@@ -58,7 +58,8 @@ const nullExam = () => ({
   name: '',
   submissions: [],
   problems: [],
-  widgets: []
+  widgets: [],
+  finalized: false
 })
 
 class App extends React.Component {

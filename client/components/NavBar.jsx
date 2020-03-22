@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 
 import './NavBar.css'
 import * as api from '../api.jsx'
+import 'bulma-tooltip/dist/css/bulma-tooltip.min.css'
 
 import HelpModal from './help/HelpModal.jsx'
 import shortcutsMarkdown from './help/ShortcutsHelp.md'
@@ -15,6 +16,13 @@ const BurgerButton = (props) => (
     <span />
     <span />
   </button>
+)
+
+const TooltipLink = (props) => (
+  <div className={'navbar-item' + (props.disabled ? ' tooltip is-tooltip-bottom' : '')}
+    data-tooltip={props.tooltipText}>
+    <Link className='navbar-item' disabled={props.disabled} to={props.to}> { props.text } </Link>
+  </div>
 )
 
 const ExamDropdown = (props) => (
@@ -82,7 +90,9 @@ const ExportDropdown = (props) => {
           </a>
         )}
         <hr className='navbar-divider' />
-        <a className='navbar-item' href={'/api/export/graders/' + props.exam.id}>
+        <a className='navbar-item'
+          href={'/api/export/graders/' + props.exam.id}
+          disabled={props.disabled}>
           Export graders statistics
         </a>
         <hr className='navbar-divider' />
@@ -156,13 +166,9 @@ class NavBar extends React.Component {
   }
 
   render () {
-    const gradingEnabled = this.props.exam.submissions.length &&
-      this.props.exam.problems.length &&
-      this.props.grader !== null
-    const overviewEnabled = this.props.exam.submissions.length > 0
-    const submissionsEnabled = this.props.exam.finalized
-    const exportEnabled = this.props.exam.id !== null
-    const emailEnabled = this.props.exam.id !== null
+    const isExamFinalized = this.props.exam.finalized
+    const isGraderSelected = this.props.grader !== null
+    const isSubmissionsEmpty = this.props.exam.submissions.length === 0
 
     return (
       <nav className='navbar' role='navigation' aria-label='dropdown navigation'>
@@ -188,12 +194,26 @@ class NavBar extends React.Component {
               : <Link className='navbar-item' to='/exams'>Add exam</Link>
             }
 
-            <Link className='navbar-item' disabled={!submissionsEnabled} to={'/submissions/' + this.props.exam.id}>Submissions</Link>
+            <TooltipLink disabled={!isExamFinalized}
+              to={'/submissions/' + this.props.exam.id}
+              text='Submissions'
+              tooltipText='Finalize the exam to upload scans.' />
             <Link className='navbar-item' to='/students'>Students</Link>
-            <Link className='navbar-item' disabled={!gradingEnabled} to='/grade'><strong><i>Grade</i></strong></Link>
-            <Link className='navbar-item' disabled={!overviewEnabled} to='/overview'>Overview</Link>
-            <Link className='navbar-item' disabled={!emailEnabled} to='/email'>Email</Link>
-            <ExportDropdown className='navbar-item' disabled={!exportEnabled} exam={this.props.exam} />
+            <TooltipLink disabled={isSubmissionsEmpty && !isGraderSelected}
+              to='/grade'
+              text={<strong><i>Grade</i></strong>}
+              tooltipText={isSubmissionsEmpty
+                ? 'There are no submissions to grade, please upload some.'
+                : 'Please, select your name in the grader drop-down.'} />
+            <TooltipLink disabled={isSubmissionsEmpty}
+              to='/overview'
+              text='Overview'
+              tooltipText='There are no submissions, please upload some.' />
+            <TooltipLink disabled={isSubmissionsEmpty}
+              to='/email'
+              text='Email'
+              tooltipText='There are no submissions, please upload some.' />
+            <ExportDropdown className='navbar-item' disabled={isSubmissionsEmpty} exam={this.props.exam} />
             <a className='navbar-item' onClick={() => this.setHelpPage('shortcuts')}>
               {this.pages['shortcuts'].title}
             </a>

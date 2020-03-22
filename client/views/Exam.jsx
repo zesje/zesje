@@ -940,6 +940,12 @@ class Exams extends React.Component {
                 api.patch(`exams/${this.state.examID}`, {name: this.state.examName})
                   .then(() => {
                     this.setState({editingExamName: false})
+
+                    // In order to change the name everywhere in the UI we are forced to
+                    // update the whole exam here as well as the exam list in the navbar.
+                    // This is not ideal and should be addressed in
+                    // https://gitlab.kwant-project.org/zesje/zesje/issues/388
+                    // TODO: implement data locality for this view
                     this.props.updateExam(this.state.examID)
                     this.props.updateExamList()
                   })

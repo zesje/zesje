@@ -18,12 +18,15 @@ const BurgerButton = (props) => (
   </button>
 )
 
-const TooltipLink = (props) => (
-  <div className={'navbar-item' + (props.disabled ? ' tooltip is-tooltip-bottom' : '')}
-    data-tooltip={props.tooltipText}>
-    <Link className='navbar-item' disabled={props.disabled} to={props.to}> { props.text } </Link>
+const TooltipLink = (props) => {
+  let pred = props.predicate.find(pred => pred[0])
+  if (!pred) pred = [false, null]
+
+  return <div className={'navbar-item no-padding' + (pred[0] ? ' tooltip is-tooltip-bottom' : '')}
+    data-tooltip={pred[1]}>
+    <Link className='navbar-item' disabled={pred[0]} to={props.to}> { props.text } </Link>
   </div>
-)
+}
 
 const ExamDropdown = (props) => (
   <div className='navbar-item has-dropdown is-hoverable'>
@@ -166,9 +169,9 @@ class NavBar extends React.Component {
   }
 
   render () {
-    const isExamFinalized = this.props.exam.finalized
-    const isGraderSelected = this.props.grader !== null
-    const isSubmissionsEmpty = this.props.exam.submissions.length === 0
+    const predicateExamNotFinalized = [!this.props.exam.finalized, 'The exam is not finalized yet.']
+    const predicateSubmissionsEmpty = [this.props.exam.submissions.length === 0, 'There are no submissions, please upload some.']
+    const predicateNoGraderSelected = [this.props.grader === null, 'Please select a grader.']
 
     return (
       <nav className='navbar' role='navigation' aria-label='dropdown navigation'>
@@ -194,26 +197,24 @@ class NavBar extends React.Component {
               : <Link className='navbar-item' to='/exams'>Add exam</Link>
             }
 
-            <TooltipLink disabled={!isExamFinalized}
+            <TooltipLink
               to={'/submissions/' + this.props.exam.id}
               text='Submissions'
-              tooltipText='Finalize the exam to upload scans.' />
+              predicate={[predicateExamNotFinalized]} />
             <Link className='navbar-item' to='/students'>Students</Link>
-            <TooltipLink disabled={isSubmissionsEmpty && !isGraderSelected}
+            <TooltipLink
               to='/grade'
               text={<strong><i>Grade</i></strong>}
-              tooltipText={isSubmissionsEmpty
-                ? 'There are no submissions to grade, please upload some.'
-                : 'Please, select your name in the grader drop-down.'} />
-            <TooltipLink disabled={isSubmissionsEmpty}
+              predicate={[predicateExamNotFinalized, predicateSubmissionsEmpty, predicateNoGraderSelected]} />
+            <TooltipLink
               to='/overview'
               text='Overview'
-              tooltipText='There are no submissions, please upload some.' />
-            <TooltipLink disabled={isSubmissionsEmpty}
+              predicate={[predicateExamNotFinalized, predicateSubmissionsEmpty]} />
+            <TooltipLink
               to='/email'
               text='Email'
-              tooltipText='There are no submissions, please upload some.' />
-            <ExportDropdown className='navbar-item' disabled={isSubmissionsEmpty} exam={this.props.exam} />
+              predicate={[predicateExamNotFinalized, predicateSubmissionsEmpty]} />
+            <ExportDropdown className='navbar-item' disabled={predicateSubmissionsEmpty[0]} exam={this.props.exam} />
             <a className='navbar-item' onClick={() => this.setHelpPage('shortcuts')}>
               {this.pages['shortcuts'].title}
             </a>

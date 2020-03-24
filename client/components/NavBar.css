@@ -3,7 +3,7 @@ a[disabled] {
     pointer-events: none;
 }
 
-div.navbar-item {
+.no-padding {
   padding: 0;
 }
 

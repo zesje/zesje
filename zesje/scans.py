@@ -528,9 +528,10 @@ def find_corner_marker_keypoints(image_array, corner_sizes=[0.125, 0.25, 0.5]):
     corner_sizes : list of float
         The corner sizes to search the corner markers in
 
-    Raises
-    ------
-    RuntimeError if no valid set of keypoints are found
+    Returns
+    -------
+    corner_points : list of (int, int)
+        The found corner markers, can contain 0-4 corner markers.
     """
     h, w, *_ = image_array.shape
     marker_length = current_app.config['MARKER_LINE_LENGTH'] * guess_dpi(image_array) / 72
@@ -635,6 +636,10 @@ def realign_image(image_array, page_shape, keypoints=None):
     -------
     return_array: numpy.array
         The image realigned properly.
+
+    Raises
+    ------
+    RuntimeError if no corner markers are detected or provided
     """
 
     if not keypoints:

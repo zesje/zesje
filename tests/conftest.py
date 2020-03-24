@@ -3,9 +3,14 @@ from tempfile import TemporaryDirectory
 
 import pytest
 from flask import Flask
-from zesje.api import api_bp
-from zesje.database import db
-from zesje.factory import create_config
+from pathlib import Path
+import sys
+
+sys.path.insert(0, str(Path.cwd()))
+
+from zesje.api import api_bp  # noqa: E402
+from zesje.database import db  # noqa: E402
+from zesje.factory import create_config  # noqa: E402
 
 
 # Adapted from https://stackoverflow.com/a/46062148/1062698

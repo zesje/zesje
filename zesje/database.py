@@ -1,7 +1,9 @@
 """ db.Models used in the db """
 
 import enum
+from os.path import join
 
+from flask import current_app
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean, ForeignKey, Enum, false
 from flask_sqlalchemy.model import BindMetaMixin, Model
@@ -82,6 +84,10 @@ class Page(db.Model):
     path = Column(Text, nullable=False)
     submission_id = Column(Integer, ForeignKey('submission.id'), nullable=True)
     number = Column(Integer, nullable=False)
+
+    @property
+    def abs_path(self):
+        return join(current_app.config['DATA_DIRECTORY'], self.path)
 
 
 """

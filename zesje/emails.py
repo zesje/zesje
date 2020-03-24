@@ -47,7 +47,7 @@ def solution_pdf(exam_id, student_id, anonymous=False):
     pdf = canvas.Canvas(result, pagesize=page_size)
     for page in pages:
         if anonymous and page.number == 0:
-            page_im = cv2.imread(page.path)
+            page_im = cv2.imread(page.abs_path)
 
             dpi = guess_dpi(page_im)
 
@@ -61,7 +61,7 @@ def solution_pdf(exam_id, student_id, anonymous=False):
 
             image = ImageReader(pil_im)
         else:
-            image = page.path
+            image = page.abs_path
 
         pdf.drawImage(image, 0, 0, width=page_size[0], height=page_size[1])
         pdf.showPage()

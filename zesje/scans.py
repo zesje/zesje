@@ -311,7 +311,8 @@ def update_database(image_path, barcode):
     # We may have added this page in previous uploads but we only want a single
     # 'Page' entry regardless
     if Page.query.filter(Page.submission == sub, Page.number == barcode.page).one_or_none() is None:
-        db.session.add(Page(path=image_path, submission=sub, number=barcode.page))
+        rel_path = os.path.relpath(image_path, start=current_app.config['DATA_DIRECTORY'])
+        db.session.add(Page(path=rel_path, submission=sub, number=barcode.page))
 
     db.session.commit()
 
@@ -390,7 +391,7 @@ def guess_student(exam_token, copy_number, force=False):
     sub = Submission.query.filter(Submission.copy_number == copy_number,
                                   Submission.exam_id == exam.id).one()
     image_path = Page.query.filter(Page.submission_id == sub.id,
-                                   Page.number == 0).one().path
+                                   Page.number == 0).one().abs_path
 
     student_id_widget, student_id_widget_coords = exam_student_id_widget(exam.id)
 

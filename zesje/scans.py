@@ -2,7 +2,7 @@ import functools
 import itertools
 import math
 import os
-from collections import namedtuple, Counter
+from collections import namedtuple
 import signal
 
 import cv2
@@ -538,19 +538,21 @@ def find_corner_marker_keypoints(image_array, corner_sizes=[0.125, 0.25, 0.5]):
     marker_area = marker_length * marker_width * 2
     marker_area_min = max(marker_length * (marker_width - 1) * 2, 0)  # One pixel thinner due to possible aliasing
 
-    best_points = []
+    corner_points = []
 
-    for corner_size in corner_sizes:
-        # Filter out everything in the center of the image
-        tb = slice(0, int(h*corner_size)), slice(int(h*(1-corner_size)), h)
-        lr = slice(0, int(w*corner_size)), slice(int(w*(1-corner_size)), w)
-        corner_points = []
-        for corner in itertools.product(tb, lr):
-            top = corner[0].start == 0
-            left = corner[1].start == 0
+    top_bottom = (True, False)
+    left_right = (True, False)
 
-            gray_im = cv2.cvtColor(image_array[corner], cv2.COLOR_BGR2GRAY)
-            _, inv_im = cv2.threshold(gray_im, 150, 255, cv2.THRESH_BINARY_INV)
+    for is_top, is_left in itertools.product(top_bottom, left_right):
+        corner_points_current_corner = []
+
+        for corner_size in corner_sizes:
+            # Filter out everything in the center of the image
+            h_slice = slice(0, int(h*corner_size)) if is_top else slice(int(h*(1-corner_size)), h)
+            w_slice = slice(0, int(w*corner_size)) if is_left else slice(int(w*(1-corner_size)), w)
+
+            gray_im = cv2.cvtColor(image_array[h_slice, w_slice], cv2.COLOR_BGR2GRAY)
+            _, inv_im = cv2.threshold(gray_im, 175, 255, cv2.THRESH_BINARY_INV)
             ret, labels = cv2.connectedComponents(inv_im)
             for label in range(1, ret):
                 new_img = (labels == label)
@@ -582,68 +584,38 @@ def find_corner_marker_keypoints(image_array, corner_sizes=[0.125, 0.25, 0.5]):
                 if np.abs(0.5*np.pi - angle) > 2 * np.pi/180:
                     continue  # The two lines are not perpendicular
 
-                marker_boundings = bounding_box_corner_markers(marker_length, theta1, theta2, top, left)
-                for nonzero_indices, marker_bounding in zip(np.nonzero(new_img), marker_boundings):
+                if not np.abs(theta2) < 15 * np.pi/180:
+                    continue  # The two lines are rotated too much
+
+                marker_boundings = bounding_box_corner_markers(marker_length, theta1, theta2, is_top, is_left)
+                invalid_dimensions = False
+                for nonzero_indices, marker_bounding in zip(np.nonzero(new_img)[::-1], marker_boundings):
                     start = np.min(nonzero_indices)
                     end = np.max(nonzero_indices)
                     blob_length = end - start
 
                     if not marker_bounding / max_error < blob_length < marker_bounding * max_error:
-                        continue  # The dimensions of the blob are too large
+                        invalid_dimensions = True  # The dimensions of the blob are too large
+                        break
+                if invalid_dimensions:
+                    continue
 
                 y, x = np.linalg.solve([[np.cos(theta1), np.sin(theta1)], [np.cos(theta2), np.sin(theta2)]],
                                        [rho1, rho2])
                 # TODO: add failsafes
                 if np.isnan(x) or np.isnan(y):
                     continue
-                corner_points.append((int(y) + corner[1].start, int(x) + corner[0].start))
+                corner_points_current_corner.append((int(y) + w_slice.start, int(x) + h_slice.start))
 
-        try:
-            check_corner_keypoints(image_array, corner_points, minimum=1)
+            if len(corner_points_current_corner) == 1:
+                corner_points.append(corner_points_current_corner[0])
+                break
 
-            if len(corner_points) > len(best_points):
-                # Save these points as the best attempt so far
-                best_points = corner_points
-        except RuntimeError:
-            pass
+            if len(corner_points_current_corner) > 1:
+                # More than one corner point found, ignore this corner
+                break
 
-        try:
-            check_corner_keypoints(image_array, corner_points)
-            # Keypoints are valid and thus return them
-            return corner_points
-        except RuntimeError as e:
-            # If this is the last iteration, attempt to return the
-            # best points found so far, otherwise raise.
-            if corner_size == corner_sizes[-1]:
-                if best_points:
-                    return best_points
-                raise e
-
-
-def check_corner_keypoints(image_array, keypoints, minimum=3):
-    """Checks whether the corner markers are valid.
-
-    1. Checks that there are between minimum (default 3) and 4 corner markers.
-    2. Checks that no 2 corner markers are the same corner of the image.
-
-    Parameters:
-    -----------
-    image_array : numpy array
-    keypoints : list of tuples containing the coordinates of keypoints
-    minimum : minimum number of keypoints to not raise an error
-    """
-    total = len(keypoints)
-    if total < minimum:
-        raise RuntimeError(f"Too few corner markers found ({total}).")
-    elif total > 4:
-        raise RuntimeError(f"Too many corner markers found ({total}).")
-
-    h, w, *_ = image_array.shape
-
-    corners = Counter((x < (w / 2), (y < h / 2)) for x, y in keypoints)
-
-    if max(corners.values()) > 1:
-        raise RuntimeError("Found multiple corner markers in the same corner")
+    return corner_points
 
 
 def realign_image(image_array, page_shape, keypoints=None):
@@ -809,27 +781,27 @@ def bounding_box_corner_markers(marker_length, theta1, theta2, top, left):
     bounding_x = marker_length * np.sin(theta1)
     bounding_y = marker_length * np.cos(theta2)
 
-    bottom = ~top
-    right = ~left
+    bottom = not top
+    right = not left
 
-    if left and top and theta2 < 0:
-        bounding_x -= np.sin(theta2) * marker_length
-    if left and bottom and theta2 > 0:
+    if left and top and theta2 > 0:
         bounding_x += np.sin(theta2) * marker_length
-
-    if right and top and theta2 > 0:
-        bounding_x += np.sin(theta2) * marker_length
-    if right and bottom and theta2 < 0:
+    if left and bottom and theta2 < 0:
         bounding_x -= np.sin(theta2) * marker_length
 
-    if left and top and theta1 > np.pi/2:
-        bounding_y -= np.cos(theta1) * marker_length
-    if left and bottom and theta1 < np.pi/2:
-        bounding_y += np.cos(theta1) * marker_length
+    if right and top and theta2 < 0:
+        bounding_x -= np.sin(theta2) * marker_length
+    if right and bottom and theta2 > 0:
+        bounding_x += np.sin(theta2) * marker_length
 
-    if right and top and theta1 < np.pi/2:
+    if left and top and theta1 < np.pi/2:
         bounding_y += np.cos(theta1) * marker_length
-    if right and bottom and theta1 > np.pi/2:
+    if left and bottom and theta1 > np.pi/2:
         bounding_y -= np.cos(theta1) * marker_length
+
+    if right and top and theta1 > np.pi/2:
+        bounding_y -= np.cos(theta1) * marker_length
+    if right and bottom and theta1 < np.pi/2:
+        bounding_y += np.cos(theta1) * marker_length
 
     return bounding_x, bounding_y

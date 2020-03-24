@@ -640,7 +640,7 @@ class Exams extends React.Component {
         <p className='panel-heading'>
           Problem details
         </p>
-        {selectedWidgetId === null ? (
+        {selectedWidgetId === null || !props.problem ? (
           <div className='panel-block'>
             <div className='field'>
               <p style={{ margin: '0.625em 0', minHeight: '3em' }}>
@@ -774,17 +774,17 @@ class Exams extends React.Component {
                 </select>
               </div>
             </div>
+            <div className='panel-block'>
+              <button
+                disabled={props.disabledDelete}
+                className='button is-danger is-fullwidth'
+                onClick={() => props.onDeleteClick()}
+              >
+                Delete problem
+              </button>
+            </div>
           </React.Fragment>
         }
-        <div className='panel-block'>
-          <button
-            disabled={props.disabledDelete}
-            className='button is-danger is-fullwidth'
-            onClick={() => props.onDeleteClick()}
-          >
-            Delete problem
-          </button>
-        </div>
       </nav>
     )
   }

@@ -566,28 +566,43 @@ def find_corner_marker_keypoints(image_array, corner_sizes=[0.125, 0.25, 0.5]):
                 if not marker_area_min / max_error**2 < blob_area < marker_area * max_error**2:
                     continue  # The area of the blob is too small or too large
 
-                lines = cv2.HoughLines(new_img.astype(np.uint8), 1, np.pi/180, int(marker_length * .9))
-                if lines is None:
-                    continue  # Didn't find any lines
-                lines = lines.reshape(-1, 2).T
+                new_img_uint8 = new_img.astype(np.uint8)
 
-                # One of the lines is nearly horizontal, can have both theta ≈ 0 or theta ≈ π;
-                # here we flip those points to ensure that we end up with two reasonably contiguous regions.
-                to_flip = lines[1] > 3*np.pi/4
-                lines[1, to_flip] -= np.pi
-                lines[0, to_flip] *= -1
-                v = (lines[1] > np.pi/4)
-                if np.all(v) or not np.any(v):
-                    continue  # All lines have roughly the same orientation
+                angle_resolution = 0.25 * np.pi/180
+                spatial_resolution = 1
+                max_angle = 15 * np.pi/180
+                threshold = int(marker_length * .9)
 
-                rho1, theta1 = np.average(lines[:, v], axis=1)
-                rho2, theta2 = np.average(lines[:, ~v], axis=1)
+                lines_vertical_1 = cv2.HoughLines(new_img_uint8, rho=spatial_resolution, theta=angle_resolution,
+                                                  threshold=threshold, min_theta=0, max_theta=max_angle)
+                lines_vertical_2 = cv2.HoughLines(new_img_uint8, rho=spatial_resolution, theta=angle_resolution,
+                                                  threshold=threshold, min_theta=np.pi-max_angle, max_theta=np.pi)
+                lines_vertical = (lines_vertical_1, lines_vertical_2)
+                if all(lines is None for lines in lines_vertical):
+                    continue  # Didn't find any vertical lines
+                lines_vertical = np.vstack(
+                        (lines for lines in (lines_vertical) if lines is not None)
+                    )
+
+                lines_horizontal = cv2.HoughLines(new_img_uint8, spatial_resolution, angle_resolution, threshold,
+                                                  min_theta=np.pi/2 - max_angle, max_theta=np.pi/2 + max_angle)
+                if lines_horizontal is None:
+                    continue  # Didn't find any horizontal lines
+
+                lines_vertical = lines_vertical.reshape(-1, 2).T
+                lines_horizontal = lines_horizontal.reshape(-1, 2).T
+
+                # The vertical lines can have both theta ≈ 0 or theta ≈ π, here we flip those
+                # points to ensure that we end up with two reasonably contiguous regions.
+                to_flip = lines_vertical[1] > 3*np.pi/4
+                lines_vertical[1, to_flip] -= np.pi
+                lines_vertical[0, to_flip] *= -1
+
+                rho1, theta1 = np.average(lines_horizontal, axis=1)
+                rho2, theta2 = np.average(lines_vertical, axis=1)
                 angle = np.abs(theta1 - theta2)
-                if np.abs(0.5*np.pi - angle) > 2 * np.pi/180:
+                if np.abs(np.pi/2 - angle) > 2 * np.pi/180:
                     continue  # The two lines are not perpendicular
-
-                if not np.abs(theta2) < 15 * np.pi/180:
-                    continue  # The two lines are rotated too much
 
                 marker_boundings = bounding_box_corner_markers(marker_length, theta1, theta2, is_top, is_left)
                 invalid_dimensions = False

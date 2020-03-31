@@ -550,8 +550,8 @@ def find_corner_marker_keypoints(image_array, corner_sizes=[0.125, 0.25, 0.5]):
 
         for corner_size in corner_sizes:
             # Filter out everything in the center of the image
-            h_slice = slice(0, int(h*corner_size)) if is_top else slice(int(h*(1-corner_size)), h)
-            w_slice = slice(0, int(w*corner_size)) if is_left else slice(int(w*(1-corner_size)), w)
+            h_slice = slice(0, int(h*corner_size)) if is_top else slice(int(h*(1-corner_size)), None)
+            w_slice = slice(0, int(w*corner_size)) if is_left else slice(int(w*(1-corner_size)), None)
 
             gray_im = cv2.cvtColor(image_array[h_slice, w_slice], cv2.COLOR_BGR2GRAY)
             _, inv_im = cv2.threshold(gray_im, 175, 255, cv2.THRESH_BINARY_INV)

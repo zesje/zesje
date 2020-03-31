@@ -592,19 +592,19 @@ def find_corner_marker_keypoints(image_array, corner_sizes=[0.125, 0.25, 0.5]):
                 lines_vertical[1, to_flip] -= np.pi
                 lines_vertical[0, to_flip] *= -1
 
-                rho2, theta2 = np.average(lines_vertical, axis=1)
+                rho_v, theta_v = np.average(lines_vertical, axis=1)
 
                 # Search for horizontal lines that are nearly perpendicular
-                horizontal_angle = theta2 + np.pi/2
+                horizontal_angle = theta_v + np.pi/2
                 lines_horizontal = cv2.HoughLines(new_img_uint8, spatial_resolution, angle_resolution, threshold,
                                                   min_theta=horizontal_angle - max_angle_error, max_theta=horizontal_angle + max_angle_error)
                 if lines_horizontal is None:
                     continue  # Didn't find any horizontal lines
 
                 lines_horizontal = lines_horizontal.reshape(-1, 2).T
-                rho1, theta1 = np.average(lines_horizontal, axis=1)
+                rho_h, theta_h = np.average(lines_horizontal, axis=1)
 
-                marker_boundings = bounding_box_corner_markers(marker_length, theta1, theta2, is_top, is_left)
+                marker_boundings = bounding_box_corner_markers(marker_length, theta_h, theta_v, is_top, is_left)
                 invalid_dimensions = False
                 for nonzero_indices, marker_bounding in zip(np.nonzero(new_img)[::-1], marker_boundings):
                     start = np.min(nonzero_indices)
@@ -617,8 +617,8 @@ def find_corner_marker_keypoints(image_array, corner_sizes=[0.125, 0.25, 0.5]):
                 if invalid_dimensions:
                     continue
 
-                y, x = np.linalg.solve([[np.cos(theta1), np.sin(theta1)], [np.cos(theta2), np.sin(theta2)]],
-                                       [rho1, rho2])
+                y, x = np.linalg.solve([[np.cos(theta_h), np.sin(theta_h)], [np.cos(theta_v), np.sin(theta_v)]],
+                                       [rho_h, rho_v])
                 # TODO: add failsafes
                 if np.isnan(x) or np.isnan(y):
                     continue

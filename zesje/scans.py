@@ -597,7 +597,8 @@ def find_corner_marker_keypoints(image_array, corner_sizes=[0.125, 0.25, 0.5]):
                 # Search for horizontal lines that are nearly perpendicular
                 horizontal_angle = theta_v + np.pi/2
                 lines_horizontal = cv2.HoughLines(new_img_uint8, spatial_resolution, angle_resolution, threshold,
-                                                  min_theta=horizontal_angle - max_angle_error, max_theta=horizontal_angle + max_angle_error)
+                                                  min_theta=horizontal_angle - max_angle_error,
+                                                  max_theta=horizontal_angle + max_angle_error)
                 if lines_horizontal is None:
                     continue  # Didn't find any horizontal lines
 

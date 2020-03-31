@@ -606,12 +606,10 @@ def find_corner_marker_keypoints(image_array, corner_sizes=[0.125, 0.25, 0.5]):
                 rho_h, theta_h = np.average(lines_horizontal, axis=1)
 
                 marker_boundings = bounding_box_corner_markers(marker_length, theta_h, theta_v, is_top, is_left)
+                non_zero_points = cv2.findNonZero(new_img_uint8)
+                *_, blob_width, blob_height = cv2.boundingRect(non_zero_points)
                 invalid_dimensions = False
-                for nonzero_indices, marker_bounding in zip(np.nonzero(new_img)[::-1], marker_boundings):
-                    start = np.min(nonzero_indices)
-                    end = np.max(nonzero_indices)
-                    blob_length = end - start
-
+                for blob_length, marker_bounding in zip((blob_width, blob_height), marker_boundings):
                     if not marker_bounding / max_error < blob_length < marker_bounding * max_error:
                         invalid_dimensions = True  # The dimensions of the blob are too large
                         break

@@ -341,10 +341,11 @@ class Exams(Resource):
             return dict(status=404, message='Exam does not exist.'), 404
 
         args = self.patch_parser.parse_args()
-        if not args['name'].strip():
+        name = args['name'].strip()
+        if not name:
             return dict(status=400, message='Exam name is empty.'), 400
 
-        exam.name = args['name'].strip()
+        exam.name = name
         db.session.commit()
 
         return dict(status=200, message='ok'), 200

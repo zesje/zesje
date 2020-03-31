@@ -570,7 +570,7 @@ def find_corner_marker_keypoints(image_array, corner_sizes=[0.125, 0.25, 0.5]):
 
                 angle_resolution = 0.25 * np.pi/180
                 spatial_resolution = 1
-                max_angle = 15 * np.pi/180
+                max_angle = 10 * np.pi/180
                 max_angle_error = 3 * np.pi/180
                 threshold = int(marker_length * .9)
 

@@ -17,7 +17,7 @@ def get_exam_widget_size(name):
         return ((digits + 1) * (fontsize + margin) + 4 * margin + text_box_width,
                 (fontsize + margin) * 11 + mark_box_size)
     elif name == 'barcode_widget':
-        matrix_box = current_app.config['COPY_NUMBER_MATRIX_BOX']
+        matrix_box = current_app.config['COPY_NUMBER_MATRIX_BOX_SIZE']
         fontsize = current_app.config['COPY_NUMBER_FONTSIZE']
 
         return (matrix_box, matrix_box + fontsize + 1)

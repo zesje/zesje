@@ -9,7 +9,7 @@ ID_GRID_BOX_SIZE = ID_GRID_FONT_SIZE - 2  # Size of student number boxes
 ID_GRID_TEXT_BOX_SIZE = (ID_GRID_FONT_SIZE * 15, ID_GRID_BOX_SIZE * 2 + ID_GRID_MARGIN + 2)  # size of textbox
 
 # copy number widget
-COPY_NUMBER_MATRIX_BOX = 44
+COPY_NUMBER_MATRIX_BOX_SIZE = 44
 COPY_NUMBER_FONTSIZE = 12  # Size of font
 COPY_NUMBER_FONT = 'Helvetica'
 

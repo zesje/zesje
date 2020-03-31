@@ -239,7 +239,7 @@ def generate_datamatrix(exam_token, page_num, copy_num):
 
     data = f'{exam_token}/{copy_num:04d}/{page_num:02d}'
 
-    box_size = current_app.config['COPY_NUMBER_MATRIX_BOX']
+    box_size = current_app.config['COPY_NUMBER_MATRIX_BOX_SIZE']
 
     encoded = encode(data.encode('utf-8'), size='18x18')
     datamatrix = PIL.Image.frombytes('RGB', (encoded.width, encoded.height), encoded.pixels)

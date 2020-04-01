@@ -2,7 +2,7 @@ import functools
 import itertools
 import math
 import os
-from collections import namedtuple, Counter
+from collections import namedtuple
 import signal
 
 import cv2
@@ -529,98 +529,109 @@ def find_corner_marker_keypoints(image_array, corner_sizes=[0.125, 0.25, 0.5]):
     corner_sizes : list of float
         The corner sizes to search the corner markers in
 
-    Raises
-    ------
-    RuntimeError if no valid set of keypoints are found
+    Returns
+    -------
+    corner_points : list of (int, int)
+        The found corner markers, can contain 0-4 corner markers.
     """
     h, w, *_ = image_array.shape
     marker_length = current_app.config['MARKER_LINE_LENGTH'] * guess_dpi(image_array) / 72
     marker_width = current_app.config['MARKER_LINE_WIDTH'] * guess_dpi(image_array) / 72
+    marker_area = marker_length * marker_width * 2
+    marker_area_min = max(marker_length * (marker_width - 1) * 2, 0)  # One pixel thinner due to possible aliasing
 
-    best_points = []
+    corner_points = []
 
-    for corner_size in corner_sizes:
-        # Filter out everything in the center of the image
-        tb = slice(0, int(h*corner_size)), slice(int(h*(1-corner_size)), h)
-        lr = slice(0, int(w*corner_size)), slice(int(w*(1-corner_size)), w)
-        corner_points = []
-        for corner in itertools.product(tb, lr):
-            gray_im = cv2.cvtColor(image_array[corner], cv2.COLOR_BGR2GRAY)
-            _, inv_im = cv2.threshold(gray_im, 150, 255, cv2.THRESH_BINARY_INV)
+    top_bottom = (True, False)
+    left_right = (True, False)
+
+    for is_top, is_left in itertools.product(top_bottom, left_right):
+        corner_points_current_corner = []
+
+        for corner_size in corner_sizes:
+            # Filter out everything in the center of the image
+            h_slice = slice(0, int(h*corner_size)) if is_top else slice(int(h*(1-corner_size)), None)
+            w_slice = slice(0, int(w*corner_size)) if is_left else slice(int(w*(1-corner_size)), None)
+
+            gray_im = cv2.cvtColor(image_array[h_slice, w_slice], cv2.COLOR_BGR2GRAY)
+            _, inv_im = cv2.threshold(gray_im, 175, 255, cv2.THRESH_BINARY_INV)
             ret, labels = cv2.connectedComponents(inv_im)
             for label in range(1, ret):
                 new_img = (labels == label)
-                # multiplier determined to work well empirically
-                if np.sum(new_img) > marker_length * marker_width * 2.83:
-                    continue  # The blob is too large
-                lines = cv2.HoughLines(new_img.astype(np.uint8), 1, np.pi/180, int(marker_length * .9))
-                if lines is None:
-                    continue  # Didn't find any lines
-                lines = lines.reshape(-1, 2).T
 
-                # One of the lines is nearly horizontal, can have both theta ≈ 0 or theta ≈ π;
-                # here we flip those points to ensure that we end up with two reasonably contiguous regions.
-                to_flip = lines[1] > 3*np.pi/4
-                lines[1, to_flip] -= np.pi
-                lines[0, to_flip] *= -1
-                v = (lines[1] > np.pi/4)
-                if np.all(v) or not np.any(v):
+                # Relative error determined to work well empirically
+                max_error = 1.19
+
+                blob_area = np.sum(new_img)
+                if not marker_area_min / max_error**2 < blob_area < marker_area * max_error**2:
+                    continue  # The area of the blob is too small or too large
+
+                new_img_uint8 = new_img.astype(np.uint8)
+
+                angle_resolution = 0.25 * np.pi/180
+                spatial_resolution = 1
+                max_angle = 10 * np.pi/180
+                max_angle_error = 3 * np.pi/180
+                threshold = int(marker_length * .9)
+
+                lines_vertical_1 = cv2.HoughLines(new_img_uint8, rho=spatial_resolution, theta=angle_resolution,
+                                                  threshold=threshold, min_theta=0, max_theta=max_angle)
+                lines_vertical_2 = cv2.HoughLines(new_img_uint8, rho=spatial_resolution, theta=angle_resolution,
+                                                  threshold=threshold, min_theta=np.pi-max_angle, max_theta=np.pi)
+                lines_vertical = (lines_vertical_1, lines_vertical_2)
+                if all(lines is None for lines in lines_vertical):
+                    continue  # Didn't find any vertical lines
+                lines_vertical = np.vstack(
+                        (lines for lines in (lines_vertical) if lines is not None)
+                    )
+                lines_vertical = lines_vertical.reshape(-1, 2).T
+
+                # The vertical lines can have both theta ≈ 0 or theta ≈ π, here we flip those
+                # points to ensure that we end up with two reasonably contiguous regions.
+                to_flip = lines_vertical[1] > 3*np.pi/4
+                lines_vertical[1, to_flip] -= np.pi
+                lines_vertical[0, to_flip] *= -1
+
+                rho_v, theta_v = np.average(lines_vertical, axis=1)
+
+                # Search for horizontal lines that are nearly perpendicular
+                horizontal_angle = theta_v + np.pi/2
+                lines_horizontal = cv2.HoughLines(new_img_uint8, spatial_resolution, angle_resolution, threshold,
+                                                  min_theta=horizontal_angle - max_angle_error,
+                                                  max_theta=horizontal_angle + max_angle_error)
+                if lines_horizontal is None:
+                    continue  # Didn't find any horizontal lines
+
+                lines_horizontal = lines_horizontal.reshape(-1, 2).T
+                rho_h, theta_h = np.average(lines_horizontal, axis=1)
+
+                marker_boundings = bounding_box_corner_markers(marker_length, theta_h, theta_v, is_top, is_left)
+                non_zero_points = cv2.findNonZero(new_img_uint8)
+                *_, blob_width, blob_height = cv2.boundingRect(non_zero_points)
+                invalid_dimensions = False
+                for blob_length, marker_bounding in zip((blob_width, blob_height), marker_boundings):
+                    if not marker_bounding / max_error < blob_length < marker_bounding * max_error:
+                        invalid_dimensions = True  # The dimensions of the blob are too large
+                        break
+                if invalid_dimensions:
                     continue
-                rho1, theta1 = np.average(lines[:, v], axis=1)
-                rho2, theta2 = np.average(lines[:, ~v], axis=1)
-                y, x = np.linalg.solve([[np.cos(theta1), np.sin(theta1)], [np.cos(theta2), np.sin(theta2)]],
-                                       [rho1, rho2])
+
+                y, x = np.linalg.solve([[np.cos(theta_h), np.sin(theta_h)], [np.cos(theta_v), np.sin(theta_v)]],
+                                       [rho_h, rho_v])
                 # TODO: add failsafes
                 if np.isnan(x) or np.isnan(y):
                     continue
-                corner_points.append((int(y) + corner[1].start, int(x) + corner[0].start))
+                corner_points_current_corner.append((int(y) + w_slice.start, int(x) + h_slice.start))
 
-        try:
-            check_corner_keypoints(image_array, corner_points, minimum=1)
+            if len(corner_points_current_corner) == 1:
+                corner_points.append(corner_points_current_corner[0])
+                break
 
-            if len(corner_points) > len(best_points):
-                # Save these points as the best attempt so far
-                best_points = corner_points
-        except RuntimeError:
-            pass
+            if len(corner_points_current_corner) > 1:
+                # More than one corner point found, ignore this corner
+                break
 
-        try:
-            check_corner_keypoints(image_array, corner_points)
-            # Keypoints are valid and thus return them
-            return corner_points
-        except RuntimeError as e:
-            # If this is the last iteration, attempt to return the
-            # best points found so far, otherwise raise.
-            if corner_size == corner_sizes[-1]:
-                if best_points:
-                    return best_points
-                raise e
-
-
-def check_corner_keypoints(image_array, keypoints, minimum=3):
-    """Checks whether the corner markers are valid.
-
-    1. Checks that there are between minimum (default 3) and 4 corner markers.
-    2. Checks that no 2 corner markers are the same corner of the image.
-
-    Parameters:
-    -----------
-    image_array : numpy array
-    keypoints : list of tuples containing the coordinates of keypoints
-    minimum : minimum number of keypoints to not raise an error
-    """
-    total = len(keypoints)
-    if total < minimum:
-        raise RuntimeError(f"Too few corner markers found ({total}).")
-    elif total > 4:
-        raise RuntimeError(f"Too many corner markers found ({total}).")
-
-    h, w, *_ = image_array.shape
-
-    corners = Counter((x < (w / 2), (y < h / 2)) for x, y in keypoints)
-
-    if max(corners.values()) > 1:
-        raise RuntimeError("Found multiple corner markers in the same corner")
+    return corner_points
 
 
 def realign_image(image_array, page_shape, keypoints=None):
@@ -640,6 +651,10 @@ def realign_image(image_array, page_shape, keypoints=None):
     -------
     return_array: numpy.array
         The image realigned properly.
+
+    Raises
+    ------
+    RuntimeError if no corner markers are detected or provided
     """
 
     if not keypoints:
@@ -757,3 +772,56 @@ def original_corner_markers(dpi):
                      (right_x, top_y),
                      (left_x, bottom_y),
                      (right_x, bottom_y)])
+
+
+def bounding_box_corner_markers(marker_length, theta1, theta2, top, left):
+    """
+    Computes the theoretical bounding box of a tilted corner marker.
+
+    The result is only valid for a rotation up to 45 degrees.
+
+    params
+    ------
+    marker_length : int
+        The configured length of the corner marker in pixels
+    theta1 : int
+        Angle of the detected horizontal hough line
+    theta2 : int
+        Angle of the detected vertical hough line
+    top : bool
+        Whether the corner marker is at the top
+    left : bool
+        Whether the corner marker is at the left
+
+    returns
+    -------
+    bounding_x, bounding_y : (int, int)
+        The bounding box (in pixels) in x- and y-direction
+    """
+    bounding_x = marker_length * np.sin(theta1)
+    bounding_y = marker_length * np.cos(theta2)
+
+    bottom = not top
+    right = not left
+
+    if left and top and theta2 > 0:
+        bounding_x += np.sin(theta2) * marker_length
+    if left and bottom and theta2 < 0:
+        bounding_x -= np.sin(theta2) * marker_length
+
+    if right and top and theta2 < 0:
+        bounding_x -= np.sin(theta2) * marker_length
+    if right and bottom and theta2 > 0:
+        bounding_x += np.sin(theta2) * marker_length
+
+    if left and top and theta1 < np.pi/2:
+        bounding_y += np.cos(theta1) * marker_length
+    if left and bottom and theta1 > np.pi/2:
+        bounding_y -= np.cos(theta1) * marker_length
+
+    if right and top and theta1 > np.pi/2:
+        bounding_y -= np.cos(theta1) * marker_length
+    if right and bottom and theta1 < np.pi/2:
+        bounding_y += np.cos(theta1) * marker_length
+
+    return bounding_x, bounding_y

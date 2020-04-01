@@ -41,10 +41,13 @@ def test_calc_angle(test_input1, test_input2, expected):
 # Tests whether the amount of cornermakers is enough to calculate the angle and
 # whether it is lower than 5 as we only add 4 corner markers per page.
 test_args = [
+    ('blank.jpg', 0),
     ('missing_two_corners.jpg', 2),
     ('sample_exam.jpg', 4),
     ('shifted.jpg', 4),
     ('tilted.jpg', 4),
+    ('tilted_extreme.jpg', 4),
+    ('tilted_extreme_2.jpg', 4),
     ('messy_three_corners.jpg', 3)]
 
 
@@ -55,12 +58,6 @@ def test_detect_enough_cornermarkers(name, expected, datadir, config_app):
     image = generate_image(name, datadir)
     keypoints = scans.find_corner_marker_keypoints(image)
     assert(len(keypoints) == expected)
-
-
-def test_detect_few_cornermarkers(datadir, config_app):
-    image = generate_image('blank.jpg', datadir)
-    with pytest.raises(RuntimeError):
-        scans.find_corner_marker_keypoints(image)
 
 
 # Tests whether the detected keypoints are actually corner markers.

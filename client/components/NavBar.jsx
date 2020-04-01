@@ -96,7 +96,7 @@ const ExportDropdown = (props) => {
         <a className='navbar-item'
           href={'/api/export/graders/' + props.exam.id}
           disabled={props.disabled}>
-          Export graders statistics
+          Export grader statistics
         </a>
         <hr className='navbar-divider' />
         <a className='navbar-item' href='/api/export/full'>

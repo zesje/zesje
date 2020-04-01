@@ -144,11 +144,13 @@ def generate_id_grid(canv, x, y):
     margin = current_app.config['ID_GRID_MARGIN']  # Margin between elements and sides
     digits = current_app.config['ID_GRID_DIGITS']  # Max amount of digits you want for student numbers
 
-    mark_box_size = fontsize - 2  # Size of student number boxes
-    text_box_width = fontsize * 15  # Width of textbox
-    text_box_height = mark_box_size * 2 + margin + 2  # Height of textbox
+    mark_box_size = current_app.config['ID_GRID_BOX_SIZE']  # Size of student number boxes
+    text_box_width, text_box_height = current_app.config['ID_GRID_TEXT_BOX_SIZE']  # size of textbox
 
     canv.setFont(current_app.config['ID_GRID_FONT'], fontsize)
+
+    # Remember to modify the ExamWidget size property after a change
+    # in the layout that affects the size of the widget
 
     # Draw numbers and boxes for student number
     canv.drawString(x + margin, y - fontsize - margin, "Student number :")
@@ -240,9 +242,11 @@ def generate_datamatrix(exam_token, page_num, copy_num):
 
     data = f'{exam_token}/{copy_num:04d}/{page_num:02d}'
 
+    box_size = current_app.config['COPY_NUMBER_MATRIX_BOX_SIZE']
+
     encoded = encode(data.encode('utf-8'), size='18x18')
     datamatrix = PIL.Image.frombytes('RGB', (encoded.width, encoded.height), encoded.pixels)
-    datamatrix = datamatrix.resize((44, 44)).convert('L')
+    datamatrix = datamatrix.resize((box_size, box_size)).convert('L')
     return datamatrix
 
 

@@ -204,6 +204,25 @@ class ExamWidget(Widget):
         'polymorphic_identity': 'exam_widget'
     }
 
+    @property
+    def size(self):
+        if self.name == 'student_id_widget':
+            fontsize = current_app.config['ID_GRID_FONT_SIZE']
+            margin = current_app.config['ID_GRID_MARGIN']
+            digits = current_app.config['ID_GRID_DIGITS']
+            mark_box_size = current_app.config['ID_GRID_BOX_SIZE']
+            text_box_width, text_box_height = current_app.config['ID_GRID_TEXT_BOX_SIZE']
+
+            return ((digits + 1) * (fontsize + margin) + 4 * margin + text_box_width,
+                    (fontsize + margin) * 11 + mark_box_size)
+        elif self.name == 'barcode_widget':
+            matrix_box = current_app.config['COPY_NUMBER_MATRIX_BOX_SIZE']
+            fontsize = current_app.config['COPY_NUMBER_FONTSIZE']
+
+            return (matrix_box, matrix_box + fontsize + 1)
+
+        raise ValueError(f'Exam widget with name {self.name} has no size defined.')
+
 
 class ProblemWidget(Widget):
     __tablename__ = 'problem_widget'

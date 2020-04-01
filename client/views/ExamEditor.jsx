@@ -1,4 +1,5 @@
 import React from 'react'
+import Notification from 'react-bulma-notification'
 
 import barcodeExampleImage from '../components/barcode_example.png'
 // FIXME!
@@ -189,6 +190,17 @@ class ExamEditor extends React.Component {
       // ok
     }).catch(err => {
       console.log(err)
+
+      err.json().then(res => {
+        if (res.status === 409) {
+          // exam widget position is not valid, notify and update it
+          Notification.warn(res.message)
+          this.props.updateWidget(res.widgetId, {
+            x: { $set: res.position.x },
+            y: { $set: res.position.y }
+          })
+        }
+      })
       // update to try and get a consistent state
       this.props.updateExam()
     })

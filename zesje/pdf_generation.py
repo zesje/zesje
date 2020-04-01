@@ -149,6 +149,9 @@ def generate_id_grid(canv, x, y):
 
     canv.setFont(current_app.config['ID_GRID_FONT'], fontsize)
 
+    # Remember to modify the ExamWidget size property after a change
+    # in the layout that affects the size of the widget
+
     # Draw numbers and boxes for student number
     canv.drawString(x + margin, y - fontsize - margin, "Student number :")
     for i in range(10):

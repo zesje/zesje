@@ -47,9 +47,7 @@ def get(exam_id, problem_id, submission_id, full_page=False):
     if page is None:
         abort(404, f'Page #{problem.widget.page} is missing for copy #{submission_id}.')
 
-    page_path = page.path
-
-    page_im = cv2.imread(page_path)
+    page_im = cv2.imread(page.abs_path)
 
     dpi = guess_dpi(page_im)
 

@@ -95,6 +95,8 @@ def full_exam_data(exam_id):
             problem.pop('max_score')
 
         results[student['id']] = {
+            ('First name', ''): student['first_name'],
+            ('Last name', ''): student['last_name'],
             **{
                 field: entry
                 for problem in problems

@@ -50,12 +50,21 @@ def exam(file_format, exam_id):
     if file_format not in ('dataframe', 'xlsx', 'xlsx_detailed'):
         abort(404)
 
-    serialized = BytesIO()
+    serialized = ResilientBytesIO()
 
     data.index.name = 'Student ID'
+    data = data.infer_objects()  # convert columns to numeric types if possible
+
+    # move the student names to the first columns
+    cols = data.columns
+    cols_names = data.columns.get_level_values(0).isin(['First name', 'Last name'])
+    cols = list(cols[cols_names]) + list(cols[~cols_names])
+    data = data[cols]
 
     if file_format == 'xlsx':
-        data = data.iloc[:, data.columns.get_level_values(1) == 'total']
+        cols_total = data.columns.get_level_values(1) == 'total'
+        cols_total[:2] = True  # include student names
+        data = data.iloc[:, cols_total]
         data.columns = data.columns.get_level_values(0)
 
     if file_format == 'dataframe':
@@ -170,3 +179,11 @@ def grader_statistics(exam_id):
         mimetype='application/json',
         cache_timeout=0,
     )
+
+
+class ResilientBytesIO(BytesIO):
+    def close(self):
+        pass  # Refuse to close to avoid pandas bug
+
+    def really_close(self):
+        super().close()

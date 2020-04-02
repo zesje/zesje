@@ -971,7 +971,7 @@ class Exams extends React.Component {
       <section className='section'>
         <div className='container'>
           <div className='columns is-centered' >
-            <div className='column is-one-quarter-widescreen is-one-third-desktop editor-side-panel' >
+            <div className='column is-one-quarter-fullhd is-one-third-desktop editor-side-panel' >
               <this.PanelExamName />
               <this.Pager
                 page={this.state.page}

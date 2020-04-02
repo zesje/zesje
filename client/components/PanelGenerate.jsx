@@ -11,7 +11,7 @@ class PanelGenerate extends React.Component {
     copyRangeEnd: '',
     type: this.types[0],
     valid: false,
-    editing: true,
+    editing: true
   }
 
   pageNumberOrEmpty = new RegExp(/^([1-9]+\d*)?$/)
@@ -55,7 +55,7 @@ class PanelGenerate extends React.Component {
       onChange={(e) => {
         if (this.pageNumberOrEmpty.test(e.target.value)) {
           this.setState({
-            [props.valueKey]: e.target.value,
+            [props.valueKey]: e.target.value
           }, () => {
             this.validate()
           })

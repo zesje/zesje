@@ -646,7 +646,7 @@ class Exams extends React.Component {
         {selectedWidgetId === null || !props.problem ? (
           <div className='panel-block'>
             <div className='field'>
-              <p style={{ margin: '0.625em 0', minHeight: '3em' }}>
+              <p>
                 To create a problem, draw a rectangle on the exam.
               </p>
             </div>

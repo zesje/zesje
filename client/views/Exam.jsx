@@ -654,7 +654,7 @@ class Exams extends React.Component {
         ) : (
           <React.Fragment>
             <div className='panel-block'>
-              <div className='field'>
+              <div className='field' style={{flexGrow: 1}}>
                 <label className='label'>Name</label>
                 <div className='control'>
                   <input

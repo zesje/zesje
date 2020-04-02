@@ -365,7 +365,7 @@ class Exams extends React.Component {
             Previous
           </button>
         </div>
-        <div className='control'>
+        <div className='control is-expanded'>
           <div className='field-text is-rounded has-text-centered is-link'>
             {'Page ' + pageNum + ' of ' + numPages}
           </div>

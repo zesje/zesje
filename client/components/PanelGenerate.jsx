@@ -118,6 +118,7 @@ class PanelGenerate extends React.Component {
                 <p className='control'>
                   <a
                     className={'button is-expanded is-link'}
+                    disabled={!this.state.valid}
                     href={'/api/exams/' + this.props.examID +
                       '/generated_pdfs' +
                       '?type=' + this.state.type.toLowerCase() +

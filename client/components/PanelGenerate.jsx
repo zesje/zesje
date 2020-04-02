@@ -42,7 +42,7 @@ class PanelGenerate extends React.Component {
 
   renderInput = (props) => {
     // Hardcode the width since Bulma does not support the size attribute
-    props.style['width'] = '3.5em'
+    props.style['minWidth'] = '3.5em'
     return <input
       className={'input ' + this.inputColor()}
       type='text'
@@ -74,60 +74,62 @@ class PanelGenerate extends React.Component {
           <label className='label'>Copy number range</label>
         </div>
         <div className='panel-block'>
-          <div className='field is-grouped'>
-            <div className='field has-addons is-marginless'>
-              <p className='control'>
-                {this.renderInput({
-                  placeholder: 'start',
-                  style: { textAlign: 'right' },
-                  value: this.state.copyRangeStart,
-                  valueKey: 'copyRangeStart'
-                })}
-              </p>
-              <p className='control'>
-                <a className='button is-static'>
-                  -
-                </a>
-              </p>
-              <p className='control'>
-                {this.renderInput({
-                  placeholder: 'end',
-                  style: { textAlign: 'left' },
-                  value: this.state.copyRangeEnd,
-                  valueKey: 'copyRangeEnd'
-                })}
-              </p>
-            </div>
-            <div className='field has-addons' style={{ marginLeft: '1em' }}>
-              <p className='control'>
-                <span className='select'>
-                  <select
-                    onChange={(e) => {
-                      this.setState({
-                        type: e.target.value
-                      })
-                    }}
-                  >
-                    {this.types.map((type, index) => {
-                      return <option key={'key_' + index}>{type}</option>
-                    })}
-                  </select>
-                </span>
-              </p>
-              <p className='control'>
-                <a
-                  className={'button is-expanded is-link'}
-                  href={'/api/exams/' + this.props.examID +
-                    '/generated_pdfs' +
-                    '?type=' + this.state.type.toLowerCase() +
-                    '&copies_start=' + parseInt(this.state.copyRangeStart) +
-                    '&copies_end=' + parseInt(this.state.copyRangeEnd)}
-                >
-                  <span className='icon is-small'>
-                    <i className='fa fa-download' />
+          <div className='field is-horizontal is-horizontal-mobile'>
+            <div className='field-body'>
+              <div className='field has-addons'>
+                <p className='control is-expanded'>
+                  {this.renderInput({
+                    placeholder: 'start',
+                    style: { textAlign: 'right' },
+                    value: this.state.copyRangeStart,
+                    valueKey: 'copyRangeStart'
+                  })}
+                </p>
+                <p className='control'>
+                  <a className='button is-static'>
+                    -
+                  </a>
+                </p>
+                <p className='control is-expanded'>
+                  {this.renderInput({
+                    placeholder: 'end',
+                    style: { textAlign: 'left' },
+                    value: this.state.copyRangeEnd,
+                    valueKey: 'copyRangeEnd'
+                  })}
+                </p>
+              </div>
+              <div className='field has-addons'>
+                <p className='control'>
+                  <span className='select'>
+                    <select
+                      onChange={(e) => {
+                        this.setState({
+                          type: e.target.value
+                        })
+                      }}
+                    >
+                      {this.types.map((type, index) => {
+                        return <option key={'key_' + index}>{type}</option>
+                      })}
+                    </select>
                   </span>
-                </a>
-              </p>
+                </p>
+                <p className='control'>
+                  <a
+                    className={'button is-expanded is-link'}
+                    href={'/api/exams/' + this.props.examID +
+                      '/generated_pdfs' +
+                      '?type=' + this.state.type.toLowerCase() +
+                      '&copies_start=' + parseInt(this.state.copyRangeStart) +
+                      '&copies_end=' + parseInt(this.state.copyRangeEnd)}
+                  >
+                    <span className='icon is-small'>
+                      <i className='fa fa-download' />
+                    </span>
+                  </a>
+                </p>
+              </div>
             </div>
           </div>
         </div>

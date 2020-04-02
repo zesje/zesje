@@ -365,7 +365,7 @@ class Exams extends React.Component {
             Previous
           </button>
         </div>
-        <div className='control'>
+        <div className='control is-expanded'>
           <div className='field-text is-rounded has-text-centered is-link'>
             {'Page ' + pageNum + ' of ' + numPages}
           </div>
@@ -623,7 +623,7 @@ class Exams extends React.Component {
         <div className='panel-block'>
           <div className='field flex-input'>
             <label>Hide student info when grading</label>
-            <Switch color='info' value={this.props.exam.gradeAnonymous} onChange={(e) => {
+            <Switch color='link' value={this.props.exam.gradeAnonymous} onChange={(e) => {
               api.put(`exams/${this.props.examID}`, {grade_anonymous: !this.props.exam.gradeAnonymous})
                 .then(() => {
                   this.props.updateExam(this.props.examID)
@@ -646,7 +646,7 @@ class Exams extends React.Component {
         {selectedWidgetId === null || !props.problem ? (
           <div className='panel-block'>
             <div className='field'>
-              <p style={{ margin: '0.625em 0', minHeight: '3em' }}>
+              <p>
                 To create a problem, draw a rectangle on the exam.
               </p>
             </div>
@@ -654,7 +654,7 @@ class Exams extends React.Component {
         ) : (
           <React.Fragment>
             <div className='panel-block'>
-              <div className='field'>
+              <div className='field' style={{flexGrow: 1}}>
                 <label className='label'>Name</label>
                 <div className='control'>
                   <input
@@ -971,7 +971,7 @@ class Exams extends React.Component {
       <section className='section'>
         <div className='container'>
           <div className='columns is-centered' >
-            <div className='column is-one-quarter-widescreen is-one-third-desktop editor-side-panel' >
+            <div className='column is-one-quarter-fullhd is-one-third-desktop editor-side-panel' >
               <this.PanelExamName />
               <this.Pager
                 page={this.state.page}

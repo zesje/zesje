@@ -415,11 +415,12 @@ class ExamGeneratedPdfs(Resource):
             datamatrix_y=barcode_widget.y
         )
 
-    post_parser = reqparse.RequestParser()
-    post_parser.add_argument('copies_start', type=int, required=True)
-    post_parser.add_argument('copies_end', type=int, required=True)
+    get_parser = reqparse.RequestParser()
+    get_parser.add_argument('copies_start', type=int, required=True)
+    get_parser.add_argument('copies_end', type=int, required=True)
+    get_parser.add_argument('type', type=str, required=True)
 
-    def post(self, exam_id):
+    def get(self, exam_id):
         """Generates the exams with datamatrices and copy numbers.
 
         A range is given. Ranges should be starting from 1.
@@ -441,7 +442,7 @@ class ExamGeneratedPdfs(Resource):
             The requested file (zip or pdf)
         """
 
-        args = self.post_parser.parse_args()
+        args = self.get_parser.parse_args()
 
         copies_start = args.get('copies_start')
         copies_end = args.get('copies_end')
@@ -449,16 +450,10 @@ class ExamGeneratedPdfs(Resource):
         exam = Exam.query.get(exam_id)
         if exam is None:
             return dict(status=404, message='Exam does not exist.'), 404
-
-        exam_dir = _get_exam_dir(exam_id)
-        generated_pdfs_dir = self._get_generated_exam_dir(exam_dir)
-
         if not exam.finalized:
             msg = f'Exam is not finalized.'
             return dict(status=403, message=msg), 403
-        if copies_start is None or copies_end is None:
-            msg = f'Missing parameters and/or "copies_start", "copies_end"'
-            return dict(status=400, message=msg), 400
+
         if copies_end < copies_start:
             msg = f'copies_end should be larger than copies_start'
             return dict(status=400, message=msg), 400
@@ -466,46 +461,21 @@ class ExamGeneratedPdfs(Resource):
             msg = f'copies_start should be larger than 0'
             return dict(status=400, message=msg), 400
 
+        exam_dir = _get_exam_dir(exam_id)
+        generated_pdfs_dir = self._get_generated_exam_dir(exam_dir)
+
         os.makedirs(generated_pdfs_dir, exist_ok=True)
 
         pdf_paths, copy_nums = self._get_paths_for_range(generated_pdfs_dir, copies_start, copies_end)
 
         generate_selectors = [not os.path.exists(pdf_path) for pdf_path in pdf_paths]
-        pdf_paths = itertools.compress(pdf_paths, generate_selectors)
-        copy_nums = itertools.compress(copy_nums, generate_selectors)
 
-        self._generate_exam_pdfs(exam, pdf_paths, copy_nums)
-
-        return {
-            'success': True
-        }
-
-    get_parser = reqparse.RequestParser()
-    get_parser.add_argument('copies_start', type=int, required=True)
-    get_parser.add_argument('copies_end', type=int, required=True)
-    get_parser.add_argument('type', type=str, required=True)
-
-    def get(self, exam_id):
-        args = self.get_parser.parse_args()
-
-        copies_start = args['copies_start']
-        copies_end = args['copies_end']
-
-        exam = Exam.query.get(exam_id)
-        if exam is None:
-            return dict(status=404, message='Exam does not exist.'), 404
-
-        exam_dir = _get_exam_dir(exam_id)
-        generated_pdfs_dir = self._get_generated_exam_dir(exam_dir)
+        if any(generate_selectors):
+            pdf_paths_to_generate = itertools.compress(pdf_paths, generate_selectors)
+            copy_nums_to_generate = itertools.compress(copy_nums, generate_selectors)
+            self._generate_exam_pdfs(exam, pdf_paths_to_generate, copy_nums_to_generate)
 
         output_file = TemporaryFile()
-
-        pdf_paths, copy_nums = self._get_paths_for_range(generated_pdfs_dir, copies_start, copies_end)
-
-        for pdf_path in pdf_paths:
-            if not os.path.exists(pdf_path):
-                msg = f'One or more exams in range have not been generated (yet)'
-                return dict(status=400, message=msg), 400
 
         if args['type'] == 'pdf':
             join_pdfs(

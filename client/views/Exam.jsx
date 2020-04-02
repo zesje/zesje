@@ -623,7 +623,7 @@ class Exams extends React.Component {
         <div className='panel-block'>
           <div className='field flex-input'>
             <label>Hide student info when grading</label>
-            <Switch color='info' value={this.props.exam.gradeAnonymous} onChange={(e) => {
+            <Switch color='link' value={this.props.exam.gradeAnonymous} onChange={(e) => {
               api.put(`exams/${this.props.examID}`, {grade_anonymous: !this.props.exam.gradeAnonymous})
                 .then(() => {
                   this.props.updateExam(this.props.examID)

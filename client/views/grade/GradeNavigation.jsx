@@ -70,12 +70,12 @@ class GradeNavigation extends React.Component {
               <button type='submit'
                 className={'button is-link' +
                     (this.props.showTooltips ? ' tooltip is-tooltip-active' : '')}
-                data-tooltip='→'
+                data-tooltip='shift + →'
                 onClick={this.props.next}>Next</button>
               <button type='submit'
                 className={'button is-info is-rounded is-hidden-mobile' +
                     (this.props.showTooltips ? ' tooltip is-tooltip-active' : '')}
-                data-tooltip='shift + →'
+                data-tooltip='→'
                 onClick={this.props.nextUngraded}>Ungraded</button>
             </div>
           </div>

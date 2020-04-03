@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 
 import './NavBar.css'
 import * as api from '../api.jsx'
+import 'bulma-tooltip/dist/css/bulma-tooltip.min.css'
 
 import HelpModal from './help/HelpModal.jsx'
 import shortcutsMarkdown from './help/ShortcutsHelp.md'
@@ -16,6 +17,16 @@ const BurgerButton = (props) => (
     <span />
   </button>
 )
+
+const TooltipLink = (props) => {
+  let pred = props.predicate.find(pred => pred[0])
+  if (!pred) pred = [false, null]
+
+  return <div className={'navbar-item no-padding' + (pred[0] ? ' tooltip is-tooltip-bottom' : '')}
+    data-tooltip={pred[1]}>
+    <Link className='navbar-item' disabled={pred[0]} to={props.to}> { props.text } </Link>
+  </div>
+}
 
 const ExamDropdown = (props) => (
   <div className='navbar-item has-dropdown is-hoverable'>
@@ -82,8 +93,10 @@ const ExportDropdown = (props) => {
           </a>
         )}
         <hr className='navbar-divider' />
-        <a className='navbar-item' href={'/api/export/graders/' + props.exam.id}>
-          Export graders statistics
+        <a className='navbar-item'
+          href={'/api/export/graders/' + props.exam.id}
+          disabled={props.disabled}>
+          Export grader statistics
         </a>
         <hr className='navbar-divider' />
         <a className='navbar-item' href='/api/export/full'>
@@ -156,13 +169,9 @@ class NavBar extends React.Component {
   }
 
   render () {
-    const gradingEnabled = this.props.exam.submissions.length &&
-      this.props.exam.problems.length &&
-      this.props.grader !== null
-    const overviewEnabled = this.props.exam.submissions.length > 0
-    const submissionsEnabled = this.props.exam.id !== null
-    const exportEnabled = this.props.exam.id !== null
-    const emailEnabled = this.props.exam.id !== null
+    const predicateExamNotFinalized = [!this.props.exam.finalized, 'The exam is not finalized yet.']
+    const predicateSubmissionsEmpty = [this.props.exam.submissions.length === 0, 'There are no submissions, please upload some.']
+    const predicateNoGraderSelected = [this.props.grader === null, 'Please select a grader.']
 
     return (
       <nav className='navbar' role='navigation' aria-label='dropdown navigation'>
@@ -188,12 +197,24 @@ class NavBar extends React.Component {
               : <Link className='navbar-item' to='/exams'>Add exam</Link>
             }
 
-            <Link className='navbar-item' disabled={!submissionsEnabled} to={'/submissions/' + this.props.exam.id}>Submissions</Link>
+            <TooltipLink
+              to={'/submissions/' + this.props.exam.id}
+              text='Submissions'
+              predicate={[predicateExamNotFinalized]} />
             <Link className='navbar-item' to='/students'>Students</Link>
-            <Link className='navbar-item' disabled={!gradingEnabled} to='/grade'><strong><i>Grade</i></strong></Link>
-            <Link className='navbar-item' disabled={!overviewEnabled} to='/overview'>Overview</Link>
-            <Link className='navbar-item' disabled={!emailEnabled} to='/email'>Email</Link>
-            <ExportDropdown className='navbar-item' disabled={!exportEnabled} exam={this.props.exam} />
+            <TooltipLink
+              to='/grade'
+              text={<strong><i>Grade</i></strong>}
+              predicate={[predicateExamNotFinalized, predicateSubmissionsEmpty, predicateNoGraderSelected]} />
+            <TooltipLink
+              to='/overview'
+              text='Overview'
+              predicate={[predicateExamNotFinalized, predicateSubmissionsEmpty]} />
+            <TooltipLink
+              to='/email'
+              text='Email'
+              predicate={[predicateExamNotFinalized, predicateSubmissionsEmpty]} />
+            <ExportDropdown className='navbar-item' disabled={predicateSubmissionsEmpty[0]} exam={this.props.exam} />
             <a className='navbar-item' onClick={() => this.setHelpPage('shortcuts')}>
               {this.pages['shortcuts'].title}
             </a>

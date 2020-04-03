@@ -267,7 +267,7 @@ def test_image_extraction(datadir, filename):
                                                 ("a4-rotated-2-bottom-markers.png", [(59, 1695), (1181, 1695)]),
                                                 ("a4-shifted-1-marker.png", [(59, 1695)])
                                                 ])
-def test_realign_image(datadir, file_name, markers):
+def test_realign_image(config_app, datadir, file_name, markers):
     dir_name = "cornermarkers"
     epsilon = 1
 
@@ -288,7 +288,7 @@ def test_realign_image(datadir, file_name, markers):
         assert diff[1] <= epsilon
 
 
-def test_incomplete_reference_realign_image(datadir):
+def test_incomplete_reference_realign_image(config_app, datadir):
     dir_name = "cornermarkers"
     epsilon = 1
     test_file = os.path.join(datadir, dir_name, "a4-rotated.png")

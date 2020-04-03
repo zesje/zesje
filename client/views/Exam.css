@@ -79,3 +79,27 @@ div.mcq-option img.mcq-box {
   flex-grow: 0;
 }
 
+.field.is-horizontal.is-horizontal-mobile {
+  display: flex;
+}
+
+.field.is-horizontal.is-horizontal-mobile > .field-body > .field {
+  flex-shrink: 1;
+  margin-bottom: 0;
+}
+
+.field.is-horizontal.is-horizontal-mobile > .field-body {
+  display: flex;
+  flex-basis: 0;
+  flex-grow: 5;
+  flex-shrink: 1;
+}
+
+.field.is-horizontal.is-horizontal-mobile > .field-body > .field:not(:last-child) {
+  margin-right: .75rem;
+}
+
+.field.is-horizontal.is-horizontal-mobile > .field-body > .field:not(:is-narrow) {
+  flex-grow: 1;
+}
+

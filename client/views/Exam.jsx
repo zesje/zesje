@@ -21,6 +21,7 @@ import * as api from '../api.jsx'
 class Exams extends React.Component {
   state = {
     examID: null,
+    examName: null,
     page: 0,
     editActive: false,
     feedbackToEdit: null,
@@ -33,7 +34,8 @@ class Exams extends React.Component {
     deletingExam: false,
     deletingWidget: false,
     deletingMCWidget: false,
-    showPanelMCQ: false
+    showPanelMCQ: false,
+    editingExamName: false
   }
 
   static getDerivedStateFromProps = (newProps, prevState) => {
@@ -72,6 +74,7 @@ class Exams extends React.Component {
 
       return {
         examID: newProps.exam.id,
+        examName: newProps.exam.name,
         page: 0,
         numPages: null,
         selectedWidgetId: null,
@@ -362,7 +365,7 @@ class Exams extends React.Component {
             Previous
           </button>
         </div>
-        <div className='control'>
+        <div className='control is-expanded'>
           <div className='field-text is-rounded has-text-centered is-link'>
             {'Page ' + pageNum + ' of ' + numPages}
           </div>
@@ -620,7 +623,7 @@ class Exams extends React.Component {
         <div className='panel-block'>
           <div className='field flex-input'>
             <label>Hide student info when grading</label>
-            <Switch color='info' value={this.props.exam.gradeAnonymous} onChange={(e) => {
+            <Switch color='link' value={this.props.exam.gradeAnonymous} onChange={(e) => {
               api.put(`exams/${this.props.examID}`, {grade_anonymous: !this.props.exam.gradeAnonymous})
                 .then(() => {
                   this.props.updateExam(this.props.examID)
@@ -640,10 +643,10 @@ class Exams extends React.Component {
         <p className='panel-heading'>
           Problem details
         </p>
-        {selectedWidgetId === null ? (
+        {selectedWidgetId === null || !props.problem ? (
           <div className='panel-block'>
             <div className='field'>
-              <p style={{ margin: '0.625em 0', minHeight: '3em' }}>
+              <p>
                 To create a problem, draw a rectangle on the exam.
               </p>
             </div>
@@ -651,7 +654,7 @@ class Exams extends React.Component {
         ) : (
           <React.Fragment>
             <div className='panel-block'>
-              <div className='field'>
+              <div className='field' style={{flexGrow: 1}}>
                 <label className='label'>Name</label>
                 <div className='control'>
                   <input
@@ -774,17 +777,17 @@ class Exams extends React.Component {
                 </select>
               </div>
             </div>
+            <div className='panel-block'>
+              <button
+                disabled={props.disabledDelete}
+                className='button is-danger is-fullwidth'
+                onClick={() => props.onDeleteClick()}
+              >
+                Delete problem
+              </button>
+            </div>
           </React.Fragment>
         }
-        <div className='panel-block'>
-          <button
-            disabled={props.disabledDelete}
-            className='button is-danger is-fullwidth'
-            onClick={() => props.onDeleteClick()}
-          >
-            Delete problem
-          </button>
-        </div>
       </nav>
     )
   }
@@ -881,15 +884,95 @@ class Exams extends React.Component {
     )
   }
 
+  PanelExamName = () => {
+    if (!this.state.editingExamName) {
+      return (
+        <nav className='panel'>
+          <p className='panel-heading'>
+            Exam details
+          </p>
+          <div className='panel-block'>
+            <p className='is-size-3'>
+              {this.state.examName}
+            </p>
+            <Tooltip
+              icon='pencil'
+              location='top'
+              text='Click to edit the exam name.'
+              clickAction={() => this.setState({editingExamName: true})}
+            />
+          </div>
+        </nav>
+      )
+    } else {
+      return (
+        <nav className='panel'>
+          <p className='panel-heading'>
+            Exam details
+          </p>
+          <div className='panel-block'>
+            <input className='input is-link'
+              type='text'
+              placeholder='Exam name'
+              value={this.state.examName}
+              onChange={(e) => {
+                this.setState({
+                  examName: e.target.value
+                })
+              }} />
+          </div>
+          <div className='panel-block field is-grouped'>
+            <button
+              className='button is-danger is-link is-fullwidth'
+              onClick={() => {
+                this.setState({
+                  examName: this.props.exam.name,
+                  editingExamName: false
+                })
+              }}
+            >
+              Cancel
+            </button>
+            <button
+              className='button is-link is-fullwidth'
+              disabled={this.state.examName === this.props.exam.name || this.state.examName === ''}
+              onClick={() => {
+                api.patch(`exams/${this.state.examID}`, {name: this.state.examName})
+                  .then(() => {
+                    this.setState({editingExamName: false})
+
+                    // In order to change the name everywhere in the UI we are forced to
+                    // update the whole exam here as well as the exam list in the navbar.
+                    // This is not ideal and should be addressed in
+                    // https://gitlab.kwant-project.org/zesje/zesje/issues/388
+                    // TODO: implement data locality for this view
+                    this.props.updateExam(this.state.examID)
+                    this.props.updateExamList()
+                  })
+                  .catch(err => {
+                    console.log(err)
+                    err.json().then(e => {
+                      Notification.error('Could not save exam name: ' + e.message)
+                    })
+                  })
+              }}
+            >
+              Save
+            </button>
+          </div>
+        </nav>
+      )
+    }
+  }
+
   render () {
     return <div>
       <Hero />
       <section className='section'>
         <div className='container'>
           <div className='columns is-centered' >
-            <div className='column is-one-quarter-widescreen is-one-third-desktop editor-side-panel' >
-              <p className='title is-1'>Exam details</p>
-              <p className='subtitle is-3'>{'Selected: ' + this.props.exam.name}</p>
+            <div className='column is-one-quarter-fullhd is-one-third-desktop editor-side-panel' >
+              <this.PanelExamName />
               <this.Pager
                 page={this.state.page}
                 numPages={this.state.numPages}

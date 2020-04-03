@@ -41,7 +41,7 @@ from tempfile import NamedTemporaryFile
 
 from lorem.text import TextLorem
 
-from zesje.database import db, Exam, Scan
+from zesje.database import db, Exam, Scan, Submission, Solution, Page
 from zesje.scans import _process_pdf
 from zesje.factory import create_app
 
@@ -110,7 +110,23 @@ def generate_students(students):
     } for i in range(students)]
 
 
-def handle_pdf_processing(exam_id, pdf):
+def _fake_process_pdf(scan, pages, student_ids):
+    for copy in range(1, len(student_ids) - 1):
+        sub = Submission(copy_number=copy, exam=scan.exam, student_id=student_ids[copy - 1])
+        db.session.add(sub)
+
+        for problem in scan.exam.problems:
+            db.session.add(Solution(problem=problem, submission=sub))
+
+        base_copy_path = os.path.join(f'{scan.exam.id}_data', 'submissions', f'{copy}')
+        for page in range(pages + 1):
+            db.session.add(Page(path=os.path.join(base_copy_path, f'page{page:02d}.jpg'), submission=sub, number=page))
+
+    scan.status = 'success'
+    db.session.commit()
+
+
+def handle_pdf_processing(exam_id, pdf, pages, student_ids, skip_processing=False):
     exam = Exam.query.get(exam_id)
     scan = Scan(exam=exam, name=pdf.name,
                 status='processing', message='Waiting...')
@@ -123,7 +139,10 @@ def handle_pdf_processing(exam_id, pdf):
         outfile.write(pdf.read())
         pdf.seek(0)
 
-    _process_pdf(scan_id=scan.id)
+    if skip_processing:
+        _fake_process_pdf(scan, pages, student_ids)
+    else:
+        _process_pdf(scan_id=scan.id)
 
     return {
         'id': scan.id,
@@ -136,19 +155,19 @@ def handle_pdf_processing(exam_id, pdf):
 def generate_solution(pdf, student_id, problems, mc_problems, solve):
     pages = len(problems) // 3
 
-    pdf.setFillColorRGB(0, 0, 1)
+    pdf.setFillColorRGB(0, 0.5, 1)
 
     sID = str(student_id)
     for k in range(7):
         d = int(sID[k])
-        pdf.rect(68 + k * 16, int(A4[1]) - 80 - d * 16, 5, 5, fill=1)
+        pdf.rect(68 + k * 16, int(A4[1]) - 80 - d * 16, 5, 5, fill=1, stroke=0)
 
     for p in range(pages):
-        pdf.setFillColorRGB(0, 0, 1)
+        pdf.setFillColorRGB(0, 0.5, 1)
 
         if p > 0 and random.random() < solve:
             o = random.choice(mc_problems[p - 1]['mc_options'])
-            pdf.rect(o['x'] + 2, o['y'] + 4, 5, 5, fill=1)
+            pdf.rect(o['x'] + 2, o['y'] + 4, 5, 5, fill=1, stroke=0)
 
         for i in range(3):
             prob = problems[3 * p + i]
@@ -186,19 +205,16 @@ def solve_problems(pdf_file, pages, student_ids, problems, mc_problems, solve):
         PdfWriter(pdf_file.name, trailer=exam_pdf).write()
 
 
-def grade_problems(exam_id, graders, problems, submissions, student_ids, grade):
+def grade_problems(exam_id, graders, problems, submissions, grade):
     for k in range(len(submissions)):
         sub = submissions[k]
         submission_id = sub['id']
-
-        # assign a student to each submission
-        client.put(f'/api/submissions/{exam_id}/{submission_id}', json={'studentID': student_ids[k]})
 
         for prob in sub['problems']:
             # randomly select the problem if it is not blanck
             if random.random() <= grade and len(prob['feedback']) == 0:
                 fo = next(filter(lambda p: p['id'] == prob['id'], problems))['feedback']
-                opt = fo[random.randint(1, len(fo) - 1)]
+                opt = fo[random.randint(0, len(fo) - 1)]
                 client.put(f"/api/solution/{exam_id}/{submission_id}/{prob['id']}",
                            json={
                                'id': opt['id'],
@@ -206,7 +222,7 @@ def grade_problems(exam_id, graders, problems, submissions, student_ids, grade):
                            })
 
 
-def create_exam(pages, students, grade, solve):
+def create_exam(pages, students, grade, solve, skip_processing):
     exam_name = lorem_name.sentence().replace('.', '')
     problems = [{
         'question': str(i + 1) + '. ' + lorem_prob.sentence().replace('.', '?'),
@@ -286,8 +302,6 @@ def create_exam(pages, students, grade, solve):
 
     client.put(f'api/exams/{exam_id}', data={'finalized': True})
 
-    # Generate PDFs
-    client.post(f'api/exams/{exam_id}/generated_pdfs', data={"copies_start": 1, "copies_end": students})
     # Download PDFs
     generated = client.get(f'api/exams/{exam_id}/generated_pdfs',
                            data={"copies_start": 1, "copies_end": students, 'type': 'pdf'})
@@ -306,7 +320,7 @@ def create_exam(pages, students, grade, solve):
         submission_pdf.seek(0)
 
         print('\tProcessing scans (this may take a while).',)
-        handle_pdf_processing(exam_id, submission_pdf)
+        handle_pdf_processing(exam_id, submission_pdf, pages, student_ids, skip_processing)
 
     submissions = client.get(f'api/submissions/{exam_id}').get_json()
     problems = client.get('/api/exams/' + str(exam_id)).get_json()['problems']
@@ -314,7 +328,7 @@ def create_exam(pages, students, grade, solve):
     graders = client.get('/api/graders').get_json()
 
     print('\tIt\'s grading time.')
-    grade_problems(exam_id, graders, problems, submissions, student_ids, grade)
+    grade_problems(exam_id, graders, problems, submissions, grade)
 
     print('\tAll done!')
     # exam_data = client.get('/api/exams/' + str(exam_id)).get_json()
@@ -324,6 +338,8 @@ def create_exam(pages, students, grade, solve):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Create example exam data in the database.')
     parser.add_argument('-d', '--delete', action='store_true', help='delete previous data')
+    parser.add_argument('--skip-processing', action='store_true', help='fakes the pdf processing to reduce time. \
+                        As a drawback, blanks will not be detected.')
     parser.add_argument('--exams', type=int, default=1, help='number of exams to add')
     parser.add_argument('--pages', type=int, default=3, help='number of pages per exam (min is 1)')
     parser.add_argument('--students', type=int, default=30, help='number of students per exam')
@@ -346,4 +362,4 @@ if __name__ == '__main__':
             client.post('/api/graders', data={'name': names.get_full_name()})
 
         for _ in range(args.exams):
-            create_exam(max(1, args.pages), args.students, args.grade / 100, args.solve / 100)
+            create_exam(max(1, args.pages), args.students, args.grade / 100, args.solve / 100, args.skip_processing)

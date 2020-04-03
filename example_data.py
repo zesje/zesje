@@ -136,19 +136,19 @@ def handle_pdf_processing(exam_id, pdf):
 def generate_solution(pdf, student_id, problems, mc_problems, solve):
     pages = len(problems) // 3
 
-    pdf.setFillColorRGB(0, 0, 1)
+    pdf.setFillColorRGB(0, 0.5, 1)
 
     sID = str(student_id)
     for k in range(7):
         d = int(sID[k])
-        pdf.rect(68 + k * 16, int(A4[1]) - 80 - d * 16, 5, 5, fill=1)
+        pdf.rect(68 + k * 16, int(A4[1]) - 80 - d * 16, 5, 5, fill=1, stroke=0)
 
     for p in range(pages):
-        pdf.setFillColorRGB(0, 0, 1)
+        pdf.setFillColorRGB(0, 0.5, 1)
 
         if p > 0 and random.random() < solve:
             o = random.choice(mc_problems[p - 1]['mc_options'])
-            pdf.rect(o['x'] + 2, o['y'] + 4, 5, 5, fill=1)
+            pdf.rect(o['x'] + 2, o['y'] + 4, 5, 5, fill=1, stroke=0)
 
         for i in range(3):
             prob = problems[3 * p + i]
@@ -186,13 +186,10 @@ def solve_problems(pdf_file, pages, student_ids, problems, mc_problems, solve):
         PdfWriter(pdf_file.name, trailer=exam_pdf).write()
 
 
-def grade_problems(exam_id, graders, problems, submissions, student_ids, grade):
+def grade_problems(exam_id, graders, problems, submissions, grade):
     for k in range(len(submissions)):
         sub = submissions[k]
         submission_id = sub['id']
-
-        # assign a student to each submission
-        client.put(f'/api/submissions/{exam_id}/{submission_id}', json={'studentID': student_ids[k]})
 
         for prob in sub['problems']:
             # randomly select the problem if it is not blanck
@@ -312,7 +309,7 @@ def create_exam(pages, students, grade, solve):
     graders = client.get('/api/graders').get_json()
 
     print('\tIt\'s grading time.')
-    grade_problems(exam_id, graders, problems, submissions, student_ids, grade)
+    grade_problems(exam_id, graders, problems, submissions, grade)
 
     print('\tAll done!')
     # exam_data = client.get('/api/exams/' + str(exam_id)).get_json()

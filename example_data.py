@@ -286,8 +286,6 @@ def create_exam(pages, students, grade, solve):
 
     client.put(f'api/exams/{exam_id}', data={'finalized': True})
 
-    # Generate PDFs
-    client.post(f'api/exams/{exam_id}/generated_pdfs', data={"copies_start": 1, "copies_end": students})
     # Download PDFs
     generated = client.get(f'api/exams/{exam_id}/generated_pdfs',
                            data={"copies_start": 1, "copies_end": students, 'type': 'pdf'})

@@ -28,7 +28,7 @@ const Tooltip = (props) => {
 const formatTime = (seconds) => {
   // returns human readable string showing the elapsed time
   const formatTimePrecision = (seconds, precision) => (
-    humanizeDuration(1000 * Math.round(seconds / precision) * precision, { delimiter: ' and ' }) 
+    humanizeDuration(1000 * Math.round(seconds / precision) * precision, { delimiter: ' and ' })
   )
 
   if (seconds > 3600) { // Use 10 minute precision

@@ -4,7 +4,6 @@ import Plot from 'react-plotly.js'
 import humanizeDuration from 'humanize-duration'
 import Hero from '../components/Hero.jsx'
 import * as api from '../api.jsx'
-import './Overview.css'
 
 const formatTime = (seconds) => {
   // returns human readable string showing the elapsed time
@@ -56,24 +55,23 @@ class Overview extends React.Component {
 
     return (
       <React.Fragment>
-        <section>
+        <div className='container'>
           {this.renderHeatmap()}
-        </section>
-        <section>
+
           {this.renderHistogramScores(total.scores, total.max_score)}
-        </section>
-        <article className={'message ' + state}>
-          <div className='message-header'>
-            <p>Cronbach's α: <strong>{total.alpha.toPrecision(3)}</strong></p>
-          </div>
-          <div className='message-body'>
-            <p>
-              {message}
-              <br />
-              Follow this <a href='https://en.wikipedia.org/wiki/Cronbach%27s_alpha' target='_blank'>link</a> for more reference.
-            </p>
-          </div>
-        </article>
+          <article className={'message ' + state}>
+            <div className='message-header'>
+              <p>Cronbach's α: <strong>{total.alpha.toPrecision(3)}</strong></p>
+            </div>
+            <div className='message-body'>
+              <p>
+                {message}
+                <br />
+                Follow this <a href='https://en.wikipedia.org/wiki/Cronbach%27s_alpha' target='_blank'>link</a> for more reference.
+              </p>
+            </div>
+          </article>
+        </div>
       </React.Fragment>
     )
   }
@@ -95,7 +93,7 @@ class Overview extends React.Component {
         }
       },
       hoverongaps: false,
-      hovertemplate: '%{y}<br>Score: %{z}<extra></extra>'
+      hovertemplate: 'Score: %{z:.1f}<extra>%{y}</extra>'
     }
 
     const layout = {
@@ -137,11 +135,11 @@ class Overview extends React.Component {
       cumulative: {enabled: true},
       autobinx: false,
       xbins: {
-        start: 0,
-        end: maxScore,
+        start: -0.5,
+        end: maxScore + 0.5,
         size: 1
       },
-      hovertemplate: '%{y:.0f}% of students with a grade < %{x:.0f}<extra></extra>',
+      hovertemplate: '%{y:.0f}% of students with a grade ≤ %{x:.0f}<extra></extra>',
       marker: {
         line: {
           color: 'rgb(8,48,107)',
@@ -177,44 +175,6 @@ class Overview extends React.Component {
       style={{width: '100%', position: 'relative', display: 'inline-block'}} />)
   }
 
-  renderGraderTime = (graders) => {
-    const avgTrace = {
-      x: graders.map(g => g.name),
-      y: graders.map(g => g.avg_grading_time),
-      type: 'scatter',
-      mode: 'markers',
-      name: 'Average',
-      error_y: {
-        type: 'data',
-        array: graders.map(g => Math.random() * 2)
-      }
-    }
-
-    const layoutHeatmap = {
-      title: {
-        text: 'Grading Time',
-        font: {
-          family: 'Courier New',
-          size: 16
-        }
-      },
-      yaxis: {
-        title: 'seconds'
-      }
-    }
-
-    const config = {
-      displaylogo: false
-    }
-
-    return (<Plot
-      data={[avgTrace]}
-      config={config}
-      layout={layoutHeatmap}
-      useResizeHandler
-      style={{width: '100%', position: 'relative', display: 'inline-block'}} />)
-  }
-
   renderGraderGraded = (graders) => {
     const values = graders.map(g => g.graded)
     const labels = graders.map(g => g.name)
@@ -230,6 +190,7 @@ class Overview extends React.Component {
       values: values,
       customdata: graders.map(g => `Average of ${formatTime(g.avg_grading_time)} per solution`),
       type: 'pie',
+      sort: true,
       hovertemplate: '<b>%{label}</b><br>' +
                      '%{value} solutions<br>' +
                      '%{customdata}' +
@@ -262,7 +223,7 @@ class Overview extends React.Component {
     const data = {
       y: feedback.map(f => f.used),
       x: feedback.map(f => f.name),
-      text: feedback.map(f => f.description),
+      text: feedback.map(f => f.description === null ? '' : f.description),
       type: 'bar',
       name: 'Used',
       hovertemplate:
@@ -294,13 +255,14 @@ class Overview extends React.Component {
         title: 'used',
         titlefont: {color: '#1f77b4'},
         tickfont: {color: '#1f77b4'},
-        zeroline: false,
-        showgrid: false
+        zeroline: true,
+        showgrid: true
       },
       yaxis2: {
         title: 'score',
         side: 'right',
         overlaying: 'y',
+        anchor: 'x',
         titlefont: {color: '#ff7f0e'},
         tickfont: {color: '#ff7f0e'},
         zeroline: false,
@@ -326,6 +288,16 @@ class Overview extends React.Component {
 
     return (
       <React.Fragment>
+        {results.scores.length < this.state.stats.students &&
+          <article className='message is-warning'>
+            <div className='message-body'>
+              <p>
+                There are {this.state.stats.students - results.scores.length} solutions left to grade.
+              </p>
+            </div>
+          </article>
+        }
+
         <article className={'message ' + 'is-info'}>
           <div className='message-header'>
             <p>Rir coefficient: <strong>{results.correlation.toPrecision(3)}</strong></p>
@@ -361,7 +333,7 @@ class Overview extends React.Component {
             </div>
             <div className='column is-half'>
               <h3 className='title is-size-2 has-text-centered'> Problem Details </h3>
-              <span className='select is-fullwidth'>
+              <span className='select is-fullwidth is-medium'>
                 <select
                   onChange={(e) => {
                     this.setState({
@@ -374,7 +346,9 @@ class Overview extends React.Component {
                   })}
                 </select>
               </span>
-              { this.renderProblemSummary(this.state.selectedProblem) }
+              <section className='section'>
+                { this.renderProblemSummary(this.state.selectedProblem) }
+              </section>
             </div>
           </div> : <p className='container'>Loading statistics...</p> }
       </div >

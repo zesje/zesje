@@ -56,6 +56,17 @@ class Statistics(Resource):
         grader_stats = grader_data(exam.id)
         problem_graders = {p['name']: p['graders'] for p in grader_stats['problems']}
 
+        feedbacks = {problem.name: [
+            {
+                'id': fb.id,
+                'name': fb.text,
+                'description': fb.description,
+                'score': fb.score,
+                'used': len(fb.solutions)
+            }
+            for fb in problem.feedback_options  # Sorted by fb.id
+        ] for problem in exam.problems}
+
         return {
             'name': exam.name,
             'students': len(problem_scores),
@@ -65,7 +76,8 @@ class Statistics(Resource):
                     'max_score': max_scores[column],
                     'scores': problem_scores[column].dropna().tolist(),
                     'correlation': corrs[column] if not isnan(corrs[column]) else '',
-                    'graders': problem_graders[column]
+                    'graders': problem_graders[column],
+                    'feedback': feedbacks[column]
                 } for column in problem_scores if column != 'total'],
             'total': {
                 'max_score': sum(max_scores.values()),

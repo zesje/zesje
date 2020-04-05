@@ -32,12 +32,13 @@ class Overview extends React.Component {
   }
 
   componentWillMount () {
-    api.get(`stats/${this.props.exam.id}`)
+    console.log(this.props.examID)
+    api.get(`stats/${this.props.examID}`)
       .then(stats => {
         this.setState({
           stats: stats,
           statsLoaded: true,
-          selectedProblem: this.props.exam.problems[0].name
+          selectedProblem: stats.problems[0].name
         })
       })
   }
@@ -284,7 +285,6 @@ class Overview extends React.Component {
 
   renderProblemSummary = (name) => {
     const results = this.state.stats.problems.find(p => p.name === name)
-    const problem = this.props.exam.problems.find(p => p.name === name)
 
     return (
       <React.Fragment>
@@ -311,7 +311,7 @@ class Overview extends React.Component {
 
         {this.renderHistogramScores(results.scores, results.max_score)}
 
-        {this.renderFeedbackChart(problem.feedback)}
+        {this.renderFeedbackChart(results.feedback)}
 
         {this.renderGraderGraded(results.graders)}
       </React.Fragment>
@@ -324,11 +324,10 @@ class Overview extends React.Component {
 
         <Hero title='Overview' subtitle='Analyse the exam results' />
 
-        <h1 className='is-size-1 has-text-centered'>Exam "{this.props.exam.name}" </h1>
-
         { this.state.statsLoaded
           ? <div className='columns is-multiline is-centered'>
             <div className='column is-three-fifths-desktop is-full-mobile'>
+              <h1 className='is-size-1 has-text-centered'>Exam "{this.state.stats.name}" </h1>
               {this.renderAtGlance()}
             </div>
             <div className='column is-half'>
@@ -341,7 +340,7 @@ class Overview extends React.Component {
                     })
                   }}
                 >
-                  {this.props.exam.problems.map((problem, index) => {
+                  {this.state.stats.problems.map((problem, index) => {
                     return <option key={'key_' + index}>{problem.name}</option>
                   })}
                 </select>

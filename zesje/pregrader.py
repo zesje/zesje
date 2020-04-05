@@ -1,12 +1,13 @@
 import cv2
 import numpy as np
 from datetime import datetime
+
+from flask import current_app
 from reportlab.lib.units import inch, mm
 
 from .blanks import reference_image
 from .database import db, Grader, FeedbackOption, GradingPolicy, Submission, Solution
 from .images import guess_dpi, get_box, widget_area
-from .pdf_generation import CHECKBOX_FORMAT
 
 AUTOGRADER_NAME = 'Zesje'
 BLANK_FEEDBACK_NAME = 'Blank'
@@ -79,7 +80,7 @@ def grade_mcq(sol, page_img):
     page_img: np.array
         A numpy array of the image scan
     """
-    box_size = CHECKBOX_FORMAT["box_size"]
+    box_size = current_app.config['CHECKBOX_SIZE']
     problem = sol.problem
     mc_filled_counter = 0
 

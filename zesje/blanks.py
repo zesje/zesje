@@ -34,7 +34,7 @@ def reference_image(exam_id, page, dpi, widget_area_in=None, padding=0):
     """
 
     app_config = current_app.config
-    data_directory = app_config.get('DATA_DIRECTORY', 'data')
+    data_directory = app_config['DATA_DIRECTORY']
     generated_path = os.path.join(data_directory, f'{exam_id}_data', 'blanks', f'{dpi}')
 
     if not os.path.exists(generated_path):
@@ -66,8 +66,7 @@ def _extract_reference_images(dpi, exam_id):
     exam_id : int
         The id of the desired exam
     """
-    app_config = current_app.config
-    data_directory = app_config.get('DATA_DIRECTORY', 'data')
+    data_directory = current_app.config['DATA_DIRECTORY']
     output_directory = os.path.join(data_directory, f'{exam_id}_data')
     pdf_path = os.path.join(output_directory, 'exam.pdf')
 

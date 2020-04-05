@@ -1,6 +1,6 @@
 import os
 
-from flask import current_app as app
+from flask import current_app
 from flask_restful import Resource, reqparse
 from werkzeug.datastructures import FileStorage
 
@@ -65,6 +65,8 @@ class Scans(Resource):
         exam = Exam.query.get(exam_id)
         if exam is None:
             return dict(status=404, message='Exam does not exist.'), 404
+        elif not exam.finalized:
+            return dict(status=403, message='Exam is not finalized.'), 403
 
         scan = Scan(exam=exam, name=args['pdf'].filename,
                     status='processing', message='Waiting...')
@@ -72,7 +74,7 @@ class Scans(Resource):
         db.session.commit()
 
         try:
-            path = os.path.join(app.config['SCAN_DIRECTORY'], f'{scan.id}.pdf')
+            path = os.path.join(current_app.config['SCAN_DIRECTORY'], f'{scan.id}.pdf')
             args['pdf'].save(path)
         except Exception:
             scan = Scan.query.get(scan.id)

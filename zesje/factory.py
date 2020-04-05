@@ -64,15 +64,23 @@ def attach_celery(app, celery):
 
 
 def create_config(config_instance, extra_config):
+    # use default config as base
+    config_instance.from_object('zesje_default_cfg')
+
+    # apply user config
     if 'ZESJE_SETTINGS' in os.environ:
         config_instance.from_envvar('ZESJE_SETTINGS')
 
+    # extra config?
     if extra_config is not None:
         config_instance.update(extra_config)
 
-    # Default settings
+    # overwrite user config with constants
+    config_instance.from_object('zesje.constants')
+
+    # Make DATA_DIRECTORY absolute
     config_instance.update(
-        DATA_DIRECTORY=abspath(config_instance.get('DATA_DIRECTORY', 'data')),
+        DATA_DIRECTORY=abspath(config_instance['DATA_DIRECTORY']),
     )
 
     # These reference DATA_DIRECTORY, so they need to be in a separate update

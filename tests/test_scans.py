@@ -4,8 +4,7 @@ import pytest
 import numpy as np
 import PIL.Image
 import cv2
-from tempfile import NamedTemporaryFile, TemporaryDirectory
-from flask import Flask
+from tempfile import NamedTemporaryFile
 from pikepdf import Pdf
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
@@ -15,55 +14,27 @@ from zesje.scans import decode_barcode, ExamMetadata, ExtractedBarcode, exam_met
 from zesje.image_extraction import extract_image_pikepdf, extract_images
 from zesje.database import db
 from zesje.api.exams import generate_exam_token, _get_exam_dir, _exam_generate_data
-from zesje.pdf_generation import write_finalized_exam, generate_pdfs, PAGE_FORMATS
+from zesje.pdf_generation import write_finalized_exam, generate_pdfs
 from zesje.database import Exam, ExamWidget
 from zesje import scans
+from zesje.constants import PAGE_FORMATS
 
 
 # Returns the original image instead of retrieving a box from it
 @pytest.fixture
-def mock_get_box_return_original(monkeypatch, datadir):
+def mock_get_box_return_original(monkeypatch):
     def mock_return(image, widget, padding):
         return image
     monkeypatch.setattr(scans, 'get_box', mock_return)
 
 
-# Return a mock DB which can be used in the testing enviroment
-# Module scope ensures it is ran only once
-@pytest.yield_fixture(scope="module")
-def db_app(request, mysql_proc):
-
-    mysqlconn = MySQLdb.connect(
-        host='localhost',
-        unix_socket=mysql_proc.unixsocket.strpath,
-        user='root',
-        passwd=''
-    )
-
-    mysqlconn.query('CREATE DATABASE IF NOT EXISTS course;')
-    mysqlconn.query('USE course;')
-    mysqlconn.close()
-
-    app = Flask(__name__, static_folder=None)
-    app.config.update(
-        SQLALCHEMY_DATABASE_URI=f'mysql://root:@localhost/course?unix_socket={mysql_proc.unixsocket.strpath}',
-        SQLALCHEMY_TRACK_MODIFICATIONS=False  # Suppress future deprecation warning
-    )
-    db.init_app(app)
-
-    return app
-
-
 @pytest.fixture(scope='module')
 def db_empty_app(db_app):
-    """Empties the database and creates a temporary data directory"""
     with db_app.app_context():
         db.drop_all()
         db.create_all()
 
-    with TemporaryDirectory() as temp_dir:
-        db_app.config.update(DATA_DIRECTORY=str(temp_dir))
-        yield db_app
+    return db_app
 
 
 @pytest.fixture(scope='module')
@@ -96,8 +67,8 @@ def full_app(db_empty_app):
         write_finalized_exam(exam_dir, exam_path, student_id_widget.x, student_id_widget.y, [])
 
     # Push the current app context for all tests so the database can be used
-    db_empty_app.app_context().push()
-    return db_empty_app
+    with db_empty_app.app_context():
+        yield db_empty_app
 
 
 def generate_flat_scan_data(copy_number=145):
@@ -297,7 +268,7 @@ def test_image_extraction(datadir, filename):
                                                 ("a4-rotated-2-bottom-markers.png", [(59, 1695), (1181, 1695)]),
                                                 ("a4-shifted-1-marker.png", [(59, 1695)])
                                                 ])
-def test_realign_image(datadir, file_name, markers):
+def test_realign_image(config_app, datadir, file_name, markers):
     dir_name = "cornermarkers"
     epsilon = 1
 
@@ -318,7 +289,7 @@ def test_realign_image(datadir, file_name, markers):
         assert diff[1] <= epsilon
 
 
-def test_incomplete_reference_realign_image(datadir):
+def test_incomplete_reference_realign_image(config_app, datadir):
     dir_name = "cornermarkers"
     epsilon = 1
     test_file = os.path.join(datadir, dir_name, "a4-rotated.png")

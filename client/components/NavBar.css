@@ -2,3 +2,11 @@ a[disabled] {
     opacity: 0.65;
     pointer-events: none;
 }
+
+.no-padding {
+  padding: 0;
+}
+
+div.navbar-item a {
+  height: 100%;
+}

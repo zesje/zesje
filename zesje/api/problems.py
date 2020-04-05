@@ -3,8 +3,7 @@
 import os
 
 from flask_restful import Resource, reqparse, current_app
-from ..database import db, Exam, Problem, ProblemWidget, Solution, FeedbackOption, GradingPolicy
-from ..pregrader import BLANK_FEEDBACK_NAME
+from ..database import db, Exam, Problem, ProblemWidget, Solution, GradingPolicy
 from zesje.pdf_reader import guess_problem_title, get_problem_page
 
 
@@ -112,7 +111,7 @@ class Problems(Resource):
             db.session.commit()
             widget.name = f'problem_{problem.id}'
 
-            data_dir = current_app.config.get('DATA_DIRECTORY', 'data')
+            data_dir = current_app.config['DATA_DIRECTORY']
             pdf_path = os.path.join(data_dir, f'{problem.exam_id}_data', 'exam.pdf')
 
             page = get_problem_page(problem, pdf_path)
@@ -120,8 +119,6 @@ class Problems(Resource):
 
             if guessed_title:
                 problem.name = guessed_title
-
-            problem.feedback_options.append(FeedbackOption(text=BLANK_FEEDBACK_NAME, score=0))
 
             db.session.commit()
 

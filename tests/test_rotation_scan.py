@@ -41,26 +41,23 @@ def test_calc_angle(test_input1, test_input2, expected):
 # Tests whether the amount of cornermakers is enough to calculate the angle and
 # whether it is lower than 5 as we only add 4 corner markers per page.
 test_args = [
+    ('blank.jpg', 0),
     ('missing_two_corners.jpg', 2),
     ('sample_exam.jpg', 4),
     ('shifted.jpg', 4),
     ('tilted.jpg', 4),
+    ('tilted_extreme.jpg', 4),
+    ('tilted_extreme_2.jpg', 4),
     ('messy_three_corners.jpg', 3)]
 
 
 @pytest.mark.parametrize(
     'name,expected', test_args,
     ids=list(map(lambda e: f"{e[0]} ({e[1]} markers)", test_args)))
-def test_detect_enough_cornermarkers(name, expected, datadir):
+def test_detect_enough_cornermarkers(name, expected, datadir, config_app):
     image = generate_image(name, datadir)
     keypoints = scans.find_corner_marker_keypoints(image)
     assert(len(keypoints) == expected)
-
-
-def test_detect_few_cornermarkers(datadir):
-    image = generate_image('blank.jpg', datadir)
-    with pytest.raises(RuntimeError):
-        scans.find_corner_marker_keypoints(image)
 
 
 # Tests whether the detected keypoints are actually corner markers.
@@ -68,7 +65,7 @@ def test_detect_few_cornermarkers(datadir):
 # of the image. Only A4 is considered as there is no test data yet for
 # US letter size.
 @pytest.mark.parametrize('name', map(lambda tup: tup[0], test_args))
-def test_detect_valid_cornermarkers(name, datadir):
+def test_detect_valid_cornermarkers(name, datadir, config_app):
     image = generate_image(name, datadir)
     keypoints = scans.find_corner_marker_keypoints(image)
 

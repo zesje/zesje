@@ -4,6 +4,14 @@ from zesje.database import db, Exam, Problem, ProblemWidget, Solution
 from zesje.database import Submission, Scan, Page, ExamWidget, FeedbackOption, MultipleChoiceOption
 
 
+@pytest.fixture
+def empty_app(db_app):
+    with db_app.app_context():
+        db.drop_all()
+        db.create_all()
+        yield db_app
+
+
 def test_mysql_server(mysql_proc):
     """Check if mysql server is running"""
     assert mysql_proc.running()
@@ -18,7 +26,6 @@ def test_cascades_exam(empty_app, exam, problem, submission, scan, exam_widget):
     - Exam -> Scan
     - Exam -> ExamWidget
     """
-    empty_app.app_context().push()
     exam.problems = [problem]
     exam.scans = [scan]
     exam.submissions = [submission]
@@ -49,8 +56,6 @@ def test_cascades_problem(empty_app, exam, problem, submission, solution, proble
     - Problem -> ProblemWidget
     - Problem -> FeedbackOption
     """
-    empty_app.app_context().push()
-
     exam.problems = [problem]
     exam.submissions = [submission]
     solution.submission = submission
@@ -80,8 +85,6 @@ def test_cascades_submission(empty_app, exam, problem, submission, solution, pag
     - Submission -> Solution
     - Submission -> Page
     """
-    empty_app.app_context().push()
-
     exam.problems = [problem]
     exam.submissions = [submission]
 
@@ -103,8 +106,6 @@ def test_cascades_submission(empty_app, exam, problem, submission, solution, pag
 
 
 def test_cascades_fb_mco(empty_app, feedback_option, mc_option):
-    empty_app.app_context().push()
-
     feedback_option.mc_option = mc_option
     db.session.add(feedback_option)
     db.session.commit()
@@ -118,8 +119,6 @@ def test_cascades_fb_mco(empty_app, feedback_option, mc_option):
 
 
 def test_cascades_mco_fb(empty_app, feedback_option, mc_option):
-    empty_app.app_context().push()
-
     feedback_option.mc_option = mc_option
     db.session.add(mc_option)
     db.session.commit()

@@ -17,7 +17,6 @@ from PIL import Image
 
 from .database import Submission
 from . import statistics
-from .api.exams import PAGE_FORMATS
 from .images import guess_dpi
 from .api.images import _grey_out_student_widget
 from .scans import exam_student_id_widget
@@ -42,14 +41,13 @@ def solution_pdf(exam_id, student_id, anonymous=False):
                                    Submission.student_id == student_id).all()
     pages = sorted((p for s in subs for p in s.pages), key=(lambda p: (p.submission.copy_number, p.number)))
 
-    page_format = current_app.config.get('PAGE_FORMAT', 'A4')  # TODO Remove default value
-    page_size = PAGE_FORMATS[page_format]
+    page_size = current_app.config['PAGE_FORMATS'][current_app.config['PAGE_FORMAT']]
 
     result = BytesIO()
     pdf = canvas.Canvas(result, pagesize=page_size)
     for page in pages:
         if anonymous and page.number == 0:
-            page_im = cv2.imread(page.path)
+            page_im = cv2.imread(page.abs_path)
 
             dpi = guess_dpi(page_im)
 
@@ -63,7 +61,7 @@ def solution_pdf(exam_id, student_id, anonymous=False):
 
             image = ImageReader(pil_im)
         else:
-            image = page.path
+            image = page.abs_path
 
         pdf.drawImage(image, 0, 0, width=page_size[0], height=page_size[1])
         pdf.showPage()

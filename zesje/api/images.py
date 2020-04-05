@@ -1,11 +1,10 @@
-from flask import abort, Response
+from flask import abort, Response, current_app
 
 import cv2
 import numpy as np
 
 from ..images import get_box, guess_dpi, widget_area
 from ..database import Exam, Submission, Problem, Page, Solution
-from ..pdf_generation import CHECKBOX_FORMAT
 from ..scans import exam_student_id_widget
 
 
@@ -48,9 +47,7 @@ def get(exam_id, problem_id, submission_id, full_page=False):
     if page is None:
         abort(404, f'Page #{problem.widget.page} is missing for copy #{submission_id}.')
 
-    page_path = page.path
-
-    page_im = cv2.imread(page_path)
+    page_im = cv2.imread(page.abs_path)
 
     dpi = guess_dpi(page_im)
 
@@ -68,7 +65,7 @@ def get(exam_id, problem_id, submission_id, full_page=False):
         if option.feedback_id in fb:
             x = int(option.x / 72 * dpi)
             y = int(option.y / 72 * dpi)
-            box_length = int(CHECKBOX_FORMAT["box_size"] / 72 * dpi)
+            box_length = int(current_app.config['CHECKBOX_SIZE'] / 72 * dpi)
             x1 = x + box_length
             y1 = y + box_length
             page_im = cv2.rectangle(page_im, (x, y), (x1, y1), (0, 255, 0), 3)

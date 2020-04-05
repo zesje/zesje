@@ -2,12 +2,13 @@ import functools
 import itertools
 import math
 import os
-from collections import namedtuple, Counter
+from collections import namedtuple
 import signal
 
 import cv2
 import numpy as np
 from scipy import spatial
+from flask import current_app
 
 from PIL import Image
 from pikepdf import Pdf
@@ -21,8 +22,6 @@ from .pregrader import grade_problem, ungrade_multiple_sub
 from .image_extraction import extract_images
 from .blanks import reference_image
 from . import celery
-
-from .pdf_generation import MARKER_FORMAT, PAGE_FORMATS
 
 ExtractedBarcode = namedtuple('ExtractedBarcode', ['token', 'copy', 'page'])
 
@@ -42,9 +41,6 @@ def process_pdf(scan_id):
     def raise_exit(signo, frame):
         raise SystemExit('PDF processing was killed by an external signal')
 
-    from flask import current_app
-    app_config = current_app.config
-
     # We want to trigger an exit from within Python when a signal is received.
     # The default behaviour for SIGTERM is to terminate the process without
     # calling 'atexit' handlers, and SIGINT raises keyboard interrupt.
@@ -52,7 +48,7 @@ def process_pdf(scan_id):
         signal.signal(signal_type, raise_exit)
 
     try:
-        _process_pdf(scan_id, app_config)
+        _process_pdf(scan_id)
     except BaseException as error:
         # TODO: When #182 is implemented, properly separate user-facing
         #       messages (written to DB) from developer-facing messages,
@@ -60,8 +56,8 @@ def process_pdf(scan_id):
         write_pdf_status(scan_id, 'error', "Unexpected error: " + str(error))
 
 
-def _process_pdf(scan_id, app_config):
-    data_directory = app_config.get('DATA_DIRECTORY', 'data')
+def _process_pdf(scan_id):
+    data_directory = current_app.config['DATA_DIRECTORY']
 
     report_error = functools.partial(write_pdf_status, scan_id, 'error')
     report_progress = functools.partial(write_pdf_status, scan_id, 'processing')
@@ -131,23 +127,26 @@ def exam_metadata(exam_id):
         )
 
 
-def exam_student_id_widget(exam_id, app_config=None):
+def exam_student_id_widget(exam_id):
     """
     Get the student id widget and an array of it's coordinates for an exam.
     :param exam_id: the id of the exam to get the widget for
-    :param app_config: optionally the flask appconfig, which contains widget height and width.
     :return: the student id widget, and an array of coordinates [ymin, ymax, xmin, xmax]
     """
-    if app_config is None:
-        app_config = {}
+
+    fontsize = current_app.config['ID_GRID_FONT_SIZE']
+    margin = current_app.config['ID_GRID_MARGIN']
+    digits = current_app.config['ID_GRID_DIGITS']
+    id_grid_height = 12 * margin + 11 * fontsize
+    id_grid_width = 5 * margin + 16 * fontsize + digits * (fontsize + margin)
 
     student_id_widget = ExamWidget.query.filter(ExamWidget.exam_id == exam_id,
                                                 ExamWidget.name == "student_id_widget").one()
     student_id_widget_coords = [
         student_id_widget.y,  # top
-        student_id_widget.y + app_config.get('ID_GRID_HEIGHT', 181),  # bottom
+        student_id_widget.y + id_grid_height,  # bottom
         student_id_widget.x,  # left
-        student_id_widget.x + app_config.get('ID_GRID_WIDTH', 313),  # right
+        student_id_widget.x + id_grid_width,  # right
     ]
     return student_id_widget, student_id_widget_coords
 
@@ -312,7 +311,8 @@ def update_database(image_path, barcode):
     # We may have added this page in previous uploads but we only want a single
     # 'Page' entry regardless
     if Page.query.filter(Page.submission == sub, Page.number == barcode.page).one_or_none() is None:
-        db.session.add(Page(path=image_path, submission=sub, number=barcode.page))
+        rel_path = os.path.relpath(image_path, start=current_app.config['DATA_DIRECTORY'])
+        db.session.add(Page(path=rel_path, submission=sub, number=barcode.page))
 
     db.session.commit()
 
@@ -367,7 +367,7 @@ def decode_barcode(image, exam_config):
     raise RuntimeError("No barcode found.")
 
 
-def guess_student(exam_token, copy_number, app_config=None, force=False):
+def guess_student(exam_token, copy_number, force=False):
     """Update a submission with a guessed student number.
 
     Parameters
@@ -376,8 +376,6 @@ def guess_student(exam_token, copy_number, app_config=None, force=False):
         Unique exam identifier (see database schema).
     copy_number : int
         The copy number of the submission.
-    app_config : Flask config
-        Optional.
     force : bool
         Whether to update the student number of a submission with a validated
         signature, default False.
@@ -387,17 +385,15 @@ def guess_student(exam_token, copy_number, app_config=None, force=False):
     description : string
         Description of the outcome.
     """
-    if app_config is None:
-        app_config = {}
 
     # Throws exception if zero or more than one of Exam, Submission or Page found
     exam = Exam.query.filter(Exam.token == exam_token).one()
     sub = Submission.query.filter(Submission.copy_number == copy_number,
                                   Submission.exam_id == exam.id).one()
     image_path = Page.query.filter(Page.submission_id == sub.id,
-                                   Page.number == 0).one().path
+                                   Page.number == 0).one().abs_path
 
-    student_id_widget, student_id_widget_coords = exam_student_id_widget(exam.id, app_config)
+    student_id_widget, student_id_widget_coords = exam_student_id_widget(exam.id)
 
     if sub.signature_validated and not force:
         return "Signature already validated"
@@ -533,100 +529,112 @@ def find_corner_marker_keypoints(image_array, corner_sizes=[0.125, 0.25, 0.5]):
     corner_sizes : list of float
         The corner sizes to search the corner markers in
 
-    Raises
-    ------
-    RuntimeError if no valid set of keypoints are found
+    Returns
+    -------
+    corner_points : list of (int, int)
+        The found corner markers, can contain 0-4 corner markers.
     """
     h, w, *_ = image_array.shape
-    marker_length = .8 / 2.54 * guess_dpi(image_array)  # 8 mm in inches × dpi
-    marker_width = .1 / 2.54 * guess_dpi(image_array)  # should get exact width
+    marker_length = current_app.config['MARKER_LINE_LENGTH'] * guess_dpi(image_array) / 72
+    marker_width = current_app.config['MARKER_LINE_WIDTH'] * guess_dpi(image_array) / 72
+    marker_area = marker_length * marker_width * 2
+    marker_area_min = max(marker_length * (marker_width - 1) * 2, 0)  # One pixel thinner due to possible aliasing
 
-    best_points = []
+    corner_points = []
 
-    for corner_size in corner_sizes:
-        # Filter out everything in the center of the image
-        tb = slice(0, int(h*corner_size)), slice(int(h*(1-corner_size)), h)
-        lr = slice(0, int(w*corner_size)), slice(int(w*(1-corner_size)), w)
-        corner_points = []
-        for corner in itertools.product(tb, lr):
-            gray_im = cv2.cvtColor(image_array[corner], cv2.COLOR_BGR2GRAY)
-            _, inv_im = cv2.threshold(gray_im, 150, 255, cv2.THRESH_BINARY_INV)
+    top_bottom = (True, False)
+    left_right = (True, False)
+
+    for is_top, is_left in itertools.product(top_bottom, left_right):
+        corner_points_current_corner = []
+
+        for corner_size in corner_sizes:
+            # Filter out everything in the center of the image
+            h_slice = slice(0, int(h*corner_size)) if is_top else slice(int(h*(1-corner_size)), None)
+            w_slice = slice(0, int(w*corner_size)) if is_left else slice(int(w*(1-corner_size)), None)
+
+            gray_im = cv2.cvtColor(image_array[h_slice, w_slice], cv2.COLOR_BGR2GRAY)
+            _, inv_im = cv2.threshold(gray_im, 175, 255, cv2.THRESH_BINARY_INV)
             ret, labels = cv2.connectedComponents(inv_im)
             for label in range(1, ret):
                 new_img = (labels == label)
-                if np.sum(new_img) > marker_length * marker_width * 2:
-                    continue  # The blob is too large
-                lines = cv2.HoughLines(new_img.astype(np.uint8), 1, np.pi/180, int(marker_length * .9))
-                if lines is None:
-                    continue  # Didn't find any lines
-                lines = lines.reshape(-1, 2).T
 
-                # One of the lines is nearly horizontal, can have both theta ≈ 0 or theta ≈ π;
-                # here we flip those points to ensure that we end up with two reasonably contiguous regions.
-                to_flip = lines[1] > 3*np.pi/4
-                lines[1, to_flip] -= np.pi
-                lines[0, to_flip] *= -1
-                v = (lines[1] > np.pi/4)
-                if np.all(v) or not np.any(v):
+                # Relative error determined to work well empirically
+                max_error = 1.19
+
+                blob_area = np.sum(new_img)
+                if not marker_area_min / max_error**2 < blob_area < marker_area * max_error**2:
+                    continue  # The area of the blob is too small or too large
+
+                new_img_uint8 = new_img.astype(np.uint8)
+
+                angle_resolution = 0.25 * np.pi/180
+                spatial_resolution = 1
+                max_angle = 10 * np.pi/180
+                max_angle_error = 3 * np.pi/180
+                threshold = int(marker_length * .9)
+
+                lines_vertical_1 = cv2.HoughLines(new_img_uint8, rho=spatial_resolution, theta=angle_resolution,
+                                                  threshold=threshold, min_theta=0, max_theta=max_angle)
+                lines_vertical_2 = cv2.HoughLines(new_img_uint8, rho=spatial_resolution, theta=angle_resolution,
+                                                  threshold=threshold, min_theta=np.pi-max_angle, max_theta=np.pi)
+                lines_vertical = (lines_vertical_1, lines_vertical_2)
+                if all(lines is None for lines in lines_vertical):
+                    continue  # Didn't find any vertical lines
+                lines_vertical = np.vstack(
+                        (lines for lines in (lines_vertical) if lines is not None)
+                    )
+                lines_vertical = lines_vertical.reshape(-1, 2).T
+
+                # The vertical lines can have both theta ≈ 0 or theta ≈ π, here we flip those
+                # points to ensure that we end up with two reasonably contiguous regions.
+                to_flip = lines_vertical[1] > 3*np.pi/4
+                lines_vertical[1, to_flip] -= np.pi
+                lines_vertical[0, to_flip] *= -1
+
+                rho_v, theta_v = np.average(lines_vertical, axis=1)
+
+                # Search for horizontal lines that are nearly perpendicular
+                horizontal_angle = theta_v + np.pi/2
+                lines_horizontal = cv2.HoughLines(new_img_uint8, spatial_resolution, angle_resolution, threshold,
+                                                  min_theta=horizontal_angle - max_angle_error,
+                                                  max_theta=horizontal_angle + max_angle_error)
+                if lines_horizontal is None:
+                    continue  # Didn't find any horizontal lines
+
+                lines_horizontal = lines_horizontal.reshape(-1, 2).T
+                rho_h, theta_h = np.average(lines_horizontal, axis=1)
+
+                marker_boundings = bounding_box_corner_markers(marker_length, theta_h, theta_v, is_top, is_left)
+                non_zero_points = cv2.findNonZero(new_img_uint8)
+                *_, blob_width, blob_height = cv2.boundingRect(non_zero_points)
+                invalid_dimensions = False
+                for blob_length, marker_bounding in zip((blob_width, blob_height), marker_boundings):
+                    if not marker_bounding / max_error < blob_length < marker_bounding * max_error:
+                        invalid_dimensions = True  # The dimensions of the blob are too large
+                        break
+                if invalid_dimensions:
                     continue
-                rho1, theta1 = np.average(lines[:, v], axis=1)
-                rho2, theta2 = np.average(lines[:, ~v], axis=1)
-                y, x = np.linalg.solve([[np.cos(theta1), np.sin(theta1)], [np.cos(theta2), np.sin(theta2)]],
-                                       [rho1, rho2])
+
+                y, x = np.linalg.solve([[np.cos(theta_h), np.sin(theta_h)], [np.cos(theta_v), np.sin(theta_v)]],
+                                       [rho_h, rho_v])
                 # TODO: add failsafes
                 if np.isnan(x) or np.isnan(y):
                     continue
-                corner_points.append((int(y) + corner[1].start, int(x) + corner[0].start))
+                corner_points_current_corner.append((int(y) + w_slice.start, int(x) + h_slice.start))
 
-        try:
-            check_corner_keypoints(image_array, corner_points, minimum=1)
+            if len(corner_points_current_corner) == 1:
+                corner_points.append(corner_points_current_corner[0])
+                break
 
-            if len(corner_points) > len(best_points):
-                # Save these points as the best attempt so far
-                best_points = corner_points
-        except RuntimeError:
-            pass
+            if len(corner_points_current_corner) > 1:
+                # More than one corner point found, ignore this corner
+                break
 
-        try:
-            check_corner_keypoints(image_array, corner_points)
-            # Keypoints are valid and thus return them
-            return corner_points
-        except RuntimeError as e:
-            # If this is the last iteration, attempt to return the
-            # best points found so far, otherwise raise.
-            if corner_size == corner_sizes[-1]:
-                if best_points:
-                    return best_points
-                raise e
+    return corner_points
 
 
-def check_corner_keypoints(image_array, keypoints, minimum=3):
-    """Checks whether the corner markers are valid.
-
-    1. Checks that there are between minimum (default 3) and 4 corner markers.
-    2. Checks that no 2 corner markers are the same corner of the image.
-
-    Parameters:
-    -----------
-    image_array : numpy array
-    keypoints : list of tuples containing the coordinates of keypoints
-    minimum : minimum number of keypoints to not raise an error
-    """
-    total = len(keypoints)
-    if total < minimum:
-        raise RuntimeError(f"Too few corner markers found ({total}).")
-    elif total > 4:
-        raise RuntimeError(f"Too many corner markers found ({total}).")
-
-    h, w, *_ = image_array.shape
-
-    corners = Counter((x < (w / 2), (y < h / 2)) for x, y in keypoints)
-
-    if max(corners.values()) > 1:
-        raise RuntimeError("Found multiple corner markers in the same corner")
-
-
-def realign_image(image_array, page_shape, keypoints=None, page_format='A4'):
+def realign_image(image_array, page_shape, keypoints=None):
     """
     Transform the image so that the keypoints match the reference.
 
@@ -643,6 +651,10 @@ def realign_image(image_array, page_shape, keypoints=None, page_format='A4'):
     -------
     return_array: numpy.array
         The image realigned properly.
+
+    Raises
+    ------
+    RuntimeError if no corner markers are detected or provided
     """
 
     if not keypoints:
@@ -655,7 +667,7 @@ def realign_image(image_array, page_shape, keypoints=None, page_format='A4'):
 
     # generate the coordinates where the markers should be
     dpi = guess_dpi(image_array)
-    reference_keypoints = original_corner_markers(page_format, dpi)
+    reference_keypoints = original_corner_markers(dpi)
 
     # create a matrix with the distances between each keypoint and match the keypoint sets
     dists = spatial.distance.cdist(keypoints, reference_keypoints)
@@ -682,7 +694,7 @@ def realign_image(image_array, page_shape, keypoints=None, page_format='A4'):
 
 
 # Based on https://stackoverflow.com/a/49406095
-def resize_image(image_array, page_shape, page_format="A4"):
+def resize_image(image_array, page_shape):
     """
     Resize the image such that the dimensions match the reference.
 
@@ -747,13 +759,69 @@ def resize_image(image_array, page_shape, page_format="A4"):
     return resized_img
 
 
-def original_corner_markers(format, dpi):
-    left_x = MARKER_FORMAT["margin"]/72 * dpi
-    top_y = MARKER_FORMAT["margin"]/72 * dpi
-    right_x = (PAGE_FORMATS[format][0] - MARKER_FORMAT["margin"])/72 * dpi
-    bottom_y = (PAGE_FORMATS[format][1] - MARKER_FORMAT["margin"])/72 * dpi
+def original_corner_markers(dpi):
+    page_size = current_app.config['PAGE_FORMATS'][current_app.config['PAGE_FORMAT']]
+
+    margin = current_app.config['MARKER_MARGIN']
+    left_x = margin/72 * dpi
+    top_y = margin/72 * dpi
+    right_x = (page_size[0] - margin) / 72 * dpi
+    bottom_y = (page_size[1] - margin) / 72 * dpi
 
     return np.round([(left_x, top_y),
                      (right_x, top_y),
                      (left_x, bottom_y),
                      (right_x, bottom_y)])
+
+
+def bounding_box_corner_markers(marker_length, theta1, theta2, top, left):
+    """
+    Computes the theoretical bounding box of a tilted corner marker.
+
+    The result is only valid for a rotation up to 45 degrees.
+
+    params
+    ------
+    marker_length : int
+        The configured length of the corner marker in pixels
+    theta1 : int
+        Angle of the detected horizontal hough line
+    theta2 : int
+        Angle of the detected vertical hough line
+    top : bool
+        Whether the corner marker is at the top
+    left : bool
+        Whether the corner marker is at the left
+
+    returns
+    -------
+    bounding_x, bounding_y : (int, int)
+        The bounding box (in pixels) in x- and y-direction
+    """
+    bounding_x = marker_length * np.sin(theta1)
+    bounding_y = marker_length * np.cos(theta2)
+
+    bottom = not top
+    right = not left
+
+    if left and top and theta2 > 0:
+        bounding_x += np.sin(theta2) * marker_length
+    if left and bottom and theta2 < 0:
+        bounding_x -= np.sin(theta2) * marker_length
+
+    if right and top and theta2 < 0:
+        bounding_x -= np.sin(theta2) * marker_length
+    if right and bottom and theta2 > 0:
+        bounding_x += np.sin(theta2) * marker_length
+
+    if left and top and theta1 < np.pi/2:
+        bounding_y += np.cos(theta1) * marker_length
+    if left and bottom and theta1 > np.pi/2:
+        bounding_y -= np.cos(theta1) * marker_length
+
+    if right and top and theta1 > np.pi/2:
+        bounding_y -= np.cos(theta1) * marker_length
+    if right and bottom and theta1 < np.pi/2:
+        bounding_y += np.cos(theta1) * marker_length
+
+    return bounding_x, bounding_y

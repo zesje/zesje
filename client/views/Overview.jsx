@@ -220,27 +220,26 @@ class Overview extends React.Component {
       style={{width: '100%', position: 'relative', display: 'inline-block'}} />)
   }
 
-  renderFeedbackChart = (feedback) => {
+  renderFeedbackChart = (problem) => {
+    const feedback = problem.feedback.sort((f1, f2) => f1.score - f2.score)
+
     const data = {
       y: feedback.map(f => f.used),
       x: feedback.map(f => f.name),
       text: feedback.map(f => f.description === null ? '' : f.description),
       type: 'bar',
       name: 'Used',
+      marker: {
+        color: feedback.map(f => f.score),
+        cmin: 0,
+        cmax: problem.max_score,
+        colorscale: 'Electric',
+        showscale: true,
+        colorbar: {title: {text: 'score'}}
+      },
       hovertemplate:
-            'Used: %{y}<br><br>' +
+            'Used %{y} times<br><br>' +
             '%{text}' +
-            '<extra></extra>'
-    }
-
-    const score = {
-      yaxis: 'y2',
-      x: feedback.map(f => f.name),
-      y: feedback.map(f => f.score),
-      type: 'scatter',
-      name: 'Score',
-      hovertemplate:
-            'Score: %{y}' +
             '<extra></extra>'
     }
 
@@ -253,21 +252,7 @@ class Overview extends React.Component {
         }
       },
       yaxis: {
-        title: 'used',
-        titlefont: {color: '#1f77b4'},
-        tickfont: {color: '#1f77b4'},
-        zeroline: true,
-        showgrid: true
-      },
-      yaxis2: {
-        title: 'score',
-        side: 'right',
-        overlaying: 'y',
-        anchor: 'x',
-        titlefont: {color: '#ff7f0e'},
-        tickfont: {color: '#ff7f0e'},
-        zeroline: false,
-        showgrid: false
+        title: 'Used'
       }
     }
 
@@ -276,7 +261,7 @@ class Overview extends React.Component {
     }
 
     return (<Plot
-      data={[data, score]}
+      data={[data]}
       config={config}
       layout={layout}
       useResizeHandler
@@ -284,15 +269,15 @@ class Overview extends React.Component {
   }
 
   renderProblemSummary = (name) => {
-    const results = this.state.stats.problems.find(p => p.name === name)
+    const problem = this.state.stats.problems.find(p => p.name === name)
 
     return (
       <React.Fragment>
-        {results.scores.length < this.state.stats.students &&
+        {problem.scores.length < this.state.stats.students &&
           <article className='message is-warning'>
             <div className='message-body'>
               <p>
-                There are {this.state.stats.students - results.scores.length} solutions left to grade.
+                There are {this.state.stats.students - problem.scores.length} solutions left to grade.
               </p>
             </div>
           </article>
@@ -300,7 +285,7 @@ class Overview extends React.Component {
 
         <article className={'message ' + 'is-info'}>
           <div className='message-header'>
-            <p>Rir coefficient: <strong>{results.correlation.toPrecision(3)}</strong></p>
+            <p>Rir coefficient: <strong>{problem.correlation.toPrecision(3)}</strong></p>
           </div>
           <div className='message-body'>
             <p>
@@ -309,11 +294,11 @@ class Overview extends React.Component {
           </div>
         </article>
 
-        {this.renderHistogramScores(results.scores, results.max_score)}
+        {this.renderHistogramScores(problem.scores, problem.max_score)}
 
-        {this.renderFeedbackChart(results.feedback)}
+        {this.renderFeedbackChart(problem)}
 
-        {this.renderGraderGraded(results.graders)}
+        {this.renderGraderGraded(problem.graders)}
       </React.Fragment>
     )
   }

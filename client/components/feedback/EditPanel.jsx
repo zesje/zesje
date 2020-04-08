@@ -48,7 +48,7 @@ class EditPanel extends React.Component {
       return {
         id: fb.id,
         name: fb.name,
-        description: fb.description,
+        description: fb.description || '',
         score: fb.score,
         updateCallback: updateCallback
       }

@@ -36,7 +36,7 @@ def solution_data(exam_id, student_id):
             {'short': fo.text,
              'score': fo.score,
              'description': fo.description}
-            for solution in solutions for fo in solution.feedback
+            for solution in solutions if solution.graded_by for fo in solution.feedback
         ]
         problem_data['score'] = (
             sum(i['score'] or 0 for i in problem_data['feedback'])

@@ -79,14 +79,23 @@ class Overview extends React.Component {
 
   renderHeatmap = () => {
     const problems = this.state.stats.problems.slice().reverse()
+    const students = this.state.stats.students
+    const yPos = problems.map((p, i) => {
+      return `Rir = ${p.correlation.toPrecision(3)}<br>` +
+      `avg = ${(p.scores.reduce((a, b) => a + b, 0) / p.scores.length).toPrecision(3)}`
+    })
 
-    const data = {
-      y: problems.map(p => `${p.name} (Rir = ${p.correlation.toPrecision(3)})`),
+    const data = [{
+      type: 'heatmap',
+      y: yPos
+    }, {
+      type: 'heatmap',
+      yaxis: 'y2',
+      y: yPos,
       z: problems.map(p => p.scores.map(x => x / p.max_score).sort()),
       ygap: 1,
       zmax: 1,
       zmin: 0,
-      type: 'heatmap',
       colorscale: 'Electric',
       colorbar: {
         title: {
@@ -94,8 +103,9 @@ class Overview extends React.Component {
         }
       },
       hoverongaps: false,
-      hovertemplate: 'Score: %{z:.1f}<extra>%{y}</extra>'
-    }
+      hovertemplate: 'Score: %{z:.1f}<br>%{y}<extra></extra>',
+      hoverlabel: {bgcolor: 'hsl(217, 71, 53)'}
+    }]
 
     const layout = {
       xaxis: {
@@ -104,7 +114,30 @@ class Overview extends React.Component {
       yaxis: {
         automargin: true,
         tickangle: -10,
-        fixedrange: true
+        fixedrange: true,
+        range: [-0.5, problems.length - 0.5],
+        tickmode: 'array',
+        tickfont: {color: 'hsl(0,0,71)'},
+        tickvals: problems.reduce((acc, p, i) => {
+          return p.scores.length < students ? acc.concat(i) : acc
+        }, []),
+        ticktext: problems.reduce((acc, p, i) => {
+          return p.scores.length < students ? acc.concat(p.name) : acc
+        }, [])
+      },
+      yaxis2: {
+        automargin: true,
+        tickangle: -10,
+        fixedrange: true,
+        range: [-0.5, problems.length - 0.5],
+        tickmode: 'array',
+        tickfont: {color: 'hsl(0,0,7)'},
+        tickvals: problems.reduce((acc, p, i) => {
+          return p.scores.length === students ? acc.concat(i) : acc
+        }, []),
+        ticktext: problems.reduce((acc, p, i) => {
+          return p.scores.length === students ? acc.concat(p.name) : acc
+        }, [])
       },
       title: {
         text: 'At a glance',
@@ -113,7 +146,7 @@ class Overview extends React.Component {
           size: 32
         }
       },
-      plot_bgcolor: '#DBDBDB'
+      plot_bgcolor: 'hsl(0,0,86)'
     }
 
     const config = {
@@ -121,7 +154,7 @@ class Overview extends React.Component {
     }
 
     return (<Plot
-      data={[data]}
+      data={data}
       config={config}
       layout={layout}
       useResizeHandler

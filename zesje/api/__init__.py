@@ -16,7 +16,6 @@ from .statistics import Statistics
 
 from . import signature
 from . import images
-from . import summary_plot
 from . import export
 
 api_bp = Blueprint(__name__, __name__)
@@ -73,11 +72,6 @@ api_bp.add_url_rule(
     '/images/solutions/<int:exam_id>/<int:problem_id>/<int:submission_id>/<int:full_page>',
     'solution_image',
     images.get,
-)
-api_bp.add_url_rule(
-    '/images/summary/<int:exam_id>',
-    'exam_summary',
-    summary_plot.get,
 )
 
 # Exports

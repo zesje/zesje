@@ -60,7 +60,6 @@ dependencies:
         - pytest
         - pyssim
         - pytest-cov
-        - pytest-mysql
 
         # Linting
         - flake8

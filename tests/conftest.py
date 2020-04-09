@@ -2,7 +2,6 @@ import os
 from tempfile import TemporaryDirectory
 
 import pytest
-import MySQLdb
 from flask import Flask
 from pathlib import Path
 import sys
@@ -31,26 +30,12 @@ def config_app():
 # Return a mock DB which can be used in the testing enviroment
 # Module scope ensures it is ran only once
 @pytest.fixture(scope="module")
-def db_app(config_app, mysql_proc):
+def db_app(config_app):
     app = config_app
 
-    # before actually creating the Flask connection we need to create the database
-    mysqlconn = MySQLdb.connect(
-        host='localhost',
-        unix_socket=mysql_proc.unixsocket.strpath,
-        user='root',
-        passwd=''
-    )
-
-    mysqlconn.query('CREATE DATABASE IF NOT EXISTS course;')
-    mysqlconn.query('USE course;')
-    mysqlconn.close()
-
-    app.config.update(
-        SQLALCHEMY_DATABASE_URI=f'mysql://root:@localhost/course?unix_socket={mysql_proc.unixsocket.strpath}',
-        SQLALCHEMY_TRACK_MODIFICATIONS=False  # Suppress future deprecation warning
-    )
     db.init_app(app)
+
+    app.config.update(SQLALCHEMY_DATABASE_URI=f'mysql://root:@localhost/course_dev')
 
     with TemporaryDirectory() as temp_dir:
         app.config.update(DATA_DIRECTORY=str(temp_dir))
@@ -68,6 +53,14 @@ def app(db_app):
 
 
 @pytest.fixture
+def empty_app(app):
+    with app.app_context():
+        db.drop_all()
+        db.create_all()
+        yield app
+
+
+@pytest.fixture
 def test_client(app):
     client = app.test_client()
 
@@ -79,11 +72,7 @@ def test_client(app):
 
 
 @pytest.fixture
-def client(app):
-    client = app.test_client()
+def client(empty_app):
+    client = empty_app.test_client()
 
     yield client
-
-    with app.app_context():
-        db.drop_all()
-        db.create_all()

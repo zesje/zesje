@@ -12,11 +12,6 @@ def empty_app(db_app):
         yield db_app
 
 
-def test_mysql_server(mysql_proc):
-    """Check if mysql server is running"""
-    assert mysql_proc.running()
-
-
 def test_cascades_exam(empty_app, exam, problem, submission, scan, exam_widget):
     """Tests the cascades defined for an exam
 

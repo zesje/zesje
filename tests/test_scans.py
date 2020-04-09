@@ -8,7 +8,6 @@ from tempfile import NamedTemporaryFile
 from pikepdf import Pdf
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
-import MySQLdb
 
 from zesje.scans import decode_barcode, ExamMetadata, ExtractedBarcode, exam_metadata, guess_dpi
 from zesje.image_extraction import extract_image_pikepdf, extract_images

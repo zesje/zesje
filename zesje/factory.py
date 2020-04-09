@@ -95,7 +95,7 @@ def create_config(config_instance, extra_config):
 
     config_instance.update(
         SQLALCHEMY_DATABASE_URI=f'mysql://{user}:{psw}@{host}/course',
-        SQLALCHEMY_PASSWORD='zesje',
+        SQLALCHEMY_PASSWORD=psw,
         SQLALCHEMY_TRACK_MODIFICATIONS=False  # Suppress future deprecation warning
     )
 

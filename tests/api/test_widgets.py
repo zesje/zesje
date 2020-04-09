@@ -6,8 +6,8 @@ from zesje.database import db, Exam, Problem, FeedbackOption, MultipleChoiceOpti
 
 
 @pytest.fixture
-def add_test_data(app):
-    with app.app_context():
+def add_test_data(empty_app):
+    with empty_app.app_context():
         exam1 = Exam(id=1, name='exam 1', finalized=True)
         db.session.add(exam1)
 

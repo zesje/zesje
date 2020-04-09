@@ -7,8 +7,8 @@ import zesje
 
 
 @pytest.fixture
-def add_test_data(app):
-    with app.app_context():
+def add_test_data(empty_app):
+    with empty_app.app_context():
         exam1 = Exam(id=1, name='exam 1', finalized=False)
         exam2 = Exam(id=2, name='exam 2', finalized=True)
         exam3 = Exam(id=3, name='exam 3', finalized=False)

@@ -55,7 +55,9 @@ test_py:
   <<: *python_packages
   stage: test
   script:
-    - yarn test:py:cov
+    - yarn mysql-create
+    - yarn test:mysql-start && yarn test:py:cov
+    - yarn mysql-stop
   artifacts:
     paths:
       - cov.html/

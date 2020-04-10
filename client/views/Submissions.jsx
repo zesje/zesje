@@ -79,6 +79,25 @@ class Submissions extends React.Component {
     })
   }
 
+  onDropZIP = (accepted, rejected) => {
+    if (rejected.length > 0) {
+      Notification.error('Please upload a ZIP file.')
+      return
+    }
+    accepted.map(file => {
+      const data = new window.FormData()
+      data.append('file', file)
+      api.post('scans/zip/' + this.props.exam.id, data)
+        .then(() => {
+          this.updateScans()
+        })
+        .catch(resp => {
+          Notification.error('failed to upload ZIP (see javascript console for details)')
+          console.error('failed to upload ZIP:', resp)
+        })
+    })
+  }
+
   componentDidMount = () => {
     this.scanUpdater = setInterval(this.updateScans, 1000)
     this.updateScans()
@@ -146,11 +165,11 @@ class Submissions extends React.Component {
                 <div className='column is-narrow'>
                   <Dropzone accept={'application/zip'} style={{}}
                     activeStyle={{ borderStyle: 'dashed', width: 'fit-content', margin: 'auto' }}
-                    onDrop={this.onDropPDF}
+                    onDrop={this.onDropZIP}
                     disablePreview
                     multiple
                   >
-                    <DropzoneContent text='Upload zip files…' />
+                    <DropzoneContent text='Upload a zip file…' />
                   </Dropzone>
                 </div>
               </div>

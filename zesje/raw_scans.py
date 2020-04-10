@@ -1,25 +1,20 @@
 import functools
 import os
-from collections import namedtuple
 import signal
 import re
+from zipfile import ZipFile
 
 from flask import current_app
-
-from zipfile import ZipFile
 
 from .database import db, Scan, Page, Submission, Solution, Student
 from . import celery
 
-ExtractedBarcode = namedtuple('ExtractedBarcode', ['token', 'copy', 'page'])
 
-ExamMetadata = namedtuple('ExamMetadata', ['token', 'barcode_coords'])
-
-RE_FILENAME = re.compile(r'(\d{7})-(\d+)\.\w+$')
+RE_FILENAME = re.compile(r'(?P<studentID>\d{7})-(?P<page>\d+)-?(?P<copy>\d+)?\.\w+$')
 
 
 @celery.task()
-def fake_process_pdf(scan_id):
+def process_zipped_images(scan_id):
     """Process a PDF, recording progress to a database
 
     Parameters
@@ -38,7 +33,7 @@ def fake_process_pdf(scan_id):
         signal.signal(signal_type, raise_exit)
 
     try:
-        _fake_process_pdf(scan_id)
+        _process_zipped_images(scan_id)
     except BaseException as error:
         # TODO: When #182 is implemented, properly separate user-facing
         #       messages (written to DB) from developer-facing messages,
@@ -46,7 +41,7 @@ def fake_process_pdf(scan_id):
         write_pdf_status(scan_id, 'error', "Unexpected error: " + str(error))
 
 
-def _fake_process_pdf(scan_id):
+def _process_zipped_images(scan_id):
     data_directory = current_app.config['DATA_DIRECTORY']
 
     report_error = functools.partial(write_pdf_status, scan_id, 'error')
@@ -111,28 +106,25 @@ def process_page(file_name, file, exam, copy_num, output_directory):
     if not m:
         return False, f'File name "{file_name}" is not valid.', copy_num
 
-    student_id = int(m.group(1))
-    page = int(m.group(2)) - 1
+    student_id = int(m.group('studentID'))
+    page = int(m.group('page')) - 1
 
     student = Student.query.get(student_id)
     if not student:
         return False, f'Student number {student_id} not in the database', copy_num
 
-    sub = Submission.query.filter(Submission.exam_id == exam.id, Submission.student_id == student_id).first()
-    if not sub:
-        sub = Submission(copy_number=copy_num, exam=exam, student_id=student_id)
-        db.session.add(sub)
-
-        for problem in exam.problems:
-            db.session.add(Solution(problem=problem, submission=sub))
-
+    subs = Submission.query.filter(Submission.exam_id == exam.id, Submission.student_id == student_id).all()
+    if not subs:
+        sub = create_submission(copy_num, exam, student_id)
         copy_num += 1
+    else:
+        sub = get_submission_without_page(subs, page)
+        if not sub:
+            sub = create_submission(copy_num, exam, student_id)
+            copy_num += 1
 
     os.makedirs(os.path.join(output_directory, f'{sub.copy_number}'), exist_ok=True)
     path = os.path.join(output_directory, f'{sub.copy_number}', f'page{page:02d}.jpg')
-
-    if os.path.exists(path):
-        return False, f'Page number {page} already exists for student {student_id}', copy_num
 
     with open(path, 'w+b') as out:
         out.write(file.read())
@@ -143,6 +135,24 @@ def process_page(file_name, file, exam, copy_num, output_directory):
     db.session.commit()
 
     return True, 'success', copy_num
+
+
+def create_submission(copy_num, exam, student_id):
+    sub = Submission(copy_number=copy_num, exam=exam, student_id=student_id)
+    db.session.add(sub)
+
+    for problem in exam.problems:
+        db.session.add(Solution(problem=problem, submission=sub))
+
+    return sub
+
+
+def get_submission_without_page(subs, page):
+    for sub in subs:
+        if not any(p.number == page for p in sub.pages):
+            return sub
+
+    return None
 
 
 def write_pdf_status(scan_id, status, message):

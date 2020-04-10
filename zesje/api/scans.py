@@ -5,7 +5,7 @@ from flask_restful import Resource, reqparse
 from werkzeug.datastructures import FileStorage
 
 from ..scans import process_pdf
-from ..bs_scans import fake_process_pdf
+from ..raw_scans import process_zipped_images
 from ..database import db, Exam, Scan
 
 
@@ -60,10 +60,8 @@ class Scans(Resource):
         message : str
         """
         args = self.post_parser.parse_args()
-        if args['pdf'].mimetype not in ['application/pdf', 'application/zip']:
-            return dict(message='Uploaded file is not a PDF or ZIP'), 400
-
-        ext = args['pdf'].mimetype.split('/')[1]
+        if args['pdf'].mimetype != 'application/pdf':
+            return dict(message='Uploaded file is not a PDF'), 400
 
         exam = Exam.query.get(exam_id)
         if exam is None:
@@ -77,7 +75,7 @@ class Scans(Resource):
         db.session.commit()
 
         try:
-            path = os.path.join(current_app.config['SCAN_DIRECTORY'], f'{scan.id}.{ext}')
+            path = os.path.join(current_app.config['SCAN_DIRECTORY'], f'{scan.id}.pdf')
             args['pdf'].save(path)
         except Exception:
             scan = Scan.query.get(scan.id)
@@ -90,10 +88,67 @@ class Scans(Resource):
         # TODO: save these into a process-local datastructure, or save
         # it into the DB as well so that we can cull 'processing' tasks
         # that are actually dead.
-        if ext == 'zip':
-            fake_process_pdf.delay(scan_id=scan.id)
-        else:
-            process_pdf.delay(scan_id=scan.id)
+        process_pdf.delay(scan_id=scan.id)
+
+        return {
+            'id': scan.id,
+            'name': scan.name,
+            'status': scan.status,
+            'message': scan.message
+        }
+
+
+class ZippedScan(Resource):
+
+    post_parser = reqparse.RequestParser()
+    post_parser.add_argument('file', type=FileStorage, required=True,
+                             location='files')
+
+    def post(self, exam_id):
+        """Upload a zip with images
+
+        Parameters
+        ----------
+        exam_id : int
+        file : FileStorage
+
+        Returns
+        -------
+        id : int
+        name : str
+        status : str
+        message : str
+        """
+        args = self.post_parser.parse_args()
+        if args['file'].mimetype != 'application/zip':
+            return dict(message='Uploaded file is not a ZIP'), 400
+
+        exam = Exam.query.get(exam_id)
+        if exam is None:
+            return dict(status=404, message='Exam does not exist.'), 404
+        elif not exam.finalized:
+            return dict(status=403, message='Exam is not finalized.'), 403
+
+        scan = Scan(exam=exam, name=args['file'].filename,
+                    status='processing', message='Waiting...')
+        db.session.add(scan)
+        db.session.commit()
+
+        try:
+            path = os.path.join(current_app.config['SCAN_DIRECTORY'], f'{scan.id}.zip')
+            args['file'].save(path)
+        except Exception:
+            scan = Scan.query.get(scan.id)
+            if scan is not None:
+                db.session.delete(scan)
+                db.session.commit()
+            raise
+
+        # Fire off a background process
+        # TODO: save these into a process-local datastructure, or save
+        # it into the DB as well so that we can cull 'processing' tasks
+        # that are actually dead.
+        process_zipped_images.delay(scan_id=scan.id)
 
         return {
             'id': scan.id,

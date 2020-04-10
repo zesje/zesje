@@ -5,6 +5,7 @@ from flask_restful import Resource, reqparse
 from werkzeug.datastructures import FileStorage
 
 from ..scans import process_pdf
+from ..bs_scans import fake_process_pdf
 from ..database import db, Exam, Scan
 
 
@@ -59,8 +60,10 @@ class Scans(Resource):
         message : str
         """
         args = self.post_parser.parse_args()
-        if args['pdf'].mimetype != 'application/pdf':
-            return dict(message='Uploaded file is not a PDF'), 400
+        if args['pdf'].mimetype not in ['application/pdf', 'application/zip']:
+            return dict(message='Uploaded file is not a PDF or ZIP'), 400
+
+        ext = args['pdf'].mimetype.split('/')[1]
 
         exam = Exam.query.get(exam_id)
         if exam is None:
@@ -74,7 +77,7 @@ class Scans(Resource):
         db.session.commit()
 
         try:
-            path = os.path.join(current_app.config['SCAN_DIRECTORY'], f'{scan.id}.pdf')
+            path = os.path.join(current_app.config['SCAN_DIRECTORY'], f'{scan.id}.{ext}')
             args['pdf'].save(path)
         except Exception:
             scan = Scan.query.get(scan.id)
@@ -87,7 +90,10 @@ class Scans(Resource):
         # TODO: save these into a process-local datastructure, or save
         # it into the DB as well so that we can cull 'processing' tasks
         # that are actually dead.
-        process_pdf.delay(scan_id=scan.id)
+        if ext == 'zip':
+            fake_process_pdf.delay(scan_id=scan.id)
+        else:
+            process_pdf.delay(scan_id=scan.id)
 
         return {
             'id': scan.id,

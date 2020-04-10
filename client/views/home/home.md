@@ -210,3 +210,19 @@ To send personalized emails to all students, use the *everyone* tab in the email
 ## Exporting data
 
 Finally, in the "export" drop-down menu of the navigation bar you can export the data in several commonly used formats.
+
+##  Image based exam
+In the current situation of online grading we have included a workaround that allows to use Zesje to correct photos or scans uploaded by students in Brightspace. Please follow this steps to create the exam:
+
+- Create a PDF file with the same number of pages as the number of questions, the content of the pages is irrelevant.
+- Add a problem per page **in order**, covering the full width.
+- Finalize the exam.
+
+It is now your job to collect the images from the students, you must enforce the students to use the format: `studentID-pagenum.jpg` where the first page corresponds to the first problem and so on. Then, put everything into a ZIP file *without intermediate directories* and upload it using the right box in the Submissions screen.
+
+#### Warnings
+
+- Each problem must be on a separate page. If a problem has multiple subquestions, add each subquestion in a different page or grade them in the same page.
+- We rely on you to ensure that the file names have the correct format, Zesje will complain otherwise.
+- A student must solve each problem in a single page, Zesje won't process two or more pages with the same number. Ask questions that can be solved in a single page, divide your question into two pages or add an extra page at the end that can be used as *extra space*.
+- In the **Grade** screen, choose `View full page`. We can't control the resolution of the images so cropping might give wrong results.

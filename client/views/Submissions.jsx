@@ -132,15 +132,28 @@ class Submissions extends React.Component {
           <div className='columns'>
             <div className='column has-text-centered'>
               <h3 className='title'>Upload scans</h3>
-              <h5 className='subtitle'>Scanned pdf files</h5>
-              <Dropzone accept={'application/pdf'} style={{}}
-                activeStyle={{ borderStyle: 'dashed', width: 'fit-content', margin: 'auto' }}
-                onDrop={this.onDropPDF}
-                disablePreview
-                multiple
-              >
-                <DropzoneContent />
-              </Dropzone>
+              <div className='columns is-centered'>
+                <div className='column is-narrow'>
+                  <Dropzone accept={'application/pdf'} style={{}}
+                    activeStyle={{ borderStyle: 'dashed', width: 'fit-content', margin: 'auto' }}
+                    onDrop={this.onDropPDF}
+                    disablePreview
+                    multiple
+                  >
+                    <DropzoneContent text='Choose a PDF file…' />
+                  </Dropzone>
+                </div>
+                <div className='column is-narrow'>
+                  <Dropzone accept={'application/zip'} style={{}}
+                    activeStyle={{ borderStyle: 'dashed', width: 'fit-content', margin: 'auto' }}
+                    onDrop={this.onDropPDF}
+                    disablePreview
+                    multiple
+                  >
+                    <DropzoneContent text='Upload zip files…' />
+                  </Dropzone>
+                </div>
+              </div>
               <br />
               <aside className='menu'>
                 <p className='menu-label'>

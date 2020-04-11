@@ -52,7 +52,7 @@ def _process_zipped_images(scan_id):
     scan = Scan.query.filter(Scan.id == scan_id).one()
     exam = scan.exam
 
-    report_progress('Importing PDF')
+    report_progress('Importing ZIP')
 
     zip_path = os.path.join(data_directory, 'scans', f'{scan.id}.zip')
     output_directory = os.path.join(data_directory, f'{exam.id}_data', 'submissions')
@@ -61,13 +61,11 @@ def _process_zipped_images(scan_id):
         total = len(zip.namelist())
 
     failures = []
-    copy_num = 1  # the next copy number to be used
     try:
-        for file_name, file in extract_images(zip_path):
-            report_progress(f'Processing file {file_name}')
+        for file_name, image in extract_images(zip_path):
             try:
-                success, description, copy_num = process_page(
-                    file_name, file, exam, copy_num, output_directory
+                success, description = process_page(
+                    file_name, image, exam, output_directory
                 )
                 if not success:
                     print(description)
@@ -84,11 +82,11 @@ def _process_zipped_images(scan_id):
         if processed:
             report_error(
                 f'Processed {processed} / {total} files. '
-                f'Failed on files:\n'
-                + '\n'.join(failures)
+                f'Failed on files:'
+                + ', '.join(failures)
             )
         else:
-            report_error(f'Failed on all {total} files.' + '\n'.join(failures))
+            report_error(f'Failed on all {total} files.')
     else:
         report_success(f'Processed {total} files.')
 
@@ -100,41 +98,53 @@ def extract_images(zip_path):
                 yield file_name, f
 
 
-def process_page(file_name, file, exam, copy_num, output_directory):
+def process_page(file_name, image, exam, output_directory):
     m = RE_FILENAME.match(file_name)
 
     if not m:
-        return False, f'File name "{file_name}" is not valid.', copy_num
+        return False, f'File name "{file_name}" is not valid.'
 
     student_id = int(m.group('studentID'))
     page = int(m.group('page')) - 1
+    copy = int(m.group('copy')) if m.group('copy') else 1
 
     student = Student.query.get(student_id)
     if not student:
-        return False, f'Student number {student_id} not in the database', copy_num
+        return False, f'Student number {student_id} not in the database'
 
-    subs = Submission.query.filter(Submission.exam_id == exam.id, Submission.student_id == student_id).all()
-    if not subs:
-        sub = create_submission(copy_num, exam, student_id)
-        copy_num += 1
-    else:
-        sub = get_submission_without_page(subs, page)
-        if not sub:
-            sub = create_submission(copy_num, exam, student_id)
-            copy_num += 1
+    sub = retrive_submission(exam, student_id, page, copy)
 
     os.makedirs(os.path.join(output_directory, f'{sub.copy_number}'), exist_ok=True)
     path = os.path.join(output_directory, f'{sub.copy_number}', f'page{page:02d}.jpg')
 
     with open(path, 'w+b') as out:
-        out.write(file.read())
+        out.write(image.read())
 
     db.session.add(Page(path=os.path.relpath(path, start=current_app.config['DATA_DIRECTORY']),
                         submission=sub,
                         number=page))
     db.session.commit()
 
-    return True, 'success', copy_num
+    return True, 'success'
+
+
+def retrive_submission(exam, student_id, page, copy):
+    subs = Submission.query.filter(Submission.exam_id == exam.id, Submission.student_id == student_id)\
+                           .order_by(Submission.copy_number.asc())\
+                           .all()
+
+    if not subs:
+        copy_num = next_free_copy_number(exam.id)
+        return create_submission(copy_num, exam, student_id)
+
+    if len(subs) < copy:
+        copy_num = next_free_copy_number(exam.id)
+        for k in range(copy - len(subs)):
+            sub = create_submission(copy_num + k, exam, student_id)
+
+        return sub
+    else:
+        return subs[copy - 1]
 
 
 def create_submission(copy_num, exam, student_id):
@@ -147,12 +157,11 @@ def create_submission(copy_num, exam, student_id):
     return sub
 
 
-def get_submission_without_page(subs, page):
-    for sub in subs:
-        if not any(p.number == page for p in sub.pages):
-            return sub
-
-    return None
+def next_free_copy_number(exam_id):
+    sub = Submission.query.filter(Submission.exam_id == exam_id)\
+                          .order_by(Submission.copy_number.desc())\
+                          .first()
+    return sub.copy_number + 1 if sub else 1
 
 
 def write_pdf_status(scan_id, status, message):

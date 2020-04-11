@@ -5,12 +5,13 @@ import re
 from zipfile import ZipFile
 
 from flask import current_app
+from wand.image import Image
 
 from .database import db, Scan, Page, Submission, Solution, Student
 from . import celery
 
 
-RE_FILENAME = re.compile(r'(?P<studentID>\d{7})-(?P<page>\d+)-?(?P<copy>\d+)?\.\w+$')
+RE_FILENAME = re.compile(r'(?P<studentID>\d{7})-(?P<page>\d+)-?(?P<copy>\d+)?\.(?P<ext>\w+)$')
 
 
 @celery.task()
@@ -63,6 +64,7 @@ def _process_zipped_images(scan_id):
     failures = []
     try:
         for file_name, image in extract_images(zip_path):
+            report_progress(f'Processing file {file_name}')
             try:
                 success, description = process_page(
                     file_name, image, exam, output_directory
@@ -82,7 +84,7 @@ def _process_zipped_images(scan_id):
         if processed:
             report_error(
                 f'Processed {processed} / {total} files. '
-                f'Failed on files:'
+                f'Failed on files: '
                 + ', '.join(failures)
             )
         else:
@@ -107,6 +109,7 @@ def process_page(file_name, image, exam, output_directory):
     student_id = int(m.group('studentID'))
     page = int(m.group('page')) - 1
     copy = int(m.group('copy')) if m.group('copy') else 1
+    ext = m.group('ext')
 
     student = Student.query.get(student_id)
     if not student:
@@ -115,10 +118,12 @@ def process_page(file_name, image, exam, output_directory):
     sub = retrive_submission(exam, student_id, page, copy)
 
     os.makedirs(os.path.join(output_directory, f'{sub.copy_number}'), exist_ok=True)
-    path = os.path.join(output_directory, f'{sub.copy_number}', f'page{page:02d}.jpg')
+    path = os.path.join(output_directory, f'{sub.copy_number}', f'page{page:02d}.png')
 
-    with open(path, 'w+b') as out:
-        out.write(image.read())
+    try:
+        save_image(image, file_name, ext)
+    except Exception:
+        return False, f'File {file_name} is not an image'
 
     db.session.add(Page(path=os.path.relpath(path, start=current_app.config['DATA_DIRECTORY']),
                         submission=sub,
@@ -132,10 +137,6 @@ def retrive_submission(exam, student_id, page, copy):
     subs = Submission.query.filter(Submission.exam_id == exam.id, Submission.student_id == student_id)\
                            .order_by(Submission.copy_number.asc())\
                            .all()
-
-    if not subs:
-        copy_num = next_free_copy_number(exam.id)
-        return create_submission(copy_num, exam, student_id)
 
     if len(subs) < copy:
         copy_num = next_free_copy_number(exam.id)
@@ -162,6 +163,15 @@ def next_free_copy_number(exam_id):
                           .order_by(Submission.copy_number.desc())\
                           .first()
     return sub.copy_number + 1 if sub else 1
+
+
+def save_image(image, path, original_format):
+    with Image(blob=image.read(), format=original_format) as original:
+        with original.convert('png') as converted:
+            if converted.width > converted.height:
+                # rotate back the image if it was rotated by wand
+                converted.rotate(90)
+            converted.save(filename=path)
 
 
 def write_pdf_status(scan_id, status, message):

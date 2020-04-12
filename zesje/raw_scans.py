@@ -5,13 +5,23 @@ import re
 from zipfile import ZipFile
 
 from flask import current_app
-from wand.image import Image
+from PIL import Image, ExifTags
 
 from .database import db, Scan, Page, Submission, Solution, Student
 from . import celery
 
 
 RE_FILENAME = re.compile(r'(?P<studentID>\d{7})-(?P<page>\d+)-?(?P<copy>\d+)?\.(?P<ext>\w+)$')
+
+EXIF_METHODS = {
+    2: Image.FLIP_LEFT_RIGHT,
+    3: Image.ROTATE_180,
+    4: Image.FLIP_TOP_BOTTOM,
+    5: Image.TRANSPOSE,
+    6: Image.ROTATE_270,
+    7: Image.TRANSVERSE,
+    8: Image.ROTATE_90,
+}
 
 
 @celery.task()
@@ -109,7 +119,6 @@ def process_page(file_name, image, exam, output_directory):
     student_id = int(m.group('studentID'))
     page = int(m.group('page')) - 1
     copy = int(m.group('copy')) if m.group('copy') else 1
-    ext = m.group('ext')
 
     student = Student.query.get(student_id)
     if not student:
@@ -121,9 +130,9 @@ def process_page(file_name, image, exam, output_directory):
     path = os.path.join(output_directory, f'{sub.copy_number}', f'page{page:02d}.png')
 
     try:
-        save_image(image, file_name, ext)
-    except Exception:
-        return False, f'File {file_name} is not an image'
+        save_image(image, path)
+    except Exception as e:
+        return False, f'File {file_name} is not an image' + str(e)
 
     db.session.add(Page(path=os.path.relpath(path, start=current_app.config['DATA_DIRECTORY']),
                         submission=sub,
@@ -165,13 +174,34 @@ def next_free_copy_number(exam_id):
     return sub.copy_number + 1 if sub else 1
 
 
-def save_image(image, path, original_format):
-    with Image(blob=image.read(), format=original_format) as original:
-        with original.convert('png') as converted:
-            if converted.width > converted.height:
-                # rotate back the image if it was rotated by wand
-                converted.rotate(90)
-            converted.save(filename=path)
+def save_image(image, path):
+    with Image.open(image) as original:
+        rotated = exif_transpose(original)  # raises some error
+        rotated.save(path)
+
+
+def exif_value(exif, field):
+    for k, v in exif.items():
+        if ExifTags.TAGS.get(k) == field:
+            return v
+    return None
+
+
+def exif_transpose(image):
+    """
+    If an image has an EXIF Orientation tag, return a new image that is
+    transposed accordingly.
+
+    Adapted from PIL.ImageOps.exif_transpose.
+
+    :param image: The image to transpose.
+    :return: An image.
+    """
+    exif = image._getexif()
+    orientation = exif_value(exif, 'Orientation')
+    method = EXIF_METHODS.get(orientation)
+
+    return image if not method else image.transpose(method)
 
 
 def write_pdf_status(scan_id, status, message):

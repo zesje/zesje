@@ -127,7 +127,7 @@ def process_page(file_name, image, exam, output_directory):
     sub = retrive_submission(exam, student_id, page, copy)
 
     os.makedirs(os.path.join(output_directory, f'{sub.copy_number}'), exist_ok=True)
-    path = os.path.join(output_directory, f'{sub.copy_number}', f'page{page:02d}.png')
+    path = os.path.join(output_directory, f'{sub.copy_number}', f'page{page:02d}.jpg')
 
     try:
         save_image(image, path)
@@ -180,25 +180,15 @@ def save_image(image, path):
         rotated.save(path)
 
 
-def exif_value(exif, field):
-    for k, v in exif.items():
-        if ExifTags.TAGS.get(k) == field:
-            return v
-    return None
-
-
 def exif_transpose(image):
     """
     If an image has an EXIF Orientation tag, return a new image that is
     transposed accordingly.
 
     Adapted from PIL.ImageOps.exif_transpose.
-
-    :param image: The image to transpose.
-    :return: An image.
     """
     exif = image._getexif()
-    orientation = exif_value(exif, 'Orientation')
+    orientation = exif.get(0x0112)
     method = EXIF_METHODS.get(orientation)
 
     return image if not method else image.transpose(method)

@@ -163,7 +163,7 @@ class Submissions extends React.Component {
                   </Dropzone>
                 </div>
                 <div className='column is-narrow'>
-                  <Dropzone accept={'application/zip'} style={{}}
+                  <Dropzone accept={'application/zip,application/octet-stream,application/x-zip-compressed,multipart/x-zip'} style={{}}
                     activeStyle={{ borderStyle: 'dashed', width: 'fit-content', margin: 'auto' }}
                     onDrop={this.onDropZIP}
                     disablePreview

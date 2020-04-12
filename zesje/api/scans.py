@@ -8,6 +8,8 @@ from ..scans import process_pdf
 from ..raw_scans import process_zipped_images
 from ..database import db, Exam, Scan
 
+ZIP_MIME_TYPES = ['application/zip', 'application/octet-stream', 'application/x-zip-compressed', 'multipart/x-zip']
+
 
 class Scans(Resource):
     """Getting a list of uploaded scans, and uploading new ones."""
@@ -120,7 +122,7 @@ class RawScans(Resource):
         message : str
         """
         args = self.post_parser.parse_args()
-        if args['file'].mimetype != 'application/zip':
+        if args['file'].mimetype not in ZIP_MIME_TYPES:
             return dict(message='Uploaded file is not a ZIP'), 400
 
         exam = Exam.query.get(exam_id)

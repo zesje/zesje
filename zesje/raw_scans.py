@@ -124,7 +124,7 @@ def process_page(file_name, image, exam, output_directory):
     if not student:
         return False, f'Student number {student_id} not in the database'
 
-    sub = retrive_submission(exam, student_id, page, copy)
+    sub = retrieve_submission(exam, student_id, page, copy)
 
     os.makedirs(os.path.join(output_directory, f'{sub.copy_number}'), exist_ok=True)
     path = os.path.join(output_directory, f'{sub.copy_number}', f'page{page:02d}.jpg')
@@ -142,7 +142,7 @@ def process_page(file_name, image, exam, output_directory):
     return True, 'success'
 
 
-def retrive_submission(exam, student_id, page, copy):
+def retrieve_submission(exam, student_id, page, copy):
     subs = Submission.query.filter(Submission.exam_id == exam.id, Submission.student_id == student_id)\
                            .order_by(Submission.copy_number.asc())\
                            .all()

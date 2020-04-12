@@ -5,7 +5,7 @@ import re
 from zipfile import ZipFile
 
 from flask import current_app
-from PIL import Image, ExifTags
+from PIL import Image
 
 from .database import db, Scan, Page, Submission, Solution, Student
 from . import celery

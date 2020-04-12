@@ -73,15 +73,15 @@ def _process_zipped_images(scan_id):
 
     failures = []
     try:
-        for file_name, image in extract_images(zip_path):
-            report_progress(f'Processing file {file_name}')
+        for number, (file_name, image) in enumerate(extract_images(zip_path)):
+            report_progress(f'Processing file {number + 1} / {total}')
             try:
                 success, description = process_page(
                     file_name, image, exam, output_directory
                 )
                 if not success:
                     print(description)
-                    failures.append(description)
+                    failures.append(f'{file_name}: {description}')
             except Exception as e:
                 report_error(f'Error processing {file_name}: {e}')
                 return
@@ -93,12 +93,13 @@ def _process_zipped_images(scan_id):
         processed = total - len(failures)
         if processed:
             report_error(
-                f'Processed {processed} / {total} files. '
-                f'Failed on files: '
-                + ', '.join(failures)
+                f'Processed {processed} / {total} files.\n'
+                f'Failed on files:\n'
+                + '\n'.join(failures)
             )
         else:
-            report_error(f'Failed on all {total} files.')
+            report_error(f'Failed on all {total} files.\n'
+                         + '\n'.join(failures))
     else:
         report_success(f'Processed {total} files.')
 
@@ -114,7 +115,7 @@ def process_page(file_name, image, exam, output_directory):
     m = RE_FILENAME.match(file_name)
 
     if not m:
-        return False, f'File name "{file_name}" is not valid.'
+        return False, f'Invalid file name (studentid-page.extension)'
 
     student_id = int(m.group('studentID'))
     page = int(m.group('page')) - 1
@@ -132,7 +133,7 @@ def process_page(file_name, image, exam, output_directory):
     try:
         save_image(image, path)
     except Exception as e:
-        return False, f'File {file_name} is not an image' + str(e)
+        return False, f'File is not an image: ' + str(e)
 
     db.session.add(Page(path=os.path.relpath(path, start=current_app.config['DATA_DIRECTORY']),
                         submission=sub,

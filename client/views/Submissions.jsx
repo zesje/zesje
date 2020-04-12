@@ -21,10 +21,24 @@ const ScanStatus = (props) => {
       iconClass += 'times'
       break
   }
+  const messageParts = props.scan.message ? props.scan.message.split('\n') : ['']
+  const summary = messageParts[0]
+  const hasDetails = messageParts.length > 1
   return (
     <div>
       {props.scan.name}&emsp;<i className={iconClass} />
-      <i>&nbsp;{props.scan.message}</i>
+      <i>&nbsp;{summary}</i>
+      {hasDetails
+        ? <details>
+          <summary>View details</summary>
+          {messageParts.slice(1).map((msg, index) =>
+            <li key={index}>
+              {msg}
+            </li>
+          )}
+        </details>
+        : null
+      }
     </div>
   )
 }

@@ -87,7 +87,7 @@ class Submissions extends React.Component {
     accepted.map(file => {
       const data = new window.FormData()
       data.append('file', file)
-      api.post('scans/zip/' + this.props.exam.id, data)
+      api.post('scans/raw/' + this.props.exam.id, data)
         .then(() => {
           this.updateScans()
         })

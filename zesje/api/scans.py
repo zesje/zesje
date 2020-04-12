@@ -98,7 +98,7 @@ class Scans(Resource):
         }
 
 
-class ZippedScan(Resource):
+class RawScans(Resource):
 
     post_parser = reqparse.RequestParser()
     post_parser.add_argument('file', type=FileStorage, required=True,

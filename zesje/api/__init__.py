@@ -3,7 +3,7 @@ from flask_restful import Api
 
 from .graders import Graders
 from .exams import Exams, ExamSource, ExamGeneratedPdfs, ExamPreview
-from .scans import Scans, ZippedScan
+from .scans import Scans, RawScans
 from .students import Students
 from .submissions import Submissions, MissingPages
 from .problems import Problems
@@ -28,7 +28,7 @@ api.add_resource(ExamSource, '/exams/<int:exam_id>/source_pdf')
 api.add_resource(ExamGeneratedPdfs, '/exams/<int:exam_id>/generated_pdfs')
 api.add_resource(ExamPreview, '/exams/<int:exam_id>/preview')
 api.add_resource(Scans, '/scans/<int:exam_id>')
-api.add_resource(ZippedScan, '/scans/zip/<int:exam_id>')
+api.add_resource(RawScans, '/scans/raw/<int:exam_id>')
 api.add_resource(Students, '/students', '/students/<int:student_id>')
 api.add_resource(Submissions,
                  '/submissions/<int:exam_id>',

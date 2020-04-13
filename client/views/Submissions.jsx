@@ -47,7 +47,8 @@ class Submissions extends React.Component {
   state = {
     scans: [],
     submissions: [],
-    examID: null
+    examID: null,
+    showOtherUploadOptions: false
   };
 
   updateScans = () => {
@@ -162,32 +163,51 @@ class Submissions extends React.Component {
       <section className='section'>
 
         <div className='container'>
-          <div className='columns'>
-            <div className='column has-text-centered'>
+          <div className='columns is-centered is-multiline'>
+            <div className='column has-text-centered is-full'>
               <h3 className='title'>Upload scans</h3>
-              <div className='columns is-centered'>
-                <div className='column is-narrow'>
-                  <Dropzone accept={'application/pdf'} style={{}}
-                    activeStyle={{ borderStyle: 'dashed', width: 'fit-content', margin: 'auto' }}
-                    onDrop={this.onDropPDF}
-                    disablePreview
-                    multiple
-                  >
-                    <DropzoneContent text='Choose a PDF file…' />
-                  </Dropzone>
-                </div>
-                <div className='column is-narrow'>
-                  <Dropzone accept={'application/zip,application/octet-stream,application/x-zip-compressed,multipart/x-zip'} style={{}}
+              <Dropzone accept={'application/pdf'} style={{}}
+                activeStyle={{ borderStyle: 'dashed', width: 'fit-content', margin: 'auto' }}
+                onDrop={this.onDropPDF}
+                disablePreview
+                multiple>
+                <DropzoneContent text='Choose a PDF file…' />
+              </Dropzone>
+            </div>
+            <div className='column is-half'>
+              <div className='card'>
+                <header className='card-header'>
+                  <a className='a card-header-icon'
+                    onClick={() => this.setState({showOtherUploadOptions: !this.state.showOtherUploadOptions})}>
+                    <span className='icon'>
+                      <i className={'fa fa-angle-' + (this.state.showOtherUploadOptions ? 'up' : 'down')}
+                        aria-hidden='true' />
+                    </span>
+                  </a>
+                  <p className='card-header-title'>
+                    Other upload options
+                  </p>
+                </header>
+                <div className='card-content'
+                  hidden={!this.state.showOtherUploadOptions}>
+                  <div className='content'>
+                    It is also possible to upload pictures of pages made by students.
+                    These should be contained in a ZIP file, for the exact format and
+                    more information please refer to <a href='/#image-based-exam'>Home#image-based-exam</a>.
+                  </div>
+                  <Dropzone
+                    accept={'application/zip,application/octet-stream,application/x-zip-compressed,multipart/x-zip'}
+                    style={{}}
                     activeStyle={{ borderStyle: 'dashed', width: 'fit-content', margin: 'auto' }}
                     onDrop={this.onDropZIP}
                     disablePreview
-                    multiple
-                  >
-                    <DropzoneContent text='Upload a zip file…' />
+                    multiple>
+                    <DropzoneContent text='Choose a ZIP file…' />
                   </Dropzone>
                 </div>
               </div>
-              <br />
+            </div>
+            <div className='column is-full has-text-centered'>
               <aside className='menu'>
                 <p className='menu-label'>
                   Uploaded submissions: {this.state.submissions.length}

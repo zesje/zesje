@@ -211,6 +211,7 @@ To send personalized emails to all students, use the *everyone* tab in the email
 
 Finally, in the "export" drop-down menu of the navigation bar you can export the data in several commonly used formats.
 
+[Image based exam](#image-based-exam)
 ##  Image based exam
 In the current situation of online grading we have included a workaround that allows to use Zesje to correct photos or scans uploaded by students in Brightspace. Please follow this steps to create the exam:
 

@@ -1,9 +1,30 @@
 import React from 'react'
 import Plot from 'react-plotly.js'
+import {mean, std, range, exp, sqrt, pow, pi} from 'mathjs'
 
 import humanizeDuration from 'humanize-duration'
 import Hero from '../components/Hero.jsx'
 import * as api from '../api.jsx'
+
+const Tooltip = (props) => {
+  if (!props.text) {
+    return null
+  }
+
+  let tooltipClass = 'icon tooltip is-tooltip-right '
+  if (props.text.length > 100) {
+    tooltipClass += 'is-tooltip-multiline '
+  }
+
+  return (
+    <span
+      className={tooltipClass}
+      data-tooltip={props.text}
+    >
+      <i className='fa fa-comment' />
+    </span>
+  )
+}
 
 const formatTime = (seconds) => {
   // returns human readable string showing the elapsed time
@@ -28,7 +49,7 @@ class Overview extends React.Component {
   state = {
     statsLoaded: false,
     stats: null,
-    selectedProblem: null
+    selectedProblemId: null
   }
 
   componentWillMount () {
@@ -38,7 +59,7 @@ class Overview extends React.Component {
         this.setState({
           stats: stats,
           statsLoaded: true,
-          selectedProblem: stats.problems[0].name
+          selectedProblemId: 0
         })
       })
   }
@@ -46,32 +67,26 @@ class Overview extends React.Component {
   renderAtGlance = () => {
     const total = this.state.stats.total
 
-    let state = 'is-success'
-    let message = 'This means that...'
-    if (total.alpha < 0.5) {
-      state = 'is-danger'
-    } else if (total.alpha < 0.8) {
-      state = 'is-warning'
-    }
+    const graded = this.state.stats.problems.reduce((acc, p, i) => {
+      acc.graded += p.graders.reduce((s, g, i) => s + g.graded, 0)
+      acc.avg_grading_time += mean(p.graders.map(g => g.avg_grading_time))
+      return acc
+    }, {
+      name: 'Graded',
+      graded: 0,
+      avg_grading_time: 0
+    })
+
+    graded.avg_grading_time /= this.state.stats.problems.length
 
     return (
       <React.Fragment>
         <div className='container'>
           {this.renderHeatmap()}
 
-          {this.renderHistogramScores(total.scores, total.max_score)}
-          <article className={'message ' + state}>
-            <div className='message-header'>
-              <p>Cronbach's α: <strong>{total.alpha.toPrecision(3)}</strong></p>
-            </div>
-            <div className='message-body'>
-              <p>
-                {message}
-                <br />
-                Follow this <a href='https://en.wikipedia.org/wiki/Cronbach%27s_alpha' target='_blank'>link</a> for more reference.
-              </p>
-            </div>
-          </article>
+          {this.renderHistogramScores(total)}
+
+          {this.renderBarGraded([graded], this.state.stats.students * this.state.stats.problems.length)}
         </div>
       </React.Fragment>
     )
@@ -80,20 +95,28 @@ class Overview extends React.Component {
   renderHeatmap = () => {
     const problems = this.state.stats.problems.slice().reverse()
     const students = this.state.stats.students
-    const yPos = problems.map((p, i) => {
-      return `Rir = ${p.correlation.toPrecision(3)}<br>` +
-      `avg = ${(p.scores.reduce((a, b) => a + b, 0) / p.scores.length).toPrecision(3)}`
+
+    const labels = problems.map((p, i) => {
+      const meanScore = mean(p.scores)
+      const stdScore = std(p.scores)
+      if (problems[i].scores.length < students) {
+        return p.name
+      } else {
+        return `${p.name}<br>(Rir = ${p.correlation.toPrecision(3)}, ` +
+        `score = ${meanScore.toPrecision(3)} ± ${stdScore.toPrecision(2)})`
+      }
     })
 
     const data = [{
       type: 'heatmap',
-      y: yPos
+      y: labels
     }, {
       type: 'heatmap',
       yaxis: 'y2',
-      y: yPos,
+      y: labels,
       z: problems.map(p => p.scores.map(x => x / p.max_score).sort()),
-      ygap: 1,
+      ygap: 2,
+      xgap: 0.5,
       zmax: 1,
       zmin: 0,
       colorscale: 'Electric',
@@ -103,7 +126,7 @@ class Overview extends React.Component {
         }
       },
       hoverongaps: false,
-      hovertemplate: 'Score: %{z:.1f}<br>%{y}<extra></extra>',
+      hovertemplate: 'Score: %{z:.1f}<extra></extra>',
       hoverlabel: {bgcolor: 'hsl(217, 71, 53)'}
     }]
 
@@ -113,7 +136,6 @@ class Overview extends React.Component {
       },
       yaxis: {
         automargin: true,
-        tickangle: -10,
         fixedrange: true,
         range: [-0.5, problems.length - 0.5],
         tickmode: 'array',
@@ -122,12 +144,11 @@ class Overview extends React.Component {
           return p.scores.length < students ? acc.concat(i) : acc
         }, []),
         ticktext: problems.reduce((acc, p, i) => {
-          return p.scores.length < students ? acc.concat(p.name) : acc
+          return p.scores.length < students ? acc.concat(labels[i]) : acc
         }, [])
       },
       yaxis2: {
         automargin: true,
-        tickangle: -10,
         fixedrange: true,
         range: [-0.5, problems.length - 0.5],
         tickmode: 'array',
@@ -136,7 +157,7 @@ class Overview extends React.Component {
           return p.scores.length === students ? acc.concat(i) : acc
         }, []),
         ticktext: problems.reduce((acc, p, i) => {
-          return p.scores.length === students ? acc.concat(p.name) : acc
+          return p.scores.length === students ? acc.concat(labels[i]) : acc
         }, [])
       },
       title: {
@@ -146,7 +167,8 @@ class Overview extends React.Component {
           size: 32
         }
       },
-      plot_bgcolor: 'hsl(0,0,86)'
+      plot_bgcolor: 'hsl(0,0,86)',
+      height: 550
     }
 
     const config = {
@@ -161,25 +183,45 @@ class Overview extends React.Component {
       style={{width: '100%', position: 'relative', display: 'inline-block'}} />)
   }
 
-  renderHistogramScores = (scores, maxScore) => {
-    const data = {
-      x: scores,
+  renderHistogramScores = (total) => {
+    const traceHistogram = {
+      x: total.scores,
       type: 'histogram',
-      histnorm: 'percent',
-      cumulative: {enabled: true},
       autobinx: false,
       xbins: {
         start: -0.5,
-        end: maxScore + 0.5,
+        end: total.max_score + 0.5,
         size: 1
       },
-      hovertemplate: '%{y:.0f}% of students with a grade ≤ %{x:.0f}<extra></extra>',
+      hovertemplate: '%{y} of students with a grade = %{x:.0f}<extra></extra>',
+      hoverongaps: false,
       marker: {
+        color: 'hsl(217, 71, 53)',
         line: {
           color: 'rgb(8,48,107)',
           width: 1.5
         }
       }
+    }
+
+    const xScores = range(0, total.max_score, 0.5).toArray()
+    const mu = mean(total.scores)
+    const sigma = std(total.scores)
+    const yScores = xScores.map(x => {
+      return 140 * exp(-pow((x - mu) / sigma, 2) / 2) / (sqrt(2 * pi) * sigma)
+    })
+
+    const traceGaussian = {
+      x: xScores,
+      y: yScores,
+      fill: 'tozeroy',
+      type: 'scatter',
+      mode: 'line',
+      marker: {
+        color: 'rgb(255, 0, 0)'
+      },
+      fillcolor: 'rgba(255, 0, 0, 0.3)',
+      hoverinfo: 'none'
     }
 
     const layout = {
@@ -189,12 +231,13 @@ class Overview extends React.Component {
         hoverformat: '.0f'
       },
       yaxis: {
-        title: 'percentage of students'
+        title: 'number of students'
       },
       title: {
-        text: 'Cumulative Probability Distribution'
+        text: `Histogram of Scores<br>(Cronbach's α: ${total.alpha.toPrecision(3)})`
       },
-      autosize: true
+      autosize: true,
+      showlegend: false
     }
 
     const config = {
@@ -202,51 +245,90 @@ class Overview extends React.Component {
     }
 
     return (<Plot
-      data={[data]}
+      data={[traceGaussian, traceHistogram]}
       config={config}
       layout={layout}
       useResizeHandler
       style={{width: '100%', position: 'relative', display: 'inline-block'}} />)
   }
 
-  renderGraderGraded = (graders) => {
-    const values = graders.map(g => g.graded)
-    const labels = graders.map(g => g.name)
-    const gradedSubmissions = values.reduce((a, b) => a + b, 0)
+  renderBarGraded = (graders, totalSolutions) => {
+    graders.sort((g1, g2) => g2.graded - g1.graded)
+    const gradedSubmissions = graders.reduce((acc, p, i) => acc + p.graded, 0)
 
-    if (gradedSubmissions < this.state.stats.students) {
-      labels.push('Ungraded')
-      values.push(this.state.stats.students - gradedSubmissions)
-    }
+    const traces = graders.map(g => {
+      return {
+        y: [''],
+        x: [g.graded],
+        name: g.name,
+        type: 'bar',
+        orientation: 'h',
+        textposition: 'inside',
+        texttemplate: g.name,
+        hovertemplate: '%{x} solutions<br>' +
+                       `Average of ${formatTime(g.avg_grading_time)} per solution` +
+                       '<extra></extra>',
+        marker: {
+          color: [g.graded],
+          colorscale: 'Blues',
+          reversescale: true,
+          cmin: 0,
+          cmax: gradedSubmissions,
+          line: {
+            width: 3
+          }
+        }
+      }
+    })
 
-    const data = {
-      labels: labels,
-      values: values,
-      customdata: graders.map(g => `Average of ${formatTime(g.avg_grading_time)} per solution`),
-      type: 'pie',
-      sort: true,
-      hovertemplate: '<b>%{label}</b><br>' +
-                     '%{value} solutions<br>' +
-                     '%{customdata}' +
-                     '<extra></extra>'
+    if (gradedSubmissions < totalSolutions) {
+      const solutionsLeft = totalSolutions - gradedSubmissions
+      const approxTime = solutionsLeft * mean(graders.map(g => g.avg_grading_time))
+      traces.push({
+        y: [''],
+        x: [solutionsLeft],
+        name: 'Ungraded',
+        type: 'bar',
+        orientation: 'h',
+        textposition: 'inside',
+        texttemplate: 'Ungraded',
+        hovertemplate: '%{x} solutions<br>' +
+                       `About ${formatTime(approxTime)} left` +
+                       '<extra></extra>',
+        marker: {
+          color: 'hsl(0, 0, 86)',
+          line: {width: 3}
+        }
+      })
     }
 
     const layout = {
       title: {
-        text: 'Graders',
-        font: {
-          family: 'Courier New',
-          size: 16
+        text: 'Graded solutions',
+        titlefont: {
+          size: 16,
+          family: 'Courier New'
         }
-      }
+      },
+      yaxis: {
+        fixedrange: true
+      },
+      xaxis: {
+        fixedrange: true
+      },
+      barmode: 'stack',
+      showlegend: false,
+      height: 250,
+      hovermode: 'closest'
     }
 
     const config = {
-      displaylogo: false
+      displaylogo: false,
+      editable: false
     }
 
     return (<Plot
-      data={[data]}
+      data={traces}
       config={config}
       layout={layout}
       useResizeHandler
@@ -301,37 +383,40 @@ class Overview extends React.Component {
       style={{width: '100%', position: 'relative', display: 'inline-block'}} />)
   }
 
-  renderProblemSummary = (name) => {
-    const problem = this.state.stats.problems.find(p => p.name === name)
+  renderProblemSummary = (id) => {
+    if (id === 0) {
+      return this.renderAtGlance()
+    }
+
+    const problem = this.state.stats.problems.find(p => p.id === id)
 
     return (
       <React.Fragment>
-        {problem.scores.length < this.state.stats.students &&
-          <article className='message is-warning'>
-            <div className='message-body'>
-              <p>
-                There are {this.state.stats.students - problem.scores.length} solutions left to grade.
-              </p>
-            </div>
-          </article>
-        }
+        <table className='table is-striped'>
+          <thead>
+            <tr>
+              <th> Feedback </th>
+              <th> Score </th>
+              <th> #&nbsp;Assigned</th>
+            </tr>
+          </thead>
+          <tbody>
+            {
+              problem.feedback.map((option, i) => {
+                return <tr key={i}>
+                  <td>
+                    {option.name}
+                    <Tooltip text={option.description} />
+                  </td>
+                  <td> {option.score} </td>
+                  <td> {option.used} </td>
+                </tr>
+              })
+            }
+          </tbody>
+        </table>
 
-        <article className={'message ' + 'is-info'}>
-          <div className='message-header'>
-            <p>Rir coefficient: <strong>{problem.correlation.toPrecision(3)}</strong></p>
-          </div>
-          <div className='message-body'>
-            <p>
-              The Rir coefficient (the correlation between a question and the rest of the questions). If this correlation becomes low or negative, the question is likely random and does not correlate with learner's success.
-            </p>
-          </div>
-        </article>
-
-        {this.renderHistogramScores(problem.scores, problem.max_score)}
-
-        {this.renderFeedbackChart(problem)}
-
-        {this.renderGraderGraded(problem.graders)}
+        {this.renderBarGraded(problem.graders, this.state.stats.students)}
       </React.Fragment>
     )
   }
@@ -343,31 +428,29 @@ class Overview extends React.Component {
         <Hero title='Overview' subtitle='Analyse the exam results' />
 
         { this.state.statsLoaded
-          ? <div className='columns is-multiline is-centered'>
-            <div className='column is-three-fifths-desktop is-full-mobile'>
-              <h1 className='is-size-1 has-text-centered'>Exam "{this.state.stats.name}" </h1>
-              {this.renderAtGlance()}
-            </div>
-            <div className='column is-half'>
-              <h3 className='title is-size-2 has-text-centered'> Problem Details </h3>
-              <span className='select is-fullwidth is-medium'>
+          ? <div className='columns is-centered'>
+            <div className='column is-three-fifths-desktop is-full-mobile has-text-centered'>
+              <h1 className='is-size-1 has-text-centered'> {this.state.stats.name} </h1>
+              <span className='select is-medium'>
                 <select
                   onChange={(e) => {
+                    console.log(e.target)
                     this.setState({
-                      selectedProblem: e.target.value
+                      selectedProblemId: parseInt(e.target.value)
                     })
                   }}
                 >
+                  <option key='key_0' value='0'>Overview</option>
                   {this.state.stats.problems.map((problem, index) => {
-                    return <option key={'key_' + index}>{problem.name}</option>
+                    return <option key={'key_' + (index + 1)} value={problem.id}>{problem.name}</option>
                   })}
                 </select>
               </span>
-              <section className='section'>
-                { this.renderProblemSummary(this.state.selectedProblem) }
-              </section>
+              <div className='content'>
+                { this.renderProblemSummary(this.state.selectedProblemId) }
+              </div>
             </div>
-          </div> : <p className='container'>Loading statistics...</p> }
+          </div> : <p className='container has-text-centered is-size-5'>Loading statistics...</p> }
       </div >
     )
   }

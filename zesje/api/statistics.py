@@ -26,6 +26,8 @@ class Statistics(Resource):
         if exam is None:
             return dict(status=404, message='Exam does not exist.'), 404
 
+        problem_ids = {problem.name: problem.id for problem in exam.problems}
+
         max_scores = {problem.name: max(list(fb.score for fb in problem.feedback_options) + [0])
                       for problem in exam.problems}
 
@@ -72,6 +74,7 @@ class Statistics(Resource):
             'students': len(problem_scores),
             'problems': [
                 {
+                    'id': problem_ids[column],
                     'name': column,
                     'max_score': max_scores[column],
                     'scores': problem_scores[column].dropna().tolist(),

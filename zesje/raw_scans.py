@@ -109,13 +109,12 @@ def extract_images(zip_path):
         for file_info in zip.infolist():
             if not file_info.is_dir():
                 with zip.open(file_info.filename, mode='r') as f:
-                    yield file_info.filename, f
+                    # Zip file names always have / as path separator
+                    yield file_info.filename.rsplit('/', 1)[-1], f
 
 
 def process_page(file_name, image, exam, output_directory):
-    # Zip file names always have / as path separator
-    file_name_without_dir = file_name.rsplit('/', 1)[-1]
-    m = RE_FILENAME.match(file_name_without_dir)
+    m = RE_FILENAME.match(file_name)
 
     if not m:
         return False, f'Invalid file name (studentid-page.extension)'

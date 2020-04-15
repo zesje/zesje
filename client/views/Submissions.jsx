@@ -176,17 +176,17 @@ class Submissions extends React.Component {
             </div>
             <div className='column is-half'>
               <div className='card'>
-                <header className='card-header'>
-                  <a className='a card-header-icon'
-                    onClick={() => this.setState({showOtherUploadOptions: !this.state.showOtherUploadOptions})}>
+                <header className='card-header'
+                  onClick={() => this.setState({showOtherUploadOptions: !this.state.showOtherUploadOptions})}>
+                  <a className='a card-header-icon'>
                     <span className='icon'>
                       <i className={'fa fa-angle-' + (this.state.showOtherUploadOptions ? 'up' : 'down')}
                         aria-hidden='true' />
                     </span>
                   </a>
-                  <p className='card-header-title'>
+                  <a className='card-header-title'>
                     Other upload options
-                  </p>
+                  </a>
                 </header>
                 <div className='card-content'
                   hidden={!this.state.showOtherUploadOptions}>

@@ -106,11 +106,10 @@ def _process_zipped_images(scan_id):
 
 def extract_images(zip_path):
     with ZipFile(zip_path) as zip:
-        for file_name in zip.namelist():
-            file_info = zip.getinfo(file_name)
+        for file_info in zip.infolist():
             if not file_info.is_dir():
-                with zip.open(file_name, mode='r') as f:
-                    yield file_name, f
+                with zip.open(file_info.filename, mode='r') as f:
+                    yield file_info.filename, f
 
 
 def process_page(file_name, image, exam, output_directory):

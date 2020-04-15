@@ -69,7 +69,7 @@ def _process_zipped_images(scan_id):
     output_directory = os.path.join(data_directory, f'{exam.id}_data', 'submissions')
 
     with ZipFile(zip_path) as zip:
-        total = len(zip.namelist())
+        total = sum(not zip_info.is_dir() for zip_info in zip.infolist())
 
     failures = []
     try:
@@ -107,12 +107,16 @@ def _process_zipped_images(scan_id):
 def extract_images(zip_path):
     with ZipFile(zip_path) as zip:
         for file_name in zip.namelist():
-            with zip.open(file_name, mode='r') as f:
-                yield file_name, f
+            file_info = zip.getinfo(file_name)
+            if not file_info.is_dir():
+                with zip.open(file_name, mode='r') as f:
+                    yield file_name, f
 
 
 def process_page(file_name, image, exam, output_directory):
-    m = RE_FILENAME.match(file_name)
+    # Zip file names always have / as path separator
+    file_name_without_dir = file_name.rsplit('/', 1)[-1]
+    m = RE_FILENAME.match(file_name_without_dir)
 
     if not m:
         return False, f'Invalid file name (studentid-page.extension)'

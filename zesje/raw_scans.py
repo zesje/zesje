@@ -189,6 +189,10 @@ def exif_transpose(image):
     Adapted from PIL.ImageOps.exif_transpose.
     """
     exif = image._getexif()
+
+    if exif is None:
+        return image
+
     orientation = exif.get(0x0112)
     method = EXIF_METHODS.get(orientation)
 

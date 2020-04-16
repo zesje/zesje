@@ -162,7 +162,8 @@ def retrieve_submission(exam, student_id, page, copy):
 
 
 def create_submission(copy_num, exam, student_id):
-    sub = Submission(copy_number=copy_num, exam=exam, student_id=student_id)
+    sub = Submission(copy_number=copy_num, exam=exam, student_id=student_id,
+                     signature_validated=True)
     db.session.add(sub)
 
     for problem in exam.problems:

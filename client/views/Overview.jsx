@@ -1,6 +1,6 @@
 import React from 'react'
 import Plot from 'react-plotly.js'
-import {mean, std, range, exp, sqrt, pow, pi} from 'mathjs'
+import {mean, std, range, exp, sqrt, pow, pi, zeros} from 'mathjs'
 
 import humanizeDuration from 'humanize-duration'
 import Hero from '../components/Hero.jsx'
@@ -45,17 +45,30 @@ const formatTime = (seconds) => {
   }
 }
 
+const estimateGradingTimeLeft = (graders, totalSolutions) => {
+  if (!graders.length) return 0
+
+  const totalGraded = graders.reduce((s, g) => s + g.graded, 0)
+  if (totalGraded === totalSolutions) return 0
+
+  const totalTime = graders.reduce((s, g) => s + g.avg_grading_time * g.graded, 0)
+
+  return (totalSolutions - totalGraded) * totalTime / totalGraded
+}
+
 class Overview extends React.Component {
   state = {
     statsLoaded: false,
     stats: null,
-    selectedProblemId: null
+    selectedProblemId: null,
+    selectedStudentId: null
   }
 
   componentWillMount () {
     console.log(this.props.examID)
     api.get(`stats/${this.props.examID}`)
       .then(stats => {
+        console.log(stats)
         this.setState({
           stats: stats,
           statsLoaded: true,
@@ -68,6 +81,8 @@ class Overview extends React.Component {
     const total = this.state.stats.total
 
     const graded = this.state.stats.problems.reduce((acc, p, i) => {
+      if (!p.graders.length) return acc
+
       acc.graded += p.graders.reduce((s, g, i) => s + g.graded, 0)
       acc.avg_grading_time += mean(p.graders.map(g => g.avg_grading_time))
       return acc
@@ -87,6 +102,15 @@ class Overview extends React.Component {
           {this.renderHistogramScores(total)}
 
           {this.renderBarGraded([graded], this.state.stats.students * this.state.stats.problems.length)}
+
+          {total.extra_copies > 1 &&
+            <article className='message is-warning'>
+              <div class='message-body'>
+                {total.extra_copies} extra copies where needed to solve this problem by some students,
+                consider adding more space the next time.
+              </div>
+            </article>
+          }
         </div>
       </React.Fragment>
     )
@@ -97,24 +121,43 @@ class Overview extends React.Component {
     const students = this.state.stats.students
 
     const labels = problems.map((p, i) => {
-      const meanScore = mean(p.scores)
-      const stdScore = std(p.scores)
-      if (problems[i].scores.length < students) {
-        return p.name
+      if (!p.scores.length) return p.name
+
+      const meanScore = mean(p.scores.map(x => x.score / p.max_score))
+      const stdScore = std(p.scores.map(x => x.score / p.max_score))
+      if (p.scores.length < students) {
+        const gradingTimeLeft = estimateGradingTimeLeft(p.graders, students)
+        return `${p.name}<br>Time left: ${formatTime(gradingTimeLeft)}`
       } else {
         return `${p.name}<br>(Rir = ${p.correlation.toPrecision(3)}, ` +
         `score = ${meanScore.toPrecision(3)} ± ${stdScore.toPrecision(2)})`
       }
     })
 
+    const yVals = range(0, problems.length, 1).toArray()
+
+    const selectedDataX = []
+    const selectedDataY = []
+    if (this.state.selectedStudentId) {
+      problems.forEach((p, i) => {
+        p.scores.forEach((x, j) => {
+          if (x.student === this.state.selectedStudentId) {
+            selectedDataX.push(j)
+            selectedDataY.push(i)
+          }
+        })
+      })
+      console.log(selectedDataX)
+    }
+
     const data = [{
       type: 'heatmap',
-      y: labels
+      y: yVals
     }, {
       type: 'heatmap',
       yaxis: 'y2',
-      y: labels,
-      z: problems.map(p => p.scores.map(x => x / p.max_score).sort()),
+      y: yVals,
+      z: problems.map(p => p.scores.map(x => x.score / p.max_score)),
       ygap: 2,
       xgap: 0.5,
       zmax: 1,
@@ -126,13 +169,28 @@ class Overview extends React.Component {
         }
       },
       hoverongaps: false,
-      hovertemplate: 'Score: %{z:.1f}<extra></extra>',
+      hovertext: problems.map(p => p.scores.map(x => {
+        return `Student: ${x.student}<br>Score: ${x.score}/${p.max_score}`
+      })),
+      hoverinfo: 'text',
       hoverlabel: {bgcolor: 'hsl(217, 71, 53)'}
+    }, {
+      type: 'scatter',
+      x: selectedDataX,
+      y: selectedDataY,
+      mode: 'markers',
+      yaxis: 'y2',
+      marker: {
+        color: '#ff0000'
+      },
+      hoverinfo: 'none'
     }]
 
     const layout = {
       xaxis: {
-        title: 'number of students'
+        title: 'number of students',
+        range: [-0.5, students + 0.5],
+        zeroline: false
       },
       yaxis: {
         automargin: true,
@@ -141,11 +199,12 @@ class Overview extends React.Component {
         tickmode: 'array',
         tickfont: {color: 'hsl(0,0,71)'},
         tickvals: problems.reduce((acc, p, i) => {
-          return p.scores.length < students ? acc.concat(i) : acc
+          return p.scores.length < students || students === 0 ? acc.concat(i) : acc
         }, []),
         ticktext: problems.reduce((acc, p, i) => {
-          return p.scores.length < students ? acc.concat(labels[i]) : acc
-        }, [])
+          return p.scores.length < students || students === 0 ? acc.concat(labels[i]) : acc
+        }, []),
+        zeroline: false
       },
       yaxis2: {
         automargin: true,
@@ -154,11 +213,12 @@ class Overview extends React.Component {
         tickmode: 'array',
         tickfont: {color: 'hsl(0,0,7)'},
         tickvals: problems.reduce((acc, p, i) => {
-          return p.scores.length === students ? acc.concat(i) : acc
+          return p.scores.length === students && students > 0 ? acc.concat(i) : acc
         }, []),
         ticktext: problems.reduce((acc, p, i) => {
-          return p.scores.length === students ? acc.concat(labels[i]) : acc
-        }, [])
+          return p.scores.length === students && students > 0 ? acc.concat(labels[i]) : acc
+        }, []),
+        zeroline: false
       },
       title: {
         text: 'At a glance',
@@ -179,13 +239,33 @@ class Overview extends React.Component {
       data={data}
       config={config}
       layout={layout}
+      onClick={(data) => {
+        const selProblem = this.state.stats.problems[this.state.stats.problems.length - data.points[0].y - 1]
+        const selStudent = selProblem.scores[data.points[0].x]['student']
+
+        this.setState({selectedStudentId: selStudent})
+      }}
+      onDoubleClick={() => this.setState({selectedStudentId: null})}
       useResizeHandler
       style={{width: '100%', position: 'relative', display: 'inline-block'}} />)
   }
 
   renderHistogramScores = (total) => {
+    if (!total.scores.length) return null
+
+    const vals = total.scores.map(x => x.score)
+
+    const colors = zeros(total.max_score).toArray()
+
+    if (this.state.selectedStudentId) {
+      const data = total.scores.find(x => x.student === this.state.selectedStudentId)
+      if (data) {
+        colors[data.score] = 1
+      }
+    }
+
     const traceHistogram = {
-      x: total.scores,
+      x: vals,
       type: 'histogram',
       autobinx: false,
       xbins: {
@@ -196,7 +276,10 @@ class Overview extends React.Component {
       hovertemplate: '%{y} of students with a grade = %{x:.0f}<extra></extra>',
       hoverongaps: false,
       marker: {
-        color: 'hsl(217, 71, 53)',
+        color: colors,
+        cmin: 0,
+        cmax: 1,
+        colorscale: [[0, 'hsl(217, 71, 53)'], [1, '#ff0000']],
         line: {
           color: 'rgb(8,48,107)',
           width: 1.5
@@ -205,10 +288,10 @@ class Overview extends React.Component {
     }
 
     const xScores = range(0, total.max_score, 0.5).toArray()
-    const mu = mean(total.scores)
-    const sigma = std(total.scores)
+    const mu = mean(vals)
+    const sigma = std(vals)
     const yScores = xScores.map(x => {
-      return 140 * exp(-pow((x - mu) / sigma, 2) / 2) / (sqrt(2 * pi) * sigma)
+      return vals.length * exp(-pow((x - mu) / sigma, 2) / 2) / (sqrt(2 * pi) * sigma)
     })
 
     const traceGaussian = {
@@ -253,6 +336,8 @@ class Overview extends React.Component {
   }
 
   renderBarGraded = (graders, totalSolutions) => {
+    if (!totalSolutions) return null
+
     graders.sort((g1, g2) => g2.graded - g1.graded)
     const gradedSubmissions = graders.reduce((acc, p, i) => acc + p.graded, 0)
 
@@ -282,11 +367,10 @@ class Overview extends React.Component {
     })
 
     if (gradedSubmissions < totalSolutions) {
-      const solutionsLeft = totalSolutions - gradedSubmissions
-      const approxTime = solutionsLeft * mean(graders.map(g => g.avg_grading_time))
+      const approxTime = estimateGradingTimeLeft(graders, totalSolutions)
       traces.push({
         y: [''],
-        x: [solutionsLeft],
+        x: [totalSolutions - gradedSubmissions],
         name: 'Ungraded',
         type: 'bar',
         orientation: 'h',
@@ -314,7 +398,8 @@ class Overview extends React.Component {
         fixedrange: true
       },
       xaxis: {
-        fixedrange: true
+        fixedrange: true,
+        range: [0, totalSolutions]
       },
       barmode: 'stack',
       showlegend: false,
@@ -417,6 +502,15 @@ class Overview extends React.Component {
         </table>
 
         {this.renderBarGraded(problem.graders, this.state.stats.students)}
+
+        {problem.extra_solutions > 1 &&
+          <article className='message is-warning'>
+            <div class='message-body'>
+              {problem.extra_solutions} extra solutions where needed to solve this problem by some students,
+              consider adding more space the next time.
+            </div>
+          </article>
+        }
       </React.Fragment>
     )
   }

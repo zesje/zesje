@@ -111,7 +111,7 @@ def generate_students(students):
 
 
 def _fake_process_pdf(scan, pages, student_ids):
-    for copy in range(1, len(student_ids) - 1):
+    for copy in range(1, len(student_ids) + 1):
         sub = Submission(copy_number=copy, exam=scan.exam, student_id=student_ids[copy - 1])
         db.session.add(sub)
 

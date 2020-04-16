@@ -219,7 +219,7 @@ In the current situation of online grading we have included a workaround that al
 - Add a problem per page **in order**, covering the full width.
 - Finalize the exam.
 
-It is now your job to collect the images from the students, you must enforce the students to use the format: `studentID-pagenum-copy.jpg`, where page **0** corresponds to the first problem and so on. The copy represents the number of pages needed for that problem, starting from 1. If no copy is specified we understand that the problem was solved in just one page. Then, put everything into a ZIP file and upload it using `Other upload options` in the Submissions page.
+It is now your job to collect the images from the students, you must enforce the students to use the format: `studentID-pagenum-copy.jpg`, where page 1 corresponds to the first problem and so on. The copy represents the number of pages needed for that problem, starting from 1. If no copy is specified we understand that the problem was solved in just one page. Then, put everything into a ZIP file and upload it using `Other upload options` in the Submissions page.
 
 #### Warnings
 

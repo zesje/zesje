@@ -120,7 +120,7 @@ def process_page(file_name, image, exam, output_directory):
         return False, f'Invalid file name (studentid-page.extension)'
 
     student_id = int(m.group('studentID'))
-    page = int(m.group('page'))
+    page = int(m.group('page')) - 1
     copy = int(m.group('copy')) if m.group('copy') else 1
 
     student = Student.query.get(student_id)

@@ -8,6 +8,7 @@ from flask import current_app
 from PIL import Image
 
 from .database import db, Scan, Page, Submission, Solution, Student
+from .image_extraction import convert_to_rgb
 from . import celery
 
 
@@ -180,7 +181,8 @@ def next_free_copy_number(exam_id):
 def save_image(image, path):
     with Image.open(image) as original:
         rotated = exif_transpose(original)  # raises some error
-        rotated.save(path)
+        converted = convert_to_rgb(rotated)
+        converted.save(path)
 
 
 def exif_transpose(image):

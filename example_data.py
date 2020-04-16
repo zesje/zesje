@@ -111,7 +111,7 @@ def generate_students(students):
 
 
 def _fake_process_pdf(scan, pages, student_ids):
-    for copy in range(1, len(student_ids) - 1):
+    for copy in range(1, len(student_ids) + 1):
         sub = Submission(copy_number=copy, exam=scan.exam, student_id=student_ids[copy - 1])
         db.session.add(sub)
 
@@ -126,7 +126,7 @@ def _fake_process_pdf(scan, pages, student_ids):
     db.session.commit()
 
 
-def handle_pdf_processing(exam_id, pdf, pages, student_ids, skip_processing=False):
+def handle_pdf_processing(app, exam_id, pdf, pages, student_ids, skip_processing=False):
     exam = Exam.query.get(exam_id)
     scan = Scan(exam=exam, name=pdf.name,
                 status='processing', message='Waiting...')
@@ -205,7 +205,7 @@ def solve_problems(pdf_file, pages, student_ids, problems, mc_problems, solve):
         PdfWriter(pdf_file.name, trailer=exam_pdf).write()
 
 
-def grade_problems(exam_id, graders, problems, submissions, grade):
+def grade_problems(client, exam_id, graders, problems, submissions, grade):
     for k in range(len(submissions)):
         sub = submissions[k]
         submission_id = sub['id']
@@ -222,7 +222,7 @@ def grade_problems(exam_id, graders, problems, submissions, grade):
                            })
 
 
-def create_exam(pages, students, grade, solve, skip_processing):
+def design_exam(app, client, pages, students, grade, solve, skip_processing):
     exam_name = lorem_name.sentence().replace('.', '')
     problems = [{
         'question': str(i + 1) + '. ' + lorem_prob.sentence().replace('.', '?'),
@@ -320,7 +320,7 @@ def create_exam(pages, students, grade, solve, skip_processing):
         submission_pdf.seek(0)
 
         print('\tProcessing scans (this may take a while).',)
-        handle_pdf_processing(exam_id, submission_pdf, pages, student_ids, skip_processing)
+        handle_pdf_processing(app, exam_id, submission_pdf, pages, student_ids, skip_processing)
 
     submissions = client.get(f'api/submissions/{exam_id}').get_json()
     problems = client.get('/api/exams/' + str(exam_id)).get_json()['problems']
@@ -328,11 +328,26 @@ def create_exam(pages, students, grade, solve, skip_processing):
     graders = client.get('/api/graders').get_json()
 
     print('\tIt\'s grading time.')
-    grade_problems(exam_id, graders, problems, submissions, grade)
+    grade_problems(client, exam_id, graders, problems, submissions, grade)
 
     print('\tAll done!')
-    # exam_data = client.get('/api/exams/' + str(exam_id)).get_json()
-    # print(exam_data)
+    return client.get('/api/exams/' + str(exam_id)).get_json()
+
+
+def create_exams(app, client, exams, pages, students, graders, solve, grade, skip_processing=False):
+    # create students
+    for student in generate_students(students):
+        client.put('api/students', data=student)
+
+    # create graders
+    for _ in range(max(1, graders)):
+        client.post('/api/graders', data={'name': names.get_full_name()})
+
+    generated_exams = []
+    for _ in range(exams):
+        generated_exams.append(design_exam(app, client, max(1, pages), students, grade, solve, skip_processing))
+
+    return generated_exams
 
 
 if __name__ == '__main__':
@@ -353,13 +368,11 @@ if __name__ == '__main__':
     app = init_app(args.delete)
 
     with app.test_client() as client:
-        # create students
-        for student in generate_students(args.students):
-            client.put('api/students', data=student)
-
-        # create graders
-        for _ in range(max(1, args.graders)):
-            client.post('/api/graders', data={'name': names.get_full_name()})
-
-        for _ in range(args.exams):
-            create_exam(max(1, args.pages), args.students, args.grade / 100, args.solve / 100, args.skip_processing)
+        create_exams(app, client,
+                     args.exams,
+                     args.pages,
+                     args.students,
+                     args.graders,
+                     args.solve / 100,
+                     args.grade / 100,
+                     args.skip_processing)

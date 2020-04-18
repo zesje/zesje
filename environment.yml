@@ -22,6 +22,7 @@ dependencies:
         - pyyaml
         - celery
         - redis
+        - mysqlclient
 
         # General utilities
         - numpy==1.15.4

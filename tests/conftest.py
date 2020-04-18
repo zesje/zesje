@@ -38,7 +38,10 @@ def db_app(config_app):
     app.config.update(SQLALCHEMY_DATABASE_URI=f'mysql://root:@localhost/course_dev')
 
     with TemporaryDirectory() as temp_dir:
-        app.config.update(DATA_DIRECTORY=str(temp_dir))
+        app.config.update(
+            DATA_DIRECTORY=str(temp_dir),
+            SCAN_DIRECTORY=str(temp_dir)
+        )
         yield app
 
 

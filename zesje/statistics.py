@@ -2,9 +2,9 @@ from sqlalchemy.orm.exc import NoResultFound
 
 import numpy as np
 import pandas
-from sqlalchemy import between, desc
+from sqlalchemy import between, desc, func
 
-from .database import Exam, Student, Grader, Solution
+from .database import db, Exam, Student, Grader, Solution
 
 
 def solution_data(exam_id, student_id):
@@ -108,7 +108,7 @@ def full_exam_data(exam_id):
     return pandas.DataFrame(results).T
 
 
-def grader_data(exam_id):
+def full_grader_data(exam_id):
     """ Compute the grader statistics for a given exam. """
     exam = Exam.query.get(exam_id)
     if exam is None:
@@ -116,57 +116,41 @@ def grader_data(exam_id):
 
     data = []
     for problem in exam.problems:
-        solutions = problem.solutions
-        graders = {}
-
-        # max_score = max(fb.score for fb in problem.feedback_options) or 0
-
-        for solution in solutions:
-            gid = solution.grader_id
-            if not gid:
-                # solution has not been graded yet
-                continue
-
-            if gid not in graders:
-                grader = Grader.query.get(gid)
-
-                graders[gid] = {
-                    "id": gid,
-                    "name": grader.name,
-                    "graded": 0,
-                    # "avg_score": 0,
-                    # "max_score": 0,
-                    # "min_score": 0,
-                    "avg_grading_time": 0,
-                    "total_time": 0
-                }
-
-            graders[gid]["graded"] += 1
-
-            '''
-            for feedback in solution.feedback:
-                if feedback.score == 0:
-                    graders[gid]["min_score"] += 1
-                elif feedback.score == max_score:
-                    graders[gid]["max_score"] += 1
-
-                graders[gid]["avg_score"] += feedback.score
-            '''
-
-        for gid in graders.keys():
-            # graders[gid]["avg_score"] /= graders[gid]["graded"]
-            avg, total = estimate_grading_time(problem.id, gid)
-            graders[gid]["avg_grading_time"] = avg
-            graders[gid]["total_time"] = total
+        graders = grader_data(problem.id)
 
         data.append({
             "id": problem.id,
             "name": problem.name,
-            # "max_score": max_score,
-            "graders": list(graders.values())
+            "graders": graders
         })
 
     return {"exam_id": exam_id, "exam_name": exam.name, "problems": data}
+
+
+def grader_data(problem_id):
+    """ Compute the grader statistics for a given problem. """
+    graders = []
+
+    # returns a tuple with (grader id, grader name, solutions graded)
+    # for each  grader that graded the given prblem ordered by grader id
+    grader_results = db.session.query(Grader.id, Grader.name, func.count(Solution.grader_id))\
+        .join(Solution)\
+        .filter(Solution.problem_id == problem_id)\
+        .group_by(Solution.grader_id)\
+        .all()
+
+    for id, name, graded in grader_results:
+        avg, total = estimate_grading_time(problem_id, id)
+
+        graders.append({
+            'id': id,
+            'name': name,
+            'graded': graded,
+            'avg_grading_time': avg,
+            'total_grading_time': total
+        })
+
+    return graders
 
 
 ELAPSED_TIME_BREAK = 21600   # 6 hours in seconds

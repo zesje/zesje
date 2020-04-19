@@ -4,8 +4,8 @@ from collections import defaultdict
 import pandas as pd
 from sqlalchemy import func
 
-from ..database import db, Exam, Submission, Solution, Grader
-from ..statistics import estimate_grading_time
+from ..database import db, Exam, Submission, Solution
+from ..statistics import grader_data
 
 
 def scores_to_data(scores):
@@ -23,6 +23,37 @@ def scores_to_data(scores):
         'student': id,
         'score': x
     } for id, x in scores.items()], key=lambda item: item['score'])
+
+
+def empty_data(exam):
+    return {
+        'id': exam.id,
+        'name': exam.name,
+        'students': 0,
+        'problems': [
+            {
+                'id': p.id,
+                'name': p.name,
+                'max_score': max(list(fb.score for fb in p.feedback_options) + [0]),
+                'scores': [],
+                'correlation': None,
+                'extra_solutions': 0,
+                'feedback': [{
+                    'id': fb.id,
+                    'name': fb.text,
+                    'description': fb.description,
+                    'score': fb.score,
+                    'used': len(fb.solutions)
+                } for fb in p.feedback_options],  # Sorted by fb.id
+                'graders': []
+            } for p in exam.problems],
+        'total': {
+            'scores': [],
+            'max_score': sum(max(list(fb.score for fb in p.feedback_options) + [0]) for p in exam.problems),
+            'alpha': None,
+            'extra_copies': 0
+        }
+    }
 
 
 class Statistics(Resource):
@@ -72,9 +103,15 @@ class Statistics(Resource):
         if exam is None:
             return dict(status=404, message='Exam does not exist.'), 404
 
+        # count the total number of students as the number of submissions for this exam
+        # with a different and not null student id
         students = db.session.query(func.count(Submission.student_id))\
             .filter(Submission.exam_id == exam.id, Submission.student_id != None)\
             .scalar() # noqa E711
+
+        if students == 0:
+            # there are no submissions or no students have been identified
+            return empty_data(exam)
 
         data = {0: {  # total
             'scores': defaultdict(int),
@@ -99,15 +136,16 @@ class Statistics(Resource):
             # add the problem score to the total
             data[0]['max_score'] += problem_data['max_score']
 
-            # query that resunts a map (solution, student_id)
-            # filtered by problem_id and graded
+            # return all solutions with the respective student id
+            # for the corresponding problem that have been graded
             results = db.session.query(Solution, Submission.student_id)\
                                 .join(Submission)\
-                                .filter(Solution.problem_id == p.id, Solution.graded_by != None)\
+                                .filter(Solution.problem_id == p.id,
+                                        Solution.graded_by != None,
+                                        Submission.student_id != None)\
                                 .all() # noqa E711
 
             scores = defaultdict(int)
-            graders = defaultdict(int)
             sols_by_student = defaultdict(int)
             for sol, student_id in results:
                 mark = (sum(list(fo.score for fo in sol.feedback)) if sol.feedback else nan)
@@ -119,30 +157,14 @@ class Statistics(Resource):
                     # do not count blank solutions
                     sols_by_student[student_id] += 1
 
-                graders[sol.grader_id] += 1
-
-            # query that counts the number of sol per student and problem id:
-            # SELECT submission.student_id, count(submission.student_id)
-            # FROM submission INNER JOIN solution
-            # ON solution.submission_id == submission.id AND solution.problem_id == 2
-            # GROUP BY submission.student_id;
+            # count how many extra solutions where needed to solve this problem as
+            # the total graded and non blank solutions minus the number of students
+            # with at least one solution
             problem_data['extra_solutions'] = sum(list(sols_by_student.values())) - len(sols_by_student)
 
             problem_data['scores'] = scores
 
-            problem_data['graders'] = []
-
-            for grader_id, graded in graders.items():
-                grader = Grader.query.get(grader_id)
-                avg, total = estimate_grading_time(p.id, grader_id)
-
-                problem_data['graders'].append({
-                    'id': grader.id,
-                    'name': grader.name,
-                    'graded': graded,
-                    'avg_grading_time': avg,
-                    'total_grading_time': total
-                })
+            problem_data['graders'] = grader_data(p.id)
 
             data[p.id] = problem_data
 
@@ -166,7 +188,7 @@ class Statistics(Resource):
         data[0]['alpha'] = alpha
         data[0]['scores'] = scores_to_data(data[0]['scores'])
         data[0]['extra_copies'] = (db.session.query(func.count(Submission.id))
-                                   .filter(Submission.exam_id == exam.id)
+                                   .filter(Submission.exam_id == exam.id, Submission.student_id != None) # noqa E711
                                    .scalar()) - students
 
         return {

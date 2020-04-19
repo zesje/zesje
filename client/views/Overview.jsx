@@ -105,7 +105,7 @@ class Overview extends React.Component {
 
           {total.extra_copies > 1 &&
             <article className='message is-warning'>
-              <div class='message-body'>
+              <div className='message-body'>
                 {total.extra_copies} extra copies where needed to solve this problem by some students,
                 consider adding more space the next time.
               </div>
@@ -129,25 +129,53 @@ class Overview extends React.Component {
         const gradingTimeLeft = estimateGradingTimeLeft(p.graders, students)
         return `${p.name}<br>Time left: ${formatTime(gradingTimeLeft)}`
       } else {
-        return `${p.name}<br>(Rir = ${p.correlation.toPrecision(3)}, ` +
-        `score = ${meanScore.toPrecision(3)} ± ${stdScore.toPrecision(2)})`
+        return `${p.name}<br>(` +
+        `score = ${meanScore.toPrecision(3)} ± ${stdScore.toPrecision(2)}` +
+        (p.correlation !== null ? `, Rir = ${p.correlation.toPrecision(3)})` : ')')
       }
     })
 
     const yVals = range(0, problems.length, 1).toArray()
 
-    const selectedDataX = []
-    const selectedDataY = []
+    const selectedData = []
     if (this.state.selectedStudentId) {
       problems.forEach((p, i) => {
         p.scores.forEach((x, j) => {
           if (x.student === this.state.selectedStudentId) {
-            selectedDataX.push(j)
-            selectedDataY.push(i)
+            selectedData.push({
+              x: j,
+              y: i,
+              xref: 'x',
+              yref: 'y',
+              text: `${x.score}/${p.max_score}`,
+              align: 'center',
+              ay: 25,
+              ax: 0,
+              bgcolor: 'hsl(171, 100, 41)',
+              arrowcolor: 'hsl(171, 100, 41)',
+              font: {
+                color: 'white'
+              }
+            })
           }
         })
       })
-      console.log(selectedDataX)
+
+      selectedData.push({
+        x: 1,
+        y: 1.07,
+        xref: 'paper',
+        yref: 'paper',
+        text: `Selected student: ${this.state.selectedStudentId}`,
+        align: 'right',
+        showarrow: false,
+        bgcolor: 'hsl(171, 100, 41)',
+        font: {
+          color: 'white',
+          size: 14
+        }
+      })
+      console.log(selectedData)
     }
 
     const data = [{
@@ -174,16 +202,6 @@ class Overview extends React.Component {
       })),
       hoverinfo: 'text',
       hoverlabel: {bgcolor: 'hsl(217, 71, 53)'}
-    }, {
-      type: 'scatter',
-      x: selectedDataX,
-      y: selectedDataY,
-      mode: 'markers',
-      yaxis: 'y2',
-      marker: {
-        color: '#ff0000'
-      },
-      hoverinfo: 'none'
     }]
 
     const layout = {
@@ -228,7 +246,8 @@ class Overview extends React.Component {
         }
       },
       plot_bgcolor: 'hsl(0,0,86)',
-      height: 550
+      height: 550,
+      annotations: selectedData
     }
 
     const config = {
@@ -273,13 +292,13 @@ class Overview extends React.Component {
         end: total.max_score + 0.5,
         size: 1
       },
-      hovertemplate: '%{y} of students with a grade = %{x:.0f}<extra></extra>',
+      hovertemplate: '%{y} students with a grade = %{x:.0f}<extra></extra>',
       hoverongaps: false,
       marker: {
         color: colors,
         cmin: 0,
         cmax: 1,
-        colorscale: [[0, 'hsl(217, 71, 53)'], [1, '#ff0000']],
+        colorscale: [[0, 'hsl(204, 86, 53)'], [1, 'hsl(171, 100, 41)']],
         line: {
           color: 'rgb(8,48,107)',
           width: 1.5
@@ -290,9 +309,23 @@ class Overview extends React.Component {
     const xScores = range(0, total.max_score, 0.5).toArray()
     const mu = mean(vals)
     const sigma = std(vals)
+    const norm = (sqrt(2 * pi) * sigma)
     const yScores = xScores.map(x => {
-      return vals.length * exp(-pow((x - mu) / sigma, 2) / 2) / (sqrt(2 * pi) * sigma)
+      return vals.length * exp(-pow((x - mu) / sigma, 2) / 2) / norm
     })
+
+    const meanAnnotation = {
+      x: mu,
+      y: vals.length / norm,
+      ax: 0,
+      ay: 0,
+      xref: 'x',
+      yref: 'y',
+      ayref: 'y',
+      yanchor: 'top',
+      arrowcolor: '#f00',
+      text: `Mean: ${mu.toPrecision(2)} ± ${sigma.toPrecision(2)}`
+    }
 
     const traceGaussian = {
       x: xScores,
@@ -303,7 +336,7 @@ class Overview extends React.Component {
       marker: {
         color: 'rgb(255, 0, 0)'
       },
-      fillcolor: 'rgba(255, 0, 0, 0.3)',
+      fillcolor: 'rgba(255, 0, 0, 0.2)',
       hoverinfo: 'none'
     }
 
@@ -317,10 +350,12 @@ class Overview extends React.Component {
         title: 'number of students'
       },
       title: {
-        text: `Histogram of Scores<br>(Cronbach's α: ${total.alpha.toPrecision(3)})`
+        text: 'Histogram of Scores<br>' +
+              (total.alpha ? `(Cronbach's α: ${total.alpha.toPrecision(3)})` : '')
       },
       autosize: true,
-      showlegend: false
+      showlegend: false,
+      annotations: [meanAnnotation]
     }
 
     const config = {
@@ -350,7 +385,7 @@ class Overview extends React.Component {
         orientation: 'h',
         textposition: 'inside',
         texttemplate: g.name,
-        hovertemplate: '%{x} solutions<br>' +
+        hovertemplate: '<b>%{fullData.name}</b>: %{x} solutions<br>' +
                        `Average of ${formatTime(g.avg_grading_time)} per solution` +
                        '<extra></extra>',
         marker: {
@@ -477,7 +512,7 @@ class Overview extends React.Component {
 
     return (
       <React.Fragment>
-        <table className='table is-striped'>
+        <table className='table is-striped is-fullwidth'>
           <thead>
             <tr>
               <th> Feedback </th>
@@ -505,7 +540,7 @@ class Overview extends React.Component {
 
         {problem.extra_solutions > 1 &&
           <article className='message is-warning'>
-            <div class='message-body'>
+            <div className='message-body'>
               {problem.extra_solutions} extra solutions where needed to solve this problem by some students,
               consider adding more space the next time.
             </div>
@@ -522,8 +557,8 @@ class Overview extends React.Component {
         <Hero title='Overview' subtitle='Analyse the exam results' />
 
         { this.state.statsLoaded
-          ? <div className='columns is-centered'>
-            <div className='column is-three-fifths-desktop is-full-mobile has-text-centered'>
+          ? <div className='columns is-centered is-multiline'>
+            <div className='column is-full has-text-centered'>
               <h1 className='is-size-1 has-text-centered'> {this.state.stats.name} </h1>
               <span className='select is-medium'>
                 <select
@@ -540,9 +575,10 @@ class Overview extends React.Component {
                   })}
                 </select>
               </span>
-              <div className='content'>
-                { this.renderProblemSummary(this.state.selectedProblemId) }
-              </div>
+            </div>
+            <div className={'column has-text-centered is-full-tablet ' + (this.state.selectedProblemId === 0
+              ? 'is-three-fifths-desktop' : 'is-half-desktop')}>
+              { this.renderProblemSummary(this.state.selectedProblemId) }
             </div>
           </div> : <p className='container has-text-centered is-size-5'>Loading statistics...</p> }
       </div >

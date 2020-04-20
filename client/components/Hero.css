@@ -1,0 +1,9 @@
+.hero .h1:empty:before {
+    content: ' ';
+    white-space: pre;
+}
+
+.hero .h2:empty:before {
+    content: ' ';
+    white-space: pre;
+}

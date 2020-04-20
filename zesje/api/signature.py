@@ -40,7 +40,7 @@ def get(exam_id, copy_number):
     widget_area_in = widget_area / 72
 
     try:
-        first_page_path = next(p.path for p in copy.pages if p.number == 0)
+        first_page_path = next(p.abs_path for p in copy.pages if p.number == 0)
     except StopIteration:
         abort(404)
     first_page_im = cv2.imread(first_page_path)

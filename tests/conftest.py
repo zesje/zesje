@@ -6,10 +6,11 @@ from flask import Flask
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-sys.path.append(str(Path.cwd()))
-from zesje.api import api_bp  # noqa E402
-from zesje.database import db  # noqa E402
-from zesje.factory import create_config  # noqa E402
+sys.path.insert(0, str(Path.cwd()))
+
+from zesje.api import api_bp  # noqa: E402
+from zesje.database import db  # noqa: E402
+from zesje.factory import create_config  # noqa: E402
 
 
 # Adapted from https://stackoverflow.com/a/46062148/1062698
@@ -40,7 +41,10 @@ def db_app(config_app):
     db.init_app(app)
 
     with TemporaryDirectory() as temp_dir:
-        app.config.update(DATA_DIRECTORY=str(temp_dir))
+        app.config.update(
+            DATA_DIRECTORY=str(temp_dir),
+            SCAN_DIRECTORY=str(temp_dir)
+        )
         yield app
 
 

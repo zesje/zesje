@@ -1,7 +1,7 @@
 import React from 'react'
 import 'bulma-tooltip/dist/css/bulma-tooltip.min.css'
 
-import moment from 'moment'
+import humanizeDuration from 'humanize-duration'
 import Hero from '../components/Hero.jsx'
 import * as api from '../api.jsx'
 
@@ -27,8 +27,21 @@ const Tooltip = (props) => {
 
 const formatTime = (seconds) => {
   // returns human readable string showing the elapsed time
+  const formatTimePrecision = (seconds, precision) => (
+    humanizeDuration(1000 * Math.round(seconds / precision) * precision, { delimiter: ' and ' })
+  )
 
-  return moment.unix(seconds).from(0, true)
+  if (seconds > 3600) { // Use 10 minute precision
+    return formatTimePrecision(seconds, 600)
+  } else if (seconds > 600) { // Use minute precision
+    return formatTimePrecision(seconds, 60)
+  } else if (seconds > 30) { // Use 10 second precision
+    return formatTimePrecision(seconds, 10)
+  } else if (seconds >= 5) { // Use 5 second precision
+    return formatTimePrecision(seconds, 5)
+  } else {
+    return 'a few seconds'
+  }
 }
 
 const ProblemSummary = (props) => (

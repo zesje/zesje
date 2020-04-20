@@ -58,7 +58,7 @@ def get(exam_id, problem_id, submission_id, full_page=False):
     raw_images = []
 
     for page in pages:
-        page_path = page.path
+        page_path = page.abs_path
         page_im = cv2.imread(page_path)
         dpi = guess_dpi(page_im)
 

@@ -155,7 +155,7 @@ class PanelMCQ extends React.Component {
       <React.Fragment>
         <div className='panel-block mcq-block'>
           <label className='label'> Multiple choice </label>
-          <Switch color='info' outlined value={this.props.problem.mc_options.length > 0} onChange={(e) => {
+          <Switch color='link' value={this.props.problem.mc_options.length > 0} onChange={(e) => {
             if (e.target.checked) {
               let npa = this.state.nrPossibleAnswers
               let labels = this.generateLabels(npa, 0)

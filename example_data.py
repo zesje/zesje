@@ -41,7 +41,7 @@ from tempfile import NamedTemporaryFile
 
 from lorem.text import TextLorem
 
-from zesje.database import db, Exam, Scan, Submission, Solution, Page
+from zesje.database import db, Exam, Scan, Submission, Solution, Page, Copy
 from zesje.scans import _process_pdf
 from zesje.factory import create_app
 
@@ -111,16 +111,17 @@ def generate_students(students):
 
 
 def _fake_process_pdf(scan, pages, student_ids):
-    for copy in range(1, len(student_ids) + 1):
-        sub = Submission(copy_number=copy, exam=scan.exam, student_id=student_ids[copy - 1])
+    for copy_number in range(1, len(student_ids) + 1):
+        copy = Copy(number=copy_number)
+        sub = Submission(copies=[copy], exam=scan.exam, student_id=student_ids[copy_number - 1])
         db.session.add(sub)
 
         for problem in scan.exam.problems:
             db.session.add(Solution(problem=problem, submission=sub))
 
-        base_copy_path = os.path.join(f'{scan.exam.id}_data', 'submissions', f'{copy}')
+        base_copy_path = os.path.join(f'{scan.exam.id}_data', 'submissions', f'{copy_number}')
         for page in range(pages + 1):
-            db.session.add(Page(path=os.path.join(base_copy_path, f'page{page:02d}.jpg'), submission=sub, number=page))
+            db.session.add(Page(path=os.path.join(base_copy_path, f'page{page:02d}.jpg'), copy=copy, number=page))
 
     scan.status = 'success'
     db.session.commit()

@@ -113,12 +113,7 @@ class Solutions(Resource):
         if grader is None:
             return dict(status=404, message='Grader does not exist.'), 404
 
-        sub = Submission.query.filter(Submission.exam_id == exam_id,
-                                      Submission.copy_number == submission_id).one_or_none()
-        if sub is None:
-            return dict(status=404, message='Submission does not exist.'), 404
-
-        solution = Solution.query.filter(Solution.submission_id == sub.id,
+        solution = Solution.query.filter(Solution.submission_id == submission_id,
                                          Solution.problem_id == problem_id).one_or_none()
         if solution is None:
             return dict(status=404, message='Solution does not exist.'), 404

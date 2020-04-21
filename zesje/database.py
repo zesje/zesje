@@ -12,6 +12,7 @@ from sqlalchemy.ext.declarative import DeclarativeMeta, declarative_base
 from sqlalchemy.orm import backref
 from sqlalchemy.orm.session import object_session
 from sqlalchemy.ext.hybrid import hybrid_property
+from sqlalchemy.ext.associationproxy import association_proxy
 
 
 # Class for NOT automatically determining table names
@@ -108,21 +109,10 @@ class Copy(db.Model):
     pages = db.relationship('Page', backref='copy', cascade='all', lazy=True)
     signature_validated = Column(Boolean, default=False, server_default='f', nullable=False)
 
-    @hybrid_property
-    def student(self):
-        return self.submission.student
-
-    @student.expression
-    def student(cls):
-        return Submission.student
-
-    @hybrid_property
-    def exam(self):
-        return self.submission.exam
-
-    @exam.expression
-    def exam(cls):
-        return Submission.exam
+    exam = association_proxy('submission', 'exam')
+    exam_id = association_proxy('submission', 'exam_id')
+    student = association_proxy('submission', 'student')
+    student_id = association_proxy('submission', 'student_id')
 
 
 class Page(db.Model):

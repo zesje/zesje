@@ -94,7 +94,7 @@ class Copies(Resource):
             msg = f'Student {args.studentID} does not exist'
             return dict(status=404, message=msg), 404
 
-        old_student = copy.student
+        old_student = copy.submission.student
         copies = validated_copies(student, exam)
         copies_old_student = validated_copies(old_student, exam) if old_student else []
 

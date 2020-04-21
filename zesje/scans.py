@@ -246,9 +246,12 @@ def process_page(image_data, exam_config, output_dir=None, strict=False):
             return False, str(e)
 
     if barcode.page == 0:
-        description = guess_student(
-            exam_token=barcode.token, copy_number=barcode.copy
-        )
+        if not copy.signature_validated:
+            description = guess_student(
+                exam_token=barcode.token, copy_number=barcode.copy
+            )
+        else:
+            description = 'Student signature already validated.'
     else:
         description = "Scanned page doesn't contain student number."
 
@@ -396,7 +399,14 @@ def guess_student(exam_token, copy_number, force=False):
     exam = Exam.query.filter(Exam.token == exam_token).one()
     copy = Copy.query.filter(Copy.number == copy_number,
                              Copy.exam == exam).one()
-    image_path = Page.query.filter(Page.copy_id == copy.id,
+    sub = copy.submission
+
+    # We expect only a single copy, raise an error if we find more
+    if len(sub.copies) > 1:
+        raise ValueError(
+            'Cannot guess student number for a copy that is not the only copy of a submission.')
+
+    image_path = Page.query.filter(Page.copy == copy,
                                    Page.number == 0).one().abs_path
 
     student_id_widget, student_id_widget_coords = exam_student_id_widget(exam.id)
@@ -411,7 +421,7 @@ def guess_student(exam_token, copy_number, force=False):
 
     student = Student.query.get(int(number))
     if student is not None:
-        copy.student = student
+        sub.student = student
         db.session.commit()
         return "Successfully extracted student number"
     else:

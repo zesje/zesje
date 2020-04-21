@@ -5,6 +5,7 @@ import pytest
 from flask import Flask
 from pathlib import Path
 import sys
+import MySQLdb
 
 sys.path.insert(0, str(Path.cwd()))
 
@@ -16,6 +17,16 @@ from zesje.factory import create_config  # noqa: E402
 @pytest.fixture
 def datadir():
     return os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
+
+
+@pytest.fixture(scope="module")
+def db_host():
+    try:
+        MySQLdb.connect('localhost', "root", "", "course_dev")
+    except Exception:
+        return 'mysql'
+
+    return 'localhost'
 
 
 # Returns a Flask app with only the config initialized
@@ -30,12 +41,12 @@ def config_app():
 # Return a mock DB which can be used in the testing enviroment
 # Module scope ensures it is ran only once
 @pytest.fixture(scope="module")
-def db_app(config_app):
+def db_app(config_app, db_host):
     app = config_app
 
     db.init_app(app)
 
-    app.config.update(SQLALCHEMY_DATABASE_URI=f'mysql://root:@localhost/course_dev')
+    app.config.update(SQLALCHEMY_DATABASE_URI=f'mysql://root:@{db_host}/course_dev')
 
     with TemporaryDirectory() as temp_dir:
         app.config.update(

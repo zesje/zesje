@@ -54,10 +54,14 @@ lint_py:
 test_py:
   <<: *python_packages
   stage: test
+  services:
+    - mysql:5.7
+  variables:
+    MYSQL_DATABASE: "course_dev"
+    MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
   script:
-    - yarn mysql-create
-    - yarn test:mysql-start && yarn test:py:cov
-    - yarn mysql-stop
+    - echo "SELECT 'OK';" | mysql -uroot -h mysql "course_dev"
+    - yarn test:py:cov
   artifacts:
     paths:
       - cov.html/

@@ -57,10 +57,9 @@ test_py:
   services:
     - mysql:5.7
   variables:
-    MYSQL_DATABASE: "course_dev"
+    MYSQL_DATABASE: "course_test"
     MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
   script:
-    - echo "SELECT 'OK';" | mysql -uroot -h mysql "course_dev"
     - yarn test:py:cov
   artifacts:
     paths:

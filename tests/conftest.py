@@ -22,7 +22,7 @@ def datadir():
 @pytest.fixture(scope="module")
 def db_host():
     try:
-        MySQLdb.connect('localhost', "root", "", "course_dev")
+        MySQLdb.connect('localhost', "root", "", "course_test")
     except Exception:
         return 'mysql'
 
@@ -46,7 +46,7 @@ def db_app(config_app, db_host):
 
     db.init_app(app)
 
-    app.config.update(SQLALCHEMY_DATABASE_URI=f'mysql://root:@{db_host}/course_dev')
+    app.config.update(SQLALCHEMY_DATABASE_URI=f'mysql://root:@{db_host}/course_test')
 
     with TemporaryDirectory() as temp_dir:
         app.config.update(

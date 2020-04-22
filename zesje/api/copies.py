@@ -85,7 +85,7 @@ class Copies(Resource):
             return dict(status=404, message='Exam does not exist.'), 404
 
         copy = Copy.query.filter(Copy.number == copy_number,
-                                 Submission.exam_id == exam_id).one_or_none()
+                                 Copy.exam == exam).one_or_none()
         if copy is None:
             return dict(status=404, message='Copy does not exist.'), 404
 

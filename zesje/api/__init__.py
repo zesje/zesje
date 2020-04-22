@@ -34,7 +34,7 @@ api.add_resource(Copies,
                  '/copies/<int:exam_id>',
                  '/copies/<int:exam_id>/<int:copy_number>')
 api.add_resource(MissingPages,
-                 '/submissions/missing_pages/<int:exam_id>')
+                 '/copies/missing_pages/<int:exam_id>')
 api.add_resource(Submissions,
                  '/submissions/<int:exam_id>',
                  '/submissions/<int:exam_id>/<int:submission_id>')

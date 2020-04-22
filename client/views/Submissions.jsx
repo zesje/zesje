@@ -32,7 +32,7 @@ const ScanStatus = (props) => {
 class Submissions extends React.Component {
   state = {
     scans: [],
-    submissions: [],
+    copies: [],
     examID: null
   };
 
@@ -43,18 +43,18 @@ class Submissions extends React.Component {
           this.setState({
             scans: scans
           })
-          this.updateSubmissions()
+          this.updateMissingPages()
         }
       })
   }
 
-  updateSubmissions = () => {
-    api.get('submissions/missing_pages/' + this.props.exam.id)
-      .then(submissions => {
+  updateMissingPages = () => {
+    api.get('copies/missing_pages/' + this.props.exam.id)
+      .then(copies => {
         this.setState({
-          submissions: submissions.map(sub => ({
-            id: sub['id'],
-            missing: sub['missing_pages']
+          copies: copies.map(copy => ({
+            number: copy['number'],
+            missing: copy['missing_pages']
           }))
         })
       })
@@ -103,18 +103,18 @@ class Submissions extends React.Component {
   }
 
   render () {
-    const missingSubmissions = this.state.submissions.filter(s => s.missing.length > 0)
+    const missingPages = this.state.copies.filter(c => c.missing.length > 0)
 
-    const missingSubmissionsStatus = (
-      missingSubmissions.length > 0
+    const missingPagesStatus = (
+      missingPages.length > 0
         ? <div>
           <p className='menu-label'>
             Missing Pages
           </p>
           <ul className='menu-list'>
-            {missingSubmissions.map(sub =>
-              <li key={sub.id}>
-                Copy {sub.id} is missing pages {sub.missing.join(',')}
+            {missingPages.map(copy =>
+              <li key={copy.number}>
+                Copy {copy.number} is missing pages {copy.missing.join(', ')}
               </li>
             )}
           </ul>
@@ -144,10 +144,10 @@ class Submissions extends React.Component {
               <br />
               <aside className='menu'>
                 <p className='menu-label'>
-                  Uploaded submissions: {this.state.submissions.length}
+                  Uploaded copies: {this.state.copies.length}
                 </p>
 
-                {missingSubmissionsStatus}
+                {missingPagesStatus}
 
                 <p className='menu-label'>
                   Upload History

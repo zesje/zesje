@@ -30,33 +30,6 @@ the error `502 - Bad Gateway` it means that Zesje is still starting.
 
 ## Development
 
-### Setting up MySQL server
-
-If this is the first time that you will run Zesje with MySQL in
-development, then first run the following command from the Zesje
-repository directory:
-
-    yarn mysql-create
-
-That's all it needs to create the MySQL files in the data directory.
-Although the database is now empty, it will automatically be populated
-with the previous `sqlite3` data once the app starts.
-
-In case you want to start MySQL without running the app use
-
-    yarn dev:mysql-start
-
-and, immeditaly after, migrate the database to create the tables and fill it
-with previous data running
-
-    yarn dev:migrate
-
-That's all, MySQL is now fully functional but remember to stop it
-once you quit the development process with
-
-    yarn mysql-stop
-
-
 ### Setting up a development environment
 *Zesje currently doesn't support native Windows, but WSL works.*
 
@@ -90,14 +63,42 @@ manually for now (we are working to bring this dependency into the
 Conda ecosystem). You can install this dependency in the following way
 on different platforms:
 
-| OS                            | Command                   |
-|-------------------------------|---------------------------|
-| macOS                         | `brew install libdmtx`    |
-| Debian <= 9, Ubuntu <= 19.04  | `apt install libdmtx0a`   |
-| Debian >= 10, Ubuntu >= 19.10 | `apt install libdmtx0b`   |
-| Arch                          | `pacman -S libdmtx`       |
-| Fedora                        | `dnf install libdmtx`     |
-| openSUSE                      | `zypper install libdmtx0` |
+| OS                            | Command                       |
+|-------------------------------|-------------------------------|
+| macOS                         | `brew install libdmtx gcc`    |
+| Debian <= 9, Ubuntu <= 19.04  | `apt install libdmtx0a gcc`   |
+| Debian >= 10, Ubuntu >= 19.10 | `apt install libdmtx0b gcc`   |
+| Arch                          | `pacman -S libdmtx gcc`       |
+| Fedora                        | `dnf install libdmtx gcc`     |
+| openSUSE                      | `zypper install libdmtx0 gcc` |
+
+
+#### Setting up MySQL server
+
+If this is the first time that you will run Zesje with MySQL in
+development, then first run the following command from the Zesje
+repository directory:
+
+    yarn mysql-create
+
+That's all it needs to create the MySQL files in the data directory.
+Although the database is now empty, it will automatically be populated
+with the previous `sqlite3` data once the app starts.
+
+In case you want to start MySQL without running the app use
+
+    yarn dev:mysql-start
+
+and, immeditaly after, migrate the database to create the tables and fill it
+with previous data running
+
+    yarn dev:migrate
+
+That's all, MySQL is now fully functional but remember to stop it
+once you quit the development process with
+
+    yarn mysql-stop
+
 
 ### Running a development server
 Activate your zesje development environment and run

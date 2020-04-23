@@ -13,8 +13,9 @@ SMTP_USERNAME = None
 SMTP_PASSWORD = None
 
 # MySQL host
-MYSQL_USER = 'root'
-MYSQL_PSW = ''
+MYSQL_USER = 'zesje'
+MYSQL_ROOT_PSW = 'rootpsw'
+MYSQL_PSW = 'zesjepsw'
 MYSQL_HOST = 'localhost'
 
 CELERY_BROKER_URL = 'redis://localhost:6479',

@@ -5,10 +5,10 @@ import pytest
 from flask import Flask
 from pathlib import Path
 import sys
-import MySQLdb
 
 sys.path.insert(0, str(Path.cwd()))
 
+import zesje.mysql as mysql  # noqa: E402
 from zesje.api import api_bp  # noqa: E402
 from zesje.database import db  # noqa: E402
 from zesje.factory import create_config  # noqa: E402
@@ -19,18 +19,8 @@ def datadir():
     return os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
 
 
-@pytest.fixture(scope="module")
-def db_host():
-    try:
-        MySQLdb.connect('localhost', "root", "", "course_test")
-    except Exception:
-        return 'mysql'
-
-    return 'localhost'
-
-
 # Returns a Flask app with only the config initialized
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="session")
 def config_app():
     app = Flask(__name__, static_folder=None)
     create_config(app.config, None)
@@ -40,20 +30,33 @@ def config_app():
 
 # Return a mock DB which can be used in the testing enviroment
 # Module scope ensures it is ran only once
-@pytest.fixture(scope="module")
-def db_app(config_app, db_host):
+@pytest.fixture(scope="session")
+def db_app(config_app):
     app = config_app
 
     db.init_app(app)
 
-    app.config.update(SQLALCHEMY_DATABASE_URI=f'mysql://root:@{db_host}/course_test')
+    if 'GITLAB_TEST' in os.environ:
+        app.config.update(SQLALCHEMY_DATABASE_URI=f'mysql://root:@mysql/course_test')
+    else:
+        user = app.config['MYSQL_USER']
+        psw = app.config['MYSQL_PSW']
+        app.config.update(SQLALCHEMY_DATABASE_URI=f'mysql://{user}:{psw}@localhost/course_test')
 
     with TemporaryDirectory() as temp_dir:
         app.config.update(
             DATA_DIRECTORY=str(temp_dir),
             SCAN_DIRECTORY=str(temp_dir)
         )
+
+        if mysql.create(app):
+            mysql.start(app)
+        else:
+            raise ValueError('Could not create mysql.')
+
         yield app
+
+        mysql.stop(app)
 
 
 @pytest.fixture(scope="module")

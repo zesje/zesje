@@ -59,6 +59,7 @@ test_py:
   variables:
     MYSQL_DATABASE: "course_test"
     MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+    GITLAB_TEST: "1"
   script:
     - yarn test:py:cov
   artifacts:

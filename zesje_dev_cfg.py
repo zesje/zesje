@@ -9,10 +9,5 @@ FROM_ADDRESS = 'noreply@tudelft.nl'
 SMTP_USERNAME = ''
 SMTP_PASSWORD = ''
 
-# MySQL host
-MYSQL_USER = 'root'
-MYSQL_PSW = ''
-MYSQL_HOST = 'localhost'
-
 # Enable debug mode
 DEBUG = 1

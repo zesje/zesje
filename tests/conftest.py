@@ -43,16 +43,16 @@ def db_app(config_app):
         psw = app.config['MYSQL_PSW']
         app.config.update(SQLALCHEMY_DATABASE_URI=f'mysql://{user}:{psw}@localhost/course_test')
 
+        if mysql.create(app):
+            mysql.start(app)
+        else:
+            raise ValueError('Could not create mysql.')
+
     with TemporaryDirectory() as temp_dir:
         app.config.update(
             DATA_DIRECTORY=str(temp_dir),
             SCAN_DIRECTORY=str(temp_dir)
         )
-
-        if mysql.create(app):
-            mysql.start(app)
-        else:
-            raise ValueError('Could not create mysql.')
 
         yield app
 

@@ -22,6 +22,7 @@
     "dev:migrate": "ZESJE_SETTINGS=$(pwd)/zesje_dev_cfg.py FLASK_APP=zesje.wsgi:app flask db upgrade",
     "prepare-migration": "ZESJE_SETTINGS=$(pwd)/zesje_dev_cfg.py FLASK_APP=zesje.wsgi:app flask db migrate",
     "test:py:cov": "python3 -m pytest -v -W error::RuntimeWarning --cov=zesje --cov-report=xml:cov.xml --cov-report=html:cov.html --cov-report=term tests/",
+    "dev:test:py:cov": "yarn mysql-start && yarn test:py:cov && yarn mysql-stop",
     "migrate-down": "FLASK_APP=zesje.wsgi:app flask db downgrade",
     "mysql-create": "python3 -m zesje.mysql create",
     "mysql-start": "python3 -m zesje.mysql start",

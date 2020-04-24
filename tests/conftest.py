@@ -1,6 +1,5 @@
 import os
 from tempfile import TemporaryDirectory
-import time
 
 import pytest
 from flask import Flask
@@ -9,7 +8,6 @@ import sys
 
 sys.path.insert(0, str(Path.cwd()))
 
-import zesje.mysql as mysql  # noqa: E402
 from zesje.api import api_bp  # noqa: E402
 from zesje.database import db  # noqa: E402
 from zesje.factory import create_config  # noqa: E402

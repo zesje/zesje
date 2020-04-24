@@ -76,28 +76,13 @@ on different platforms:
 #### Setting up MySQL server
 
 If this is the first time that you will run Zesje with MySQL in
-development, then first run the following command from the Zesje
+development, then run the following command from the Zesje
 repository directory:
 
-    yarn mysql-create
+    yarn mysql-init
 
-That's all it needs to create the MySQL files in the data directory.
-Although the database is now empty, it will automatically be populated
-with the previous `sqlite3` data once the app starts.
-
-In case you want to start MySQL without running the app use
-
-    yarn dev:mysql-start
-
-and, immeditaly after, migrate the database to create the tables and fill it
-with previous data running
-
-    yarn dev:migrate
-
-That's all, MySQL is now fully functional but remember to stop it
-once you quit the development process with
-
-    yarn mysql-stop
+That's all it needs to create the MySQL files in the data directory,
+migrate the database to the last schema and move all your previous data.
 
 
 ### Running a development server

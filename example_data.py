@@ -30,6 +30,7 @@ import os
 import shutil
 import sys
 import argparse
+import time
 
 import lorem
 import names
@@ -44,6 +45,7 @@ from lorem.text import TextLorem
 from zesje.database import db, Exam, Scan, Submission, Solution, Page
 from zesje.scans import _process_pdf
 from zesje.factory import create_app
+import zesje.mysql as mysql
 
 
 if 'ZESJE_SETTINGS' not in os.environ:
@@ -63,6 +65,10 @@ def init_app(delete):
     # ensure directories exists
     os.makedirs(app.config['DATA_DIRECTORY'], exist_ok=True)
     os.makedirs(app.config['SCAN_DIRECTORY'], exist_ok=True)
+
+    mysql.create(app.config)
+    mysql.start(app.config)
+    time.sleep(5)  # wait till mysql starts
 
     # Only create the database from migrations if it was deleted.
     # Otherwise the user should migrate manually.
@@ -376,3 +382,5 @@ if __name__ == '__main__':
                      args.solve / 100,
                      args.grade / 100,
                      args.skip_processing)
+
+    mysql.stop(app.config)

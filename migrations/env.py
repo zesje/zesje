@@ -15,7 +15,6 @@ from flask import current_app
 
 sys.path.append(os.getcwd())
 from zesje.database import db  # noqa: E402
-import zesje.mysql as mysql  # noqa: E402
 
 config = context.config
 fileConfig(config.config_file_name)
@@ -109,4 +108,3 @@ if context.is_offline_mode():
     run_migrations_offline()
 else:
     run_migrations_online()
-    mysql.stop(current_app)

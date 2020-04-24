@@ -4,14 +4,6 @@ from zesje.database import db, Exam, Problem, ProblemWidget, Solution
 from zesje.database import Submission, Scan, Page, ExamWidget, FeedbackOption, MultipleChoiceOption
 
 
-@pytest.fixture
-def empty_app(db_app):
-    with db_app.app_context():
-        db.drop_all()
-        db.create_all()
-        yield db_app
-
-
 def test_cascades_exam(empty_app, exam, problem, submission, scan, exam_widget):
     """Tests the cascades defined for an exam
 

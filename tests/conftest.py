@@ -1,5 +1,6 @@
 import os
 from tempfile import TemporaryDirectory
+import time
 
 import pytest
 from flask import Flask
@@ -20,7 +21,7 @@ def datadir():
 
 
 # Returns a Flask app with only the config initialized
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def config_app():
     app = Flask(__name__, static_folder=None)
     create_config(app.config, None)
@@ -30,7 +31,7 @@ def config_app():
 
 # Return a mock DB which can be used in the testing enviroment
 # Module scope ensures it is ran only once
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def db_app(config_app):
     app = config_app
 
@@ -43,11 +44,6 @@ def db_app(config_app):
         psw = app.config['MYSQL_PSW']
         app.config.update(SQLALCHEMY_DATABASE_URI=f'mysql://{user}:{psw}@localhost/course_test')
 
-        if mysql.create(app):
-            mysql.start(app)
-        else:
-            raise ValueError('Could not create mysql.')
-
     with TemporaryDirectory() as temp_dir:
         app.config.update(
             DATA_DIRECTORY=str(temp_dir),
@@ -55,8 +51,6 @@ def db_app(config_app):
         )
 
         yield app
-
-        mysql.stop(app)
 
 
 @pytest.fixture(scope="module")

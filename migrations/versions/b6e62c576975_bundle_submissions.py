@@ -107,11 +107,11 @@ def upgrade():
                 conn.execute(f'DELETE FROM solution WHERE id = {sol_to_delete.id}')
 
             # Mark the solution as graded only if all solutions are graded
-            is_graded = all(s.grader_id != '' for s in solutions_of_problem)
+            is_graded = all(s.grader_id is not None for s in solutions_of_problem)
             graded_at = 'NULL'
             grader_id = 'NULL'
             if is_graded:
-                graded_solution = next((s for s in solutions_of_problem if s.grader_id != ''))
+                graded_solution = next((s for s in solutions_of_problem if s.grader_id is not None))
                 graded_at = f'"{graded_solution.graded_at}"'
                 grader_id = graded_solution.grader_id
             conn.execute(f'UPDATE solution SET graded_at = {graded_at}, grader_id = {grader_id} ' +

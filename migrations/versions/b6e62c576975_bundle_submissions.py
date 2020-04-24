@@ -114,7 +114,13 @@ def upgrade():
                 graded_solution = next((s for s in solutions_of_problem if s.grader_id is not None))
                 graded_at = f'"{graded_solution.graded_at}"'
                 grader_id = graded_solution.grader_id
-            conn.execute(f'UPDATE solution SET graded_at = {graded_at}, grader_id = {grader_id} ' +
+
+            # Combine all remarks into a single string
+            remarks = '\n'.join(sol.remarks for sol in solutions_of_problem if sol.remarks is not None)
+            remarks_sql = 'NULL' if remarks == '' else f'"{remarks}"'
+
+            conn.execute(f'UPDATE solution SET graded_at = {graded_at}, grader_id = {grader_id}, ' +
+                         f'remarks = {remarks_sql} '
                          f'WHERE id = {sol_to_keep.id}')
 
         # Point each copy to the main submission

@@ -221,10 +221,10 @@ def validate_signatures(client, exam_id, copies):
         number = copy['number']
         student = copy['student']
         if not student:
-            raise RuntimeError(f'No student detected for copy {number}')
-
-        student_id = student['id']
-        client.put(f'/api/copies/{exam_id}/{number}', data={'studentID': student_id})
+            print(f'\tNo student detected for copy {number} of exam {exam_id}')
+        else:
+            student_id = student['id']
+            client.put(f'/api/copies/{exam_id}/{number}', data={'studentID': student_id})
 
 
 def grade_problems(client, exam_id, graders, problems, submissions, grade):

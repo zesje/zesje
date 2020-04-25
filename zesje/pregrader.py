@@ -27,6 +27,7 @@ def grade_problem(copy, page, page_img):
     'blank' if so.
     For multiple choice problems, a feedback option is added for each checkbox
     that is identified as filled in is created.
+    For submissions with multipe copies, no grading is done at all.
 
     Parameters
     ------

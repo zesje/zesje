@@ -237,9 +237,11 @@ def process_page(image_data, exam_config, output_dir=None, strict=False):
     else:
         return True, "Testing, image not saved and database not updated."
 
-    copy = update_database(image_path, barcode)
+    # This copy belongs to a submission that may or may not have other copies
+    copy = add_to_correct_copy(image_path, barcode)
 
     try:
+        # If the corresponding submission has multiple copies, this doesn't grade anything
         grade_problem(copy, barcode.page, image_array)
     except InternalError as e:
         if strict:
@@ -282,7 +284,7 @@ def save_image(image, barcode, base_path):
     return image_path
 
 
-def update_database(image_path, barcode):
+def add_to_correct_copy(image_path, barcode):
     """Add a database entry for the new image or update an existing one.
 
     Parameters

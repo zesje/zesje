@@ -149,7 +149,8 @@ def upgrade():
         prev_student = sub.student_id
         prev_exam = sub.exam_id
 
-    bundle_submissions(prev_submissions)
+    if prev_submissions:
+        bundle_submissions(prev_submissions)
 
     # Move all pages to new table
     conn.execute('INSERT INTO page_new (id, path, copy_id, number) ' +

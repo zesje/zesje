@@ -97,8 +97,6 @@ class Submission(db.Model):
     copies = db.relationship('Copy', backref='submission', cascade='all', lazy=True)
     student_id = Column(Integer, ForeignKey('student.id'), nullable=True)  # backref student
 
-    # TODO Unique constraint (exam_id, student_id)
-
 
 class Copy(db.Model):
     """A copy holding multiple pages"""

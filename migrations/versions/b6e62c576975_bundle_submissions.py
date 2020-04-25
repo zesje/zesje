@@ -69,7 +69,6 @@ def upgrade():
     ON y.student_id = z.x_student_id AND y.exam_id = z.x_exam_id
     WHERE x_student_id IS NOT NULL
     '''
-    print(conn.execute(bundled_submissions_subquery).fetchall())
 
     # Insert all submissions that don't need to be bundled into the new table
     conn.execute('INSERT INTO submission_new (id, exam_id, student_id) ' +
@@ -84,14 +83,11 @@ def upgrade():
                                'ORDER BY exam_id, student_id, id').fetchall()
 
     def bundle_submissions(subs):
-        print(subs)
         sub_ids = ', '.join(map(lambda s: str(s.id), subs))
         solutions = conn.execute('SELECT id, submission_id, problem_id, grader_id, graded_at, remarks ' +
                                  'FROM solution ' +
                                  f'WHERE submission_id IN ({sub_ids}) ' +
                                  'ORDER BY submission_id').fetchall()
-        print(solutions)
-        print('\n')
 
         # Merge feedback options of each problem
         solutions_per_problem = defaultdict(list)
@@ -143,7 +139,6 @@ def upgrade():
     prev_student = 0
     prev_exam = 0
     prev_submissions = []
-    print(submissions)
     for sub in submissions:
         if prev_student != sub.student_id or prev_exam != sub.exam_id:
             if prev_submissions:

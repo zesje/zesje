@@ -13,15 +13,18 @@ Usage:
                        [--grade {nothing,partial,all}]
 
     optional arguments:
-      -h, --help           show this help message and exit
-      -d, --delete         delete previous data
-      --exams (int)        number of exams to add
-      --pages (int)        number of pages per exam
-      --students (int)     number of students per exam
-      --graders (int)      number of graders
-      --solve (float)      how much of the solutions to solve (between 0 and 100)
-      --grade (float)      how much of the exam to grade (between 0 and 100). Notice that only non-
-                           blank solutions will be considered for grading.
+      -h, --help                show this help message and exit
+      -d, --delete              delete previous data
+      --exams (int)             number of exams to add
+      --pages (int)             number of pages per exam
+      --students (int)          number of students per exam
+      --graders (int)           number of graders
+      --solve (float)           how much of the solutions to solve (between 0 and 100)
+      --grade (float)           how much of the exam to grade (between 0 and 100). Notice that only non-
+                                blank solutions will be considered for grading.
+      --skip-processing         fakes the pdf processing to reduce time.
+                                As a drawback, blanks will not be detected.
+      --multiple-copies (float) how much of the students submit multiple copies (between 0 and 100)
 
 '''
 

@@ -403,8 +403,9 @@ def guess_student(exam_token, copy_number, force=False):
 
     # We expect only a single copy, raise an error if we find more
     if len(sub.copies) > 1:
-        raise ValueError(
-            'Cannot guess student number for a copy that is not the only copy of a submission.')
+        raise RuntimeError(
+            'Cannot guess student number for a copy that is not the only copy of a submission. ' +
+            'This means the copy has already been validated.')
 
     image_path = Page.query.filter(Page.copy == copy,
                                    Page.number == 0).one().abs_path

@@ -140,8 +140,9 @@ class App extends React.Component {
             <Route path='/scans/:examID' render={({ match }) =>
               <Scans examID={match.params.examID} />}
             />
-            <Route path='/students/:examID' render={() =>
-              <Students examID={match.params.examID} />} />
+            <Route path='/students/:examID' render={({ match }) =>
+              <Students examID={match.params.examID} />} 
+            />
             <Route path='/grade' render={() => (
               exam.submissions.length && exam.problems.length && grader
                 ? <Grade examID={exam.id} gradeAnonymous={exam.gradeAnonymous} graderID={this.state.grader.id} />

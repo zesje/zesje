@@ -29,7 +29,7 @@ const ScanStatus = (props) => {
   )
 }
 
-class Submissions extends React.Component {
+class Scans extends React.Component {
   state = {
     scans: [],
     copies: [],
@@ -37,7 +37,7 @@ class Submissions extends React.Component {
   };
 
   updateScans = () => {
-    api.get('scans/' + this.props.exam.id)
+    api.get('scans/' + this.props.examID)
       .then(scans => {
         if (JSON.stringify(scans) !== JSON.stringify(this.state.scans)) {
           this.setState({
@@ -49,7 +49,7 @@ class Submissions extends React.Component {
   }
 
   updateMissingPages = () => {
-    api.get('copies/missing_pages/' + this.props.exam.id)
+    api.get('copies/missing_pages/' + this.props.examID)
       .then(copies => {
         this.setState({
           copies: copies.map(copy => ({
@@ -68,7 +68,7 @@ class Submissions extends React.Component {
     accepted.map(file => {
       const data = new window.FormData()
       data.append('pdf', file)
-      api.post('scans/' + this.props.exam.id, data)
+      api.post('scans/' + this.props.examID, data)
         .then(() => {
           this.updateScans()
         })
@@ -91,7 +91,7 @@ class Submissions extends React.Component {
             'You have not yet uploaded any students. ' +
             "If you don't upload students before the scans " +
             "then we can't automatically assign students " +
-            'to their submissions',
+            'to their copies',
             { 'duration': 5 }
           )
         }
@@ -124,7 +124,7 @@ class Submissions extends React.Component {
 
     return <div>
 
-      <Hero title='Exam details' subtitle={'Selected: ' + this.props.exam.name} />
+      <Hero title='Scans' subtitle='Upload scans and check missing pages' />
 
       <section className='section'>
 
@@ -168,4 +168,4 @@ class Submissions extends React.Component {
   }
 }
 
-export default Submissions
+export default Scans

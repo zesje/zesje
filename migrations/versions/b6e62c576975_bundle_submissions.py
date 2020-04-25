@@ -99,15 +99,21 @@ def upgrade():
             solutions_per_problem[sol.problem_id].append(sol)
         for problem_id, solutions_of_problem in solutions_per_problem.items():
             sol_to_keep = solutions_of_problem[0]
+            duplicate_fbos = False
             for sol_to_delete in solutions_of_problem[1:]:
-                # If a feedback is assigned multiple times over these submissions
-                # we ignore this, since this is an error by the user
-                conn.execute(f'UPDATE OR IGNORE solution_feedback SET solution_id = {sol_to_keep.id} ' +
-                             f'WHERE solution_id = {sol_to_delete.id}')
+                try:
+                    conn.execute(f'UPDATE solution_feedback SET solution_id = {sol_to_keep.id} ' +
+                                 f'WHERE solution_id = {sol_to_delete.id}')
+                except sa.exc.IntegrityError:
+                    # Unique constraint fails, thus we have a duplicate feedback option
+                    duplicate_fbos = True
+                    conn.execute(f'UPDATE OR IGNORE solution_feedback SET solution_id = {sol_to_keep.id} ' +
+                                 f'WHERE solution_id = {sol_to_delete.id}')
+
                 conn.execute(f'DELETE FROM solution WHERE id = {sol_to_delete.id}')
 
-            # Mark the solution as graded only if all solutions are graded
-            is_graded = all(s.grader_id is not None for s in solutions_of_problem)
+            # Mark the solution as graded only if all solutions are graded and there are no duplicates
+            is_graded = (not duplicate_fbos) and all(s.grader_id is not None for s in solutions_of_problem)
             graded_at = 'NULL'
             grader_id = 'NULL'
             if is_graded:

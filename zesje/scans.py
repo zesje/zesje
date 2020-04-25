@@ -371,7 +371,7 @@ def decode_barcode(image, exam_config):
     raise RuntimeError("No barcode found.")
 
 
-def guess_student(exam_token, copy_number, force=False):
+def guess_student(exam_token, copy_number):
     """Update a submission with a guessed student number.
 
     Parameters
@@ -380,20 +380,12 @@ def guess_student(exam_token, copy_number, force=False):
         Unique exam identifier (see database schema).
     copy_number : int
         The copy number.
-    force : bool
-        Whether to update the student number of a submission with a validated
-        signature, default False.
 
     Returns
     -------
     description : string
         Description of the outcome.
     """
-
-    # TODO: Implement this
-    if force:
-        raise NotImplementedError(
-            'Setting the student for a validated copy is not implemented yet.')
 
     # Throws exception if zero or more than one of Exam, Submission or Page found
     exam = Exam.query.filter(Exam.token == exam_token).one()
@@ -412,7 +404,7 @@ def guess_student(exam_token, copy_number, force=False):
 
     student_id_widget, student_id_widget_coords = exam_student_id_widget(exam.id)
 
-    if copy.signature_validated and not force:
+    if copy.signature_validated:
         return "Signature already validated"
 
     try:

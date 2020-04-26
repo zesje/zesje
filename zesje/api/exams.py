@@ -10,6 +10,7 @@ from flask_restful import Resource, reqparse
 from flask_restful.inputs import boolean
 from werkzeug.datastructures import FileStorage
 from sqlalchemy.orm import selectinload
+from sqlalchemy import func
 
 from zesje.api._helpers import _shuffle
 from zesje.api.problems import problem_to_data
@@ -115,13 +116,18 @@ class Exams(Resource):
             submissions : int
                 Number of submissions
         """
+        sub_count = {
+            result.exam_id: result.sub_count for result in
+            db.session.query(Submission.exam_id, func.count(Submission.id).label('sub_count'))
+            .group_by(Submission.exam_id).all()
+        }
         return [
             {
                 'id': ex.id,
                 'name': ex.name,
-                'submissions': len(ex.submissions)  # TODO Should this be copies or submissions?
+                'submissions': sub_count[ex.id]  # TODO Should this be copies or submissions?
             }
-            for ex in Exam.query.order_by(Exam.id).all()
+            for ex in db.session.query(Exam.id, Exam.name).order_by(Exam.id).all()
         ]
 
     def _get_single(self, exam_id):

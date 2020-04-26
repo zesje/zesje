@@ -132,6 +132,9 @@ class Submissions(Resource):
             if sub is None:
                 return dict(status=404, message='Submission does not exist.'), 404
 
+            if sub.exam != exam:
+                return dict(status=400, message='Submission does not belong to this exam.'), 400
+
             if args.direction:
                 if args.problem_id is None or args.shuffle_seed is None or args.ungraded is None:
                     return dict(status=400, message='One of problem_id, grader_id, ungraded, direction not provided')

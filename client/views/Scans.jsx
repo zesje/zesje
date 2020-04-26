@@ -131,8 +131,6 @@ class Scans extends React.Component {
         <div className='container'>
           <div className='columns'>
             <div className='column has-text-centered'>
-              <h3 className='title'>Upload scans</h3>
-              <h5 className='subtitle'>Scanned pdf files</h5>
               <Dropzone accept={'application/pdf'} style={{}}
                 activeStyle={{ borderStyle: 'dashed', width: 'fit-content', margin: 'auto' }}
                 onDrop={this.onDropPDF}

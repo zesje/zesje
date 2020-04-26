@@ -94,7 +94,7 @@ class Copies(Resource):
             return dict(status=404, message=msg), 404
 
         old_student = copy.submission.student
-        copies = validated_copies(student, exam)
+        already_assigned_copies = validated_copies(student, exam)
         copies_old_student = validated_copies(old_student, exam) if old_student else []
 
         # If the corresponding submission has only one copy, we can simply
@@ -104,10 +104,10 @@ class Copies(Resource):
         if (not copy.validated) or \
            (old_student != student and len(copies_old_student) == 1):
 
-            if copies:
+            if already_assigned_copies:
                 # Remove submission, add copy to existing submission
                 sub_old_student = copy.submission
-                sub = copies[0].submission
+                sub = already_assigned_copies[0].submission
                 sub.validated = True
                 copy.submission = sub
                 merge_solutions(sub, sub_old_student)
@@ -124,10 +124,10 @@ class Copies(Resource):
             sub_old_student = copies_old_student[0].submission
             ungrade_submission(sub_old_student)
 
-            if copies:
+            if already_assigned_copies:
                 # Switch the copy from the old student submission to
                 # the new student submission
-                sub = copies[0].submission
+                sub = already_assigned_copies[0].submission
                 ungrade_submission(sub)
                 copy.submission = sub
             else:

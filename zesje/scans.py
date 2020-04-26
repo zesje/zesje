@@ -248,7 +248,7 @@ def process_page(image_data, exam_config, output_dir=None, strict=False):
             return False, str(e)
 
     if barcode.page == 0:
-        if not copy.signature_validated:
+        if not copy.validated:
             description = guess_student(
                 exam_token=barcode.token, copy_number=barcode.copy
             )
@@ -406,8 +406,8 @@ def guess_student(exam_token, copy_number):
 
     student_id_widget, student_id_widget_coords = exam_student_id_widget(exam.id)
 
-    if copy.signature_validated:
-        return "Signature already validated"
+    if copy.validated:
+        return "Signature of this copy is already validated"
 
     try:
         number = get_student_number(image_path, student_id_widget_coords)

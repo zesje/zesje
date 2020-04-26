@@ -18,7 +18,7 @@ def copy_to_data(copy):
             'lastName': sub.student.last_name,
             'email': sub.student.email
         } if sub.student else None,
-        'validated': copy.signature_validated
+        'validated': copy.validated
     }
 
 
@@ -102,15 +102,15 @@ class Copies(Resource):
         # delete the submission or reuse it for the new student.
         # This is the case whenever signature is unvalidated or the old
         # student has only one validated copy (which is this one).
-        if (not copy.signature_validated) or \
+        if (not copy.validated) or \
            (old_student != student and len(copies_old_student) == 1):
 
             if copies:
                 # Remove submission, add copy to existing submission
                 sub_old_student = copy.submission
                 sub = copies[0].submission
+                sub.validated = True
                 copy.submission = sub
-                copy.signature_validated = True
                 merge_solutions(sub, sub_old_student)
                 db.session.delete(sub_old_student)
 
@@ -118,7 +118,7 @@ class Copies(Resource):
                 # Assign student to copy, validate signature
                 sub = copy.submission
                 sub.student = student
-                copy.signature_validated = True
+                sub.validated = True
 
         # In this case the old student has more than one copy
         elif old_student != student:
@@ -150,7 +150,7 @@ def validated_copies(student, exam):
     if submissions:
         return [
             copy for sub in submissions for copy in sub.copies
-            if copy.signature_validated
+            if sub.validated
         ]
     else:
         return []

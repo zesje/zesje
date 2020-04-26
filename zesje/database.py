@@ -76,7 +76,7 @@ class Exam(db.Model):
     # TODO Is this SQL expression really needed?
     @copies.expression
     def copies(cls):
-        return select([Copy.id, Copy.number, Copy.submission_id, Copy.signature_validated]).\
+        return select([Copy.id, Copy.number, Copy.submission_id]).\
                select_from(
                    join(Copy, Submission)
                ).\
@@ -96,6 +96,7 @@ class Submission(db.Model):
                                 order_by='Solution.problem_id', lazy=True)
     copies = db.relationship('Copy', backref='submission', cascade='all', lazy=True)
     student_id = Column(Integer, ForeignKey('student.id'), nullable=True)  # backref student
+    validated = Column(Boolean, default=False, server_default=false(), nullable=False)
 
 
 class Copy(db.Model):
@@ -105,12 +106,12 @@ class Copy(db.Model):
     number = Column(Integer, nullable=False)
     submission_id = Column(Integer, ForeignKey('submission.id'), nullable=False)  # backref submission
     pages = db.relationship('Page', backref='copy', cascade='all', lazy=True)
-    signature_validated = Column(Boolean, default=False, server_default='f', nullable=False)
 
     exam = association_proxy('submission', 'exam')
     exam_id = association_proxy('submission', 'exam_id')
     student = association_proxy('submission', 'student')
     student_id = association_proxy('submission', 'student_id')
+    validated = association_proxy('submission', 'validated')
 
 
 class Page(db.Model):

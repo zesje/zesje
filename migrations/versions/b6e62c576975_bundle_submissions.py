@@ -23,7 +23,6 @@ def upgrade():
         sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
         sa.Column('number', sa.Integer(), nullable=False),
         sa.Column('submission_id', sa.Integer(), nullable=False),
-        sa.Column('signature_validated', sa.Boolean(), server_default=sa.false(), nullable=False),
         sa.ForeignKeyConstraint(['submission_id'], ['submission.id'], ),
         sa.PrimaryKeyConstraint('id')
     )
@@ -33,6 +32,7 @@ def upgrade():
         sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
         sa.Column('exam_id', sa.Integer(), nullable=False),
         sa.Column('student_id', sa.Integer(), nullable=True),
+        sa.Column('validated', sa.Boolean(), server_default=sa.false(), nullable=False),
         sa.ForeignKeyConstraint(['exam_id'], ['exam.id'], ),
         sa.ForeignKeyConstraint(['student_id'], ['student.id'], ),
         sa.PrimaryKeyConstraint('id')
@@ -53,8 +53,8 @@ def upgrade():
     # Populate new copy table with all the old submissions.
     # Each copy uses the same id as the submission to ensure everything stays linked.
     # The submission_id of copies that belong to a bundled submission will be updated later.
-    conn.execute('INSERT INTO copy (id, number, submission_id, signature_validated) ' +
-                 'SELECT id, copy_number, id, signature_validated FROM submission')
+    conn.execute('INSERT INTO copy (id, number, submission_id) ' +
+                 'SELECT id, copy_number, id FROM submission')
 
     bundled_submissions_subquery = '''
     SELECT y.id
@@ -71,8 +71,8 @@ def upgrade():
     '''
 
     # Insert all submissions that don't need to be bundled into the new table
-    conn.execute('INSERT INTO submission_new (id, exam_id, student_id) ' +
-                 'SELECT id, exam_id, student_id ' +
+    conn.execute('INSERT INTO submission_new (id, exam_id, student_id, validated) ' +
+                 'SELECT id, exam_id, student_id, signature_validated ' +
                  'FROM submission ' +
                  f'WHERE submission.id NOT IN ({bundled_submissions_subquery})')
 
@@ -132,8 +132,8 @@ def upgrade():
                          f'WHERE submission_id = {sub_to_delete.id}')
 
         # Add the main submission to the new table
-        conn.execute('INSERT INTO submission_new (id, exam_id, student_id) ' +
-                     f'VALUES ({sub_to_keep.id}, {sub_to_keep.exam_id}, {sub_to_keep.student_id})')
+        conn.execute('INSERT INTO submission_new (id, exam_id, student_id, validated) ' +
+                     f'VALUES ({sub_to_keep.id}, {sub_to_keep.exam_id}, {sub_to_keep.student_id}, 1)')
 
     # Bundle all submissions together that need to be bundled
     prev_student = 0

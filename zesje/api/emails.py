@@ -157,7 +157,7 @@ class Email(Resource):
                 message="Exam does not exist"
             )
 
-        if not all(copy.signature_validated for copy in exam.copies):
+        if not all(sub.validated for sub in exam.submissions):
             abort(
                 409,
                 message="All copies must be validated before "

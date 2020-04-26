@@ -146,8 +146,8 @@ def grader_data(problem_id):
             'id': id,
             'name': name,
             'graded': graded,
-            'avg_grading_time': avg,
-            'total_grading_time': total
+            'averageTime': avg,
+            'totalTime': total
         })
 
     return graders

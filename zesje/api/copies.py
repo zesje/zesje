@@ -154,31 +154,25 @@ def validated_copies(student, exam):
         return []
 
 
+def is_exactly_blank(solution):
+    return all(fb.text == BLANK_FEEDBACK_NAME for fb in solution.feedback) and len(solution.feedback)
+
+
 def merge_solutions(sub, sub_to_merge):
     # Ordering is the same since Submission.solutions is ordered by problem_id
     for sol, sol_to_merge in zip(sub.solutions, sub_to_merge.solutions):
-        only_blank = all(fb.text == BLANK_FEEDBACK_NAME for fb in sol.feedback)
-        only_blank_to_merge = all(fb.text == BLANK_FEEDBACK_NAME for fb in sol_to_merge.feedback)
+        # Merge all feedback options together
+        feedback = list(set(sol.feedback + sol_to_merge.feedback))
 
-        # If one of the solutions has no feedback or only blank feedback,
-        # then we can merge all the feedback options
-        if only_blank or only_blank_to_merge:
-            feedback = list(set(sol.feedback + sol_to_merge.feedback))
+        # If one of the solutions has feedback other than Blank or no feedback at all,
+        # we should remove Blank from the list of feedback options
+        both_exactly_blank = is_exactly_blank(sol) and is_exactly_blank(sol_to_merge)
+        if not both_exactly_blank:
+            feedback = [fb for fb in feedback if fb.text != BLANK_FEEDBACK_NAME]
 
-            # Remove blank from set of feedback options if one of the solutions has not
-            # has not exactly only `Blank` as feedback option
-            if not (only_blank and only_blank_to_merge and len(sol.feedback) and len(sol_to_merge.feedback)):
-                feedback = [fbo for fbo in feedback if fbo.text != BLANK_FEEDBACK_NAME]
-
-            sol.feedback = feedback
-
-            if not (sol.graded_by and sol_to_merge.graded_by):
-                sol.graded_by = None
-                sol.graded_at = None
-        else:
-            sol.feedback = list(set(sol.feedback + sol_to_merge.feedback))
-            sol.graded_by = None
-            sol.graded_at = None
+        sol.feedback = feedback
+        sol.graded_by = None
+        sol.graded_at = None
 
 
 def ungrade_submission(sub):

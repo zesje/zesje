@@ -94,68 +94,50 @@ class Copies(Resource):
             return dict(status=404, message=msg), 404
 
         old_student = copy.submission.student
-        already_assigned_copies = validated_copies(student, exam)
-        copies_old_student = validated_copies(old_student, exam) if old_student else []
 
-        # If the corresponding submission has only one copy, we can simply
-        # delete the submission or reuse it for the new student.
-        # This is the case whenever signature is unvalidated or the old
-        # student has only one validated copy (which is this one).
-        if (not copy.validated) or \
-           (old_student != student and len(copies_old_student) == 1):
+        # Does this student have other validated copies?
+        new_submission = Submission.query.filter(
+            Submission.exam == exam,
+            Submission.student == student,
+            Submission.validated
+        ).one_or_none()
 
-            if already_assigned_copies:
-                # Remove submission, add copy to existing submission
-                sub_old_student = copy.submission
-                sub = already_assigned_copies[0].submission
-                sub.validated = True
-                copy.submission = sub
-                merge_solutions(sub, sub_old_student)
-                db.session.delete(sub_old_student)
+        if old_student == student or (new_submission is None and len(copy.submission.copies) == 1):
+            # We are only validating a submission and possibly updating the student
+            copy.submission.student = student
+            copy.submission.validated = True
+            db.session.commit()
+            return dict(status=200, message=f'Student {student.id} matched to copy {copy.number}'), 200
 
-            else:
-                # Assign student to copy, validate signature
-                sub = copy.submission
-                sub.student = student
-                sub.validated = True
+        if new_submission is None:
+            # Create a new submission for the student (we will add the copy later)
+            new_submission = Submission(exam=exam, copies=[], student=student, validated=True)
+            db.session.add(new_submission)
+            for problem in exam.problems:
+                db.session.add(Solution(problem=problem, submission=new_submission))
 
-        # In this case the old student has more than one copy
-        elif old_student != student:
-            sub_old_student = copies_old_student[0].submission
-            unapprove_grading(sub_old_student)
+        # Merge old and new, make new ungraded
 
-            if already_assigned_copies:
-                # Switch the copy from the old student submission to
-                # the new student submission
-                sub = already_assigned_copies[0].submission
-                unapprove_grading(sub)
-                copy.submission = sub
-            else:
-                # Switch the copy from the old student submission to
-                # a new submission for the new student
-                sub = Submission(exam=exam, copies=[copy], student=student, validated=True)
-                db.session.add(sub)
-                for problem in exam.problems:
-                    db.session.add(Solution(problem=problem, submission=sub))
+        old_submission = copy.submission
+        merge_feedback(new_submission, old_submission)
+        unapprove_grading(new_submission)
 
-            # TODO: Pregrade both submissions again
+        if len(old_submission.copies) > 1:
+            unapprove_grading(old_submission)
+        else:
+            db.session.delete(old_submission)
+
+        copy.submission = new_submission
 
         db.session.commit()
         return dict(status=200, message=f'Student {student.id} matched to copy {copy.number}'), 200
-
-
-def validated_copies(student, exam):
-    sub = Submission.query.filter(Submission.exam == exam,
-                                  Submission.student == student,
-                                  Submission.validated).one_or_none()
-    return sub.copies if sub else []
 
 
 def is_exactly_blank(solution):
     return all(fb.text == BLANK_FEEDBACK_NAME for fb in solution.feedback) and len(solution.feedback)
 
 
-def merge_solutions(sub, sub_to_merge):
+def merge_feedback(sub, sub_to_merge):
     # Ordering is the same since Submission.solutions is ordered by problem_id
     for sol, sol_to_merge in zip(sub.solutions, sub_to_merge.solutions):
         # Merge all feedback options together
@@ -168,8 +150,6 @@ def merge_solutions(sub, sub_to_merge):
             feedback = [fb for fb in feedback if fb.text != BLANK_FEEDBACK_NAME]
 
         sol.feedback = feedback
-        sol.graded_by = None
-        sol.graded_at = None
 
 
 def unapprove_grading(sub):

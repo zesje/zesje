@@ -1,6 +1,4 @@
 import React from 'react'
-import Mousetrap from 'mousetrap'
-
 import Notification from 'react-bulma-notification'
 
 import * as api from '../api.jsx'
@@ -8,6 +6,7 @@ import * as api from '../api.jsx'
 import Hero from '../components/Hero.jsx'
 import ProgressBar from '../components/ProgressBar.jsx'
 import SearchBox from '../components/SearchBox.jsx'
+import withShortcuts from '../components/ShortcutBinder.jsx'
 
 import SearchPanel from './students/SearchPanel.jsx'
 import EditPanel from './students/EditPanel.jsx'
@@ -18,115 +17,98 @@ class CheckStudents extends React.Component {
   state = {
     editActive: false,
     editStud: null,
-    input: '',
     index: 0,
-    examID: null
-  };
-
-  componentWillUnmount = () => {
-    Mousetrap.unbind(['left', 'h'])
-    Mousetrap.unbind(['right', 'l'])
-    Mousetrap.unbind(['up', 'k'])
-    Mousetrap.unbind(['down', 'j'])
-  };
-
-  // If we add shortcuts here, don't forget to add them
-  // to ./client/components/help/ShortcutsHelp.md
+    copies: [],
+    examID: null // The exam ID the loaded copies belong to
+  }
 
   componentDidMount = () => {
-    Mousetrap.bind(['left', 'h'], this.prev)
-    Mousetrap.bind(['right', 'l'], this.next)
-    Mousetrap.bind(['up', 'k'], (event) => {
+    // If we change the keybindings here we should also remember to
+    // update the tooltips for the associated widgets (in render()).
+    // Also add the shortcut to ./client/components/help/ShortcutsHelp.md
+    this.props.bindShortcut(['left', 'h'], this.prev)
+    this.props.bindShortcut(['right', 'l'], this.next)
+    this.props.bindShortcut(['up', 'k'], (event) => {
       event.preventDefault()
       this.nextUnchecked()
     })
-    Mousetrap.bind(['down', 'j'], (event) => {
+    this.props.bindShortcut(['down', 'j'], (event) => {
       event.preventDefault()
       this.prevUnchecked()
     })
+
+    this.fetchCopies()
   }
 
-  static getDerivedStateFromProps = (newProps, prevState) => {
-    if (newProps.exam.id !== prevState.examID && newProps.exam.submissions.length) {
-      return {
-        input: newProps.exam.submissions[0].id,
-        index: 0,
-        examID: newProps.exam.id
-      }
+  componentDidUpdate = () => {
+    if (this.state.examID !== this.props.examID) {
+      this.fetchCopies()
     }
-    return null
+  }
+
+  fetchCopies = () => {
+    if (this.props.examID === null) return
+
+    api.get(`copies/${this.props.examID}`).then(copies => {
+      const newIndex = this.state.index < copies.length ? this.state.index : 0
+      this.setState({
+        index: newIndex,
+        copies: copies,
+        examID: this.props.examID
+      })
+    })
+  }
+
+  fetchCopy = (index) => {
+    const copyNumber = this.state.copies[index].number
+    api.get(`copies/${this.props.examID}/${copyNumber}`).then(copy => {
+      let copies = [...this.state.copies]
+      let oldIndex = copies.findIndex((copy) => copy.number === copyNumber)
+      copies[oldIndex] = copy
+      this.setState({ copies: copies })
+    })
+  }
+
+  setCopyIndex = (newIndex) => {
+    if (newIndex >= 0 && newIndex < this.state.copies.length) {
+      this.setState({
+        index: newIndex
+      })
+      this.fetchCopy(newIndex)
+    }
   }
 
   prev = () => {
-    const newIndex = this.state.index - 1
-
-    if (newIndex >= 0 && newIndex < this.props.exam.submissions.length) {
-      this.setState({
-        index: newIndex,
-        input: this.props.exam.submissions[newIndex].id
-      })
-      this.props.updateSubmission(this.props.exam.submissions[newIndex].id)
-    }
+    this.setCopyIndex(this.state.index - 1)
   }
   next = () => {
-    const newIndex = this.state.index + 1
-
-    if (newIndex >= 0 && newIndex < this.props.exam.submissions.length) {
-      this.setState({
-        index: newIndex,
-        input: this.props.exam.submissions[newIndex].id
-      })
-      this.props.updateSubmission(this.props.exam.submissions[newIndex].id)
-    }
+    this.setCopyIndex(this.state.index + 1)
   }
 
   prevUnchecked = () => {
     for (let i = this.state.index - 1; i >= 0; i--) {
-      if (this.props.exam.submissions[i].validated === false) {
-        this.setState({
-          input: this.props.exam.submissions[i].id,
-          index: i
-        })
-        this.props.updateSubmission(this.props.exam.submissions[i].id)
+      if (this.state.copies[i].validated === false) {
+        this.setCopyIndex(i)
         return
       }
     }
   }
   nextUnchecked = () => {
-    for (let i = this.state.index + 1; i < this.props.exam.submissions.length; i++) {
-      if (this.props.exam.submissions[i].validated === false) {
-        this.setState({
-          input: this.props.exam.submissions[i].id,
-          index: i
-        })
-        this.props.updateSubmission(this.props.exam.submissions[i].id)
+    for (let i = this.state.index + 1; i < this.state.copies.length; i++) {
+      if (this.state.copies[i].validated === false) {
+        this.setCopyIndex(i)
         return
       }
     }
   }
 
-  setSubmission = (id) => {
-    const i = this.props.exam.submissions.findIndex(sub => sub.id === id)
-    this.setState({
-      index: i
-    })
-    this.props.updateSubmission(id)
-  }
-
-  setSubInput = (event) => {
-    const patt = new RegExp(/^([1-9]\d*|0)?$/)
-
-    if (patt.test(event.target.value)) {
-      this.setState({ input: event.target.value })
-    }
-  }
-
   matchStudent = (stud) => {
-    if (!this.props.exam.submissions.length) return
+    if (!this.state.copies) return
 
-    api.put('submissions/' + this.props.exam.id + '/' + this.props.exam.submissions[this.state.index].id, { studentID: stud.id })
+    api.put(`copies/${this.props.examID}/${this.state.copies[this.state.index].number}`, { studentID: stud.id })
       .then(resp => {
-        this.props.updateSubmission(this.props.exam.submissions[this.state.index].id)
+        // TODO When do we want to update the full list of copies?
+        this.fetchCopy(this.state.index)
         this.nextUnchecked()
       })
       .catch(err => {
@@ -152,10 +134,11 @@ class CheckStudents extends React.Component {
   }
 
   render () {
-    const exam = this.props.exam
-    const subm = exam.submissions[this.state.index]
-    const total = exam.submissions.length
-    const done = exam.submissions.filter(s => s.validated).length
+    const copies = this.state.copies
+    const copy = copies[this.state.index]
+    const validated = copy && copy.validated
+    const total = copies.length
+    const done = copies.filter(c => c.validated).length
 
     return (
       <div>
@@ -170,12 +153,12 @@ class CheckStudents extends React.Component {
               <div className='column is-one-quarter-desktop is-one-third-tablet'>
                 {this.state.editActive
                   ? <EditPanel toggleEdit={this.toggleEdit} editStud={this.state.editStud} />
-                  : <SearchPanel matchStudent={this.matchStudent} toggleEdit={this.toggleEdit} submission={subm}
-                    student={subm && subm.student} validated={subm && subm.validated} subIndex={this.state.index} />
+                  : <SearchPanel matchStudent={this.matchStudent} toggleEdit={this.toggleEdit} copy={copy}
+                    student={copy && copy.student} validated={validated} copyIndex={this.state.index} />
                 }
               </div>
 
-              {this.props.exam.submissions.length
+              {this.state.copies.length
                 ? <div className='column'>
                   <div className='level'>
                     <div className='level-item make-wider'>
@@ -183,35 +166,35 @@ class CheckStudents extends React.Component {
                         <div className='control'>
                           <button type='submit' className='button is-info is-rounded is-hidden-mobile'
                             onClick={this.prevUnchecked}>unchecked</button>
-                          <button type='submit' className={'button' + (subm.validated ? ' is-success' : ' is-link')}
+                          <button type='submit' className={'button' + (copy.validated ? ' is-success' : ' is-link')}
                             onClick={this.prev}>Previous</button>
                         </div>
                         <div className='control is-wider'>
                           <SearchBox
-                            placeholder='Search for a submission'
-                            selected={subm}
-                            options={exam.submissions}
+                            placeholder='Search for a copy'
+                            selected={copy}
+                            options={copies}
                             suggestionKeys={[
-                              'id',
+                              'number',
                               'student.firstName',
                               'student.lastName',
                               'student.id'
                             ]}
-                            setSelected={this.setSubmission}
-                            renderSelected={({id, student}) => {
+                            setSelected={this.setCopyIndex}
+                            renderSelected={({number, student}) => {
                               if (student) {
-                                return `#${id}: ${student.firstName} ${student.lastName} (${student.id})`
+                                return `#${number}: ${student.firstName} ${student.lastName} (${student.id})`
                               } else {
-                                return `#${id}`
+                                return `#${number}`
                               }
                             }}
-                            renderSuggestion={(submission) => {
-                              const stud = submission.student
+                            renderSuggestion={(copy) => {
+                              const stud = copy.student
                               if (stud) {
                                 return (
                                   <div className='flex-parent'>
                                     <span className='flex-child truncated'>
-                                      <b>#{submission.id}</b>
+                                      <b>#{copy.number}</b>
                                       {` ${stud.firstName} ${stud.lastName}`}
                                     </span>
                                     <i className='flex-child fixed'>
@@ -220,13 +203,13 @@ class CheckStudents extends React.Component {
                                   </div>
                                 )
                               } else {
-                                return `#${submission.id}: No student`
+                                return `#${copy.number}: No student`
                               }
                             }}
                           />
                         </div>
                         <div className='control'>
-                          <button type='submit' className={'button' + (subm.validated ? ' is-success' : ' is-link')}
+                          <button type='submit' className={'button' + (validated ? ' is-success' : ' is-link')}
                             onClick={this.next}>Next</button>
                           <button type='submit' className='button is-info is-rounded is-hidden-mobile'
                             onClick={this.nextUnchecked}>unchecked</button>
@@ -238,7 +221,7 @@ class CheckStudents extends React.Component {
                   <ProgressBar done={done} total={total} />
 
                   <p className='box'>
-                    <img src={'api/images/signature/' + this.props.exam.id + '/' + subm.id} alt='' />
+                    <img src={'api/images/signature/' + this.state.examID + '/' + copy.number} alt='' />
                   </p>
 
                 </div>
@@ -252,4 +235,4 @@ class CheckStudents extends React.Component {
   }
 }
 
-export default CheckStudents
+export default withShortcuts(CheckStudents)

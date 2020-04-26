@@ -4,11 +4,11 @@ import numpy as np
 import cv2
 
 from ..images import get_box
-from ..database import Exam, Submission
+from ..database import Exam, Copy
 from ..scans import exam_student_id_widget
 
 
-def get(exam_id, submission_id):
+def get(exam_id, copy_number):
     """get student signature for the given submission.
 
     Parameters
@@ -28,10 +28,10 @@ def get(exam_id, submission_id):
     if exam is None:
         return dict(status=404, message='Exam does not exist.'), 404
 
-    sub = Submission.query.filter(Submission.exam_id == exam.id,
-                                  Submission.copy_number == submission_id).one_or_none()
-    if sub is None:
-        return dict(status=404, message=f'Submission with id #{submission_id} not found'), 404
+    copy = Copy.query.filter(Copy.exam == exam,
+                             Copy.number == copy_number).one_or_none()
+    if copy is None:
+        return dict(status=404, message='Copy does not exist.'), 404
 
     _, student_id_widget_coords = exam_student_id_widget(exam_id)
     widget_area = np.asarray(student_id_widget_coords)
@@ -40,7 +40,7 @@ def get(exam_id, submission_id):
     widget_area_in = widget_area / 72
 
     try:
-        first_page_path = next(p.abs_path for p in sub.pages if p.number == 0)
+        first_page_path = next(p.abs_path for p in copy.pages if p.number == 0)
     except StopIteration:
         abort(404)
     first_page_im = cv2.imread(first_page_path)

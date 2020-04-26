@@ -178,7 +178,7 @@ def merge_solutions(sub, sub_to_merge):
                 sol.graded_by = None
                 sol.graded_at = None
         else:
-            sol.feedback = []
+            sol.feedback = list(set(sol.feedback + sol_to_merge.feedback))
             sol.graded_by = None
             sol.graded_at = None
 

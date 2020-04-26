@@ -122,13 +122,13 @@ class Copies(Resource):
         # In this case the old student has more than one copy
         elif old_student != student:
             sub_old_student = copies_old_student[0].submission
-            ungrade_submission(sub_old_student)
+            unapprove_grading(sub_old_student)
 
             if already_assigned_copies:
                 # Switch the copy from the old student submission to
                 # the new student submission
                 sub = already_assigned_copies[0].submission
-                ungrade_submission(sub)
+                unapprove_grading(sub)
                 copy.submission = sub
             else:
                 # Switch the copy from the old student submission to
@@ -175,11 +175,10 @@ def merge_solutions(sub, sub_to_merge):
         sol.graded_at = None
 
 
-def ungrade_submission(sub):
+def unapprove_grading(sub):
     for sol in sub.solutions:
         sol.graded_by = None
         sol.graded_at = None
-        sol.feedback = []
 
 
 class MissingPages(Resource):

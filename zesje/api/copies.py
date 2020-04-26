@@ -150,6 +150,7 @@ def merge_feedback(sub, sub_to_merge):
             feedback = [fb for fb in feedback if fb.text != BLANK_FEEDBACK_NAME]
 
         sol.feedback = feedback
+        sol.remarks = '\n'.join(remarks for remarks in [sol.remarks, sol_to_merge.remarks] if remarks)
 
 
 def unapprove_grading(sub):

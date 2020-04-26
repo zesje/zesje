@@ -118,6 +118,9 @@ class Solutions(Resource):
             return dict(status=404, message='Grader does not exist.'), 404
 
         sub = Submission.query.get(submission_id)
+        if sub is None:
+            return dict(status=404, message='Submission does not exist.'), 404
+
         if sub.exam_id != exam_id:
             return dict(status=400, message='Submission does not belong to this exam.'), 400
 

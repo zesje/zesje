@@ -116,21 +116,19 @@ def generate_students(students):
 def _fake_process_pdf(scan, pages, student_ids, copies_per_student):
     copy_number = 0
     for student_id, number_of_copies in zip(student_ids, copies_per_student):
-        copies = []
         for _ in range(number_of_copies):
             copy_number += 1
-            copy = Copy(number=copy_number, signature_validated=True)
-            copies.append(copy)
+            copy = Copy(number=copy_number)
 
             base_copy_path = os.path.join(f'{scan.exam.id}_data', 'submissions', f'{copy_number}')
             for page in range(pages + 1):
                 db.session.add(Page(path=os.path.join(base_copy_path, f'page{page:02d}.jpg'), copy=copy, number=page))
 
-        sub = Submission(copies=copies, exam=scan.exam, student_id=student_id)
-        db.session.add(sub)
+            sub = Submission(copies=[copy], exam=scan.exam, student_id=student_id)
+            db.session.add(sub)
 
-        for problem in scan.exam.problems:
-            db.session.add(Solution(problem=problem, submission=sub))
+            for problem in scan.exam.problems:
+                db.session.add(Solution(problem=problem, submission=sub))
 
     scan.status = 'success'
     db.session.commit()

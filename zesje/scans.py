@@ -582,7 +582,7 @@ def find_corner_marker_keypoints(image_array, corner_sizes=[0.125, 0.25, 0.5]):
                 if all(lines is None for lines in lines_vertical):
                     continue  # Didn't find any vertical lines
                 lines_vertical = np.vstack(
-                        (lines for lines in (lines_vertical) if lines is not None)
+                        [lines for lines in (lines_vertical) if lines is not None]
                     )
                 lines_vertical = lines_vertical.reshape(-1, 2).T
 

@@ -165,4 +165,4 @@ def upgrade():
 
 def downgrade():
     # Don't even start...
-    pass
+    raise NotImplementedError('Downgrading to unbundled submission is not supported.')

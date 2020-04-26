@@ -98,7 +98,7 @@ class Submissions(Resource):
     get_parser.add_argument('direction', type=str, required=False, choices=["next", "prev"])
 
     def get(self, exam_id, submission_id=None):
-        """get submissions for the given exam, ordered by copy number.
+        """get submissions for the given exam
 
         if args.direction is specified, returns a submission based on
         the _find_submissions function.
@@ -106,20 +106,18 @@ class Submissions(Resource):
         Parameters
         ----------
         exam_id : int
-            The id of the exam for which the missing pages must be computed.
+            The id of the exam for which the submissions must be returned
         submission_id : int, optional
-            The copy number of the submission. This uniquely identifies
-            the submission *within a given exam*.
+            The id of the submission. This uniquely identifies
+            the submission *across all exams*.
 
         Returns
         -------
         If 'submission_id' not provided provides a single instance of
         (otherwise a list of):
-            copyID: int
-            studentID: int or null
+            id: int
+            student: Student
                 Student that completed this submission, null if not assigned.
-            validated: bool
-                True if the assigned student has been validated by a human.
             problems: list of problems
         """
         args = self.get_parser.parse_args()

@@ -125,7 +125,7 @@ class Exams(Resource):
             {
                 'id': ex.id,
                 'name': ex.name,
-                'submissions': sub_count[ex.id]  # TODO Should this be copies or submissions?
+                'submissions': sub_count[ex.id]
             }
             for ex in db.session.query(Exam.id, Exam.name).order_by(Exam.id).all()
         ]

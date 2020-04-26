@@ -117,6 +117,10 @@ class Solutions(Resource):
         if grader is None:
             return dict(status=404, message='Grader does not exist.'), 404
 
+        sub = Submission.query.get(submission_id)
+        if sub.exam_id != exam_id:
+            return dict(status=400, message='Submission does not belong to this exam.'), 400
+
         solution = Solution.query.filter(Solution.submission_id == submission_id,
                                          Solution.problem_id == problem_id).one_or_none()
         if solution is None:

@@ -121,13 +121,12 @@ class Copies(Resource):
         old_submission = copy.submission
         merge_feedback(new_submission, old_submission)
         unapprove_grading(new_submission)
+        copy.submission = new_submission
 
         if len(old_submission.copies) > 1:
             unapprove_grading(old_submission)
         else:
             db.session.delete(old_submission)
-
-        copy.submission = new_submission
 
         db.session.commit()
         return dict(status=200, message=f'Student {student.id} matched to copy {copy.number}'), 200

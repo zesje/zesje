@@ -62,7 +62,7 @@ def upgrade():
     LEFT OUTER JOIN (
         SELECT x.student_id AS x_student_id, x.exam_id AS x_exam_id
         FROM submission AS x
-        WHERE x.student_id IS NOT NULL AND x.signature_validated = 1
+        WHERE x.signature_validated = 1
         GROUP BY x.exam_id, x.student_id
         HAVING COUNT(*) > 1
     ) AS z

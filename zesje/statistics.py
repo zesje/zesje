@@ -17,7 +17,8 @@ def solution_data(exam_id, student_id):
         raise NoResultFound(f"Student with id #{student_id} does not exist.")
 
     sub = Submission.query.filter(Submission.exam == exam,
-                                  Submission.student == student).one_or_none()
+                                  Submission.student == student,
+                                  Submission.validated).one_or_none()
     if sub is None:
         raise RuntimeError('Student did not make a '
                            'submission for this exam')
@@ -64,7 +65,7 @@ def full_exam_data(exam_id):
     exam = Exam.query.get(exam_id)
     if exam is None:
         raise KeyError("No such exam.")
-    students = sorted(sub.student.id for sub in exam.submissions if sub.student)
+    students = sorted(sub.student.id for sub in exam.submissions if sub.student and sub.validated)
 
     data = [solution_data(exam_id, student_id)
             for student_id in students]

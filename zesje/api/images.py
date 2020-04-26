@@ -46,8 +46,8 @@ def get(exam_id, problem_id, submission_id, full_page=False):
                               Copy.submission == sub,
                               Page.number == page_number).all()
 
-    if len(pages) != len(sub.copies):
-        abort(404, f'Page #{page_number} is missing for some copies of submission #{submission_id}.')
+    if len(pages) == 0:
+        abort(404, f'Page #{page_number} is missing for all copies of submission #{submission_id}.')
 
     solution = Solution.query.filter(Solution.submission_id == sub.id,
                                      Solution.problem_id == problem_id).one()

@@ -56,8 +56,7 @@ class Copies(Resource):
 
             return copy_to_data(copy)
         else:
-            # TODO: Ensure some kind of consistent ordering
-            return [copy_to_data(copy) for copy in exam.copies]
+            return [copy_to_data(copy) for copy in exam.copies]  # Ordered by copy number
 
     put_parser = reqparse.RequestParser()
     put_parser.add_argument('studentID', type=int, required=True)

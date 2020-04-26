@@ -83,7 +83,7 @@ def upgrade():
                                'ORDER BY exam_id, student_id, id').fetchall()
 
     def bundle_submissions(subs):
-        sub_ids = ', '.join(map(lambda s: str(s.id), subs))
+        sub_ids = ', '.join(str(s.id) for s in subs)
         solutions = conn.execute('SELECT id, submission_id, problem_id, grader_id, graded_at, remarks ' +
                                  'FROM solution ' +
                                  f'WHERE submission_id IN ({sub_ids}) ' +

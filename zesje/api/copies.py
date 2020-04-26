@@ -145,13 +145,11 @@ class Copies(Resource):
 
 
 def validated_copies(student, exam):
-    submissions = Submission.query.filter(Submission.exam == exam,
-                                          Submission.student == student).all()
-    if submissions:
-        return [
-            copy for sub in submissions for copy in sub.copies
-            if sub.validated
-        ]
+    sub = Submission.query.filter(Submission.exam == exam,
+                                  Submission.student == student,
+                                  Submission.validated).one_or_none()
+    if sub:
+        return sub.copies
     else:
         return []
 

@@ -134,9 +134,10 @@ class Copies(Resource):
             else:
                 # Switch the copy from the old student submission to
                 # a new submission for the new student
-                sub = Submission(exam=exam, copies=[copy], student=student)
-                sub.solutions = [Solution(problem=problem) for problem in exam.problems]
+                sub = Submission(exam=exam, copies=[copy], student=student, validated=True)
                 db.session.add(sub)
+                for problem in exam.problems:
+                    db.session.add(Solution(problem=problem, submission=sub))
 
             # TODO: Pregrade both submissions again
 
@@ -159,12 +160,20 @@ def validated_copies(student, exam):
 def merge_solutions(sub, sub_to_merge):
     # Ordering is the same since Submission.solutions is ordered by problem_id
     for sol, sol_to_merge in zip(sub.solutions, sub_to_merge.solutions):
+        only_blank = all(fb.text == BLANK_FEEDBACK_NAME for fb in sol.feedback)
+        only_blank_to_merge = all(fb.text == BLANK_FEEDBACK_NAME for fb in sol_to_merge.feedback)
 
         # If one of the solutions has no feedback or only blank feedback,
         # then we can merge all the feedback options
-        if all(fb.text == BLANK_FEEDBACK_NAME for fb in sol.feedback) or \
-           all(fb.text == BLANK_FEEDBACK_NAME for fb in sol_to_merge.feedback):
-            sol.feedback = list(set(sol.feedback + sol_to_merge.feedback))
+        if only_blank or only_blank_to_merge:
+            feedback = list(set(sol.feedback + sol_to_merge.feedback))
+
+            # Remove blank from set of feedback options if one of the solutions has not
+            # has not exactly only `Blank` as feedback option
+            if not (only_blank and only_blank_to_merge and len(sol.feedback) and len(sol_to_merge.feedback)):
+                feedback = [fbo for fbo in feedback if fbo.text != BLANK_FEEDBACK_NAME]
+
+            sol.feedback = feedback
 
             if not (sol.graded_by and sol_to_merge.graded_by):
                 sol.graded_by = None

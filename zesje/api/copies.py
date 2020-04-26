@@ -148,10 +148,7 @@ def validated_copies(student, exam):
     sub = Submission.query.filter(Submission.exam == exam,
                                   Submission.student == student,
                                   Submission.validated).one_or_none()
-    if sub:
-        return sub.copies
-    else:
-        return []
+    return sub.copies if sub else []
 
 
 def is_exactly_blank(solution):

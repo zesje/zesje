@@ -8,6 +8,7 @@ from flask import current_app
 from PIL import Image
 
 from .database import db, Scan, Page, Submission, Solution, Student
+from .image_extraction import convert_to_rgb
 from . import celery
 
 
@@ -120,7 +121,7 @@ def process_page(file_name, image, exam, output_directory):
         return False, f'Invalid file name (studentid-page.extension)'
 
     student_id = int(m.group('studentID'))
-    page = int(m.group('page'))
+    page = int(m.group('page')) - 1
     copy = int(m.group('copy')) if m.group('copy') else 1
 
     student = Student.query.get(student_id)
@@ -161,7 +162,8 @@ def retrieve_submission(exam, student_id, page, copy):
 
 
 def create_submission(copy_num, exam, student_id):
-    sub = Submission(copy_number=copy_num, exam=exam, student_id=student_id)
+    sub = Submission(copy_number=copy_num, exam=exam, student_id=student_id,
+                     signature_validated=True)
     db.session.add(sub)
 
     for problem in exam.problems:
@@ -180,7 +182,8 @@ def next_free_copy_number(exam_id):
 def save_image(image, path):
     with Image.open(image) as original:
         rotated = exif_transpose(original)  # raises some error
-        rotated.save(path)
+        converted = convert_to_rgb(rotated)
+        converted.save(path)
 
 
 def exif_transpose(image):

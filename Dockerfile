@@ -2,7 +2,7 @@
 
 FROM continuumio/miniconda3
 
-RUN apt-get update && \
+RUN apt-get -o Acquire::Check-Valid-Until=false update && \
     apt-get install -y \
         curl \
         poppler-utils build-essential libgl1-mesa-glx \

@@ -301,7 +301,7 @@ class Overview extends React.Component {
     const colorsUnfinished = zeros(total.max_score + 1).toArray()
 
     if (this.state.selectedStudentId) {
-      const data = total.results.find(x => x.student === this.state.selectedStudentId)
+      const data = total.results.find(x => x.studentId === this.state.selectedStudentId)
       if (data) {
         if (data.graded) {
           colorsFinished[data.score] = 1

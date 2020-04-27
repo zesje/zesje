@@ -15,7 +15,7 @@ WORKDIR /app
 # Setup PYTHON packages
 
 ADD environment.yml .
-RUN conda env create
+RUN conda env create && conda clean --all
 
 # From https://medium.com/@chadlagore/conda-environments-with-docker-82cdc9d25754
 RUN echo "source activate zesje-dev" > ~/.bashrc

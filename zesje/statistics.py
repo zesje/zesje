@@ -5,6 +5,7 @@ import pandas
 from sqlalchemy import between, desc, func
 
 from .database import db, Exam, Student, Grader, Solution, Submission
+from .pregrader import AUTOGRADER_NAME
 
 
 def solution_data(exam_id, student_id):
@@ -117,12 +118,13 @@ def full_grader_data(exam_id):
 
     data = []
     for problem in exam.problems:
-        graders = grader_data(problem.id)
+        graders, autograded = grader_data(problem.id)
 
         data.append({
             "id": problem.id,
             "name": problem.name,
-            "graders": graders
+            "graders": graders,
+            "autograded": autograded
         })
 
     return {"exam_id": exam_id, "exam_name": exam.name, "problems": data}
@@ -140,7 +142,13 @@ def grader_data(problem_id):
         .group_by(Solution.grader_id)\
         .all()
 
+    autograded_solutions = 0
+
     for id, name, graded in grader_results:
+        if name == AUTOGRADER_NAME:
+            autograded_solutions = graded
+            continue
+
         avg, total = estimate_grading_time(problem_id, id)
 
         graders.append({
@@ -151,7 +159,7 @@ def grader_data(problem_id):
             'totalTime': total
         })
 
-    return graders
+    return graders, autograded_solutions
 
 
 ELAPSED_TIME_BREAK = 21600   # 6 hours in seconds

@@ -1,31 +1,12 @@
 from math import isnan, nan
 from flask_restful import Resource
-from collections import defaultdict
 import pandas as pd
 
-from ..database import db, Exam, Submission, Solution
+from ..database import db, Exam, Submission
 from ..statistics import grader_data
-from ..pregrader import BLANK_FEEDBACK_NAME
 
 
-def scores_to_data(scores):
-    """ Construct the list to be send in the response sorted by score.
-
-    Parameters
-    ----------
-    scores: dict(studentID: score)
-
-    Returns
-    -------
-    list of dict(student, score)
-    """
-    return sorted([{
-        'student': id,
-        'score': x
-    } for id, x in scores.items()], key=lambda item: item['score'])
-
-
-def total_scores_to_data(scores, finished):
+def scores_to_data(scores, finished):
     """ Construct the list to be send in the response sorted by total score.
 
     Parameters
@@ -39,7 +20,7 @@ def total_scores_to_data(scores, finished):
     return sorted([{
         'student': id,
         'score': x,
-        'finished': finished[id]
+        'graded': finished[id]
     } for id, x in scores.items()], key=lambda item: item['score'])
 
 
@@ -55,7 +36,8 @@ def empty_data(exam):
                 'max_score': max(list(fb.score for fb in p.feedback_options) + [0]),
                 'results': [],
                 'correlation': None,
-                'extra_solutions': 0,
+                'averageGradingTime': 0,
+                'autograded': 0,
                 'feedback': [{
                     'id': fb.id,
                     'name': fb.text,
@@ -90,11 +72,15 @@ class Statistics(Resource):
             'id': the exam id,
             'name': the exam name,
             'students': number of students that did the exam,
+            'copies': number of copies,
             'problems': list of problems data
                 'id': the problem id,
                 'name': them problem name,
                 'max_score': maximum score of the problem,
-                'results': list of scores as returned by `scores_to_data`,
+                'results': list of scores
+                    'studentId': the student id,
+                    'score': the mark of the corresponding student in the problem,
+                    'graded': true if there is a grader
                 'extra_solutions': the amount of times a student needed an extra copy to solve this problem,
                 'correlation': Rir coefficient,
                 'averageGradingTime': an estimation of the time spend grading a solution
@@ -104,6 +90,7 @@ class Statistics(Resource):
                     'description': the feedback option description,
                     'score': the feedback option score,
                     'used': the amount of times used,
+                'autograded': the amount of solutions graded by Zesje,
                 'graders': list of graders that graded this problem
                     'id': the grader id,
                     'name': the grader name,
@@ -111,10 +98,12 @@ class Statistics(Resource):
                     'averageTime': an estimation of the average time spend grading a solution,
                     'totalTime': an estimation of the total time spend grading all solutions,
             'total': overall results of the exam
-                'results': list of total scores as returned by `scores_to_data`,
+                'results': list of total scores
+                    'studentId': the student id,
+                    'score': the total score for this student,
+                    'graded': true if the student has a grade in all problems
                 'max_score': maximum score of the exam,
-                'alpha': Cronbach's alpha coefficient,
-                'extra_copies': the amount of extra copies needed compared to the total number of students
+                'alpha': Cronbach's alpha coefficient
 
         """
 
@@ -126,7 +115,8 @@ class Statistics(Resource):
         student_ids = db.session.query(Submission.student_id)\
             .filter(Submission.exam_id == exam.id, Submission.validated)\
             .all()
-        if len(student_ids) == 0:
+
+        if len(student_ids) == 0 or len(exam.problems) == 0:
             # there are no submissions or no students have been identified
             return empty_data(exam)
 
@@ -162,39 +152,34 @@ class Statistics(Resource):
             # add the problem score to the total
             total_max_score += max_score
 
-            # return all solutions with the respective student id
-            # for the corresponding problem that have been graded
-            solutions = db.session.query(Solution, Submission.student_id)\
-                                  .join(Submission)\
-                                  .filter(Solution.problem_id == p.id, Submission.validated)\
-                                  .all()
+            results = []
 
-            sols_by_student = defaultdict(int)
-            for sol, student_id in solutions:
+            for sol in p.solutions:
+                student_id = sol.submission.student_id
                 mark = sum(fo.score for fo in sol.feedback) if sol.feedback else nan
-
-                if all(fo.text != BLANK_FEEDBACK_NAME for fo in sol.feedback):
-                    # do not count blank solutions
-                    sols_by_student[student_id] += 1
 
                 if isnan(full_scores.loc[student_id, p.id]):
                     full_scores.loc[student_id, p.id] = 0
+                if not isnan(mark):
+                    results.append({
+                        'studentId': student_id,
+                        'score': mark,
+                        'graded': sol.grader_id != None  # noqa: E711
+                    })
 
-                full_scores.loc[student_id, p.id] += mark
+                full_scores.loc[student_id, p.id] = mark
 
-            # count how many extra solutions where needed to solve this problem as
-            # the total graded and non blank solutions minus the number of students
-            # with at least one solution
-            problem_data['extra_solutions'] = sum(list(sols_by_student.values())) - len(sols_by_student)
+            problem_data['results'] = sorted(results, key=lambda x: x['score'])
 
-            problem_data['graders'] = grader_data(p.id)
+            graders, autograded = grader_data(p.id)
+            problem_data['graders'] = graders
+            problem_data['autograded'] = autograded
 
             totalTime = 0
             solutionsGraded = 0
             for g in problem_data['graders']:
-                if g['name'] != 'Zesje':
-                    solutionsGraded += g['graded']
-                    totalTime += g['totalTime']
+                solutionsGraded += g['graded']
+                totalTime += g['totalTime']
 
             problem_data['averageGradingTime'] = totalTime / solutionsGraded if solutionsGraded > 0 else 0
 
@@ -205,7 +190,6 @@ class Statistics(Resource):
         finished = full_scores.sum(axis=1, skipna=False).notna().to_dict()
 
         for p in exam.problems:
-            data[p.id]['results'] = scores_to_data(full_scores[p.id].dropna().to_dict())
             corr = (full_scores[p.id]
                     .astype(float)
                     .corr(full_scores[0]
@@ -221,17 +205,15 @@ class Statistics(Resource):
         else:
             alpha = None
 
-        total_extra_copies = len(exam.copies) - len(student_ids)
-
         return {
             'id': exam.id,
             'name': exam.name,
             'students': len(student_ids),
+            'copies': len(exam.copies),
             'problems': [data[p.id] for p in exam.problems],
             'total': {
                 'alpha': alpha,
                 'max_score': total_max_score,
-                'extra_copies': total_extra_copies,
-                'results': total_scores_to_data(full_scores.loc[:, 0].dropna().to_dict(), finished)
+                'results': scores_to_data(full_scores.loc[:, 0].dropna().to_dict(), finished)
             }
         }

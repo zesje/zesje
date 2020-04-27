@@ -5,6 +5,8 @@ FROM continuumio/miniconda3
 RUN apt-get -o Acquire::Check-Valid-Until=false update && \
     apt-get install -y libdmtx0b
 
+WORKDIR /yarn
+
 # Setup PYTHON packages
 
 ADD environment.yml .

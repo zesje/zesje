@@ -1,4 +1,4 @@
-from math import isnan, nan
+from math import isnan
 from flask_restful import Resource
 from collections import defaultdict
 import pandas as pd
@@ -6,6 +6,7 @@ from sqlalchemy import func
 
 from ..database import db, Exam, Submission, Solution
 from ..statistics import grader_data
+from ..pregrader import BLANK_FEEDBACK_NAME
 
 
 def scores_to_data(scores):
@@ -167,14 +168,14 @@ class Statistics(Resource):
 
             sols_by_student = defaultdict(int)
             for sol, student_id in solutions:
-                mark = (sum(list(fo.score for fo in sol.feedback)) if sol.feedback else nan)
+                mark = sum(fo.score for fo in sol.feedback)
 
-                if not isnan(mark):
+                if all(fo.text != BLANK_FEEDBACK_NAME for fo in sol.feedback):
                     # do not count blank solutions
                     sols_by_student[student_id] += 1
 
-                    if isnan(full_scores.loc[student_id, p.id]):
-                        full_scores.loc[student_id, p.id] = 0
+                if isnan(full_scores.loc[student_id, p.id]):
+                    full_scores.loc[student_id, p.id] = 0
 
                 full_scores.loc[student_id, p.id] += mark
 

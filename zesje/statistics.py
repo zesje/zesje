@@ -4,7 +4,7 @@ import numpy as np
 import pandas
 from sqlalchemy import between, desc, func
 
-from .database import db, Exam, Student, Grader, Solution
+from .database import db, Exam, Student, Grader, Solution, Submission
 
 
 def solution_data(exam_id, student_id):
@@ -15,12 +15,17 @@ def solution_data(exam_id, student_id):
     student = Student.query.get(student_id)
     if student is None:
         raise NoResultFound(f"Student with id #{student_id} does not exist.")
-    if any(i is None for i in (exam, student)):
+
+    sub = Submission.query.filter(Submission.exam == exam,
+                                  Submission.student == student,
+                                  Submission.validated).one_or_none()
+    if sub is None:
         raise RuntimeError('Student did not make a '
                            'submission for this exam')
 
     results = []
-    for problem in exam.problems:  # Sorted by problem.id
+    for solution in sub.solutions:  # Sorted by problem_id
+        problem = solution.problem
         if not len(problem.feedback_options):
             # There is no possible feedback for this problem.
             continue
@@ -28,24 +33,20 @@ def solution_data(exam_id, student_id):
             'name': problem.name,
             'max_score': max(fb.score for fb in problem.feedback_options) or 0
         }
-        # TODO Maybe replace this with an optimized query
-        solutions = [sol for sols in [sub.solutions for sub in student.submissions]
-                     for sol in sols
-                     if sol.problem_id == problem.id]
+
         problem_data['feedback'] = [
             {'short': fo.text,
              'score': fo.score,
              'description': fo.description}
-            for solution in solutions for fo in solution.feedback
+            for fo in solution.feedback if solution.graded_by
         ]
         problem_data['score'] = (
             sum(i['score'] or 0 for i in problem_data['feedback'])
             if problem_data['feedback']
             else np.nan
         )
-        problem_data['remarks'] = '\n\n'.join(sol.remarks
-                                              for sol in solutions
-                                              if sol.remarks)
+        problem_data['remarks'] = solution.remarks
+
         results.append(problem_data)
 
     student = {
@@ -64,7 +65,7 @@ def full_exam_data(exam_id):
     exam = Exam.query.get(exam_id)
     if exam is None:
         raise KeyError("No such exam.")
-    students = sorted(sub.student.id for sub in exam.submissions if sub.student)
+    students = sorted(sub.student.id for sub in exam.submissions if sub.student and sub.validated)
 
     data = [solution_data(exam_id, student_id)
             for student_id in students]

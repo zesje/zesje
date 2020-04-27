@@ -1,10 +1,10 @@
 import os
-from tempfile import TemporaryDirectory
+import sys
 
 import pytest
 from flask import Flask
 from pathlib import Path
-import sys
+from tempfile import TemporaryDirectory
 
 sys.path.insert(0, str(Path.cwd()))
 
@@ -41,7 +41,10 @@ def db_app(config_app):
     db.init_app(app)
 
     with TemporaryDirectory() as temp_dir:
-        app.config.update(DATA_DIRECTORY=str(temp_dir))
+        app.config.update(
+            DATA_DIRECTORY=str(temp_dir),
+            SCAN_DIRECTORY=str(temp_dir)
+        )
         yield app
 
 

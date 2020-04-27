@@ -25,8 +25,8 @@ const Exam = Loadable({
   loader: () => import('./views/Exam.jsx'),
   loading: Loading
 })
-const Submissions = Loadable({
-  loader: () => import('./views/Submissions.jsx'),
+const Scans = Loadable({
+  loader: () => import('./views/Scans.jsx'),
   loading: Loading
 })
 const Students = Loadable({
@@ -138,14 +138,12 @@ class App extends React.Component {
                 setHelpPage={this.menu.current ? this.menu.current.setHelpPage : null} />} />
             <Route path='/exams' render={({ history }) =>
               <AddExam updateExamList={this.menu.current ? this.menu.current.updateExamList : null} changeURL={history.push} />} />
-            <Route path='/submissions/:examID' render={({ match }) =>
-              <Submissions
-                exam={exam}
-                urlID={match.params.examID}
-                updateExam={this.updateExam} />}
+            <Route path='/scans/:examID' render={({ match }) =>
+              <Scans examID={match.params.examID} />}
             />
-            <Route path='/students' render={() =>
-              <Students exam={exam} updateSubmission={this.updateSubmission} />} />
+            <Route path='/students/:examID' render={({ match }) =>
+              <Students examID={match.params.examID} />}
+            />
             <Route path='/grade' render={() => (
               exam.submissions.length && exam.problems.length && grader
                 ? <Grade examID={exam.id} gradeAnonymous={exam.gradeAnonymous} graderID={this.state.grader.id} />

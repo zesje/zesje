@@ -15,10 +15,10 @@ from pikepdf import Pdf
 from pylibdmtx import pylibdmtx
 from sqlalchemy.exc import InternalError
 
-from .database import db, Scan, Exam, Page, Student, Submission, Solution, ExamWidget
+from .database import db, Scan, Exam, Page, Student, Submission, Copy, Solution, ExamWidget
 from .datamatrix import decode_raw_datamatrix
 from .images import guess_dpi, get_box
-from .pregrader import grade_problem, ungrade_multiple_sub
+from .pregrader import grade_problem
 from .image_extraction import extract_images
 from .blanks import reference_image
 from . import celery
@@ -237,23 +237,25 @@ def process_page(image_data, exam_config, output_dir=None, strict=False):
     else:
         return True, "Testing, image not saved and database not updated."
 
-    sub = update_database(image_path, barcode)
+    # This copy belongs to a submission that may or may not have other copies
+    copy = add_to_correct_copy(image_path, barcode)
 
     try:
-        grade_problem(sub, barcode.page, image_array)
+        # If the corresponding submission has multiple copies, this doesn't grade anything
+        grade_problem(copy, barcode.page, image_array)
     except InternalError as e:
         if strict:
             return False, str(e)
 
     if barcode.page == 0:
-        description = guess_student(
-            exam_token=barcode.token, copy_number=barcode.copy
-        )
+        if not copy.validated:
+            description = guess_student(
+                exam_token=barcode.token, copy_number=barcode.copy
+            )
+        else:
+            description = 'Student signature already validated.'
     else:
         description = "Scanned page doesn't contain student number."
-
-    if sub.student:
-        ungrade_multiple_sub(sub.student.id, sub.exam_id)
 
     return True, description
 
@@ -282,7 +284,7 @@ def save_image(image, barcode, base_path):
     return image_path
 
 
-def update_database(image_path, barcode):
+def add_to_correct_copy(image_path, barcode):
     """Add a database entry for the new image or update an existing one.
 
     Parameters
@@ -294,29 +296,33 @@ def update_database(image_path, barcode):
 
     Returns
     -------
-    sub : Submission
-        the current submission
+    copy : Copy
+        the current copy
     """
     exam = Exam.query.filter(Exam.token == barcode.token).first()
     if exam is None:
         raise RuntimeError('Invalid exam token.')
 
-    sub = Submission.query.filter(Submission.copy_number == barcode.copy, Submission.exam_id == exam.id).one_or_none()
-    if sub is None:
-        sub = Submission(copy_number=barcode.copy, exam=exam)
+    copy = Copy.query.filter(Copy.number == barcode.copy, Copy.exam == exam).one_or_none()
+    if copy is None:
+        # Copy does not yet exist, so we create it together with a new submission
+        copy = Copy(number=barcode.copy)
+        sub = Submission(exam=exam, copies=[copy])
         db.session.add(sub)
+
+        # Add a solution for each problem
         for problem in exam.problems:
             db.session.add(Solution(problem=problem, submission=sub))
 
     # We may have added this page in previous uploads but we only want a single
     # 'Page' entry regardless
-    if Page.query.filter(Page.submission == sub, Page.number == barcode.page).one_or_none() is None:
+    if Page.query.filter(Page.copy == copy, Page.number == barcode.page).one_or_none() is None:
         rel_path = os.path.relpath(image_path, start=current_app.config['DATA_DIRECTORY'])
-        db.session.add(Page(path=rel_path, submission=sub, number=barcode.page))
+        db.session.add(Page(path=rel_path, copy=copy, number=barcode.page))
 
     db.session.commit()
 
-    return sub
+    return copy
 
 
 def decode_barcode(image, exam_config):
@@ -367,7 +373,7 @@ def decode_barcode(image, exam_config):
     raise RuntimeError("No barcode found.")
 
 
-def guess_student(exam_token, copy_number, force=False):
+def guess_student(exam_token, copy_number):
     """Update a submission with a guessed student number.
 
     Parameters
@@ -375,10 +381,7 @@ def guess_student(exam_token, copy_number, force=False):
     exam_token : string
         Unique exam identifier (see database schema).
     copy_number : int
-        The copy number of the submission.
-    force : bool
-        Whether to update the student number of a submission with a validated
-        signature, default False.
+        The copy number.
 
     Returns
     -------
@@ -388,15 +391,23 @@ def guess_student(exam_token, copy_number, force=False):
 
     # Throws exception if zero or more than one of Exam, Submission or Page found
     exam = Exam.query.filter(Exam.token == exam_token).one()
-    sub = Submission.query.filter(Submission.copy_number == copy_number,
-                                  Submission.exam_id == exam.id).one()
-    image_path = Page.query.filter(Page.submission_id == sub.id,
+    copy = Copy.query.filter(Copy.number == copy_number,
+                             Copy.exam == exam).one()
+    sub = copy.submission
+
+    # We expect only a single copy, raise an error if we find more
+    if len(sub.copies) > 1:
+        raise RuntimeError(
+            'Cannot guess student number for a copy that is not the only copy of a submission. ' +
+            'This means the copy has already been validated.')
+
+    image_path = Page.query.filter(Page.copy == copy,
                                    Page.number == 0).one().abs_path
 
     student_id_widget, student_id_widget_coords = exam_student_id_widget(exam.id)
 
-    if sub.signature_validated and not force:
-        return "Signature already validated"
+    if copy.validated:
+        return "Signature of this copy is already validated"
 
     try:
         number = get_student_number(image_path, student_id_widget_coords)
@@ -405,8 +416,6 @@ def guess_student(exam_token, copy_number, force=False):
 
     student = Student.query.get(int(number))
     if student is not None:
-        exam = Exam.query.filter(Exam.token == exam_token).one()
-        sub = Submission.query.filter(Submission.copy_number == copy_number, Submission.exam_id == exam.id).one()
         sub.student = student
         db.session.commit()
         return "Successfully extracted student number"
@@ -582,7 +591,7 @@ def find_corner_marker_keypoints(image_array, corner_sizes=[0.125, 0.25, 0.5]):
                 if all(lines is None for lines in lines_vertical):
                     continue  # Didn't find any vertical lines
                 lines_vertical = np.vstack(
-                        (lines for lines in (lines_vertical) if lines is not None)
+                        [lines for lines in (lines_vertical) if lines is not None]
                     )
                 lines_vertical = lines_vertical.reshape(-1, 2).T
 

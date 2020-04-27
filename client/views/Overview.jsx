@@ -81,7 +81,7 @@ class Overview extends React.Component {
     const graded = this.state.stats.problems.reduce((acc, p, i) => {
       if (!p.graders.length) return acc
 
-      const n = p.graders.reduce((s, g, i) => s + g.graded, 0)
+      const n = p.graders.reduce((s, g, i) => s + g.graded, 0) + p.autograded
 
       acc.graded += n
       acc.averageTime += p.graders.reduce((s, g) => s + g.graded * g.averageTime, 0) / n
@@ -91,8 +91,7 @@ class Overview extends React.Component {
       averageTime: 0
     })
 
-    const ungraded = (this.state.stats.students + total.extra_copies) * this.state.stats.problems.length - graded.graded
-    console.log(ungraded)
+    const ungraded = this.state.stats.students * this.state.stats.problems.length - graded.graded
     graded.averageTime /= this.state.stats.problems.length
 
     return (
@@ -103,7 +102,7 @@ class Overview extends React.Component {
               <div className='message-body'>
                 {ungraded === 1
                   ? 'There is just one solution left to grade.'
-                  : `There are ${ungraded} solutions left to graded, this will approximately take you ${formatTime(ungraded * graded.averageTime)}.`
+                  : `There are ${ungraded} solutions left to grade, this will approximately take you ${formatTime(ungraded * graded.averageTime)}.`
                 }
               </div>
             </article>
@@ -113,10 +112,11 @@ class Overview extends React.Component {
 
           {this.renderHistogramScores(total, true)}
 
-          {total.extra_copies > 1 &&
+          {this.state.stats.copies / this.state.stats.students > 1.1 &&
             <article className='message is-warning'>
               <div className='message-body'>
-                {total.extra_copies} extra copies where needed to solve this problem by some students,
+                {this.state.stats.copies - this.state.stats.students} extra copies
+                where needed to solve this problem by some students,
                 consider adding more space the next time.
               </div>
             </article>
@@ -127,6 +127,16 @@ class Overview extends React.Component {
   }
 
   renderHeatmap = () => {
+    if (this.state.stats.problems.length === 0) {
+      return (
+        <article className='message is-danger'>
+          <div className='message-body'>
+            The exam has no problems or there is no feedback assigned to them.
+          </div>
+        </article>
+      )
+    }
+
     const problems = this.state.stats.problems.slice().reverse()
     const students = this.state.stats.students
 
@@ -151,7 +161,7 @@ class Overview extends React.Component {
     if (this.state.selectedStudentId) {
       problems.forEach((p, i) => {
         p.results.forEach((x, j) => {
-          if (x.student === this.state.selectedStudentId) {
+          if (x.studentId === this.state.selectedStudentId) {
             selectedData.push({
               x: j,
               y: i,
@@ -208,7 +218,7 @@ class Overview extends React.Component {
       },
       hoverongaps: false,
       hovertext: problems.map(p => p.results.map(x => {
-        return `Student: ${x.student}<br>Score: ${x.score}/${p.max_score}`
+        return `Student: ${x.studentId}<br>Score: ${x.score}/${p.max_score}`
       })),
       hoverinfo: 'text',
       hoverlabel: {bgcolor: 'hsl(217, 71, 53)'}
@@ -273,7 +283,7 @@ class Overview extends React.Component {
       layout={layout}
       onClick={(data) => {
         const selProblem = this.state.stats.problems[this.state.stats.problems.length - data.points[0].y - 1]
-        const selStudent = selProblem.results[data.points[0].x]['student']
+        const selStudent = selProblem.results[data.points[0].x]['studentId']
 
         this.setState({selectedStudentId: selStudent})
       }}
@@ -287,13 +297,13 @@ class Overview extends React.Component {
 
     const vals = total.results.map(x => x.score)
 
-    const colorsFinished = zeros(total.max_score).toArray()
-    const colorsUnfinished = zeros(total.max_score).toArray()
+    const colorsFinished = zeros(total.max_score + 1).toArray()
+    const colorsUnfinished = zeros(total.max_score + 1).toArray()
 
     if (this.state.selectedStudentId) {
       const data = total.results.find(x => x.student === this.state.selectedStudentId)
       if (data) {
-        if (data.finished) {
+        if (data.graded) {
           colorsFinished[data.score] = 1
         } else {
           colorsUnfinished[data.score] = 1
@@ -303,11 +313,11 @@ class Overview extends React.Component {
 
     const traces = [{
       x: total.results.reduce((acc, v) => {
-        if (v.finished) acc.push(v.score)
+        if (v.graded) acc.push(v.score)
         return acc
       }, []),
       type: 'histogram',
-      name: 'Finished',
+      name: 'Graded',
       autobinx: false,
       xbins: {
         start: -0.5,
@@ -323,7 +333,7 @@ class Overview extends React.Component {
       }
     }, {
       x: total.results.reduce((acc, v) => {
-        if (!v.finished) acc.push(v.score)
+        if (!v.graded) acc.push(v.score)
         return acc
       }, []),
       type: 'histogram',
@@ -375,7 +385,7 @@ class Overview extends React.Component {
       xaxis: {
         title: 'score',
         zeroline: false,
-        hoverformat: '.0f'
+        dtick: total.max_score > 10 ? 5 : 1
       },
       yaxis: {
         title: 'number of students'
@@ -387,7 +397,8 @@ class Overview extends React.Component {
       },
       autosize: true,
       showlegend: true,
-      barmode: 'stack'
+      barmode: 'stack',
+      height: '150px'
     }
 
     const config = {
@@ -412,18 +423,10 @@ class Overview extends React.Component {
 
     const problem = this.state.stats.problems.find(p => p.id === id)
 
-    const zesje = problem.graders.find(g => g.name === 'Zesje')
-    let graders
-    if (zesje) {
-      graders = problem.graders.filter(g => g.name !== 'Zesje')
-    } else {
-      graders = problem.graders
-    }
-
     return (
       <React.Fragment>
         <div className='columns is-multiline'>
-          <div className='column is-half'>
+          <div className='column is-half-desktop is-full-mobile'>
             <h3 className='is-size-5'> Feedback details </h3>
             <table className='table is-striped is-fullwidth'>
               <thead>
@@ -449,7 +452,7 @@ class Overview extends React.Component {
               </tbody>
             </table>
           </div>
-          <div className='column is-half'>
+          <div className='column is-half-desktop is-full-mobile'>
             {this.renderHistogramScores(problem, false)}
           </div>
           <div className='column is-full'>
@@ -465,7 +468,7 @@ class Overview extends React.Component {
               </thead>
               <tbody>
                 {
-                  graders.map((g, i) => {
+                  problem.graders.map((g, i) => {
                     if (g.name === 'Zesje') return null
 
                     return <tr key={i}>
@@ -479,23 +482,16 @@ class Overview extends React.Component {
               </tbody>
             </table>
 
-            {zesje &&
-              <p>
-                In this problem Zesje helped you grade {zesje.graded === 1 ? '1 solution' : zesje.graded + ' solutions'},
-                saving you {formatTime(problem.averageGradingTime * zesje.graded)} of grading time.
-              </p>
+            {problem.autograded > 0 &&
+              <article className='message is-info'>
+                <div className='message-body'>
+                  In this problem Zesje helped you grade {problem.autograded === 1 ? '1 solution' : problem.autograded + ' solutions'},
+                  saving you {formatTime(problem.averageGradingTime * problem.autograded)} of grading time.
+                </div>
+              </article>
             }
           </div>
         </div>
-
-        {problem.extra_solutions / this.state.stats.students > 0.2 &&
-          <article className='message is-warning'>
-            <div className='message-body'>
-              {problem.extra_solutions} extra solutions where needed to solve this problem by some students,
-              consider adding more space the next time.
-            </div>
-          </article>
-        }
       </React.Fragment>
     )
   }

@@ -58,7 +58,6 @@ const estimateGradingTimeLeft = (graders, totalSolutions) => {
 
 class Overview extends React.Component {
   state = {
-    statsLoaded: false,
     stats: null,
     selectedProblemId: null,
     selectedStudentId: null
@@ -71,7 +70,6 @@ class Overview extends React.Component {
         console.log(stats)
         this.setState({
           stats: stats,
-          statsLoaded: true,
           selectedProblemId: 0
         })
       })
@@ -83,25 +81,37 @@ class Overview extends React.Component {
     const graded = this.state.stats.problems.reduce((acc, p, i) => {
       if (!p.graders.length) return acc
 
-      acc.graded += p.graders.reduce((s, g, i) => s + g.graded, 0)
-      acc.averageTime += mean(p.graders.map(g => g.averageTime))
+      const n = p.graders.reduce((s, g, i) => s + g.graded, 0)
+
+      acc.graded += n
+      acc.averageTime += p.graders.reduce((s, g) => s + g.graded * g.averageTime, 0) / n
       return acc
     }, {
-      name: 'Graded',
       graded: 0,
       averageTime: 0
     })
 
+    const ungraded = (this.state.stats.students + total.extra_copies) * this.state.stats.problems.length - graded.graded
+    console.log(ungraded)
     graded.averageTime /= this.state.stats.problems.length
 
     return (
       <React.Fragment>
         <div className='container'>
+          {ungraded > 0 &&
+            <article className='message is-info'>
+              <div className='message-body'>
+                {ungraded === 1
+                  ? 'There is just one solution left to grade.'
+                  : `There are ${ungraded} solutions left to graded, this will approximately take you ${formatTime(ungraded * graded.averageTime)}.`
+                }
+              </div>
+            </article>
+          }
+
           {this.renderHeatmap()}
 
           {this.renderHistogramScores(total)}
-
-          {this.renderBarGraded([graded], this.state.stats.students * this.state.stats.problems.length)}
 
           {total.extra_copies > 1 &&
             <article className='message is-warning'>
@@ -252,7 +262,10 @@ class Overview extends React.Component {
     }
 
     const config = {
-      displaylogo: false
+      displaylogo: false,
+      modeBarButtonsToRemove: ['pan2d', 'select2d', 'lasso2d', 'resetScale2d',
+        'zoomOut2d', 'zoomIn2d', 'zoom2d',
+        'hoverClosestCartesian', 'hoverCompareCartesian']
     }
 
     return (<Plot
@@ -275,14 +288,22 @@ class Overview extends React.Component {
 
     const vals = total.results.map(x => x.score)
 
-    const colors = zeros(total.max_score).toArray()
+    const colorsFinished = zeros(total.max_score).toArray()
+    const colorsUnfinished = zeros(total.max_score).toArray()
 
     if (this.state.selectedStudentId) {
       const data = total.results.find(x => x.student === this.state.selectedStudentId)
       if (data) {
-        colors[data.score] = 1
+        if (data.finished) {
+          colorsFinished[data.score] = 1
+        } else {
+          colorsUnfinished[data.score] = 1
+        }
       }
     }
+
+    console.log(colorsFinished)
+    console.log(colorsUnfinished)
 
     const traces = [{
       x: total.results.reduce((acc, v) => {
@@ -290,23 +311,19 @@ class Overview extends React.Component {
         return acc
       }, []),
       type: 'histogram',
+      name: 'Finished',
       autobinx: false,
       xbins: {
         start: -0.5,
         end: total.max_score + 0.5,
         size: 1
       },
-      hovertemplate: '%{y} students with a grade = %{x:.0f}<extra></extra>',
-      hoverongaps: false,
+      hoverinfo: 'none',
       marker: {
-        color: colors,
+        color: colorsFinished,
         cmin: 0,
         cmax: 1,
-        colorscale: [[0, 'hsl(204, 86, 53)'], [1, 'hsl(171, 100, 41)']],
-        line: {
-          color: 'rgb(8,48,107)',
-          width: 1.5
-        }
+        colorscale: [[0, 'hsl(204, 86, 53)'], [1, 'red']]
       }
     }, {
       x: total.results.reduce((acc, v) => {
@@ -314,22 +331,21 @@ class Overview extends React.Component {
         return acc
       }, []),
       type: 'histogram',
+      name: 'Partially graded',
       autobinx: false,
       xbins: {
         start: -0.5,
         end: total.max_score + 0.5,
         size: 1
       },
-      hovertemplate: '%{y} students with a grade = %{x:.0f}<extra></extra>',
-      hoverongaps: false,
+      hoverinfo: 'none',
       marker: {
-        color: colors,
+        color: colorsUnfinished,
         cmin: 0,
         cmax: 1,
-        colorscale: [[0, 'hsl(0, 0, 53)'], [1, 'hsl(171, 100, 41)']],
+        colorscale: [[0, 'hsla(204, 86, 53, 0.5)'], [1, 'hsla(171, 100, 41, 0.5)']],
         line: {
-          color: 'rgb(8,48,107)',
-          width: 1.5
+          color: 'green'
         }
       }
     }]
@@ -342,29 +358,17 @@ class Overview extends React.Component {
       return vals.length * exp(-pow((x - mu) / sigma, 2) / 2) / norm
     })
 
-    const meanAnnotation = {
-      x: mu,
-      y: vals.length / norm,
-      ax: 0,
-      ay: 0,
-      xref: 'x',
-      yref: 'y',
-      ayref: 'y',
-      yanchor: 'top',
-      arrowcolor: '#f00',
-      text: `Mean: ${mu.toPrecision(2)} ± ${sigma.toPrecision(2)}`
-    }
-
     traces.push({
       x: xScores,
       y: yScores,
+      name: 'PDF',
       fill: 'tozeroy',
       type: 'scatter',
       mode: 'line',
       marker: {
         color: 'rgb(255, 0, 0)'
       },
-      fillcolor: 'rgba(255, 0, 0, 0.2)',
+      fillcolor: 'rgba(255, 0, 0, 0.1)',
       hoverinfo: 'none'
     })
 
@@ -379,101 +383,19 @@ class Overview extends React.Component {
       },
       title: {
         text: 'Histogram of Scores<br>' +
-              (total.alpha ? `(Cronbach's α: ${total.alpha.toPrecision(3)})` : '')
+              `(score = ${mu.toPrecision(2)} ± ${sigma.toPrecision(2)}` +
+              (total.alpha ? `, Cronbach's α: ${total.alpha.toPrecision(3)})` : ')')
       },
       autosize: true,
-      showlegend: false,
-      barmode: 'stack',
-      annotations: [meanAnnotation]
-    }
-
-    const config = {
-      displaylogo: false
-    }
-
-    return (<Plot
-      data={traces}
-      config={config}
-      layout={layout}
-      useResizeHandler
-      style={{width: '100%', position: 'relative', display: 'inline-block'}} />)
-  }
-
-  renderBarGraded = (graders, totalSolutions) => {
-    if (!totalSolutions) return null
-
-    graders.sort((g1, g2) => g2.graded - g1.graded)
-    const gradedSubmissions = graders.reduce((acc, p, i) => acc + p.graded, 0)
-
-    const traces = graders.map(g => {
-      return {
-        y: [''],
-        x: [g.graded],
-        name: g.name,
-        type: 'bar',
-        orientation: 'h',
-        textposition: 'inside',
-        texttemplate: g.name,
-        hovertemplate: '<b>%{fullData.name}</b>: %{x} solutions<br>' +
-                       `Average of ${formatTime(g.averageTime)} per solution` +
-                       '<extra></extra>',
-        marker: {
-          color: [g.graded],
-          colorscale: 'Blues',
-          reversescale: true,
-          cmin: 0,
-          cmax: gradedSubmissions,
-          line: {
-            width: 3
-          }
-        }
-      }
-    })
-
-    if (gradedSubmissions < totalSolutions) {
-      const approxTime = estimateGradingTimeLeft(graders, totalSolutions)
-      traces.push({
-        y: [''],
-        x: [totalSolutions - gradedSubmissions],
-        name: 'Ungraded',
-        type: 'bar',
-        orientation: 'h',
-        textposition: 'inside',
-        texttemplate: 'Ungraded',
-        hovertemplate: '%{x} solutions<br>' +
-                       `About ${formatTime(approxTime)} left` +
-                       '<extra></extra>',
-        marker: {
-          color: 'hsl(0, 0, 86)',
-          line: {width: 3}
-        }
-      })
-    }
-
-    const layout = {
-      title: {
-        text: 'Graded solutions',
-        titlefont: {
-          size: 16,
-          family: 'Courier New'
-        }
-      },
-      yaxis: {
-        fixedrange: true
-      },
-      xaxis: {
-        fixedrange: true,
-        range: [0, totalSolutions]
-      },
-      barmode: 'stack',
-      showlegend: false,
-      height: 250,
-      hovermode: 'closest'
+      showlegend: true,
+      barmode: 'stack'
     }
 
     const config = {
       displaylogo: false,
-      editable: false
+      modeBarButtonsToRemove: ['pan2d', 'select2d', 'lasso2d', 'resetScale2d',
+        'zoomOut2d', 'zoomIn2d', 'zoom2d',
+        'hoverClosestCartesian', 'hoverCompareCartesian']
     }
 
     return (<Plot
@@ -607,7 +529,7 @@ class Overview extends React.Component {
           </p>
         }
 
-        {problem.extra_solutions > 1 &&
+        {problem.extra_solutions / this.state.stats.students > 0.2 &&
           <article className='message is-warning'>
             <div className='message-body'>
               {problem.extra_solutions} extra solutions where needed to solve this problem by some students,
@@ -625,10 +547,10 @@ class Overview extends React.Component {
 
         <Hero title='Overview' subtitle='Analyse the exam results' />
 
-        { this.state.statsLoaded
-          ? <div className='columns is-centered is-multiline'>
-            <div className='column is-full has-text-centered'>
-              <h1 className='is-size-1 has-text-centered'> {this.state.stats.name} </h1>
+        { this.state.stats
+          ? (
+            <div className='container has-text-centered'>
+              <h1 className='is-size-1'> {this.state.stats.name} </h1>
               <span className='select is-medium'>
                 <select
                   onChange={(e) => {
@@ -644,12 +566,19 @@ class Overview extends React.Component {
                   })}
                 </select>
               </span>
+              <section className='section'>
+                <div className='container'>
+                  { this.renderProblemSummary(this.state.selectedProblemId) }
+                </div>
+              </section>
             </div>
-            <div className={'column has-text-centered is-full-tablet ' + (this.state.selectedProblemId === 0
-              ? 'is-three-fifths-desktop' : 'is-half-desktop')}>
-              { this.renderProblemSummary(this.state.selectedProblemId) }
+          ) : (
+            <div className='container'>
+              <p className='container has-text-centered is-size-5'>Loading statistics...</p>
             </div>
-          </div> : <p className='container has-text-centered is-size-5'>Loading statistics...</p> }
+          )
+        }
+
       </div >
     )
   }

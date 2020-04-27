@@ -59,4 +59,6 @@ test_py:
   artifacts:
     paths:
       - cov.html/
+    reports:
+      - cobertura: cov.xml
     expire_in: 1 week

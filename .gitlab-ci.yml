@@ -32,15 +32,15 @@ build-image:
 .conda-env: &conda-env
   before_script:
     - source activate zesje-dev
+    - ln -s /yarn/node_modules ./node_modules
 
 build:
   <<: *conda-env
   stage: build
   script:
     - ls -lah
-    - echo $PATH
-    - ls node_modules -lah
     - yarn list
+    - ls node_modules -lah
     - python3 -m compileall zesje
     - yarn build
   artifacts:

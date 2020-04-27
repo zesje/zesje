@@ -10,7 +10,7 @@ RUN apt-get -o Acquire::Check-Valid-Until=false update && \
         && \
     apt-get -y --quiet install git supervisor nginx
 
-WORKDIR /app
+WORKDIR /yarn
 
 # Setup PYTHON packages
 
@@ -28,5 +28,7 @@ RUN rm environment.yml
 ADD package.json .
 RUN yarn install
 RUN rm package.json
+
+WORKDIR /app
 
 CMD bash

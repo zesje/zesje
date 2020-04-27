@@ -20,12 +20,12 @@ build-image:
     - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
   script:
     - mkdir docker
-    - cp Dockerfile docker/
+    - cp test.Dockerfile docker/
     - cp environment.yml docker/
     - cp package.json docker/
     - /kaniko/executor
       --context $CI_PROJECT_DIR/docker
-      --dockerfile $CI_PROJECT_DIR/docker/Dockerfile
+      --dockerfile $CI_PROJECT_DIR/docker/test.Dockerfile
       --destination $TEST_IMAGE
       --cache=true
 
@@ -38,9 +38,6 @@ build:
   <<: *conda-env
   stage: build
   script:
-    - ls -lah
-    - yarn list
-    - ls node_modules -lah
     - python3 -m compileall zesje
     - yarn build
   artifacts:

@@ -37,6 +37,10 @@ build:
   <<: *conda-env
   stage: build
   script:
+    - ls -lah
+    - echo $PATH
+    - ls node_modules -lah
+    - yarn list
     - python3 -m compileall zesje
     - yarn build
   artifacts:

@@ -1,5 +1,5 @@
 # This base image can be found in 'Dockerfile'
-image: gitlab.kwant-project.org:5005/zesje/zesje/test:latest
+image: $TEST_IMAGE
 
 stages:
   - build-env
@@ -7,10 +7,11 @@ stages:
   - test
 
 variables:
-  TEST_IMAGE: ${CI_REGISTRY_IMAGE}/test:${CI_COMMIT_REF_SLUG}
+  TEST_IMAGE: ${CI_REGISTRY_IMAGE}/test
 
 build-image:
   stage: build-env
+  when: manual
   image:
     name: gcr.io/kaniko-project/executor:debug-v0.16.0
     entrypoint: [""]
@@ -39,14 +40,19 @@ build:
       - zesje/static
     expire_in: 1 week
 
+.conda-env: &conda-env
+  before_script:
+    - source activate zesje-dev
 
 test_js:
+  <<: *conda-env
   image: $TEST_IMAGE
   stage: test
   script: 
     - yarn test:js
 
 lint_js:
+  <<: *conda-env
   image: $TEST_IMAGE
   stage: test
   allow_failure: true
@@ -54,6 +60,7 @@ lint_js:
     - yarn lint:js
 
 lint_py:
+  <<: *conda-env
   image: $TEST_IMAGE
   stage: test
   allow_failure: true
@@ -61,6 +68,7 @@ lint_py:
     - yarn lint:py
 
 test_py:
+  <<: *conda-env
   image: $TEST_IMAGE
   stage: test
   script:

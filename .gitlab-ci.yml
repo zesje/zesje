@@ -2,57 +2,57 @@
 image: gitlab.kwant-project.org:5005/zesje/zesje/test:latest
 
 stages:
+  - build-env
   - build
   - test
 
-# Special hidden job that is merged with JS jobs
-.node_modules: &node_modules
-  # Cache the JS modules that yarn fetches
-  cache:
-    untracked: true
-    paths:
-      - .yarn-cache
-  before_script:
-    - source activate zesje-dev
-    - yarn install --cache-folder .yarn-cache
+variables:
+  TEST_IMAGE: CI_REGISTRY_IMAGE/test:${CI_COMMIT_REF_SLUG}
 
-.python_packages: &python_packages
-  before_script:
-    - source activate zesje-dev
-    - conda env update
-
-build:
-  <<: *node_modules
-  stage: build
-  script:
-    - python3 -m compileall zesje
-    - yarn build
+build-image:
+  stage: build-env
+  image:
+    name: gcr.io/kaniko-project/executor:debug-v0.16.0
+    entrypoint: [""]
   artifacts:
-    paths:
-      - zesje/static
-    expire_in: 1 week
+    untracked: true
+    expire_in: 1 hour
+  before_script:
+    - mkdir -p /kaniko/.docker
+    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
+  script:
+    - mkdir docker
+    - cp Dockerfile docker/
+    - cp environment.yml docker/
+    - cp package.json docker/
+    - /kaniko/executor
+      --context $CI_PROJECT_DIR/docker
+      --dockerfile $CI_PROJECT_DIR/docker/Dockerfile
+      --destination $TEST_IMAGE
+      --cache=true
 
 test_js:
-  <<: *node_modules
+  image: $TEST_IMAGE
   stage: test
-  script: yarn test:js
+  script: 
+    - yarn test:js
 
 lint_js:
-  <<: *node_modules
+  image: $TEST_IMAGE
   stage: test
   allow_failure: true
   script:
     - yarn lint:js
 
 lint_py:
-  <<: *python_packages
+  image: $TEST_IMAGE
   stage: test
   allow_failure: true
   script:
     - yarn lint:py
 
 test_py:
-  <<: *python_packages
+  image: $TEST_IMAGE
   stage: test
   script:
     - yarn test:py:cov

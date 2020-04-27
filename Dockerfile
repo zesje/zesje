@@ -12,13 +12,21 @@ RUN apt-get update && \
 
 WORKDIR /app
 
-ADD environment.yml /app/environment.yml
+# Setup PYTHON packages
+
+ADD environment.yml .
 RUN conda env create
 
 # From https://medium.com/@chadlagore/conda-environments-with-docker-82cdc9d25754
-RUN echo "source activate $(head -1 /app/environment.yml | cut -d' ' -f2)" > ~/.bashrc
-ENV PATH /opt/conda/envs/$(head -1 /app/environment.yml | cut -d' ' -f2)/bin:$PATH
+RUN echo "source activate zesje-dev" > ~/.bashrc
+ENV PATH /opt/conda/envs/zesje-dev/bin:$PATH
 
-RUN rm /app/environment.yml
+RUN rm environment.yml
+
+# Setup YARN packages
+
+ADD package.json .
+RUN yarn install
+RUN rm package.json
 
 CMD bash

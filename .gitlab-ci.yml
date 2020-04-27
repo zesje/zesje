@@ -32,7 +32,7 @@ build-image:
 .conda-env: &conda-env
   before_script:
     - source activate zesje-dev
-    - ln -s /yarn/node_modules ./node_modules
+    - ln -s /yarn/* ./
 
 build:
   <<: *conda-env

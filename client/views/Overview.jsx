@@ -111,7 +111,7 @@ class Overview extends React.Component {
 
           {this.renderHeatmap()}
 
-          {this.renderHistogramScores(total)}
+          {this.renderHistogramScores(total, true)}
 
           {total.extra_copies > 1 &&
             <article className='message is-warning'>
@@ -197,7 +197,6 @@ class Overview extends React.Component {
       y: yVals,
       z: problems.map(p => p.results.map(x => 100 * x.score / p.max_score)),
       ygap: 2,
-      xgap: 0.5,
       zmax: 100,
       zmin: 0,
       colorscale: 'Electric',
@@ -283,7 +282,7 @@ class Overview extends React.Component {
       style={{width: '100%', position: 'relative', display: 'inline-block'}} />)
   }
 
-  renderHistogramScores = (total) => {
+  renderHistogramScores = (total, showPDF) => {
     if (!total.results.length) return null
 
     const vals = total.results.map(x => x.score)
@@ -301,9 +300,6 @@ class Overview extends React.Component {
         }
       }
     }
-
-    console.log(colorsFinished)
-    console.log(colorsUnfinished)
 
     const traces = [{
       x: total.results.reduce((acc, v) => {
@@ -323,7 +319,7 @@ class Overview extends React.Component {
         color: colorsFinished,
         cmin: 0,
         cmax: 1,
-        colorscale: [[0, 'hsl(204, 86, 53)'], [1, 'red']]
+        colorscale: [[0, 'hsl(204, 86, 53)'], [1, 'hsl(171, 100, 41)']]
       }
     }, {
       x: total.results.reduce((acc, v) => {
@@ -350,27 +346,30 @@ class Overview extends React.Component {
       }
     }]
 
-    const xScores = range(0, total.max_score, 0.5).toArray()
     const mu = mean(vals)
     const sigma = std(vals)
-    const norm = (sqrt(2 * pi) * sigma)
-    const yScores = xScores.map(x => {
-      return vals.length * exp(-pow((x - mu) / sigma, 2) / 2) / norm
-    })
 
-    traces.push({
-      x: xScores,
-      y: yScores,
-      name: 'PDF',
-      fill: 'tozeroy',
-      type: 'scatter',
-      mode: 'line',
-      marker: {
-        color: 'rgb(255, 0, 0)'
-      },
-      fillcolor: 'rgba(255, 0, 0, 0.1)',
-      hoverinfo: 'none'
-    })
+    if (showPDF) {
+      const norm = (sqrt(2 * pi) * sigma)
+      const xScores = range(0, total.max_score, 0.5).toArray()
+      const yScores = xScores.map(x => {
+        return vals.length * exp(-pow((x - mu) / sigma, 2) / 2) / norm
+      })
+
+      traces.push({
+        x: xScores,
+        y: yScores,
+        name: 'PDF',
+        fill: 'tozeroy',
+        type: 'scatter',
+        mode: 'line',
+        marker: {
+          color: 'rgb(255, 0, 0)'
+        },
+        fillcolor: 'rgba(255, 0, 0, 0.1)',
+        hoverinfo: 'none'
+      })
+    }
 
     const layout = {
       xaxis: {
@@ -406,54 +405,6 @@ class Overview extends React.Component {
       style={{width: '100%', position: 'relative', display: 'inline-block'}} />)
   }
 
-  renderFeedbackChart = (problem) => {
-    const feedback = problem.feedback.sort((f1, f2) => f1.score - f2.score)
-
-    const data = {
-      y: feedback.map(f => f.used),
-      x: feedback.map(f => f.name),
-      text: feedback.map(f => f.description === null ? '' : f.description),
-      type: 'bar',
-      name: 'Used',
-      marker: {
-        color: feedback.map(f => f.score),
-        cmin: 0,
-        cmax: problem.max_score,
-        colorscale: 'Electric',
-        showscale: true,
-        colorbar: {title: {text: 'score'}}
-      },
-      hovertemplate:
-            'Used %{y} times<br><br>' +
-            '%{text}' +
-            '<extra></extra>'
-    }
-
-    const layout = {
-      title: {
-        text: 'Feedback Options',
-        font: {
-          family: 'Courier New',
-          size: 16
-        }
-      },
-      yaxis: {
-        title: 'Used'
-      }
-    }
-
-    const config = {
-      displaylogo: false
-    }
-
-    return (<Plot
-      data={[data]}
-      config={config}
-      layout={layout}
-      useResizeHandler
-      style={{width: '100%', position: 'relative', display: 'inline-block'}} />)
-  }
-
   renderProblemSummary = (id) => {
     if (id === 0) {
       return this.renderAtGlance()
@@ -471,63 +422,71 @@ class Overview extends React.Component {
 
     return (
       <React.Fragment>
-        <h3 className='is-size-5'> Feedback details </h3>
-        <table className='table is-striped is-fullwidth'>
-          <thead>
-            <tr>
-              <th> Feedback </th>
-              <th> Score </th>
-              <th> #&nbsp;Assigned</th>
-            </tr>
-          </thead>
-          <tbody>
-            {
-              problem.feedback.map((option, i) => {
-                return <tr key={i}>
-                  <td>
-                    {option.name}
-                    <Tooltip text={option.description} />
-                  </td>
-                  <td> {option.score} </td>
-                  <td> {option.used} </td>
+        <div className='columns is-multiline'>
+          <div className='column is-half'>
+            <h3 className='is-size-5'> Feedback details </h3>
+            <table className='table is-striped is-fullwidth'>
+              <thead>
+                <tr>
+                  <th> Feedback </th>
+                  <th> Score </th>
+                  <th> #&nbsp;Assigned</th>
                 </tr>
-              })
-            }
-          </tbody>
-        </table>
-
-        <h3 className='is-size-5'> Grader details </h3>
-        <table className='table is-striped is-fullwidth'>
-          <thead>
-            <tr>
-              <th> Grader </th>
-              <th> Solutions graded </th>
-              <th> Average grading time </th>
-              <th> Total grading time </th>
-            </tr>
-          </thead>
-          <tbody>
-            {
-              graders.map((g, i) => {
-                if (g.name === 'Zesje') return null
-
-                return <tr key={i}>
-                  <td> {g.name} </td>
-                  <td> {g.graded} </td>
-                  <td> {formatTime(g.averageTime)} </td>
-                  <td> {formatTime(g.totalTime)} </td>
+              </thead>
+              <tbody>
+                {
+                  problem.feedback.map((option, i) => {
+                    return <tr key={i}>
+                      <td>
+                        {option.name}
+                        <Tooltip text={option.description} />
+                      </td>
+                      <td> {option.score} </td>
+                      <td> {option.used} </td>
+                    </tr>
+                  })
+                }
+              </tbody>
+            </table>
+          </div>
+          <div className='column is-half'>
+            {this.renderHistogramScores(problem, false)}
+          </div>
+          <div className='column is-full'>
+            <h3 className='is-size-5'> Grader details </h3>
+            <table className='table is-striped is-fullwidth'>
+              <thead>
+                <tr>
+                  <th> Grader </th>
+                  <th> Solutions graded </th>
+                  <th> Average grading time </th>
+                  <th> Total grading time </th>
                 </tr>
-              })
-            }
-          </tbody>
-        </table>
+              </thead>
+              <tbody>
+                {
+                  graders.map((g, i) => {
+                    if (g.name === 'Zesje') return null
 
-        {zesje &&
-          <p>
-            In this problem Zesje helped you grade {zesje.graded === 1 ? '1 solution' : zesje.graded + ' solutions'},
-            saving you {formatTime(problem.averageGradingTime * zesje.graded)} of grading time.
-          </p>
-        }
+                    return <tr key={i}>
+                      <td> {g.name} </td>
+                      <td> {g.graded} </td>
+                      <td> {formatTime(g.averageTime)} </td>
+                      <td> {formatTime(g.totalTime)} </td>
+                    </tr>
+                  })
+                }
+              </tbody>
+            </table>
+
+            {zesje &&
+              <p>
+                In this problem Zesje helped you grade {zesje.graded === 1 ? '1 solution' : zesje.graded + ' solutions'},
+                saving you {formatTime(problem.averageGradingTime * zesje.graded)} of grading time.
+              </p>
+            }
+          </div>
+        </div>
 
         {problem.extra_solutions / this.state.stats.students > 0.2 &&
           <article className='message is-warning'>

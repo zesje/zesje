@@ -135,7 +135,7 @@ class Statistics(Resource):
                                    index=[id for id, in student_ids],
                                    columns=[p.id for p in exam.problems] + [0],
                                    dtype=int)
-        data = []
+        data = {}
 
         for p in exam.problems:
             if len(p.feedback_options) == 0:
@@ -198,7 +198,7 @@ class Statistics(Resource):
 
             problem_data['averageGradingTime'] = totalTime / solutionsGraded if solutionsGraded > 0 else 0
 
-            data.append(problem_data)
+            data[p.id] = problem_data
 
         # total sum per row
         full_scores.loc[:, 0] = full_scores.sum(axis=1)
@@ -227,7 +227,7 @@ class Statistics(Resource):
             'id': exam.id,
             'name': exam.name,
             'students': len(student_ids),
-            'problems': data,
+            'problems': [data[p.id] for p in exam.problems],
             'total': {
                 'alpha': alpha,
                 'max_score': total_max_score,

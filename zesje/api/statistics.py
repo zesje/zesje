@@ -1,8 +1,7 @@
-from math import isnan
+from math import isnan, nan
 from flask_restful import Resource
 from collections import defaultdict
 import pandas as pd
-from sqlalchemy import func
 
 from ..database import db, Exam, Submission, Solution
 from ..statistics import grader_data
@@ -54,7 +53,7 @@ def empty_data(exam):
                 'id': p.id,
                 'name': p.name,
                 'max_score': max(list(fb.score for fb in p.feedback_options) + [0]),
-                'scores': [],
+                'results': [],
                 'correlation': None,
                 'extra_solutions': 0,
                 'feedback': [{
@@ -67,7 +66,7 @@ def empty_data(exam):
                 'graders': []
             } for p in exam.problems],
         'total': {
-            'scores': [],
+            'results': [],
             'max_score': sum(max(list(fb.score for fb in p.feedback_options) + [0]) for p in exam.problems),
             'alpha': None,
             'extra_copies': 0
@@ -123,28 +122,34 @@ class Statistics(Resource):
         if exam is None:
             return dict(status=404, message='Exam does not exist.'), 404
 
-        # count the total number of students as the number of submissions for this exam
-        # with a different and not null student id
+        # count the total number of students as the number of validated submissions
         student_ids = db.session.query(Submission.student_id)\
-            .filter(Submission.exam_id == exam.id, Submission.student_id != None)\
-            .group_by(Submission.student_id).all()  # noqa E711
+            .filter(Submission.exam_id == exam.id, Submission.validated)\
+            .all()
         if len(student_ids) == 0:
             # there are no submissions or no students have been identified
             return empty_data(exam)
 
         total_max_score = 0
-
         full_scores = pd.DataFrame(data={},
                                    index=[id for id, in student_ids],
                                    columns=[p.id for p in exam.problems] + [0],
                                    dtype=int)
-        data = {}
+        data = []
 
         for p in exam.problems:
+            if len(p.feedback_options) == 0:
+                # exclude problems without feedback options
+                continue
+
+            max_score = max(list(fb.score for fb in p.feedback_options) + [0])
+            if max_score == 0:
+                continue
+
             problem_data = {
                 'id': p.id,
                 'name': p.name,
-                'max_score': max(list(fb.score for fb in p.feedback_options) + [0]),
+                'max_score': max_score,
                 'feedback': [{
                     'id': fb.id,
                     'name': fb.text,
@@ -155,20 +160,18 @@ class Statistics(Resource):
             }
 
             # add the problem score to the total
-            total_max_score += problem_data['max_score']
+            total_max_score += max_score
 
             # return all solutions with the respective student id
             # for the corresponding problem that have been graded
             solutions = db.session.query(Solution, Submission.student_id)\
-                                .join(Submission)\
-                                .filter(Solution.problem_id == p.id,
-                                        Solution.graded_by != None,
-                                        Submission.student_id != None)\
-                                .all() # noqa E711
+                                  .join(Submission)\
+                                  .filter(Solution.problem_id == p.id, Submission.validated)\
+                                  .all()
 
             sols_by_student = defaultdict(int)
             for sol, student_id in solutions:
-                mark = sum(fo.score for fo in sol.feedback)
+                mark = sum(fo.score for fo in sol.feedback) if sol.feedback else nan
 
                 if all(fo.text != BLANK_FEEDBACK_NAME for fo in sol.feedback):
                     # do not count blank solutions
@@ -195,7 +198,7 @@ class Statistics(Resource):
 
             problem_data['averageGradingTime'] = totalTime / solutionsGraded if solutionsGraded > 0 else 0
 
-            data[p.id] = problem_data
+            data.append(problem_data)
 
         # total sum per row
         full_scores.loc[:, 0] = full_scores.sum(axis=1)
@@ -218,15 +221,13 @@ class Statistics(Resource):
         else:
             alpha = None
 
-        total_extra_copies = (db.session.query(func.count(Submission.id))
-                                   .filter(Submission.exam_id == exam.id, Submission.student_id != None) # noqa E711
-                                   .scalar()) - len(student_ids)
+        total_extra_copies = len(exam.copies) - len(student_ids)
 
         return {
             'id': exam.id,
             'name': exam.name,
             'students': len(student_ids),
-            'problems': [data[p.id] for p in exam.problems],
+            'problems': data,
             'total': {
                 'alpha': alpha,
                 'max_score': total_max_score,

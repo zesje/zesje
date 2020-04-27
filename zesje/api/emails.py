@@ -157,10 +157,10 @@ class Email(Resource):
                 message="Exam does not exist"
             )
 
-        if not all(sub.signature_validated for sub in exam.submissions):
+        if not all(sub.validated for sub in exam.submissions):
             abort(
                 409,
-                message="All submissions must be validated before "
+                message="All copies must be validated before "
                         "sending emails."
             )
 
@@ -207,7 +207,7 @@ class Email(Resource):
                 404,
                 message="Exam does not exist"
             )
-        student_ids = set(sub.student.id for sub in exam.submissions if sub.student)
+        student_ids = [sub.student_id for sub in exam.submissions if sub.student_id]
 
         failed_to_build = list()
         to_send = dict()

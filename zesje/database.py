@@ -1,16 +1,18 @@
 """ db.Models used in the db """
 
 import enum
-from os.path import join
+import os
 
 from flask import current_app
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean, ForeignKey, Enum
+from sqlalchemy import select, join
 from flask_sqlalchemy.model import BindMetaMixin, Model
 from sqlalchemy.ext.declarative import DeclarativeMeta, declarative_base
 from sqlalchemy.orm import backref
 from sqlalchemy.orm.session import object_session
 from sqlalchemy.ext.hybrid import hybrid_property
+from sqlalchemy.ext.associationproxy import association_proxy
 
 
 # Class for NOT automatically determining table names
@@ -59,6 +61,27 @@ class Exam(db.Model):
     finalized = Column(Boolean, default=False, server_default='0')
     grade_anonymous = Column(Boolean, default=False, server_default='0')
 
+    @hybrid_property
+    def copies(self):
+        # Ordered by copy number, ascending
+        return Copy.query.select_from(Exam).\
+               join(Exam.submissions).join(Submission.copies).\
+               filter(Exam.id == self.id).\
+               order_by(Copy.number.asc()).all()
+        # TODO For clarity, I rather want this to be something like:
+        # [copy for sub in self.submissions for copy in sub.copies]
+        # but only use this when all the objects are already loaded
+        # and use the query above otherwise.
+
+    # TODO Is this SQL expression really needed?
+    @copies.expression
+    def copies(cls):
+        return select([Copy.id, Copy.number, Copy.submission_id]).\
+               select_from(
+                   join(Copy, Submission)
+               ).\
+               where(Submission.exam_id == cls.id)
+
     # Any migration that alters (and thus recreates) the exam table should explicitly
     # specify this keyword to ensure it will be used for the new table
     __table_args__ = {'sqlite_autoincrement': True}
@@ -68,26 +91,48 @@ class Submission(db.Model):
     """Typically created when adding a new exam."""
     __tablename__ = 'submission'
     id = Column(Integer, primary_key=True, autoincrement=True)
-    copy_number = Column(Integer, nullable=False)
-    exam_id = Column(Integer, ForeignKey('exam.id'), nullable=False)
+    exam_id = Column(Integer, ForeignKey('exam.id'), nullable=False)  # backref exam
     solutions = db.relationship('Solution', backref='submission', cascade='all',
                                 order_by='Solution.problem_id', lazy=True)
-    pages = db.relationship('Page', backref='submission', cascade='all', lazy=True)
-    student_id = Column(Integer, ForeignKey('student.id'), nullable=True)
-    signature_validated = Column(Boolean, default=False, server_default='0', nullable=False)
+    copies = db.relationship('Copy', backref='submission', cascade='all', lazy=True)
+    student_id = Column(Integer, ForeignKey('student.id'), nullable=True)  # backref student
+    validated = Column(Boolean, default=False, server_default='0', nullable=False)
+
+
+class Copy(db.Model):
+    """A copy holding multiple pages"""
+    __tablename__ = 'copy'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    number = Column(Integer, nullable=False)
+    submission_id = Column(Integer, ForeignKey('submission.id'), nullable=False)  # backref submission
+    pages = db.relationship('Page', backref='copy', cascade='all', lazy=True)
+
+    exam = association_proxy('submission', 'exam')
+    exam_id = association_proxy('submission', 'exam_id')
+    student = association_proxy('submission', 'student')
+    student_id = association_proxy('submission', 'student_id')
+    validated = association_proxy('submission', 'validated')
 
 
 class Page(db.Model):
-    """Page of an exam"""
+    """Page of a copy"""
     __tablename__ = 'page'
     id = Column(Integer, primary_key=True, autoincrement=True)
     path = Column(Text, nullable=False)
-    submission_id = Column(Integer, ForeignKey('submission.id'), nullable=True)
+    copy_id = Column(Integer, ForeignKey('copy.id'), nullable=False)  # backref copy
     number = Column(Integer, nullable=False)
+
+    @hybrid_property
+    def copy_number(self):
+        return self.copy.number
+
+    @hybrid_property
+    def submission(self):
+        return self.copy.submission
 
     @property
     def abs_path(self):
-        return join(current_app.config['DATA_DIRECTORY'], self.path)
+        return os.path.join(current_app.config['DATA_DIRECTORY'], self.path)
 
 
 """

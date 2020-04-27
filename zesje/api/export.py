@@ -120,12 +120,12 @@ def zipped_exam_solutions_generator(exam_id, anonymous, current_app):
     with current_app.app_context():
         z = zipstream.ZipFile(mode='w')
 
-        subs = Submission.query.filter(Submission.exam_id == exam_id).all()
-        students = set(sub.student for sub in subs if sub.student)
+        subs = Submission.query.filter(Submission.exam_id == exam_id, Submission.validated).all()
+        student_sub = {sub.student: sub for sub in subs}
 
-        for student in students:
+        for student, sub in student_sub.items():
             if anonymous:
-                copy_numbers = sorted(sub.copy_number for sub in subs if sub.student == student)
+                copy_numbers = list(copy.number for copy in sub.copies)
                 file_name = f'cop{"y" if len(copy_numbers) == 1 else "ies"}-' \
                             f'{"-".join(str(number) for number in copy_numbers)}.pdf'
             else:

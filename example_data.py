@@ -13,15 +13,18 @@ Usage:
                        [--grade {nothing,partial,all}]
 
     optional arguments:
-      -h, --help           show this help message and exit
-      -d, --delete         delete previous data
-      --exams (int)        number of exams to add
-      --pages (int)        number of pages per exam
-      --students (int)     number of students per exam
-      --graders (int)      number of graders
-      --solve (float)      how much of the solutions to solve (between 0 and 100)
-      --grade (float)      how much of the exam to grade (between 0 and 100). Notice that only non-
-                           blank solutions will be considered for grading.
+      -h, --help                show this help message and exit
+      -d, --delete              delete previous data
+      --exams (int)             number of exams to add
+      --pages (int)             number of pages per exam
+      --students (int)          number of students per exam
+      --graders (int)           number of graders
+      --solve (float)           how much of the solutions to solve (between 0 and 100)
+      --grade (float)           how much of the exam to grade (between 0 and 100). Notice that only non-
+                                blank solutions will be considered for grading.
+      --skip-processing         fakes the pdf processing to reduce time.
+                                As a drawback, blanks will not be detected.
+      --multiple-copies (float) how much of the students submit multiple copies (between 0 and 100)
 
 '''
 
@@ -42,7 +45,7 @@ from tempfile import NamedTemporaryFile
 
 from lorem.text import TextLorem
 
-from zesje.database import db, Exam, Scan, Submission, Solution, Page
+from zesje.database import db, Exam, Scan, Submission, Solution, Page, Copy
 from zesje.scans import _process_pdf
 from zesje.factory import create_app
 import zesje.mysql as mysql
@@ -116,23 +119,28 @@ def generate_students(students):
     } for i in range(students)]
 
 
-def _fake_process_pdf(scan, pages, student_ids):
-    for copy in range(1, len(student_ids) + 1):
-        sub = Submission(copy_number=copy, exam=scan.exam, student_id=student_ids[copy - 1])
-        db.session.add(sub)
+def _fake_process_pdf(scan, pages, student_ids, copies_per_student):
+    copy_number = 0
+    for student_id, number_of_copies in zip(student_ids, copies_per_student):
+        for _ in range(number_of_copies):
+            copy_number += 1
+            copy = Copy(number=copy_number)
 
-        for problem in scan.exam.problems:
-            db.session.add(Solution(problem=problem, submission=sub))
+            base_copy_path = os.path.join(f'{scan.exam.id}_data', 'submissions', f'{copy_number}')
+            for page in range(pages + 1):
+                db.session.add(Page(path=os.path.join(base_copy_path, f'page{page:02d}.jpg'), copy=copy, number=page))
 
-        base_copy_path = os.path.join(f'{scan.exam.id}_data', 'submissions', f'{copy}')
-        for page in range(pages + 1):
-            db.session.add(Page(path=os.path.join(base_copy_path, f'page{page:02d}.jpg'), submission=sub, number=page))
+            sub = Submission(copies=[copy], exam=scan.exam, student_id=student_id)
+            db.session.add(sub)
+
+            for problem in scan.exam.problems:
+                db.session.add(Solution(problem=problem, submission=sub))
 
     scan.status = 'success'
     db.session.commit()
 
 
-def handle_pdf_processing(app, exam_id, pdf, pages, student_ids, skip_processing=False):
+def handle_pdf_processing(app, exam_id, pdf, pages, student_ids, copies_per_student, skip_processing=False):
     exam = Exam.query.get(exam_id)
     scan = Scan(exam=exam, name=pdf.name,
                 status='processing', message='Waiting...')
@@ -146,7 +154,7 @@ def handle_pdf_processing(app, exam_id, pdf, pages, student_ids, skip_processing
         pdf.seek(0)
 
     if skip_processing:
-        _fake_process_pdf(scan, pages, student_ids)
+        _fake_process_pdf(scan, pages, student_ids, copies_per_student)
     else:
         _process_pdf(scan_id=scan.id)
 
@@ -161,15 +169,15 @@ def handle_pdf_processing(app, exam_id, pdf, pages, student_ids, skip_processing
 def generate_solution(pdf, student_id, problems, mc_problems, solve):
     pages = len(problems) // 3
 
-    pdf.setFillColorRGB(0, 0.5, 1)
+    pdf.setFillColorRGB(0, 0.1, 0.4)
 
     sID = str(student_id)
     for k in range(7):
         d = int(sID[k])
-        pdf.rect(68 + k * 16, int(A4[1]) - 80 - d * 16, 5, 5, fill=1, stroke=0)
+        pdf.rect(66 + k * 16, int(A4[1]) - 82 - d * 16, 9, 9, fill=1, stroke=0)
 
     for p in range(pages):
-        pdf.setFillColorRGB(0, 0.5, 1)
+        pdf.setFillColorRGB(0, 0.1, 0.4)
 
         if p > 0 and random.random() < solve:
             o = random.choice(mc_problems[p - 1]['mc_options'])
@@ -183,7 +191,7 @@ def generate_solution(pdf, student_id, problems, mc_problems, solve):
         pdf.showPage()
 
 
-def solve_problems(pdf_file, pages, student_ids, problems, mc_problems, solve):
+def solve_problems(pdf_file, pages, student_ids, problems, mc_problems, solve, copies_per_student):
     if solve < 0.01:
         # nothing to solve
         return
@@ -191,12 +199,13 @@ def solve_problems(pdf_file, pages, student_ids, problems, mc_problems, solve):
     with NamedTemporaryFile() as sol_file:
         pdf = canvas.Canvas(sol_file.name, pagesize=A4)
 
-        for id in student_ids:
-            generate_solution(pdf, id, problems, mc_problems, solve)
+        for id, number_of_copies in zip(student_ids, copies_per_student):
+            for _ in range(number_of_copies):
+                generate_solution(pdf, id, problems, mc_problems, solve)
 
-            if pages % 2 == 1:
-                # for an odd number of pages, zesje adds a blank page at the end
-                pdf.showPage()
+                if pages % 2 == 1:
+                    # for an odd number of pages, zesje adds a blank page at the end
+                    pdf.showPage()
 
         pdf.save()
 
@@ -209,6 +218,17 @@ def solve_problems(pdf_file, pages, student_ids, problems, mc_problems, solve):
             exam_merge.render()
 
         PdfWriter(pdf_file.name, trailer=exam_pdf).write()
+
+
+def validate_signatures(client, exam_id, copies):
+    for copy in copies:
+        number = copy['number']
+        student = copy['student']
+        if not student:
+            print(f'\tNo student detected for copy {number} of exam {exam_id}')
+        else:
+            student_id = student['id']
+            client.put(f'/api/copies/{exam_id}/{number}', data={'studentID': student_id})
 
 
 def grade_problems(client, exam_id, graders, problems, submissions, grade):
@@ -228,7 +248,7 @@ def grade_problems(client, exam_id, graders, problems, submissions, grade):
                            })
 
 
-def design_exam(app, client, pages, students, grade, solve, skip_processing):
+def design_exam(app, client, pages, students, grade, solve, multiple_copies, skip_processing):
     exam_name = lorem_name.sentence().replace('.', '')
     problems = [{
         'question': str(i + 1) + '. ' + lorem_prob.sentence().replace('.', '?'),
@@ -309,8 +329,9 @@ def design_exam(app, client, pages, students, grade, solve, skip_processing):
     client.put(f'api/exams/{exam_id}', data={'finalized': True})
 
     # Download PDFs
+    copies_per_student = [2 if random.random() < multiple_copies else 1 for _ in range(students)]
     generated = client.get(f'api/exams/{exam_id}/generated_pdfs',
-                           data={"copies_start": 1, "copies_end": students, 'type': 'pdf'})
+                           data={"copies_start": 1, "copies_end": sum(copies_per_student), 'type': 'pdf'})
 
     student_ids = [s['id'] for s in client.get(f'/api/students').get_json()]
     random.shuffle(student_ids)
@@ -322,11 +343,15 @@ def design_exam(app, client, pages, students, grade, solve, skip_processing):
         submission_pdf.seek(0)
 
         print('\tWaiting for students to solve it.')
-        solve_problems(submission_pdf, pages, student_ids, problems, mc_problems, solve)
+        solve_problems(submission_pdf, pages, student_ids, problems, mc_problems, solve, copies_per_student)
         submission_pdf.seek(0)
 
         print('\tProcessing scans (this may take a while).',)
-        handle_pdf_processing(app, exam_id, submission_pdf, pages, student_ids, skip_processing)
+        handle_pdf_processing(app, exam_id, submission_pdf, pages, student_ids, copies_per_student, skip_processing)
+
+    # Validate signatures
+    copies = client.get(f'api/copies/{exam_id}').get_json()
+    validate_signatures(client, exam_id, copies)
 
     submissions = client.get(f'api/submissions/{exam_id}').get_json()
     problems = client.get('/api/exams/' + str(exam_id)).get_json()['problems']
@@ -340,7 +365,7 @@ def design_exam(app, client, pages, students, grade, solve, skip_processing):
     return client.get('/api/exams/' + str(exam_id)).get_json()
 
 
-def create_exams(app, client, exams, pages, students, graders, solve, grade, skip_processing=False):
+def create_exams(app, client, exams, pages, students, graders, solve, grade, multiple_copies, skip_processing=False):
     # create students
     for student in generate_students(students):
         client.put('api/students', data=student)
@@ -351,7 +376,8 @@ def create_exams(app, client, exams, pages, students, graders, solve, grade, ski
 
     generated_exams = []
     for _ in range(exams):
-        generated_exams.append(design_exam(app, client, max(1, pages), students, grade, solve, skip_processing))
+        generated_exams.append(design_exam(app, client, max(1, pages), students, grade,
+                                           solve, multiple_copies, skip_processing))
 
     return generated_exams
 
@@ -368,6 +394,8 @@ if __name__ == '__main__':
     parser.add_argument('--solve', type=int, default=90, help='how much of the solutions to solve (between 0 and 100)')
     parser.add_argument('--grade', type=int, default=60, help='how much of the exam to grade (between 0 and 100). \
                         Notice that only non-blank solutions will be considered for grading.')
+    parser.add_argument('--multiple-copies', type=int, default=5,
+                        help='how much of the students submit multiple copies (between 0 and 100)')
 
     args = parser.parse_args(sys.argv[1:])
 
@@ -381,6 +409,7 @@ if __name__ == '__main__':
                      args.graders,
                      args.solve / 100,
                      args.grade / 100,
+                     args.multiple_copies / 100,
                      args.skip_processing)
 
     mysql.stop(app.config)

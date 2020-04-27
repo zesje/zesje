@@ -104,8 +104,11 @@ The script is called from the command line with the following parameters:
  - `--pages (int)` the number of pages per exam, default is 3.
  - `--students (int)` the number of students per exam, default is 30
  - `--graders (int)` the number of graders to add, default is 4.
- - `--solve (float)` between 0 and 1, indicates the percentage of questions to answer (including MCQ), default is 90%.
- - `--grade (float)` between 0 and 1, indicate the percentage of solved questions to grade (that is, excluding blank answers), default is 60%.
+ - `--solve (float)` between 0 and 100, indicates the percentage of questions to answer (including MCQ), default is 90%.
+ - `--grade (float)` between 0 and 100, indicate the percentage of solved questions to grade (that is, excluding blank answers), default is 60%.
+ - `--skip-processing` if specified, fakes the pdf processing to reduce time. As a drawback, blanks will not be detected.
+ - `--multiple-copies (float)` between 0 and 100, indicates how much of the students submit multiple copies, default is 5%
+
 
 The actual processing of the exam takes a while, specially when the number of students is large.
 

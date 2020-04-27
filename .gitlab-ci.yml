@@ -7,7 +7,7 @@ stages:
   - test
 
 variables:
-  TEST_IMAGE: CI_REGISTRY_IMAGE/test:${CI_COMMIT_REF_SLUG}
+  TEST_IMAGE: ${CI_REGISTRY_IMAGE}/test:${CI_COMMIT_REF_SLUG}
 
 build-image:
   stage: build-env
@@ -30,6 +30,18 @@ build-image:
       --dockerfile $CI_PROJECT_DIR/docker/Dockerfile
       --destination $TEST_IMAGE
       --cache=true
+
+build:
+  image: $TEST_IMAGE
+  stage: build
+  script:
+    - python3 -m compileall zesje
+    - yarn build
+  artifacts:
+    paths:
+      - zesje/static
+    expire_in: 1 week
+
 
 test_js:
   image: $TEST_IMAGE

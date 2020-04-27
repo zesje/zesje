@@ -43,33 +43,33 @@ const ScanStatus = (props) => {
   )
 }
 
-class Submissions extends React.Component {
+class Scans extends React.Component {
   state = {
     scans: [],
-    submissions: [],
+    copies: [],
     examID: null,
     showOtherUploadOptions: false
   };
 
   updateScans = () => {
-    api.get('scans/' + this.props.exam.id)
+    api.get('scans/' + this.props.examID)
       .then(scans => {
         if (JSON.stringify(scans) !== JSON.stringify(this.state.scans)) {
           this.setState({
             scans: scans
           })
-          this.updateSubmissions()
+          this.updateMissingPages()
         }
       })
   }
 
-  updateSubmissions = () => {
-    api.get('submissions/missing_pages/' + this.props.exam.id)
-      .then(submissions => {
+  updateMissingPages = () => {
+    api.get('copies/missing_pages/' + this.props.examID)
+      .then(copies => {
         this.setState({
-          submissions: submissions.map(sub => ({
-            id: sub['id'],
-            missing: sub['missing_pages']
+          copies: copies.map(copy => ({
+            number: copy['number'],
+            missing: copy['missing_pages']
           }))
         })
       })
@@ -83,7 +83,7 @@ class Submissions extends React.Component {
     accepted.map(file => {
       const data = new window.FormData()
       data.append('pdf', file)
-      api.post('scans/' + this.props.exam.id, data)
+      api.post('scans/' + this.props.examID, data)
         .then(() => {
           this.updateScans()
         })
@@ -125,7 +125,7 @@ class Submissions extends React.Component {
             'You have not yet uploaded any students. ' +
             "If you don't upload students before the scans " +
             "then we can't automatically assign students " +
-            'to their submissions',
+            'to their copies',
             { 'duration': 5 }
           )
         }
@@ -137,18 +137,18 @@ class Submissions extends React.Component {
   }
 
   render () {
-    const missingSubmissions = this.state.submissions.filter(s => s.missing.length > 0)
+    const missingPages = this.state.copies.filter(c => c.missing.length > 0)
 
-    const missingSubmissionsStatus = (
-      missingSubmissions.length > 0
+    const missingPagesStatus = (
+      missingPages.length > 0
         ? <div>
           <p className='menu-label'>
             Missing Pages
           </p>
           <ul className='menu-list'>
-            {missingSubmissions.map(sub =>
-              <li key={sub.id}>
-                Copy {sub.id} is missing pages {sub.missing.join(',')}
+            {missingPages.map(copy =>
+              <li key={copy.number}>
+                Copy {copy.number} is missing pages {copy.missing.join(', ')}
               </li>
             )}
           </ul>
@@ -158,14 +158,13 @@ class Submissions extends React.Component {
 
     return <div>
 
-      <Hero title='Exam details' subtitle={'Selected: ' + this.props.exam.name} />
+      <Hero title='Scans' subtitle='Upload scans and check missing pages' />
 
       <section className='section'>
 
         <div className='container'>
-          <div className='columns is-centered is-multiline'>
-            <div className='column has-text-centered is-full'>
-              <h3 className='title'>Upload scans</h3>
+          <div className='columns'>
+            <div className='column has-text-centered'>
               <Dropzone accept={'application/pdf'} style={{}}
                 activeStyle={{ borderStyle: 'dashed', width: 'fit-content', margin: 'auto' }}
                 onDrop={this.onDropPDF}
@@ -210,10 +209,10 @@ class Submissions extends React.Component {
             <div className='column is-full has-text-centered'>
               <aside className='menu'>
                 <p className='menu-label'>
-                  Uploaded submissions: {this.state.submissions.length}
+                  Uploaded copies: {this.state.copies.length}
                 </p>
 
-                {missingSubmissionsStatus}
+                {missingPagesStatus}
 
                 <p className='menu-label'>
                   Upload History
@@ -234,4 +233,4 @@ class Submissions extends React.Component {
   }
 }
 
-export default Submissions
+export default Scans

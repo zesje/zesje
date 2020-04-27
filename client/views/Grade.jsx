@@ -377,8 +377,8 @@ class Grade extends React.Component {
                   ? <article className='message is-info'>
                     <div className='message-body'>
                       <p>
-                        This student has multiple submissions: (#{submission.id}, {otherSubmissions})
-                        Make sure that each applicable feedback option is only selected once.
+                        This student has possibly submitted multiple copies: (#{submission.id}, {otherSubmissions})
+                        Please verify the student identity to bundle these copies before grading.
                       </p>
                     </div>
                   </article>

@@ -29,8 +29,12 @@ build-image:
       --destination $TEST_IMAGE
       --cache=true
 
+.conda-env: &conda-env
+  before_script:
+    - source activate zesje-dev
+
 build:
-  image: $TEST_IMAGE
+  <<: *conda-env
   stage: build
   script:
     - python3 -m compileall zesje
@@ -40,20 +44,14 @@ build:
       - zesje/static
     expire_in: 1 week
 
-.conda-env: &conda-env
-  before_script:
-    - source activate zesje-dev
-
 test_js:
   <<: *conda-env
-  image: $TEST_IMAGE
   stage: test
   script: 
     - yarn test:js
 
 lint_js:
   <<: *conda-env
-  image: $TEST_IMAGE
   stage: test
   allow_failure: true
   script:
@@ -61,7 +59,6 @@ lint_js:
 
 lint_py:
   <<: *conda-env
-  image: $TEST_IMAGE
   stage: test
   allow_failure: true
   script:
@@ -69,7 +66,6 @@ lint_py:
 
 test_py:
   <<: *conda-env
-  image: $TEST_IMAGE
   stage: test
   script:
     - yarn test:py:cov

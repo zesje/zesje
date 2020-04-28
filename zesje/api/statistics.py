@@ -18,7 +18,7 @@ def scores_to_data(scores, finished):
     list of dict(student, score, finished)
     """
     return sorted([{
-        'student': id,
+        'studentId': id,
         'score': x,
         'graded': finished[id]
     } for id, x in scores.items()], key=lambda item: item['score'])
@@ -83,7 +83,6 @@ class Statistics(Resource):
                     'graded': true if there is a grader
                 'extra_solutions': the amount of times a student needed an extra copy to solve this problem,
                 'correlation': Rir coefficient,
-                'averageGradingTime': an estimation of the time spend grading a solution
                 'feedback': list of feedback options
                     'id': the feedback option id,
                     'name': the feedback option name,
@@ -116,9 +115,12 @@ class Statistics(Resource):
             .filter(Submission.exam_id == exam.id, Submission.validated)\
             .all()
 
-        if len(student_ids) == 0 or len(exam.problems) == 0:
-            # there are no submissions or no students have been identified
-            return empty_data(exam)
+        if len(student_ids) == 0:
+            # there are no vaidated submissions
+            return dict(status=404, message='There are no students with a validated copy for tihs exam.'), 404
+
+        if len(exam.problems) == 0:
+            return dict(status=404, message='There are no problems for tihs exam.'), 404
 
         total_max_score = 0
         full_scores = pd.DataFrame(data={},
@@ -174,14 +176,6 @@ class Statistics(Resource):
             graders, autograded = grader_data(p.id)
             problem_data['graders'] = graders
             problem_data['autograded'] = autograded
-
-            totalTime = 0
-            solutionsGraded = 0
-            for g in problem_data['graders']:
-                solutionsGraded += g['graded']
-                totalTime += g['totalTime']
-
-            problem_data['averageGradingTime'] = totalTime / solutionsGraded if solutionsGraded > 0 else 0
 
             data[p.id] = problem_data
 

@@ -45,15 +45,21 @@ const formatTime = (seconds) => {
   }
 }
 
-const estimateGradingTimeLeft = (graders, totalSolutions) => {
-  if (!graders.length) return 0
+const estimateGradingTime = (graders) => {
+  if (!graders.length) return {graded: 0, time: 0}
 
-  const totalGraded = graders.reduce((s, g) => s + g.graded, 0)
-  if (totalGraded === totalSolutions) return 0
+  const total = graders.reduce((s, g) => {
+    s.graded += g.graded
+    s.time += g.totalTime
+    return s
+  }, {
+    graded: 0,
+    time: 0
+  })
 
-  const totalTime = graders.reduce((s, g) => s + g.averageTime * g.graded, 0)
+  total.time /= total.graded
 
-  return (totalSolutions - totalGraded) * totalTime / totalGraded
+  return total
 }
 
 class Overview extends React.Component {
@@ -64,7 +70,6 @@ class Overview extends React.Component {
   }
 
   componentWillMount () {
-    console.log(this.props.examID)
     api.get(`stats/${this.props.examID}`)
       .then(stats => {
         console.log(stats)
@@ -72,6 +77,8 @@ class Overview extends React.Component {
           stats: stats,
           selectedProblemId: 0
         })
+      }).catch(e => {
+        // show a notification or something
       })
   }
 
@@ -81,10 +88,10 @@ class Overview extends React.Component {
     const graded = this.state.stats.problems.reduce((acc, p, i) => {
       if (!p.graders.length) return acc
 
-      const n = p.graders.reduce((s, g, i) => s + g.graded, 0) + p.autograded
+      const total = estimateGradingTime(p.graders)
 
-      acc.graded += n
-      acc.averageTime += p.graders.reduce((s, g) => s + g.graded * g.averageTime, 0) / n
+      acc.graded += total.graded + p.autograded
+      acc.averageTime += total.time
       return acc
     }, {
       graded: 0,
@@ -145,13 +152,20 @@ class Overview extends React.Component {
 
       const meanScore = mean(p.results.map(x => x.score / p.max_score))
       const stdScore = std(p.results.map(x => x.score / p.max_score))
-      if (p.results.length < students) {
-        const gradingTimeLeft = estimateGradingTimeLeft(p.graders, students)
-        return `${p.name}<br>Time left: ${formatTime(gradingTimeLeft)}`
+
+      const total = estimateGradingTime(p.graders)
+      const solInRevision = p.results.length - total.graded - p.autograded
+      const solToGrade = students - p.results.length
+
+      if (solToGrade || solInRevision) {
+        const gradingTimeLeft = (students - p.autograded - total.graded) * total.time
+
+        return `Time left: ${formatTime(gradingTimeLeft)}` +
+               (solToGrade ? `<br>${solToGrade} solutions to grade` : '') +
+               (solInRevision > 0 ? `<br>${solInRevision} solutions to revise` : '')
       } else {
-        return `${p.name}<br>(` +
-        `score = ${meanScore.toPrecision(3)} ± ${stdScore.toPrecision(2)}` +
-        (p.correlation !== null ? `, Rir = ${p.correlation.toPrecision(3)})` : ')')
+        return `Score: ${meanScore.toPrecision(3)} ± ${stdScore.toPrecision(2)}` +
+               (p.correlation !== null ? `<br>Rir: ${p.correlation.toPrecision(3)}` : '')
       }
     })
 
@@ -218,10 +232,37 @@ class Overview extends React.Component {
       },
       hoverongaps: false,
       hovertext: problems.map(p => p.results.map(x => {
-        return `Student: ${x.studentId}<br>Score: ${x.score}/${p.max_score}`
+        return `Student: ${x.studentId}<br>` +
+               `Score: ${x.score}/${p.max_score}` +
+               (x.graded ? '' : '<br>Needs revision')
       })),
       hoverinfo: 'text',
-      hoverlabel: {bgcolor: 'hsl(217, 71, 53)'}
+      hoverlabel: {
+        bgcolor: 'hsl(217, 71, 53)'
+      }
+    }, {
+      x: zeros(problems.length + 1).map(x => -2).toArray(),
+      y: yVals,
+      yaxis: 'y2',
+      type: 'scatter',
+      opacity: 0,
+      mode: 'markers',
+      size: 0,
+      hoverinfo: 'text',
+      hovertext: labels,
+      hoverlabel: {
+        bgcolor: 'hsl(0, 0, 96)',
+        bordercolor: problems.map(p => {
+          if (p.results.length === 0) {
+            return 'hsl(348, 100, 61)'
+          }
+          return p.results.length === students ? 'hsl(141, 53, 53)' : 'hsl(48, 100%, 67%)'
+        }),
+        font: {
+          color: '#000'
+        },
+        align: 'right'
+      }
     }]
 
     const layout = {
@@ -235,12 +276,15 @@ class Overview extends React.Component {
         fixedrange: true,
         range: [-0.5, problems.length - 0.5],
         tickmode: 'array',
-        tickfont: {color: 'hsl(0,0,71)'},
+        tickfont: {
+          color: 'hsl(0,0,71)',
+          size: 14
+        },
         tickvals: problems.reduce((acc, p, i) => {
           return p.results.length < students || students === 0 ? acc.concat(i) : acc
         }, []),
         ticktext: problems.reduce((acc, p, i) => {
-          return p.results.length < students || students === 0 ? acc.concat(labels[i]) : acc
+          return p.results.length < students || students === 0 ? acc.concat(p.name) : acc
         }, []),
         zeroline: false
       },
@@ -249,12 +293,15 @@ class Overview extends React.Component {
         fixedrange: true,
         range: [-0.5, problems.length - 0.5],
         tickmode: 'array',
-        tickfont: {color: 'hsl(0,0,7)'},
+        tickfont: {
+          color: 'hsl(0,0,7)',
+          size: 14
+        },
         tickvals: problems.reduce((acc, p, i) => {
           return p.results.length === students && students > 0 ? acc.concat(i) : acc
         }, []),
         ticktext: problems.reduce((acc, p, i) => {
-          return p.results.length === students && students > 0 ? acc.concat(labels[i]) : acc
+          return p.results.length === students && students > 0 ? acc.concat(p.name) : acc
         }, []),
         zeroline: false
       },
@@ -265,6 +312,7 @@ class Overview extends React.Component {
           size: 32
         }
       },
+      hovermode: 'closest',
       plot_bgcolor: 'hsl(0,0,86)',
       height: 550,
       annotations: selectedData
@@ -486,7 +534,7 @@ class Overview extends React.Component {
               <article className='message is-info'>
                 <div className='message-body'>
                   In this problem Zesje helped you grade {problem.autograded === 1 ? '1 solution' : problem.autograded + ' solutions'},
-                  saving you {formatTime(problem.averageGradingTime * problem.autograded)} of grading time.
+                  saving you {formatTime(estimateGradingTime(problem.graders).time * problem.autograded)} of grading time.
                 </div>
               </article>
             }
@@ -509,7 +557,6 @@ class Overview extends React.Component {
               <span className='select is-medium'>
                 <select
                   onChange={(e) => {
-                    console.log(e.target)
                     this.setState({
                       selectedProblemId: parseInt(e.target.value)
                     })

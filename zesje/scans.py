@@ -16,7 +16,6 @@ from pylibdmtx import pylibdmtx
 from sqlalchemy.exc import InternalError
 
 from .database import db, Scan, Exam, Page, Student, Submission, Copy, Solution, ExamWidget
-from .datamatrix import decode_raw_datamatrix
 from .images import guess_dpi, get_box
 from .pregrader import grade_problem
 from .image_extraction import extract_images
@@ -356,11 +355,7 @@ def decode_barcode(image, exam_config):
         results = pylibdmtx.decode(method(image))
         if len(results) == 1:
             data = results[0].data
-            # See https://github.com/NaturalHistoryMuseum/pylibdmtx/issues/24
-            try:
-                data = data.decode('utf-8')
-            except UnicodeDecodeError:
-                data = decode_raw_datamatrix(data)
+            data = data.decode('utf-8')
 
             try:
                 token, copy, page = data.split('/')

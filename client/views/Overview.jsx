@@ -116,7 +116,7 @@ class Overview extends React.Component {
             <article className='message is-warning'>
               <div className='message-body'>
                 {this.state.stats.copies - this.state.stats.students} extra copies
-                where needed to solve this problem by some students,
+                were needed to solve this exam by some students,
                 consider adding more space the next time.
               </div>
             </article>

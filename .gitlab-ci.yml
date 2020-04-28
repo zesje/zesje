@@ -33,6 +33,7 @@ build-image:
   before_script:
     - source activate zesje-dev
     - ln -s /yarn/* ./
+    - if [[ $CI_JOB_NAME != *"py"* ]]; then yarn install; fi
 
 build:
   <<: *conda-env
@@ -49,7 +50,6 @@ test_js:
   <<: *conda-env
   stage: test
   script:
-    - yarn install
     - yarn test:js
   artifacts:
     reports:
@@ -60,7 +60,6 @@ lint_js:
   stage: test
   allow_failure: true
   script:
-    - yarn install
     - yarn lint:js
 
 lint_py:

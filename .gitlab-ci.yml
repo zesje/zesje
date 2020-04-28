@@ -48,7 +48,8 @@ build:
 test_js:
   <<: *conda-env
   stage: test
-  script: 
+  script:
+    - yarn install
     - yarn test:js
   artifacts:
     reports:
@@ -59,6 +60,7 @@ lint_js:
   stage: test
   allow_failure: true
   script:
+    - yarn install
     - yarn lint:js
 
 lint_py:

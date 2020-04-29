@@ -6,54 +6,28 @@ from ..database import db, Exam, Submission
 from ..statistics import grader_data
 
 
-def scores_to_data(scores, finished):
+def scores_to_data(scores, ungraded):
     """ Construct the list to be send in the response sorted by total score.
 
     Parameters
     ----------
-    scores: dict(studentID: dict(score, finished))
+    scores : dict(int: int)
+        dictionary containing the items (studentId, score)
+    ungraded : dict(int: int)
+        dictionary containing the items (studentId, number of problems ungraded)
 
     Returns
     -------
-    list of dict(student, score, finished)
+    list of dict:
+        'studentId' : the student id,
+        'score' : the score of that student,
+        'ungraded' : number of ungraded problems
     """
     return sorted([{
         'studentId': id,
         'score': x,
-        'graded': finished[id]
+        'ungraded': ungraded[id]
     } for id, x in scores.items()], key=lambda item: item['score'])
-
-
-def empty_data(exam):
-    return {
-        'id': exam.id,
-        'name': exam.name,
-        'students': 0,
-        'problems': [
-            {
-                'id': p.id,
-                'name': p.name,
-                'max_score': max(list(fb.score for fb in p.feedback_options) + [0]),
-                'results': [],
-                'correlation': None,
-                'averageGradingTime': 0,
-                'autograded': 0,
-                'feedback': [{
-                    'id': fb.id,
-                    'name': fb.text,
-                    'description': fb.description,
-                    'score': fb.score,
-                    'used': len(fb.solutions)
-                } for fb in p.feedback_options],  # Sorted by fb.id
-                'graders': []
-            } for p in exam.problems],
-        'total': {
-            'results': [],
-            'max_score': sum(max(list(fb.score for fb in p.feedback_options) + [0]) for p in exam.problems),
-            'alpha': None,
-            'extra_copies': 0
-        }
-    }
 
 
 class Statistics(Resource):
@@ -80,8 +54,10 @@ class Statistics(Resource):
                 'results': list of scores
                     'studentId': the student id,
                     'score': the mark of the corresponding student in the problem,
-                    'graded': true if there is a grader
-                'extra_solutions': the amount of times a student needed an extra copy to solve this problem,
+                    'graded': true if there is a grader,
+                'mean': dictionary containing,
+                    'value': the mean value,
+                    'error': the standard deviation,
                 'correlation': Rir coefficient,
                 'feedback': list of feedback options
                     'id': the feedback option id,
@@ -89,6 +65,7 @@ class Statistics(Resource):
                     'description': the feedback option description,
                     'score': the feedback option score,
                     'used': the amount of times used,
+                'inRevision': the amount of solutions with a grade but no grader, those set aside,
                 'autograded': the amount of solutions graded by Zesje,
                 'graders': list of graders that graded this problem
                     'id': the grader id,
@@ -100,9 +77,12 @@ class Statistics(Resource):
                 'results': list of total scores
                     'studentId': the student id,
                     'score': the total score for this student,
-                    'graded': true if the student has a grade in all problems
+                    'ungraded': number of ungraded problems
                 'max_score': maximum score of the exam,
-                'alpha': Cronbach's alpha coefficient
+                'alpha': Cronbach's alpha coefficient,
+                'mean': dictionary containing,
+                    'value': the mean value,
+                    'error': the standard deviation,
 
         """
 
@@ -155,6 +135,9 @@ class Statistics(Resource):
             total_max_score += max_score
 
             results = []
+            in_revision = 0
+
+            print(p.name, len(p.solutions))
 
             for sol in p.solutions:
                 if not sol.submission.validated:
@@ -163,22 +146,30 @@ class Statistics(Resource):
                 student_id = sol.submission.student_id
                 mark = sum(fo.score for fo in sol.feedback) if sol.feedback else nan
 
-                if isnan(full_scores.loc[student_id, p.id]):
-                    full_scores.loc[student_id, p.id] = 0
                 if not isnan(mark):
+                    has_grader = True if sol.grader_id else False
+                    if not has_grader:
+                        in_revision += 1
+
                     results.append({
                         'studentId': student_id,
                         'score': mark,
-                        'graded': True if sol.grader_id else False
+                        'graded': has_grader
                     })
 
-                full_scores.loc[student_id, p.id] = mark
+                    full_scores.loc[student_id, p.id] = mark
 
             problem_data['results'] = sorted(results, key=lambda x: x['score'])
+            problem_data['inRevision'] = in_revision
 
             graders, autograded = grader_data(p.id)
             problem_data['graders'] = graders
             problem_data['autograded'] = autograded
+
+            problem_data['mean'] = {
+                'value': full_scores.loc[:, p.id].mean(),
+                'error': full_scores.loc[:, p.id].std()
+            }
 
             data[p.id] = problem_data
 
@@ -187,7 +178,11 @@ class Statistics(Resource):
 
         # total sum per row
         full_scores.loc[:, 0] = full_scores.sum(axis=1)
-        finished = full_scores.sum(axis=1, skipna=False).notna().to_dict()
+        problems_ungraded = full_scores.loc[:, full_scores.columns != 0].isna().sum(axis=1).to_dict()
+        total_mean = {
+            'value': full_scores.loc[:, 0].mean(),
+            'error': full_scores.loc[:, 0].std()
+        }
 
         for p in exam.problems:
             corr = (full_scores[p.id]
@@ -214,6 +209,7 @@ class Statistics(Resource):
             'total': {
                 'alpha': alpha,
                 'max_score': total_max_score,
-                'results': scores_to_data(full_scores.loc[:, 0].dropna().to_dict(), finished)
+                'results': scores_to_data(full_scores.loc[:, 0].dropna().to_dict(), problems_ungraded),
+                'mean': total_mean
             }
         }

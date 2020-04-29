@@ -65,6 +65,7 @@ const estimateGradingTime = (graders) => {
 class Overview extends React.Component {
   state = {
     stats: null,
+    loadingText: 'Loading statistics...',
     selectedProblemId: null,
     selectedStudentId: null
   }
@@ -72,54 +73,33 @@ class Overview extends React.Component {
   componentWillMount () {
     api.get(`stats/${this.props.examID}`)
       .then(stats => {
-        console.log(stats)
         this.setState({
           stats: stats,
           selectedProblemId: 0
         })
-      }).catch(e => {
-        // show a notification or something
+      }).catch(err => {
+        console.log(err)
+        err.json().then(res => {
+          this.setState({
+            stats: null,
+            loadingText: 'Error loading statistics: ' + res.message
+          })
+        })
       })
   }
 
   renderAtGlance = () => {
     const total = this.state.stats.total
 
-    const graded = this.state.stats.problems.reduce((acc, p, i) => {
-      if (!p.graders.length) return acc
-
-      const total = estimateGradingTime(p.graders)
-
-      acc.graded += total.graded + p.autograded
-      acc.averageTime += total.time
-      return acc
-    }, {
-      graded: 0,
-      averageTime: 0
-    })
-
-    const ungraded = this.state.stats.students * this.state.stats.problems.length - graded.graded
-    graded.averageTime /= this.state.stats.problems.length
-
     return (
       <React.Fragment>
         <div className='container'>
-          {ungraded > 0 &&
-            <article className='message is-info'>
-              <div className='message-body'>
-                {ungraded === 1
-                  ? 'There is just one solution left to grade.'
-                  : `There are ${ungraded} solutions left to grade, this will approximately take you ${formatTime(ungraded * graded.averageTime)}.`
-                }
-              </div>
-            </article>
-          }
 
           {this.renderHeatmap()}
 
           {this.renderHistogramScores(total, true)}
 
-          {this.state.stats.copies / this.state.stats.students > 1.1 &&
+          {this.state.stats.copies / this.state.stats.students > 1.05 &&
             <article className='message is-warning'>
               <div className='message-body'>
                 {this.state.stats.copies - this.state.stats.students} extra copies
@@ -134,18 +114,13 @@ class Overview extends React.Component {
   }
 
   renderHeatmap = () => {
-    if (this.state.stats.problems.length === 0) {
-      return (
-        <article className='message is-danger'>
-          <div className='message-body'>
-            The exam has no problems or there is no feedback assigned to them.
-          </div>
-        </article>
-      )
-    }
-
-    const problems = this.state.stats.problems.slice().reverse()
+    const problems = this.state.stats.problems.slice()
     const students = this.state.stats.students
+
+    const totalGraded = {
+      graded: 0,
+      averageTime: 0
+    }
 
     const labels = problems.map((p, i) => {
       if (!p.results.length) return p.name
@@ -154,6 +129,8 @@ class Overview extends React.Component {
       const stdScore = std(p.results.map(x => x.score / p.max_score))
 
       const total = estimateGradingTime(p.graders)
+      totalGraded.graded += total.graded
+      totalGraded.averageTime += total.averageTime
       const solInRevision = p.results.length - total.graded - p.autograded
       const solToGrade = students - p.results.length
 
@@ -168,6 +145,25 @@ class Overview extends React.Component {
                (p.correlation !== null ? `<br>Rir: ${p.correlation.toPrecision(3)}` : '')
       }
     })
+
+    const totalUngraded = this.state.stats.students * this.state.stats.problems.length - totalGraded.graded
+    totalGraded.averageTime /= this.state.stats.problems.length
+
+    problems.push({
+      name: 'Total',
+      results: this.state.stats.total.results,
+      max_score: this.state.stats.total.max_score,
+      alpha: this.state.stats.total.alpha
+    })
+
+    if (totalUngraded) {
+      labels.push(`Time left: ${formatTime(totalGraded.averageTime * totalUngraded)}<br>${totalUngraded} solutions to grade`)
+    } else {
+      labels.push(this.state.stats.total.alpha !== null ? `<br>Cronbach's α: ${this.state.stats.total.alpha.toPrecision(3)}` : '')
+    }
+
+    problems.reverse()
+    labels.reverse()
 
     const yVals = range(0, problems.length, 1).toArray()
 
@@ -209,7 +205,6 @@ class Overview extends React.Component {
           size: 14
         }
       })
-      console.log(selectedData)
     }
 
     const data = [{
@@ -234,7 +229,7 @@ class Overview extends React.Component {
       hovertext: problems.map(p => p.results.map(x => {
         return `Student: ${x.studentId}<br>` +
                `Score: ${x.score}/${p.max_score}` +
-               (x.graded ? '' : '<br>Needs revision')
+               (x.graded ? '' : p.name === 'Total' ? '<br><i>Some problems left</i>' : '<br><i>Needs revision</i>')
       })),
       hoverinfo: 'text',
       hoverlabel: {
@@ -330,8 +325,8 @@ class Overview extends React.Component {
       config={config}
       layout={layout}
       onClick={(data) => {
-        const selProblem = this.state.stats.problems[this.state.stats.problems.length - data.points[0].y - 1]
-        const selStudent = selProblem.results[data.points[0].x]['studentId']
+        const selProblem = problems[data.points[0].y]
+        const selStudent = selProblem.results[data.points[0].x].studentId
 
         this.setState({selectedStudentId: selStudent})
       }}
@@ -345,16 +340,16 @@ class Overview extends React.Component {
 
     const vals = total.results.map(x => x.score)
 
-    const colorsFinished = zeros(total.max_score + 1).toArray()
-    const colorsUnfinished = zeros(total.max_score + 1).toArray()
+    let colorsFinished = 'hsl(204, 86, 53)'
+    let colorsUnfinished = 'hsla(204, 86, 53, 0.5)'
 
     if (this.state.selectedStudentId) {
       const data = total.results.find(x => x.studentId === this.state.selectedStudentId)
       if (data) {
         if (data.graded) {
-          colorsFinished[data.score] = 1
+          colorsFinished = range(0, total.max_score + 1, 1).map(x => x === data.score ? 'hsl(171, 100, 41)' : 'hsl(204, 86, 53)').toArray()
         } else {
-          colorsUnfinished[data.score] = 1
+          colorsUnfinished = range(0, total.max_score + 1, 1).map(x => x === data.score ? 'hsla(171, 100, 41, 0.5)' : 'hsla(204, 86, 53, 0.5)').toArray()
         }
       }
     }
@@ -374,11 +369,10 @@ class Overview extends React.Component {
       },
       hoverinfo: 'none',
       marker: {
-        color: colorsFinished,
-        cmin: 0,
-        cmax: 1,
-        colorscale: [[0, 'hsl(204, 86, 53)'], [1, 'hsl(171, 100, 41)']]
-      }
+        color: colorsFinished
+      },
+      xcalendar: 'gregorian',
+      ycalendar: 'gregorian'
     }, {
       x: total.results.reduce((acc, v) => {
         if (!v.graded) acc.push(v.score)
@@ -394,14 +388,10 @@ class Overview extends React.Component {
       },
       hoverinfo: 'none',
       marker: {
-        color: colorsUnfinished,
-        cmin: 0,
-        cmax: 1,
-        colorscale: [[0, 'hsla(204, 86, 53, 0.5)'], [1, 'hsla(171, 100, 41, 0.5)']],
-        line: {
-          color: 'green'
-        }
-      }
+        color: colorsUnfinished
+      },
+      xcalendar: 'gregorian',
+      ycalendar: 'gregorian'
     }]
 
     const mu = mean(vals)
@@ -440,8 +430,7 @@ class Overview extends React.Component {
       },
       title: {
         text: 'Histogram of Scores<br>' +
-              `(score = ${mu.toPrecision(2)} ± ${sigma.toPrecision(2)}` +
-              (total.alpha ? `, Cronbach's α: ${total.alpha.toPrecision(3)})` : ')')
+              `(score = ${mu.toPrecision(2)} ± ${sigma.toPrecision(2)})`
       },
       autosize: true,
       showlegend: true,
@@ -576,7 +565,7 @@ class Overview extends React.Component {
             </div>
           ) : (
             <div className='container'>
-              <p className='container has-text-centered is-size-5'>Loading statistics...</p>
+              <p className='container has-text-centered is-size-5'> {this.state.loadingText} </p>
             </div>
           )
         }

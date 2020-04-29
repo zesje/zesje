@@ -117,10 +117,10 @@ class Statistics(Resource):
 
         if len(student_ids) == 0:
             # there are no vaidated submissions
-            return dict(status=404, message='There are no students with a validated copy for tihs exam.'), 404
+            return dict(status=404, message='There are no students with a validated copy for this exam.'), 404
 
         if len(exam.problems) == 0:
-            return dict(status=404, message='There are no problems for tihs exam.'), 404
+            return dict(status=404, message='There are no problems in this exam.'), 404
 
         total_max_score = 0
         full_scores = pd.DataFrame(data={},
@@ -157,6 +157,9 @@ class Statistics(Resource):
             results = []
 
             for sol in p.solutions:
+                if not sol.submission.validated:
+                    continue
+
                 student_id = sol.submission.student_id
                 mark = sum(fo.score for fo in sol.feedback) if sol.feedback else nan
 
@@ -166,7 +169,7 @@ class Statistics(Resource):
                     results.append({
                         'studentId': student_id,
                         'score': mark,
-                        'graded': sol.grader_id != None  # noqa: E711
+                        'graded': True if sol.grader_id else False
                     })
 
                 full_scores.loc[student_id, p.id] = mark
@@ -178,6 +181,9 @@ class Statistics(Resource):
             problem_data['autograded'] = autograded
 
             data[p.id] = problem_data
+
+        if len(data) == 0:
+            return dict(status=404, message='The problems in the exam have no feedback options.'), 404
 
         # total sum per row
         full_scores.loc[:, 0] = full_scores.sum(axis=1)

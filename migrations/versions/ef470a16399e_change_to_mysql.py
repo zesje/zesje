@@ -31,8 +31,7 @@ def upgrade():
                     sa.Column('finalized', sa.Boolean(), server_default='0', nullable=True),
                     sa.Column('grade_anonymous', sa.Boolean(), server_default='0', nullable=True),
                     sa.PrimaryKeyConstraint('id'),
-                    sa.UniqueConstraint('token'),
-                    sqlite_autoincrement=True)
+                    sa.UniqueConstraint('token'))
     op.create_table('grader',
                     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
                     sa.Column('name', sa.String(length=100), nullable=False),
@@ -76,12 +75,17 @@ def upgrade():
                     sa.PrimaryKeyConstraint('id'))
     op.create_table('submission',
                     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
-                    sa.Column('copy_number', sa.Integer(), nullable=False),
                     sa.Column('exam_id', sa.Integer(), nullable=False),
                     sa.Column('student_id', sa.Integer(), nullable=True),
-                    sa.Column('signature_validated', sa.Boolean(), server_default='0', nullable=False),
+                    sa.Column('validated', sa.Boolean(), server_default='0', nullable=False),
                     sa.ForeignKeyConstraint(['exam_id'], ['exam.id'], ),
                     sa.ForeignKeyConstraint(['student_id'], ['student.id'], ),
+                    sa.PrimaryKeyConstraint('id'))
+    op.create_table('copy',
+                    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
+                    sa.Column('number', sa.Integer(), nullable=False),
+                    sa.Column('submission_id', sa.Integer(), nullable=False),
+                    sa.ForeignKeyConstraint(['submission_id'], ['submission.id'], ),
                     sa.PrimaryKeyConstraint('id'))
     op.create_table('feedback_option',
                     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
@@ -94,9 +98,9 @@ def upgrade():
     op.create_table('page',
                     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
                     sa.Column('path', sa.Text(), nullable=False),
-                    sa.Column('submission_id', sa.Integer(), nullable=True),
+                    sa.Column('copy_id', sa.Integer(), nullable=True),
                     sa.Column('number', sa.Integer(), nullable=False),
-                    sa.ForeignKeyConstraint(['submission_id'], ['submission.id'], ),
+                    sa.ForeignKeyConstraint(['copy_id'], ['copy.id'], ),
                     sa.PrimaryKeyConstraint('id'))
     op.create_table('problem_widget',
                     sa.Column('id', sa.Integer(), nullable=False),

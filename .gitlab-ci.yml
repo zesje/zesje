@@ -36,6 +36,9 @@ test_js:
   <<: *node_modules
   stage: test
   script: yarn test:js
+  artifacts:
+    reports:
+      junit: junit.xml
 
 lint_js:
   <<: *node_modules
@@ -65,4 +68,7 @@ test_py:
   artifacts:
     paths:
       - cov.html/
+    reports:
+      cobertura: cov.xml
+      junit: tests.xml
     expire_in: 1 week

@@ -18,7 +18,6 @@ from ..pdf_generation import page_is_size, save_with_even_pages
 from ..pdf_generation import write_finalized_exam
 from ..database import db, Exam, ExamWidget, Submission, FeedbackOption, token_length
 from .submissions import sub_to_data
-from ..pregrader import BLANK_FEEDBACK_NAME
 
 
 def _get_exam_dir(exam_id):
@@ -59,6 +58,7 @@ def add_blank_feedback(problems):
     """
     Add the blank feedback option to each problem.
     """
+    BLANK_FEEDBACK_NAME = current_app.config['BLANK_FEEDBACK_NAME']
     for p in problems:
         db.session.add(FeedbackOption(problem_id=p.id, text=BLANK_FEEDBACK_NAME, score=0))
 

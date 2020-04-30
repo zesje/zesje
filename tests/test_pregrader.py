@@ -70,7 +70,7 @@ problems_with_result = [
 @pytest.mark.parametrize(
     'coords, result', problems_with_result,
     ids=['blank', 'blank padding', 'not blank 1', 'not blank 1 padding', 'not blank 2', 'not blank 2 padding'])
-def test_is_blank(coords, result, student_aligned, reference):
+def test_is_blank(config_app, coords, result, student_aligned, reference):
     problem = Problem(name='Problem')
     problem.widget = ProblemWidget(x=coords[0], y=coords[1],
                                    width=coords[2], height=coords[3])
@@ -82,7 +82,7 @@ def test_is_blank(coords, result, student_aligned, reference):
 @pytest.mark.parametrize(
     'coords', map(lambda tup: tup[0], problems_with_result),
     ids=['blank', 'blank padding', 'not blank 1', 'not blank 1 padding', 'not blank 2', 'not blank 2 padding'])
-def test_is_misaligned(coords, student_misaligned, reference):
+def test_is_misaligned(config_app, coords, student_misaligned, reference):
     problem = Problem(name='Problem')
     problem.widget = ProblemWidget(x=coords[0], y=coords[1],
                                    width=coords[2], height=coords[2])

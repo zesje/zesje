@@ -45,6 +45,57 @@ const formatTime = (seconds) => {
   }
 }
 
+const GraderDetails = (props) => {
+  if (!props.graders.length && props.autograded === 0) {
+    return (
+      <article className='message is-danger'>
+        <div className='message-body'>
+          No solutions have been graded for this problem.
+        </div>
+      </article>
+    )
+  }
+
+  return (
+    <React.Fragment>
+      <h3 className='is-size-5'> Grader details </h3>
+      <table className='table is-striped is-fullwidth'>
+        <thead>
+          <tr>
+            <th> Grader </th>
+            <th> Solutions graded </th>
+            <th> Average grading time </th>
+            <th> Total grading time </th>
+          </tr>
+        </thead>
+        <tbody>
+          {
+            props.graders.map((g, i) => {
+              if (g.name === 'Zesje') return null
+
+              return <tr key={i}>
+                <td> {g.name} </td>
+                <td> {g.graded} </td>
+                <td> {formatTime(g.averageTime)} </td>
+                <td> {formatTime(g.totalTime)} </td>
+              </tr>
+            })
+          }
+        </tbody>
+      </table>
+
+      {props.autograded > 0 &&
+        <article className='message is-info'>
+          <div className='message-body'>
+            In this problem Zesje helped you grade {props.autograded === 1 ? '1 solution' : `${props.autograded} solutions`},
+            saving you {formatTime(estimateGradingTime(props.graders) * props.autograded)} of grading time.
+          </div>
+        </article>
+      }
+    </React.Fragment>
+  )
+}
+
 const estimateGradingTime = (graders) => {
   if (!graders.length) return 0
 
@@ -87,28 +138,8 @@ class Overview extends React.Component {
   }
 
   renderAtGlance = () => {
-    return (
-      <React.Fragment>
-        <div className='container'>
-
-          {this.renderHeatmap()}
-
-          {this.state.stats.copies / this.state.stats.students > 1.05 &&
-            <article className='message is-warning'>
-              <div className='message-body'>
-                {this.state.stats.copies - this.state.stats.students} extra copies
-                were needed to solve this exam by some students,
-                consider adding more space the next time.
-              </div>
-            </article>
-          }
-        </div>
-      </React.Fragment>
-    )
-  }
-
-  renderHeatmap = () => {
     const problems = this.state.stats.problems.slice()
+    const total = this.state.stats.total
     const students = this.state.stats.students
 
     let totalUngraded = 0
@@ -116,8 +147,6 @@ class Overview extends React.Component {
     let totalTimeLeft = 0
 
     const labels = problems.map((p, i) => {
-      if (!p.results.length) return p.name
-
       const avgTime = estimateGradingTime(p.graders)
       const solInRevision = p.inRevision
       const solToGrade = students - p.results.length
@@ -126,11 +155,13 @@ class Overview extends React.Component {
       totalInRevision += solInRevision
       totalTimeLeft += avgTime * solToGrade
 
+      if (!p.results.length) return `${students} solutions to grade`
+
       if (solToGrade || solInRevision) {
         const gradingTimeLeft = solToGrade * avgTime
 
-        return (solToGrade ? `<br>${solToGrade} solutions to grade` : '') +
-               (solInRevision > 0 ? `<br>${solInRevision} solutions to revise` : '') +
+        return (solToGrade > 0 ? `<br>${solToGrade === 1 ? '1 solution' : `${solToGrade} solutions`} to grade` : '') +
+               (solInRevision > 0 ? `<br>${solInRevision === 1 ? '1 solution' : `${solInRevision} solutions`} to revise` : '') +
                `<br>Time left: ${formatTime(gradingTimeLeft)}`
       } else {
         return `Score: ${p.mean.value.toPrecision(1)} ± ${p.mean.error.toPrecision(1)}` +
@@ -141,15 +172,19 @@ class Overview extends React.Component {
     problems.push({
       name: 'Total',
       id: 0,
-      results: this.state.stats.total.results,
-      max_score: this.state.stats.total.max_score,
-      alpha: this.state.stats.total.alpha
+      results: total.results,
+      max_score: total.max_score,
+      alpha: total.alpha
     })
 
-    if (totalUngraded || totalInRevision) { // include in revision
-      labels.push(`Time left: ${formatTime(totalTimeLeft)}<br>${totalUngraded} solutions to grade`)
+    if (totalUngraded || totalInRevision) {
+      labels.push(
+        (totalUngraded > 0 ? `<br>${totalUngraded} solutions to grade` : '') +
+        (totalInRevision > 0 ? `<br>${totalUngraded} solutions to revise` : '') +
+        (totalTimeLeft > 0 ? `<br>Time left: ${formatTime(totalTimeLeft)}` : '')
+      )
     } else {
-      labels.push(this.state.stats.total.alpha !== null ? `<br>Cronbach's α: ${this.state.stats.total.alpha.toPrecision(3)}` : '')
+      labels.push(total.alpha !== null ? `<br>Cronbach's α: ${total.alpha.toPrecision(3)}` : '')
     }
 
     problems.reverse()
@@ -157,7 +192,7 @@ class Overview extends React.Component {
 
     const yVals = range(0, problems.length, 1).toArray()
 
-    const selectedData = []
+    const annotations = []
     if (this.state.selectedStudentId) {
       problems.forEach((p, i) => {
         p.results.forEach((x, j) => {
@@ -167,7 +202,7 @@ class Overview extends React.Component {
                 ? ' (provisional)'
                 : !x.graded && p.id > 0 ? ' (to revise)' : ''
             )
-            selectedData.push({
+            annotations.push({
               x: j,
               y: i,
               xref: 'x',
@@ -186,7 +221,7 @@ class Overview extends React.Component {
         })
       })
 
-      selectedData.push({
+      annotations.push({
         x: 1,
         y: 1.07,
         xref: 'paper',
@@ -200,21 +235,6 @@ class Overview extends React.Component {
           size: 14
         }
       })
-    }
-
-    const total = this.state.stats.total
-    let colorsFinished = 'hsl(204, 86, 53)'
-    let colorsUnfinished = 'hsla(204, 86, 53, 0.5)'
-
-    if (this.state.selectedStudentId) {
-      const data = total.results.find(x => x.studentId === this.state.selectedStudentId)
-      if (data) {
-        if (data.graded) {
-          colorsFinished = range(0, total.max_score + 1, 1).map(x => x === data.score ? 'hsl(171, 100, 41)' : 'hsl(204, 86, 53)').toArray()
-        } else {
-          colorsUnfinished = range(0, total.max_score + 1, 1).map(x => x === data.score ? 'hsla(171, 100, 41, 0.5)' : 'hsla(204, 86, 53, 0.5)').toArray()
-        }
-      }
     }
 
     const data = [{
@@ -244,7 +264,7 @@ class Overview extends React.Component {
         const baseText = `Student: ${x.studentId}<br>Score: ${x.score}/${p.max_score}`
         if (p.id === 0) { // the total bar
           return baseText +
-            (x.ungraded > 0 ? `<br>${x.ungraded} problems left to grade` : '')
+            (x.ungraded > 0 ? `<br>${x.ungraded === 1 ? '1 problem' : `${x.ungraded} problems`} left to grade` : '')
         } else {
           return baseText + (x.graded ? '' : '<br><i>Needs revision</i>')
         }
@@ -255,7 +275,7 @@ class Overview extends React.Component {
       },
       showlegend: false
     }, {
-      x: zeros(problems.length + 1).map(x => -2).toArray(),
+      x: zeros(problems.length + 1).map(x => -1).toArray(),
       y: yVals,
       yaxis: 'y2',
       type: 'scatter',
@@ -267,10 +287,11 @@ class Overview extends React.Component {
       hoverlabel: {
         bgcolor: 'hsl(0, 0, 96)',
         bordercolor: problems.map(p => {
+          // for some reason, colors in hsl format are not shown
           if (p.results.length === 0) {
-            return 'hsl(348, 100, 61)'
+            return '#FF3860' // danger
           }
-          return p.results.length === students ? 'hsl(141, 53, 53)' : 'hsl(48, 100%, 67%)'
+          return p.results.length === students ? '#48C774' : '#FFDD57' // success : warning
         }),
         font: {
           color: '#000'
@@ -279,36 +300,34 @@ class Overview extends React.Component {
       },
       showlegend: false
     }, {
-      y: total.results.reduce((acc, v) => v.ungraded === 0 ? acc.concat(v.score) : acc, []),
-      orientation: 'horizontal',
+      x: total.results.reduce((acc, v) => v.ungraded === 0 ? acc.concat(v.score) : acc, []),
       type: 'histogram',
       name: 'Graded',
       autobinx: false,
-      ybins: {
+      xbins: {
         start: -0.5,
         end: total.max_score + 0.5,
         size: 1
       },
       hoverinfo: 'none',
       marker: {
-        color: colorsFinished
+        color: 'hsl(204, 86, 53)'
       },
       xaxis: 'x3',
       yaxis: 'y3'
     }, {
-      y: total.results.reduce((acc, v) => v.ungraded > 0 ? acc.concat(v.score) : acc, []),
-      orientation: 'horizontal',
+      x: total.results.reduce((acc, v) => v.ungraded > 0 ? acc.concat(v.score) : acc, []),
       type: 'histogram',
       name: 'Partially graded',
       autobinx: false,
-      ybins: {
+      xbins: {
         start: -0.5,
         end: total.max_score + 0.5,
         size: 1
       },
       hoverinfo: 'none',
       marker: {
-        color: colorsUnfinished
+        color: 'hsla(204, 86, 53, 0.5)'
       },
       xcalendar: 'gregorian',
       ycalendar: 'gregorian',
@@ -316,7 +335,7 @@ class Overview extends React.Component {
       yaxis: 'y3'
     }]
 
-    if (total.results.length) {
+    if (total.results.length > 1) {
       const norm = (sqrt(2 * pi) * total.mean.error)
       const xScores = range(0, total.max_score, 0.5).toArray()
       const yScores = xScores.map(x => {
@@ -324,8 +343,8 @@ class Overview extends React.Component {
       })
 
       data.push({
-        y: xScores,
-        x: yScores,
+        x: xScores,
+        y: yScores,
         xaxis: 'x3',
         yaxis: 'y3',
         name: 'PDF',
@@ -340,13 +359,28 @@ class Overview extends React.Component {
       })
     }
 
+    annotations.push({
+      x: 0.5,
+      y: 0.41,
+      xref: 'paper',
+      yref: 'paper',
+      yanchor: 'bottom',
+      text: 'Histogram of scores',
+      align: 'center',
+      showarrow: false,
+      font: {
+        size: 25
+      }
+    })
+
     const layout = {
       xaxis: {
         title: 'number of students',
         range: [-0.5, students - 0.5],
         zeroline: false,
         domain: [0, 1],
-        anchor: 'y'
+        anchor: 'y',
+        fixedrange: true
       },
       yaxis: {
         automargin: true,
@@ -395,77 +429,75 @@ class Overview extends React.Component {
         anchor: 'y3',
         zeroline: false,
         dtick: 5,
-        side: 'top'
+        title: 'score',
+        fixedrange: true
       },
       yaxis3: {
-        title: 'score',
-        domain: [0, 0.45],
-        anchor: 'x3'
+        title: 'number of students',
+        domain: [0, 0.40],
+        anchor: 'x3',
+        fixedrange: true
       },
       title: {
         text: 'At a glance',
         font: {
-          family: 'Courier New',
           size: 32
         }
       },
       legend: {
-        y: 0.44,
+        y: 0.39,
         yanchor: 'top',
         x: 0.99,
         xanchor: 'right',
-        borderwidth: 1,
-        title: {
-          text: 'Histogram of scores',
-          font: {size: 14}
-        }
+        borderwidth: 1
       },
       hovermode: 'closest',
       barmode: 'stack',
       plot_bgcolor: 'hsl(0,0,86)',
       height: 1000,
-      annotations: selectedData
+      annotations: annotations
     }
 
     const config = {
       displaylogo: false,
-      modeBarButtonsToRemove: ['pan2d', 'select2d', 'lasso2d', 'resetScale2d',
-        'zoomOut2d', 'zoomIn2d', 'zoom2d',
+      scrollZoom: false,
+      modeBarButtonsToRemove: ['pan2d', 'select2d', 'lasso2d',
         'hoverClosestCartesian', 'hoverCompareCartesian']
     }
 
-    return (<Plot
-      data={data}
-      config={config}
-      layout={layout}
-      onClick={(data) => {
-        const selProblem = problems[data.points[0].y]
-        const selStudent = selProblem.results[data.points[0].x].studentId
+    return (
+      <React.Fragment>
+        <div className='container'>
 
-        this.setState({selectedStudentId: selStudent})
-      }}
-      onDoubleClick={() => this.setState({selectedStudentId: null})}
-      useResizeHandler
-      style={{width: '100%', position: 'relative', display: 'inline-block'}} />)
+          <Plot
+            data={data}
+            config={config}
+            layout={layout}
+            onClick={(data) => {
+              const selProblem = problems[data.points[0].y]
+              const selStudent = selProblem.results[data.points[0].x].studentId
+
+              this.setState({selectedStudentId: selStudent})
+            }}
+            onDoubleClick={() => this.setState({selectedStudentId: null})}
+            useResizeHandler
+            style={{width: '100%', position: 'relative', display: 'inline-block'}} />
+
+          {this.state.stats.copies / this.state.stats.students > 1.05 &&
+            <article className='message is-warning'>
+              <div className='message-body'>
+                {this.state.stats.copies - this.state.stats.students} extra copies
+                were needed to solve this exam by some students,
+                consider adding more space the next time.
+              </div>
+            </article>
+          }
+        </div>
+      </React.Fragment>
+    )
   }
 
   renderHistogramScores = (problem) => {
-    if (!problem.results.length) return null
-
-    let colorsFinished = 'hsl(204, 86, 53)'
-    let colorsUnfinished = 'hsla(204, 86, 53, 0.5)'
-
-    if (this.state.selectedStudentId) {
-      const data = problem.results.find(x => x.studentId === this.state.selectedStudentId)
-      if (data) {
-        if (data.graded) {
-          colorsFinished = range(0, problem.max_score + 1, 1).map(x => x === data.score ? 'hsl(171, 100, 41)' : 'hsl(204, 86, 53)').toArray()
-        } else {
-          colorsUnfinished = range(0, problem.max_score + 1, 1).map(x => x === data.score ? 'hsla(171, 100, 41, 0.5)' : 'hsla(204, 86, 53, 0.5)').toArray()
-        }
-      }
-    }
-
     const traces = [{
       x: problem.results.reduce((acc, v) => v.graded ? acc.concat(v.score) : acc, []),
       type: 'histogram',
@@ -478,7 +510,7 @@ class Overview extends React.Component {
       },
       hoverinfo: 'none',
       marker: {
-        color: colorsFinished
+        color: 'hsl(204, 86, 53)'
       },
       xcalendar: 'gregorian',
       ycalendar: 'gregorian'
@@ -494,7 +526,7 @@ class Overview extends React.Component {
       },
       hoverinfo: 'none',
       marker: {
-        color: colorsUnfinished
+        color: 'hsla(204, 86, 53, 0.5)'
       },
       xcalendar: 'gregorian',
       ycalendar: 'gregorian'
@@ -504,10 +536,13 @@ class Overview extends React.Component {
       xaxis: {
         title: 'score',
         zeroline: false,
-        dtick: problem.max_score > 10 ? 5 : 1
+        range: [-0.5, problem.max_score + 0.5],
+        dtick: problem.max_score > 10 ? 5 : 1,
+        fixedrange: true
       },
       yaxis: {
-        title: 'number of students'
+        title: 'number of students',
+        fixedrange: true
       },
       title: {
         text: `Histogram of Scores<br>(score=${problem.mean.value.toPrecision(1)} ± ${problem.mean.error.toPrecision(1)})`
@@ -520,8 +555,7 @@ class Overview extends React.Component {
 
     const config = {
       displaylogo: false,
-      modeBarButtonsToRemove: ['pan2d', 'select2d', 'lasso2d', 'resetScale2d',
-        'zoomOut2d', 'zoomIn2d', 'zoom2d',
+      modeBarButtonsToRemove: ['pan2d', 'select2d', 'lasso2d',
         'hoverClosestCartesian', 'hoverCompareCartesian']
     }
 
@@ -534,11 +568,9 @@ class Overview extends React.Component {
   }
 
   renderProblemSummary = (id) => {
-    if (id === 0) {
-      return this.renderAtGlance()
-    }
-
     const problem = this.state.stats.problems.find(p => p.id === id)
+
+    if (!problem) return null
 
     return (
       <React.Fragment>
@@ -573,40 +605,9 @@ class Overview extends React.Component {
             {this.renderHistogramScores(problem)}
           </div>
           <div className='column is-full'>
-            <h3 className='is-size-5'> Grader details </h3>
-            <table className='table is-striped is-fullwidth'>
-              <thead>
-                <tr>
-                  <th> Grader </th>
-                  <th> Solutions graded </th>
-                  <th> Average grading time </th>
-                  <th> Total grading time </th>
-                </tr>
-              </thead>
-              <tbody>
-                {
-                  problem.graders.map((g, i) => {
-                    if (g.name === 'Zesje') return null
-
-                    return <tr key={i}>
-                      <td> {g.name} </td>
-                      <td> {g.graded} </td>
-                      <td> {formatTime(g.averageTime)} </td>
-                      <td> {formatTime(g.totalTime)} </td>
-                    </tr>
-                  })
-                }
-              </tbody>
-            </table>
-
-            {problem.autograded > 0 &&
-              <article className='message is-info'>
-                <div className='message-body'>
-                  In this problem Zesje helped you grade {problem.autograded === 1 ? '1 solution' : problem.autograded + ' solutions'},
-                  saving you {formatTime(estimateGradingTime(problem.graders) * problem.autograded)} of grading time.
-                </div>
-              </article>
-            }
+            <GraderDetails
+              graders={problem.graders}
+              autograded={problem.autograded} />
           </div>
         </div>
       </React.Fragment>
@@ -639,7 +640,10 @@ class Overview extends React.Component {
               </span>
               <section className='section'>
                 <div className='container'>
-                  { this.renderProblemSummary(this.state.selectedProblemId) }
+                  { this.state.selectedProblemId === 0
+                    ? this.renderAtGlance()
+                    : this.renderProblemSummary(this.state.selectedProblemId)
+                  }
                 </div>
               </section>
             </div>

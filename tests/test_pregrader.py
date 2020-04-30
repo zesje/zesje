@@ -75,7 +75,7 @@ def test_is_blank(coords, result, student_aligned, reference):
     problem.widget = ProblemWidget(x=coords[0], y=coords[1],
                                    width=coords[2], height=coords[3])
 
-    assert not pregrader.is_misaligned(problem, student_aligned, reference)
+    assert not pregrader.is_problem_misaligned(problem, student_aligned, reference)
     assert pregrader.is_blank(problem, student_aligned, reference) == result
 
 
@@ -87,4 +87,4 @@ def test_is_misaligned(coords, student_misaligned, reference):
     problem.widget = ProblemWidget(x=coords[0], y=coords[1],
                                    width=coords[2], height=coords[2])
 
-    assert pregrader.is_misaligned(problem, student_misaligned, reference)
+    assert pregrader.is_problem_misaligned(problem, student_misaligned, reference)

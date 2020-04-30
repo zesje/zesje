@@ -55,7 +55,7 @@ def grade_problem(sub, page, page_img):
 
         problem = sol.problem
 
-        if not is_misaligned(problem, page_img, reference_img):
+        if not is_problem_misaligned(problem, page_img, reference_img):
             if problem.mc_options:
                 grade_mcq(sol, page_img)
             elif is_blank(problem, page_img, reference_img):
@@ -144,8 +144,10 @@ def set_auto_grader(solution):
     db.session.commit()
 
 
-def is_misaligned(problem, student_img, reference_img):
+def is_problem_misaligned(problem, student_img, reference_img):
     """Checks if an image is correctly aligned against the reference
+
+    The check is only executed for the area of the problem.
 
     This is done by thickening the lines in the student image and
     checking if this thickened image fully covers the reference image.
@@ -160,11 +162,29 @@ def is_misaligned(problem, student_img, reference_img):
         A numpy array of the full page reference image
     """
     widget_area_in = widget_area(problem)
-    dpi = guess_dpi(student_img)
+    return is_misaligned(widget_area_in, student_img, reference_img)
 
-    # Extra padding to ensure any content is not cut off
-    # in only one of the two images
-    padding_inch = 0.2
+
+def is_misaligned(area_inch, student_img, reference_img, padding_inch=0.2):
+    """Checks if an image is correctly aligned against the reference
+
+    The check is only executed for the supplied area.
+
+    This is done by thickening the lines in the student image and
+    checking if this thickened image fully covers the reference image.
+
+    Params
+    ------
+    area_inch: numpy array
+        An array with consisting of [top, bottom, left, right] in inches
+    page_img: np.array
+        A numpy array of the full page image scan
+    reference_img: np.array
+        A numpy array of the full page reference image
+    padding_inch: float
+        Extra padding to apply such that content is not cut off, in inches
+    """
+    dpi = guess_dpi(student_img)
     padding_pixels = int(padding_inch * dpi)
 
     # The diameter of the kernel to thicken the lines with. This allows
@@ -172,8 +192,8 @@ def is_misaligned(problem, student_img, reference_img):
     kernel_size_mm = 2 * MAX_ALIGNMENT_ERROR_MM
     kernel_size = int(kernel_size_mm * dpi / mm_per_inch)
 
-    student = get_box(student_img, widget_area_in, padding=padding_inch)
-    reference = get_box(reference_img, widget_area_in, padding=padding_inch)
+    student = get_box(student_img, area_inch, padding=padding_inch)
+    reference = get_box(reference_img, area_inch, padding=padding_inch)
 
     return not covers(student, reference,
                       padding_pixels=padding_pixels,

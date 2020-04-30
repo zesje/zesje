@@ -124,7 +124,7 @@ class Feedback(Resource):
             return dict(status=404, message=f"Feedback option with id #{feedback_id} does not exist"), 404
         problem = fb.problem
         if problem.id != problem_id:
-            return dict(status=409, message="Feedback does not match the problem."), 409
+            return dict(status=400, message="Feedback option does not belong to this problem."), 400
         if fb.mc_option:
             return dict(status=401, message='Cannot delete feedback option'
                                             + ' attached to a multiple choice option.'), 401

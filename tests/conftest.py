@@ -1,10 +1,10 @@
 import os
-from tempfile import TemporaryDirectory
+import sys
 
 import pytest
 from flask import Flask
 from pathlib import Path
-import sys
+from tempfile import TemporaryDirectory
 
 sys.path.insert(0, str(Path.cwd()))
 

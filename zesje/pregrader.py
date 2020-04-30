@@ -6,33 +6,40 @@ from flask import current_app
 from reportlab.lib.units import inch, mm
 
 from .blanks import reference_image
-from .database import db, Grader, FeedbackOption, GradingPolicy, Submission, Solution
+from .database import db, Grader, FeedbackOption, GradingPolicy
 from .images import guess_dpi, get_box, widget_area, covers, is_misaligned
 
 mm_per_inch = inch / mm
 
 
-def grade_problem(sub, page, page_img):
+def grade_problem(copy, page, page_img):
     """
     Automatically checks if a problem is blank, and adds a feedback option
     'blank' if so.
     For multiple choice problems, a feedback option is added for each checkbox
     that is identified as filled in is created.
+    For submissions with multipe copies, no grading is done at all.
 
     Parameters
     ------
-    sub : Submission
-        the current submission
+    copy : Copy
+        the current copy
     page : int
         Page number of the submission
     page_img : np.array
         image of the page
     """
     AUTOGRADER_NAME = current_app.config['AUTOGRADER_NAME']
+    sub = copy.submission
+
+    # The solutions to grade are all submissions on the current page that are either
+    # not graded yet or graded by Zesje. Submissions with multiple copies are excluded.
+
+    # TODO Support pregrading for submissions with multiple copies.
     solutions_to_grade = [
         sol for sol in sub.solutions
         if (not sol.graded_by or sol.graded_by.name == AUTOGRADER_NAME) and sol.problem.widget.page == page
-    ]
+    ] if len(sub.copies) == 1 else []
 
     if solutions_to_grade:
         dpi = guess_dpi(page_img)
@@ -53,7 +60,8 @@ def grade_problem(sub, page, page_img):
             elif is_blank(problem, page_img, reference_img):
                 grade_as_blank(sol)
 
-    db.session.commit()
+    if solutions_to_grade:
+        db.session.commit()
 
 
 def grade_mcq(sol, page_img):
@@ -273,29 +281,3 @@ def box_is_filled(box, page_img, threshold=225, cut_padding=0.05, box_size=9):
     if res_x < 0.333 * box_size_px or res_y < 0.333 * box_size_px:
         return True
     return np.average(res_rect) < threshold
-
-
-def ungrade_multiple_sub(student_id, exam_id, commit=True):
-    """
-    Ungrade all solutions of a specific student if they have more than one submission.
-
-    This function does not remove the selected feedback options, but sets the
-    graded_at and grader_id fields to None such that it has to be approved again.
-
-    Params
-    ------
-    student_id: int
-        The student number of the student to check
-    exam_id: int
-        The exam to perform the check on
-    """
-    submission_ids = [sub.id for sub in Submission.query.filter(Submission.student_id == student_id,
-                                                                Submission.exam_id == exam_id).all()]
-    if len(submission_ids) > 1:
-        Solution.query \
-                .filter(Solution.submission_id.in_(submission_ids)) \
-                .update({Solution.grader_id: None, Solution.graded_at: None},
-                        synchronize_session='fetch')
-
-        if commit:
-            db.session.commit()

@@ -114,7 +114,7 @@ class Statistics(Resource):
                 # exclude problems without feedback options
                 continue
 
-            max_score = max(list(fb.score for fb in p.feedback_options) + [0])
+            max_score = max(fb.score for fb in p.feedback_options)
             if max_score == 0:
                 continue
 
@@ -136,8 +136,6 @@ class Statistics(Resource):
 
             results = []
             in_revision = 0
-
-            print(p.name, len(p.solutions))
 
             for sol in p.solutions:
                 if not sol.submission.validated:
@@ -167,8 +165,8 @@ class Statistics(Resource):
             problem_data['autograded'] = autograded
 
             problem_data['mean'] = {
-                'value': full_scores.loc[:, p.id].mean(),
-                'error': full_scores.loc[:, p.id].std()
+                'value': full_scores.loc[:, p.id].mean() if len(results) > 1 else 0,
+                'error': full_scores.loc[:, p.id].std() if len(results) > 1 else 0
             }
 
             data[p.id] = problem_data
@@ -176,24 +174,29 @@ class Statistics(Resource):
         if len(data) == 0:
             return dict(status=404, message='The problems in the exam have no feedback options.'), 404
 
-        # total sum per row
-        full_scores.loc[:, 0] = full_scores.sum(axis=1)
+        # total sum per row, min_count ensures that if all problems are Nan the sum is also Nan
+        full_scores.loc[:, 0] = full_scores.sum(axis=1, min_count=1)
+
+        # counts the number of ungraded problems per student
         problems_ungraded = full_scores.loc[:, full_scores.columns != 0].isna().sum(axis=1).to_dict()
+
+        total_results = scores_to_data(full_scores.loc[:, 0].dropna().to_dict(), problems_ungraded)
+
         total_mean = {
-            'value': full_scores.loc[:, 0].mean(),
-            'error': full_scores.loc[:, 0].std()
+            'value': full_scores.loc[:, 0].mean() if len(total_results) > 1 else 0,
+            'error': full_scores.loc[:, 0].std() if len(total_results) > 1 else 0
         }
 
-        for p in exam.problems:
-            corr = (full_scores[p.id]
+        for id in data.keys():
+            corr = (full_scores[id]
                     .astype(float)
                     .corr(full_scores[0]
-                          .subtract(full_scores[p.id])
+                          .subtract(full_scores[id])
                           .astype(float))
                     )
-            data[p.id]['correlation'] = corr if not isnan(corr) else None
+            data[id]['correlation'] = corr if not isnan(corr) else None
 
-        if len(full_scores) > 2 and full_scores[0].var():
+        if len(total_results) > 2 and full_scores[0].var():
             alpha = ((len(full_scores) - 1) / (len(full_scores) - 2)
                      * (1 - full_scores.var()[:-1].sum()
                         / full_scores[0].var()))
@@ -209,7 +212,7 @@ class Statistics(Resource):
             'total': {
                 'alpha': alpha,
                 'max_score': total_max_score,
-                'results': scores_to_data(full_scores.loc[:, 0].dropna().to_dict(), problems_ungraded),
+                'results': total_results,
                 'mean': total_mean
             }
         }

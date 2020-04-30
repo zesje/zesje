@@ -68,14 +68,12 @@ def app_fixture(base_app):
 
 @pytest.fixture
 def app(base_app):
-    for app in app_fixture(base_app):
-        yield app
+    yield from app_fixture(base_app)
 
 
 @pytest.fixture(scope='module')
 def module_app(base_app):
-    for app in app_fixture(base_app):
-        yield app
+    yield from app_fixture(base_app)
 
 
 @pytest.fixture

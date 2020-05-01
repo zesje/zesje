@@ -1,11 +1,11 @@
 from sqlalchemy.orm.exc import NoResultFound
 
+from flask import current_app
 import numpy as np
 import pandas
 from sqlalchemy import between, desc, func
 
 from .database import db, Exam, Student, Grader, Solution, Submission
-from .pregrader import AUTOGRADER_NAME
 
 
 def solution_data(exam_id, student_id):
@@ -133,6 +133,7 @@ def full_grader_data(exam_id):
 def grader_data(problem_id):
     """ Compute the grader statistics for a given problem. """
     graders = []
+    autograder = current_app.config['AUTOGRADER_NAME']
 
     # returns a tuple with (grader id, grader name, solutions graded)
     # for each  grader that graded the given prblem ordered by grader id
@@ -145,7 +146,7 @@ def grader_data(problem_id):
     autograded_solutions = 0
 
     for id, name, graded in grader_results:
-        if name == AUTOGRADER_NAME:
+        if name == autograder:
             autograded_solutions = graded
             continue
 

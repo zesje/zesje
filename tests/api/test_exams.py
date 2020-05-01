@@ -6,20 +6,19 @@ from zesje.api.exams import generate_exam_token
 
 
 @pytest.fixture
-def add_test_data(empty_app):
-    with empty_app.app_context():
-        exam1 = Exam(id=1, name='exam 1', finalized=False)
-        db.session.add(exam1)
-        db.session.commit()
+def add_test_data(app):
+    exam1 = Exam(id=1, name='exam 1', finalized=False)
+    db.session.add(exam1)
+    db.session.commit()
 
-        problem1 = Problem(id=1, name='Problem 1', exam_id=1)
-        db.session.add(problem1)
-        db.session.commit()
+    problem1 = Problem(id=1, name='Problem 1', exam_id=1)
+    db.session.add(problem1)
+    db.session.commit()
 
-        problem_widget_1 = ProblemWidget(id=1, name='problem widget', problem_id=1, page=2,
-                                         width=100, height=150, x=40, y=200, type='problem_widget')
-        db.session.add(problem_widget_1)
-        db.session.commit()
+    problem_widget_1 = ProblemWidget(id=1, name='problem widget', problem_id=1, page=2,
+                                     width=100, height=150, x=40, y=200, type='problem_widget')
+    db.session.add(problem_widget_1)
+    db.session.commit()
 
 
 # Actual tests

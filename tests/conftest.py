@@ -19,21 +19,35 @@ def datadir():
 
 
 # Returns a Flask app with only the config initialized
-@pytest.fixture(scope="module")
-def config_app():
+# Runs only once per session
+@pytest.fixture(scope='session')
+def base_config_app():
     app = Flask(__name__, static_folder=None)
     create_config(app.config, None)
+    return app
+
+# Provides an app context, this runs for every test
+# to ensure the app context is popped after each test
+@pytest.fixture
+def config_app(base_config_app):
+    app = base_config_app
     with app.app_context():
         yield app
 
 
 # Return a mock DB which can be used in the testing enviroment
-# Module scope ensures it is ran only once
-@pytest.fixture(scope="module")
-def db_app(config_app):
-    app = config_app
+# Session scope ensures it is ran only once
+@pytest.fixture(scope="session")
+def base_app(base_config_app):
+    app = base_config_app
 
     db.init_app(app)
+    app.register_blueprint(api_bp, url_prefix='/api')
+    return app
+
+
+def app_fixture(base_app):
+    app = base_app
 
     if 'GITLAB_TEST' in os.environ:
         app.config.update(SQLALCHEMY_DATABASE_URI=f'mysql://root:@mysql/course_test')
@@ -48,40 +62,23 @@ def db_app(config_app):
             SCAN_DIRECTORY=str(temp_dir)
         )
 
-        yield app
-
-
-@pytest.fixture(scope="module")
-def app(db_app):
-    with db_app.app_context():
-        db.create_all()
-
-    db_app.register_blueprint(api_bp, url_prefix='/api')
-
-    return db_app
+        with app.app_context():
+            db.create_all()
+            yield app
+            db.drop_all()
 
 
 @pytest.fixture
-def empty_app(app):
-    with app.app_context():
-        db.drop_all()
-        db.create_all()
-        yield app
+def app(base_app):
+    yield from app_fixture(base_app)
+
+
+@pytest.fixture(scope='module')
+def module_app(base_app):
+    yield from app_fixture(base_app)
 
 
 @pytest.fixture
 def test_client(app):
-    client = app.test_client()
-
-    yield client
-
-    with app.app_context():
-        db.drop_all()
-        db.create_all()
-
-
-@pytest.fixture
-def client(empty_app):
-    client = empty_app.test_client()
-
-    yield client
+    with app.test_client() as client:
+        yield client

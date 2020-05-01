@@ -4,7 +4,7 @@ from zesje.database import db, Exam, Problem, ProblemWidget, Solution, Copy
 from zesje.database import Submission, Scan, Page, ExamWidget, FeedbackOption, MultipleChoiceOption
 
 
-def test_cascades_exam(empty_app, exam, problem, submission, scan, exam_widget):
+def test_cascades_exam(app, exam, problem, submission, scan, exam_widget):
     """Tests the cascades defined for an exam
 
     Tests the cascades for the following relations:
@@ -35,7 +35,7 @@ def test_cascades_exam(empty_app, exam, problem, submission, scan, exam_widget):
     assert exam_widget not in db.session
 
 
-def test_cascades_problem(empty_app, exam, problem, submission, solution, problem_widget, feedback_option):
+def test_cascades_problem(app, exam, problem, submission, solution, problem_widget, feedback_option):
     """Tests the cascades defined for a problem
 
     Tests the cascades for the following relations:
@@ -65,7 +65,7 @@ def test_cascades_problem(empty_app, exam, problem, submission, solution, proble
     assert feedback_option not in db.session
 
 
-def test_cascades_submission(empty_app, exam, problem, submission, solution, copy):
+def test_cascades_submission(app, exam, problem, submission, solution, copy):
     """Tests the cascades defined for a submission
 
     Tests the cascades for the following relations:
@@ -92,7 +92,7 @@ def test_cascades_submission(empty_app, exam, problem, submission, solution, cop
     assert copy not in db.session
 
 
-def test_cascades_copy(empty_app, exam, copy, page, submission):
+def test_cascades_copy(app, exam, copy, page, submission):
     """Tests the cascades defined for a submission
 
     Tests the cascades for the following relations:
@@ -116,7 +116,7 @@ def test_cascades_copy(empty_app, exam, copy, page, submission):
     assert page not in db.session
 
 
-def test_cascades_fb_mco(empty_app, feedback_option, mc_option):
+def test_cascades_fb_mco(app, feedback_option, mc_option):
     feedback_option.mc_option = mc_option
     db.session.add(feedback_option)
     db.session.commit()
@@ -129,7 +129,7 @@ def test_cascades_fb_mco(empty_app, feedback_option, mc_option):
     assert mc_option not in db.session
 
 
-def test_cascades_mco_fb(empty_app, feedback_option, mc_option):
+def test_cascades_mco_fb(app, feedback_option, mc_option):
     feedback_option.mc_option = mc_option
     db.session.add(mc_option)
     db.session.commit()

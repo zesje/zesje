@@ -135,7 +135,7 @@ def test_join_pdfs(mock_generate_datamatrix, mock_generate_id_grid,
     assert_pdf_and_images_are_equal(out, images)
 
 
-def test_generate_datamatrix():
+def test_generate_datamatrix(config_app):
     # Checks for input and output formats, as well as string contents.
     datamatrix = pdf_generation.generate_datamatrix('ABCD', 2, 3)
     assert isinstance(datamatrix, Image.Image)

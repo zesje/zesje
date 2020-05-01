@@ -4,5 +4,6 @@ module.exports = {
   },
   'testPathIgnorePatterns': ['/node_modules/', '/.yarn-cache/'],
   'modulePathIgnorePatterns': ['.yarn-cache'],
-  'setupTestFrameworkScriptFile': '<rootDir>testSetup.js'
+  'setupTestFrameworkScriptFile': '<rootDir>testSetup.js',
+  'reporters': [ 'default', 'jest-junit' ]
 }

@@ -21,7 +21,7 @@
     "migrate:dev": "ZESJE_SETTINGS=$(pwd)/zesje_dev_cfg.py FLASK_APP=zesje.wsgi:app flask db upgrade",
     "migrate": "FLASK_APP=zesje.wsgi:app flask db upgrade",
     "prepare-migration": "ZESJE_SETTINGS=$(pwd)/zesje_dev_cfg.py FLASK_APP=zesje.wsgi:app flask db migrate",
-    "test:py:cov": "python3 -m pytest -v -W error::RuntimeWarning --cov=zesje --cov-report=xml:cov.xml --cov-report=html:cov.html --cov-report=term tests/",
+    "test:py:cov": "python3 -m pytest -v -W error::RuntimeWarning --junitxml=tests.xml --cov=zesje --cov-report=xml:cov.xml --cov-report=html:cov.html --cov-report=term tests/",
     "migrate-down": "FLASK_APP=zesje.wsgi:app flask db downgrade"
   },
   "standard": {
@@ -90,6 +90,7 @@
     "enzyme-adapter-react-16": "^1.7.1",
     "identity-obj-proxy": "^3.0.0",
     "jest": "^23.3.0",
+    "jest-junit": "^10.0.0",
     "react-test-renderer": "^16.3.2",
     "snazzy": "^7.1.1",
     "standard": "^11.0.1",

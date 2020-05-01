@@ -59,30 +59,30 @@ const GraderDetails = (props) => {
   return (
     <React.Fragment>
       <h3 className='is-size-5'> Grader details </h3>
-      <table className='table is-striped is-fullwidth'>
-        <thead>
-          <tr>
-            <th> Grader </th>
-            <th> Solutions graded </th>
-            <th> Average grading time </th>
-            <th> Total grading time </th>
-          </tr>
-        </thead>
-        <tbody>
-          {
-            props.graders.map((g, i) => {
-              if (g.name === 'Zesje') return null
-
-              return <tr key={i}>
-                <td> {g.name} </td>
-                <td> {g.graded} </td>
-                <td> {formatTime(g.averageTime)} </td>
-                <td> {formatTime(g.totalTime)} </td>
-              </tr>
-            })
-          }
-        </tbody>
-      </table>
+      {props.graders.length > 0 &&
+        <table className='table is-striped is-fullwidth'>
+          <thead>
+            <tr>
+              <th> Grader </th>
+              <th> Solutions graded </th>
+              <th> Average grading time </th>
+              <th> Total grading time </th>
+            </tr>
+          </thead>
+          <tbody>
+            {
+              props.graders.map((g, i) => {
+                return <tr key={i}>
+                  <td> {g.name} </td>
+                  <td> {g.graded} </td>
+                  <td> {formatTime(g.averageTime)} </td>
+                  <td> {formatTime(g.totalTime)} </td>
+                </tr>
+              })
+            }
+          </tbody>
+        </table>
+      }
 
       {props.autograded > 0 &&
         <article className='message is-info'>
@@ -146,7 +146,7 @@ class Overview extends React.Component {
     let totalInRevision = 0
     let totalTimeLeft = 0
 
-    const labels = problems.map((p, i) => {
+    const hoverText = problems.map((p, i) => {
       const avgTime = estimateGradingTime(p.graders)
       const solInRevision = p.inRevision
       const solToGrade = students - p.results.length
@@ -157,16 +157,18 @@ class Overview extends React.Component {
 
       if (!p.results.length) return `${students} solutions to grade`
 
+      let text = `<b>Score</b>: ${p.mean.value.toPrecision(2)} ± ${p.mean.error.toPrecision(2)}` +
+                  (p.correlation !== null ? `<br><b>Rir</b>: ${p.correlation.toPrecision(3)}` : '')
+
       if (solToGrade || solInRevision) {
         const gradingTimeLeft = solToGrade * avgTime
 
-        return (solToGrade > 0 ? `<br>${solToGrade === 1 ? '1 solution' : `${solToGrade} solutions`} to grade` : '') +
-               (solInRevision > 0 ? `<br>${solInRevision === 1 ? '1 solution' : `${solInRevision} solutions`} to revise` : '') +
-               `<br>Time left: ${formatTime(gradingTimeLeft)}`
-      } else {
-        return `Score: ${p.mean.value.toPrecision(1)} ± ${p.mean.error.toPrecision(1)}` +
-               (p.correlation !== null ? `<br>Rir: ${p.correlation.toPrecision(3)}` : '')
+        text += (solToGrade > 0 ? (`<br>${solToGrade === 1 ? '1 solution' : `${solToGrade} solutions`}`) + ' to grade' : '')
+        text += (solInRevision > 0 ? (`<br>${solInRevision === 1 ? '1 solution' : `${solInRevision} solutions`}`) + ' to revise' : '')
+        text += `<br>Time left: ${formatTime(gradingTimeLeft)}`
       }
+
+      return text
     })
 
     problems.push({
@@ -177,18 +179,15 @@ class Overview extends React.Component {
       alpha: total.alpha
     })
 
-    if (totalUngraded || totalInRevision) {
-      labels.push(
-        (totalUngraded > 0 ? `<br>${totalUngraded} solutions to grade` : '') +
-        (totalInRevision > 0 ? `<br>${totalUngraded} solutions to revise` : '') +
-        (totalTimeLeft > 0 ? `<br>Time left: ${formatTime(totalTimeLeft)}` : '')
-      )
-    } else {
-      labels.push(total.alpha !== null ? `<br>Cronbach's α: ${total.alpha.toPrecision(3)}` : '')
-    }
+    hoverText.push(
+      (total.alpha !== null ? `<br><b>Cronbach's α</b>: ${total.alpha.toPrecision(3)}` : '') +
+      (totalUngraded > 0 ? `<br>${totalUngraded === 1 ? '1 solution' : `${totalUngraded} solutions`} to grade` : '') +
+      (totalInRevision > 0 ? `<br>${totalInRevision === 1 ? '1 solution' : `${totalInRevision} solutions`} to revise` : '') +
+      (totalTimeLeft > 0 ? `<br>Time left: ${formatTime(totalTimeLeft)}` : '')
+    )
 
     problems.reverse()
-    labels.reverse()
+    hoverText.reverse()
 
     const yVals = range(0, problems.length, 1).toArray()
 
@@ -271,7 +270,7 @@ class Overview extends React.Component {
       })),
       hoverinfo: 'text',
       hoverlabel: {
-        bgcolor: 'hsl(217, 71, 53)'
+        bgcolor: 'hsl(217, 71, 53)' // primary
       },
       showlegend: false
     }, {
@@ -283,7 +282,7 @@ class Overview extends React.Component {
       mode: 'markers',
       size: 0,
       hoverinfo: 'text',
-      hovertext: labels,
+      hovertext: hoverText,
       hoverlabel: {
         bgcolor: 'hsl(0, 0, 96)',
         bordercolor: problems.map(p => {
@@ -311,7 +310,7 @@ class Overview extends React.Component {
       },
       hoverinfo: 'none',
       marker: {
-        color: 'hsl(204, 86, 53)'
+        color: 'hsl(204, 86, 53)' // info
       },
       xaxis: 'x3',
       yaxis: 'y3'
@@ -545,7 +544,7 @@ class Overview extends React.Component {
         fixedrange: true
       },
       title: {
-        text: `Histogram of Scores<br>(score=${problem.mean.value.toPrecision(1)} ± ${problem.mean.error.toPrecision(1)})`
+        text: `Histogram of Scores<br>(score = ${problem.mean.value.toPrecision(2)} ± ${problem.mean.error.toPrecision(2)})`
       },
       autosize: true,
       showlegend: true,

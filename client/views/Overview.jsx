@@ -274,7 +274,7 @@ class Overview extends React.Component {
       },
       showlegend: false
     }, {
-      x: zeros(problems.length + 1).map(x => -1).toArray(),
+      x: zeros(problems.length + 1).map(x => -2).toArray(),
       y: yVals,
       yaxis: 'y2',
       type: 'scatter',
@@ -391,12 +391,12 @@ class Overview extends React.Component {
           size: 14
         },
         tickvals: problems.reduce((acc, p, i) => {
-          if (p.id === 0 && totalUngraded > 0) return acc.concat(i)
-          return p.results.length < students || students === 0 ? acc.concat(i) : acc
+          if (p.id === 0) return (totalUngraded + totalInRevision > 0 ? acc.concat(i) : acc)
+          return (p.results.length - p.inRevision) < students ? acc.concat(i) : acc
         }, []),
         ticktext: problems.reduce((acc, p, i) => {
-          if (p.id === 0 && totalUngraded > 0) return acc.concat(p.name)
-          return p.results.length < students || students === 0 ? acc.concat(p.name) : acc
+          if (p.id === 0) return (totalUngraded + totalInRevision > 0 ? acc.concat(p.name) : acc)
+          return (p.results.length - p.inRevision) < students ? acc.concat(p.name) : acc
         }, []),
         zeroline: false,
         anchor: 'x',
@@ -412,12 +412,12 @@ class Overview extends React.Component {
           size: 14
         },
         tickvals: problems.reduce((acc, p, i) => {
-          if (p.id === 0 && totalUngraded === 0) return acc.concat(i)
-          return p.results.length === students && students > 0 ? acc.concat(i) : acc
+          if (p.id === 0) return (totalUngraded + totalInRevision === 0 ? acc.concat(i) : acc)
+          return (p.results.length - p.inRevision) === students ? acc.concat(i) : acc
         }, []),
         ticktext: problems.reduce((acc, p, i) => {
-          if (p.id === 0 && totalUngraded === 0) return acc.concat(p.name)
-          return p.results.length === students && students > 0 ? acc.concat(p.name) : acc
+          if (p.id === 0) return (totalUngraded + totalInRevision === 0 ? acc.concat(p.name) : acc)
+          return (p.results.length - p.inRevision) === students ? acc.concat(p.name) : acc
         }, []),
         zeroline: false,
         anchor: 'x',

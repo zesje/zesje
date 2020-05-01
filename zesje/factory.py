@@ -92,6 +92,7 @@ def create_config(config_instance, extra_config):
     user = config_instance['MYSQL_USER']
     psw = config_instance['MYSQL_PSW']
     host = config_instance['MYSQL_HOST']
+    host = host.replace('localhost', '127.0.0.1')
 
     config_instance.update(
         MYSQL_DIRECTORY=os.path.join(config_instance['DATA_DIRECTORY'], 'mysql'),

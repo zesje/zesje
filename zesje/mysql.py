@@ -1,5 +1,8 @@
 import sys
 import os
+import subprocess
+import ctypes
+import signal
 from os.path import dirname
 from argparse import ArgumentParser
 
@@ -28,20 +31,47 @@ def create(config):
 
         _create_init_file(initfile, config)
 
-        code = os.system(f'mysqld {_default_options(datadir)} --init-file={initfile} --initialize;')
+        def _set_pdeathsig(sig=signal.SIGTERM):
+            def callable():
+
+                libc = ctypes.CDLL("libc.so.6")
+                return libc.prctl(1, sig)
+            return callable
+        command = f'mysqld {_default_options(datadir)} --init-file={initfile} --initialize'
+        print(command)
+        process = subprocess.Popen(command.split(' '), stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                   preexec_fn=_set_pdeathsig(signal.SIGTERM))
+
+        status_code = process.wait()
 
         os.remove(initfile)
 
-        if code != 0:
+        if status_code != 0:
             raise ValueError('Error creating MySQL, please see log files for details.')
 
 
 def start(config, interactive=False):
     datadir = config['MYSQL_DIRECTORY']
-    code = os.system(
-        f'mysqld_safe {_default_options(datadir)} --mysqld=$CONDA_PREFIX/bin/mysqld --gdb'
-        + ('' if interactive else ' &')
-    )
+    command = f'mysqld {_default_options(datadir)} --mysqld=$CONDA_PREFIX/bin/mysqld --gdb'
+    print(command)
+
+    if interactive:
+        def _set_pdeathsig(sig=signal.SIGTERM):
+            def callable():
+
+                libc = ctypes.CDLL("libc.so.6")
+                return libc.prctl(1, sig)
+            return callable
+
+        process = subprocess.Popen(command.split(' '), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                   preexec_fn=_set_pdeathsig(signal.SIGTERM), env=os.environ)
+        output = process.communicate()
+        for line in output:
+            print(line.decode('utf-8'))
+        code = process.wait()
+        print(code)
+    else:
+        code = os.system(command)
 
     if code != 0:
         raise ValueError('Error starting MySQL, please see log files for details.')
@@ -61,7 +91,9 @@ def _create_init_file(filepath, config):
 
 
 def _default_options(datadir):
-    return f'--basedir=$CONDA_PREFIX/bin --datadir={datadir} --lc-messages-dir=$CONDA_PREFIX/share/mysql'
+    return f'--basedir=$CONDA_PREFIX/bin --datadir={datadir} --log-error={datadir}/mysql_error.log ' + \
+        f'--log_error={datadir}/mysql_error.log ' + \
+        '--socket=mysql.sock --lc-messages-dir=$CONDA_PREFIX/share/mysql --pid-file=mysql.pid'
 
 
 def main(action, interactive):

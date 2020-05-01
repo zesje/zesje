@@ -105,7 +105,7 @@ def covers(cover_img, to_cover_img, padding_pixels=0, threshold=0, kernel_size=9
     return non_covered_pixels <= threshold
 
 
-def is_misaligned(area_inch, student_img, reference_img, padding_inch=0.2):
+def is_misaligned(area_inch, img, reference, padding_inch=0.2):
     """Checks if an image is correctly aligned against the reference
 
     The check is only executed for the supplied area.
@@ -117,14 +117,14 @@ def is_misaligned(area_inch, student_img, reference_img, padding_inch=0.2):
     ------
     area_inch: numpy array
         An array with consisting of [top, bottom, left, right] in inches
-    page_img: np.array
+    img: np.array
         A numpy array of the full page image scan
-    reference_img: np.array
+    reference: np.array
         A numpy array of the full page reference image
     padding_inch: float
         Extra padding to apply such that content is not cut off, in inches
     """
-    dpi = guess_dpi(student_img)
+    dpi = guess_dpi(img)
     padding_pixels = int(padding_inch * dpi)
 
     # The diameter of the kernel to thicken the lines with. This allows
@@ -132,9 +132,9 @@ def is_misaligned(area_inch, student_img, reference_img, padding_inch=0.2):
     kernel_size_mm = 2 * current_app.config['MAX_ALIGNMENT_ERROR_MM']
     kernel_size = int(kernel_size_mm * dpi / mm_per_inch)
 
-    student = get_box(student_img, area_inch, padding=padding_inch)
-    reference = get_box(reference_img, area_inch, padding=padding_inch)
+    img_cropped = get_box(img, area_inch, padding=padding_inch)
+    reference_cropped = get_box(reference, area_inch, padding=padding_inch)
 
-    return not covers(student, reference,
+    return not covers(img_cropped, reference_cropped,
                       padding_pixels=padding_pixels,
                       kernel_size=kernel_size)

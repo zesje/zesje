@@ -5,7 +5,6 @@ from flask_restful import Resource, reqparse
 from pdfrw import PdfReader
 
 from ..database import db, Exam, Submission, Student, Copy, Solution
-from ..pregrader import BLANK_FEEDBACK_NAME
 
 
 def copy_to_data(copy):
@@ -133,10 +132,13 @@ class Copies(Resource):
 
 
 def is_exactly_blank(solution):
+    BLANK_FEEDBACK_NAME = app.config['BLANK_FEEDBACK_NAME']
     return all(fb.text == BLANK_FEEDBACK_NAME for fb in solution.feedback) and len(solution.feedback)
 
 
 def merge_feedback(sub, sub_to_merge):
+    BLANK_FEEDBACK_NAME = app.config['BLANK_FEEDBACK_NAME']
+
     # Ordering is the same since Submission.solutions is ordered by problem_id
     for sol, sol_to_merge in zip(sub.solutions, sub_to_merge.solutions):
         # Merge all feedback options together

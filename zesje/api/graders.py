@@ -1,13 +1,12 @@
 """ REST api for graders page """
 
-from flask import abort
+from flask import abort, current_app
 from flask_restful import Resource, reqparse
 
 from ..database import db
 
 from ._helpers import required_string
 from ..database import Grader
-from ..pregrader import AUTOGRADER_NAME
 
 
 # TODO: when making new database structure, have only a single
@@ -30,7 +29,7 @@ class Graders(Resource):
                 'id': g.id,
                 'name': g.name
             }
-            for g in Grader.query.filter(Grader.name != AUTOGRADER_NAME).all()
+            for g in Grader.query.filter(Grader.name != current_app.config['AUTOGRADER_NAME']).all()
         ]
 
     post_parser = reqparse.RequestParser()

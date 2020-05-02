@@ -41,6 +41,14 @@ def config_app(base_config_app):
 def base_app(base_config_app):
     app = base_config_app
 
+    if 'GITLAB_TEST' in os.environ:
+        app.config.update(SQLALCHEMY_DATABASE_URI=f'mysql://root:@mysql/course_test')
+    else:
+        user = app.config['MYSQL_USER']
+        psw = app.config['MYSQL_PSW']
+        host = app.config['MYSQL_HOST']
+        app.config.update(SQLALCHEMY_DATABASE_URI=f'mysql://{user}:{psw}@{host}/course_test')
+
     db.init_app(app)
     app.register_blueprint(api_bp, url_prefix='/api')
     return app
@@ -48,13 +56,6 @@ def base_app(base_config_app):
 
 def app_fixture(base_app):
     app = base_app
-
-    if 'GITLAB_TEST' in os.environ:
-        app.config.update(SQLALCHEMY_DATABASE_URI=f'mysql://root:@mysql/course_test')
-    else:
-        user = app.config['MYSQL_USER']
-        psw = app.config['MYSQL_PSW']
-        app.config.update(SQLALCHEMY_DATABASE_URI=f'mysql://{user}:{psw}@localhost/course_test')
 
     with TemporaryDirectory() as temp_dir:
         app.config.update(
@@ -64,8 +65,10 @@ def app_fixture(base_app):
 
         with app.app_context():
             db.create_all()
+            print('\nCreated tables')
             yield app
             db.drop_all()
+            print('\nDropped tables')
 
 
 @pytest.fixture

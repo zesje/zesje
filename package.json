@@ -3,8 +3,8 @@
   "main": "index.js",
   "license": "AGPL-3.0",
   "scripts": {
-    "dev": "concurrently --kill-others --names \"WEBPACK,MYSQL,PYTHON,CELERY,REDIS\" --prefix-colors \"bgBlue.bold,bgMagenta.bold,bgGreen.bold,bgRed.bold,bgYellow.bold\" \"yarn dev:webpack\" \"yarn dev:mysql start -i\" \"yarn start\" \"yarn dev:celery\" \"yarn dev:redis\"",
-    "dev:backend": "concurrently --kill-others --names \"MYSQL,PYTHON,CELERY,REDIS\" --prefix-colors \"bgMagenta.bold,bgGreen.bold,bgRed.bold,bgYellow.bold\" \"yarn dev:mysql start -i\" \"yarn start\" \"yarn dev:celery\" \"yarn dev:redis\"",
+    "dev": "concurrently --kill-others --names \"WEBPACK,MYSQL,PYTHON,CELERY,REDIS\" --prefix-colors \"bgBlue.bold,bgMagenta.bold,bgGreen.bold,bgRed.bold,bgYellow.bold\" \"yarn dev:webpack\" \"yarn dev:mysql start -i --allow-running\" \"yarn start\" \"yarn dev:celery\" \"yarn dev:redis\"",
+    "dev:backend": "concurrently --kill-others --names \"MYSQL,PYTHON,CELERY,REDIS\" --prefix-colors \"bgMagenta.bold,bgGreen.bold,bgRed.bold,bgYellow.bold\" \"yarn dev:mysql start -i --allow-running\" \"yarn start\" \"yarn dev:celery\" \"yarn dev:redis\"",
     "dev:webpack": "webpack-dev-server --hot --inline --progress --config webpack.dev.js",
     "dev:celery": "ZESJE_SETTINGS=$(pwd)/zesje_dev_cfg.py celery -A zesje.wsgi.celery worker -l info --autoscale=4,1 --max-tasks-per-child=16",
     "dev:redis": "redis-server redis.conf",
@@ -15,7 +15,10 @@
     "lint:js": "standard --verbose | snazzy",
     "test:js": "jest",
     "lint:py": "flake8",
-    "test:py": "yarn dev:mysql start && python3 -m pytest -v -W error::RuntimeWarning && yarn dev:mysql stop",
+    "test:py2": "concurrently --kill-others --raw \"yarn dev:mysql start -i --allow-running\" \"python3 -m pytest -v -W error::RuntimeWarning\"",
+    "command:test:py": "python3 -m pytest -v -W error::RuntimeWarning",
+    "test:py": "yarn dev:mysql is-running && (yarn command:test:py || true) || ((yarn dev:mysql start && yarn command:test:py); yarn dev:mysql stop)",
+    "test:py3": "if yarn dev:mysql is-running; then python3 -m pytest -v -W error::RuntimeWarning; else ((yarn dev:mysql start && python3 -m pytest -v -W error::RuntimeWarning); yarn dev:mysql stop); fi",
     "start": "ZESJE_SETTINGS=$(pwd)/zesje_dev_cfg.py python3 zesje",
     "analyze": "webpack --config webpack.prod.js --profile --json > stats.json; webpack-bundle-analyzer stats.json zesje/static",
     "migrate": "FLASK_APP=zesje.wsgi:app flask db upgrade",
@@ -29,7 +32,7 @@
     "mysql-init": "yarn mysql create && yarn mysql-migrate",
     "dev:mysql-init": "yarn dev:mysql create && yarn dev:mysql-migrate",
     "mysql-migrate": "yarn mysql-start && yarn migrate && yarn mysql-stop",
-    "dev:mysql-migrate": "yarn dev:mysql start && yarn dev:migrate && yarn dev:mysql stop"
+    "dev:mysql-migrate": "yarn dev:mysql is-running && (yarn dev:migrate || true) || ((yarn dev:mysql start && yarn dev:migrate); yarn dev:mysql stop)"
   },
   "standard": {
     "parser": "babel-eslint",

@@ -1,8 +1,10 @@
 import sys
 import os
-import subprocess
-import ctypes
-import signal
+import configparser
+import time
+import psutil
+
+from pathlib import Path
 from os.path import dirname
 from argparse import ArgumentParser
 
@@ -22,64 +24,98 @@ FLUSH PRIVILEGES;
 """
 
 
-def create(config):
+def create(config, allow_exists):
     os.makedirs(config['DATA_DIRECTORY'], exist_ok=True)
 
     datadir = config['MYSQL_DIRECTORY']
     if not os.path.exists(datadir):
+        print('Initializing MySQL...')
         initfile = os.path.join(dirname(config['DATA_DIRECTORY']), 'myinit.sql')
 
         _create_init_file(initfile, config)
 
-        def _set_pdeathsig(sig=signal.SIGTERM):
-            def callable():
-
-                libc = ctypes.CDLL("libc.so.6")
-                return libc.prctl(1, sig)
-            return callable
         command = f'mysqld {_default_options(datadir)} --init-file={initfile} --initialize'
         print(command)
-        process = subprocess.Popen(command.split(' '), stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                                   preexec_fn=_set_pdeathsig(signal.SIGTERM))
-
-        status_code = process.wait()
+        status_code = os.system(command)
 
         os.remove(initfile)
 
         if status_code != 0:
             raise ValueError('Error creating MySQL, please see log files for details.')
-
-
-def start(config, interactive=False):
-    datadir = config['MYSQL_DIRECTORY']
-    command = f'mysqld {_default_options(datadir)} --mysqld=$CONDA_PREFIX/bin/mysqld --gdb'
-    print(command)
-
-    if interactive:
-        def _set_pdeathsig(sig=signal.SIGTERM):
-            def callable():
-
-                libc = ctypes.CDLL("libc.so.6")
-                return libc.prctl(1, sig)
-            return callable
-
-        process = subprocess.Popen(command.split(' '), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                                   preexec_fn=_set_pdeathsig(signal.SIGTERM), env=os.environ)
-        output = process.communicate()
-        for line in output:
-            print(line.decode('utf-8'))
-        code = process.wait()
-        print(code)
     else:
-        code = os.system(command)
+        print('MySQL is already initialized.')
+        if not allow_exists:
+            _exit(1)
 
-    if code != 0:
-        raise ValueError('Error starting MySQL, please see log files for details.')
+
+def start(config, interactive=False, allow_running=False):
+    datadir = config['MYSQL_DIRECTORY']
+    pid_file = _pid_file(datadir)
+    if pid_file:
+        print(f'MySQL is running, PID file for MySQL already exists at {pid_file}')
+        if allow_running:
+            if not interactive:
+                print('Will not start MySQL, continuing...')
+                _exit(0)
+                return True
+            else:
+                print('Will not start MySQL, waiting for interrupt...')
+                sys.stdout.flush()
+                try:
+                    while True:
+                        time.sleep(1)
+                except KeyboardInterrupt:
+                    _exit(0)
+        else:
+            print('Will not start MySQL, exiting...')
+            _exit(1)
+            return False
+    else:
+        command = f'mysqld {_default_options(datadir)} --gdb'
+        print(command)
+
+        if interactive:
+            code = os.system(command)
+
+            try:
+                time.sleep(1.0)
+            except KeyboardInterrupt:
+                print('Stopping MySQL...')
+        else:
+            command += ' &'
+            code = os.system(command)
+
+            if code != 0:
+                raise ValueError('Error starting MySQL, please see log files for details.')
 
 
 def stop(config):
     psw = config['MYSQL_ROOT_PSW']
-    os.system(f'mysqladmin --user=root --password={psw} shutdown')
+    host = config['MYSQL_HOST']
+    os.system(f'mysqladmin --host={host} --user=root --password={psw} shutdown')
+
+
+def is_running(config):
+    datadir = config['MYSQL_DIRECTORY']
+    pid_file = _pid_file(datadir)
+    if pid_file:
+        print(f'MySQL is running, PID file exists at {pid_file}')
+        _exit(0)
+        return True
+    else:
+        print(f'MySQL is not running')
+        _exit(1)
+        return False
+
+
+def _exit(code):
+    if __name__ == '__main__':
+        exit(code)
+
+
+def _pid_file(datadir):
+    pid_file = Path(datadir) / _defaults_file_option('pid_file')
+    return pid_file if (pid_file.exists() and psutil.pid_exists(int(pid_file.read_text()))) else None
 
 
 def _create_init_file(filepath, config):
@@ -90,22 +126,33 @@ def _create_init_file(filepath, config):
         out_file.write(rendered)
 
 
+def _defaults_file():
+    return Path.cwd() / 'mysql.conf'
+
+
+def _defaults_file_option(option):
+    config = configparser.ConfigParser()
+    config.read(_defaults_file())
+    return config['mysqld'][option]
+
+
 def _default_options(datadir):
-    return f'--basedir=$CONDA_PREFIX/bin --datadir={datadir} --log-error={datadir}/mysql_error.log ' + \
-        f'--log_error={datadir}/mysql_error.log ' + \
-        '--socket=mysql.sock --lc-messages-dir=$CONDA_PREFIX/share/mysql --pid-file=mysql.pid'
+    return f'--defaults-file={_defaults_file()} --datadir={datadir} --basedir=$CONDA_PREFIX/bin ' + \
+        '--lc-messages-dir=$CONDA_PREFIX/share/mysql'
 
 
-def main(action, interactive):
+def main(action, args):
     config = Config(dirname(dirname(__file__)))
     create_config(config, None)
 
     if action == 'create':
-        create(config)
+        create(config, args.allow_exists)
     elif action == 'start':
-        start(config, interactive)
+        start(config, args.i, args.allow_running)
     elif action == 'stop':
         stop(config)
+    elif action == 'is-running':
+        is_running(config)
 
 
 if __name__ == '__main__':
@@ -113,10 +160,16 @@ if __name__ == '__main__':
     from .factory import create_config
 
     parser = ArgumentParser(description='Control MySQL database')
-    parser.add_argument('action', choices=['create', 'start', 'stop'], help='Action to be performed')
+    parser.add_argument('action', choices=['create', 'start', 'stop', 'is-running'], help='Action to be performed')
     parser.add_argument('-i',
                         action='store_true',
                         help='Run commant in interactive mode, attached to the console.')
+    parser.add_argument('--allow-running',
+                        action='store_true',
+                        help='Allow the MySQL server to be already running.')
+    parser.add_argument('--allow-exists',
+                        action='store_true',
+                        help='Allow MySQL to be initialized already.')
 
     args = parser.parse_args(sys.argv[1:])
-    main(args.action, args.i)
+    main(args.action, args)

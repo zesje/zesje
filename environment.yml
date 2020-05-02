@@ -57,6 +57,7 @@ dependencies:
         - pytest
         - pyssim
         - pytest-cov
+        - psutil
 
         # Linting
         - flake8

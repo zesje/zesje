@@ -5,6 +5,7 @@ import pytest
 from flask import Flask
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from sqlalchemy.orm.session import close_all_sessions
 
 sys.path.insert(0, str(Path.cwd()))
 
@@ -50,6 +51,9 @@ def base_app(base_config_app):
         app.config.update(SQLALCHEMY_DATABASE_URI=f'mysql://{user}:{psw}@{host}/course_test')
 
     db.init_app(app)
+    with app.app_context():
+        db.drop_all()
+
     app.register_blueprint(api_bp, url_prefix='/api')
     return app
 
@@ -65,10 +69,10 @@ def app_fixture(base_app):
 
         with app.app_context():
             db.create_all()
-            print('\nCreated tables')
             yield app
+
+            close_all_sessions()
             db.drop_all()
-            print('\nDropped tables')
 
 
 @pytest.fixture

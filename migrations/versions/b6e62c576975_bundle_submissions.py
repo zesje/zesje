@@ -105,6 +105,8 @@ def upgrade():
                     duplicate_fbos = True
                     conn.execute(f'UPDATE OR IGNORE solution_feedback SET solution_id = {sol_to_keep.id} ' +
                                  f'WHERE solution_id = {sol_to_delete.id}')
+                    # Delete the duplicate feedback options from the old solution
+                    conn.execute(f'DELETE FROM solution_feedback WHERE solution_id = {sol_to_delete.id}')
 
                 conn.execute(f'DELETE FROM solution WHERE id = {sol_to_delete.id}')
 

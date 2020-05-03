@@ -94,6 +94,7 @@ class Copies(Resource):
             return dict(status=404, message=msg), 404
 
         old_student = copy.submission.student
+        old_submission = copy.submission
 
         # Does this student have other validated copies?
         new_submission = Submission.query.filter(
@@ -102,31 +103,29 @@ class Copies(Resource):
             Submission.validated
         ).one_or_none()
 
-        if old_student == student or (new_submission is None and len(copy.submission.copies) == 1):
-            # We are only validating a submission and possibly updating the student
-            copy.submission.student = student
-            copy.submission.validated = True
-            db.session.commit()
-            return dict(status=200, message=f'Student {student.id} matched to copy {copy.number}'), 200
-
+        # If not, find the submission we are going to assign the copy to
         if new_submission is None:
-            # Create a new submission for the student (we will add the copy later)
-            new_submission = Submission(exam=exam, copies=[], student=student, validated=True)
-            db.session.add(new_submission)
-            for problem in exam.problems:
-                db.session.add(Solution(problem=problem, submission=new_submission))
+            if student == old_student or len(old_submission.copies) == 1:
+                new_submission = old_submission
+            else:
+                # Create a new empty submission for the student
+                new_submission = Submission(exam=exam)
+                db.session.add(new_submission)
+                for problem in exam.problems:
+                    db.session.add(Solution(problem=problem, submission=new_submission))
 
-        # Merge old and new, make new ungraded
-
-        old_submission = copy.submission
-        merge_feedback(new_submission, old_submission)
-        unapprove_grading(new_submission)
         copy.submission = new_submission
+        new_submission.student = student
+        new_submission.validated = True
 
-        if len(old_submission.copies) > 1:
-            unapprove_grading(old_submission)
-        else:
-            db.session.delete(old_submission)
+        if old_submission != new_submission:
+            merge_feedback(new_submission, old_submission)
+            unapprove_grading(new_submission)
+
+            if len(old_submission.copies) == 0:
+                db.session.delete(old_submission)
+            else:
+                unapprove_grading(old_submission)
 
         db.session.commit()
         return dict(status=200, message=f'Student {student.id} matched to copy {copy.number}'), 200

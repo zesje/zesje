@@ -68,10 +68,13 @@ def add_submissions(exam, student, type, with_student=True):
 
 
 def assert_valid_state():
+    students = []
     for sub in Submission.query.all():
         if sub.validated:
             assert len(sub.copies) >= 1
             assert sub.student is not None
+            assert sub.student not in students
+            students.append(sub.student)
         else:
             assert len(sub.copies) <= 1
 

@@ -3,6 +3,8 @@ import os
 import configparser
 import time
 import psutil
+import subprocess as sp
+
 
 from pathlib import Path
 from os.path import dirname
@@ -106,6 +108,23 @@ def is_running(config):
         print(f'MySQL is not running')
         _exit(1)
         return False
+
+
+def dump(config, database):
+    psw = config['MYSQL_ROOT_PSW']
+    host = config['MYSQL_HOST']
+    p = sp.Popen(
+        ['mysqldump', '-uroot', f'--password={psw}', f'--host={host}', database],
+        stdin=sp.PIPE,
+        stdout=sp.PIPE,
+        stderr=sp.PIPE
+    )
+    output, err = p.communicate()
+
+    if p.returncode != 0:
+        raise ValueError(f'mysqldump exited with error code {p.returncode}')
+
+    return output
 
 
 def _exit(code):

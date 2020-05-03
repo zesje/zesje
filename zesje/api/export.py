@@ -2,12 +2,12 @@ from io import BytesIO
 
 from flask import abort, send_file, Response, current_app
 import zipstream
-import subprocess as sp
 import json
 
 from ..database import Exam, Submission
 from ..statistics import full_exam_data, grader_data
 from ..emails import solution_pdf
+from ..mysql import dump
 
 
 def full():
@@ -19,12 +19,10 @@ def full():
         response containing the ``course.sql``
     """
 
-    p = sp.Popen(['mysqldump', '-uroot', 'course'], stdin=sp.PIPE, stdout=sp.PIPE, stderr=sp.PIPE)
-    output, err = p.communicate()
-    rc = p.returncode
-
-    if rc != 0:
-        abort(404, f'mysqldump exited with error code {rc}')
+    try:
+        output = dump(current_app.config, current_app.config['MYSQL_DATABASE'])
+    except Exception as e:
+        abort(404, 'Could not export database content: ' + str(e))
 
     return send_file(
         BytesIO(output),

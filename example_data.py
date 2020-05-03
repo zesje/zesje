@@ -39,8 +39,10 @@ import names
 import flask_migrate
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
+from reportlab.pdfbase import pdfmetrics
 from pdfrw import PdfReader, PdfWriter, PageMerge
 from tempfile import NamedTemporaryFile
+from pathlib import Path
 
 from lorem.text import TextLorem
 
@@ -171,6 +173,7 @@ def generate_solution(pdf, student_id, problems, mc_problems, solve):
         pdf.rect(66 + k * 16, int(A4[1]) - 82 - d * 16, 9, 9, fill=1, stroke=0)
 
     for p in range(pages):
+        pdf.setFont('HugoHandwriting', 19)
         pdf.setFillColorRGB(0, 0.1, 0.4)
 
         if p > 0 and random.random() < solve:
@@ -180,7 +183,8 @@ def generate_solution(pdf, student_id, problems, mc_problems, solve):
         for i in range(3):
             prob = problems[3 * p + i]
             if random.random() < solve:
-                pdf.drawString(prob['x'] + 50, prob['y'] - 50, lorem.sentence())
+                for i in range(random.randint(1, 3)):
+                    pdf.drawString(prob['x'] + 20, prob['y'] - 30 - (20 * i), lorem.sentence())
 
         pdf.showPage()
 
@@ -258,6 +262,8 @@ def design_exam(app, client, pages, students, grade, solve, multiple_copies, ski
         'page': i,
         'mc_options': []
     } for i in range(1, pages)]
+
+    register_fonts()
 
     with NamedTemporaryFile() as pdf_file:
         generate_exam_pdf(pdf_file, exam_name, pages, problems, mc_problems)
@@ -374,6 +380,25 @@ def create_exams(app, client, exams, pages, students, graders, solve, grade, mul
                                            solve, multiple_copies, skip_processing))
 
     return generated_exams
+
+
+def register_fonts():
+    # Font name : file name
+    # File name should be the same as internal font name
+    fonts = {
+        'HugoHandwriting': 'Hugohandwriting-Regular'
+    }
+
+    font_dir = Path.cwd() / 'tests' / 'data' / 'fonts'
+    for font_name, font_file in fonts.items():
+        font_path_afm = font_dir / (font_file + '.afm')
+        font_path_pfb = font_dir / (font_file + '.pfb')
+
+        face = pdfmetrics.EmbeddedType1Face(font_path_afm, font_path_pfb)
+        pdfmetrics.registerTypeFace(face)
+
+        font = pdfmetrics.Font(font_name, font_file, 'WinAnsiEncoding')
+        pdfmetrics.registerFont(font)
 
 
 if __name__ == '__main__':

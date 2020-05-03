@@ -1,10 +1,15 @@
 import React from 'react'
-import Plot from 'react-plotly.js'
+
+import Plotly from 'plotly.js-cartesian-dist'
+import createPlotlyComponent from 'react-plotly.js/factory'
+
 import {range, exp, sqrt, pow, pi, zeros} from 'mathjs'
 
 import humanizeDuration from 'humanize-duration'
 import Hero from '../components/Hero.jsx'
 import * as api from '../api.jsx'
+
+const Plot = createPlotlyComponent(Plotly)
 
 const Tooltip = (props) => {
   if (!props.text) {

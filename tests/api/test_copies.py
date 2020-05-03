@@ -9,14 +9,13 @@ copy_count = 0
 
 @pytest.fixture
 def app_with_data(app):
-    with app.app_context():
-        exam = Exam(name='')
-        students = [Student(id=i, first_name='', last_name='') for i in range(2)]
-        db.session.add(exam)
-        for student in students:
-            db.session.add(student)
-        db.session.commit()
-        yield app, exam, students
+    exam = Exam(name='')
+    students = [Student(id=i, first_name='', last_name='') for i in range(2)]
+    db.session.add(exam)
+    for student in students:
+        db.session.add(student)
+    db.session.commit()
+    yield app, exam, students
 
 
 types = ['unvalidated',

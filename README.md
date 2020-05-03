@@ -79,7 +79,7 @@ If this is the first time that you will run Zesje with MySQL in
 development, then run the following command from the Zesje
 repository directory:
 
-    yarn mysql-init
+    yarn dev:mysql-init
 
 That's all it needs to create the MySQL files in the data directory,
 migrate the database to the last schema and move all your previous data.

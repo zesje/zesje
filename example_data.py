@@ -74,7 +74,8 @@ def init_app(delete):
 
     mysql.create(app.config, allow_exists=True)
     mysql_was_running = mysql.start(app.config, allow_running=True)
-    time.sleep(5)  # wait till mysql starts
+    if not mysql_was_running:
+        time.sleep(5)  # wait till mysql starts
 
     # Only create the database from migrations if it was deleted.
     # Otherwise the user should migrate manually.

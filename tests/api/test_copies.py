@@ -11,7 +11,7 @@ copy_count = 0
 def app_with_data(app):
     with app.app_context():
         exam = Exam(name='')
-        students = [Student(id=i, first_name='', last_name='') for i in range(5)]
+        students = [Student(id=i, first_name='', last_name='') for i in range(2)]
         db.session.add(exam)
         for student in students:
             db.session.add(student)
@@ -24,7 +24,9 @@ types = ['unvalidated',
          'validated',
          'validated_multiple',
          'mixed',
-         'mixed_multiple']
+         'mixed_inverse',
+         'mixed_multiple',
+         'mixed_multiple_inverse']
 
 
 def next_copy():
@@ -48,10 +50,17 @@ def add_submissions(exam, student, type, with_student=True):
     elif type == 'mixed':
         subs.append(Submission(exam=exam, student=student_none, copies=[next_copy()]))
         subs.append(Submission(exam=exam, student=student, validated=True, copies=[next_copy()]))
+    elif type == 'mixed_inverse':
+        subs.append(Submission(exam=exam, student=student, validated=True, copies=[next_copy()]))
+        subs.append(Submission(exam=exam, student=student_none, copies=[next_copy()]))
     elif type == 'mixed_multiple':
         subs.append(Submission(exam=exam, student=student_none, copies=[next_copy()]))
         subs.append(Submission(exam=exam, student=student, copies=[next_copy()]))
         subs.append(Submission(exam=exam, student=student, validated=True, copies=[next_copy(), next_copy()]))
+    elif type == 'mixed_multiple_inverse':
+        subs.append(Submission(exam=exam, student=student, validated=True, copies=[next_copy(), next_copy()]))
+        subs.append(Submission(exam=exam, student=student_none, copies=[next_copy()]))
+        subs.append(Submission(exam=exam, student=student, copies=[next_copy()]))
 
     for sub in subs:
         db.session.add(sub)
@@ -188,25 +197,65 @@ def test_mixed_multiple_validated(test_client, app_with_data):
     assert_exactly(*unvalidated2, student, validated=False)
 
 
-old_student_types = ['unvalidated', 'validated']
-new_student_types = ['validated', 'validated_multiple']
-student_types = list(product(old_student_types, new_student_types))
+types_product = list(product(types, types))
 
-
-@pytest.mark.parametrize(['old_student_type', 'new_student_type'], student_types,
-                         ids=['_'.join(student_type) for student_type in student_types])
-def test_switch_single(test_client, app_with_data, old_student_type, new_student_type):
+@pytest.mark.parametrize(['old_student_type', 'new_student_type'], types_product,
+                         ids=['_'.join(student_type) for student_type in types_product])
+def test_switch_all(test_client, app_with_data, old_student_type, new_student_type):
     app, exam, students = app_with_data
     student_old = students[0]
-    sub_old, copies_old = add_submissions(exam, student_old, old_student_type)[0]
+    sub_copies_old = add_submissions(exam, student_old, old_student_type)
+    validated_old = [sub.validated for sub, copies in sub_copies_old]
+    sub_old, copies_old = sub_copies_old[0]
 
     student_new = students[1]
-    sub_new, copies_new = add_submissions(exam, student_old, new_student_type)[0]
+    sub_copies_new = add_submissions(exam, student_new, new_student_type)
 
     validate(copies_old[0], student_new, exam, test_client)
 
-    if sub_old in db.session:
-        sub_old, sub_new = sub_new, sub_old
+    removed_subs = 0
+    sub_copies_added = None
 
-    assert_exactly(sub_new, copies_old + copies_new, student_new)
-    assert sub_old not in db.session
+    for (sub, copies), validated in zip(sub_copies_old, validated_old):
+        if sub not in db.session:
+            removed_subs += 1
+        elif sub != sub_old:
+            # Other submissions shouldn't be altered
+            assert_exactly(sub, copies, student_old, validated=validated)
+        elif len(copies) > len(sub.copies):
+            # Copies have been removed, assert the correct one was removed
+            assert_exactly(sub, list(set(copies) - set([copies_old[0]])), student_old)
+        else:
+            # This has to be the submission that is assigned to the new student
+            sub_copies_added = (sub, copies)
+
+    for sub, copies in sub_copies_new:
+        if sub not in db.session:
+            removed_subs += 1
+            if sub_copies_added:
+                # Assert that the copies from this deleted submission are assigned
+                # to the submission with added copies we detected earlier
+                sub_added, copies_added = sub_copies_added
+                assert_exactly(sub_added, copies_added + copies, student_new)
+        elif not sub.validated:
+            # Unvalidated submissions shouldn't be altered
+            assert_exactly(sub, copies, student_new, validated=False)
+        else:
+            # We found a submission where copies are added
+            # Assert that we didn't found such a submission previously
+            assert sub_copies_added is None
+            assert_exactly(sub, copies + [copies_old[0]], student_new)
+            sub_copies_added = True
+
+    # A new submission was added by the endpoint, let's find it
+    if sub_copies_added is None:
+        sub_added = Submission.query.filter(Submission.validated,
+                                            Submission.student == student_new).one()
+        # Assert it was indeed a new submission
+        assert sub_added not in [sub for sub, copies in sub_copies_old]
+        assert sub_added not in [sub for sub, copies in sub_copies_new]
+
+        assert_exactly(sub_added, [copies_old[0]], student_new)
+
+    # We should never remove more than one submission
+    assert removed_subs <= 1

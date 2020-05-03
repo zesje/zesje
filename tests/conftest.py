@@ -42,14 +42,6 @@ def config_app(base_config_app):
 def base_app(base_config_app):
     app = base_config_app
 
-    if 'GITLAB_TEST' in os.environ:
-        app.config.update(SQLALCHEMY_DATABASE_URI=f'mysql://root:@mysql/course_test')
-    else:
-        user = app.config['MYSQL_USER']
-        psw = app.config['MYSQL_PSW']
-        host = app.config['MYSQL_HOST']
-        app.config.update(SQLALCHEMY_DATABASE_URI=f'mysql://{user}:{psw}@{host}/course_test')
-
     db.init_app(app)
     with app.app_context():
         db.drop_all()

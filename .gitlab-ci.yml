@@ -77,8 +77,8 @@ test_py:
   variables:
     MYSQL_DATABASE: "course_test"
     MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
-    GITLAB_TEST: "1"
   script:
+    - echo -e "\nMYSQL_HOST = 'mysql'\nMYSQL_PSW = None" >> zesje_test_cfg.py
     - yarn test:py:cov
   artifacts:
     paths:

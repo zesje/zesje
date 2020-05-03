@@ -92,14 +92,17 @@ def create_config(config_instance, extra_config):
     user = config_instance['MYSQL_USER']
     psw = config_instance['MYSQL_PSW']
     host = config_instance['MYSQL_HOST']
+    database = config_instance['MYSQL_DATABASE']
 
     # Force MySQL to use a TCP connection
     host = host.replace('localhost', '127.0.0.1')
+    # Interpret None as no password
+    psw = psw if psw is not None else ''
 
     config_instance.update(
         MYSQL_HOST=host,
         MYSQL_DIRECTORY=os.path.join(config_instance['DATA_DIRECTORY'], 'mysql'),
-        SQLALCHEMY_DATABASE_URI=f'mysql://{user}:{psw}@{host}/course',
+        SQLALCHEMY_DATABASE_URI=f'mysql://{user}:{psw}@{host}/{database}',
         SQLALCHEMY_PASSWORD=psw,
         SQLALCHEMY_TRACK_MODIFICATIONS=False  # Suppress future deprecation warning
     )

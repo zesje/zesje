@@ -17,6 +17,7 @@ MYSQL_USER = 'zesje'
 MYSQL_ROOT_PSW = 'rootpsw'
 MYSQL_PSW = 'zesjepsw'
 MYSQL_HOST = 'localhost'
+MYSQL_DATABASE = 'course'
 
 CELERY_BROKER_URL = 'redis://localhost:6479',
 CELERY_RESULT_BACKEND = 'redis://localhost:6479'

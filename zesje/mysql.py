@@ -52,6 +52,11 @@ def create(config, allow_exists):
 
 def start(config, interactive=False, allow_running=False):
     datadir = config['MYSQL_DIRECTORY']
+    if not Path(datadir).exists():
+        print(f'MySQL is not yet initialized at {datadir}')
+        _exit(1)
+        return False
+
     pid_file = _pid_file(datadir)
     if pid_file:
         print(f'MySQL is running, PID file for MySQL already exists at {pid_file}')

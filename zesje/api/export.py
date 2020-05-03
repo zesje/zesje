@@ -20,7 +20,7 @@ def full():
     """
 
     try:
-        output = dump(current_app.config, current_app.config['MYSQL_DATABASE'])
+        output = dump(current_app.config)
     except Exception as e:
         abort(404, 'Could not export database content: ' + str(e))
 

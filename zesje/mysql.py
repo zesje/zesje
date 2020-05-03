@@ -115,9 +115,10 @@ def is_running(config):
         return False
 
 
-def dump(config, database):
+def dump(config, database=None):
     psw = config['MYSQL_ROOT_PSW']
     host = config['MYSQL_HOST']
+    database = database if database is not None else config['MYSQL_DATABASE']
     p = sp.Popen(
         ['mysqldump', '-uroot', f'--password={psw}', f'--host={host}', database],
         stdin=sp.PIPE,

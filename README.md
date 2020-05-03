@@ -162,8 +162,8 @@ To change something in the database schema, simply add this change to `zesje/dat
 
 This uses Flask-Migrate to make a new migration script in `migrations/versions` which needs to be reviewed and edited. Please suffix the name of this file with something distinctive and add a short description at the top of the file. To apply the database migration run:
 
-    yarn dev:migrate # (for the development database)
-    yarn migrate # (for the production database)
+    yarn dev:mysql-migrate # (for the development database)
+    yarn mysql-migrate # (for the production database)
 
 ### Building and running the production version
 

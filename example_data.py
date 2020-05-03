@@ -145,7 +145,7 @@ def generate_solution(pdf, student_id, problems, mc_problems, solve):
 
     for p in range(pages):
         pdf.setFillColorRGB(0, 0, 1)
-        pdf.setFont('Ballpoint', 16)
+        pdf.setFont('HugoHandwriting', 19)
 
         if p > 0 and random.random() < solve:
             o = random.choice(mc_problems[p - 1]['mc_options'])
@@ -329,7 +329,7 @@ def register_fonts():
     # Font name : file name
     # File name should be the same as internal font name
     fonts = {
-        'Ballpoint': 'Ballpointprint'
+        'HugoHandwriting': 'Hugohandwriting-Regular'
     }
 
     font_dir = Path.cwd() / 'tests' / 'data' / 'fonts'

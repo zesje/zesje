@@ -10,6 +10,7 @@ from flask_restful import Resource, reqparse
 from flask_restful.inputs import boolean
 from werkzeug.datastructures import FileStorage
 from sqlalchemy.orm import selectinload
+from sqlalchemy import func
 
 from zesje.api._helpers import _shuffle
 from zesje.api.problems import problem_to_data
@@ -18,7 +19,6 @@ from ..pdf_generation import page_is_size, save_with_even_pages
 from ..pdf_generation import write_finalized_exam
 from ..database import db, Exam, ExamWidget, Submission, FeedbackOption, token_length
 from .submissions import sub_to_data
-from ..pregrader import BLANK_FEEDBACK_NAME
 
 
 def _get_exam_dir(exam_id):
@@ -59,6 +59,7 @@ def add_blank_feedback(problems):
     """
     Add the blank feedback option to each problem.
     """
+    BLANK_FEEDBACK_NAME = current_app.config['BLANK_FEEDBACK_NAME']
     for p in problems:
         db.session.add(FeedbackOption(problem_id=p.id, text=BLANK_FEEDBACK_NAME, score=0))
 
@@ -115,13 +116,18 @@ class Exams(Resource):
             submissions : int
                 Number of submissions
         """
+        sub_count = {
+            result.exam_id: result.sub_count for result in
+            db.session.query(Submission.exam_id, func.count(Submission.id).label('sub_count'))
+            .group_by(Submission.exam_id).all()
+        }
         return [
             {
                 'id': ex.id,
                 'name': ex.name,
-                'submissions': len(ex.submissions)
+                'submissions': sub_count[ex.id]
             }
-            for ex in Exam.query.order_by(Exam.id).all()
+            for ex in db.session.query(Exam.id, Exam.name).order_by(Exam.id).all()
         ]
 
     def _get_single(self, exam_id):
@@ -155,7 +161,7 @@ class Exams(Resource):
         submissions = [sub_to_data(sub) for sub in exam.submissions]
 
         # Sort submissions by selecting those with students assigned, then by
-        # student number, then by copy number.
+        # student number, then by submission id.
         # TODO: This is a minimal fix of #166, to be replaced later.
         submissions = sorted(
             submissions,
@@ -205,7 +211,7 @@ class Exams(Resource):
             'exam_id': exam.id,
             'submissions': [
                 {
-                    'id': sub.copy_number,
+                    'id': sub.id,
                     'student': {
                         'id': sub.student.id,
                         'firstName': sub.student.first_name,
@@ -324,6 +330,32 @@ class Exams(Resource):
 
         return dict(status=400, message=f'One of finalized or anonymous must be present'), 400
 
+    patch_parser = reqparse.RequestParser()
+    patch_parser.add_argument('name', type=str, required=True)
+
+    def patch(self, exam_id):
+        """Update the name of an existing exam.
+
+        Parameters
+        ----------
+        name: str
+            name for the exam
+        """
+
+        exam = Exam.query.get(exam_id)
+        if exam is None:
+            return dict(status=404, message='Exam does not exist.'), 404
+
+        args = self.patch_parser.parse_args()
+        name = args['name'].strip()
+        if not name:
+            return dict(status=400, message='Exam name is empty.'), 400
+
+        exam.name = name
+        db.session.commit()
+
+        return dict(status=200, message='ok'), 200
+
 
 class ExamSource(Resource):
 
@@ -389,11 +421,12 @@ class ExamGeneratedPdfs(Resource):
             datamatrix_y=barcode_widget.y
         )
 
-    post_parser = reqparse.RequestParser()
-    post_parser.add_argument('copies_start', type=int, required=True)
-    post_parser.add_argument('copies_end', type=int, required=True)
+    get_parser = reqparse.RequestParser()
+    get_parser.add_argument('copies_start', type=int, required=True)
+    get_parser.add_argument('copies_end', type=int, required=True)
+    get_parser.add_argument('type', type=str, required=True)
 
-    def post(self, exam_id):
+    def get(self, exam_id):
         """Generates the exams with datamatrices and copy numbers.
 
         A range is given. Ranges should be starting from 1.
@@ -415,7 +448,7 @@ class ExamGeneratedPdfs(Resource):
             The requested file (zip or pdf)
         """
 
-        args = self.post_parser.parse_args()
+        args = self.get_parser.parse_args()
 
         copies_start = args.get('copies_start')
         copies_end = args.get('copies_end')
@@ -423,16 +456,10 @@ class ExamGeneratedPdfs(Resource):
         exam = Exam.query.get(exam_id)
         if exam is None:
             return dict(status=404, message='Exam does not exist.'), 404
-
-        exam_dir = _get_exam_dir(exam_id)
-        generated_pdfs_dir = self._get_generated_exam_dir(exam_dir)
-
         if not exam.finalized:
             msg = f'Exam is not finalized.'
             return dict(status=403, message=msg), 403
-        if copies_start is None or copies_end is None:
-            msg = f'Missing parameters and/or "copies_start", "copies_end"'
-            return dict(status=400, message=msg), 400
+
         if copies_end < copies_start:
             msg = f'copies_end should be larger than copies_start'
             return dict(status=400, message=msg), 400
@@ -440,46 +467,21 @@ class ExamGeneratedPdfs(Resource):
             msg = f'copies_start should be larger than 0'
             return dict(status=400, message=msg), 400
 
+        exam_dir = _get_exam_dir(exam_id)
+        generated_pdfs_dir = self._get_generated_exam_dir(exam_dir)
+
         os.makedirs(generated_pdfs_dir, exist_ok=True)
 
         pdf_paths, copy_nums = self._get_paths_for_range(generated_pdfs_dir, copies_start, copies_end)
 
         generate_selectors = [not os.path.exists(pdf_path) for pdf_path in pdf_paths]
-        pdf_paths = itertools.compress(pdf_paths, generate_selectors)
-        copy_nums = itertools.compress(copy_nums, generate_selectors)
 
-        self._generate_exam_pdfs(exam, pdf_paths, copy_nums)
-
-        return {
-            'success': True
-        }
-
-    get_parser = reqparse.RequestParser()
-    get_parser.add_argument('copies_start', type=int, required=True)
-    get_parser.add_argument('copies_end', type=int, required=True)
-    get_parser.add_argument('type', type=str, required=True)
-
-    def get(self, exam_id):
-        args = self.get_parser.parse_args()
-
-        copies_start = args['copies_start']
-        copies_end = args['copies_end']
-
-        exam = Exam.query.get(exam_id)
-        if exam is None:
-            return dict(status=404, message='Exam does not exist.'), 404
-
-        exam_dir = _get_exam_dir(exam_id)
-        generated_pdfs_dir = self._get_generated_exam_dir(exam_dir)
+        if any(generate_selectors):
+            pdf_paths_to_generate = itertools.compress(pdf_paths, generate_selectors)
+            copy_nums_to_generate = itertools.compress(copy_nums, generate_selectors)
+            self._generate_exam_pdfs(exam, pdf_paths_to_generate, copy_nums_to_generate)
 
         output_file = TemporaryFile()
-
-        pdf_paths, copy_nums = self._get_paths_for_range(generated_pdfs_dir, copies_start, copies_end)
-
-        for pdf_path in pdf_paths:
-            if not os.path.exists(pdf_path):
-                msg = f'One or more exams in range have not been generated (yet)'
-                return dict(status=400, message=msg), 400
 
         if args['type'] == 'pdf':
             join_pdfs(

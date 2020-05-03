@@ -65,6 +65,8 @@ class Scans(Resource):
         exam = Exam.query.get(exam_id)
         if exam is None:
             return dict(status=404, message='Exam does not exist.'), 404
+        elif not exam.finalized:
+            return dict(status=403, message='Exam is not finalized.'), 403
 
         scan = Scan(exam=exam, name=args['pdf'].filename,
                     status='processing', message='Waiting...')

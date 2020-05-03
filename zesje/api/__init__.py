@@ -5,17 +5,18 @@ from .graders import Graders
 from .exams import Exams, ExamSource, ExamGeneratedPdfs, ExamPreview
 from .scans import Scans
 from .students import Students
-from .submissions import Submissions, MissingPages
+from .copies import Copies, MissingPages
+from .submissions import Submissions
 from .problems import Problems
 from .feedback import Feedback
 from .solutions import Solutions, Approve
 from .widgets import Widgets
 from .emails import EmailTemplate, RenderedEmailTemplate, Email
 from .mult_choice import MultipleChoice
+from .statistics import Statistics
 
 from . import signature
 from . import images
-from . import summary_plot
 from . import export
 
 api_bp = Blueprint(__name__, __name__)
@@ -29,11 +30,14 @@ api.add_resource(ExamGeneratedPdfs, '/exams/<int:exam_id>/generated_pdfs')
 api.add_resource(ExamPreview, '/exams/<int:exam_id>/preview')
 api.add_resource(Scans, '/scans/<int:exam_id>')
 api.add_resource(Students, '/students', '/students/<int:student_id>')
+api.add_resource(Copies,
+                 '/copies/<int:exam_id>',
+                 '/copies/<int:exam_id>/<int:copy_number>')
+api.add_resource(MissingPages,
+                 '/copies/missing_pages/<int:exam_id>')
 api.add_resource(Submissions,
                  '/submissions/<int:exam_id>',
                  '/submissions/<int:exam_id>/<int:submission_id>')
-api.add_resource(MissingPages,
-                 '/submissions/missing_pages/<int:exam_id>')
 api.add_resource(Problems,
                  '/problems',
                  '/problems/<int:problem_id>')
@@ -56,14 +60,15 @@ api.add_resource(Approve,
 api.add_resource(MultipleChoice,
                  '/mult-choice/<int:id>',
                  '/mult-choice/')
-
+api.add_resource(Statistics,
+                 '/stats/<int:exam_id>')
 # Other resources that don't return JSON
 # It is possible to get flask_restful to work with these, but not
 # very idiomatic.
 
 # Images
 api_bp.add_url_rule(
-    '/images/signature/<int:exam_id>/<int:submission_id>',
+    '/images/signature/<int:exam_id>/<int:copy_number>',
     'signature',
     signature.get,
 )
@@ -71,11 +76,6 @@ api_bp.add_url_rule(
     '/images/solutions/<int:exam_id>/<int:problem_id>/<int:submission_id>/<int:full_page>',
     'solution_image',
     images.get,
-)
-api_bp.add_url_rule(
-    '/images/summary/<int:exam_id>',
-    'exam_summary',
-    summary_plot.get,
 )
 
 # Exports

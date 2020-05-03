@@ -1,7 +1,27 @@
 from flask_restful import Resource
-from flask import request
+from flask import current_app, request
 
 from ..database import db, Widget, ExamWidget, MultipleChoiceOption
+
+
+def force_boundaries(widget):
+    """ Moves the exam widget if it overlaps with the corner marker margins. """
+    if not isinstance(widget, ExamWidget):
+        return False
+
+    size = widget.size
+    page_size = current_app.config['PAGE_FORMATS'][current_app.config['PAGE_FORMAT']]
+    margin = int(current_app.config['MARKER_MARGIN'] + current_app.config['MARKER_LINE_WIDTH'])
+
+    x = min(max(widget.x, margin), page_size[0] - size[0] - margin)
+    y = min(max(widget.y, margin), page_size[1] - size[1] - margin)
+
+    if x != widget.x or y != widget.y:
+        widget.x = x
+        widget.y = y
+        return True
+
+    return False
 
 
 class Widgets(Resource):
@@ -30,6 +50,15 @@ class Widgets(Resource):
             except (TypeError, ValueError) as error:
                 return dict(status=400, message=str(error)), 400
 
+        changed = force_boundaries(widget)
+
         db.session.commit()
+
+        if changed:
+            # this response forces the client to move the widget to the specified position
+            return dict(status=409,
+                        message="The Exam widget has to lay between the corner markers region.",
+                        widgetId=widget_id,
+                        position={'x': widget.x, 'y': widget.y}), 409
 
         return dict(status=200, message="ok"), 200

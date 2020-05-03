@@ -13,15 +13,18 @@ Usage:
                        [--grade {nothing,partial,all}]
 
     optional arguments:
-      -h, --help           show this help message and exit
-      -d, --delete         delete previous data
-      --exams (int)        number of exams to add
-      --pages (int)        number of pages per exam
-      --students (int)     number of students per exam
-      --graders (int)      number of graders
-      --solve (float)      how much of the solutions to solve (between 0 and 100)
-      --grade (float)      how much of the exam to grade (between 0 and 100). Notice that only non-
-                           blank solutions will be considered for grading.
+      -h, --help                show this help message and exit
+      -d, --delete              delete previous data
+      --exams (int)             number of exams to add
+      --pages (int)             number of pages per exam
+      --students (int)          number of students per exam
+      --graders (int)           number of graders
+      --solve (float)           how much of the solutions to solve (between 0 and 100)
+      --grade (float)           how much of the exam to grade (between 0 and 100). Notice that only non-
+                                blank solutions will be considered for grading.
+      --skip-processing         fakes the pdf processing to reduce time.
+                                As a drawback, blanks will not be detected.
+      --multiple-copies (float) how much of the students submit multiple copies (between 0 and 100)
 
 '''
 
@@ -33,6 +36,7 @@ import argparse
 
 import lorem
 import names
+import flask_migrate
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfbase import pdfmetrics
@@ -42,7 +46,7 @@ from pathlib import Path
 
 from lorem.text import TextLorem
 
-from zesje.database import db, Exam, Scan
+from zesje.database import db, Exam, Scan, Submission, Solution, Page, Copy
 from zesje.scans import _process_pdf
 from zesje.factory import create_app
 
@@ -65,10 +69,11 @@ def init_app(delete):
     os.makedirs(app.config['DATA_DIRECTORY'], exist_ok=True)
     os.makedirs(app.config['SCAN_DIRECTORY'], exist_ok=True)
 
-    with app.app_context():
-        if delete:
-            db.drop_all()
-        db.create_all()
+    # Only create the database from migrations if it was deleted.
+    # Otherwise the user should migrate manually.
+    if delete:
+        with app.app_context():
+            flask_migrate.upgrade(directory='migrations')
 
     return app
 
@@ -110,7 +115,28 @@ def generate_students(students):
     } for i in range(students)]
 
 
-def handle_pdf_processing(exam_id, pdf):
+def _fake_process_pdf(scan, pages, student_ids, copies_per_student):
+    copy_number = 0
+    for student_id, number_of_copies in zip(student_ids, copies_per_student):
+        for _ in range(number_of_copies):
+            copy_number += 1
+            copy = Copy(number=copy_number)
+
+            base_copy_path = os.path.join(f'{scan.exam.id}_data', 'submissions', f'{copy_number}')
+            for page in range(pages + 1):
+                db.session.add(Page(path=os.path.join(base_copy_path, f'page{page:02d}.jpg'), copy=copy, number=page))
+
+            sub = Submission(copies=[copy], exam=scan.exam, student_id=student_id)
+            db.session.add(sub)
+
+            for problem in scan.exam.problems:
+                db.session.add(Solution(problem=problem, submission=sub))
+
+    scan.status = 'success'
+    db.session.commit()
+
+
+def handle_pdf_processing(app, exam_id, pdf, pages, student_ids, copies_per_student, skip_processing=False):
     exam = Exam.query.get(exam_id)
     scan = Scan(exam=exam, name=pdf.name,
                 status='processing', message='Waiting...')
@@ -123,7 +149,10 @@ def handle_pdf_processing(exam_id, pdf):
         outfile.write(pdf.read())
         pdf.seek(0)
 
-    _process_pdf(scan_id=scan.id)
+    if skip_processing:
+        _fake_process_pdf(scan, pages, student_ids, copies_per_student)
+    else:
+        _process_pdf(scan_id=scan.id)
 
     return {
         'id': scan.id,
@@ -136,20 +165,20 @@ def handle_pdf_processing(exam_id, pdf):
 def generate_solution(pdf, student_id, problems, mc_problems, solve):
     pages = len(problems) // 3
 
-    pdf.setFillColorRGB(0, 0, 1)
+    pdf.setFillColorRGB(0, 0.1, 0.4)
 
     sID = str(student_id)
     for k in range(7):
         d = int(sID[k])
-        pdf.rect(68 + k * 16, int(A4[1]) - 80 - d * 16, 5, 5, fill=1)
+        pdf.rect(66 + k * 16, int(A4[1]) - 82 - d * 16, 9, 9, fill=1, stroke=0)
 
     for p in range(pages):
-        pdf.setFillColorRGB(0, 0, 1)
         pdf.setFont('HugoHandwriting', 19)
+        pdf.setFillColorRGB(0, 0.1, 0.4)
 
         if p > 0 and random.random() < solve:
             o = random.choice(mc_problems[p - 1]['mc_options'])
-            pdf.rect(o['x'] + 2, o['y'] + 4, 5, 5, fill=1)
+            pdf.rect(o['x'] + 2, o['y'] + 4, 5, 5, fill=1, stroke=0)
 
         for i in range(3):
             prob = problems[3 * p + i]
@@ -160,7 +189,7 @@ def generate_solution(pdf, student_id, problems, mc_problems, solve):
         pdf.showPage()
 
 
-def solve_problems(pdf_file, pages, student_ids, problems, mc_problems, solve):
+def solve_problems(pdf_file, pages, student_ids, problems, mc_problems, solve, copies_per_student):
     if solve < 0.01:
         # nothing to solve
         return
@@ -168,12 +197,13 @@ def solve_problems(pdf_file, pages, student_ids, problems, mc_problems, solve):
     with NamedTemporaryFile() as sol_file:
         pdf = canvas.Canvas(sol_file.name, pagesize=A4)
 
-        for id in student_ids:
-            generate_solution(pdf, id, problems, mc_problems, solve)
+        for id, number_of_copies in zip(student_ids, copies_per_student):
+            for _ in range(number_of_copies):
+                generate_solution(pdf, id, problems, mc_problems, solve)
 
-            if pages % 2 == 1:
-                # for an odd number of pages, zesje adds a blank page at the end
-                pdf.showPage()
+                if pages % 2 == 1:
+                    # for an odd number of pages, zesje adds a blank page at the end
+                    pdf.showPage()
 
         pdf.save()
 
@@ -188,19 +218,27 @@ def solve_problems(pdf_file, pages, student_ids, problems, mc_problems, solve):
         PdfWriter(pdf_file.name, trailer=exam_pdf).write()
 
 
-def grade_problems(exam_id, graders, problems, submissions, student_ids, grade):
+def validate_signatures(client, exam_id, copies):
+    for copy in copies:
+        number = copy['number']
+        student = copy['student']
+        if not student:
+            print(f'\tNo student detected for copy {number} of exam {exam_id}')
+        else:
+            student_id = student['id']
+            client.put(f'/api/copies/{exam_id}/{number}', data={'studentID': student_id})
+
+
+def grade_problems(client, exam_id, graders, problems, submissions, grade):
     for k in range(len(submissions)):
         sub = submissions[k]
         submission_id = sub['id']
-
-        # assign a student to each submission
-        client.put(f'/api/submissions/{exam_id}/{submission_id}', json={'studentID': student_ids[k]})
 
         for prob in sub['problems']:
             # randomly select the problem if it is not blanck
             if random.random() <= grade and len(prob['feedback']) == 0:
                 fo = next(filter(lambda p: p['id'] == prob['id'], problems))['feedback']
-                opt = fo[random.randint(1, len(fo) - 1)]
+                opt = fo[random.randint(0, len(fo) - 1)]
                 client.put(f"/api/solution/{exam_id}/{submission_id}/{prob['id']}",
                            json={
                                'id': opt['id'],
@@ -208,7 +246,7 @@ def grade_problems(exam_id, graders, problems, submissions, student_ids, grade):
                            })
 
 
-def create_exam(pages, students, grade, solve):
+def design_exam(app, client, pages, students, grade, solve, multiple_copies, skip_processing):
     exam_name = lorem_name.sentence().replace('.', '')
     problems = [{
         'question': str(i + 1) + '. ' + lorem_prob.sentence().replace('.', '?'),
@@ -290,11 +328,10 @@ def create_exam(pages, students, grade, solve):
 
     client.put(f'api/exams/{exam_id}', data={'finalized': True})
 
-    # Generate PDFs
-    client.post(f'api/exams/{exam_id}/generated_pdfs', data={"copies_start": 1, "copies_end": students})
     # Download PDFs
+    copies_per_student = [2 if random.random() < multiple_copies else 1 for _ in range(students)]
     generated = client.get(f'api/exams/{exam_id}/generated_pdfs',
-                           data={"copies_start": 1, "copies_end": students, 'type': 'pdf'})
+                           data={"copies_start": 1, "copies_end": sum(copies_per_student), 'type': 'pdf'})
 
     student_ids = [s['id'] for s in client.get(f'/api/students').get_json()]
     random.shuffle(student_ids)
@@ -306,11 +343,15 @@ def create_exam(pages, students, grade, solve):
         submission_pdf.seek(0)
 
         print('\tWaiting for students to solve it.')
-        solve_problems(submission_pdf, pages, student_ids, problems, mc_problems, solve)
+        solve_problems(submission_pdf, pages, student_ids, problems, mc_problems, solve, copies_per_student)
         submission_pdf.seek(0)
 
         print('\tProcessing scans (this may take a while).',)
-        handle_pdf_processing(exam_id, submission_pdf)
+        handle_pdf_processing(app, exam_id, submission_pdf, pages, student_ids, copies_per_student, skip_processing)
+
+    # Validate signatures
+    copies = client.get(f'api/copies/{exam_id}').get_json()
+    validate_signatures(client, exam_id, copies)
 
     submissions = client.get(f'api/submissions/{exam_id}').get_json()
     problems = client.get('/api/exams/' + str(exam_id)).get_json()['problems']
@@ -318,11 +359,27 @@ def create_exam(pages, students, grade, solve):
     graders = client.get('/api/graders').get_json()
 
     print('\tIt\'s grading time.')
-    grade_problems(exam_id, graders, problems, submissions, student_ids, grade)
+    grade_problems(client, exam_id, graders, problems, submissions, grade)
 
     print('\tAll done!')
-    # exam_data = client.get('/api/exams/' + str(exam_id)).get_json()
-    # print(exam_data)
+    return client.get('/api/exams/' + str(exam_id)).get_json()
+
+
+def create_exams(app, client, exams, pages, students, graders, solve, grade, multiple_copies, skip_processing=False):
+    # create students
+    for student in generate_students(students):
+        client.put('api/students', data=student)
+
+    # create graders
+    for _ in range(max(1, graders)):
+        client.post('/api/graders', data={'name': names.get_full_name()})
+
+    generated_exams = []
+    for _ in range(exams):
+        generated_exams.append(design_exam(app, client, max(1, pages), students, grade,
+                                           solve, multiple_copies, skip_processing))
+
+    return generated_exams
 
 
 def register_fonts():
@@ -347,6 +404,8 @@ def register_fonts():
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Create example exam data in the database.')
     parser.add_argument('-d', '--delete', action='store_true', help='delete previous data')
+    parser.add_argument('--skip-processing', action='store_true', help='fakes the pdf processing to reduce time. \
+                        As a drawback, blanks will not be detected.')
     parser.add_argument('--exams', type=int, default=1, help='number of exams to add')
     parser.add_argument('--pages', type=int, default=3, help='number of pages per exam (min is 1)')
     parser.add_argument('--students', type=int, default=30, help='number of students per exam')
@@ -354,19 +413,20 @@ if __name__ == '__main__':
     parser.add_argument('--solve', type=int, default=90, help='how much of the solutions to solve (between 0 and 100)')
     parser.add_argument('--grade', type=int, default=60, help='how much of the exam to grade (between 0 and 100). \
                         Notice that only non-blank solutions will be considered for grading.')
+    parser.add_argument('--multiple-copies', type=int, default=5,
+                        help='how much of the students submit multiple copies (between 0 and 100)')
 
     args = parser.parse_args(sys.argv[1:])
 
     app = init_app(args.delete)
 
     with app.test_client() as client:
-        # create students
-        for student in generate_students(args.students):
-            client.put('api/students', data=student)
-
-        # create graders
-        for _ in range(max(1, args.graders)):
-            client.post('/api/graders', data={'name': names.get_full_name()})
-
-        for _ in range(args.exams):
-            create_exam(max(1, args.pages), args.students, args.grade / 100, args.solve / 100)
+        create_exams(app, client,
+                     args.exams,
+                     args.pages,
+                     args.students,
+                     args.graders,
+                     args.solve / 100,
+                     args.grade / 100,
+                     args.multiple_copies / 100,
+                     args.skip_processing)

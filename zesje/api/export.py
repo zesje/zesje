@@ -50,12 +50,21 @@ def exam(file_format, exam_id):
     if file_format not in ('dataframe', 'xlsx', 'xlsx_detailed'):
         abort(404)
 
-    serialized = BytesIO()
+    serialized = ResilientBytesIO()
 
     data.index.name = 'Student ID'
+    data = data.infer_objects()  # convert columns to numeric types if possible
+
+    # move the student names to the first columns
+    cols = data.columns
+    cols_names = data.columns.get_level_values(0).isin(['First name', 'Last name'])
+    cols = list(cols[cols_names]) + list(cols[~cols_names])
+    data = data[cols]
 
     if file_format == 'xlsx':
-        data = data.iloc[:, data.columns.get_level_values(1) == 'total']
+        cols_total = data.columns.get_level_values(1) == 'total'
+        cols_total[:2] = True  # include student names
+        data = data.iloc[:, cols_total]
         data.columns = data.columns.get_level_values(0)
 
     if file_format == 'dataframe':
@@ -101,12 +110,12 @@ def zipped_exam_solutions_generator(exam_id, anonymous, current_app):
     with current_app.app_context():
         z = zipstream.ZipFile(mode='w')
 
-        subs = Submission.query.filter(Submission.exam_id == exam_id).all()
-        students = set(sub.student for sub in subs if sub.student)
+        subs = Submission.query.filter(Submission.exam_id == exam_id, Submission.validated).all()
+        student_sub = {sub.student: sub for sub in subs}
 
-        for student in students:
+        for student, sub in student_sub.items():
             if anonymous:
-                copy_numbers = sorted(sub.copy_number for sub in subs if sub.student == student)
+                copy_numbers = list(copy.number for copy in sub.copies)
                 file_name = f'cop{"y" if len(copy_numbers) == 1 else "ies"}-' \
                             f'{"-".join(str(number) for number in copy_numbers)}.pdf'
             else:
@@ -156,25 +165,25 @@ def grader_statistics(exam_id):
     try:
         data = grader_data(exam_id)
         data_str = json.dumps(data)
+
+        serialized = BytesIO()
+        serialized.write(data_str.encode('utf-8'))
+        serialized.seek(0)
     except Exception:
         abort(404, 'Failed to load grader data.')
-
-    return Response(
-        response=data_str,
-        status=200,
-        mimetype='application/json'
-    )
-
-    """
-    serialized = BytesIO()
-    serialized.write(data_str.encode('utf-8'))
-    serialized.seek(0)
 
     return send_file(
         serialized,
         as_attachment=True,
-        attachment_filename=f'graders_exam{exam_id}.txt',
-        mimetype="text/plain",
+        attachment_filename=f'grader_statistics_exam_{exam_id}.json',
+        mimetype='application/json',
         cache_timeout=0,
     )
-    """
+
+
+class ResilientBytesIO(BytesIO):
+    def close(self):
+        pass  # Refuse to close to avoid pandas bug
+
+    def really_close(self):
+        super().close()

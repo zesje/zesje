@@ -1,10 +1,11 @@
 from sqlalchemy.orm.exc import NoResultFound
 
+from flask import current_app
 import numpy as np
 import pandas
-from sqlalchemy import between, desc
+from sqlalchemy import between, desc, func
 
-from .database import Exam, Student, Grader, Solution
+from .database import db, Exam, Student, Grader, Solution, Submission
 
 
 def solution_data(exam_id, student_id):
@@ -15,12 +16,17 @@ def solution_data(exam_id, student_id):
     student = Student.query.get(student_id)
     if student is None:
         raise NoResultFound(f"Student with id #{student_id} does not exist.")
-    if any(i is None for i in (exam, student)):
+
+    sub = Submission.query.filter(Submission.exam == exam,
+                                  Submission.student == student,
+                                  Submission.validated).one_or_none()
+    if sub is None:
         raise RuntimeError('Student did not make a '
                            'submission for this exam')
 
     results = []
-    for problem in exam.problems:  # Sorted by problem.id
+    for solution in sub.solutions:  # Sorted by problem_id
+        problem = solution.problem
         if not len(problem.feedback_options):
             # There is no possible feedback for this problem.
             continue
@@ -28,24 +34,20 @@ def solution_data(exam_id, student_id):
             'name': problem.name,
             'max_score': max(fb.score for fb in problem.feedback_options) or 0
         }
-        # TODO Maybe replace this with an optimized query
-        solutions = [sol for sols in [sub.solutions for sub in student.submissions]
-                     for sol in sols
-                     if sol.problem_id == problem.id]
+
         problem_data['feedback'] = [
             {'short': fo.text,
              'score': fo.score,
              'description': fo.description}
-            for solution in solutions for fo in solution.feedback
+            for fo in solution.feedback if solution.graded_by
         ]
         problem_data['score'] = (
             sum(i['score'] or 0 for i in problem_data['feedback'])
             if problem_data['feedback']
             else np.nan
         )
-        problem_data['remarks'] = '\n\n'.join(sol.remarks
-                                              for sol in solutions
-                                              if sol.remarks)
+        problem_data['remarks'] = solution.remarks
+
         results.append(problem_data)
 
     student = {
@@ -64,7 +66,7 @@ def full_exam_data(exam_id):
     exam = Exam.query.get(exam_id)
     if exam is None:
         raise KeyError("No such exam.")
-    students = sorted(sub.student.id for sub in exam.submissions if sub.student)
+    students = sorted(sub.student.id for sub in exam.submissions if sub.student and sub.validated)
 
     data = [solution_data(exam_id, student_id)
             for student_id in students]
@@ -95,6 +97,8 @@ def full_exam_data(exam_id):
             problem.pop('max_score')
 
         results[student['id']] = {
+            ('First name', ''): student['first_name'],
+            ('Last name', ''): student['last_name'],
             **{
                 field: entry
                 for problem in problems
@@ -106,7 +110,7 @@ def full_exam_data(exam_id):
     return pandas.DataFrame(results).T
 
 
-def grader_data(exam_id):
+def full_grader_data(exam_id):
     """ Compute the grader statistics for a given exam. """
     exam = Exam.query.get(exam_id)
     if exam is None:
@@ -114,57 +118,49 @@ def grader_data(exam_id):
 
     data = []
     for problem in exam.problems:
-        solutions = problem.solutions
-        graders = {}
-
-        # max_score = max(fb.score for fb in problem.feedback_options) or 0
-
-        for solution in solutions:
-            gid = solution.grader_id
-            if not gid:
-                # solution has not been graded yet
-                continue
-
-            if gid not in graders:
-                grader = Grader.query.get(gid)
-
-                graders[gid] = {
-                    "id": gid,
-                    "name": grader.name,
-                    "graded": 0,
-                    # "avg_score": 0,
-                    # "max_score": 0,
-                    # "min_score": 0,
-                    "avg_grading_time": 0,
-                    "total_time": 0
-                }
-
-            graders[gid]["graded"] += 1
-
-            '''
-            for feedback in solution.feedback:
-                if feedback.score == 0:
-                    graders[gid]["min_score"] += 1
-                elif feedback.score == max_score:
-                    graders[gid]["max_score"] += 1
-
-                graders[gid]["avg_score"] += feedback.score
-            '''
-
-        for gid in graders.keys():
-            # graders[gid]["avg_score"] /= graders[gid]["graded"]
-            avg, total = estimate_grading_time(problem.id, gid)
-            graders[gid]["avg_grading_time"] = avg
-            graders[gid]["total_time"] = total
+        graders, autograded = grader_data(problem.id)
 
         data.append({
             "id": problem.id,
             "name": problem.name,
-            # "max_score": max_score,
-            "graders": list(graders.values())
+            "graders": graders,
+            "autograded": autograded
         })
 
     return {"exam_id": exam_id, "exam_name": exam.name, "problems": data}
+
+
+def grader_data(problem_id):
+    """ Compute the grader statistics for a given problem. """
+    graders = []
+    autograder = current_app.config['AUTOGRADER_NAME']
+
+    # returns a tuple with (grader id, grader name, solutions graded)
+    # for each  grader that graded the given prblem ordered by grader id
+    grader_results = db.session.query(Grader.id, Grader.name, func.count(Solution.grader_id))\
+        .join(Solution)\
+        .filter(Solution.problem_id == problem_id)\
+        .group_by(Solution.grader_id)\
+        .all()
+
+    autograded_solutions = 0
+
+    for id, name, graded in grader_results:
+        if name == autograder:
+            autograded_solutions = graded
+            continue
+
+        avg, total = estimate_grading_time(problem_id, id)
+
+        graders.append({
+            'id': id,
+            'name': name,
+            'graded': graded,
+            'averageTime': avg,
+            'totalTime': total
+        })
+
+    return graders, autograded_solutions
 
 
 ELAPSED_TIME_BREAK = 21600   # 6 hours in seconds
@@ -172,15 +168,11 @@ ELAPSED_TIME_BREAK = 21600   # 6 hours in seconds
 
 def estimate_grading_time(problem_id, grader_id):
     graded_timings = get_grade_timings(problem_id, grader_id)
-
+    if graded_timings is None:
+        return 0, 0
     # since a grader might evaluate different problems at once,
     # compute the interval as the time range between the grading of the specified problem
     # and the previous problem graded
-    '''
-    if graded_timings.shape[0] == 2:
-        elapsed_times = np.array([graded_timings[1, 1] - graded_timings[0, 1]])
-    else:
-    '''
     selected_problem = graded_timings[:, 0] == problem_id
     elapsed_times = graded_timings[selected_problem, 1] - np.roll(graded_timings[:, 1], 1)[selected_problem]
     if elapsed_times[0] < 0:
@@ -209,6 +201,8 @@ def get_grade_timings(problem_id, grader_id):
         # look for some other graded solution before first_grade
         previous_grade = Solution.query.filter(Solution.grader_id == grader_id, Solution.graded_at < first_grade)\
             .order_by(desc(Solution.graded_at)).first()
+        if previous_grade is None:
+            return None
 
         return np.array([[previous_grade.problem_id, previous_grade.graded_at.timestamp()],
                         [problem_id, first_grade.timestamp()]])

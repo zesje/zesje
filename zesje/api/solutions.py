@@ -30,10 +30,12 @@ class Solutions(Resource):
         if exam is None:
             return dict(status=404, message='Exam does not exist.'), 404
 
-        sub = Submission.query.filter(Submission.exam_id == exam.id,
-                                      Submission.copy_number == submission_id).one_or_none()
+        sub = Submission.query.get(submission_id)
         if sub is None:
-            return dict(status=404, message=f'Submission does not exist.'), 404
+            return dict(status=404, message='Submission does not exist.'), 404
+
+        if sub.exam_id != exam_id:
+            return dict(status=400, message='Submission does not belong to this exam.'), 400
 
         solution = Solution.query.filter(Solution.submission_id == sub.id,
                                          Solution.problem_id == problem.id).one_or_none()
@@ -77,10 +79,12 @@ class Solutions(Resource):
         if exam is None:
             return dict(status=404, message='Exam does not exist.'), 404
 
-        sub = Submission.query.filter(Submission.exam_id == exam.id,
-                                      Submission.copy_number == submission_id).one_or_none()
+        sub = Submission.query.get(submission_id)
         if sub is None:
             return dict(status=404, message='Submission does not exist.'), 404
+
+        if sub.exam_id != exam_id:
+            return dict(status=400, message='Submission does not belong to this exam.'), 400
 
         solution = Solution.query.filter(Solution.submission_id == sub.id,
                                          Solution.problem_id == problem.id).one_or_none()
@@ -109,17 +113,18 @@ class Solutions(Resource):
             state: boolean
         """
         args = self.put_parser.parse_args()
-
         grader = Grader.query.get(args.graderID)
         if grader is None:
             return dict(status=404, message='Grader does not exist.'), 404
 
-        sub = Submission.query.filter(Submission.exam_id == exam_id,
-                                      Submission.copy_number == submission_id).one_or_none()
+        sub = Submission.query.get(submission_id)
         if sub is None:
             return dict(status=404, message='Submission does not exist.'), 404
 
-        solution = Solution.query.filter(Solution.submission_id == sub.id,
+        if sub.exam_id != exam_id:
+            return dict(status=400, message='Submission does not belong to this exam.'), 400
+
+        solution = Solution.query.filter(Solution.submission_id == submission_id,
                                          Solution.problem_id == problem_id).one_or_none()
         if solution is None:
             return dict(status=404, message='Solution does not exist.'), 404
@@ -152,11 +157,14 @@ class Solutions(Resource):
 class Approve(Resource):
     """Mark a solution as graded."""
     put_parser = reqparse.RequestParser()
-    put_parser.add_argument('graderID', type=int, required=True)
+    put_parser.add_argument('graderID', type=int, required=False)
 
     def put(self, exam_id, submission_id, problem_id):
-        """Takes an existing feedback checks if it is valid then gives the current graders id to the solution this is
-        usefull for approving pre graded solutions
+        """Approve a solution or set it aside for later grading.
+
+        If the grader id is provided, the solution is marked as being graded by that grader,
+        otherwise it is marked as ungraded. This refuses to mark as graded if no feedback
+        is assigned.
 
         Parameters
         ----------
@@ -168,12 +176,14 @@ class Approve(Resource):
         """
         args = self.put_parser.parse_args()
 
-        grader = Grader.query.get(args.graderID)
+        grader = Grader.query.get(args.graderID) if args.graderID is not None else None
 
-        sub = Submission.query.filter(Submission.exam_id == exam_id,
-                                      Submission.copy_number == submission_id).one_or_none()
+        sub = Submission.query.get(submission_id)
         if sub is None:
             return dict(status=404, message='Submission does not exist.'), 404
+
+        if sub.exam_id != exam_id:
+            return dict(status=400, message='Submission does not belong to this exam.'), 400
 
         solution = Solution.query.filter(Solution.submission_id == sub.id,
                                          Solution.problem_id == problem_id).one_or_none()
@@ -183,7 +193,7 @@ class Approve(Resource):
         graded = len(solution.feedback)
 
         if graded:
-            solution.graded_at = datetime.now()
+            solution.graded_at = datetime.now() if grader is not None else None
             solution.graded_by = grader
             db.session.commit()
         else:

@@ -2,7 +2,7 @@ import functools
 import itertools
 import math
 import os
-from collections import namedtuple, Counter
+from collections import namedtuple
 import signal
 
 import cv2
@@ -14,11 +14,11 @@ from PIL import Image
 from pikepdf import Pdf
 from pylibdmtx import pylibdmtx
 from sqlalchemy.exc import InternalError
+from reportlab.lib.units import inch
 
-from .database import db, Scan, Exam, Page, Student, Submission, Solution, ExamWidget
-from .datamatrix import decode_raw_datamatrix
-from .images import guess_dpi, get_box
-from .pregrader import grade_problem, ungrade_multiple_sub
+from .database import db, Scan, Exam, Page, Student, Submission, Copy, Solution, ExamWidget
+from .images import guess_dpi, get_box, is_misaligned
+from .pregrader import grade_problem
 from .image_extraction import extract_images
 from .blanks import reference_image
 from . import celery
@@ -237,23 +237,25 @@ def process_page(image_data, exam_config, output_dir=None, strict=False):
     else:
         return True, "Testing, image not saved and database not updated."
 
-    sub = update_database(image_path, barcode)
+    # This copy belongs to a submission that may or may not have other copies
+    copy = add_to_correct_copy(image_path, barcode)
 
     try:
-        grade_problem(sub, barcode.page, image_array)
+        # If the corresponding submission has multiple copies, this doesn't grade anything
+        grade_problem(copy, barcode.page, image_array)
     except InternalError as e:
         if strict:
             return False, str(e)
 
     if barcode.page == 0:
-        description = guess_student(
-            exam_token=barcode.token, copy_number=barcode.copy
-        )
+        if not copy.validated:
+            description = guess_student(
+                exam_token=barcode.token, copy_number=barcode.copy
+            )
+        else:
+            description = 'Student signature already validated.'
     else:
         description = "Scanned page doesn't contain student number."
-
-    if sub.student:
-        ungrade_multiple_sub(sub.student.id, sub.exam_id)
 
     return True, description
 
@@ -282,7 +284,7 @@ def save_image(image, barcode, base_path):
     return image_path
 
 
-def update_database(image_path, barcode):
+def add_to_correct_copy(image_path, barcode):
     """Add a database entry for the new image or update an existing one.
 
     Parameters
@@ -294,28 +296,33 @@ def update_database(image_path, barcode):
 
     Returns
     -------
-    sub : Submission
-        the current submission
+    copy : Copy
+        the current copy
     """
     exam = Exam.query.filter(Exam.token == barcode.token).first()
     if exam is None:
         raise RuntimeError('Invalid exam token.')
 
-    sub = Submission.query.filter(Submission.copy_number == barcode.copy, Submission.exam_id == exam.id).one_or_none()
-    if sub is None:
-        sub = Submission(copy_number=barcode.copy, exam=exam)
+    copy = Copy.query.filter(Copy.number == barcode.copy, Copy.exam == exam).one_or_none()
+    if copy is None:
+        # Copy does not yet exist, so we create it together with a new submission
+        copy = Copy(number=barcode.copy)
+        sub = Submission(exam=exam, copies=[copy])
         db.session.add(sub)
+
+        # Add a solution for each problem
         for problem in exam.problems:
             db.session.add(Solution(problem=problem, submission=sub))
 
     # We may have added this page in previous uploads but we only want a single
     # 'Page' entry regardless
-    if Page.query.filter(Page.submission == sub, Page.number == barcode.page).one_or_none() is None:
-        db.session.add(Page(path=image_path, submission=sub, number=barcode.page))
+    if Page.query.filter(Page.copy == copy, Page.number == barcode.page).one_or_none() is None:
+        rel_path = os.path.relpath(image_path, start=current_app.config['DATA_DIRECTORY'])
+        db.session.add(Page(path=rel_path, copy=copy, number=barcode.page))
 
     db.session.commit()
 
-    return sub
+    return copy
 
 
 def decode_barcode(image, exam_config):
@@ -349,11 +356,7 @@ def decode_barcode(image, exam_config):
         results = pylibdmtx.decode(method(image))
         if len(results) == 1:
             data = results[0].data
-            # See https://github.com/NaturalHistoryMuseum/pylibdmtx/issues/24
-            try:
-                data = data.decode('utf-8')
-            except UnicodeDecodeError:
-                data = decode_raw_datamatrix(data)
+            data = data.decode('utf-8')
 
             try:
                 token, copy, page = data.split('/')
@@ -366,7 +369,7 @@ def decode_barcode(image, exam_config):
     raise RuntimeError("No barcode found.")
 
 
-def guess_student(exam_token, copy_number, force=False):
+def guess_student(exam_token, copy_number):
     """Update a submission with a guessed student number.
 
     Parameters
@@ -374,10 +377,7 @@ def guess_student(exam_token, copy_number, force=False):
     exam_token : string
         Unique exam identifier (see database schema).
     copy_number : int
-        The copy number of the submission.
-    force : bool
-        Whether to update the student number of a submission with a validated
-        signature, default False.
+        The copy number.
 
     Returns
     -------
@@ -387,25 +387,38 @@ def guess_student(exam_token, copy_number, force=False):
 
     # Throws exception if zero or more than one of Exam, Submission or Page found
     exam = Exam.query.filter(Exam.token == exam_token).one()
-    sub = Submission.query.filter(Submission.copy_number == copy_number,
-                                  Submission.exam_id == exam.id).one()
-    image_path = Page.query.filter(Page.submission_id == sub.id,
-                                   Page.number == 0).one().path
+    copy = Copy.query.filter(Copy.number == copy_number,
+                             Copy.exam == exam).one()
+    sub = copy.submission
+
+    # We expect only a single copy, raise an error if we find more
+    if len(sub.copies) > 1:
+        raise RuntimeError(
+            'Cannot guess student number for a copy that is not the only copy of a submission. ' +
+            'This means the copy has already been validated.')
+
+    if copy.validated:
+        return "Signature of this copy is already validated"
+
+    image_path = Page.query.filter(Page.copy == copy,
+                                   Page.number == 0).one().abs_path
 
     student_id_widget, student_id_widget_coords = exam_student_id_widget(exam.id)
+    student_id_widget_coords_inch = np.array(student_id_widget_coords) / 72
 
-    if sub.signature_validated and not force:
-        return "Signature already validated"
+    image = cv2.imread(image_path)
+    dpi = guess_dpi(image)
+    reference = reference_image(exam.id, 0, dpi)
+    if is_misaligned(student_id_widget_coords_inch, image, reference, padding_inch=0.2):
+        return "Student id widget is misaligned, not guessing student"
 
     try:
-        number = get_student_number(image_path, student_id_widget_coords)
+        number = get_student_number(image, student_id_widget_coords)
     except Exception as e:
         return "Failed to extract student number: " + str(e)
 
     student = Student.query.get(int(number))
     if student is not None:
-        exam = Exam.query.filter(Exam.token == exam_token).one()
-        sub = Submission.query.filter(Submission.copy_number == copy_number, Submission.exam_id == exam.id).one()
         sub.student = student
         db.session.commit()
         return "Successfully extracted student number"
@@ -413,72 +426,42 @@ def guess_student(exam_token, copy_number, force=False):
         return f"Student number {number} not in the database"
 
 
-def get_student_number(image_path, student_id_widget_coords):
+def get_student_number(image, student_id_widget_coords):
     """Extract the student number from the image path with the scanned number.
 
     TODO: all the numerical parameters are guessed and work well on the first
     exam.  Yet, they should be inferred from the scans.
     """
-    image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
     # TODO: use points as base unit
-    student_id_widget_coords_in = np.asarray(student_id_widget_coords) / 72
-    image_raw = get_box(image, student_id_widget_coords_in, padding=0.3)
+    dpi = guess_dpi(image)
+    student_id_widget_coords_inch = np.asarray(student_id_widget_coords) / inch
 
-    # Add a 1 pixel border to floodfill from all sides
-    h, w, *_ = image_raw.shape
-    image = np.full((h+2, w+2), 255, np.uint8)
-    image[1:-1, 1:-1] = image_raw
+    widget_image = get_box(image, student_id_widget_coords_inch, padding=0.0)
 
-    _, thresholded = cv2.threshold(image, 150, 255, cv2.THRESH_BINARY)
-    thresholded = cv2.bitwise_not(thresholded)
+    _, thresholded = cv2.threshold(widget_image, 150, 255, cv2.THRESH_BINARY)
 
-    # Copy the thresholded image.
-    im_floodfill = thresholded.copy()
+    box_size = current_app.config['ID_GRID_BOX_SIZE'] / inch * dpi
+    margin = current_app.config['ID_GRID_MARGIN'] / inch * dpi
+    font_size = current_app.config['ID_GRID_FONT_SIZE'] / inch * dpi
+    digits = current_app.config['ID_GRID_DIGITS']
 
-    # Mask used to flood filling.
-    # Notice the size needs to be 2 pixels than the image.
-    mask = np.zeros((h+4, w+4), np.uint8)
+    line_width = dpi/inch
+    left = int(margin + font_size + box_size/2 + line_width/2)
+    right = int(left + (digits - 1) * (font_size + margin))
+    top = int(2 * (margin + box_size) + line_width)
+    bottom = int(top + (10 - 1) * (font_size + margin))
 
-    # Floodfill from point (0, 0)
-    cv2.floodFill(im_floodfill, mask, (0, 0), 255)
+    r = int(box_size / 2 - 1.5*line_width)
 
-    # Invert floodfilled image
-    im_floodfill_inv = cv2.bitwise_not(im_floodfill)
-
-    # Combine the two images to get the foreground.
-    im_out = ~(thresholded | im_floodfill_inv)
-
-    min_box_size = int(h*w/1000)
-
-    params = cv2.SimpleBlobDetector_Params()
-    params.filterByArea = True
-    params.minArea = min_box_size * 0.7
-    params.maxArea = min_box_size * 2
-    params.filterByCircularity = False
-    params.filterByConvexity = True
-    params.minConvexity = 0.87
-    params.filterByInertia = True
-    params.minInertiaRatio = 0.7
-
-    detector = cv2.SimpleBlobDetector_create(params)
-
-    keypoints = detector.detect(im_out)
-    if len(keypoints) <= 2:
-        raise ValueError('Blob detector did not detect enough keypoints.')
-
-    centers = np.array(sorted([kp.pt for kp in keypoints])).astype(int)
-    diameters = np.array([kp.size for kp in keypoints])
-    r = int(np.median(diameters)/4)
-    (right, bottom) = np.max(centers, axis=0)
-    (left, top) = np.min(centers, axis=0)
-    centers = np.mgrid[left:right:7j, top:bottom:10j].astype(int)
+    centers = np.mgrid[left:right:digits*1j, top:bottom:10j].astype(int)
     weights = []
     for center in centers.reshape(2, -1).T:
         x, y = center
-        weights.append(np.sum(255 - image[y-r:y+r, x-r:x+r]))
+        weights.append(np.sum(255 - thresholded[y-r:y+r, x-r:x+r]))
+        thresholded[y-r:y+r, x-r:x+r] = np.array([255, 0, 0])
 
-    weights = np.array(weights).reshape(10, 7, order='F')
-    return sum(((np.argmax(weights, axis=0)) % 10)[::-1] * 10**np.arange(7))
+    weights = np.array(weights).reshape(10, digits, order='F')
+    return sum(((np.argmax(weights, axis=0)) % 10)[::-1] * 10**np.arange(digits))
 
 
 def calc_angle(keyp1, keyp2):
@@ -528,98 +511,109 @@ def find_corner_marker_keypoints(image_array, corner_sizes=[0.125, 0.25, 0.5]):
     corner_sizes : list of float
         The corner sizes to search the corner markers in
 
-    Raises
-    ------
-    RuntimeError if no valid set of keypoints are found
+    Returns
+    -------
+    corner_points : list of (int, int)
+        The found corner markers, can contain 0-4 corner markers.
     """
     h, w, *_ = image_array.shape
     marker_length = current_app.config['MARKER_LINE_LENGTH'] * guess_dpi(image_array) / 72
     marker_width = current_app.config['MARKER_LINE_WIDTH'] * guess_dpi(image_array) / 72
+    marker_area = marker_length * marker_width * 2
+    marker_area_min = max(marker_length * (marker_width - 1) * 2, 0)  # One pixel thinner due to possible aliasing
 
-    best_points = []
+    corner_points = []
 
-    for corner_size in corner_sizes:
-        # Filter out everything in the center of the image
-        tb = slice(0, int(h*corner_size)), slice(int(h*(1-corner_size)), h)
-        lr = slice(0, int(w*corner_size)), slice(int(w*(1-corner_size)), w)
-        corner_points = []
-        for corner in itertools.product(tb, lr):
-            gray_im = cv2.cvtColor(image_array[corner], cv2.COLOR_BGR2GRAY)
-            _, inv_im = cv2.threshold(gray_im, 150, 255, cv2.THRESH_BINARY_INV)
+    top_bottom = (True, False)
+    left_right = (True, False)
+
+    for is_top, is_left in itertools.product(top_bottom, left_right):
+        corner_points_current_corner = []
+
+        for corner_size in corner_sizes:
+            # Filter out everything in the center of the image
+            h_slice = slice(0, int(h*corner_size)) if is_top else slice(int(h*(1-corner_size)), None)
+            w_slice = slice(0, int(w*corner_size)) if is_left else slice(int(w*(1-corner_size)), None)
+
+            gray_im = cv2.cvtColor(image_array[h_slice, w_slice], cv2.COLOR_BGR2GRAY)
+            _, inv_im = cv2.threshold(gray_im, 175, 255, cv2.THRESH_BINARY_INV)
             ret, labels = cv2.connectedComponents(inv_im)
             for label in range(1, ret):
                 new_img = (labels == label)
-                # multiplier determined to work well empirically
-                if np.sum(new_img) > marker_length * marker_width * 2.83:
-                    continue  # The blob is too large
-                lines = cv2.HoughLines(new_img.astype(np.uint8), 1, np.pi/180, int(marker_length * .9))
-                if lines is None:
-                    continue  # Didn't find any lines
-                lines = lines.reshape(-1, 2).T
 
-                # One of the lines is nearly horizontal, can have both theta ≈ 0 or theta ≈ π;
-                # here we flip those points to ensure that we end up with two reasonably contiguous regions.
-                to_flip = lines[1] > 3*np.pi/4
-                lines[1, to_flip] -= np.pi
-                lines[0, to_flip] *= -1
-                v = (lines[1] > np.pi/4)
-                if np.all(v) or not np.any(v):
+                # Relative error determined to work well empirically
+                max_error = 1.19
+
+                blob_area = np.sum(new_img)
+                if not marker_area_min / max_error**2 < blob_area < marker_area * max_error**2:
+                    continue  # The area of the blob is too small or too large
+
+                new_img_uint8 = new_img.astype(np.uint8)
+
+                angle_resolution = 0.25 * np.pi/180
+                spatial_resolution = 1
+                max_angle = 10 * np.pi/180
+                max_angle_error = 3 * np.pi/180
+                threshold = int(marker_length * .9)
+
+                lines_vertical_1 = cv2.HoughLines(new_img_uint8, rho=spatial_resolution, theta=angle_resolution,
+                                                  threshold=threshold, min_theta=0, max_theta=max_angle)
+                lines_vertical_2 = cv2.HoughLines(new_img_uint8, rho=spatial_resolution, theta=angle_resolution,
+                                                  threshold=threshold, min_theta=np.pi-max_angle, max_theta=np.pi)
+                lines_vertical = (lines_vertical_1, lines_vertical_2)
+                if all(lines is None for lines in lines_vertical):
+                    continue  # Didn't find any vertical lines
+                lines_vertical = np.vstack(
+                        [lines for lines in (lines_vertical) if lines is not None]
+                    )
+                lines_vertical = lines_vertical.reshape(-1, 2).T
+
+                # The vertical lines can have both theta ≈ 0 or theta ≈ π, here we flip those
+                # points to ensure that we end up with two reasonably contiguous regions.
+                to_flip = lines_vertical[1] > 3*np.pi/4
+                lines_vertical[1, to_flip] -= np.pi
+                lines_vertical[0, to_flip] *= -1
+
+                rho_v, theta_v = np.average(lines_vertical, axis=1)
+
+                # Search for horizontal lines that are nearly perpendicular
+                horizontal_angle = theta_v + np.pi/2
+                lines_horizontal = cv2.HoughLines(new_img_uint8, spatial_resolution, angle_resolution, threshold,
+                                                  min_theta=horizontal_angle - max_angle_error,
+                                                  max_theta=horizontal_angle + max_angle_error)
+                if lines_horizontal is None:
+                    continue  # Didn't find any horizontal lines
+
+                lines_horizontal = lines_horizontal.reshape(-1, 2).T
+                rho_h, theta_h = np.average(lines_horizontal, axis=1)
+
+                marker_boundings = bounding_box_corner_markers(marker_length, theta_h, theta_v, is_top, is_left)
+                non_zero_points = cv2.findNonZero(new_img_uint8)
+                *_, blob_width, blob_height = cv2.boundingRect(non_zero_points)
+                invalid_dimensions = False
+                for blob_length, marker_bounding in zip((blob_width, blob_height), marker_boundings):
+                    if not marker_bounding / max_error < blob_length < marker_bounding * max_error:
+                        invalid_dimensions = True  # The dimensions of the blob are too large
+                        break
+                if invalid_dimensions:
                     continue
-                rho1, theta1 = np.average(lines[:, v], axis=1)
-                rho2, theta2 = np.average(lines[:, ~v], axis=1)
-                y, x = np.linalg.solve([[np.cos(theta1), np.sin(theta1)], [np.cos(theta2), np.sin(theta2)]],
-                                       [rho1, rho2])
+
+                y, x = np.linalg.solve([[np.cos(theta_h), np.sin(theta_h)], [np.cos(theta_v), np.sin(theta_v)]],
+                                       [rho_h, rho_v])
                 # TODO: add failsafes
                 if np.isnan(x) or np.isnan(y):
                     continue
-                corner_points.append((int(y) + corner[1].start, int(x) + corner[0].start))
+                corner_points_current_corner.append((int(y) + w_slice.start, int(x) + h_slice.start))
 
-        try:
-            check_corner_keypoints(image_array, corner_points, minimum=1)
+            if len(corner_points_current_corner) == 1:
+                corner_points.append(corner_points_current_corner[0])
+                break
 
-            if len(corner_points) > len(best_points):
-                # Save these points as the best attempt so far
-                best_points = corner_points
-        except RuntimeError:
-            pass
+            if len(corner_points_current_corner) > 1:
+                # More than one corner point found, ignore this corner
+                break
 
-        try:
-            check_corner_keypoints(image_array, corner_points)
-            # Keypoints are valid and thus return them
-            return corner_points
-        except RuntimeError as e:
-            # If this is the last iteration, attempt to return the
-            # best points found so far, otherwise raise.
-            if corner_size == corner_sizes[-1]:
-                if best_points:
-                    return best_points
-                raise e
-
-
-def check_corner_keypoints(image_array, keypoints, minimum=3):
-    """Checks whether the corner markers are valid.
-
-    1. Checks that there are between minimum (default 3) and 4 corner markers.
-    2. Checks that no 2 corner markers are the same corner of the image.
-
-    Parameters:
-    -----------
-    image_array : numpy array
-    keypoints : list of tuples containing the coordinates of keypoints
-    minimum : minimum number of keypoints to not raise an error
-    """
-    total = len(keypoints)
-    if total < minimum:
-        raise RuntimeError(f"Too few corner markers found ({total}).")
-    elif total > 4:
-        raise RuntimeError(f"Too many corner markers found ({total}).")
-
-    h, w, *_ = image_array.shape
-
-    corners = Counter((x < (w / 2), (y < h / 2)) for x, y in keypoints)
-
-    if max(corners.values()) > 1:
-        raise RuntimeError("Found multiple corner markers in the same corner")
+    return corner_points
 
 
 def realign_image(image_array, page_shape, keypoints=None):
@@ -639,6 +633,10 @@ def realign_image(image_array, page_shape, keypoints=None):
     -------
     return_array: numpy.array
         The image realigned properly.
+
+    Raises
+    ------
+    RuntimeError if no corner markers are detected or provided
     """
 
     if not keypoints:
@@ -756,3 +754,56 @@ def original_corner_markers(dpi):
                      (right_x, top_y),
                      (left_x, bottom_y),
                      (right_x, bottom_y)])
+
+
+def bounding_box_corner_markers(marker_length, theta1, theta2, top, left):
+    """
+    Computes the theoretical bounding box of a tilted corner marker.
+
+    The result is only valid for a rotation up to 45 degrees.
+
+    params
+    ------
+    marker_length : int
+        The configured length of the corner marker in pixels
+    theta1 : int
+        Angle of the detected horizontal hough line
+    theta2 : int
+        Angle of the detected vertical hough line
+    top : bool
+        Whether the corner marker is at the top
+    left : bool
+        Whether the corner marker is at the left
+
+    returns
+    -------
+    bounding_x, bounding_y : (int, int)
+        The bounding box (in pixels) in x- and y-direction
+    """
+    bounding_x = marker_length * np.sin(theta1)
+    bounding_y = marker_length * np.cos(theta2)
+
+    bottom = not top
+    right = not left
+
+    if left and top and theta2 > 0:
+        bounding_x += np.sin(theta2) * marker_length
+    if left and bottom and theta2 < 0:
+        bounding_x -= np.sin(theta2) * marker_length
+
+    if right and top and theta2 < 0:
+        bounding_x -= np.sin(theta2) * marker_length
+    if right and bottom and theta2 > 0:
+        bounding_x += np.sin(theta2) * marker_length
+
+    if left and top and theta1 < np.pi/2:
+        bounding_y += np.cos(theta1) * marker_length
+    if left and bottom and theta1 > np.pi/2:
+        bounding_y -= np.cos(theta1) * marker_length
+
+    if right and top and theta1 > np.pi/2:
+        bounding_y -= np.cos(theta1) * marker_length
+    if right and bottom and theta1 < np.pi/2:
+        bounding_y += np.cos(theta1) * marker_length
+
+    return bounding_x, bounding_y

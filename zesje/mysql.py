@@ -16,11 +16,11 @@ import jinja2
 INIT_FILE_TEMPLATE = """CREATE DATABASE IF NOT EXISTS course;
 CREATE DATABASE IF NOT EXISTS course_test;
 
-CREATE USER IF NOT EXISTS '{{MYSQL_USER}}'@'%' IDENTIFIED BY '{{MYSQL_PSW}}';
+CREATE USER IF NOT EXISTS '{{MYSQL_USER}}'@'%' IDENTIFIED BY '{{MYSQL_PASSWORD}}';
 GRANT ALL ON course.* TO '{{MYSQL_USER}}'@'%';
 GRANT ALL ON course_test.* TO '{{MYSQL_USER}}'@'%';
 
-ALTER USER 'root'@'localhost' IDENTIFIED BY '{{MYSQL_ROOT_PSW}}';
+ALTER USER 'root'@'localhost' IDENTIFIED BY '{{MYSQL_ROOT_PASSWORD}}';
 
 FLUSH PRIVILEGES;
 """
@@ -97,9 +97,9 @@ def start(config, interactive=False, allow_running=False):
 
 
 def stop(config):
-    psw = config['MYSQL_ROOT_PSW']
+    password = config['MYSQL_ROOT_PASSWORD']
     host = config['MYSQL_HOST']
-    os.system(f'mysqladmin --host={host} --user=root --password={psw} shutdown')
+    os.system(f'mysqladmin --host={host} --user=root --password={password} shutdown')
 
 
 def is_running(config):
@@ -115,12 +115,13 @@ def is_running(config):
         return False
 
 
-def dump(config, database=None):
-    psw = config['MYSQL_ROOT_PSW']
+def dump(config, database):
+    user = config['MYSQL_USER']
+    password = config['MYSQL_PASSWORD']
     host = config['MYSQL_HOST']
     database = database if database is not None else config['MYSQL_DATABASE']
     p = sp.Popen(
-        ['mysqldump', '-uroot', f'--password={psw}', f'--host={host}', database],
+        ['mysqldump', f'--user={user}', f'--password={password}', f'--host={host}', database],
         stdin=sp.PIPE,
         stdout=sp.PIPE,
         stderr=sp.PIPE

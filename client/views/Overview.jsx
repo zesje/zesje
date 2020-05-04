@@ -195,7 +195,6 @@ class Overview extends React.Component {
     hoverText.reverse()
 
     const hoverProblemPosition = min(max(-students / 40, -7), -0.2)
-    console.log(hoverProblemPosition)
 
     const yVals = range(0, problems.length, 1).toArray()
 

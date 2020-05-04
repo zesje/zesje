@@ -10,7 +10,7 @@ copy_count = 0
 @pytest.fixture
 def app_with_data(app):
     exam = Exam(name='')
-    students = [Student(id=i, first_name='', last_name='') for i in range(2)]
+    students = [Student(id=i+1, first_name='', last_name='') for i in range(2)]
     db.session.add(exam)
     for student in students:
         db.session.add(student)

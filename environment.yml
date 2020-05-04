@@ -9,6 +9,9 @@ dependencies:
     - redis
     - pip
     - imagemagick
+    - mysql
+    - pymysql
+
     - pip:
         # Core components
         - flask

@@ -158,12 +158,12 @@ Zesje uses Flask-Migrate and Alembic for database versioning and migration. Flas
 
 To change something in the database schema, simply add this change to `zesje/database.py`. After that run the following command to prepare a new migration:
 
-    yarn prepare-migration
+    yarn dev:prepare-migration
 
 This uses Flask-Migrate to make a new migration script in `migrations/versions` which needs to be reviewed and edited. Please suffix the name of this file with something distinctive and add a short description at the top of the file. To apply the database migration run:
 
     yarn dev:mysql-migrate # (for the development database)
-    yarn mysql-migrate # (for the production database)
+    yarn migrate # (for the production database, MySQL must be running)
 
 ### Building and running the production version
 

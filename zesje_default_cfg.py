@@ -14,7 +14,6 @@ SMTP_PASSWORD = None
 
 # MySQL host
 MYSQL_USER = 'zesje'
-MYSQL_ROOT_PASSWORD = 'rootpsw'
 MYSQL_PASSWORD = 'zesjepsw'
 MYSQL_HOST = 'localhost'
 MYSQL_DATABASE = 'course'

@@ -25,12 +25,9 @@
     "test:py:cov": "yarn command:test:py --junitxml=tests.xml --cov=zesje --cov-report=xml:cov.xml --cov-report=html:cov.html --cov-report=term tests/",
     "dev:test:py:cov": "yarn dev:mysql start && yarn test:py:cov && yarn dev:mysql stop",
     "migrate-down": "FLASK_APP=zesje.wsgi:app flask db downgrade",
-    "mysql": "python3 -m zesje.mysql",
     "dev:mysql": "ZESJE_SETTINGS=$(pwd)/zesje_dev_cfg.py python3 -m zesje.mysql",
-    "mysql-init": "yarn mysql create && yarn mysql-migrate",
-    "dev:mysql-init": "yarn dev:mysql create && yarn dev:mysql-migrate",
-    "mysql-migrate": "yarn mysql-start && yarn migrate && yarn mysql-stop",
-    "dev:mysql-migrate": "yarn dev:mysql is-running && (yarn dev:migrate || true) || ((yarn dev:mysql start && yarn dev:migrate); yarn dev:mysql stop)"
+    "dev:mysql-init": "yarn dev:mysql create && sleep 2 && yarn dev:mysql-migrate",
+    "dev:mysql-migrate": "yarn dev:mysql is-running && (yarn dev:migrate || true) || ((yarn dev:mysql start && sleep 2 && yarn dev:migrate); yarn dev:mysql stop)"
   },
   "standard": {
     "parser": "babel-eslint",

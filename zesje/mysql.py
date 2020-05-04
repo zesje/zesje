@@ -44,10 +44,12 @@ def create(config, allow_exists):
 
         if status_code != 0:
             raise ValueError('Error creating MySQL, please see log files for details.')
+        return True
     else:
         print('MySQL is already initialized.')
         if not allow_exists:
             _exit(1)
+        return False
 
 
 def start(config, interactive=False, allow_running=False):

@@ -63,7 +63,8 @@ def init_app(delete):
     app = create_app()
 
     if os.path.exists(app.config['DATA_DIRECTORY']) and delete:
-        if mysql.is_running(app.config):
+        mysql_was_running_before_delete = mysql.is_running(app.config)
+        if mysql_was_running_before_delete:
             mysql.stop(app.config)
             time.sleep(5)
         shutil.rmtree(app.config['DATA_DIRECTORY'])
@@ -72,18 +73,20 @@ def init_app(delete):
     os.makedirs(app.config['DATA_DIRECTORY'], exist_ok=True)
     os.makedirs(app.config['SCAN_DIRECTORY'], exist_ok=True)
 
-    mysql.create(app.config, allow_exists=True)
+    mysql_is_created = mysql.create(app.config, allow_exists=True)
+    if mysql_is_created:
+        time.sleep(2)
     mysql_was_running = mysql.start(app.config, allow_running=True)
     if not mysql_was_running:
         time.sleep(5)  # wait till mysql starts
 
-    # Only create the database from migrations if it was deleted.
-    # Otherwise the user should migrate manually.
-    if delete:
+    # Only create the database from migrations if it was created
+    # by this script, otherwise the user should migrate manually
+    if delete or mysql_is_created:
         with app.app_context():
             flask_migrate.upgrade(directory='migrations')
 
-    return app, mysql_was_running
+    return app, mysql_was_running or mysql_was_running_before_delete
 
 
 def generate_exam_pdf(pdf_file, exam_name, pages, problems, mc_problems):

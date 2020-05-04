@@ -63,14 +63,14 @@ manually for now (we are working to bring this dependency into the
 Conda ecosystem). You can install this dependency in the following way
 on different platforms:
 
-| OS                            | Command                       |
-|-------------------------------|-------------------------------|
-| macOS                         | `brew install libdmtx gcc`    |
-| Debian <= 9, Ubuntu <= 19.04  | `apt install libdmtx0a gcc`   |
-| Debian >= 10, Ubuntu >= 19.10 | `apt install libdmtx0b gcc`   |
-| Arch                          | `pacman -S libdmtx gcc`       |
-| Fedora                        | `dnf install libdmtx gcc`     |
-| openSUSE                      | `zypper install libdmtx0 gcc` |
+| OS                            | Command                   |
+|-------------------------------|---------------------------|
+| macOS                         | `brew install libdmtx`    |
+| Debian <= 9, Ubuntu <= 19.04  | `apt install libdmtx0a`   |
+| Debian >= 10, Ubuntu >= 19.10 | `apt install libdmtx0b`   |
+| Arch                          | `pacman -S libdmtx`       |
+| Fedora                        | `dnf install libdmtx`     |
+| openSUSE                      | `zypper install libdmtx0` |
 
 
 #### Setting up MySQL server

@@ -3,7 +3,7 @@
 FROM continuumio/miniconda3
 
 RUN apt-get update && \
-    apt-get install -y libdmtx0b gcc
+    apt-get install -y libdmtx0b
 
 WORKDIR /yarn
 

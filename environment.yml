@@ -10,6 +10,7 @@ dependencies:
     - pip
     - imagemagick
     - mysql
+    - pymysql
 
     - pip:
         # Core components
@@ -22,7 +23,6 @@ dependencies:
         - pyyaml
         - celery
         - redis
-        - mysqlclient
 
         # General utilities
         - numpy==1.15.4
@@ -57,7 +57,6 @@ dependencies:
         - pytest
         - pyssim
         - pytest-cov
-        - psutil
 
         # Linting
         - flake8

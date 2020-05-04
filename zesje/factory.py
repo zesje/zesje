@@ -1,11 +1,14 @@
 import os
 from os.path import abspath, dirname
 
-from flask import Flask
+from flask import Flask, session, redirect, request, url_for, jsonify, render_template
 from flask_migrate import Migrate
 from werkzeug.exceptions import NotFound
+from flask_login import login_required, login_user, logout_user
+from requests_oauthlib import OAuth2Session
 
-from .database import db
+
+from .database import db, login_manager, Grader
 from .api import api_bp
 
 
@@ -14,6 +17,10 @@ STATIC_FOLDER_PATH = os.path.join(abspath(dirname(__file__)), 'static')
 
 def create_app(celery=None, app_config=None):
     app = Flask(__name__, static_folder=STATIC_FOLDER_PATH)
+    os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
+
+    login_manager.init_app(app)
+    login_manager.login_view = "login"
 
     create_config(app.config, app_config)
 
@@ -32,6 +39,7 @@ def create_app(celery=None, app_config=None):
 
     @app.route('/')
     @app.route('/<path:path>')
+    @login_required
     def index(path='index.html'):
         """Serve the static react content, otherwise fallback to the index.html
 
@@ -40,7 +48,47 @@ def create_app(celery=None, app_config=None):
         try:
             return app.send_static_file(path)
         except NotFound:
-            return app.send_static_file('index.html')
+            return render_template('index.html')
+
+    @app.route("/login")
+    def login():
+        github = OAuth2Session(app.config['GITHUB_CLIENT_ID'])
+        authorization_url, state = github.authorization_url(app.config['GITHUB_AUTHORIZATION_BASE_URL'])
+
+        session['oauth_state'] = state
+
+        return redirect(authorization_url)
+
+    @app.route("/callback")
+    def callback():
+        gitlab = OAuth2Session(app.config['GITHUB_CLIENT_ID'], state=session['oauth_state'])
+        token = gitlab.fetch_token(
+            app.config['GITHUB_TOKEN_URL'],
+            client_secret=app.config['GITHUB_CLIENT_SECRET'],
+            authorization_response=request.url,
+        )
+
+        session['oauth_token'] = token
+
+        return redirect(url_for('.profile'))
+
+    @app.route("/profile", methods=["GET"])
+    def profile():
+        """Fetching a protected resource using an OAuth 2 token.
+        """
+        login_user(Grader.query.get(int(1)))
+        github = OAuth2Session(app.config['GITHUB_CLIENT_ID'], token=session['oauth_token'])
+        current_grader = github.get(app.config['GITHUB_USERINFO_URL']).json()
+        session['grader_name'] = current_grader['name']
+        return jsonify(current_grader)
+
+    @app.route("/logout", methods=["GET"])
+    def logout():
+        """Fetching a protected resource using an OAuth 2 token.
+        """
+        logout_user()
+        return redirect(url_for('.login'))
+
 
     return app
 

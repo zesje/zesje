@@ -24,6 +24,12 @@ dependencies:
         - celery
         - redis
 
+        #oauth library
+        - requests-oauthlib
+
+        #flask session management
+        - flask-login
+
         # General utilities
         - numpy==1.15.4
         - scipy==1.3.0

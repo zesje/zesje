@@ -3,7 +3,7 @@ import React from 'react'
 import Plotly from 'plotly.js-cartesian-dist'
 import createPlotlyComponent from 'react-plotly.js/factory'
 
-import {range, exp, sqrt, pow, pi, zeros} from 'mathjs'
+import {range, exp, sqrt, pow, pi, zeros, min, max} from 'mathjs'
 
 import humanizeDuration from 'humanize-duration'
 import Hero from '../components/Hero.jsx'
@@ -194,6 +194,9 @@ class Overview extends React.Component {
     problems.reverse()
     hoverText.reverse()
 
+    const hoverProblemPosition = min(max(-students / 40, -7), -0.2)
+    console.log(hoverProblemPosition)
+
     const yVals = range(0, problems.length, 1).toArray()
 
     const annotations = []
@@ -227,9 +230,10 @@ class Overview extends React.Component {
 
       annotations.push({
         x: 1,
-        y: 1.07,
+        y: 1,
         xref: 'paper',
         yref: 'paper',
+        yanchor: 'bottom',
         text: `Selected student: ${this.state.selectedStudentId}`,
         align: 'right',
         showarrow: false,
@@ -279,7 +283,7 @@ class Overview extends React.Component {
       },
       showlegend: false
     }, {
-      x: zeros(problems.length + 1).map(x => -2).toArray(),
+      x: zeros(problems.length + 1).map(x => hoverProblemPosition).toArray(),
       y: yVals,
       yaxis: 'y2',
       type: 'scatter',
@@ -365,7 +369,7 @@ class Overview extends React.Component {
 
     annotations.push({
       x: 0.5,
-      y: 0.41,
+      y: 0.35,
       xref: 'paper',
       yref: 'paper',
       yanchor: 'bottom',
@@ -405,7 +409,7 @@ class Overview extends React.Component {
         }, []),
         zeroline: false,
         anchor: 'x',
-        domain: [0.55, 1]
+        domain: [0.5, 1]
       },
       yaxis2: {
         automargin: true,
@@ -426,7 +430,7 @@ class Overview extends React.Component {
         }, []),
         zeroline: false,
         anchor: 'x',
-        domain: [0.55, 1]
+        domain: [0.5, 1]
       },
       xaxis3: {
         domain: [0, 1],
@@ -438,7 +442,7 @@ class Overview extends React.Component {
       },
       yaxis3: {
         title: 'number of students',
-        domain: [0, 0.40],
+        domain: [0, 0.35],
         anchor: 'x3',
         fixedrange: true
       },
@@ -449,7 +453,7 @@ class Overview extends React.Component {
         }
       },
       legend: {
-        y: 0.39,
+        y: 0.34,
         yanchor: 'top',
         x: 0.99,
         xanchor: 'right',

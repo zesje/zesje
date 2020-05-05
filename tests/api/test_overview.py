@@ -28,7 +28,7 @@ def add_test_data(app):
     yield app, exam
 
 
-def test_get_statistics(test_client, add_test_data):
+def test_only_problems_with_grades(test_client, add_test_data):
     app, exam = add_test_data
 
     response = test_client.get(f'/api/stats/{exam.id}')

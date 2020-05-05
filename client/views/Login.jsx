@@ -25,7 +25,9 @@ class Login extends React.Component {
       <div>
         <Hero title='Auth graders' subtitle='Many hands must be authenticated' />
 
-        <Button variant='outline-primary' className='btn-primary'>Primary</Button>{' '}
+        <div className='Login'>
+          <Button variant='outline-success'>Login with GitLab</Button>{' '}
+        </div>
 
       </div>
     )

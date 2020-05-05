@@ -52,6 +52,8 @@ def create_app(celery=None, app_config=None):
 
     @app.route("/login")
     def login():
+        """Logs the user in by redirecting to the OAuth provider with the appropriate
+        client ID as a request parameter"""
         github = OAuth2Session(app.config['GITHUB_CLIENT_ID'])
         authorization_url, state = github.authorization_url(app.config['GITHUB_AUTHORIZATION_BASE_URL'])
 
@@ -61,6 +63,8 @@ def create_app(celery=None, app_config=None):
 
     @app.route("/callback")
     def callback():
+        """OAuth provider redirects to this route after authorization.
+        Fetches token and redirects to /profile"""
         gitlab = OAuth2Session(app.config['GITHUB_CLIENT_ID'], state=session['oauth_state'])
         token = gitlab.fetch_token(
             app.config['GITHUB_TOKEN_URL'],
@@ -84,11 +88,10 @@ def create_app(celery=None, app_config=None):
 
     @app.route("/logout", methods=["GET"])
     def logout():
-        """Fetching a protected resource using an OAuth 2 token.
+        """Logs the user out and redirects to /login
         """
         logout_user()
         return redirect(url_for('.login'))
-
 
     return app
 

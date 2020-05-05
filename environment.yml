@@ -25,10 +25,10 @@ dependencies:
         - redis
 
         #oauth library
-        - requests-oauthlib
+        - requests_oauthlib
 
         #flask session management
-        - flask-login
+        - flask_login
 
         # General utilities
         - numpy==1.15.4

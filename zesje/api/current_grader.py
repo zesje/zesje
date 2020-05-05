@@ -3,6 +3,7 @@
 from flask import session
 from flask_restful import Resource
 
+
 class Current_Grader(Resource):
     """Gets the current grader who logged in via OAuth"""
 

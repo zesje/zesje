@@ -26,8 +26,9 @@ db = SQLAlchemy(model_class=declarative_base(
 
 token_length = 12
 
-#Initializing login-manager and the user loader function required for login-manager
+# Initializing login-manager and the user loader function required for login-manager
 login_manager = LoginManager()
+
 
 @login_manager.user_loader
 def load_user(user_id):

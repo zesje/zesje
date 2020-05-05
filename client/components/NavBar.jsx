@@ -220,6 +220,12 @@ class NavBar extends React.Component {
             </a>
           </div>
 
+          <div className='navbar-end'>
+            <div className='navbar-item'>
+              <i>Version {__ZESJE_VERSION__}</i>
+            </div>
+          </div>
+
         </div>
         <HelpModal page={this.pages[this.state.helpPage] || {content: null, title: null}}
           closeHelp={() => this.setState({ helpPage: null })} />

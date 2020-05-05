@@ -1,6 +1,6 @@
 @media all and (min-width: 480px) {
-  div.Login {
-    padding: 60px 0;
+  .Login {
+    padding: 60px;
     margin: 0 auto;
     text-align:center;
   }

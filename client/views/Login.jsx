@@ -12,22 +12,22 @@ class Login extends React.Component {
     setPassword: ''
   };
 
-  validateForm = () => {
-    return this.state.email.length > 0 && this.state.password.length > 0
-  }
-
-  handleSubmit = (event) => {
-    event.preventDefault()
-  }
+  // validateForm = () => {
+  //   return this.state.email.length > 0 && this.state.password.length > 0
+  // }
+  //
+  // handleSubmit = (event) => {
+  //   event.preventDefault()
+  // }
 
   render () {
     return (
       <div>
         <Hero title='Auth graders' subtitle='Many hands must be authenticated' />
 
-        <div className='Login'>
+        <section className='Login'>
           <Button variant='outline-success'>Login with GitLab</Button>{' '}
-        </div>
+        </section>
 
       </div>
     )

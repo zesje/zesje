@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="jest tests" tests="1" failures="0" time="5.452">
+  <testsuite name="undefined" errors="0" failures="0" skipped="0" timestamp="2020-05-05T03:39:25" time="3.414" tests="1">
+    <testcase classname=" Student id searchfield has focus on loading component" name=" Student id searchfield has focus on loading component" time="0.1">
+    </testcase>
+  </testsuite>
+</testsuites>

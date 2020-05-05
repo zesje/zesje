@@ -1,0 +1,11 @@
+@media all and (min-width: 480px) {
+  div.Login {
+    padding: 60px 0;
+  }
+
+  div.Login form {
+    margin: 0 auto;
+    padding: 50px 50px;
+    max-width: 320px;
+  }
+}

@@ -49,6 +49,10 @@ const Email = Loadable({
   loader: () => import('./views/Email.jsx'),
   loading: Loading
 })
+const Login = Loadable({
+  loader: () => import('./views/Login.jsx'),
+  loading: Loading
+})
 const Fail = Loadable({
   loader: () => import('./views/Fail.jsx'),
   loading: Loading
@@ -157,6 +161,8 @@ class App extends React.Component {
             <Route path='/email' render={() => (
               exam.submissions.length ? <Email exam={exam} /> : <Fail message='No exams uploaded. Please do not bookmark URLs' />
             )} />
+            <Route path='/auth_graders' render={() =>
+              <Login />} />
             <Route path='/graders' render={() =>
               <Graders updateGraderList={this.menu.current ? this.menu.current.updateGraderList : null} />} />
             <Route render={() =>

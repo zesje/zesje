@@ -60,6 +60,7 @@
     "raw-loader": "^0.5.1",
     "react": "^16.4.0",
     "react-autosuggest": "^9.3.4",
+    "react-bootstrap": "^1.0.1",
     "react-bulma-notification": "^1.1.0",
     "react-bulma-switch": "^0.0.3",
     "react-dom": "^16.4.0",

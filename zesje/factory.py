@@ -1,7 +1,7 @@
 import os
 from os.path import abspath, dirname
 
-from flask import Flask, session, redirect, request, url_for, jsonify, render_template
+from flask import Flask, session, redirect, request, url_for, render_template
 from flask_migrate import Migrate
 from werkzeug.exceptions import NotFound
 from flask_login import login_required, login_user, logout_user
@@ -54,8 +54,8 @@ def create_app(celery=None, app_config=None):
     def login():
         """Logs the user in by redirecting to the OAuth provider with the appropriate
         client ID as a request parameter"""
-        github = OAuth2Session(app.config['GITHUB_CLIENT_ID'])
-        authorization_url, state = github.authorization_url(app.config['GITHUB_AUTHORIZATION_BASE_URL'])
+        github = OAuth2Session(app.config['OAUTH_CLIENT_ID'])
+        authorization_url, state = github.authorization_url(app.config['OAUTH_AUTHORIZATION_BASE_URL'])
 
         session['oauth_state'] = state
 
@@ -65,26 +65,29 @@ def create_app(celery=None, app_config=None):
     def callback():
         """OAuth provider redirects to this route after authorization.
         Fetches token and redirects to /profile"""
-        gitlab = OAuth2Session(app.config['GITHUB_CLIENT_ID'], state=session['oauth_state'])
+        gitlab = OAuth2Session(app.config['OAUTH_CLIENT_ID'], state=session['oauth_state'])
         token = gitlab.fetch_token(
-            app.config['GITHUB_TOKEN_URL'],
-            client_secret=app.config['GITHUB_CLIENT_SECRET'],
+            app.config['OAUTH_TOKEN_URL'],
+            client_secret=app.config['OAUTH_CLIENT_SECRET'],
             authorization_response=request.url,
         )
 
-        session['oauth_token'] = token
+        session['oauth_token'] = token  # token can used to make requests with OAuth provider later if needed
 
-        return redirect(url_for('.profile'))
-
-    @app.route("/profile", methods=["GET"])
-    def profile():
-        """Fetching a protected resource using an OAuth 2 token.
-        """
-        login_user(Grader.query.get(int(1)))
-        github = OAuth2Session(app.config['GITHUB_CLIENT_ID'], token=session['oauth_token'])
-        current_grader = github.get(app.config['GITHUB_USERINFO_URL']).json()
+        github = OAuth2Session(app.config['OAUTH_CLIENT_ID'], token=session['oauth_token'])
+        current_grader = github.get(app.config['OAUTH_USERINFO_URL']).json()
         session['grader_name'] = current_grader['name']
-        return jsonify(current_grader)
+
+        grader = Grader.query.filter(Grader.name == current_grader['name']).one_or_none()
+
+        if grader is None:
+            grader = Grader(name=current_grader['name'])
+            db.session.add(grader)
+            db.session.commit()
+
+        login_user(grader)
+
+        return redirect(url_for('index'))
 
     @app.route("/logout", methods=["GET"])
     def logout():

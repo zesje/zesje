@@ -2,10 +2,12 @@ import os
 import sys
 
 import pytest
+from _pytest.monkeypatch import MonkeyPatch
 from flask import Flask
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from sqlalchemy.orm.session import close_all_sessions
+from sqlalchemy import event, create_engine
 
 sys.path.insert(0, str(Path.cwd()))
 
@@ -45,12 +47,19 @@ def base_app(base_config_app):
     db.init_app(app)
     with app.app_context():
         db.drop_all()
+        db.create_all()
+
+    close_all_sessions()
+
+    engine = create_engine(app.config['SQLALCHEMY_DATABASE_URI'])
+    connection = engine.connect()
+    app.config['TESTING_CONNECTION'] = connection
 
     app.register_blueprint(api_bp, url_prefix='/api')
     return app
 
 
-def app_fixture(base_app):
+def app_fixture(base_app, monkeypatch):
     app = base_app
 
     with TemporaryDirectory() as temp_dir:
@@ -60,24 +69,48 @@ def app_fixture(base_app):
         )
 
         with app.app_context():
-            db.create_all()
+            connection = app.config['TESTING_CONNECTION']
+            transaction = connection.begin()
+
+            options = dict(bind=connection, binds={})
+            session = db.create_scoped_session(options=options)
+            session.begin_nested()
+
+            @event.listens_for(session, 'after_transaction_end')
+            def restart_savepoint(session2, transaction):
+                # Detecting whether this is indeed the nested transaction of the test
+                if transaction.nested and not transaction._parent.nested:
+                    # The test should have normally called session.commit(),
+                    # but to be safe we explicitly expire the session
+                    session2.expire_all()
+                    session.begin_nested()
+
+            monkeypatch.setattr(db, 'session', session)
+
             yield app
 
-            close_all_sessions()
-            db.drop_all()
+            session.remove()
+            transaction.rollback()
 
 
 @pytest.fixture
-def app(base_app):
-    yield from app_fixture(base_app)
+def app(base_app, monkeypatch):
+    yield from app_fixture(base_app, monkeypatch)
 
 
 @pytest.fixture(scope='module')
-def module_app(base_app):
-    yield from app_fixture(base_app)
+def module_app(base_app, module_monkeypatch):
+    yield from app_fixture(base_app, module_monkeypatch)
 
 
 @pytest.fixture
 def test_client(app):
     with app.test_client() as client:
         yield client
+
+
+@pytest.fixture(scope='module')
+def module_monkeypatch():
+    monkeypatch = MonkeyPatch()
+    yield monkeypatch
+    monkeypatch.undo()

@@ -105,6 +105,3 @@ stats.json
 .coverage
 cov.xml
 cov.html/
-
-#
-default.profraw

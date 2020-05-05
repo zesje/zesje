@@ -33,20 +33,24 @@ import os
 import shutil
 import sys
 import argparse
+import time
 
 import lorem
 import names
 import flask_migrate
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
+from reportlab.pdfbase import pdfmetrics
 from pdfrw import PdfReader, PdfWriter, PageMerge
 from tempfile import NamedTemporaryFile
+from pathlib import Path
 
 from lorem.text import TextLorem
 
 from zesje.database import db, Exam, Scan, Submission, Solution, Page, Copy
 from zesje.scans import _process_pdf
 from zesje.factory import create_app
+import zesje.mysql as mysql
 
 
 if 'ZESJE_SETTINGS' not in os.environ:
@@ -61,19 +65,30 @@ def init_app(delete):
     app = create_app()
 
     if os.path.exists(app.config['DATA_DIRECTORY']) and delete:
+        mysql_was_running_before_delete = mysql.is_running(app.config)
+        if mysql_was_running_before_delete:
+            mysql.stop(app.config)
+            time.sleep(5)
         shutil.rmtree(app.config['DATA_DIRECTORY'])
 
     # ensure directories exists
     os.makedirs(app.config['DATA_DIRECTORY'], exist_ok=True)
     os.makedirs(app.config['SCAN_DIRECTORY'], exist_ok=True)
 
-    # Only create the database from migrations if it was deleted.
-    # Otherwise the user should migrate manually.
-    if delete:
+    mysql_is_created = mysql.create(app.config, allow_exists=True)
+    if mysql_is_created:
+        time.sleep(2)
+    mysql_was_running = mysql.start(app.config, allow_running=True)
+    if not mysql_was_running:
+        time.sleep(5)  # wait till mysql starts
+
+    # Only create the database from migrations if it was created
+    # by this script, otherwise the user should migrate manually
+    if delete or mysql_is_created:
         with app.app_context():
             flask_migrate.upgrade(directory='migrations')
 
-    return app
+    return app, mysql_was_running or mysql_was_running_before_delete
 
 
 def generate_exam_pdf(pdf_file, exam_name, pages, problems, mc_problems):
@@ -171,6 +186,7 @@ def generate_solution(pdf, student_id, problems, mc_problems, solve):
         pdf.rect(66 + k * 16, int(A4[1]) - 82 - d * 16, 9, 9, fill=1, stroke=0)
 
     for p in range(pages):
+        pdf.setFont('HugoHandwriting', 19)
         pdf.setFillColorRGB(0, 0.1, 0.4)
 
         if p > 0 and random.random() < solve:
@@ -180,7 +196,8 @@ def generate_solution(pdf, student_id, problems, mc_problems, solve):
         for i in range(3):
             prob = problems[3 * p + i]
             if random.random() < solve:
-                pdf.drawString(prob['x'] + 50, prob['y'] - 50, lorem.sentence())
+                for i in range(random.randint(1, 3)):
+                    pdf.drawString(prob['x'] + 20, prob['y'] - 30 - (20 * i), lorem.sentence())
 
         pdf.showPage()
 
@@ -258,6 +275,8 @@ def design_exam(app, client, pages, students, grade, solve, multiple_copies, ski
         'page': i,
         'mc_options': []
     } for i in range(1, pages)]
+
+    register_fonts()
 
     with NamedTemporaryFile() as pdf_file:
         generate_exam_pdf(pdf_file, exam_name, pages, problems, mc_problems)
@@ -376,6 +395,25 @@ def create_exams(app, client, exams, pages, students, graders, solve, grade, mul
     return generated_exams
 
 
+def register_fonts():
+    # Font name : file name
+    # File name should be the same as internal font name
+    fonts = {
+        'HugoHandwriting': 'Hugohandwriting-Regular'
+    }
+
+    font_dir = Path.cwd() / 'tests' / 'data' / 'fonts'
+    for font_name, font_file in fonts.items():
+        font_path_afm = font_dir / (font_file + '.afm')
+        font_path_pfb = font_dir / (font_file + '.pfb')
+
+        face = pdfmetrics.EmbeddedType1Face(font_path_afm, font_path_pfb)
+        pdfmetrics.registerTypeFace(face)
+
+        font = pdfmetrics.Font(font_name, font_file, 'WinAnsiEncoding')
+        pdfmetrics.registerFont(font)
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Create example exam data in the database.')
     parser.add_argument('-d', '--delete', action='store_true', help='delete previous data')
@@ -393,7 +431,7 @@ if __name__ == '__main__':
 
     args = parser.parse_args(sys.argv[1:])
 
-    app = init_app(args.delete)
+    app, mysql_was_running = init_app(args.delete)
 
     with app.test_client() as client:
         create_exams(app, client,
@@ -405,3 +443,5 @@ if __name__ == '__main__':
                      args.grade / 100,
                      args.multiple_copies / 100,
                      args.skip_processing)
+    if not mysql_was_running:
+        mysql.stop(app.config)

@@ -15,6 +15,8 @@ from flask import current_app
 
 sys.path.append(os.getcwd())
 from zesje.database import db  # noqa: E402
+from zesje.mysql import dump  # noqa: E402
+
 
 config = context.config
 fileConfig(config.config_file_name)
@@ -93,6 +95,18 @@ def run_migrations_online():
         db_backup_path = os.path.join(db_dir, db_backup_file)
         if not os.path.isfile(db_backup_path) and from_revision != to_revision:
             copy(db_path, db_backup_path)
+    elif db_url.startswith('mysql://'):
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        db_backup_path = os.path.join(
+            current_app.config['DATA_DIRECTORY'],
+            'backup_{}_{}.sql'.format(timestamp, current_app.config['MYSQL_DATABASE'])
+        )
+        try:
+            output = dump(current_app.config, current_app.config['MYSQL_DATABASE'])
+            with open(db_backup_path, 'wb') as outf:
+                outf.write(output)
+        except Exception as e:
+            print('Could not backup database: ' + str(e))
 
     try:
         with context.begin_transaction():

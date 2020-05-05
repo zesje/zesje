@@ -64,7 +64,7 @@ class Graders extends React.Component {
                 <div className='control'>
                   <input name='first_name' value={this.state.name}
                     onChange={this.changeName} className='input' type='text'
-                    placeholder='Name' />
+                    maxLength={100} placeholder='Name' />
                 </div>
                 <div className='control'>
                   <button type='submit' className='button is-info'>

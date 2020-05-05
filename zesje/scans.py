@@ -14,10 +14,10 @@ from PIL import Image
 from pikepdf import Pdf
 from pylibdmtx import pylibdmtx
 from sqlalchemy.exc import InternalError
+from reportlab.lib.units import inch
 
 from .database import db, Scan, Exam, Page, Student, Submission, Copy, Solution, ExamWidget
-from .datamatrix import decode_raw_datamatrix
-from .images import guess_dpi, get_box
+from .images import guess_dpi, get_box, is_misaligned
 from .pregrader import grade_problem
 from .image_extraction import extract_images
 from .blanks import reference_image
@@ -356,11 +356,7 @@ def decode_barcode(image, exam_config):
         results = pylibdmtx.decode(method(image))
         if len(results) == 1:
             data = results[0].data
-            # See https://github.com/NaturalHistoryMuseum/pylibdmtx/issues/24
-            try:
-                data = data.decode('utf-8')
-            except UnicodeDecodeError:
-                data = decode_raw_datamatrix(data)
+            data = data.decode('utf-8')
 
             try:
                 token, copy, page = data.split('/')
@@ -401,16 +397,23 @@ def guess_student(exam_token, copy_number):
             'Cannot guess student number for a copy that is not the only copy of a submission. ' +
             'This means the copy has already been validated.')
 
+    if copy.validated:
+        return "Signature of this copy is already validated"
+
     image_path = Page.query.filter(Page.copy == copy,
                                    Page.number == 0).one().abs_path
 
     student_id_widget, student_id_widget_coords = exam_student_id_widget(exam.id)
+    student_id_widget_coords_inch = np.array(student_id_widget_coords) / 72
 
-    if copy.validated:
-        return "Signature of this copy is already validated"
+    image = cv2.imread(image_path)
+    dpi = guess_dpi(image)
+    reference = reference_image(exam.id, 0, dpi)
+    if is_misaligned(student_id_widget_coords_inch, image, reference, padding_inch=0.2):
+        return "Student id widget is misaligned, not guessing student"
 
     try:
-        number = get_student_number(image_path, student_id_widget_coords)
+        number = get_student_number(image, student_id_widget_coords)
     except Exception as e:
         return "Failed to extract student number: " + str(e)
 
@@ -423,72 +426,42 @@ def guess_student(exam_token, copy_number):
         return f"Student number {number} not in the database"
 
 
-def get_student_number(image_path, student_id_widget_coords):
+def get_student_number(image, student_id_widget_coords):
     """Extract the student number from the image path with the scanned number.
 
     TODO: all the numerical parameters are guessed and work well on the first
     exam.  Yet, they should be inferred from the scans.
     """
-    image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
     # TODO: use points as base unit
-    student_id_widget_coords_in = np.asarray(student_id_widget_coords) / 72
-    image_raw = get_box(image, student_id_widget_coords_in, padding=0.3)
+    dpi = guess_dpi(image)
+    student_id_widget_coords_inch = np.asarray(student_id_widget_coords) / inch
 
-    # Add a 1 pixel border to floodfill from all sides
-    h, w, *_ = image_raw.shape
-    image = np.full((h+2, w+2), 255, np.uint8)
-    image[1:-1, 1:-1] = image_raw
+    widget_image = get_box(image, student_id_widget_coords_inch, padding=0.0)
 
-    _, thresholded = cv2.threshold(image, 150, 255, cv2.THRESH_BINARY)
-    thresholded = cv2.bitwise_not(thresholded)
+    _, thresholded = cv2.threshold(widget_image, 150, 255, cv2.THRESH_BINARY)
 
-    # Copy the thresholded image.
-    im_floodfill = thresholded.copy()
+    box_size = current_app.config['ID_GRID_BOX_SIZE'] / inch * dpi
+    margin = current_app.config['ID_GRID_MARGIN'] / inch * dpi
+    font_size = current_app.config['ID_GRID_FONT_SIZE'] / inch * dpi
+    digits = current_app.config['ID_GRID_DIGITS']
 
-    # Mask used to flood filling.
-    # Notice the size needs to be 2 pixels than the image.
-    mask = np.zeros((h+4, w+4), np.uint8)
+    line_width = dpi/inch
+    left = int(margin + font_size + box_size/2 + line_width/2)
+    right = int(left + (digits - 1) * (font_size + margin))
+    top = int(2 * (margin + box_size) + line_width)
+    bottom = int(top + (10 - 1) * (font_size + margin))
 
-    # Floodfill from point (0, 0)
-    cv2.floodFill(im_floodfill, mask, (0, 0), 255)
+    r = int(box_size / 2 - 1.5*line_width)
 
-    # Invert floodfilled image
-    im_floodfill_inv = cv2.bitwise_not(im_floodfill)
-
-    # Combine the two images to get the foreground.
-    im_out = ~(thresholded | im_floodfill_inv)
-
-    min_box_size = int(h*w/1000)
-
-    params = cv2.SimpleBlobDetector_Params()
-    params.filterByArea = True
-    params.minArea = min_box_size * 0.7
-    params.maxArea = min_box_size * 2
-    params.filterByCircularity = False
-    params.filterByConvexity = True
-    params.minConvexity = 0.87
-    params.filterByInertia = True
-    params.minInertiaRatio = 0.7
-
-    detector = cv2.SimpleBlobDetector_create(params)
-
-    keypoints = detector.detect(im_out)
-    if len(keypoints) <= 2:
-        raise ValueError('Blob detector did not detect enough keypoints.')
-
-    centers = np.array(sorted([kp.pt for kp in keypoints])).astype(int)
-    diameters = np.array([kp.size for kp in keypoints])
-    r = int(np.median(diameters)/4)
-    (right, bottom) = np.max(centers, axis=0)
-    (left, top) = np.min(centers, axis=0)
-    centers = np.mgrid[left:right:7j, top:bottom:10j].astype(int)
+    centers = np.mgrid[left:right:digits*1j, top:bottom:10j].astype(int)
     weights = []
     for center in centers.reshape(2, -1).T:
         x, y = center
-        weights.append(np.sum(255 - image[y-r:y+r, x-r:x+r]))
+        weights.append(np.sum(255 - thresholded[y-r:y+r, x-r:x+r]))
+        thresholded[y-r:y+r, x-r:x+r] = np.array([255, 0, 0])
 
-    weights = np.array(weights).reshape(10, 7, order='F')
-    return sum(((np.argmax(weights, axis=0)) % 10)[::-1] * 10**np.arange(7))
+    weights = np.array(weights).reshape(10, digits, order='F')
+    return sum(((np.argmax(weights, axis=0)) % 10)[::-1] * 10**np.arange(digits))
 
 
 def calc_angle(keyp1, keyp2):

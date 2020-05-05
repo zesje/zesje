@@ -28,46 +28,34 @@ def mock_get_box_return_original(monkeypatch):
 
 
 @pytest.fixture(scope='module')
-def db_empty_app(db_app):
-    with db_app.app_context():
-        db.drop_all()
-        db.create_all()
-
-    return db_app
-
-
-@pytest.fixture(scope='module')
-def full_app(db_empty_app):
+def full_app(module_app):
     """
     Default code for generating a database entry and writing
     a finalized exam pdf.
     This needs to be ran at the start of every pipeline test
     """
-    with db_empty_app.app_context():
-        exam = Exam(name='Exam')
-        db.session.add(exam)
-        db.session.commit()
+    exam = Exam(name='Exam')
+    db.session.add(exam)
+    db.session.commit()
 
-        exam.token = generate_exam_token(exam.id, exam.name, b'EXAM PDF DATA')
-        student_id_widget = ExamWidget(exam=exam, name='student_id_widget', x=50, y=50)
-        ExamWidget(exam=exam, name='barcode_widget', x=40, y=510)
+    exam.token = generate_exam_token(exam.id, exam.name, b'EXAM PDF DATA')
+    student_id_widget = ExamWidget(exam=exam, name='student_id_widget', x=50, y=50)
+    ExamWidget(exam=exam, name='barcode_widget', x=40, y=510)
 
-        db.session.commit()
+    db.session.commit()
 
-        exam_dir = _get_exam_dir(exam.id)
-        os.makedirs(exam_dir, exist_ok=True)
+    exam_dir = _get_exam_dir(exam.id)
+    os.makedirs(exam_dir, exist_ok=True)
 
-        exam_path = os.path.join(exam_dir, 'exam.pdf')
-        pdf = canvas.Canvas(exam_path, pagesize=A4)
-        for _ in range(2):
-            pdf.showPage()
-        pdf.save()
+    exam_path = os.path.join(exam_dir, 'exam.pdf')
+    pdf = canvas.Canvas(exam_path, pagesize=A4)
+    for _ in range(2):
+        pdf.showPage()
+    pdf.save()
 
-        write_finalized_exam(exam_dir, exam_path, student_id_widget.x, student_id_widget.y, [])
+    write_finalized_exam(exam_dir, exam_path, student_id_widget.x, student_id_widget.y, [])
 
-    # Push the current app context for all tests so the database can be used
-    with db_empty_app.app_context():
-        yield db_empty_app
+    yield module_app
 
 
 def generate_flat_scan_data(copy_number=145):

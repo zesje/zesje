@@ -2,9 +2,9 @@ import pytest
 
 
 @pytest.mark.parametrize('email', ['student@school.edu', ''], ids=['email', 'no email'])
-def test_add_student(client, email):
+def test_add_student(test_client, email):
     student = new_student(1000000, email)
-    result = client.put('api/students', json=student)
+    result = test_client.put('api/students', json=student)
 
     assert result.status_code == 200
 
@@ -12,16 +12,16 @@ def test_add_student(client, email):
     assert data == student
 
 
-def test_get_students(client):
+def test_get_students(test_client):
     students = [
         new_student(1000000, ''),
         new_student(1000001, 'student@school.edu')
     ]
 
     for student in students:
-        assert client.put('api/students', json=student).status_code == 200
+        assert test_client.put('api/students', json=student).status_code == 200
 
-    result = client.get('api/students')
+    result = test_client.get('api/students')
     assert result.status_code == 200
 
     data = result.get_json()
@@ -44,12 +44,12 @@ def test_get_students(client):
     ([[1000000, 'a', 'b', 'c'], [1000001, 'a2', 'b2', 'c2'], [1000001, 'a3', 'b3', 'c']], [200, 200, 400],
      [[1000000, 'a', 'b', 'c'], [1000001, 'a2', 'b2', 'c2']]),
 ], ids=['same id same email', 'new id same email', 'same id new mail', 'same id no mail', 'update id same mail'])
-def test_update_students(client, data, code, expected):
+def test_update_students(test_client, data, code, expected):
     for index, student_data in enumerate(data):
         student = new_student(student_data[0], student_data[3], student_data[1], student_data[2])
-        assert client.put('api/students', json=student).status_code == code[index]
+        assert test_client.put('api/students', json=student).status_code == code[index]
 
-    result = client.get('api/students')
+    result = test_client.get('api/students')
     assert result.status_code == 200
 
     data = result.get_json()

@@ -6,7 +6,7 @@ import os
 from flask import current_app
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean, ForeignKey, Enum
-from sqlalchemy import false, select, join
+from sqlalchemy import select, join
 from flask_sqlalchemy.model import BindMetaMixin, Model
 from sqlalchemy.ext.declarative import DeclarativeMeta, declarative_base
 from sqlalchemy.orm import backref
@@ -35,7 +35,7 @@ class Student(db.Model):
     id = Column(Integer, primary_key=True)
     first_name = Column(Text, nullable=False)
     last_name = Column(Text, nullable=False)
-    email = Column(Text, unique=True)
+    email = Column(String(320), unique=True)
     submissions = db.relationship('Submission', backref='student', lazy=True)
 
 
@@ -43,7 +43,7 @@ class Grader(db.Model):
     """Graders can be created by any user at any time, but are immutable once they are created"""
     __tablename__ = 'grader'
     id = Column(Integer, primary_key=True, autoincrement=True)
-    name = Column(Text, nullable=False, unique=True)
+    name = Column(String(100), nullable=False, unique=True)
     graded_solutions = db.relationship('Solution', backref='graded_by', lazy=True)
 
 
@@ -58,8 +58,8 @@ class Exam(db.Model):
     scans = db.relationship('Scan', backref='exam', cascade='all', lazy=True)
     widgets = db.relationship('ExamWidget', backref='exam', cascade='all',
                               order_by='ExamWidget.id', lazy=True)
-    finalized = Column(Boolean, default=False, server_default='f')
-    grade_anonymous = Column(Boolean, default=False, server_default=false())
+    finalized = Column(Boolean, default=False, server_default='0')
+    grade_anonymous = Column(Boolean, default=False, server_default='0')
 
     @hybrid_property
     def copies(self):
@@ -96,7 +96,7 @@ class Submission(db.Model):
                                 order_by='Solution.problem_id', lazy=True)
     copies = db.relationship('Copy', backref='submission', cascade='all', lazy=True)
     student_id = Column(Integer, ForeignKey('student.id'), nullable=True)  # backref student
-    validated = Column(Boolean, default=False, server_default=false(), nullable=False)
+    validated = Column(Boolean, default=False, server_default='0', nullable=False)
 
 
 class Copy(db.Model):
@@ -232,7 +232,7 @@ class MultipleChoiceOption(Widget):
     __tablename__ = 'mc_option'
     id = Column(Integer, ForeignKey('widget.id'), primary_key=True, autoincrement=True)
 
-    label = Column(String, nullable=True)
+    label = Column(Text, nullable=True)
     feedback_id = Column(Integer, ForeignKey('feedback_option.id'), nullable=False)
 
     __mapper_args__ = {

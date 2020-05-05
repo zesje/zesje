@@ -6,11 +6,10 @@ from zesje.database import db, Grader
 
 @pytest.fixture
 def add_test_data(app):
-    with app.app_context():
-        grader1 = Grader(name='grader')
-        db.session.add(grader1)
+    grader1 = Grader(name='grader')
+    db.session.add(grader1)
 
-        db.session.commit()
+    db.session.commit()
 
 
 # Actual tests

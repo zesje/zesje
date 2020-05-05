@@ -1,8 +1,6 @@
 import React from 'react'
-import {Button} from 'react-bootstrap'
 import Hero from '../components/Hero.jsx'
 import '../components/Login.css'
-import '../../node_modules/bootstrap/dist/css/bootstrap.min.css'
 
 class Login extends React.Component {
   state = {
@@ -26,7 +24,7 @@ class Login extends React.Component {
         <Hero title='Auth graders' subtitle='Many hands must be authenticated' />
 
         <section className='Login'>
-          <Button variant='outline-success'>Login with GitLab</Button>{' '}
+          <button className='large-and-just-outline'>Login with GitHub</button>
         </section>
 
       </div>

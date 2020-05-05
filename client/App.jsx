@@ -164,7 +164,7 @@ class App extends React.Component {
             <Route path='/auth_graders' render={() =>
               <Login />} />
             <Route path='/graders' render={() =>
-              <Graders updateGraderList={this.menu.current ? this.menu.current.updateGraderList : null} />} />
+              <Graders />} />
             <Route render={() =>
               <Fail message="404. Could not find that page :'(" />} />
           </Switch>

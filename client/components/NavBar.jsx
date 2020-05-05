@@ -48,25 +48,25 @@ const ExamDropdown = (props) => (
   </div>
 )
 
-const GraderDropdown = (props) => (
-  <div className='navbar-item has-dropdown is-hoverable'>
-    <div className='navbar-link' >
-      {props.grader ? <i>{props.grader.name}</i> : 'Select grader'}
-    </div>
-    <div className='navbar-dropdown'>
-      {props.list.map((grader) => (
-        <a className={'navbar-item' + (props.grader && props.grader.id === grader.id ? ' is-active' : '')}
-          key={grader.id} onClick={() => props.changeGrader(grader)} >
-          <i>{grader.name}</i>
-        </a>
-      ))}
-      <hr className='navbar-divider' />
-      <Link className='navbar-item' to={'/graders'} >
-        Add grader
-      </Link>
-    </div>
-  </div>
-)
+// const GraderDropdown = (props) => (
+//   <div className='navbar-item has-dropdown is-hoverable'>
+//     <div className='navbar-link' >
+//       {props.grader ? <i>{props.grader.name}</i> : 'Select grader'}
+//     </div>
+//     <div className='navbar-dropdown'>
+//       {props.list.map((grader) => (
+//         <a className={'navbar-item' + (props.grader && props.grader.id === grader.id ? ' is-active' : '')}
+//           key={grader.id} onClick={() => props.changeGrader(grader)} >
+//           <i>{grader.name}</i>
+//         </a>
+//       ))}
+//       <hr className='navbar-divider' />
+//       <Link className='navbar-item' to={'/graders'} >
+//         Add grader
+//       </Link>
+//     </div>
+//   </div>
+// )
 
 const ExportDropdown = (props) => {
   const exportFormats = [
@@ -122,7 +122,7 @@ class NavBar extends React.Component {
 
   componentDidMount = () => {
     this.updateExamList()
-    this.updateGraderList()
+    // this.updateGraderList()
   }
 
   updateExamList = () => {
@@ -143,20 +143,20 @@ class NavBar extends React.Component {
       })
   }
 
-  updateGraderList = () => {
-    api.get('graders')
-      .then(graders => {
-        this.setState({
-          graderList: graders
-        })
-
-        const oldGraderID = parseInt(window.sessionStorage.getItem('graderID'))
-        if (oldGraderID >= 0) {
-          const i = graders.findIndex(grader => grader.id === oldGraderID)
-          if (this.props.grader === null && i >= 0) this.props.changeGrader(graders[i])
-        }
-      })
-  }
+  // updateGraderList = () => {
+  //   api.get('graders')
+  //     .then(graders => {
+  //       this.setState({
+  //         graderList: graders
+  //       })
+  //
+  //       const oldGraderID = parseInt(window.sessionStorage.getItem('graderID'))
+  //       if (oldGraderID >= 0) {
+  //         const i = graders.findIndex(grader => grader.id === oldGraderID)
+  //         if (this.props.grader === null && i >= 0) this.props.changeGrader(graders[i])
+  //       }
+  //     })
+  // }
 
   burgerClick = () => {
     this.setState({
@@ -220,15 +220,6 @@ class NavBar extends React.Component {
             </a>
           </div>
 
-          <div className='navbar-end'>
-            {this.state.graderList.length
-              ? <GraderDropdown grader={this.props.grader} list={this.state.graderList} changeGrader={this.props.changeGrader} />
-              : <Link className='navbar-item' to='/graders'>Add grader</Link>
-            }
-            <div className='navbar-item'>
-              <i>Version {__ZESJE_VERSION__}</i>
-            </div>
-          </div>
         </div>
         <HelpModal page={this.pages[this.state.helpPage] || {content: null, title: null}}
           closeHelp={() => this.setState({ helpPage: null })} />

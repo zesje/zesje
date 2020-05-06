@@ -112,7 +112,7 @@ def is_running(config):
         _exit(0)
         return True
     else:
-        print(f'MySQL is not running')
+        print('MySQL is not running')
         _exit(1)
         return False
 

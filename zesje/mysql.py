@@ -123,7 +123,7 @@ def dump(config, database=None):
     host = config['MYSQL_HOST']
     database = database if database is not None else config['MYSQL_DATABASE']
     p = sp.Popen(
-        ['mysqldump', f'--user={user}', f'--password={password}', f'--host={host}', database],
+        ['mysqldump', '--single-transaction', f'--user={user}', f'--password={password}', f'--host={host}', database],
         stdin=sp.PIPE,
         stdout=sp.PIPE,
         stderr=sp.PIPE

@@ -117,7 +117,7 @@ def is_running(config):
         return False
 
 
-def dump(config, database):
+def dump(config, database=None):
     user = config['MYSQL_USER']
     password = config['MYSQL_PASSWORD']
     host = config['MYSQL_HOST']

@@ -1,7 +1,7 @@
 import pytest
 
 from flask import json
-from zesje.database import db, Exam, Problem, ProblemWidget
+from zesje.database import db, Exam, Problem, ProblemWidget, Submission
 from zesje.api.exams import generate_exam_token
 
 
@@ -24,7 +24,7 @@ def add_test_data(app):
 # Actual tests
 
 
-def test_get_exams(test_client, add_test_data):
+def test_get_exams_mult_choice(test_client, add_test_data):
     mc_option_1 = {
         'x': 100,
         'y': 40,
@@ -63,3 +63,39 @@ def test_exam_generate_token_same(ids, names, pdfs, tokens_equal):
 
     assert len(token_a) == len(token_b) == 12
     assert (token_a == token_b) is tokens_equal
+
+
+@pytest.mark.parametrize(
+    'no_with_subs, no_without_subs',
+    [(0, 0), (0, 1), (1, 0), (1, 1), (5, 10)],
+    ids=['No exams', 'Without submissions', 'With submissions', 'Mixed', 'Many'])
+def test_get_exams(test_client, no_with_subs, no_without_subs):
+    for i in range(no_without_subs):
+        db.session.add(Exam(name=f'No Submissions {i}'))
+
+    for i in range(no_with_subs):
+        exam = Exam(name=f'Submissions {i}')
+        db.session.add(exam)
+        for _ in range(i):
+            db.session.add(Submission(exam=exam))
+
+    db.session.commit()
+
+    response = test_client.get('/api/exams')
+
+    assert response.status_code == 200
+
+    data = json.loads(response.data)
+    exams = {exam['name']: exam['submissions'] for exam in data}
+
+    assert len(exams) == no_with_subs + no_without_subs
+
+    for i in range(no_without_subs):
+        exam_name = f'No Submissions {i}'
+        assert exam_name in exams
+        assert exams[exam_name] == 0
+
+    for i in range(no_with_subs):
+        exam_name = f'Submissions {i}'
+        assert exam_name in exams
+        assert exams[exam_name] == i

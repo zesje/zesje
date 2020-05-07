@@ -125,7 +125,7 @@ class Exams(Resource):
             {
                 'id': ex.id,
                 'name': ex.name,
-                'submissions': sub_count[ex.id]
+                'submissions': sub_count[ex.id] if ex.id in sub_count else 0
             }
             for ex in db.session.query(Exam.id, Exam.name).order_by(Exam.id).all()
         ]

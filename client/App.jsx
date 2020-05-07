@@ -98,6 +98,7 @@ class App extends React.Component {
         this.updateExamList()
       })
   }
+
   updateSubmission = (submissionID) => {
     api.get('submissions/' + this.state.exam.id + '/' + submissionID)
       .then(sub => {

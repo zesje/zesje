@@ -68,6 +68,10 @@ const ExamDropdown = (props) => (
 //   </div>
 // )
 
+const GraderSetup = (props) => {
+
+}
+
 const ExportDropdown = (props) => {
   const exportFormats = [
     { label: 'Excel Spreadsheet', format: 'xlsx' },
@@ -117,7 +121,8 @@ class NavBar extends React.Component {
     foldOut: false,
     examList: [],
     graderList: [],
-    helpPage: null
+    helpPage: null,
+    grader: ''
   }
 
   componentDidMount = () => {
@@ -140,6 +145,16 @@ class NavBar extends React.Component {
             this.props.updateExam(exams[exams.length - 1].id)
           }
         }
+      })
+  }
+
+  updateGrader = () => {
+    api.get('current_grader/')
+      .then(response => {
+        let json = response.json()
+        // eslint-disable-next-line no-undef
+        let jsonObject = $.parseJSON(json)
+        this.state.grader = jsonObject.name
       })
   }
 
@@ -172,6 +187,7 @@ class NavBar extends React.Component {
     const predicateExamNotFinalized = [!this.props.exam.finalized, 'The exam is not finalized yet.']
     const predicateSubmissionsEmpty = [this.props.exam.submissions.length === 0, 'There are no submissions, please upload some.']
     const predicateNoGraderSelected = [this.props.grader === null, 'Please select a grader.']
+    this.updateGrader()
 
     return (
       <nav className='navbar' role='navigation' aria-label='dropdown navigation'>
@@ -221,6 +237,10 @@ class NavBar extends React.Component {
           </div>
 
           <div className='navbar-end'>
+            <div className='navbar-item'>
+              <i>Current Grader: {this.props.grader}</i>
+            </div>
+
             <div className='navbar-item'>
               <i>Version {__ZESJE_VERSION__}</i>
             </div>

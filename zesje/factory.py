@@ -54,8 +54,8 @@ def create_app(celery=None, app_config=None):
     def login():
         """Logs the user in by redirecting to the OAuth provider with the appropriate
         client ID as a request parameter"""
-        github = OAuth2Session(app.config['OAUTH_CLIENT_ID'])
-        authorization_url, state = github.authorization_url(app.config['OAUTH_AUTHORIZATION_BASE_URL'])
+        oauth2_session = OAuth2Session(app.config['OAUTH_CLIENT_ID'])
+        authorization_url, state = oauth2_session.authorization_url(app.config['OAUTH_AUTHORIZATION_BASE_URL'])
 
         session['oauth_state'] = state
 
@@ -65,8 +65,8 @@ def create_app(celery=None, app_config=None):
     def callback():
         """OAuth provider redirects to this route after authorization.
         Fetches token and redirects to /profile"""
-        gitlab = OAuth2Session(app.config['OAUTH_CLIENT_ID'], state=session['oauth_state'])
-        token = gitlab.fetch_token(
+        oauth2_session = OAuth2Session(app.config['OAUTH_CLIENT_ID'], state=session['oauth_state'])
+        token = oauth2_session.fetch_token(
             app.config['OAUTH_TOKEN_URL'],
             client_secret=app.config['OAUTH_CLIENT_SECRET'],
             authorization_response=request.url,
@@ -76,7 +76,6 @@ def create_app(celery=None, app_config=None):
 
         github = OAuth2Session(app.config['OAUTH_CLIENT_ID'], token=session['oauth_token'])
         current_grader = github.get(app.config['OAUTH_USERINFO_URL']).json()
-        session['grader_name'] = current_grader['name']
 
         grader = Grader.query.filter(Grader.name == current_grader['name']).one_or_none()
 
@@ -84,6 +83,8 @@ def create_app(celery=None, app_config=None):
             grader = Grader(name=current_grader['name'])
             db.session.add(grader)
             db.session.commit()
+
+        session['grader'] = grader
 
         login_user(grader)
 

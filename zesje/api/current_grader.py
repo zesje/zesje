@@ -4,7 +4,7 @@ from flask import session
 from flask_restful import Resource
 
 
-class Current_Grader(Resource):
+class CurrentGrader(Resource):
     """Gets the current grader who logged in via OAuth"""
 
     def get(self):
@@ -15,5 +15,6 @@ class Current_Grader(Resource):
         name : str
         """
         return {
-            'name': session['grader_name']
+            'id': session['grader'].id,
+            'name': session['grader'].name
         }

@@ -31,11 +31,10 @@ login_manager = LoginManager()
 
 
 @login_manager.user_loader
-def load_user(user_id):
-    return Grader.query.get(user_id)
+def load_grader(grader_id):
+    return Grader.query.get(grader_id)
 
 # db.Models #
-
 
 class Student(db.Model):
     """New students may be added throughout the course."""

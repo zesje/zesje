@@ -9,6 +9,9 @@ dependencies:
     - redis
     - pip
     - imagemagick
+    - mysql
+    - pymysql
+
     - pip:
         # Core components
         - flask
@@ -20,6 +23,12 @@ dependencies:
         - pyyaml
         - celery
         - redis
+
+        #oauth library
+        - requests_oauthlib
+
+        #flask session management
+        - flask_login
 
         # General utilities
         - numpy==1.15.4

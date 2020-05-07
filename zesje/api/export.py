@@ -7,6 +7,7 @@ import json
 from ..database import Exam, Submission
 from ..statistics import full_exam_data, grader_data
 from ..emails import solution_pdf
+from ..mysql import dump
 
 
 def full():
@@ -15,12 +16,19 @@ def full():
     Returns
     -------
     response : flask Response
-        response containing the ``course.sqlite``
+        response containing the ``course.sql``
     """
+
+    try:
+        output = dump(current_app.config)
+    except Exception as e:
+        abort(404, 'Could not export database content: ' + str(e))
+
     return send_file(
-        current_app.config['DB_PATH'],
+        BytesIO(output),
         as_attachment=True,
-        mimetype="application/x-sqlite3",
+        attachment_filename='course.sql',
+        mimetype="application/sql",
         cache_timeout=0,
     )
 

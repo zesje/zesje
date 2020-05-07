@@ -72,7 +72,13 @@ lint_py:
 test_py:
   <<: *conda-env
   stage: test
+  services:
+    - mysql:5.7
+  variables:
+    MYSQL_DATABASE: "course_test"
+    MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
   script:
+    - echo -e "\nMYSQL_HOST = 'mysql'\nMYSQL_USER = 'root'\nMYSQL_PASSWORD = None" >> zesje_test_cfg.py
     - yarn test:py:cov
   artifacts:
     paths:

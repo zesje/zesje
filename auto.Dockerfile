@@ -25,4 +25,4 @@ EXPOSE 80
 
 CMD sudo service nginx restart && \
     sudo chown -R zesje:zesje /app/data-dev && \
-    yarn migrate:dev && yarn dev:backend
+    yarn dev:mysql-init && yarn dev:backend

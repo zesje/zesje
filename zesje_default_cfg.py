@@ -1,3 +1,4 @@
+import os
 # Folder to save exam scans and database
 DATA_DIRECTORY = 'data'
 
@@ -12,5 +13,22 @@ FROM_ADDRESS = None
 SMTP_USERNAME = None
 SMTP_PASSWORD = None
 
+# MySQL host
+MYSQL_USER = 'zesje'
+MYSQL_PASSWORD = 'zesjepsw'
+MYSQL_HOST = 'localhost'
+MYSQL_DATABASE = 'course'
+MYSQL_CONNECTOR = 'mysql+pymysql'
+
 CELERY_BROKER_URL = 'redis://localhost:6479',
 CELERY_RESULT_BACKEND = 'redis://localhost:6479'
+
+# Secret key required for flask.session
+SECRET_KEY = os.urandom(25)
+
+# Github OAuth
+OAUTH_CLIENT_ID = None
+OAUTH_CLIENT_SECRET = None
+OAUTH_AUTHORIZATION_BASE_URL = "https://github.com/login/oauth/authorize"
+OAUTH_TOKEN_URL = "https://github.com/login/oauth/access_token"
+OAUTH_USERINFO_URL = "https://api.github.com/user"

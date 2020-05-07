@@ -5,13 +5,13 @@ import pytest
 from flask import Flask
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from sqlalchemy.orm.session import close_all_sessions
 
 sys.path.insert(0, str(Path.cwd()))
 
 from zesje.api import api_bp  # noqa: E402
 from zesje.database import db  # noqa: E402
 from zesje.factory import create_config  # noqa: E402
-
 
 # Adapted from https://stackoverflow.com/a/46062148/1062698
 @pytest.fixture
@@ -42,11 +42,10 @@ def config_app(base_config_app):
 def base_app(base_config_app):
     app = base_config_app
 
-    app.config.update(
-        SQLALCHEMY_DATABASE_URI='sqlite:///:memory:',
-        SQLALCHEMY_TRACK_MODIFICATIONS=False  # Suppress future deprecation warning
-    )
     db.init_app(app)
+    with app.app_context():
+        db.drop_all()
+
     app.register_blueprint(api_bp, url_prefix='/api')
     return app
 
@@ -63,6 +62,8 @@ def app_fixture(base_app):
         with app.app_context():
             db.create_all()
             yield app
+
+            close_all_sessions()
             db.drop_all()
 
 

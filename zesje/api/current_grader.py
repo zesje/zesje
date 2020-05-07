@@ -12,6 +12,7 @@ class CurrentGrader(Resource):
 
         Returns
         -------
+        id : int
         name : str
         """
         return {

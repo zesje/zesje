@@ -9,10 +9,13 @@ from PIL import Image
 
 from .database import db, Scan, Page, Submission, Solution, Student
 from .image_extraction import convert_to_rgb
+from .constants import ID_GRID_DIGITS
 from . import celery
 
 
-RE_FILENAME = re.compile(r'(?P<studentID>\d{7})-(?P<page>\d+)-?(?P<copy>\d+)?\.(?P<ext>\w+)$')
+RE_FILENAME = re.compile(
+    r'(?P<studentID>\d{' + str(ID_GRID_DIGITS) + r'})-(?P<page>\d+)-?(?P<copy>\d+)?\.(?P<ext>\w+)$'
+)
 
 EXIF_METHODS = {
     2: Image.FLIP_LEFT_RIGHT,

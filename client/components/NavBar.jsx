@@ -173,6 +173,10 @@ class NavBar extends React.Component {
     this.setState({ helpPage: helpPage })
   }
 
+  logout = () => {
+
+  }
+
   render () {
     const predicateExamNotFinalized = [!this.props.exam.finalized, 'The exam is not finalized yet.']
     const predicateSubmissionsEmpty = [this.props.exam.submissions.length === 0, 'There are no submissions, please upload some.']
@@ -228,6 +232,7 @@ class NavBar extends React.Component {
 
           <div className='navbar-end'>
             <GraderDropdown grader={this.state.grader} />
+            <Link className='navbar-item' to='/logout'>Logout</Link>
 
             <div className='navbar-item'>
               <i>Version {__ZESJE_VERSION__}</i>

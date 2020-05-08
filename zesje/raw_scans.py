@@ -118,14 +118,10 @@ def extract_images(zip_path):
 
 
 def process_page(file_name, image, exam, output_directory):
-    m = RE_FILENAME.match(file_name)
-
-    if not m:
-        return False, f'Invalid file name (studentid-page.extension)'
-
-    student_id = int(m.group('studentID'))
-    page = int(m.group('page')) - 1
-    copy = int(m.group('copy')) if m.group('copy') else 1
+    try:
+        student_id, page, copy = extract_image_info(file_name)
+    except Exception as e:
+        return False, str(e)
 
     student = Student.query.get(student_id)
     if not student:
@@ -139,7 +135,7 @@ def process_page(file_name, image, exam, output_directory):
     try:
         save_image(image, path)
     except Exception as e:
-        return False, f'File is not an image: ' + str(e)
+        return False, 'File is not an image: ' + str(e)
 
     db.session.add(Page(path=os.path.relpath(path, start=current_app.config['DATA_DIRECTORY']),
                         submission=sub,
@@ -147,6 +143,18 @@ def process_page(file_name, image, exam, output_directory):
     db.session.commit()
 
     return True, 'success'
+
+
+def extract_image_info(file_name):
+    m = RE_FILENAME.match(file_name)
+    if not m:
+        raise ValueError('Invalid file name (studentid-page-(copy).extension)')
+
+    student_id = int(m.group('studentID'))
+    page = int(m.group('page')) - 1
+    copy = int(m.group('copy')) if m.group('copy') else 1
+
+    return student_id, page, copy
 
 
 def retrieve_submission(exam, student_id, page, copy):

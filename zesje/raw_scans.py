@@ -7,7 +7,7 @@ from zipfile import ZipFile
 from flask import current_app
 from PIL import Image
 
-from .database import db, Scan, Page, Submission, Solution, Student
+from .database import db, Scan, Page, Submission, Solution, Student, Copy
 from .image_extraction import convert_to_rgb
 from .constants import ID_GRID_DIGITS
 from . import celery
@@ -127,10 +127,10 @@ def process_page(file_name, image, exam, output_directory):
     if not student:
         return False, f'Student number {student_id} not in the database'
 
-    sub = retrieve_submission(exam, student_id, page, copy)
+    copy = retrieve_copy(exam, student_id, copy)
 
-    os.makedirs(os.path.join(output_directory, f'{sub.copy_number}'), exist_ok=True)
-    path = os.path.join(output_directory, f'{sub.copy_number}', f'page{page:02d}.jpg')
+    os.makedirs(os.path.join(output_directory, f'{copy.number}'), exist_ok=True)
+    path = os.path.join(output_directory, f'{copy.number}', f'page{page:02d}.jpg')
 
     try:
         save_image(image, path)
@@ -138,7 +138,7 @@ def process_page(file_name, image, exam, output_directory):
         return False, 'File is not an image: ' + str(e)
 
     db.session.add(Page(path=os.path.relpath(path, start=current_app.config['DATA_DIRECTORY']),
-                        submission=sub,
+                        copy=copy,
                         number=page))
     db.session.commit()
 
@@ -157,24 +157,27 @@ def extract_image_info(file_name):
     return student_id, page, copy
 
 
-def retrieve_submission(exam, student_id, page, copy):
-    subs = Submission.query.filter(Submission.exam_id == exam.id, Submission.student_id == student_id)\
-                           .order_by(Submission.copy_number.asc())\
-                           .all()
+def retrieve_copy(exam, student_id, copy):
+    """Returns a copy associated the given student"""
+    sub = Submission.query.filter(Submission.exam_id == exam.id, Submission.student_id == student_id)\
+        .one_or_none()
 
-    if len(subs) < copy:
-        copy_num = next_free_copy_number(exam.id)
-        for k in range(copy - len(subs)):
-            sub = create_submission(copy_num + k, exam, student_id)
+    if not sub:
+        sub = create_submission(exam, student_id, True)
 
-        return sub
+    copies = sub.copies or []
+    if len(copies) < copy:
+        for k in range(copy - len(copies)):
+            copy = create_copy(sub)
     else:
-        return subs[copy - 1]
+        copy = copies[copy - 1]
+
+    return copy
 
 
-def create_submission(copy_num, exam, student_id):
-    sub = Submission(copy_number=copy_num, exam=exam, student_id=student_id,
-                     signature_validated=True)
+def create_submission(exam, student_id, validated):
+    """Adds a new submission to the db for the given exam and student"""
+    sub = Submission(exam=exam, student_id=student_id, validated=validated)
     db.session.add(sub)
 
     for problem in exam.problems:
@@ -183,11 +186,15 @@ def create_submission(copy_num, exam, student_id):
     return sub
 
 
-def next_free_copy_number(exam_id):
-    sub = Submission.query.filter(Submission.exam_id == exam_id)\
-                          .order_by(Submission.copy_number.desc())\
-                          .first()
-    return sub.copy_number + 1 if sub else 1
+def create_copy(sub):
+    """Adds a new copy associated to the given submission whose number is equal to the id"""
+    copy = Copy(submission=sub, number=0)
+    db.session.add(copy)
+    db.session.commit()
+    copy.number = copy.id
+    db.session.commit()
+
+    return copy
 
 
 def save_image(image, path):

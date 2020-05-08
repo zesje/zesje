@@ -4,20 +4,4 @@
     margin: 0 auto;
     text-align:center;
   }
-
-  .large-and-just-outline {
-    background-color: white;
-    border-color: #209cee;
-    color: black;
-    border-radius: 5%;
-    padding: 14px 28px;
-    font-size: 16px;
-    cursor: pointer;
-  }
-
-  button:hover {
-    animation-duration: 500ms;
-    background-color: #209cee;
-    color: white;
-  }
 }

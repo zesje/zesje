@@ -1,7 +1,6 @@
 """Rest API for getting the grader of the current session"""
 
 from flask_restful import Resource
-from flask_login import current_user
 
 
 class CurrentGrader(Resource):
@@ -17,7 +16,8 @@ class CurrentGrader(Resource):
         """
 
         return {
-            'id': current_user.id,
-            'name': current_user.name,
-            'oauth_id': current_user.oauth_id
+            # 'id': current_user.id,
+            # 'name': current_user.name,
+            # 'oauth_id': current_user.oauth_id
+            'name': 'vasu'
         }

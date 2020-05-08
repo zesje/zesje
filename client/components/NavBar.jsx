@@ -139,11 +139,13 @@ class NavBar extends React.Component {
   }
 
   updateGrader = () => {
-    api.get('current_grader/')
+    api.get('current_grader')
+      // .catch(resp => { console.log('Found error') })
       .then(response => {
         let json = response.json()
         // eslint-disable-next-line no-undef
         let jsonObject = $.parseJSON(json)
+        // console.log('printing' + jsonObject.toString())
         this.state.grader = jsonObject.name
       })
   }
@@ -174,7 +176,8 @@ class NavBar extends React.Component {
   }
 
   logout = () => {
-
+    api.get('logout')
+      .catch(response => { console.log(response) })
   }
 
   render () {
@@ -232,7 +235,7 @@ class NavBar extends React.Component {
 
           <div className='navbar-end'>
             <GraderDropdown grader={this.state.grader} />
-            <Link className='navbar-item' to='/logout'>Logout</Link>
+            <Link onClick={this.logout()} className='navbar-item' to='/auth_graders'>Logout</Link>
 
             <div className='navbar-item'>
               <i>Version {__ZESJE_VERSION__}</i>

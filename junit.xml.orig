@@ -1,13 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<<<<<<< HEAD
-<testsuites name="jest tests" tests="1" failures="0" time="4.13">
-  <testsuite name="undefined" errors="0" failures="0" skipped="0" timestamp="2020-05-05T06:44:42" time="2.049" tests="1">
-    <testcase classname=" Student id searchfield has focus on loading component" name=" Student id searchfield has focus on loading component" time="0.098">
-=======
-<testsuites name="jest tests" tests="1" failures="0" time="4.82">
-  <testsuite name="undefined" errors="0" failures="0" skipped="0" timestamp="2020-05-05T04:57:32" time="2.938" tests="1">
-    <testcase classname=" Student id searchfield has focus on loading component" name=" Student id searchfield has focus on loading component" time="0.104">
->>>>>>> 451-oauth-backend
+<testsuites name="jest tests" tests="1" failures="0" time="4.581">
+  <testsuite name="undefined" errors="0" failures="0" skipped="0" timestamp="2020-05-08T11:01:33" time="2.305" tests="1">
+    <testcase classname=" Student id searchfield has focus on loading component" name=" Student id searchfield has focus on loading component" time="0.159">
     </testcase>
   </testsuite>
 </testsuites>

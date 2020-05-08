@@ -1,6 +1,8 @@
 import React from 'react'
 import Hero from '../components/Hero.jsx'
 import '../components/Login.css'
+import { Button } from 'react-bulma-components'
+import 'react-bulma-components/dist/react-bulma-components.min.css'
 
 class Login extends React.Component {
   state = {
@@ -24,7 +26,7 @@ class Login extends React.Component {
         <Hero title='Auth graders' subtitle='Many hands must be authenticated' />
 
         <section className='Login'>
-          <button className='large-and-just-outline'>Login with GitHub</button>
+          <Button class='button is-info is-outlined is-medium'>Login with GitHub</Button>
         </section>
 
       </div>

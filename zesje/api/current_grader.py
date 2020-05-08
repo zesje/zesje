@@ -1,9 +1,7 @@
 """Rest API for getting the grader of the current session"""
 
-from flask import session
 from flask_restful import Resource
-
-from ..database import Grader
+from flask_login import current_user
 
 
 class CurrentGrader(Resource):
@@ -18,10 +16,8 @@ class CurrentGrader(Resource):
         name : str
         """
 
-        grader = Grader.query.filter(Grader.id == session['grader_id'])
-
         return {
-            'id': grader.id,
-            'name': grader.name,
-            'oauth_id': grader.oauth_id
+            'id': current_user.id,
+            'name': current_user.name,
+            'oauth_id': current_user.oauth_id
         }

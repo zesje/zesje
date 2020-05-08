@@ -94,8 +94,6 @@ def create_app(celery=None, app_config=None):
         elif grader.name is None:
             grader.name = current_login['OAUTH_NAME_FIELD']
 
-        session['grader_id'] = grader.id
-
         login_user(grader)
 
         return redirect(url_for('index'))

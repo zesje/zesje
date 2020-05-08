@@ -4,7 +4,7 @@ from os.path import abspath, dirname
 from flask import Flask, session, redirect, request, url_for, render_template
 from flask_migrate import Migrate
 from werkzeug.exceptions import NotFound
-from flask_login import login_required, login_user, logout_user, current_user
+from flask_login import login_user, logout_user, current_user
 from requests_oauthlib import OAuth2Session
 
 
@@ -44,12 +44,13 @@ def create_app(celery=None, app_config=None):
 
     @app.before_request
     def check_user_auth():
-        if not current_user.is_authenticated:
+        # Force authentication if endpoint not one of the exempted routes
+        if (current_user is None or not current_user.is_authenticated) \
+                and request.endpoint not in app.config['EXEMPTED_ROUTES']:
             return redirect(url_for('.login'))
 
     @app.route('/')
     @app.route('/<path:path>')
-    @login_required
     def index(path='index.html'):
         """Serve the static react content, otherwise fallback to the index.html
         React Router will decide what to do with the URL in that case.
@@ -60,7 +61,7 @@ def create_app(celery=None, app_config=None):
         except NotFound:
             return render_template('index.html')
 
-    @app.route("/login")
+    @app.route('/login')
     def login():
         """Logs the user in by redirecting to the OAuth provider with the appropriate
         client ID as a request parameter"""
@@ -71,7 +72,7 @@ def create_app(celery=None, app_config=None):
 
         return redirect(authorization_url)
 
-    @app.route("/callback")
+    @app.route('/callback')
     def callback():
         """OAuth provider redirects to this route after authorization.
         Fetches token and redirects to /profile"""
@@ -92,13 +93,22 @@ def create_app(celery=None, app_config=None):
         if grader is None:
             return "Your account is Unauthorized. Please contact somebody who has access"
         elif grader.name is None:
-            grader.name = current_login['OAUTH_NAME_FIELD']
+            grader.name = current_login[app.config['OAUTH_NAME_FIELD']]
 
         login_user(grader)
 
         return redirect(url_for('index'))
 
-    @app.route("/logout", methods=["GET"])
+    @app.route('/current_grader')
+    def get_current_grader():
+        # returns details of the current grader logged in
+        return {
+            'id': current_user.id,
+            'name': current_user.name,
+            'oauth_id': current_user.oauth_id
+        }
+
+    @app.route('/logout', methods=["GET"])
     def logout():
         """Logs the user out and redirects to /login
         """

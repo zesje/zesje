@@ -1,10 +1,10 @@
 """Rest API for getting the grader of the current session"""
 
-from flask import session
 from flask_restful import Resource
+from flask_login import current_user
 
 
-class Current_Grader(Resource):
+class CurrentGrader(Resource):
     """Gets the current grader who logged in via OAuth"""
 
     def get(self):
@@ -12,8 +12,12 @@ class Current_Grader(Resource):
 
         Returns
         -------
+        id : int
         name : str
         """
+
         return {
-            'name': session['grader_name']
+            'id': current_user.id,
+            'name': current_user.name,
+            'oauth_id': current_user.oauth_id
         }

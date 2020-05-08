@@ -105,3 +105,6 @@ stats.json
 .coverage
 cov.xml
 cov.html/
+
+#test output
+junit.xml

@@ -4,7 +4,7 @@ from os.path import abspath, dirname
 from flask import Flask, session, redirect, request, url_for, render_template
 from flask_migrate import Migrate
 from werkzeug.exceptions import NotFound
-from flask_login import login_required, login_user, logout_user
+from flask_login import login_required, login_user, logout_user, current_user
 from requests_oauthlib import OAuth2Session
 
 
@@ -37,6 +37,16 @@ def create_app(celery=None, app_config=None):
         os.makedirs(app.config['DATA_DIRECTORY'], exist_ok=True)
         os.makedirs(app.config['SCAN_DIRECTORY'], exist_ok=True)
 
+        # Add Instance Owner to the database if they don't already exist
+        if Grader.query.filter(Grader.oauth_id == app.config['OWNER_OAUTH_ID']).one_or_none() is None:
+            db.session.add(Grader(name=app.config["OWNER_NAME"], oauth_id=app.config["OWNER_OAUTH_ID"]))
+            db.session.commit()
+
+    @app.before_request
+    def check_user_auth():
+        if not current_user.is_authenticated:
+            return redirect(url_for('.login'))
+
     @app.route('/')
     @app.route('/<path:path>')
     @login_required
@@ -54,8 +64,8 @@ def create_app(celery=None, app_config=None):
     def login():
         """Logs the user in by redirecting to the OAuth provider with the appropriate
         client ID as a request parameter"""
-        github = OAuth2Session(app.config['OAUTH_CLIENT_ID'])
-        authorization_url, state = github.authorization_url(app.config['OAUTH_AUTHORIZATION_BASE_URL'])
+        oauth2_session = OAuth2Session(app.config['OAUTH_CLIENT_ID'])
+        authorization_url, state = oauth2_session.authorization_url(app.config['OAUTH_AUTHORIZATION_BASE_URL'])
 
         session['oauth_state'] = state
 
@@ -65,8 +75,8 @@ def create_app(celery=None, app_config=None):
     def callback():
         """OAuth provider redirects to this route after authorization.
         Fetches token and redirects to /profile"""
-        gitlab = OAuth2Session(app.config['OAUTH_CLIENT_ID'], state=session['oauth_state'])
-        token = gitlab.fetch_token(
+        oauth2_session = OAuth2Session(app.config['OAUTH_CLIENT_ID'], state=session['oauth_state'])
+        token = oauth2_session.fetch_token(
             app.config['OAUTH_TOKEN_URL'],
             client_secret=app.config['OAUTH_CLIENT_SECRET'],
             authorization_response=request.url,
@@ -75,15 +85,14 @@ def create_app(celery=None, app_config=None):
         session['oauth_token'] = token  # token can used to make requests with OAuth provider later if needed
 
         github = OAuth2Session(app.config['OAUTH_CLIENT_ID'], token=session['oauth_token'])
-        current_grader = github.get(app.config['OAUTH_USERINFO_URL']).json()
-        session['grader_name'] = current_grader['name']
+        current_login = github.get(app.config['OAUTH_USERINFO_URL']).json()
 
-        grader = Grader.query.filter(Grader.name == current_grader['name']).one_or_none()
+        grader = Grader.query.filter(Grader.oauth_id == current_login[app.config['OAUTH_ID_FIELD']]).one_or_none()
 
         if grader is None:
-            grader = Grader(name=current_grader['name'])
-            db.session.add(grader)
-            db.session.commit()
+            return "Your account is Unauthorized. Please contact somebody who has access"
+        elif grader.name is None:
+            grader.name = current_login['OAUTH_NAME_FIELD']
 
         login_user(grader)
 

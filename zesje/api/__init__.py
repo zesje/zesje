@@ -2,7 +2,6 @@ from flask import Blueprint
 from flask_restful import Api
 
 from .graders import Graders
-from .login import Login
 from .exams import Exams, ExamSource, ExamGeneratedPdfs, ExamPreview
 from .scans import Scans
 from .students import Students

@@ -1,12 +1,6 @@
 """ REST api for login page """
 
-from flask import abort, current_app
-from flask_restful import Resource, reqparse
-
-from ..database import db
-
-from ._helpers import required_string
-from ..database import Grader
+from flask_restful import Resource
 
 
 # TODO: when making new database structure, have only a single

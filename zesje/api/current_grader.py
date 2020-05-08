@@ -3,6 +3,8 @@
 from flask import session
 from flask_restful import Resource
 
+from ..database import Grader
+
 
 class CurrentGrader(Resource):
     """Gets the current grader who logged in via OAuth"""
@@ -15,7 +17,11 @@ class CurrentGrader(Resource):
         id : int
         name : str
         """
+
+        grader = Grader.query.filter(Grader.id == session['grader_id'])
+
         return {
-            'id': session['grader'].id,
-            'name': session['grader'].name
+            'id': grader.id,
+            'name': grader.name,
+            'oauth_id': grader.oauth_id
         }

@@ -4,7 +4,7 @@ from os.path import abspath, dirname
 from flask import Flask, session, redirect, request, url_for, render_template
 from flask_migrate import Migrate
 from werkzeug.exceptions import NotFound
-from flask_login import login_required, login_user, logout_user
+from flask_login import login_required, login_user, logout_user, current_user
 from requests_oauthlib import OAuth2Session
 
 
@@ -36,6 +36,16 @@ def create_app(celery=None, app_config=None):
     def setup():
         os.makedirs(app.config['DATA_DIRECTORY'], exist_ok=True)
         os.makedirs(app.config['SCAN_DIRECTORY'], exist_ok=True)
+
+        # Add Instance Owner to the database if they don't already exist
+        if Grader.query.filter(Grader.oauth_id == app.config['OWNER_OAUTH_ID']).one_or_none() is None:
+            db.session.add(Grader(name=app.config["OWNER_NAME"], oauth_id=app.config["OWNER_OAUTH_ID"]))
+            db.session.commit()
+
+    @app.before_request
+    def check_user_auth():
+        if not current_user.is_authenticated:
+            return redirect(url_for('.login'))
 
     @app.route('/')
     @app.route('/<path:path>')
@@ -75,16 +85,16 @@ def create_app(celery=None, app_config=None):
         session['oauth_token'] = token  # token can used to make requests with OAuth provider later if needed
 
         github = OAuth2Session(app.config['OAUTH_CLIENT_ID'], token=session['oauth_token'])
-        current_grader = github.get(app.config['OAUTH_USERINFO_URL']).json()
+        current_login = github.get(app.config['OAUTH_USERINFO_URL']).json()
 
-        grader = Grader.query.filter(Grader.name == current_grader['name']).one_or_none()
+        grader = Grader.query.filter(Grader.oauth_id == current_login[app.config['OAUTH_ID_FIELD']]).one_or_none()
 
         if grader is None:
-            grader = Grader(name=current_grader['name'])
-            db.session.add(grader)
-            db.session.commit()
+            return "Your account is Unauthorized. Please contact somebody who has access"
+        elif grader.name is None:
+            grader.name = current_login['OAUTH_NAME_FIELD']
 
-        session['grader'] = grader
+        session['grader_id'] = grader.id
 
         login_user(grader)
 

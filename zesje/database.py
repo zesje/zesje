@@ -36,6 +36,7 @@ def load_grader(grader_id):
 
 # db.Models #
 
+
 class Student(db.Model):
     """New students may be added throughout the course."""
     __tablename__ = 'student'
@@ -50,7 +51,8 @@ class Grader(UserMixin, db.Model):
     """Graders can be created by any user at any time, but are immutable once they are created"""
     __tablename__ = 'grader'
     id = Column(Integer, primary_key=True, autoincrement=True)
-    name = Column(String(100), nullable=False, unique=True)
+    name = Column(String(100), nullable=True)
+    oauth_id = Column(String(100), nullable=True, unique=True)
     graded_solutions = db.relationship('Solution', backref='graded_by', lazy=True)
 
 

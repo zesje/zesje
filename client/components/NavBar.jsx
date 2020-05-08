@@ -48,29 +48,19 @@ const ExamDropdown = (props) => (
   </div>
 )
 
-// const GraderDropdown = (props) => (
-//   <div className='navbar-item has-dropdown is-hoverable'>
-//     <div className='navbar-link' >
-//       {props.grader ? <i>{props.grader.name}</i> : 'Select grader'}
-//     </div>
-//     <div className='navbar-dropdown'>
-//       {props.list.map((grader) => (
-//         <a className={'navbar-item' + (props.grader && props.grader.id === grader.id ? ' is-active' : '')}
-//           key={grader.id} onClick={() => props.changeGrader(grader)} >
-//           <i>{grader.name}</i>
-//         </a>
-//       ))}
-//       <hr className='navbar-divider' />
-//       <Link className='navbar-item' to={'/graders'} >
-//         Add grader
-//       </Link>
-//     </div>
-//   </div>
-// )
+const GraderDropdown = (props) => (
+  <div className='navbar-item has-dropdown is-hoverable'>
+    <div className='navbar-link' >
+      <i>Current grader: {props.grader}</i>
+    </div>
 
-const GraderSetup = (props) => {
-
-}
+    <div className='navbar-dropdown'>
+      <Link className='navbar-item' to={'/graders'} >
+        Add grader
+      </Link>
+    </div>
+  </div>
+)
 
 const ExportDropdown = (props) => {
   const exportFormats = [
@@ -237,9 +227,7 @@ class NavBar extends React.Component {
           </div>
 
           <div className='navbar-end'>
-            <div className='navbar-item'>
-              <i>Current Grader: {this.props.grader}</i>
-            </div>
+            <GraderDropdown grader={this.state.grader} />
 
             <div className='navbar-item'>
               <i>Version {__ZESJE_VERSION__}</i>

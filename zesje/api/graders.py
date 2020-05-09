@@ -50,15 +50,15 @@ class Graders(Resource):
         """
         args = self.post_parser.parse_args()
 
-        oauth_id = args['name']
+        name = args['name']
 
-        grader = Grader.query.filter(Grader.oauth_id == oauth_id).one_or_none()
+        grader = Grader.query.filter(Grader.name == name).one_or_none()
 
         if grader:
-            return dict(status=409, message=f'Grader with name {oauth_id} already exists.'), 409
+            return dict(status=409, message=f'Grader with name {name} already exists.'), 409
 
         try:
-            db.session.add(Grader(oauth_id=oauth_id))
+            db.session.add(Grader(name=name))
             db.session.commit()
         except KeyError as error:
             abort(400, error)

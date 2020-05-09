@@ -162,7 +162,7 @@ class App extends React.Component {
             <Route path='/email' render={() => (
               exam.submissions.length ? <Email exam={exam} /> : <Fail message='No exams uploaded. Please do not bookmark URLs' />
             )} />
-            <Route path='/auth_graders' render={() =>
+            <Route path='/auth' render={() =>
               <Login />} />
             <Route path='/graders' render={() =>
               <Graders />} />

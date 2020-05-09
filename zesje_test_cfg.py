@@ -16,8 +16,8 @@ SMTP_PASSWORD = ''
 DEBUG = 1
 
 # Github OAuth
-OAUTH_CLIENT_ID = None
-OAUTH_CLIENT_SECRET = None
+OAUTH_CLIENT_ID = "91be0202053a4f0ed71a"
+OAUTH_CLIENT_SECRET = "cca91b0a19a6e0246a5f2c925116376a7c40bda8"
 OAUTH_AUTHORIZATION_BASE_URL = "https://github.com/login/oauth/authorize"
 OAUTH_TOKEN_URL = "https://github.com/login/oauth/access_token"
 OAUTH_USERINFO_URL = "https://api.github.com/user"

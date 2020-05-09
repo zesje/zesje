@@ -175,7 +175,6 @@ class NavBar extends React.Component {
     const predicateExamNotFinalized = [!this.props.exam.finalized, 'The exam is not finalized yet.']
     const predicateSubmissionsEmpty = [this.props.exam.submissions.length === 0, 'There are no submissions, please upload some.']
     const predicateNoGraderSelected = [this.props.grader === null, 'Please select a grader.']
-    // this.updateGrader()
 
     return (
       <nav className='navbar' role='navigation' aria-label='dropdown navigation'>
@@ -226,7 +225,7 @@ class NavBar extends React.Component {
 
           <div className='navbar-end'>
             <GraderDropdown grader={this.state.grader} />
-            <Link onClick={() => { this.logout() }} className='navbar-item' to='/auth_graders'>Logout</Link>
+            <Link className='navbar-item' to='/auth'>Auth</Link>
 
             <div className='navbar-item'>
               <i>Version {__ZESJE_VERSION__}</i>

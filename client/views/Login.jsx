@@ -14,20 +14,38 @@ class Login extends React.Component {
   //   event.preventDefault()
   // }
 
-  requestLogin = () => {
-    api.get('login')
-      .catch(resp => {
-        console.error('Error sending request', resp)
+  state = {
+    text: 'Login with Github'
+  }
+
+  componentDidMount = () => {
+    this.getGraderForText() === undefined ? this.changeText('Logout') : this.changeText('Login with GitHub')
+  }
+
+  changeText = (text) => {
+    this.setState({ text })
+  }
+
+  getGraderForText = () => {
+    api.get('current_grader')
+      .then(response => {
+        let grader = response.name
+        console.log('found response ' + grader)
+        return grader
+      })
+      .catch(err => {
+        console.log('found error ' + err)
       })
   }
 
   render () {
+    const { text } = this.state
     return (
       <div>
         <Hero title='Auth graders' subtitle='Many hands must be authenticated' />
 
         <section className='Login'>
-          <Button class='button is-info is-outlined is-medium' onclick={() => { this.requestLogin() }}>Login with GitHub</Button>
+          <Button class='button is-info is-outlined is-medium'> { text } </Button>
         </section>
 
       </div>

@@ -1,5 +1,5 @@
 import React from 'react'
-import { Link } from 'react-router-dom'
+import {Link} from 'react-router-dom'
 
 import './NavBar.css'
 import * as api from '../api.jsx'
@@ -140,30 +140,13 @@ class NavBar extends React.Component {
 
   updateGrader = () => {
     api.get('current_grader')
-      // .catch(resp => { console.log('Found error') })
       .then(response => {
-        let json = response.json()
-        // eslint-disable-next-line no-undef
-        let jsonObject = $.parseJSON(json)
-        // console.log('printing' + jsonObject.toString())
-        this.state.grader = jsonObject.name
+        this.state.grader = response.grader
+      })
+      .catch(err => {
+        console.log('found error ' + err)
       })
   }
-
-  // updateGraderList = () => {
-  //   api.get('graders')
-  //     .then(graders => {
-  //       this.setState({
-  //         graderList: graders
-  //       })
-  //
-  //       const oldGraderID = parseInt(window.sessionStorage.getItem('graderID'))
-  //       if (oldGraderID >= 0) {
-  //         const i = graders.findIndex(grader => grader.id === oldGraderID)
-  //         if (this.props.grader === null && i >= 0) this.props.changeGrader(graders[i])
-  //       }
-  //     })
-  // }
 
   burgerClick = () => {
     this.setState({
@@ -235,7 +218,7 @@ class NavBar extends React.Component {
 
           <div className='navbar-end'>
             <GraderDropdown grader={this.state.grader} />
-            <Link onClick={this.logout()} className='navbar-item' to='/auth_graders'>Logout</Link>
+            <Link onClick={() => { this.logout() }} className='navbar-item' to='/auth_graders'>Logout</Link>
 
             <div className='navbar-item'>
               <i>Version {__ZESJE_VERSION__}</i>

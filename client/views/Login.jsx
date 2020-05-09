@@ -3,15 +3,9 @@ import Hero from '../components/Hero.jsx'
 import '../components/Login.css'
 import { Button } from 'react-bulma-components'
 import 'react-bulma-components/dist/react-bulma-components.min.css'
+import * as api from '../api.jsx'
 
 class Login extends React.Component {
-  state = {
-    password: '',
-    email: '',
-    setEmail: '',
-    setPassword: ''
-  };
-
   // validateForm = () => {
   //   return this.state.email.length > 0 && this.state.password.length > 0
   // }
@@ -20,13 +14,20 @@ class Login extends React.Component {
   //   event.preventDefault()
   // }
 
+  requestLogin = () => {
+    api.get('login')
+      .catch(resp => {
+        console.error('Error sending request', resp)
+      })
+  }
+
   render () {
     return (
       <div>
         <Hero title='Auth graders' subtitle='Many hands must be authenticated' />
 
         <section className='Login'>
-          <Button class='button is-info is-outlined is-medium'>Login with GitHub</Button>
+          <Button class='button is-info is-outlined is-medium' onclick={() => { this.requestLogin() }}>Login with GitHub</Button>
         </section>
 
       </div>

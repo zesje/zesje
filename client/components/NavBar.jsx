@@ -1,5 +1,5 @@
 import React from 'react'
-import { Link } from 'react-router-dom'
+import {Link} from 'react-router-dom'
 
 import './NavBar.css'
 import * as api from '../api.jsx'
@@ -51,16 +51,10 @@ const ExamDropdown = (props) => (
 const GraderDropdown = (props) => (
   <div className='navbar-item has-dropdown is-hoverable'>
     <div className='navbar-link' >
-      {props.grader ? <i>{props.grader.name}</i> : 'Select grader'}
+      <i>Current grader: {props.grader}</i>
     </div>
+
     <div className='navbar-dropdown'>
-      {props.list.map((grader) => (
-        <a className={'navbar-item' + (props.grader && props.grader.id === grader.id ? ' is-active' : '')}
-          key={grader.id} onClick={() => props.changeGrader(grader)} >
-          <i>{grader.name}</i>
-        </a>
-      ))}
-      <hr className='navbar-divider' />
       <Link className='navbar-item' to={'/graders'} >
         Add grader
       </Link>
@@ -117,12 +111,13 @@ class NavBar extends React.Component {
     foldOut: false,
     examList: [],
     graderList: [],
-    helpPage: null
+    helpPage: null,
+    grader: ''
   }
 
   componentDidMount = () => {
     this.updateExamList()
-    this.updateGraderList()
+    this.updateGrader()
   }
 
   updateExamList = () => {
@@ -143,20 +138,14 @@ class NavBar extends React.Component {
       })
   }
 
-  updateGraderList = () => {
-    api.get('graders')
-      .then(graders => {
-        this.setState({
-          graderList: graders
+    updateGrader = () => {
+      api.get('graders/current')
+        .then(response => {
+          let grader = response.name
+          // console.log('found response ' + grader)
+          this.setState({grader: grader})
         })
-
-        const oldGraderID = parseInt(window.sessionStorage.getItem('graderID'))
-        if (oldGraderID >= 0) {
-          const i = graders.findIndex(grader => grader.id === oldGraderID)
-          if (this.props.grader === null && i >= 0) this.props.changeGrader(graders[i])
-        }
-      })
-  }
+    }
 
   burgerClick = () => {
     this.setState({
@@ -166,6 +155,11 @@ class NavBar extends React.Component {
 
   setHelpPage = (helpPage) => {
     this.setState({ helpPage: helpPage })
+  }
+
+  logout = () => {
+    api.get('logout')
+      .catch(response => { console.log(response) })
   }
 
   render () {
@@ -221,14 +215,14 @@ class NavBar extends React.Component {
           </div>
 
           <div className='navbar-end'>
-            {this.state.graderList.length
-              ? <GraderDropdown grader={this.props.grader} list={this.state.graderList} changeGrader={this.props.changeGrader} />
-              : <Link className='navbar-item' to='/graders'>Add grader</Link>
-            }
+            <GraderDropdown grader={this.state.grader} />
+            <Link onClick={() => { this.logout() }} className='navbar-item' to='/auth_graders'>Logout</Link>
+
             <div className='navbar-item'>
               <i>Version {__ZESJE_VERSION__}</i>
             </div>
           </div>
+
         </div>
         <HelpModal page={this.pages[this.state.helpPage] || {content: null, title: null}}
           closeHelp={() => this.setState({ helpPage: null })} />

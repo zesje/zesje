@@ -55,7 +55,7 @@ class Graders extends React.Component {
 
         <section className='section'>
           <div className='container'>
-            <h1 className='title'>Enter the names</h1>
+            <h1 className='title'>Enter the IDs</h1>
             <h5 className='subtitle'>to add them to the system</h5>
             <hr />
 
@@ -84,7 +84,7 @@ class Graders extends React.Component {
               </p>
               <ul className='menu-list'>
                 {this.state.graders.map((grader) =>
-                  <li key={grader.id}>{grader.name}</li>
+                  <li key={grader.id}>{grader.oauth_id}</li>
                 )}
               </ul>
             </aside>

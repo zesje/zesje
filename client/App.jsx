@@ -157,8 +157,10 @@ class App extends React.Component {
             <Route path='/email' render={() => (
               exam.submissions.length ? <Email exam={exam} /> : <Fail message='No exams uploaded. Please do not bookmark URLs' />
             )} />
+            <Route path='/auth_graders' render={() =>
+              <Login />} />
             <Route path='/graders' render={() =>
-              <Graders updateGraderList={this.menu.current ? this.menu.current.updateGraderList : null} />} />
+              <Graders />} />
             <Route render={() =>
               <Fail message="404. Could not find that page :'(" />} />
           </Switch>
@@ -168,5 +170,6 @@ class App extends React.Component {
     )
   }
 }
+
 
 export default hot(module)(App)

@@ -20,7 +20,6 @@ def create_app(celery=None, app_config=None):
     os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
 
     login_manager.init_app(app)
-    login_manager.login_view = "login"
 
     create_config(app.config, app_config)
 
@@ -47,7 +46,7 @@ def create_app(celery=None, app_config=None):
         # Force authentication if endpoint not one of the exempted routes
         if (current_user is None or not current_user.is_authenticated) \
                 and request.endpoint not in app.config['EXEMPTED_ROUTES']:
-            return redirect(url_for('.login'))
+            return redirect(url_for('login'))
 
     @app.route('/')
     @app.route('/<path:path>')
@@ -59,7 +58,7 @@ def create_app(celery=None, app_config=None):
         try:
             return app.send_static_file(path)
         except NotFound:
-            return render_template('index.html')
+            return app.send_static_file('index.html')
 
     @app.route('/login')
     def login():
@@ -99,7 +98,7 @@ def create_app(celery=None, app_config=None):
 
         return redirect(url_for('index'))
 
-    @app.route('/current_grader')
+    @app.route('/api/graders/current')
     def get_current_grader():
         # returns details of the current grader logged in
         return {
@@ -115,6 +114,7 @@ def create_app(celery=None, app_config=None):
         logout_user()
         return redirect(url_for('.login'))
 
+
     return app
 
 
@@ -129,9 +129,9 @@ def attach_celery(app, celery):
     class ContextTask(TaskBase):
         abstract = True
 
-        def __call__(self, *args, **kwargs):
+        def _call_(self, *args, **kwargs):
             with app.app_context():
-                return TaskBase.__call__(self, *args, **kwargs)
+                return TaskBase._call_(self, *args, **kwargs)
 
     celery.Task = ContextTask
 

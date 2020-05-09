@@ -27,6 +27,3 @@ OAUTH_NAME_FIELD = "name"
 # Instance owner details
 OWNER_OAUTH_ID = None
 OWNER_NAME = None
-
-# Routes exempted from authentication
-EXEMPTED_ROUTES = ['login', 'callback']

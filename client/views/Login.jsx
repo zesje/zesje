@@ -6,14 +6,6 @@ import 'react-bulma-components/dist/react-bulma-components.min.css'
 import * as api from '../api.jsx'
 
 class Login extends React.Component {
-  // validateForm = () => {
-  //   return this.state.email.length > 0 && this.state.password.length > 0
-  // }
-  //
-  // handleSubmit = (event) => {
-  //   event.preventDefault()
-  // }
-
   state = {
     text: 'Login with Github'
   }
@@ -24,6 +16,28 @@ class Login extends React.Component {
 
   changeText = (text) => {
     this.setState({ text })
+  }
+
+  loginOrLogout = (text) => {
+    if (text === undefined || text === null) {
+      // login
+      api.get('login')
+        .then(response => {
+          console.log('found response ' + response)
+        })
+        .catch(err => {
+          console.log('found error ' + err)
+        })
+    } else {
+      // logout
+      api.get('logout')
+        .then(response => {
+          console.log('found response ' + response)
+        })
+        .catch(err => {
+          console.log('found error ' + err)
+        })
+    }
   }
 
   getGraderForText = () => {
@@ -45,7 +59,7 @@ class Login extends React.Component {
         <Hero title='Auth graders' subtitle='Many hands must be authenticated' />
 
         <section className='Login'>
-          <Button class='button is-info is-outlined is-medium'> { text } </Button>
+          <Button onClick={() => this.loginOrLogout(text)} class='button is-info is-outlined is-medium'> { text } </Button>
         </section>
 
       </div>

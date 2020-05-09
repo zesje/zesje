@@ -14,19 +14,3 @@ SMTP_PASSWORD = ''
 
 # Enable debug mode
 DEBUG = 1
-
-# Github OAuth
-OAUTH_CLIENT_ID = "91be0202053a4f0ed71a"
-OAUTH_CLIENT_SECRET = "cca91b0a19a6e0246a5f2c925116376a7c40bda8"
-OAUTH_AUTHORIZATION_BASE_URL = "https://github.com/login/oauth/authorize"
-OAUTH_TOKEN_URL = "https://github.com/login/oauth/access_token"
-OAUTH_USERINFO_URL = "https://api.github.com/user"
-OAUTH_ID_FIELD = "email"
-OAUTH_NAME_FIELD = "name"
-
-# Instance owner details
-OWNER_OAUTH_ID = 'P.Dixit@student.tudelft.nl'
-OWNER_NAME = 'Pradyuman Dixit'
-
-# Routes exempted from authentication
-EXEMPTED_ROUTES = ['login', 'callback', 'current_grader']

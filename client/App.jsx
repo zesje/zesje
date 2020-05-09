@@ -157,10 +157,12 @@ class App extends React.Component {
             <Route path='/email' render={() => (
               exam.submissions.length ? <Email exam={exam} /> : <Fail message='No exams uploaded. Please do not bookmark URLs' />
             )} />
-            <Route path='/auth_graders' render={() =>
-              <Login />} />
             <Route path='/graders' render={() =>
               <Graders />} />
+            <Route path='/logout' component={() => {
+              window.location.href = '/logout'
+              return null
+            }} />
             <Route render={() =>
               <Fail message="404. Could not find that page :'(" />} />
           </Switch>

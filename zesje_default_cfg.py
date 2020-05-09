@@ -1,4 +1,5 @@
 import os
+
 # Folder to save exam scans and database
 DATA_DIRECTORY = 'data'
 

@@ -7,12 +7,11 @@ from werkzeug.exceptions import NotFound
 from flask_login import login_user, logout_user, current_user
 from requests_oauthlib import OAuth2Session
 
-
 from .database import db, login_manager, Grader
 from .api import api_bp
 
-
 STATIC_FOLDER_PATH = os.path.join(abspath(dirname(__file__)), 'static')
+
 
 def create_app(celery=None, app_config=None):
     app = Flask(__name__, static_folder=STATIC_FOLDER_PATH)
@@ -45,7 +44,8 @@ def create_app(celery=None, app_config=None):
     @app.before_request
     def check_user_auth():
         # Force authentication if endpoint not one of the exempted routes
-        if (current_user is None or not current_user.is_authenticated) and request.endpoint not in app.config['EXEMPTED_ROUTES']:
+        if (current_user is None or not current_user.is_authenticated) and request.endpoint not in app.config[
+                'EXEMPTED_ROUTES']:
             return redirect(url_for('login'))
 
     @app.route('/')
@@ -113,7 +113,6 @@ def create_app(celery=None, app_config=None):
         """
         logout_user()
         return redirect(url_for('.login'))
-
 
     return app
 

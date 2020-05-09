@@ -1,7 +1,7 @@
 import os
 from os.path import abspath, dirname
 
-from flask import Flask, session, redirect, request, url_for, render_template
+from flask import Flask, session, redirect, request, url_for
 from flask_migrate import Migrate
 from werkzeug.exceptions import NotFound
 from flask_login import login_user, logout_user, current_user
@@ -13,7 +13,6 @@ from .api import api_bp
 
 
 STATIC_FOLDER_PATH = os.path.join(abspath(dirname(__file__)), 'static')
-
 
 def create_app(celery=None, app_config=None):
     app = Flask(__name__, static_folder=STATIC_FOLDER_PATH)
@@ -41,11 +40,12 @@ def create_app(celery=None, app_config=None):
             db.session.add(Grader(name=app.config["OWNER_NAME"], oauth_id=app.config["OWNER_OAUTH_ID"]))
             db.session.commit()
 
+        login_user(Grader.query.filter(Grader.oauth_id == app.config['OWNER_OAUTH_ID']).one_or_none())
+
     @app.before_request
     def check_user_auth():
         # Force authentication if endpoint not one of the exempted routes
-        if (current_user is None or not current_user.is_authenticated) \
-                and request.endpoint not in app.config['EXEMPTED_ROUTES']:
+        if (current_user is None or not current_user.is_authenticated) and request.endpoint not in app.config['EXEMPTED_ROUTES']:
             return redirect(url_for('login'))
 
     @app.route('/')
@@ -98,7 +98,7 @@ def create_app(celery=None, app_config=None):
 
         return redirect(url_for('index'))
 
-    @app.route('/current_grader')
+    @app.route('/api/current_grader', methods=['GET'])
     def get_current_grader():
         # returns details of the current grader logged in
         return {

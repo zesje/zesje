@@ -117,7 +117,7 @@ class NavBar extends React.Component {
 
   componentDidMount = () => {
     this.updateExamList()
-    // this.updateGraderList()
+    this.updateGrader()
   }
 
   updateExamList = () => {
@@ -138,15 +138,23 @@ class NavBar extends React.Component {
       })
   }
 
-  updateGrader = () => {
-    api.get('current_grader')
-      .then(response => {
-        this.state.grader = response.grader
-      })
-      .catch(err => {
-        console.log('found error ' + err)
-      })
-  }
+  // updateGrader = () => {
+  //   // eslint-disable-next-line no-undef
+  //   fetch('http://127.0.0.1:5000/current_grader')
+  //     .then(response => {
+  //
+  //     })
+  //     .then(data => this.setState({ totalReactPackages: data.total }))
+  // }
+
+    updateGrader = () => {
+      api.get('current_grader')
+        .then(response => {
+          let grader = response.name
+          // console.log('found response ' + grader)
+          this.setState({grader: grader})
+        })
+    }
 
   burgerClick = () => {
     this.setState({
@@ -167,7 +175,7 @@ class NavBar extends React.Component {
     const predicateExamNotFinalized = [!this.props.exam.finalized, 'The exam is not finalized yet.']
     const predicateSubmissionsEmpty = [this.props.exam.submissions.length === 0, 'There are no submissions, please upload some.']
     const predicateNoGraderSelected = [this.props.grader === null, 'Please select a grader.']
-    this.updateGrader()
+    // this.updateGrader()
 
     return (
       <nav className='navbar' role='navigation' aria-label='dropdown navigation'>

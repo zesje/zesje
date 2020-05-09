@@ -36,5 +36,8 @@ OAUTH_ID_FIELD = "email"
 OAUTH_NAME_FIELD = "name"
 
 # Instance owner details
-OWNER_OAUTH_ID = None
-OWNER_NAME = None
+OWNER_OAUTH_ID = 'P.Dixit@student.tudelft.nl'
+OWNER_NAME = 'Pradyuman Dixit'
+
+# Routes exempted from authentication
+EXEMPTED_ROUTES = ['login', 'callback', 'current_grader']

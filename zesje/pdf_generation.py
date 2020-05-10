@@ -12,16 +12,16 @@ from pylibdmtx.pylibdmtx import encode
 from reportlab.pdfgen import canvas
 
 
-def get_exam_dir(exam_id):
+def exam_dir(exam_id):
     return os.path.join(
         current_app.config['DATA_DIRECTORY'],
         f'{exam_id}_data',
     )
 
 
-def get_exam_pdf_path(exam_id):
+def exam_pdf_path(exam_id):
     return os.path.join(
-        get_exam_dir(exam_id),
+        exam_dir(exam_id),
         'exam.pdf'
     )
 
@@ -172,8 +172,7 @@ def _exam_generate_data(exam):
     cb_data : list of tuples
         List of tuples with checkbox data, each tuple represented as (x, y, page, label)
     """
-    exam_dir = get_exam_dir(exam.id)
-    os.makedirs(exam_dir, exist_ok=True)
+    os.makedirs(exam_dir(exam.id), exist_ok=True)
 
     student_id_widget = next(
         widget
@@ -189,11 +188,11 @@ def _exam_generate_data(exam):
         if widget.name == 'barcode_widget'
     )
 
-    exam_path = get_exam_pdf_path(exam.id)
+    exam_path = exam_pdf_path(exam.id)
 
     cb_data = _checkboxes(exam)
 
-    return exam_dir, student_id_widget, barcode_widget, exam_path, cb_data
+    return exam_dir(exam.id), student_id_widget, barcode_widget, exam_path, cb_data
 
 
 def _checkboxes(exam):
@@ -626,9 +625,8 @@ def save_with_even_pages(exam_id, exam_pdf_file):
     exam_pdf_file : str or File like object
         The exam pdf to be saved inthe data directory
     """
-    exam_dir = get_exam_dir(exam_id)
-    os.makedirs(exam_dir, exist_ok=True)
-    pdf_path = get_exam_pdf_path(exam_id)
+    os.makedirs(exam_dir(exam_id), exist_ok=True)
+    pdf_path = exam_pdf_path(exam_id)
 
     exam_pdf = PdfReader(exam_pdf_file)
     pagecount = len(exam_pdf.pages)

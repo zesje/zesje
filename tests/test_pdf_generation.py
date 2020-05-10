@@ -177,7 +177,7 @@ def test_pdf_has_even_pages(config_app):
 
         pdf_generation.save_with_even_pages(1, tempfile.name)
 
-        exam_pdf = PdfReader(pdf_generation.get_exam_pdf_path(1))
+        exam_pdf = PdfReader(pdf_generation.exam_pdf_path(1))
         pagecount = len(exam_pdf.pages)
 
         assert pagecount == 4

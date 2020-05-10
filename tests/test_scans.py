@@ -13,7 +13,7 @@ from zesje.scans import decode_barcode, ExamMetadata, ExtractedBarcode, exam_met
 from zesje.image_extraction import extract_image_pikepdf, extract_images
 from zesje.database import db
 from zesje.api.exams import generate_exam_token, _exam_generate_data
-from zesje.pdf_generation import get_exam_dir, write_finalized_exam, generate_single_pdf
+from zesje.pdf_generation import exam_dir, exam_pdf_path, write_finalized_exam, generate_single_pdf
 from zesje.database import Exam, ExamWidget
 from zesje import scans
 from zesje.constants import PAGE_FORMATS
@@ -44,10 +44,9 @@ def full_app(module_app):
 
     db.session.commit()
 
-    exam_dir = get_exam_dir(exam.id)
-    os.makedirs(exam_dir, exist_ok=True)
+    os.makedirs(exam_dir(exam.id), exist_ok=True)
 
-    exam_path = os.path.join(exam_dir, 'exam.pdf')
+    exam_path = exam_pdf_path(exam.id)
     pdf = canvas.Canvas(exam_path, pagesize=A4)
     for _ in range(2):
         pdf.showPage()
@@ -61,7 +60,7 @@ def full_app(module_app):
 def generate_flat_scan_data(copy_number=145):
     """Generates a submission PDF and flattens it"""
     exam = Exam.query.first()
-    exam_dir, _, barcode_widget, exam_path, _ = _exam_generate_data(exam)
+    examdir, _, barcode_widget, exam_path, _ = _exam_generate_data(exam)
 
     exam_config = exam_metadata(exam.id)
 
@@ -70,7 +69,7 @@ def generate_flat_scan_data(copy_number=145):
         scan_pdf.seek(0)
 
         for image, _ in extract_images(scan_pdf.name, dpi=150):
-            yield image, exam_config, exam_dir
+            yield image, exam_config, examdir
 
 
 def original_page_size(format, dpi):
@@ -145,8 +144,8 @@ def apply_scan(img, rotation=0, scale=1, skew=(0, 0)):
 
 
 def test_pipeline(full_app):
-    for image, exam_config, exam_dir in generate_flat_scan_data():
-        success, reason = scans.process_page(image, exam_config, exam_dir)
+    for image, exam_config, examdir in generate_flat_scan_data():
+        success, reason = scans.process_page(image, exam_config, examdir)
         assert success is True, reason
 
 

@@ -10,7 +10,7 @@ from sqlalchemy import func
 
 from zesje.api._helpers import _shuffle
 from zesje.api.problems import problem_to_data
-from ..pdf_generation import get_exam_pdf_path, _exam_generate_data
+from ..pdf_generation import exam_pdf_path, _exam_generate_data
 from ..pdf_generation import generate_pdfs, generate_single_pdf, generate_zipped_pdfs
 from ..pdf_generation import page_is_size, save_with_even_pages
 from ..pdf_generation import write_finalized_exam
@@ -325,7 +325,7 @@ class ExamSource(Resource):
             return dict(status=404, message='Exam does not exist.'), 404
 
         return send_file(
-            get_exam_pdf_path(exam.id),
+            exam_pdf_path(exam.id),
             cache_timeout=0,
             mimetype='application/pdf')
 

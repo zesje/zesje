@@ -627,8 +627,8 @@ def save_with_even_pages(exam_id, exam_pdf_file):
         The exam pdf to be saved inthe data directory
     """
     exam_dir = get_exam_dir(exam_id)
-    pdf_path = os.path.join(exam_dir, 'exam.pdf')
     os.makedirs(exam_dir, exist_ok=True)
+    pdf_path = get_exam_pdf_path(exam_id)
 
     exam_pdf = PdfReader(exam_pdf_file)
     pagecount = len(exam_pdf.pages)

@@ -2,7 +2,7 @@
 
 FROM continuumio/miniconda3
 
-RUN apt-get update -y && apt-get install -y libdmtx0b
+RUN apt-get update -y && apt-get install -y libdmtx-dev
 
 WORKDIR /app
 

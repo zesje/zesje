@@ -8,7 +8,7 @@ import * as api from '../api.jsx'
 class Login extends React.Component {
   loginOAuth = () => {
     api.get('/login_oauth').then(response => {
-        window.location.href = response.redirect_oauth
+      window.location.href = response.redirect_oauth
     })
   }
   render () {

@@ -3,7 +3,7 @@
 FROM continuumio/miniconda3
 
 RUN apt-get update && \
-    apt-get install -y libdmtx0b && \
+    apt-get install -y libdmtx-dev && \
     apt-get install -y git supervisor nginx cron
 
 WORKDIR /app

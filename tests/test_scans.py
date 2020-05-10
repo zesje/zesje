@@ -12,8 +12,8 @@ from reportlab.lib.pagesizes import A4
 from zesje.scans import decode_barcode, ExamMetadata, ExtractedBarcode, exam_metadata, guess_dpi
 from zesje.image_extraction import extract_image_pikepdf, extract_images
 from zesje.database import db
-from zesje.api.exams import generate_exam_token, _get_exam_dir, _exam_generate_data
-from zesje.pdf_generation import write_finalized_exam, generate_pdfs
+from zesje.api.exams import generate_exam_token, _exam_generate_data
+from zesje.pdf_generation import get_exam_dir, write_finalized_exam, generate_single_pdf
 from zesje.database import Exam, ExamWidget
 from zesje import scans
 from zesje.constants import PAGE_FORMATS
@@ -39,12 +39,12 @@ def full_app(module_app):
     db.session.commit()
 
     exam.token = generate_exam_token(exam.id, exam.name, b'EXAM PDF DATA')
-    student_id_widget = ExamWidget(exam=exam, name='student_id_widget', x=50, y=50)
+    ExamWidget(exam=exam, name='student_id_widget', x=50, y=50)
     ExamWidget(exam=exam, name='barcode_widget', x=40, y=510)
 
     db.session.commit()
 
-    exam_dir = _get_exam_dir(exam.id)
+    exam_dir = get_exam_dir(exam.id)
     os.makedirs(exam_dir, exist_ok=True)
 
     exam_path = os.path.join(exam_dir, 'exam.pdf')
@@ -53,7 +53,7 @@ def full_app(module_app):
         pdf.showPage()
     pdf.save()
 
-    write_finalized_exam(exam_dir, exam_path, student_id_widget.x, student_id_widget.y, [])
+    write_finalized_exam(exam)
 
     yield module_app
 
@@ -66,14 +66,8 @@ def generate_flat_scan_data(copy_number=145):
     exam_config = exam_metadata(exam.id)
 
     with NamedTemporaryFile() as scan_pdf:
-        generate_pdfs(
-            exam_pdf_file=exam_path,
-            copy_nums=[copy_number],
-            output_paths=[scan_pdf.name],
-            exam_token=exam.token,
-            datamatrix_x=barcode_widget.x,
-            datamatrix_y=barcode_widget.y
-        )
+        generate_single_pdf(exam, copy_number, copy_number, scan_pdf)
+        scan_pdf.seek(0)
 
         for image, _ in extract_images(scan_pdf.name, dpi=150):
             yield image, exam_config, exam_dir

@@ -56,7 +56,7 @@ def monkeypatch_write_finalized_exam(monkeypatch):
     def mock_exam_generate_data(exam):
         return None, ExamWidget(), None, None, None
 
-    def mock_write_finalized_exam(*args):
+    def mock_write_finalized_exam(exam):
         pass
 
     monkeypatch.setattr(zesje.api.exams, '_exam_generate_data', mock_exam_generate_data)
@@ -218,7 +218,7 @@ def test_delete_mco_check_feedback(test_client, add_test_data):
 
 
 def test_delete_not_present(test_client, add_test_data):
-    response = test_client.delete(f'/api/mult-choice/1')
+    response = test_client.delete('/api/mult-choice/1')
     data = json.loads(response.data)
 
     assert data['status'] == 404

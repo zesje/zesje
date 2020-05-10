@@ -1,5 +1,7 @@
 import os
 from io import BytesIO
+from zipfile import ZipFile
+from tempfile import NamedTemporaryFile
 
 import PIL
 from PIL import Image
@@ -11,8 +13,10 @@ from reportlab.pdfgen.canvas import Canvas as RLCanvas
 from wand.color import Color as WandColor
 from wand.image import Image as WandImage
 from pylibdmtx import pylibdmtx
+from pdfrw import PdfReader
 
 from zesje import pdf_generation
+from zesje.database import Exam, ExamWidget
 
 
 # Mock fixtures #
@@ -99,11 +103,12 @@ def test_generate_pdfs_num_files(datadir, tmpdir, config_app):
 
     num_copies = 3
     copy_nums = range(num_copies)
-    paths = map(lambda copy_num: os.path.join(tmpdir, f'{copy_num}.pdf'), copy_nums)
 
-    pdf_generation.generate_pdfs(blank_pdf, copy_nums, paths, 'ABCDEFGHIJKL', 25, 270, 150, 270)
+    generated = list(
+        pdf_generation.generate_pdfs(blank_pdf, copy_nums, 'ABCDEFGHIJKL', 25, 270, 150, 270)
+    )
 
-    assert len(tmpdir.listdir()) == num_copies
+    assert len(generated) == num_copies
 
 
 @pytest.mark.parametrize('checkboxes', [[(300, 100, 1, 'c'), (500, 50, 0, 'd'), (500, 500, 0, 'a'), (250, 200, 1, 'b')],
@@ -113,10 +118,11 @@ def test_generate_checkboxes(datadir, tmpdir, checkboxes, config_app):
 
     num_copies = 1
     copy_nums = range(num_copies)
-    paths = map(lambda copy_num: os.path.join(tmpdir, f'{copy_num}.pdf'), copy_nums)
-    pdf_generation.generate_pdfs(blank_pdf, copy_nums, paths, 'ABCDEFGHIJKL', 25, 270, 150, 270, checkboxes)
+    generated = list(
+        pdf_generation.generate_pdfs(blank_pdf, copy_nums, 'ABCDEFGHIJKL', 25, 270, 150, 270, checkboxes)
+    )
 
-    assert len(tmpdir.listdir()) == num_copies
+    assert len(generated) == num_copies
 
 
 @pytest.mark.parametrize('name', ['a4', 'square'], ids=['a4', 'square'])
@@ -135,8 +141,55 @@ def test_join_pdfs(mock_generate_datamatrix, mock_generate_id_grid,
     assert_pdf_and_images_are_equal(out, images)
 
 
+def test_generate_zip(datadir, tmpdir, config_app, monkeypatch_exam_generate_data):
+    with NamedTemporaryFile() as tempfile:
+        pdf_generation.generate_zipped_pdfs(Exam(token='ABCDEFGHIJKL'), 1, 3, tempfile)
+        tempfile.seek(0)
+
+        with ZipFile(tempfile) as zf:
+            assert len(zf.namelist()) == 3
+
+
+def test_generate_single_pdf(datadir, tmpdir, config_app, monkeypatch_exam_generate_data):
+    with NamedTemporaryFile() as tempfile:
+        pdf_generation.generate_single_pdf(Exam(token='ABCDEFGHIJKL'), 1, 3, tempfile)
+        tempfile.seek(0)
+
+        exam_pdf = PdfReader(tempfile)
+        pagecount = len(exam_pdf.pages)
+
+        assert pagecount == 6
+
+
 def test_generate_datamatrix(config_app):
     # Checks for input and output formats, as well as string contents.
     datamatrix = pdf_generation.generate_datamatrix('ABCD', 2, 3)
     assert isinstance(datamatrix, Image.Image)
     assert pylibdmtx.decode(datamatrix)[0].data.decode('utf-8') == 'ABCD/0003/02'
+
+
+def test_pdf_has_even_pages(config_app):
+    with NamedTemporaryFile() as tempfile:
+        pdf = RLCanvas(tempfile.name, pagesize=A4)
+        for _ in range(3):
+            pdf.showPage()
+        pdf.save()
+
+        pdf_generation.save_with_even_pages(1, tempfile.name)
+
+        exam_pdf = PdfReader(pdf_generation.get_exam_pdf_path(1))
+        pagecount = len(exam_pdf.pages)
+
+        assert pagecount == 4
+
+
+@pytest.fixture
+def monkeypatch_exam_generate_data(monkeypatch, datadir):
+    def mock_exam_generate_data(exam):
+        return (datadir,
+                ExamWidget(x=50, y=50),
+                ExamWidget(x=150, y=270),
+                os.path.join(datadir, 'blank-a4-2pages.pdf'),
+                None)
+
+    monkeypatch.setattr(pdf_generation, '_exam_generate_data', mock_exam_generate_data)

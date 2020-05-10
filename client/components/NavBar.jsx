@@ -116,28 +116,25 @@ class NavBar extends React.Component {
   }
 
   componentDidMount = () => {
-    this.updateExamList()
     this.updateGrader()
   }
 
   updateExamList = () => {
-    if (window.location.pathname !== '/login') {
-      api.get('exams')
-        .then(exams => {
-          this.setState({
-            examList: exams
-          })
-          const examIDs = exams.map(exam => exam.id)
-          const examID = this.props.exam.id
-          if (!examIDs.includes(examID) || examID === null) {
-            if (!exams.length) {
-              this.props.updateExam(null)
-            } else {
-              this.props.updateExam(exams[exams.length - 1].id)
-            }
-          }
+    api.get('exams')
+      .then(exams => {
+        this.setState({
+          examList: exams
         })
-    }
+        const examIDs = exams.map(exam => exam.id)
+        const examID = this.props.exam.id
+        if (!examIDs.includes(examID) || examID === null) {
+          if (!exams.length) {
+            this.props.updateExam(null)
+          } else {
+            this.props.updateExam(exams[exams.length - 1].id)
+          }
+        }
+      })
   }
   updateGrader = () => {
     if (window.location.pathname !== '/login') {
@@ -145,6 +142,7 @@ class NavBar extends React.Component {
         let grader = response.name
         this.setState({grader: grader})
       })
+      this.updateExamList()
     }
   }
 

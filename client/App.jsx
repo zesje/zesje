@@ -131,7 +131,7 @@ class App extends React.Component {
           <NavBar exam={exam} updateExam={this.updateExam} grader={grader} changeGrader={this.changeGrader} ref={this.menu} />
           <Switch>
             <Route exact path='/' component={Home} />
-            <Route path='/login' render={() => <Login />} />
+            <Route path='/login' render={({ history }) => <Login changeURL={history.push} />} />
             <Route path='/exams/:examID' render={({ match, history }) =>
               <Exam
                 exam={exam}
@@ -163,8 +163,6 @@ class App extends React.Component {
             <Route path='/email' render={() => (
               exam.submissions.length ? <Email exam={exam} /> : <Fail message='No exams uploaded. Please do not bookmark URLs' />
             )} />
-            <Route path='/auth' render={() =>
-              <Login />} />
             <Route path='/graders' render={() =>
               <Graders />} />
             <Route render={() =>

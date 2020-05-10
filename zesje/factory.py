@@ -21,6 +21,9 @@ def create_app(celery=None, app_config=None):
 
     create_config(app.config, app_config)
 
+    if app.config['SECRET_KEY'] is None:
+        raise KeyError
+
     if celery is not None:
         attach_celery(app, celery)
 
@@ -34,7 +37,7 @@ def create_app(celery=None, app_config=None):
         # Force authentication if endpoint not one of the exempted routes
         if (current_user is None or not current_user.is_authenticated) and request.endpoint not in app.config[
                 'EXEMPTED_ROUTES']:
-            return dict(status=401, message=request.endpoint), 401
+            return dict(status=403, message=request.endpoint), 403
 
     @app.route('/')
     @app.route('/<path:path>')

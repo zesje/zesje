@@ -11,6 +11,7 @@ class Login extends React.Component {
       window.location.href = response.redirect_oauth
     })
   }
+
   render () {
     return (
       <div>

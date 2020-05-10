@@ -1,4 +1,3 @@
-import os
 # Folder to save exam scans and database
 DATA_DIRECTORY = 'data'
 
@@ -24,7 +23,7 @@ CELERY_BROKER_URL = 'redis://localhost:6479',
 CELERY_RESULT_BACKEND = 'redis://localhost:6479'
 
 # Secret key required for flask.session
-SECRET_KEY = os.urandom(25)
+SECRET_KEY = None
 
 # Github OAuth
 OAUTH_CLIENT_ID = None

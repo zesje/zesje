@@ -8,7 +8,7 @@ RUN apt-get update && \
 
 WORKDIR /app
 
-ADD environment.yml /app/environment.yml
+ADD environment.yml .
 RUN conda env create && conda clean --all
 
 RUN echo "source activate zesje-dev" > ~/.bashrc
@@ -17,5 +17,7 @@ ENV PATH /opt/conda/envs/zesje-dev/bin:$PATH
 ADD . .
 RUN yarn install
 RUN yarn build
+
+RUN rm -rf node_modules
 
 ENTRYPOINT [ "/bin/bash" ]

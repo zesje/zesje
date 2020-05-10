@@ -6,24 +6,33 @@ import 'react-bulma-components/dist/react-bulma-components.min.css'
 import * as api from '../api.jsx'
 
 class Login extends React.Component {
-  loginOAuth = () => {
-    api.get('/login_oauth').then(response => {
-      window.location.href = response.redirect_oauth
-    })
-  }
+    state = {
+      redirect_url: '',
+      provider: ''
+    }
+    componentDidMount = () => {
+      api.get('/oauth/start').then(response => {
+        if (response.is_authenticated) {
+          window.location.href = window.location.origin
+        }
+        this.setState({redirect_url: response.redirect_oauth, provider: response.provider})
+      })
+    }
+    loginOAuth = () => {
+      window.location.href = this.state.redirect_url
+    }
+    render () {
+      return (
+        <div>
+          <Hero title='Login' subtitle='Many hands must be authenticated' />
 
-  render () {
-    return (
-      <div>
-        <Hero title='Login With Github' subtitle='Many hands must be authenticated' />
+          <section className='Login'>
+            <Button onClick={this.loginOAuth} class='button is-info is-outlined is-medium'> Login With {this.state.provider} </Button>
+          </section>
 
-        <section className='Login'>
-          <Button onClick={this.loginOAuth} class='button is-info is-outlined is-medium'> Login </Button>
-        </section>
-
-      </div>
-    )
-  }
+        </div>
+      )
+    }
 }
 
 export default Login

@@ -158,7 +158,7 @@ class NavBar extends React.Component {
 
   logout = () => {
     this.setState({grader: ''})
-    api.get('logout')
+    api.get('oauth/logout')
       .catch(response => { console.log(response) })
   }
 

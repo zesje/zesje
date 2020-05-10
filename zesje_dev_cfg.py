@@ -19,18 +19,20 @@ DEBUG = 1
 # Secret key required for flask.session
 SECRET_KEY = os.urandom(25)
 
-# Github OAuth
+# OAuth Details
 OAUTH_CLIENT_ID = None
 OAUTH_CLIENT_SECRET = None
-OAUTH_AUTHORIZATION_BASE_URL = "https://github.com/login/oauth/authorize"
-OAUTH_TOKEN_URL = "https://github.com/login/oauth/access_token"
-OAUTH_USERINFO_URL = "https://api.github.com/user"
+OAUTH_AUTHORIZATION_BASE_URL = None
+OAUTH_TOKEN_URL = None
+OAUTH_USERINFO_URL = None
 OAUTH_ID_FIELD = "email"
 OAUTH_NAME_FIELD = "name"
+OAUTH_PROVIDER = None
+INSECURE_TRANSPORT = '1'
 
 # Instance owner details
 OWNER_OAUTH_ID = None
 OWNER_NAME = None
 
 # Routes exempted from authentication
-EXEMPTED_ROUTES = ['login', 'callback', 'index']
+EXEMPTED_ROUTES = ['zesje.api.oauthinitiate', 'zesje.api.oauthcallback', 'index']

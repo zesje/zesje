@@ -25,6 +25,11 @@ def datadir():
 def base_config_app():
     app = Flask(__name__, static_folder=None)
     create_config(app.config, None)
+    os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
+    app.config['SECRET_KEY'] = "TEST"
+    app.config['OAUTH_CLIENT_ID'] = "id"
+    app.config['OAUTH_CLIENT_SECRET'] = "secret"
+    app.config['OAUTH_AUTHORIZATION_BASE_URL'] = "https://test/auth"
     return app
 
 # Provides an app context, this runs for every test

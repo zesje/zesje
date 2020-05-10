@@ -126,8 +126,8 @@ class Feedback(Resource):
         if problem.id != problem_id:
             return dict(status=400, message="Feedback option does not belong to this problem."), 400
         if fb.mc_option:
-            return dict(status=401, message='Cannot delete feedback option'
-                                            + ' attached to a multiple choice option.'), 401
+            return dict(status=403, message='Cannot delete feedback option'
+                                            + ' attached to a multiple choice option.'), 403
 
         db.session.delete(fb)
 

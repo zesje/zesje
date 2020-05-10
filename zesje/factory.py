@@ -1,11 +1,10 @@
 import os
 from os.path import abspath, dirname
 
-from flask import Flask, session, redirect, request, url_for
+from flask import Flask, request
 from flask_migrate import Migrate
 from werkzeug.exceptions import NotFound
-from flask_login import login_user, logout_user, current_user
-from requests_oauthlib import OAuth2Session
+from flask_login import logout_user, current_user
 
 from .database import db, login_manager, Grader
 from .api import api_bp
@@ -15,11 +14,12 @@ STATIC_FOLDER_PATH = os.path.join(abspath(dirname(__file__)), 'static')
 
 def create_app(celery=None, app_config=None):
     app = Flask(__name__, static_folder=STATIC_FOLDER_PATH)
-    os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
 
     login_manager.init_app(app)
 
     create_config(app.config, app_config)
+
+    os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = app.config['INSECURE_TRANSPORT']
 
     if app.config['SECRET_KEY'] is None:
         raise KeyError
@@ -32,12 +32,19 @@ def create_app(celery=None, app_config=None):
 
     app.register_blueprint(api_bp, url_prefix='/api')
 
+    @app.before_first_request
+    def add_instance_owner():
+        # Add instance owner to database if they aren't in it already
+        if Grader.query.filter(Grader.oauth_id == app.config['OWNER_OAUTH_ID']).one_or_none() is None:
+            db.session.add(Grader(oauth_id=app.config['OWNER_OAUTH_ID'], name=app.config['OWNER_NAME']))
+            db.session.commit()
+
     @app.before_request
     def check_user_auth():
         # Force authentication if endpoint not one of the exempted routes
         if (current_user is None or not current_user.is_authenticated) and request.endpoint not in app.config[
                 'EXEMPTED_ROUTES']:
-            return dict(status=403, message=request.endpoint), 403
+            return dict(status=401, message=request.endpoint), 401
 
     @app.route('/')
     @app.route('/<path:path>')
@@ -51,55 +58,7 @@ def create_app(celery=None, app_config=None):
         except NotFound:
             return app.send_static_file('index.html')
 
-    @app.route('/api/login_oauth')
-    def login():
-        """Logs the user in by redirecting to the OAuth provider with the appropriate
-        client ID as a request parameter"""
-        oauth2_session = OAuth2Session(app.config['OAUTH_CLIENT_ID'])
-        authorization_url, state = oauth2_session.authorization_url(app.config['OAUTH_AUTHORIZATION_BASE_URL'])
-
-        session['oauth_state'] = state
-
-        return {
-            'redirect_oauth': authorization_url
-        }
-
-    @app.route('/callback')
-    def callback():
-        """OAuth provider redirects to this route after authorization.
-        Fetches token and redirects to /profile"""
-        oauth2_session = OAuth2Session(app.config['OAUTH_CLIENT_ID'], state=session['oauth_state'])
-        token = oauth2_session.fetch_token(
-            app.config['OAUTH_TOKEN_URL'],
-            client_secret=app.config['OAUTH_CLIENT_SECRET'],
-            authorization_response=request.url,
-        )
-
-        session['oauth_token'] = token  # token can used to make requests with OAuth provider later if needed
-
-        github = OAuth2Session(app.config['OAUTH_CLIENT_ID'], token=session['oauth_token'])
-        current_login = github.get(app.config['OAUTH_USERINFO_URL']).json()
-
-        grader = Grader.query.filter(Grader.oauth_id == current_login[app.config['OAUTH_ID_FIELD']]).one_or_none()
-
-        if grader is None:
-            return "Your account is Unauthorized. Please contact somebody who has access"
-        elif grader.name is None:
-            grader.name = current_login[app.config['OAUTH_NAME_FIELD']]
-
-        login_user(grader)
-
-        return redirect(url_for('index'))
-
-    @app.route('/api/logout', methods=["GET"])
-    def logout():
-        """Logs the user out
-        """
-        logout_user()
-        return dict(status=400, message="Logout successful")
-
     return app
-
 
 def attach_celery(app, celery):
     celery.conf.update(

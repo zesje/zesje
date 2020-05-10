@@ -408,8 +408,6 @@ class ExamPreview(Resource):
         if exam is None:
             return dict(status=404, message='Exam does not exist.'), 404
 
-        intermediate_file = BytesIO()
-
         exam_dir, student_id_widget, barcode_widget, exam_path, cb_data = _exam_generate_data(exam)
 
         # Generate generic overlay

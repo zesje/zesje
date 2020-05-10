@@ -1,16 +1,14 @@
 import os
 from os.path import abspath, dirname
 
-from flask import Flask, session, redirect, request, url_for, render_template
+from flask import Flask, session, redirect, request, url_for
 from flask_migrate import Migrate
 from werkzeug.exceptions import NotFound
 from flask_login import login_user, logout_user, current_user
 from requests_oauthlib import OAuth2Session
 
-
 from .database import db, login_manager, Grader
 from .api import api_bp
-
 
 STATIC_FOLDER_PATH = os.path.join(abspath(dirname(__file__)), 'static')
 
@@ -31,22 +29,12 @@ def create_app(celery=None, app_config=None):
 
     app.register_blueprint(api_bp, url_prefix='/api')
 
-    @app.before_first_request
-    def setup():
-        os.makedirs(app.config['DATA_DIRECTORY'], exist_ok=True)
-        os.makedirs(app.config['SCAN_DIRECTORY'], exist_ok=True)
-
-        # Add Instance Owner to the database if they don't already exist
-        if Grader.query.filter(Grader.oauth_id == app.config['OWNER_OAUTH_ID']).one_or_none() is None:
-            db.session.add(Grader(name=app.config["OWNER_NAME"], oauth_id=app.config["OWNER_OAUTH_ID"]))
-            db.session.commit()
-
     @app.before_request
     def check_user_auth():
         # Force authentication if endpoint not one of the exempted routes
-        if (current_user is None or not current_user.is_authenticated) \
-                and request.endpoint not in app.config['EXEMPTED_ROUTES']:
-            return redirect(url_for('login'))
+        if (current_user is None or not current_user.is_authenticated) and request.endpoint not in app.config[
+                'EXEMPTED_ROUTES']:
+            return dict(status=401, message=request.endpoint), 401
 
     @app.route('/')
     @app.route('/<path:path>')
@@ -60,7 +48,7 @@ def create_app(celery=None, app_config=None):
         except NotFound:
             return app.send_static_file('index.html')
 
-    @app.route('/login')
+    @app.route('/api/login_oauth')
     def login():
         """Logs the user in by redirecting to the OAuth provider with the appropriate
         client ID as a request parameter"""
@@ -69,7 +57,9 @@ def create_app(celery=None, app_config=None):
 
         session['oauth_state'] = state
 
-        return redirect(authorization_url)
+        return {
+            'redirect_oauth': authorization_url
+        }
 
     @app.route('/callback')
     def callback():
@@ -98,22 +88,12 @@ def create_app(celery=None, app_config=None):
 
         return redirect(url_for('index'))
 
-    @app.route('/api/graders/current')
-    def get_current_grader():
-        # returns details of the current grader logged in
-        return {
-            'id': current_user.id,
-            'name': current_user.name,
-            'oauth_id': current_user.oauth_id
-        }
-
-    @app.route('/logout', methods=["GET"])
+    @app.route('/api/logout', methods=["GET"])
     def logout():
-        """Logs the user out and redirects to /login
+        """Logs the user out
         """
         logout_user()
-        return redirect(url_for('.login'))
-
+        return dict(status=400, message="Logout successful")
 
     return app
 

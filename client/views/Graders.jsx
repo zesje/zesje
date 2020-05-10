@@ -23,7 +23,7 @@ class Graders extends React.Component {
           name: '',
           graders: graders
         })
-        this.props.updateGraderList()
+        // this.props.updateGraderList()
       })
       .catch(resp => {
         resp.json().then(e => {

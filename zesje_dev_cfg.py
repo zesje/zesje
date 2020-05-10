@@ -14,19 +14,3 @@ SMTP_PASSWORD = ''
 
 # Enable debug mode
 DEBUG = 1
-
-# Github OAuth
-OAUTH_CLIENT_ID = None
-OAUTH_CLIENT_SECRET = None
-OAUTH_AUTHORIZATION_BASE_URL = "https://github.com/login/oauth/authorize"
-OAUTH_TOKEN_URL = "https://github.com/login/oauth/access_token"
-OAUTH_USERINFO_URL = "https://api.github.com/user"
-OAUTH_ID_FIELD = "email"
-OAUTH_NAME_FIELD = "name"
-
-# Instance owner details
-OWNER_OAUTH_ID = None
-OWNER_NAME = None
-
-# Routes exempted from authentication
-EXEMPTED_ROUTES = ['login', 'callback']

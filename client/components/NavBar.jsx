@@ -121,31 +121,32 @@ class NavBar extends React.Component {
   }
 
   updateExamList = () => {
-    api.get('exams')
-      .then(exams => {
-        this.setState({
-          examList: exams
-        })
-        const examIDs = exams.map(exam => exam.id)
-        const examID = this.props.exam.id
-        if (!examIDs.includes(examID) || examID === null) {
-          if (!exams.length) {
-            this.props.updateExam(null)
-          } else {
-            this.props.updateExam(exams[exams.length - 1].id)
+    if (window.location.pathname !== '/login') {
+      api.get('exams')
+        .then(exams => {
+          this.setState({
+            examList: exams
+          })
+          const examIDs = exams.map(exam => exam.id)
+          const examID = this.props.exam.id
+          if (!examIDs.includes(examID) || examID === null) {
+            if (!exams.length) {
+              this.props.updateExam(null)
+            } else {
+              this.props.updateExam(exams[exams.length - 1].id)
+            }
           }
-        }
-      })
-  }
-
-    updateGrader = () => {
-      api.get('graders/current')
-        .then(response => {
-          let grader = response.name
-          // console.log('found response ' + grader)
-          this.setState({grader: grader})
         })
     }
+  }
+  updateGrader = () => {
+    if (window.location.pathname !== '/login') {
+      api.get('graders/oauth').then(response => {
+        let grader = response.name
+        this.setState({grader: grader})
+      })
+    }
+  }
 
   burgerClick = () => {
     this.setState({
@@ -155,6 +156,12 @@ class NavBar extends React.Component {
 
   setHelpPage = (helpPage) => {
     this.setState({ helpPage: helpPage })
+  }
+
+  logout = () => {
+    this.setState({grader: ''})
+    api.get('logout')
+      .catch(response => { console.log(response) })
   }
 
   render () {
@@ -211,7 +218,7 @@ class NavBar extends React.Component {
 
           <div className='navbar-end'>
             <GraderDropdown grader={this.state.grader} />
-            <Link className='navbar-item' to='/logout'>Logout</Link>
+            <Link className='navbar-item' onClick={this.logout} to='/login'>Logout</Link>
 
             <div className='navbar-item'>
               <i>Version {__ZESJE_VERSION__}</i>

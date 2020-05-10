@@ -40,4 +40,4 @@ OWNER_OAUTH_ID = None
 OWNER_NAME = None
 
 # Routes exempted from authentication
-EXEMPTED_ROUTES = ['login', 'callback']
+EXEMPTED_ROUTES = ['login', 'callback', 'index']

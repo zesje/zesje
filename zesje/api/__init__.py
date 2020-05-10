@@ -14,6 +14,7 @@ from .widgets import Widgets
 from .emails import EmailTemplate, RenderedEmailTemplate, Email
 from .mult_choice import MultipleChoice
 from .statistics import Statistics
+from .graders_oauth import GradersOAuth
 
 from . import signature
 from . import images
@@ -24,6 +25,7 @@ api_bp = Blueprint(__name__, __name__)
 api = Api(api_bp)
 
 api.add_resource(Graders, '/graders')
+# api.add_resource(Login, '/auth_graders')
 api.add_resource(Exams, '/exams', '/exams/<int:exam_id>', '/exams/<int:exam_id>/<string:attr>')
 api.add_resource(ExamSource, '/exams/<int:exam_id>/source_pdf')
 api.add_resource(ExamGeneratedPdfs, '/exams/<int:exam_id>/generated_pdfs')
@@ -62,6 +64,7 @@ api.add_resource(MultipleChoice,
                  '/mult-choice/')
 api.add_resource(Statistics,
                  '/stats/<int:exam_id>')
+api.add_resource(GradersOAuth, '/graders/oauth')
 # Other resources that don't return JSON
 # It is possible to get flask_restful to work with these, but not
 # very idiomatic.

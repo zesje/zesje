@@ -23,7 +23,11 @@ function _fetch (method) {
         console.error('Error: ', error, ' in', method, endpoint, 'with data', data))
       .then(resp => {
         if (!resp.ok) {
-          throw resp
+          if (resp.status === 401) {
+            window.location.href = window.location.origin + '/login'
+          } else {
+            throw resp
+          }
         } else {
           return resp
         }

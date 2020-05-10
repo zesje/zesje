@@ -49,6 +49,10 @@ const Email = Loadable({
   loader: () => import('./views/Email.jsx'),
   loading: Loading
 })
+const Login = Loadable({
+  loader: () => import('./views/Login.jsx'),
+  loading: Loading
+})
 const Fail = Loadable({
   loader: () => import('./views/Fail.jsx'),
   loading: Loading
@@ -94,6 +98,7 @@ class App extends React.Component {
         this.updateExamList()
       })
   }
+
   updateSubmission = (submissionID) => {
     api.get('submissions/' + this.state.exam.id + '/' + submissionID)
       .then(sub => {
@@ -126,6 +131,7 @@ class App extends React.Component {
           <NavBar exam={exam} updateExam={this.updateExam} grader={grader} changeGrader={this.changeGrader} ref={this.menu} />
           <Switch>
             <Route exact path='/' component={Home} />
+            <Route path='/login' render={() => <Login />} />
             <Route path='/exams/:examID' render={({ match, history }) =>
               <Exam
                 exam={exam}
@@ -157,12 +163,10 @@ class App extends React.Component {
             <Route path='/email' render={() => (
               exam.submissions.length ? <Email exam={exam} /> : <Fail message='No exams uploaded. Please do not bookmark URLs' />
             )} />
+            <Route path='/auth' render={() =>
+              <Login />} />
             <Route path='/graders' render={() =>
               <Graders />} />
-            <Route path='/logout' component={() => {
-              window.location.href = '/logout'
-              return null
-            }} />
             <Route render={() =>
               <Fail message="404. Could not find that page :'(" />} />
           </Switch>
@@ -172,6 +176,5 @@ class App extends React.Component {
     )
   }
 }
-
 
 export default hot(module)(App)

@@ -19,17 +19,6 @@ def datadir():
     return os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
 
 
-# Sets config params for the test app
-def create_test_config(app):
-    app.config['SECRET_KEY'] = "TEST"
-    app.config['OAUTH_CLIENT_ID'] = "id"
-    app.config['OAUTH_CLIENT_SECRET'] = "secret"
-    app.config['OAUTH_AUTHORIZATION_BASE_URL'] = "https://test.com/oauth/start"
-    app.config['OAUTH_TOKEN_URL'] = "https://test.com/oauth/token"
-    app.config['OAUTH_USERINFO_URL'] = "https://test.com/user"
-    app.config['OAUTH_ID_FIELD'] = 'email'
-    app.config['OAUTH_NAME_FIELD'] = 'name'
-
 # Returns a Flask app with only the config initialized
 # Runs only once per session
 @pytest.fixture(scope='session')
@@ -37,7 +26,6 @@ def base_config_app():
     app = Flask(__name__, static_folder=None)
     create_config(app.config, None)
     os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
-    create_test_config(app)
     login_manager.init_app(app)
     @app.route('/')
     def index():

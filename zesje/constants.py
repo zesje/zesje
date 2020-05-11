@@ -43,3 +43,6 @@ MAX_ALIGNMENT_ERROR_MM = 1
 MIN_ANSWER_SIZE_MM2 = 4
 
 SQLALCHEMY_TRACK_MODIFICATIONS = False  # Suppress future deprecation warning
+
+# Routes exempted from authentication
+EXEMPTED_ROUTES = ['zesje.api.oauthinitiate', 'zesje.api.oauthcallback', 'index']

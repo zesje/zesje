@@ -10,7 +10,7 @@ from sqlalchemy.orm.session import close_all_sessions
 sys.path.insert(0, str(Path.cwd()))
 
 from zesje.api import api_bp  # noqa: E402
-from zesje.database import db  # noqa: E402
+from zesje.database import db, login_manager  # noqa: E402
 from zesje.factory import create_config  # noqa: E402
 
 # Adapted from https://stackoverflow.com/a/46062148/1062698
@@ -19,6 +19,17 @@ def datadir():
     return os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
 
 
+# Sets config params for the test app
+def create_test_config(app):
+    app.config['SECRET_KEY'] = "TEST"
+    app.config['OAUTH_CLIENT_ID'] = "id"
+    app.config['OAUTH_CLIENT_SECRET'] = "secret"
+    app.config['OAUTH_AUTHORIZATION_BASE_URL'] = "https://test.com/oauth/start"
+    app.config['OAUTH_TOKEN_URL'] = "https://test.com/oauth/token"
+    app.config['OAUTH_USERINFO_URL'] = "https://test.com/user"
+    app.config['OAUTH_ID_FIELD'] = 'email'
+    app.config['OAUTH_NAME_FIELD'] = 'name'
+
 # Returns a Flask app with only the config initialized
 # Runs only once per session
 @pytest.fixture(scope='session')
@@ -26,10 +37,12 @@ def base_config_app():
     app = Flask(__name__, static_folder=None)
     create_config(app.config, None)
     os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
-    app.config['SECRET_KEY'] = "TEST"
-    app.config['OAUTH_CLIENT_ID'] = "id"
-    app.config['OAUTH_CLIENT_SECRET'] = "secret"
-    app.config['OAUTH_AUTHORIZATION_BASE_URL'] = "https://test/auth"
+    create_test_config(app)
+    login_manager.init_app(app)
+    @app.route('/')
+    def index():
+        """OAuth callback redirects to index. Required to build url for endpoint index"""
+        return 'success'
     return app
 
 # Provides an app context, this runs for every test

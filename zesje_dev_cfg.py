@@ -28,11 +28,8 @@ OAUTH_USERINFO_URL = None
 OAUTH_ID_FIELD = "email"
 OAUTH_NAME_FIELD = "name"
 OAUTH_PROVIDER = None
-INSECURE_TRANSPORT = '1'
+OAUTH_INSECURE_TRANSPORT = True
 
 # Instance owner details
 OWNER_OAUTH_ID = None
 OWNER_NAME = None
-
-# Routes exempted from authentication
-EXEMPTED_ROUTES = ['zesje.api.oauthinitiate', 'zesje.api.oauthcallback', 'index']

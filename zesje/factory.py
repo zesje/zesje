@@ -4,10 +4,11 @@ from os.path import abspath, dirname
 from flask import Flask, request
 from flask_migrate import Migrate
 from werkzeug.exceptions import NotFound
-from flask_login import logout_user, current_user
+from flask_login import current_user
 
 from .database import db, login_manager, Grader
 from .api import api_bp
+from .constants import EXEMPTED_ROUTES
 
 STATIC_FOLDER_PATH = os.path.join(abspath(dirname(__file__)), 'static')
 
@@ -19,7 +20,8 @@ def create_app(celery=None, app_config=None):
 
     create_config(app.config, app_config)
 
-    os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = app.config['INSECURE_TRANSPORT']
+    if app.config['OAUTH_INSECURE_TRANSPORT']:
+        os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = '1'
 
     if app.config['SECRET_KEY'] is None:
         raise KeyError
@@ -42,8 +44,7 @@ def create_app(celery=None, app_config=None):
     @app.before_request
     def check_user_auth():
         # Force authentication if endpoint not one of the exempted routes
-        if (current_user is None or not current_user.is_authenticated) and request.endpoint not in app.config[
-                'EXEMPTED_ROUTES']:
+        if (current_user is None or not current_user.is_authenticated) and request.endpoint not in EXEMPTED_ROUTES:
             return dict(status=401, message=request.endpoint), 401
 
     @app.route('/')
@@ -60,6 +61,7 @@ def create_app(celery=None, app_config=None):
 
     return app
 
+
 def attach_celery(app, celery):
     celery.conf.update(
         result_backend=app.config['CELERY_RESULT_BACKEND'],
@@ -71,7 +73,7 @@ def attach_celery(app, celery):
     class ContextTask(TaskBase):
         abstract = True
 
-        def _call_(self, *args, **kwargs):
+        def __call__(self, *args, **kwargs):
             with app.app_context():
                 return TaskBase._call_(self, *args, **kwargs)
 

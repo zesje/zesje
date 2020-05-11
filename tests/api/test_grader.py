@@ -14,7 +14,6 @@ def add_test_data(app):
 
 # Actual tests
 
-
 @pytest.mark.parametrize('grader_name, expected_status_code', [
     ('grader', 409),
     ('grader2', 200)],

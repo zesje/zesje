@@ -1,6 +1,5 @@
 import os
 from io import BytesIO
-from zipfile import ZipFile
 from tempfile import NamedTemporaryFile
 
 import PIL
@@ -14,6 +13,7 @@ from wand.color import Color as WandColor
 from wand.image import Image as WandImage
 from pylibdmtx import pylibdmtx
 from pdfrw import PdfReader
+import zipstream
 
 from zesje import pdf_generation
 from zesje.database import Exam, ExamWidget
@@ -142,12 +142,11 @@ def test_join_pdfs(mock_generate_datamatrix, mock_generate_id_grid,
 
 
 def test_generate_zip(datadir, tmpdir, config_app, monkeypatch_exam_generate_data):
-    with NamedTemporaryFile() as tempfile:
-        pdf_generation.generate_zipped_pdfs(Exam(token='ABCDEFGHIJKL'), 1, 3, tempfile)
-        tempfile.seek(0)
+    generator = pdf_generation.generate_zipped_pdfs(1, 1, 3)
+    zf = zipstream.ZipFile()
+    zf.write_iter('pdfs', generator)
 
-        with ZipFile(tempfile) as zf:
-            assert len(zf.namelist()) == 3
+    len(zf.namelist()) == 3
 
 
 def test_generate_single_pdf(datadir, tmpdir, config_app, monkeypatch_exam_generate_data):

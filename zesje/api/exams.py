@@ -1,7 +1,7 @@
 import hashlib
 from io import BytesIO
 
-from flask import current_app, send_file
+from flask import current_app, send_file, stream_with_context, Response
 from flask_restful import Resource, reqparse
 from flask_restful.inputs import boolean
 from werkzeug.datastructures import FileStorage
@@ -378,27 +378,26 @@ class ExamGeneratedPdfs(Resource):
             msg = 'copies_start should be larger than 0'
             return dict(status=400, message=msg), 400
 
-        if args['type'] == 'pdf':
-            generate_function = generate_single_pdf
-        elif args['type'] == 'zip':
-            generate_function = generate_zipped_pdfs
-        else:
-            msg = 'type must be one of ["pdf", "zip"]'
-            return dict(status=400, message=msg), 400
-
-        output_file = BytesIO()
-        generate_function(exam, copies_start, copies_end, output_file)
-        output_file.seek(0)
-
         attachment_filename = f'{exam.name}_{copies_start}-{copies_end}.{args["type"]}'
         mimetype = f'application/{args["type"]}'
 
-        return send_file(
-            output_file,
-            cache_timeout=0,
-            attachment_filename=attachment_filename,
-            as_attachment=True,
-            mimetype=mimetype)
+        if args['type'] == 'pdf':
+            output_file = BytesIO()
+            generate_single_pdf(exam, copies_start, copies_end, output_file)
+            output_file.seek(0)
+            return send_file(
+                output_file,
+                cache_timeout=0,
+                attachment_filename=attachment_filename,
+                as_attachment=True,
+                mimetype=mimetype)
+        elif args['type'] == 'zip':
+            generator = generate_zipped_pdfs(exam.id, copies_start, copies_end)
+            response = Response(stream_with_context(generator), mimetype=mimetype)
+            response.headers['Content-Disposition'] = f'attachment; filename="{attachment_filename}"'
+            return response
+
+        return dict(status=400, message='type must be one of ["pdf", "zip"]'), 400
 
 
 class ExamPreview(Resource):

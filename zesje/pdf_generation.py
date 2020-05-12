@@ -4,12 +4,14 @@ import PIL
 import shutil
 import os
 from io import BytesIO
-from zipfile import ZipFile
 
 from flask import current_app
 from pdfrw import PdfReader, PdfWriter, PageMerge
 from pylibdmtx.pylibdmtx import encode
 from reportlab.pdfgen import canvas
+import zipstream
+
+from .database import Exam
 
 
 def exam_dir(exam_id):
@@ -241,7 +243,7 @@ def join_pdfs(output_filename, pdf_paths):
     writer.write(output_filename)
 
 
-def generate_zipped_pdfs(exam, start, end, output_file):
+def generate_zipped_pdfs(exam_id, start, end):
     """Generates a zip file with all the copies joined together.
 
     Inside the zip, the copies are named by their copy number.
@@ -257,16 +259,21 @@ def generate_zipped_pdfs(exam, start, end, output_file):
     output_file : file like object
         where to write the pdf, needs to implement a write function.
     """
+    exam = Exam.query.get(exam_id)
     exam_dir, _, barcode_widget, exam_path, _ = _exam_generate_data(exam)
 
-    with ZipFile(output_file, 'w') as zf:
-        for copy_num, pdf in generate_pdfs(
-                exam_pdf_file=exam_path,
-                copy_nums=list(range(start, end + 1)),
-                exam_token=exam.token,
-                datamatrix_x=barcode_widget.x,
-                datamatrix_y=barcode_widget.y):
-            zf.writestr(current_app.config['OUTPUT_PDF_FILENAME_FORMAT'].format(copy_num), pdf.getvalue())
+    zf = zipstream.ZipFile(mode='w')
+
+    for copy_num, pdf in generate_pdfs(
+            exam_pdf_file=exam_path,
+            copy_nums=list(range(start, end + 1)),
+            exam_token=exam.token,
+            datamatrix_x=barcode_widget.x,
+            datamatrix_y=barcode_widget.y):
+        zf.writestr(current_app.config['OUTPUT_PDF_FILENAME_FORMAT'].format(copy_num), pdf.getvalue())
+        yield from zf.flush()
+
+    yield from zf
 
 
 def generate_single_pdf(exam, start, end, output_file):

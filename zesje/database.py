@@ -200,7 +200,7 @@ class Solution(db.Model):
     @property
     def feedback_count(self):
         return object_session(self).query(solution_feedback)\
-            .filter(db.text('solution_id == ' + str(self.id))).count()
+            .filter(db.text('solution_id = ' + str(self.id))).count()
 
 
 class Scan(db.Model):

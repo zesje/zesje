@@ -1,6 +1,6 @@
 from io import BytesIO
 
-from flask import abort, send_file, Response, current_app
+from flask import abort, send_file, stream_with_context, Response, current_app
 import zipstream
 import json
 
@@ -97,7 +97,7 @@ def exam(file_format, exam_id):
     )
 
 
-def zipped_exam_solutions_generator(exam_id, anonymous, current_app):
+def zipped_exam_solutions_generator(exam_id, anonymous):
     """Generator for exam solutions as a zip of (anonymized) pdfs
 
     Should only load the student solutions one at a time to decrease memory load.
@@ -115,24 +115,23 @@ def zipped_exam_solutions_generator(exam_id, anonymous, current_app):
     response : generator
         generator that yields parts of the zip.
     """
-    with current_app.app_context():
-        z = zipstream.ZipFile(mode='w')
+    z = zipstream.ZipFile(mode='w')
 
-        subs = Submission.query.filter(Submission.exam_id == exam_id, Submission.validated).all()
-        student_sub = {sub.student: sub for sub in subs}
+    subs = Submission.query.filter(Submission.exam_id == exam_id, Submission.validated).all()
+    student_sub = {sub.student: sub for sub in subs}
 
-        for student, sub in student_sub.items():
-            if anonymous:
-                copy_numbers = list(copy.number for copy in sub.copies)
-                file_name = f'cop{"y" if len(copy_numbers) == 1 else "ies"}-' \
-                            f'{"-".join(str(number) for number in copy_numbers)}.pdf'
-            else:
-                file_name = f'student-{student.id}.pdf'
+    for student, sub in student_sub.items():
+        if anonymous:
+            copy_numbers = list(copy.number for copy in sub.copies)
+            file_name = f'cop{"y" if len(copy_numbers) == 1 else "ies"}-' \
+                        f'{"-".join(str(number) for number in copy_numbers)}.pdf'
+        else:
+            file_name = f'student-{student.id}.pdf'
 
-            z.write_iter(file_name, solution_pdf(exam_id, student.id, anonymous))
-            yield from z.flush()
+        z.write_iter(file_name, solution_pdf(exam_id, student.id, anonymous))
+        yield from z.flush()
 
-        yield from z
+    yield from z
 
 
 def exam_pdf(exam_id):
@@ -151,8 +150,8 @@ def exam_pdf(exam_id):
     if exam_data is None:
         abort(404)
 
-    generator = zipped_exam_solutions_generator(exam_id, exam_data.grade_anonymous, current_app._get_current_object())
-    response = Response(generator, mimetype='application/zip')
+    generator = zipped_exam_solutions_generator(exam_id, exam_data.grade_anonymous)
+    response = Response(stream_with_context(generator), mimetype='application/zip')
     response.headers['Content-Disposition'] = f'attachment; filename=exam{exam_id}.zip'
     return response
 

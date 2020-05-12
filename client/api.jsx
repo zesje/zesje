@@ -24,7 +24,9 @@ function _fetch (method) {
       .then(resp => {
         if (!resp.ok) {
           if (resp.status === 401) {
-            window.location.href = window.location.origin + '/login'
+            if (window.location.path !== '/login') {
+              window.location.href = window.location.origin + '/login'
+            }
           } else {
             throw resp
           }

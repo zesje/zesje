@@ -30,8 +30,6 @@ def test_oauth_start(test_client, config_app):
 
 def test_oauth_callback_unauthorized_grader(callback_request):
     assert callback_request.status_code == 403
-    assert callback_request.get_json()['message'] == 'Your account is Unauthorized. ' \
-                                                     'Please contact somebody who has access'
 
 
 def test_oauth_callback_authorized_grader(add_grader, callback_request):
@@ -47,4 +45,4 @@ def test_current_grader(test_client, add_grader, callback_request):
 def test_logout(test_client, add_grader, callback_request):
     result = test_client.get('/api/oauth/logout')
     assert result.status_code == 200
-    assert result.get_json()['message'] == 'Logout successful'
+    assert test_client.get('/api/oauth/grader').status_code == 401

@@ -141,8 +141,8 @@ class NavBar extends React.Component {
       api.get('oauth/grader').then(response => {
         let grader = response.name
         this.setState({grader: grader})
+        this.updateExamList()
       })
-      this.updateExamList()
     }
   }
 

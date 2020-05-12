@@ -75,7 +75,7 @@ def attach_celery(app, celery):
 
         def __call__(self, *args, **kwargs):
             with app.app_context():
-                return TaskBase._call_(self, *args, **kwargs)
+                return TaskBase.__call__(self, *args, **kwargs)
 
     celery.Task = ContextTask
 

@@ -8,7 +8,7 @@ from requests_oauthlib import OAuth2Session
 from ..database import Grader
 
 
-class OAuthInitiate(Resource):
+class OAuthStart(Resource):
     def get(self):
         """Logs the user in by redirecting to the OAuth provider with the appropriate
                 client ID as a request parameter"""
@@ -58,9 +58,11 @@ class OAuthCallback(Resource):
         return redirect(url_for('index'))
 
 
-class GradersOAuth(Resource):
+class OAuthGrader(Resource):
     def get(self):
         # returns details of the current grader logged in
+        if current_user is None or (not current_user.is_authenticated):
+            return dict(status=403, message="Not logged in"), 403
 
         return dict(
             id=current_user.id,
@@ -69,7 +71,7 @@ class GradersOAuth(Resource):
         )
 
 
-class Logout(Resource):
+class OAuthLogout(Resource):
     def get(self):
         """Logs the user out
                 """

@@ -12,7 +12,7 @@ class Login extends React.Component {
     componentDidMount = () => {
       api.get('/oauth/start').then(response => {
         if (response.is_authenticated) {
-          window.location.href = window.location.origin
+          this.props.changeURL('/')
         }
         this.setState({redirect_url: response.redirect_oauth, provider: response.provider})
       })
@@ -23,7 +23,7 @@ class Login extends React.Component {
         <div>
           <Hero title='Login' subtitle='Many hands must be authenticated' />
 
-          <section className='Login'>
+          <section className='Login columns is-desktop is-centered'>
             <a href={this.state.redirect_url}>Login With {this.state.provider} </a>
           </section>
 

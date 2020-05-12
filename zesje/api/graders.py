@@ -27,13 +27,13 @@ class Graders(Resource):
         return [
             {
                 'id': g.id,
-                'name': g.name
+                'name': g.oauth_id
             }
-            for g in Grader.query.filter(Grader.name != current_app.config['AUTOGRADER_NAME']).all()
+            for g in Grader.query.filter(Grader.oauth_id != current_app.config['AUTOGRADER_NAME']).all()
         ]
 
     post_parser = reqparse.RequestParser()
-    required_string(post_parser, 'name')
+    required_string(post_parser, 'oauth_id')
 
     def post(self):
         """add a grader.
@@ -50,15 +50,15 @@ class Graders(Resource):
         """
         args = self.post_parser.parse_args()
 
-        name = args['name']
+        oauth_id = args['oauth_id']
 
-        grader = Grader.query.filter(Grader.name == name).one_or_none()
+        grader = Grader.query.filter(Grader.oauth_id == oauth_id).one_or_none()
 
         if grader:
-            return dict(status=409, message=f'Grader with name {name} already exists.'), 409
+            return dict(status=409, message=f'Grader with name {oauth_id} already exists.'), 409
 
         try:
-            db.session.add(Grader(name=name))
+            db.session.add(Grader(oauth_id=oauth_id))
             db.session.commit()
         except KeyError as error:
             abort(400, error)

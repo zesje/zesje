@@ -385,7 +385,7 @@ def create_exams(app, client, exams, pages, students, graders, solve, grade, mul
 
     # create graders
     for _ in range(max(1, graders)):
-        client.post('/api/graders', data={'name': names.get_full_name()})
+        client.post('/api/graders', data={'oauth_id': names.get_full_name()})
 
     generated_exams = []
     for _ in range(exams):

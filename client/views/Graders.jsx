@@ -17,7 +17,7 @@ class Graders extends React.Component {
   }
 
   submitName = (event) => {
-    api.post('graders', { name: this.state.name })
+    api.post('graders', { oauth_id: this.state.name })
       .then(graders => {
         this.setState({
           name: '',

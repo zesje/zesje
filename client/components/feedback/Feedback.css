@@ -1,0 +1,32 @@
+.panel-block.attach-bottom {
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+.control.is-score-control {
+    width: 1.5rem;
+    margin-right: 0;
+}
+
+.control.is-score-control > .input {
+    text-align: center;
+    margin-top: 0.25rem;
+    padding-left: 0.1rem;
+    padding-right: 0.1rem;
+}
+
+.panel-block.feedback-item {
+    display: flex;
+}
+
+.grow {
+    flex-grow: 1 !important;
+}
+
+.no-grow {
+    flex-grow: 0 !important;
+}
+
+.is-fullwidth {
+    width: 100%;
+}

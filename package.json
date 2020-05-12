@@ -3,7 +3,7 @@
   "main": "index.js",
   "license": "AGPL-3.0",
   "scripts": {
-    "dev": "concurrently --kill-others --names \"WEBPACK,MYSQL,PYTHON,CELERY,REDIS\" --prefix-colors \"bgBlue.bold,bgMagenta.bold,bgGreen.bold,bgRed.bold,bgYellow.bold\" \"yarn dev:webpack\" \"yarn dev:mysql start -i --allow-running\" \"yarn start\" \"yarn dev:celery\" \"yarn dev:redis\" \"yarn dev:oauth\"",
+    "dev": "concurrently --kill-others --names \"WEBPACK,MYSQL,PYTHON,CELERY,REDIS,OAUTH2\" --prefix-colors \"bgBlue.bold,bgMagenta.bold,bgGreen.bold,bgRed.bold,bgAqua.bold,bg.bold\" \"yarn dev:webpack\" \"yarn dev:mysql start -i --allow-running\" \"yarn start\" \"yarn dev:celery\" \"yarn dev:redis\" \"yarn dev:oauth\"",
     "dev:backend": "concurrently --kill-others --names \"MYSQL,PYTHON,CELERY,REDIS,OAUTH2\" --prefix-colors \"bgMagenta.bold,bgGreen.bold,bgRed.bold,bgYellow.bold,bgBlue.bold\" \"yarn dev:mysql start -i --allow-running\" \"yarn start\" \"yarn dev:celery\" \"yarn dev:redis\" \"yarn dev:oauth\"",
     "dev:webpack": "webpack-dev-server --hot --inline --progress --config webpack.dev.js",
     "dev:celery": "ZESJE_SETTINGS=$(pwd)/zesje_dev_cfg.py celery -A zesje.wsgi.celery worker -l info --autoscale=4,1 --max-tasks-per-child=16",

@@ -313,7 +313,7 @@ class Grade extends React.Component {
 
           <div className='container'>
             <div className='columns'>
-              <div className='column is-one-quarter-desktop is-one-third-tablet'>
+              <div className='column is-one-quarter-fullhd is-one-third-desktop editor-side-panel'>
                 <ProblemSelector
                   problems={problems}
                   setProblemUpdateMetadata={this.setProblemUpdateMetadata}

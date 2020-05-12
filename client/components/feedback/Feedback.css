@@ -27,6 +27,11 @@
     flex-grow: 0 !important;
 }
 
+.flex-space-between {
+    display: flex;
+    justify-content: space-between;
+}
+
 .is-fullwidth {
     width: 100%;
 }

@@ -4,30 +4,29 @@ import ConfirmationModal from '../../components/ConfirmationModal.jsx'
 import * as api from '../../api.jsx'
 import Notification from 'react-bulma-notification'
 
-const CloseButton = (props) => (
-  <button className='button is-light is-fullwidth' onClick={props.onClick}>
+const CancelButton = (props) => (
+  <button className='button is-light' onClick={props.onClick}>
     <span className='icon is-small'>
-      <i className='fa fa-chevron-left' />
+      <i className='fa fa-times' />
     </span>
-    <span>close</span>
+    <span>Cancel</span>
   </button>
 )
 
 const SaveButton = (props) => (
-  <button className='button is-link is-fullwidth' disabled={props.disabled} onClick={props.onClick}>
+  <button className='button is-link' disabled={props.disabled} onClick={props.onClick}>
     <span className='icon is-small'>
       <i className='fa fa-floppy-o' />
     </span>
-    <span>{props.exists ? 'save' : 'add'}</span>
+    <span>{props.exists ? 'Save' : 'Add'}</span>
   </button>
 )
 
 const DeleteButton = (props) => (
-  <button className='button is-link is-fullwidth is-danger' disabled={!props.exists} onClick={props.onClick}>
+  <button className='button is-danger' style={{marginLeft: 'auto'}} disabled={!props.exists} onClick={props.onClick}>
     <span className='icon is-small'>
       <i className='fa fa-trash' />
     </span>
-    <span>{'delete'}</span>
   </button>
 )
 
@@ -159,10 +158,14 @@ class EditPanel extends React.Component {
         </div>
 
         <div className='panel-block'>
-          <CloseButton onClick={this.props.goBack} />
-          <SaveButton onClick={this.saveFeedback} exists={this.props.feedback}
-            disabled={!this.state.name || (!this.state.score && this.state.score !== 0) || isNaN(parseInt(this.state.score))} />
-          <DeleteButton onClick={() => { this.setState({deleting: true}) }} exists={this.props.feedback} />
+          <div className={'flex-space-between is-fullwidth'}>
+            <div className={'buttons is-marginless'}>
+              <SaveButton onClick={this.saveFeedback} exists={this.props.feedback}
+                disabled={!this.state.name || (!this.state.score && this.state.score !== 0) || isNaN(parseInt(this.state.score))} />
+              <CancelButton onClick={this.props.goBack} />
+            </div>
+            <DeleteButton onClick={() => { this.setState({deleting: true}) }} exists={this.props.feedback} />
+          </div>
           <ConfirmationModal
             headerText={`Do you want to irreversibly delete feedback option "${this.state.name}"?`}
             contentText={

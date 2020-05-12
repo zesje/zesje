@@ -250,14 +250,12 @@ def generate_zipped_pdfs(exam_id, start, end):
 
     Parameters
     ----------
-    exam : Exam
-        The exam to generate the pdfs for
+    exam_id : int
+        The exam id to generate the pdfs for
     start : int
         The start copy number
     end : int
         The final copy number, included
-    output_file : file like object
-        where to write the pdf, needs to implement a write function.
     """
     exam = Exam.query.get(exam_id)
     exam_dir, _, barcode_widget, exam_path, _ = _exam_generate_data(exam)

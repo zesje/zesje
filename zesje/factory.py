@@ -32,6 +32,12 @@ def create_app(celery=None, app_config=None):
     db.init_app(app)
     Migrate(app, db)
 
+    @api_bp.before_request
+    def check_user_auth():
+        # Force authentication if endpoint not one of the exempted routes
+        if (current_user is None or not current_user.is_authenticated) and request.endpoint not in EXEMPTED_ROUTES:
+            return dict(status=401, message=request.endpoint), 401
+
     app.register_blueprint(api_bp, url_prefix='/api')
 
     @app.before_first_request
@@ -43,12 +49,6 @@ def create_app(celery=None, app_config=None):
         if Grader.query.filter(Grader.oauth_id == app.config['OWNER_OAUTH_ID']).one_or_none() is None:
             db.session.add(Grader(oauth_id=app.config['OWNER_OAUTH_ID'], name=app.config['OWNER_NAME']))
             db.session.commit()
-
-    @app.before_request
-    def check_user_auth():
-        # Force authentication if endpoint not one of the exempted routes
-        if (current_user is None or not current_user.is_authenticated) and request.endpoint not in EXEMPTED_ROUTES:
-            return dict(status=401, message=request.endpoint), 401
 
     @app.route('/')
     @app.route('/<path:path>')

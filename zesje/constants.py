@@ -45,4 +45,4 @@ MIN_ANSWER_SIZE_MM2 = 4
 SQLALCHEMY_TRACK_MODIFICATIONS = False  # Suppress future deprecation warning
 
 # Routes exempted from authentication
-EXEMPTED_ROUTES = ['zesje.api.oauthstart', 'zesje.api.oauthcallback', 'index']
+EXEMPTED_ROUTES = ['zesje.api.oauthstart', 'zesje.api.oauthcallback']

@@ -62,7 +62,7 @@ class OAuthGrader(Resource):
     def get(self):
         # returns details of the current grader logged in
         if current_user is None or (not current_user.is_authenticated):
-            return dict(status=403, message="Not logged in"), 403
+            return dict(status=401, message="Not logged in"), 401
 
         return dict(
             id=current_user.id,

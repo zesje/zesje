@@ -4,7 +4,6 @@ import Hero from '../components/Hero.jsx'
 
 import FeedbackPanel from '../components/feedback/FeedbackPanel.jsx'
 import ProblemSelector from './grade/ProblemSelector.jsx'
-import EditPanel from '../components/feedback/EditPanel.jsx'
 import ProgressBar from '../components/ProgressBar.jsx'
 import withShortcuts from '../components/ShortcutBinder.jsx'
 import GradeNavigation from './grade/GradeNavigation.jsx'
@@ -136,8 +135,8 @@ class Grade extends React.Component {
    * Also updates the metadata.
    * @param id the id of the problem to update to.
    */
-  setProblemUpdateMetadata = (id) => {
-    api.get(`problems/${id}`).then(problem => {
+  setProblemUpdateMetadata = (problemId) => {
+    api.get(`problems/${problemId}`).then(problem => {
       this.setState({
         problem: problem
       })
@@ -180,26 +179,6 @@ class Grade extends React.Component {
     }
     const newId = this.state.problems[currentIndex + 1].id
     this.setProblemUpdateMetadata(newId)
-  }
-  /**
-   * Enter the feedback editing view for a feedback option.
-   * @param feedback the feedback to edit.
-   */
-  editFeedback = (feedback) => {
-    this.setState({
-      editActive: true,
-      feedbackToEdit: feedback
-    })
-  }
-  /**
-   * Go back to all the feedback options.
-   * Updates the problem to make sure changes to feedback options are reflected.
-   */
-  backToFeedback = () => {
-    this.setProblemUpdateMetadata(this.state.problem.id)
-    this.setState({
-      editActive: false
-    })
   }
 
   /**
@@ -341,20 +320,14 @@ class Grade extends React.Component {
                   current={problem}
                   showTooltips={this.state.showTooltips} />
                 <nav className='panel'>
-                  {this.state.editActive
-                    ? <EditPanel
-                      problemID={problem.id}
-                      feedback={this.state.feedbackToEdit}
-                      goBack={this.backToFeedback} />
-                    : <FeedbackPanel
-                      examID={examID} submissionID={submission.id} graderID={graderID}
-                      problem={problem} solution={solution}
-                      showTooltips={this.state.showTooltips} grading
-                      setSubmission={this.setSubmission}
-                      editFeedback={this.editFeedback}
-                      toggleOption={this.toggleFeedbackOption}
-                      toggleApprove={this.toggleApprove} />
-                  }
+                  <FeedbackPanel
+                    examID={examID} submissionID={submission.id} graderID={graderID}
+                    problem={problem} solution={solution}
+                    showTooltips={this.state.showTooltips} grading
+                    setSubmission={this.setSubmission}
+                    toggleOption={this.toggleFeedbackOption}
+                    toggleApprove={this.toggleApprove}
+                    updateFeedback={this.setProblemUpdateMetadata} />
                 </nav>
               </div>
 

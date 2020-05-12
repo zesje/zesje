@@ -404,10 +404,12 @@ class Grade extends React.Component {
                   </div>
                 </div>
 
-                <p className={'box' + (solution.graded_at ? ' is-graded' : '')}>
-                  <img src={examID ? ('api/images/solutions/' + examID + '/' +
-                    problem.id + '/' + submission.id + '/' + (this.state.fullPage ? '1' : '0')) + '?' +
-                    Grade.getLocationHash(problem) : ''} alt='' />
+                <p className={'box is-scrollable-tablet' + (solution.graded_at ? ' is-graded' : '')}>
+                  <img
+                    src={examID ? ('api/images/solutions/' + examID + '/' +
+                      problem.id + '/' + submission.id + '/' + (this.state.fullPage ? '1' : '0')) + '?' +
+                      Grade.getLocationHash(problem) : ''}
+                    alt='' />
                 </p>
               </div>
             </div>

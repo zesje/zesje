@@ -35,8 +35,11 @@ def create_app(celery=None, app_config=None):
     app.register_blueprint(api_bp, url_prefix='/api')
 
     @app.before_first_request
-    def add_instance_owner():
-        # Add instance owner to database if they aren't in it already
+    def setup():
+        os.makedirs(app.config['DATA_DIRECTORY'], exist_ok=True)
+        os.makedirs(app.config['SCAN_DIRECTORY'], exist_ok=True)
+
+        # Add instance owner to db if they don't already exist
         if Grader.query.filter(Grader.oauth_id == app.config['OWNER_OAUTH_ID']).one_or_none() is None:
             db.session.add(Grader(oauth_id=app.config['OWNER_OAUTH_ID'], name=app.config['OWNER_NAME']))
             db.session.commit()

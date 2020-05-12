@@ -10,8 +10,18 @@ from ..database import Grader
 
 class OAuthStart(Resource):
     def get(self):
-        """Logs the user in by redirecting to the OAuth provider with the appropriate
-                client ID as a request parameter"""
+        """Logs the user in by redirecting to the OAuth provider with the appropriate client ID
+
+        Returns
+        -------
+        redirect_oauth: str
+         the external URL of the OAuth2 provider to redirect to
+        provider: str
+         the name of the OAuth2 provider
+        state: str
+         returns current state, used for testing
+        is_authenticated: boolean
+        """
         oauth2_session = OAuth2Session(current_app.config['OAUTH_CLIENT_ID'])
         authorization_url, state = oauth2_session.authorization_url(current_app.config['OAUTH_AUTHORIZATION_BASE_URL'])
 
@@ -29,8 +39,12 @@ class OAuthStart(Resource):
 
 class OAuthCallback(Resource):
     def get(self):
-        """OAuth provider redirects to this route after authorization.
-                Fetches token and redirects to /profile"""
+        """OAuth provider redirects to this route after authorization. Fetches token and redirects /
+
+        Returns
+        -------
+        redirect to /
+        """
 
         oauth2_session = OAuth2Session(current_app.config['OAUTH_CLIENT_ID'], state=session['oauth_state'])
 
@@ -60,7 +74,14 @@ class OAuthCallback(Resource):
 
 class OAuthGrader(Resource):
     def get(self):
-        # returns details of the current grader logged in
+        """returns details of the current grader logged in
+
+        Returns
+        -------
+        id: str
+        name: str
+        oauth_id: str
+        """
         if current_user is None or (not current_user.is_authenticated):
             return dict(status=401, message="Not logged in"), 401
 
@@ -74,6 +95,11 @@ class OAuthGrader(Resource):
 class OAuthLogout(Resource):
     def get(self):
         """Logs the user out
-                """
+
+        Returns
+        -------
+        status: int
+        message: str
+        """
         logout_user()
         return dict(status=200, message="Logout successful")

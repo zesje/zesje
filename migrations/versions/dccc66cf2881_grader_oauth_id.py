@@ -1,4 +1,4 @@
-""" Added a column oauth_id to store unique ids of oauth providers. Change name to type Text
+""" Added a column oauth_id to store unique ids of oauth providers.
 
 Revision ID: dccc66cf2881
 Revises: ef470a16399e
@@ -16,11 +16,10 @@ depends_on = None
 
 
 def upgrade():
-    # Drop unique constraint for grader name, set type to Text, add unique column oauth_id
+    # Drop unique constraint for grader name, add unique column oauth_id
     with op.batch_alter_table('grader', schema=None) as batch_op:
         batch_op.add_column(sa.Column('oauth_id', sa.String(length=320), nullable=True))
         batch_op.alter_column('name',
-                              type_=mysql.TEXT,
                               existing_type=mysql.VARCHAR(length=100),
                               nullable=True)
         batch_op.drop_index('name')

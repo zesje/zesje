@@ -1,6 +1,5 @@
 import React from 'react'
 import Hero from '../components/Hero.jsx'
-import '../components/Login.css'
 import 'react-bulma-components/dist/react-bulma-components.min.css'
 import * as api from '../api.jsx'
 
@@ -23,8 +22,8 @@ class Login extends React.Component {
         <div>
           <Hero title='Login' subtitle='Many hands must be authenticated' />
 
-          <section className='Login columns is-desktop is-centered'>
-            <a href={this.state.redirect_url}>Login With {this.state.provider} </a>
+          <section className='has-text-centered'>
+            <a href={this.state.redirect_url}><button>Login With {this.state.provider} </button></a>
           </section>
 
         </div>

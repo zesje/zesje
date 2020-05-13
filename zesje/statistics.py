@@ -1,3 +1,5 @@
+from collections import OrderedDict
+
 from sqlalchemy.orm.exc import NoResultFound
 
 from flask import current_app
@@ -31,12 +33,14 @@ def solution_data(exam_id, student_id):
             # There is no possible feedback for this problem.
             continue
         problem_data = {
+            'id': problem.id,
             'name': problem.name,
             'max_score': max(fb.score for fb in problem.feedback_options) or 0
         }
 
         problem_data['feedback'] = [
-            {'short': fo.text,
+            {'id': fo.id,
+             'short': fo.text,
              'score': fo.score,
              'description': fo.description}
             for fo in solution.feedback if solution.graded_by
@@ -66,48 +70,71 @@ def full_exam_data(exam_id):
     exam = Exam.query.get(exam_id)
     if exam is None:
         raise KeyError("No such exam.")
-    students = sorted(sub.student.id for sub in exam.submissions if sub.student and sub.validated)
 
-    data = [solution_data(exam_id, student_id)
-            for student_id in students]
+    student_ids = db.session.query(Submission.student_id)\
+        .filter(Submission.exam_id == exam.id, Submission.validated)\
+        .order_by(Submission.student_id)\
+        .all()
 
-    if not data:
+    # keys used to distinguish problems or FO with the same name
+    # we attach to the name its id to those that are repeated
+    problem_keys = {}
+    feedback_keys = {}
+
+    columns = OrderedDict()
+    columns[('First name', '')] = 'object'
+    columns[('Last name', '')] = 'object'
+    for problem in exam.problems:  # Sorted by problem.id
+        if problem.name in problem_keys.values():
+            key = f'{problem.name} ({problem.id})'
+        else:
+            key = problem.name
+        problem_keys[problem.id] = key
+
+        if not len(problem.feedback_options):
+            # There is no possible feedback for this problem.
+            continue
+
+        columns[(key, 'remarks')] = 'object'
+        for fo in problem.feedback_options:
+            if (key, fo.text) in feedback_keys.values():
+                feedback_keys[fo.id] = (key, f'{fo.text} ({fo.id})')
+            else:
+                feedback_keys[fo.id] = (key, fo.text)
+            columns[feedback_keys[fo.id]] = 'float16'
+        columns[(key, 'total')] = 'float16'
+    columns[('total', 'total')] = 'float16'
+
+    if not student_ids:
         # No students were assigned.
-        columns = []
-        for problem in exam.problems:  # Sorted by problem.id
-            if not len(problem.feedback_options):
-                # There is no possible feedback for this problem.
-                continue
-            for fo in problem.feedback_options:
-                columns.append((problem, fo.text))
-            columns.append((problem, 'total'))
-        columns.append(('total', 'total'))
+        return pandas.DataFrame(columns=pandas.MultiIndex.from_tuples(columns.keys()))
 
-        result = pandas.DataFrame(columns=pandas.MultiIndex.from_tuples(columns))
-        return result
+    df = pandas.DataFrame(
+        index=pandas.Index([id for id, in student_ids], name='Student ID', dtype='int64'),
+        columns=pandas.MultiIndex.from_tuples(columns.keys())
+    )
 
-    results = {}
-    for student, problems in data:
+    for student_id, in student_ids:
+        student, problems = solution_data(exam_id, student_id)
+
+        df.loc[student['id'], ('First name', '')] = student['first_name']
+        df.loc[student['id'], ('Last name', '')] = student['last_name']
+
         for problem in problems:
-            name = problem.pop('name')
-            problem[(name, 'remarks')] = problem.pop('remarks')
-            for fo in problem.pop('feedback'):
-                problem[(name, fo['short'])] = fo['score']
-            problem[(name, 'total')] = problem.pop('score')
-            problem.pop('max_score')
+            key = problem_keys[problem['id']]
 
-        results[student['id']] = {
-            ('First name', ''): student['first_name'],
-            ('Last name', ''): student['last_name'],
-            **{
-                field: entry
-                for problem in problems
-                for field, entry in problem.items()
-            },
-            ('total', 'total'): student['total']
-        }
+            df.loc[student['id'], (key, 'remarks')] = problem['remarks'] or ''
 
-    return pandas.DataFrame(results).T
+            for fo in problem['feedback']:
+                df.loc[student['id'], feedback_keys[fo['id']]] = fo['score']
+
+            df.loc[student['id'], (key, 'total')] = problem['score']
+
+        df.loc[student['id'], ('total', 'total')] = student['total']
+
+    df = df.astype(dtype=columns)  # set column types
+
+    return df
 
 
 def full_grader_data(exam_id):

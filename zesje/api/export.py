@@ -118,9 +118,10 @@ def zipped_exam_solutions_generator(exam_id, anonymous):
     z = zipstream.ZipFile(mode='w')
 
     subs = Submission.query.filter(Submission.exam_id == exam_id, Submission.validated).all()
-    student_sub = {sub.student: sub for sub in subs}
 
-    for student, sub in student_sub.items():
+    for sub in subs:
+        student = sub.student
+
         if anonymous:
             copy_numbers = list(copy.number for copy in sub.copies)
             file_name = f'cop{"y" if len(copy_numbers) == 1 else "ies"}-' \

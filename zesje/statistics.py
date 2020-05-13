@@ -1,3 +1,5 @@
+from collections import OrderedDict
+
 from sqlalchemy.orm.exc import NoResultFound
 
 from flask import current_app
@@ -79,7 +81,9 @@ def full_exam_data(exam_id):
     problem_keys = {}
     feedback_keys = {}
 
-    columns = [('First name', ''), ('Last name', '')]
+    columns = OrderedDict()
+    columns[('First name', '')] = 'object'
+    columns[('Last name', '')] = 'object'
     for problem in exam.problems:  # Sorted by problem.id
         if problem.name in problem_keys.values():
             key = f'{problem.name} ({problem.id})'
@@ -91,23 +95,23 @@ def full_exam_data(exam_id):
             # There is no possible feedback for this problem.
             continue
 
-        columns.append((key, 'remarks'))
+        columns[(key, 'remarks')] = 'object'
         for fo in problem.feedback_options:
             if (key, fo.text) in feedback_keys.values():
                 feedback_keys[fo.id] = (key, f'{fo.text} ({fo.id})')
             else:
                 feedback_keys[fo.id] = (key, fo.text)
-            columns.append(feedback_keys[fo.id])
-        columns.append((key, 'total'))
-    columns.append(('total', 'total'))
+            columns[feedback_keys[fo.id]] = 'float16'
+        columns[(key, 'total')] = 'float16'
+    columns[('total', 'total')] = 'float16'
 
     if not student_ids:
         # No students were assigned.
-        return pandas.DataFrame(columns=pandas.MultiIndex.from_tuples(columns))
+        return pandas.DataFrame(columns=pandas.MultiIndex.from_tuples(columns.keys()))
 
     df = pandas.DataFrame(
-        index=pandas.Index([id for id, in student_ids], name='Student ID'),
-        columns=pandas.MultiIndex.from_tuples(columns)
+        index=pandas.Index([id for id, in student_ids], name='Student ID', dtype='int64'),
+        columns=pandas.MultiIndex.from_tuples(columns.keys())
     )
 
     for student_id, in student_ids:
@@ -119,7 +123,7 @@ def full_exam_data(exam_id):
         for problem in problems:
             key = problem_keys[problem['id']]
 
-            df.loc[student['id'], (key, 'remarks')] = problem['remarks']
+            df.loc[student['id'], (key, 'remarks')] = problem['remarks'] or ''
 
             for fo in problem['feedback']:
                 df.loc[student['id'], feedback_keys[fo['id']]] = fo['score']
@@ -128,7 +132,7 @@ def full_exam_data(exam_id):
 
         df.loc[student['id'], ('total', 'total')] = student['total']
 
-    df = df.infer_objects()  # convert columns to numeric types if possible
+    df = df.astype(dtype=columns)  # set column types
 
     return df
 

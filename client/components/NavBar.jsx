@@ -48,19 +48,23 @@ const ExamDropdown = (props) => (
   </div>
 )
 
-const GraderDropdown = (props) => (
-  <div className='navbar-item has-dropdown is-hoverable'>
-    <div className='navbar-link' >
-      <i>Current grader: {props.grader}</i>
-    </div>
+const GraderDropdown = (props) => {
+  if (props.disabled) { return null } else {
+    return (
+      <div className='navbar-item has-dropdown is-hoverable'>
+        <div className='navbar-link' >
+          <i>{props.grader}</i>
+        </div>
 
-    <div className='navbar-dropdown'>
-      <Link className='navbar-item' to={'/graders'} >
+        <div className='navbar-dropdown'>
+          <Link className='navbar-item' to={'/graders'} >
         Add grader
-      </Link>
-    </div>
-  </div>
-)
+          </Link>
+        </div>
+      </div>
+    )
+  }
+}
 
 const ExportDropdown = (props) => {
   const exportFormats = [
@@ -73,7 +77,7 @@ const ExportDropdown = (props) => {
   const exportUrl = format => `/api/export/${format}/${props.exam.id}`
 
   return (
-    <div className='navbar-item has-dropdown is-hoverable' >
+    <div className='navbar-item has-dropdown is-hoverable'>
       <div className='navbar-link'>
         Export
       </div>
@@ -162,6 +166,14 @@ class NavBar extends React.Component {
       .catch(response => { console.log(response) })
   }
 
+  displayGrader = () => {
+    if (this.state.grader) {
+      return 'Current Grader: ' + this.state.grader
+    } else {
+      return ''
+    }
+  }
+
   render () {
     const predicateExamNotFinalized = [!this.props.exam.finalized, 'The exam is not finalized yet.']
     const predicateSubmissionsEmpty = [this.props.exam.submissions.length === 0, 'There are no submissions, please upload some.']
@@ -215,8 +227,8 @@ class NavBar extends React.Component {
           </div>
 
           <div className='navbar-end'>
-            <GraderDropdown grader={this.state.grader} />
-            <Link className='navbar-item' onClick={this.logout} to='/login'>Logout</Link>
+            <GraderDropdown grader={this.displayGrader()} disabled={!this.state.grader} />
+            <Link className='navbar-item' disabled={!this.state.grader} onClick={this.logout} to='/login'>Logout</Link>
 
             <div className='navbar-item'>
               <i>Version {__ZESJE_VERSION__}</i>

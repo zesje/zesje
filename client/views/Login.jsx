@@ -1,6 +1,5 @@
 import React from 'react'
 import Hero from '../components/Hero.jsx'
-import 'react-bulma-components/dist/react-bulma-components.min.css'
 import * as api from '../api.jsx'
 
 class Login extends React.Component {
@@ -9,7 +8,7 @@ class Login extends React.Component {
       provider: ''
     }
     componentDidMount = () => {
-      api.get('/oauth/start').then(response => {
+      api.get('oauth/start').then(response => {
         if (response.is_authenticated) {
           this.props.changeURL('/')
         }

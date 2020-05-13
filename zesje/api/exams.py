@@ -1,11 +1,7 @@
-import itertools
-import os
-import zipfile
 import hashlib
 from io import BytesIO
-from tempfile import TemporaryFile
 
-from flask import current_app, send_file
+from flask import current_app, send_file, stream_with_context, Response
 from flask_restful import Resource, reqparse
 from flask_restful.inputs import boolean
 from werkzeug.datastructures import FileStorage
@@ -14,45 +10,12 @@ from sqlalchemy import func
 
 from zesje.api._helpers import _shuffle
 from zesje.api.problems import problem_to_data
-from ..pdf_generation import generate_pdfs, join_pdfs
+from ..pdf_generation import exam_pdf_path, _exam_generate_data
+from ..pdf_generation import generate_pdfs, generate_single_pdf, generate_zipped_pdfs
 from ..pdf_generation import page_is_size, save_with_even_pages
 from ..pdf_generation import write_finalized_exam
 from ..database import db, Exam, ExamWidget, Submission, FeedbackOption, token_length
 from .submissions import sub_to_data
-
-
-def _get_exam_dir(exam_id):
-    return os.path.join(
-        current_app.config['DATA_DIRECTORY'],
-        f'{exam_id}_data',
-    )
-
-
-def checkboxes(exam):
-    """
-    Returns all multiple choice question check boxes for one specific exam
-
-    Parameters
-    ----------
-        exam: the exam
-
-    Returns
-    -------
-        A list of tuples with checkbox data.
-        Each tuple is represented as (x, y, page, label)
-
-        Where
-        x: x position
-        y: y position
-        page: page number
-        label: checkbox label
-    """
-    cb_data = []
-    for problem in exam.problems:
-        page = problem.widget.page
-        cb_data += [(cb.x, cb.y, page, cb.label) for cb in problem.mc_options]
-
-    return cb_data
 
 
 def add_blank_feedback(problems):
@@ -286,11 +249,7 @@ class Exams(Resource):
         pdf_data.seek(0)
         db.session.commit()
 
-        exam_dir = _get_exam_dir(exam.id)
-        pdf_path = os.path.join(exam_dir, 'exam.pdf')
-        os.makedirs(exam_dir, exist_ok=True)
-
-        save_with_even_pages(pdf_path, args['pdf'])
+        save_with_even_pages(exam.id, args['pdf'])
 
         print(f"Added exam {exam.id} (name: {exam_name}, token: {exam.token}) to database")
 
@@ -314,21 +273,20 @@ class Exams(Resource):
         elif args['finalized']:
             add_blank_feedback(exam.problems)
 
-            exam_dir, student_id_widget, _, exam_path, cb_data = _exam_generate_data(exam)
-            write_finalized_exam(exam_dir, exam_path, student_id_widget.x, student_id_widget.y, cb_data)
+            write_finalized_exam(exam)
 
             exam.finalized = True
             db.session.commit()
             return dict(status=200, message="ok"), 200
         else:
-            return dict(status=403, message=f'Exam can not be unfinalized'), 403
+            return dict(status=403, message='Exam can not be unfinalized'), 403
 
         if args['grade_anonymous'] is not None:
             exam.grade_anonymous = args['grade_anonymous']
             db.session.commit()
             return dict(status=200, message="ok"), 200
 
-        return dict(status=400, message=f'One of finalized or anonymous must be present'), 400
+        return dict(status=400, message='One of finalized or anonymous must be present'), 400
 
     patch_parser = reqparse.RequestParser()
     patch_parser.add_argument('name', type=str, required=True)
@@ -366,60 +324,13 @@ class ExamSource(Resource):
         if exam is None:
             return dict(status=404, message='Exam does not exist.'), 404
 
-        exam_dir = _get_exam_dir(exam.id)
-
         return send_file(
-            os.path.join(exam_dir, 'exam.pdf'),
+            exam_pdf_path(exam.id),
             cache_timeout=0,
             mimetype='application/pdf')
 
 
 class ExamGeneratedPdfs(Resource):
-
-    def _get_generated_exam_dir(self, exam_dir):
-        return os.path.join(
-            exam_dir,
-            'generated_pdfs'
-        )
-
-    def _get_paths_for_range(self, generated_pdfs_dir, copies_start, copies_end):
-        copy_nums = range(copies_start, copies_end + 1)
-        pdf_paths = [
-            os.path.join(
-                generated_pdfs_dir,
-                current_app.config['OUTPUT_PDF_FILENAME_FORMAT'].format(copy_num))
-            for copy_num
-            in copy_nums
-        ]
-        return pdf_paths, copy_nums
-
-    def _generate_exam_pdfs(self, exam, pdf_paths, copy_nums):
-        """
-        Generate and save separate exam PDFs for each copy to
-        prepare for the user downloading them.
-
-        This function retrieves the data necessary to generate
-        the PDFs and calls the appropriate generation function.
-
-        Parameters
-        ----------
-        exam : Exam
-            The exam to generate the PDFs for
-        pdf_paths : list of paths
-            The location to save each PDF
-        copy_nums: list of ints
-            The copy numbers to generate
-        """
-        exam_dir, _, barcode_widget, exam_path, _ = _exam_generate_data(exam)
-
-        generate_pdfs(
-            exam_pdf_file=exam_path,
-            copy_nums=copy_nums,
-            output_paths=pdf_paths,
-            exam_token=exam.token,
-            datamatrix_x=barcode_widget.x,
-            datamatrix_y=barcode_widget.y
-        )
 
     get_parser = reqparse.RequestParser()
     get_parser.add_argument('copies_start', type=int, required=True)
@@ -457,60 +368,36 @@ class ExamGeneratedPdfs(Resource):
         if exam is None:
             return dict(status=404, message='Exam does not exist.'), 404
         if not exam.finalized:
-            msg = f'Exam is not finalized.'
+            msg = 'Exam is not finalized.'
             return dict(status=403, message=msg), 403
 
         if copies_end < copies_start:
-            msg = f'copies_end should be larger than copies_start'
+            msg = 'copies_end should be larger than copies_start'
             return dict(status=400, message=msg), 400
         if copies_start <= 0:
-            msg = f'copies_start should be larger than 0'
+            msg = 'copies_start should be larger than 0'
             return dict(status=400, message=msg), 400
 
-        exam_dir = _get_exam_dir(exam_id)
-        generated_pdfs_dir = self._get_generated_exam_dir(exam_dir)
-
-        os.makedirs(generated_pdfs_dir, exist_ok=True)
-
-        pdf_paths, copy_nums = self._get_paths_for_range(generated_pdfs_dir, copies_start, copies_end)
-
-        generate_selectors = [not os.path.exists(pdf_path) for pdf_path in pdf_paths]
-
-        if any(generate_selectors):
-            pdf_paths_to_generate = itertools.compress(pdf_paths, generate_selectors)
-            copy_nums_to_generate = itertools.compress(copy_nums, generate_selectors)
-            self._generate_exam_pdfs(exam, pdf_paths_to_generate, copy_nums_to_generate)
-
-        output_file = TemporaryFile()
+        attachment_filename = f'{exam.name}_{copies_start}-{copies_end}.{args["type"]}'
+        mimetype = f'application/{args["type"]}'
 
         if args['type'] == 'pdf':
-            join_pdfs(
+            output_file = BytesIO()
+            generate_single_pdf(exam, copies_start, copies_end, output_file)
+            output_file.seek(0)
+            return send_file(
                 output_file,
-                pdf_paths,
-            )
-            attachment_filename = f'{exam.name}_{copies_start}-{copies_end}.pdf'
-            mimetype = 'application/pdf'
+                cache_timeout=0,
+                attachment_filename=attachment_filename,
+                as_attachment=True,
+                mimetype=mimetype)
         elif args['type'] == 'zip':
-            with zipfile.ZipFile(output_file, 'w') as zf:
-                for pdf_path in pdf_paths:
-                    zf.write(
-                        pdf_path,
-                        os.path.basename(pdf_path)
-                    )
-            attachment_filename = f'{exam.name}_{copies_start}-{copies_end}.zip'
-            mimetype = 'application/zip'
-        else:
-            msg = f'type must be one of ["pdf", "zip"]'
-            return dict(status=400, message=msg), 400
+            generator = generate_zipped_pdfs(exam.id, copies_start, copies_end)
+            response = Response(stream_with_context(generator), mimetype=mimetype)
+            response.headers['Content-Disposition'] = f'attachment; filename="{attachment_filename}"'
+            return response
 
-        output_file.seek(0)
-
-        return send_file(
-            output_file,
-            cache_timeout=0,
-            attachment_filename=attachment_filename,
-            as_attachment=True,
-            mimetype=mimetype)
+        return dict(status=400, message='type must be one of ["pdf", "zip"]'), 400
 
 
 class ExamPreview(Resource):
@@ -520,80 +407,27 @@ class ExamPreview(Resource):
         if exam is None:
             return dict(status=404, message='Exam does not exist.'), 404
 
-        intermediate_file = BytesIO()
-
         exam_dir, student_id_widget, barcode_widget, exam_path, cb_data = _exam_generate_data(exam)
 
         # Generate generic overlay
-        generate_pdfs(
+        _, intermediate_file = next(generate_pdfs(
             exam_pdf_file=exam_path,
             copy_nums=[None],
-            output_paths=[intermediate_file],
             id_grid_x=student_id_widget.x,
             id_grid_y=student_id_widget.y,
             cb_data=cb_data
-        )
-
-        intermediate_file.seek(0)
-        output_file = BytesIO()
+        ))
 
         # Generate copy overlay
-        generate_pdfs(
+        _, output_file = next(generate_pdfs(
             exam_pdf_file=intermediate_file,
             copy_nums=[1559],
-            output_paths=[output_file],
             exam_token="A" * token_length,
             datamatrix_x=barcode_widget.x,
             datamatrix_y=barcode_widget.y,
-        )
-
-        output_file.seek(0)
+        ))
 
         return send_file(
             output_file,
             cache_timeout=0,
             mimetype='application/pdf')
-
-
-def _exam_generate_data(exam):
-    """ Retrieve data necessary to generate exam PDFs
-
-    Parameters
-    ----------
-    exam : Exam
-        The exam to retrieve the data for
-
-    Returns
-    -------
-    exam_dir : path
-        Directory with the exam data
-    student_id_widget : ExamWidget
-        The student id widget
-    barcode_widget : ExamWidget
-        The barcode widget
-    exam_path : path
-        The path to the exam PDF file
-    cb_data : list of tuples
-        List of tuples with checkbox data, each tuple represented as (x, y, page, label)
-    """
-    exam_dir = _get_exam_dir(exam.id)
-
-    student_id_widget = next(
-        widget
-        for widget
-        in exam.widgets
-        if widget.name == 'student_id_widget'
-    )
-
-    barcode_widget = next(
-        widget
-        for widget
-        in exam.widgets
-        if widget.name == 'barcode_widget'
-    )
-
-    exam_path = os.path.join(exam_dir, 'exam.pdf')
-
-    cb_data = checkboxes(exam)
-
-    return exam_dir, student_id_widget, barcode_widget, exam_path, cb_data

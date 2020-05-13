@@ -146,6 +146,7 @@ def process_page(file_name, image, exam, output_directory):
 
 
 def extract_image_info(file_name):
+    """Extract information about student, copy and page from the file name."""
     m = RE_FILENAME.match(file_name)
     if not m:
         raise ValueError('Invalid file name (studentid-page-(copy).extension)')

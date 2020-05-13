@@ -15,7 +15,7 @@
     "lint:js": "standard --verbose | snazzy",
     "test:js": "jest",
     "lint:py": "flake8",
-    "comwemand:test:py": "ZESJE_SETTINGS=$(pwd)/zesje_test_cfg.py python3 -m pytest -v -W error::RuntimeWarning",
+    "command:test:py": "ZESJE_SETTINGS=$(pwd)/zesje_test_cfg.py python3 -m pytest -v -W error::RuntimeWarning",
     "test:py": "yarn dev:mysql is-running && (yarn command:test:py || true) || ((yarn dev:mysql start && yarn command:test:py); yarn dev:mysql stop)",
     "start": "ZESJE_SETTINGS=$(pwd)/zesje_dev_cfg.py python3 zesje",
     "analyze": "webpack --config webpack.prod.js --profile --json > stats.json; webpack-bundle-analyzer stats.json zesje/static",

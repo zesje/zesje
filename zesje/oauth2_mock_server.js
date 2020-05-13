@@ -4,9 +4,10 @@ let bodyParser = require('body-parser')
 let app = express()
 
 app.get('/authorize', function (req, res) {
+  let urlFrom = url.parse(req.get('Referer'))
   console.log('GET ' + req.url)
   let query = url.parse(req.url, true).query
-  res.redirect('http://127.0.0.1:5000/api/oauth/callback?code=test&state=' + query.state)
+  res.redirect(urlFrom.protocol + '//' + urlFrom.host + '/api/oauth/callback?code=test&state=' + query.state)
 })
 
 app.get('/user', function (req, res) {

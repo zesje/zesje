@@ -22,8 +22,8 @@ class Login extends React.Component {
         <div>
           <Hero title='Login' subtitle='Many hands must be authenticated' />
 
-          <section className='has-text-centered'>
-            <a href={this.state.redirect_url}><button>Login With {this.state.provider} </button></a>
+          <section className='section has-text-centered'>
+            <a class='button' href={this.state.redirect_url}>Login With {this.state.provider} </a>
           </section>
 
         </div>

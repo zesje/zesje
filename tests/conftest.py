@@ -15,6 +15,7 @@ from zesje.api import api_bp  # noqa: E402
 from zesje.database import db  # noqa: E402
 from zesje.factory import create_config  # noqa: E402
 
+
 # Adapted from https://stackoverflow.com/a/46062148/1062698
 @pytest.fixture
 def datadir():
@@ -28,6 +29,7 @@ def base_config_app():
     app = Flask(__name__, static_folder=None)
     create_config(app.config, None)
     return app
+
 
 # Provides an app context, this runs for every test
 # to ensure the app context is popped after each test

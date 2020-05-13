@@ -2,6 +2,7 @@ import pytest
 import numpy as np
 from zesje import statistics as stats
 
+
 # Tests
 
 # Returns mock grader timings
@@ -13,6 +14,7 @@ def mock_get_grade_timings(monkeypatch):
         else:
             return np.array([[problem_id, k * 137 + (0 if k < 3 else 10000)] for k in range(9)])
     monkeypatch.setattr(stats, 'get_grade_timings', mock_return)
+
 
 # Tests whether the statistics return the correct avg and total time per problem.
 # This is done with two test data, one with equal elapsed times and the other with

@@ -40,7 +40,7 @@ class Solutions(Resource):
         solution = Solution.query.filter(Solution.submission_id == sub.id,
                                          Solution.problem_id == problem.id).one_or_none()
         if solution is None:
-            return dict(status=404, message=f'Solution does not exist.'), 404
+            return dict(status=404, message='Solution does not exist.'), 404
 
         return {
             'feedback': [fb.id for fb in solution.feedback],

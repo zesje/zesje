@@ -346,7 +346,7 @@ def design_exam(app, client, pages, students, grade, solve, multiple_copies, ski
     generated = client.get(f'api/exams/{exam_id}/generated_pdfs',
                            data={"copies_start": 1, "copies_end": sum(copies_per_student), 'type': 'pdf'})
 
-    student_ids = [s['id'] for s in client.get(f'/api/students').get_json()]
+    student_ids = [s['id'] for s in client.get('/api/students').get_json()]
     random.shuffle(student_ids)
     student_ids = student_ids[:students]
 

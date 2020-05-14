@@ -107,7 +107,7 @@ class Statistics(Resource):
                                    index=[id for id, in student_ids],
                                    columns=[p.id for p in exam.problems] + [0],
                                    dtype=int)
-        data = {}
+        data = []
 
         for p in exam.problems:
             if len(p.feedback_options) == 0:
@@ -169,7 +169,7 @@ class Statistics(Resource):
                 'error': full_scores.loc[:, p.id].std() if len(results) > 1 else 0
             }
 
-            data[p.id] = problem_data
+            data.append(problem_data)
 
         if len(data) == 0:
             return dict(status=404, message='The problems in the exam have no feedback options.'), 404
@@ -187,14 +187,15 @@ class Statistics(Resource):
             'error': full_scores.loc[:, 0].std() if len(total_results) > 1 else 0
         }
 
-        for id in data.keys():
+        for j in range(len(data)):
+            id = data[j]['id']
             corr = (full_scores[id]
                     .astype(float)
                     .corr(full_scores[0]
                           .subtract(full_scores[id])
                           .astype(float))
                     )
-            data[id]['correlation'] = corr if not isnan(corr) else None
+            data[j]['correlation'] = corr if not isnan(corr) else None
 
         if len(total_results) > 2 and full_scores[0].var():
             alpha = ((len(full_scores) - 1) / (len(full_scores) - 2)
@@ -208,7 +209,7 @@ class Statistics(Resource):
             'name': exam.name,
             'students': len(student_ids),
             'copies': len(exam.copies),
-            'problems': [data[p.id] for p in exam.problems],
+            'problems': data,
             'total': {
                 'alpha': alpha,
                 'max_score': total_max_score,

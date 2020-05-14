@@ -80,6 +80,9 @@ test_py:
   script:
     - echo -e "\nMYSQL_HOST = 'mysql'\nMYSQL_USER = 'root'\nMYSQL_PASSWORD = None" >> zesje_test_cfg.py
     - yarn test:py:cov
+    # Patch against https://gitlab.com/gitlab-org/gitlab/-/issues/217664
+    - 'sed -i "s=<source>.*zesje</source>=<source>./zesje</source>=g" cov.xml'
+    - 'sed -i "s;filename=\";filename=\"zesje/;g" cov.xml'
   artifacts:
     paths:
       - cov.html/

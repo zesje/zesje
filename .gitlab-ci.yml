@@ -1,28 +1,42 @@
 # This base image can be found in 'Dockerfile'
-image: gitlab.kwant-project.org:5005/zesje/zesje/test:latest
+image: $TEST_IMAGE
 
 stages:
+  - build-env
   - build
   - test
 
-# Special hidden job that is merged with JS jobs
-.node_modules: &node_modules
-  # Cache the JS modules that yarn fetches
-  cache:
-    untracked: true
-    paths:
-      - .yarn-cache
-  before_script:
-    - source activate zesje-dev
-    - yarn install --cache-folder .yarn-cache
+variables:
+  TEST_IMAGE: ${CI_REGISTRY_IMAGE}/test
 
-.python_packages: &python_packages
+build-image:
+  stage: build-env
+  when: manual
+  image:
+    name: gcr.io/kaniko-project/executor:debug-v0.19.0
+    entrypoint: [""]
+  before_script:
+    - mkdir -p /kaniko/.docker
+    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
+  script:
+    - mkdir docker
+    - cp test.Dockerfile docker/
+    - cp environment.yml docker/
+    - cp package.json docker/
+    - /kaniko/executor
+      --context $CI_PROJECT_DIR/docker
+      --dockerfile $CI_PROJECT_DIR/docker/test.Dockerfile
+      --destination $TEST_IMAGE
+      --cache=true
+
+.conda-env: &conda-env
   before_script:
     - source activate zesje-dev
-    - conda env update
+    - ln -s /yarn/* ./
+    - if [[ $CI_JOB_NAME != *"py"* ]]; then yarn install; fi
 
 build:
-  <<: *node_modules
+  <<: *conda-env
   stage: build
   script:
     - python3 -m compileall zesje
@@ -33,30 +47,46 @@ build:
     expire_in: 1 week
 
 test_js:
-  <<: *node_modules
+  <<: *conda-env
   stage: test
-  script: yarn test:js
+  script:
+    - yarn test:js
+  artifacts:
+    reports:
+      junit: junit.xml
 
 lint_js:
-  <<: *node_modules
+  <<: *conda-env
   stage: test
   allow_failure: true
   script:
     - yarn lint:js
 
 lint_py:
-  <<: *python_packages
+  <<: *conda-env
   stage: test
   allow_failure: true
   script:
     - yarn lint:py
 
 test_py:
-  <<: *python_packages
+  <<: *conda-env
   stage: test
+  services:
+    - mysql:5.7
+  variables:
+    MYSQL_DATABASE: "course_test"
+    MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
   script:
+    - echo -e "\nMYSQL_HOST = 'mysql'\nMYSQL_USER = 'root'\nMYSQL_PASSWORD = None" >> zesje_test_cfg.py
     - yarn test:py:cov
+    # Patch against https://gitlab.com/gitlab-org/gitlab/-/issues/217664
+    - 'sed -i "s=<source>.*zesje</source>=<source>./zesje</source>=g" cov.xml'
+    - 'sed -i "s;filename=\";filename=\"zesje/;g" cov.xml'
   artifacts:
     paths:
       - cov.html/
+    reports:
+      cobertura: cov.xml
+      junit: tests.xml
     expire_in: 1 week

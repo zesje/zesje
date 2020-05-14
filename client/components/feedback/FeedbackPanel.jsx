@@ -6,17 +6,44 @@ import * as api from '../../api.jsx'
 
 import withShortcuts from '../ShortcutBinder.jsx'
 import FeedbackBlock from './FeedbackBlock.jsx'
+import FeedbackBlockEdit from './FeedbackBlockEdit.jsx'
+
+import './Feedback.css'
 
 class FeedbackPanel extends React.Component {
   feedbackBlock = React.createRef();
 
   state = {
     selectedFeedbackIndex: null,
+    feedbackToEditId: 0,
     remark: '',
     // Have to keep submissionID and problemID in state,
     // to be able to decide when to derive remark from properties.
     submissionID: null,
     problemID: null
+  }
+
+  /**
+   * Enter the feedback editing view for a feedback option.
+   * @param feedback the feedback to edit.
+   */
+  editFeedback = (feedbackId) => {
+    this.setState({
+      feedbackToEditId: feedbackId
+    })
+  }
+  /**
+   * Go back to all the feedback options.
+   * Updates the problem to make sure changes to feedback options are reflected.
+   */
+  backToFeedback = () => {
+    this.setState({
+      feedbackToEditId: 0
+    })
+  }
+
+  updateFeedback = () => {
+    this.props.updateFeedback(this.state.problemID)
   }
 
   componentDidMount = () => {
@@ -41,6 +68,7 @@ class FeedbackPanel extends React.Component {
       return {
         remark: nextProps.grading && nextProps.solution.remark,
         selectedFeedbackIndex: null,
+        feedbackToEditId: 0,
         submissionID: nextProps.submissionID,
         problemID: nextProps.problem.id
       }
@@ -133,27 +161,34 @@ class FeedbackPanel extends React.Component {
             </div>
           </div>
         }
-        {this.props.problem.feedback.map((feedback, index) =>
-          <FeedbackBlock key={feedback.id} uri={blockURI} graderID={this.props.graderID}
-            feedback={feedback} checked={this.props.grading && this.props.solution.feedback.includes(feedback.id)}
-            editFeedback={() => this.props.editFeedback(feedback)} toggleOption={this.props.toggleOption}
-            ref={(selectedFeedbackId === feedback.id) ? this.feedbackBlock : null} grading={this.props.grading}
-            submissionID={this.props.submissionID} selected={selectedFeedbackId === feedback.id || feedback.highlight}
-            showIndex={this.props.showTooltips} index={index + 1} />
-        )}
+        {this.props.problem.feedback.map((feedback, index) => (
+          feedback.id !== this.state.feedbackToEditId
+            ? <FeedbackBlock key={feedback.id} uri={blockURI} graderID={this.props.graderID}
+              feedback={feedback} checked={this.props.grading && this.props.solution.feedback.includes(feedback.id)}
+              editFeedback={() => this.editFeedback(feedback.id)} toggleOption={this.props.toggleOption}
+              ref={(selectedFeedbackId === feedback.id) ? this.feedbackBlock : null} grading={this.props.grading}
+              submissionID={this.props.submissionID} selected={selectedFeedbackId === feedback.id || feedback.highlight}
+              showIndex={this.props.showTooltips} index={index + 1} />
+            : <FeedbackBlockEdit key={feedback.id} feedback={feedback} problemID={this.state.problemID}
+              goBack={this.backToFeedback} updateFeedback={this.updateFeedback} />
+        ))}
+        {(this.state.feedbackToEditId === -1)
+          ? <FeedbackBlockEdit feedback={null} problemID={this.state.problemID} goBack={this.backToFeedback}
+            updateFeedback={this.updateFeedback} />
+          : <div className='panel-block'>
+            <button className='button is-link is-outlined is-fullwidth' onClick={() => this.editFeedback(-1)}>
+              <span className='icon is-small'>
+                <i className='fa fa-plus' />
+              </span>
+              <span>option</span>
+            </button>
+          </div>
+        }
         {this.props.grading &&
           <div className='panel-block'>
             <textarea className='textarea' rows='2' placeholder='Remark' value={this.state.remark} onBlur={this.saveRemark} onChange={this.changeRemark} onKeyDown={this.keyMap} />
           </div>
         }
-        <div className='panel-block'>
-          <button className='button is-link is-outlined is-fullwidth' onClick={() => this.props.editFeedback()}>
-            <span className='icon is-small'>
-              <i className='fa fa-plus' />
-            </span>
-            <span>option</span>
-          </button>
-        </div>
       </React.Fragment>
     )
   }

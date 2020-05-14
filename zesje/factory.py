@@ -89,6 +89,26 @@ def create_config(config_instance, extra_config):
         DB_PATH=os.path.join(config_instance['DATA_DIRECTORY'], 'course.sqlite'),
     )
 
+    user = config_instance['MYSQL_USER']
+    password = config_instance['MYSQL_PASSWORD']
+    host = config_instance['MYSQL_HOST']
+    database = config_instance['MYSQL_DATABASE']
+    connector = config_instance['MYSQL_CONNECTOR']
+
+    # Force MySQL to use a TCP connection
+    host = host.replace('localhost', '127.0.0.1')
+    # Interpret None as no password
+    password = password if password is not None else ''
+
     config_instance.update(
-        SQLALCHEMY_DATABASE_URI='sqlite:///' + config_instance['DB_PATH']
+        MYSQL_HOST=host,
+        MYSQL_DIRECTORY=os.path.join(config_instance['DATA_DIRECTORY'], 'mysql'),
+        SQLALCHEMY_DATABASE_URI=f'{connector}://{user}:{password}@{host}/{database}',
+        SQLALCHEMY_PASSWORD=password,
+        SQLALCHEMY_TRACK_MODIFICATIONS=False  # Suppress future deprecation warning
+    )
+
+    config_instance.update(
+        CELERY_BROKER_URL='redis://localhost:6479',
+        CELERY_RESULT_BACKEND='redis://localhost:6479'
     )

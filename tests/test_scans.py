@@ -12,8 +12,8 @@ from reportlab.lib.pagesizes import A4
 from zesje.scans import decode_barcode, ExamMetadata, ExtractedBarcode, exam_metadata, guess_dpi
 from zesje.image_extraction import extract_image_pikepdf, extract_images
 from zesje.database import db
-from zesje.api.exams import generate_exam_token, _get_exam_dir, _exam_generate_data
-from zesje.pdf_generation import write_finalized_exam, generate_pdfs
+from zesje.api.exams import generate_exam_token, _exam_generate_data
+from zesje.pdf_generation import exam_dir, exam_pdf_path, write_finalized_exam, generate_single_pdf
 from zesje.database import Exam, ExamWidget
 from zesje import scans
 from zesje.constants import PAGE_FORMATS
@@ -28,67 +28,48 @@ def mock_get_box_return_original(monkeypatch):
 
 
 @pytest.fixture(scope='module')
-def db_empty_app(db_app):
-    with db_app.app_context():
-        db.drop_all()
-        db.create_all()
-
-    return db_app
-
-
-@pytest.fixture(scope='module')
-def full_app(db_empty_app):
+def full_app(module_app):
     """
     Default code for generating a database entry and writing
     a finalized exam pdf.
     This needs to be ran at the start of every pipeline test
     """
-    with db_empty_app.app_context():
-        exam = Exam(name='Exam')
-        db.session.add(exam)
-        db.session.commit()
+    exam = Exam(name='Exam')
+    db.session.add(exam)
+    db.session.commit()
 
-        exam.token = generate_exam_token(exam.id, exam.name, b'EXAM PDF DATA')
-        student_id_widget = ExamWidget(exam=exam, name='student_id_widget', x=50, y=50)
-        ExamWidget(exam=exam, name='barcode_widget', x=40, y=510)
+    exam.token = generate_exam_token(exam.id, exam.name, b'EXAM PDF DATA')
+    ExamWidget(exam=exam, name='student_id_widget', x=50, y=50)
+    ExamWidget(exam=exam, name='barcode_widget', x=40, y=510)
 
-        db.session.commit()
+    db.session.commit()
 
-        exam_dir = _get_exam_dir(exam.id)
-        os.makedirs(exam_dir, exist_ok=True)
+    os.makedirs(exam_dir(exam.id), exist_ok=True)
 
-        exam_path = os.path.join(exam_dir, 'exam.pdf')
-        pdf = canvas.Canvas(exam_path, pagesize=A4)
-        for _ in range(2):
-            pdf.showPage()
-        pdf.save()
+    exam_path = exam_pdf_path(exam.id)
+    pdf = canvas.Canvas(exam_path, pagesize=A4)
+    for _ in range(2):
+        pdf.showPage()
+    pdf.save()
 
-        write_finalized_exam(exam_dir, exam_path, student_id_widget.x, student_id_widget.y, [])
+    write_finalized_exam(exam)
 
-    # Push the current app context for all tests so the database can be used
-    with db_empty_app.app_context():
-        yield db_empty_app
+    yield module_app
 
 
 def generate_flat_scan_data(copy_number=145):
     """Generates a submission PDF and flattens it"""
     exam = Exam.query.first()
-    exam_dir, _, barcode_widget, exam_path, _ = _exam_generate_data(exam)
+    examdir, _, barcode_widget, exam_path, _ = _exam_generate_data(exam)
 
     exam_config = exam_metadata(exam.id)
 
     with NamedTemporaryFile() as scan_pdf:
-        generate_pdfs(
-            exam_pdf_file=exam_path,
-            copy_nums=[copy_number],
-            output_paths=[scan_pdf.name],
-            exam_token=exam.token,
-            datamatrix_x=barcode_widget.x,
-            datamatrix_y=barcode_widget.y
-        )
+        generate_single_pdf(exam, copy_number, copy_number, scan_pdf)
+        scan_pdf.seek(0)
 
         for image, _ in extract_images(scan_pdf.name, dpi=150):
-            yield image, exam_config, exam_dir
+            yield image, exam_config, examdir
 
 
 def original_page_size(format, dpi):
@@ -163,8 +144,8 @@ def apply_scan(img, rotation=0, scale=1, skew=(0, 0)):
 
 
 def test_pipeline(full_app):
-    for image, exam_config, exam_dir in generate_flat_scan_data():
-        success, reason = scans.process_page(image, exam_config, exam_dir)
+    for image, exam_config, examdir in generate_flat_scan_data():
+        success, reason = scans.process_page(image, exam_config, examdir)
         assert success is True, reason
 
 

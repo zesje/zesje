@@ -58,10 +58,6 @@ Install all of the Javascript dependencies:
 
     yarn install
 
-Afterwards, initialize the database using the following command:
-
-    yarn migrate:dev
-
 Unfortunately there is also another dependency that must be installed
 manually for now (we are working to bring this dependency into the
 Conda ecosystem). You can install this dependency in the following way
@@ -70,11 +66,23 @@ on different platforms:
 | OS                            | Command                   |
 |-------------------------------|---------------------------|
 | macOS                         | `brew install libdmtx`    |
-| Debian <= 9, Ubuntu <= 19.04  | `apt install libdmtx0a`   |
-| Debian >= 10, Ubuntu >= 19.10 | `apt install libdmtx0b`   |
+| Debian, Ubuntu                | `apt install libdmtx-dev` |
 | Arch                          | `pacman -S libdmtx`       |
 | Fedora                        | `dnf install libdmtx`     |
 | openSUSE                      | `zypper install libdmtx0` |
+
+
+#### Setting up MySQL server
+
+If this is the first time that you will run Zesje with MySQL in
+development, then run the following command from the Zesje
+repository directory:
+
+    yarn dev:mysql-init
+
+That's all it needs to create the MySQL files in the data directory,
+migrate the database to the last schema and move all your previous data.
+
 
 ### Running a development server
 Activate your zesje development environment and run
@@ -95,8 +103,11 @@ The script is called from the command line with the following parameters:
  - `--pages (int)` the number of pages per exam, default is 3.
  - `--students (int)` the number of students per exam, default is 30
  - `--graders (int)` the number of graders to add, default is 4.
- - `--solve (float)` between 0 and 1, indicates the percentage of questions to answer (including MCQ), default is 90%.
- - `--grade (float)` between 0 and 1, indicate the percentage of solved questions to grade (that is, excluding blank answers), default is 60%.
+ - `--solve (float)` between 0 and 100, indicates the percentage of questions to answer (including MCQ), default is 90%.
+ - `--grade (float)` between 0 and 100, indicate the percentage of solved questions to grade (that is, excluding blank answers), default is 60%.
+ - `--skip-processing` if specified, fakes the pdf processing to reduce time. As a drawback, blanks will not be detected.
+ - `--multiple-copies (float)` between 0 and 100, indicates how much of the students submit multiple copies, default is 5%
+
 
 The actual processing of the exam takes a while, specially when the number of students is large.
 
@@ -146,12 +157,12 @@ Zesje uses Flask-Migrate and Alembic for database versioning and migration. Flas
 
 To change something in the database schema, simply add this change to `zesje/database.py`. After that run the following command to prepare a new migration:
 
-    yarn prepare-migration
+    yarn dev:prepare-migration
 
 This uses Flask-Migrate to make a new migration script in `migrations/versions` which needs to be reviewed and edited. Please suffix the name of this file with something distinctive and add a short description at the top of the file. To apply the database migration run:
 
-    yarn migrate:dev # (for the development database)
-    yarn migrate # (for the production database)
+    yarn dev:mysql-migrate # (for the development database)
+    yarn migrate # (for the production database, MySQL must be running)
 
 ### Building and running the production version
 

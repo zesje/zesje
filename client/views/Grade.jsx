@@ -4,7 +4,6 @@ import Hero from '../components/Hero.jsx'
 
 import FeedbackPanel from '../components/feedback/FeedbackPanel.jsx'
 import ProblemSelector from './grade/ProblemSelector.jsx'
-import EditPanel from '../components/feedback/EditPanel.jsx'
 import ProgressBar from '../components/ProgressBar.jsx'
 import withShortcuts from '../components/ShortcutBinder.jsx'
 import GradeNavigation from './grade/GradeNavigation.jsx'
@@ -136,8 +135,8 @@ class Grade extends React.Component {
    * Also updates the metadata.
    * @param id the id of the problem to update to.
    */
-  setProblemUpdateMetadata = (id) => {
-    api.get(`problems/${id}`).then(problem => {
+  setProblemUpdateMetadata = (problemId) => {
+    api.get(`problems/${problemId}`).then(problem => {
       this.setState({
         problem: problem
       })
@@ -180,26 +179,6 @@ class Grade extends React.Component {
     }
     const newId = this.state.problems[currentIndex + 1].id
     this.setProblemUpdateMetadata(newId)
-  }
-  /**
-   * Enter the feedback editing view for a feedback option.
-   * @param feedback the feedback to edit.
-   */
-  editFeedback = (feedback) => {
-    this.setState({
-      editActive: true,
-      feedbackToEdit: feedback
-    })
-  }
-  /**
-   * Go back to all the feedback options.
-   * Updates the problem to make sure changes to feedback options are reflected.
-   */
-  backToFeedback = () => {
-    this.setProblemUpdateMetadata(this.state.problem.id)
-    this.setState({
-      editActive: false
-    })
   }
 
   /**
@@ -334,27 +313,21 @@ class Grade extends React.Component {
 
           <div className='container'>
             <div className='columns'>
-              <div className='column is-one-quarter-desktop is-one-third-tablet'>
+              <div className='column is-one-quarter-fullhd is-one-third-desktop editor-side-panel'>
                 <ProblemSelector
                   problems={problems}
                   setProblemUpdateMetadata={this.setProblemUpdateMetadata}
                   current={problem}
                   showTooltips={this.state.showTooltips} />
                 <nav className='panel'>
-                  {this.state.editActive
-                    ? <EditPanel
-                      problemID={problem.id}
-                      feedback={this.state.feedbackToEdit}
-                      goBack={this.backToFeedback} />
-                    : <FeedbackPanel
-                      examID={examID} submissionID={submission.id} graderID={graderID}
-                      problem={problem} solution={solution}
-                      showTooltips={this.state.showTooltips} grading
-                      setSubmission={this.setSubmission}
-                      editFeedback={this.editFeedback}
-                      toggleOption={this.toggleFeedbackOption}
-                      toggleApprove={this.toggleApprove} />
-                  }
+                  <FeedbackPanel
+                    examID={examID} submissionID={submission.id} graderID={graderID}
+                    problem={problem} solution={solution}
+                    showTooltips={this.state.showTooltips} grading
+                    setSubmission={this.setSubmission}
+                    toggleOption={this.toggleFeedbackOption}
+                    toggleApprove={this.toggleApprove}
+                    updateFeedback={this.setProblemUpdateMetadata} />
                 </nav>
               </div>
 
@@ -377,8 +350,8 @@ class Grade extends React.Component {
                   ? <article className='message is-info'>
                     <div className='message-body'>
                       <p>
-                        This student has multiple submissions: (#{submission.id}, {otherSubmissions})
-                        Make sure that each applicable feedback option is only selected once.
+                        This student has possibly submitted multiple copies: (#{submission.id}, {otherSubmissions})
+                        Please verify the student identity to bundle these copies before grading.
                       </p>
                     </div>
                   </article>
@@ -404,10 +377,12 @@ class Grade extends React.Component {
                   </div>
                 </div>
 
-                <p className={'box' + (solution.graded_at ? ' is-graded' : '')}>
-                  <img src={examID ? ('api/images/solutions/' + examID + '/' +
-                    problem.id + '/' + submission.id + '/' + (this.state.fullPage ? '1' : '0')) + '?' +
-                    Grade.getLocationHash(problem) : ''} alt='' />
+                <p className={'box is-scrollable-tablet' + (solution.graded_at ? ' is-graded' : '')}>
+                  <img
+                    src={examID ? ('api/images/solutions/' + examID + '/' +
+                      problem.id + '/' + submission.id + '/' + (this.state.fullPage ? '1' : '0')) + '?' +
+                      Grade.getLocationHash(problem) : ''}
+                    alt='' />
                 </p>
               </div>
             </div>

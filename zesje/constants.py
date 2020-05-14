@@ -32,4 +32,14 @@ PAGE_FORMATS = {
     "US letter": (612, 792),
 }
 
+AUTOGRADER_NAME = 'Zesje'
+BLANK_FEEDBACK_NAME = 'Blank'
+
+# Allow up to 1 mm misalignment in any direction
+MAX_ALIGNMENT_ERROR_MM = 1
+
+# Make sure a roughly 1 cm long line written with
+# a ballpoint pen is regarded as not blank.
+MIN_ANSWER_SIZE_MM2 = 4
+
 SQLALCHEMY_TRACK_MODIFICATIONS = False  # Suppress future deprecation warning

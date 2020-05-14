@@ -48,9 +48,8 @@ class MultipleChoice(Resource):
         # Get request arguments
         label = args['label']
         problem_id = args['problem_id']
-        problem = Problem.query.get(problem_id)
 
-        if not problem:
+        if not (problem := Problem.query.get(problem_id)):
             return dict(status=404, message=f'Problem with id {problem_id} does not exist'), 404
 
         if problem.exam.finalized:
@@ -86,9 +85,8 @@ class MultipleChoice(Resource):
         -------
             A JSON object with the multiple choice option data
         """
-        mult_choice = MultipleChoiceOption.query.get(id)
 
-        if not mult_choice:
+        if (mult_choice := MultipleChoiceOption.query.get(id)) is None:
             return dict(status=404, message=f'Multiple choice option with id {id} does not exist.'), 404
 
         json = {
@@ -124,13 +122,11 @@ class MultipleChoice(Resource):
         """
         args = self.patch_parser.parse_args()
 
-        mc_entry = MultipleChoiceOption.query.get(id)
-
-        if not mc_entry:
+        if (mc_entry := MultipleChoiceOption.query.get(id)) is None:
             return dict(status=404, message=f"Multiple choice question with id {id} does not exist"), 404
 
         if mc_entry.feedback.problem.exam.finalized:
-            return dict(status=405, message=f'Exam is finalized'), 405
+            return dict(status=405, message='Exam is finalized'), 405
 
         update_mc_option(mc_entry, args)
 
@@ -153,9 +149,8 @@ class MultipleChoice(Resource):
         -------
             A message indicating success or failure
         """
-        mult_choice = MultipleChoiceOption.query.get(id)
 
-        if not mult_choice:
+        if (mult_choice := MultipleChoiceOption.query.get(id)) is None:
             return dict(status=404, message=f'Multiple choice question with id {id} does not exist.'), 404
 
         # Check if the exam is finalized, do not delete the multiple choice option otherwise

@@ -1,12 +1,13 @@
 from io import BytesIO
 
-from flask import abort, send_file, Response, current_app
+from flask import abort, send_file, stream_with_context, Response, current_app
 import zipstream
 import json
 
 from ..database import Exam, Submission
 from ..statistics import full_exam_data, grader_data
 from ..emails import solution_pdf
+from ..mysql import dump
 
 
 def full():
@@ -15,12 +16,19 @@ def full():
     Returns
     -------
     response : flask Response
-        response containing the ``course.sqlite``
+        response containing the ``course.sql``
     """
+
+    try:
+        output = dump(current_app.config)
+    except Exception as e:
+        abort(500, 'Could not export database content: ' + str(e))
+
     return send_file(
-        current_app.config['DB_PATH'],
+        BytesIO(output),
         as_attachment=True,
-        mimetype="application/x-sqlite3",
+        attachment_filename='course.sql',
+        mimetype="application/sql",
         cache_timeout=0,
     )
 
@@ -44,22 +52,13 @@ def exam(file_format, exam_id):
 
     try:
         data = full_exam_data(exam_id)
-    except KeyError:
-        abort(404)
+    except KeyError as e:
+        abort(404, message=str(e))
 
     if file_format not in ('dataframe', 'xlsx', 'xlsx_detailed'):
-        abort(404)
+        abort(404, message='File format is not one of [dataframe, xlsx, xlsx_detailed]')
 
     serialized = ResilientBytesIO()
-
-    data.index.name = 'Student ID'
-    data = data.infer_objects()  # convert columns to numeric types if possible
-
-    # move the student names to the first columns
-    cols = data.columns
-    cols_names = data.columns.get_level_values(0).isin(['First name', 'Last name'])
-    cols = list(cols[cols_names]) + list(cols[~cols_names])
-    data = data[cols]
 
     if file_format == 'xlsx':
         cols_total = data.columns.get_level_values(1) == 'total'
@@ -89,7 +88,7 @@ def exam(file_format, exam_id):
     )
 
 
-def zipped_exam_solutions_generator(exam_id, anonymous, current_app):
+def zipped_exam_solutions_generator(exam_id, anonymous):
     """Generator for exam solutions as a zip of (anonymized) pdfs
 
     Should only load the student solutions one at a time to decrease memory load.
@@ -107,24 +106,24 @@ def zipped_exam_solutions_generator(exam_id, anonymous, current_app):
     response : generator
         generator that yields parts of the zip.
     """
-    with current_app.app_context():
-        z = zipstream.ZipFile(mode='w')
+    z = zipstream.ZipFile(mode='w')
 
-        subs = Submission.query.filter(Submission.exam_id == exam_id).all()
-        students = set(sub.student for sub in subs if sub.student)
+    subs = Submission.query.filter(Submission.exam_id == exam_id, Submission.validated).all()
 
-        for student in students:
-            if anonymous:
-                copy_numbers = sorted(sub.copy_number for sub in subs if sub.student == student)
-                file_name = f'cop{"y" if len(copy_numbers) == 1 else "ies"}-' \
-                            f'{"-".join(str(number) for number in copy_numbers)}.pdf'
-            else:
-                file_name = f'student-{student.id}.pdf'
+    for sub in subs:
+        student = sub.student
 
-            z.write_iter(file_name, solution_pdf(exam_id, student.id, anonymous))
-            yield from z.flush()
+        if anonymous:
+            copy_numbers = list(copy.number for copy in sub.copies)
+            file_name = f'cop{"y" if len(copy_numbers) == 1 else "ies"}-' \
+                        f'{"-".join(str(number) for number in copy_numbers)}.pdf'
+        else:
+            file_name = f'student-{student.id}.pdf'
 
-        yield from z
+        z.write_iter(file_name, solution_pdf(exam_id, student.id, anonymous))
+        yield from z.flush()
+
+    yield from z
 
 
 def exam_pdf(exam_id):
@@ -143,8 +142,8 @@ def exam_pdf(exam_id):
     if exam_data is None:
         abort(404)
 
-    generator = zipped_exam_solutions_generator(exam_id, exam_data.grade_anonymous, current_app._get_current_object())
-    response = Response(generator, mimetype='application/zip')
+    generator = zipped_exam_solutions_generator(exam_id, exam_data.grade_anonymous)
+    response = Response(stream_with_context(generator), mimetype='application/zip')
     response.headers['Content-Disposition'] = f'attachment; filename=exam{exam_id}.zip'
     return response
 

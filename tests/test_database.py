@@ -1,18 +1,10 @@
 import pytest
 
-from zesje.database import db, Exam, Problem, ProblemWidget, Solution
+from zesje.database import db, Exam, Problem, ProblemWidget, Solution, Copy
 from zesje.database import Submission, Scan, Page, ExamWidget, FeedbackOption, MultipleChoiceOption
 
 
-@pytest.fixture
-def empty_app(db_app):
-    with db_app.app_context():
-        db.drop_all()
-        db.create_all()
-        yield db_app
-
-
-def test_cascades_exam(empty_app, exam, problem, submission, scan, exam_widget):
+def test_cascades_exam(app, exam, problem, submission, scan, exam_widget):
     """Tests the cascades defined for an exam
 
     Tests the cascades for the following relations:
@@ -43,7 +35,7 @@ def test_cascades_exam(empty_app, exam, problem, submission, scan, exam_widget):
     assert exam_widget not in db.session
 
 
-def test_cascades_problem(empty_app, exam, problem, submission, solution, problem_widget, feedback_option):
+def test_cascades_problem(app, exam, problem, submission, solution, problem_widget, feedback_option):
     """Tests the cascades defined for a problem
 
     Tests the cascades for the following relations:
@@ -73,34 +65,58 @@ def test_cascades_problem(empty_app, exam, problem, submission, solution, proble
     assert feedback_option not in db.session
 
 
-def test_cascades_submission(empty_app, exam, problem, submission, solution, page):
+def test_cascades_submission(app, exam, problem, submission, solution, copy):
     """Tests the cascades defined for a submission
 
     Tests the cascades for the following relations:
     - Submission -> Solution
-    - Submission -> Page
+    - Submission -> Copy
     """
     exam.problems = [problem]
     exam.submissions = [submission]
 
     solution.problem = problem
     solution.submission = submission
-    page.submission = submission
+    copy.submission = submission
 
     db.session.add_all([exam, problem, submission])
     db.session.commit()
 
     assert solution in db.session
-    assert page in db.session
+    assert copy in db.session
 
     db.session.delete(submission)
     db.session.commit()
 
     assert solution not in db.session
+    assert copy not in db.session
+
+
+def test_cascades_copy(app, exam, copy, page, submission):
+    """Tests the cascades defined for a submission
+
+    Tests the cascades for the following relations:
+    - Copy -> Page
+    - Copy -> Submission (only `save-update`, not `delete`)
+    """
+    exam.submissions = [submission]
+    copy.submission = submission
+    copy.pages = [page]
+
+    db.session.add_all([exam, copy])
+    db.session.commit()
+
+    assert submission in db.session
+    assert page in db.session
+
+    db.session.delete(copy)
+    db.session.commit()
+
+    assert submission in db.session  # It should NOT delete the submission
     assert page not in db.session
 
 
-def test_cascades_fb_mco(empty_app, feedback_option, mc_option):
+def test_cascades_fb_mco(app, feedback_option, mc_option):
     feedback_option.mc_option = mc_option
     db.session.add(feedback_option)
     db.session.commit()
@@ -113,7 +129,7 @@ def test_cascades_fb_mco(empty_app, feedback_option, mc_option):
     assert mc_option not in db.session
 
 
-def test_cascades_mco_fb(empty_app, feedback_option, mc_option):
+def test_cascades_mco_fb(app, feedback_option, mc_option):
     feedback_option.mc_option = mc_option
     db.session.add(mc_option)
     db.session.commit()
@@ -153,7 +169,12 @@ def exam_widget():
 
 @pytest.fixture
 def submission():
-    return Submission(copy_number=0)
+    return Submission()
+
+
+@pytest.fixture
+def copy():
+    return Copy(number=0)
 
 
 @pytest.fixture

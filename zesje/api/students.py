@@ -31,8 +31,7 @@ class Students(Resource):
         """
 
         if student_id is not None:
-            s = Student.query.get(student_id)
-            if s is None:
+            if (s := Student.query.get(student_id)) is None:
                 return dict(status=404, message='Student not found'), 404
             return {
                 'id': s.id,

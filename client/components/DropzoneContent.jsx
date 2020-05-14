@@ -1,6 +1,6 @@
 import React from 'react'
 
-const DropzoneContent = () => (
+const DropzoneContent = (props) => (
   <div className='file has-name is-boxed is-centered'>
     <label className='file-label'>
       <span className='file-cta'>
@@ -8,7 +8,7 @@ const DropzoneContent = () => (
           <i className='fa fa-upload' />
         </span>
         <span className='file-label'>
-                    Choose a file…
+          {props.text}
         </span>
       </span>
     </label>

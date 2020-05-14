@@ -201,6 +201,7 @@ def test_mixed_multiple_validated(test_client, app_with_data):
 
 types_product = list(product(types, types))
 
+
 @pytest.mark.parametrize(['old_student_type', 'new_student_type'], types_product,
                          ids=['_'.join(student_type) for student_type in types_product])
 def test_switch_all(test_client, app_with_data, old_student_type, new_student_type):

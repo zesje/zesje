@@ -130,7 +130,7 @@ class MultipleChoice(Resource):
             return dict(status=404, message=f"Multiple choice question with id {id} does not exist"), 404
 
         if mc_entry.feedback.problem.exam.finalized:
-            return dict(status=405, message=f'Exam is finalized'), 405
+            return dict(status=405, message='Exam is finalized'), 405
 
         update_mc_option(mc_entry, args)
 

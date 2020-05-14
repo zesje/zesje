@@ -20,7 +20,12 @@ repo = gl.projects.get('zesje/zesje')
 labels = repo.labels.list()
 
 # +
-label_dict = {tuple(l.name.split(': ')): l for l in labels if ': ' in l.name}
+label_dict = {
+    tuple(label.name.split(': ')): label
+    for label in labels
+    if ': ' in label.name
+}
+
 
 categories = ['impact', 'effort', 'maintainability']
 degrees = ['low', 'medium', 'high']
@@ -66,7 +71,9 @@ def next_issue():
     issues = repo.issues.list(all=True, state='opened')
     for issue in issues:
         issue_categories = {
-            l.split(': ')[0]: l.split(': ')[1] for l in issue.labels if ': ' in l
+            label.split(': ')[0]: label.split(': ')[1]
+            for label in issue.labels
+            if ': ' in label
         }
         already_labeled = (
             len(issue_categories) == 3

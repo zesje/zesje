@@ -321,14 +321,14 @@ class Exams(Resource):
             db.session.commit()
             return dict(status=200, message="ok"), 200
         else:
-            return dict(status=403, message=f'Exam can not be unfinalized'), 403
+            return dict(status=403, message='Exam can not be unfinalized'), 403
 
         if args['grade_anonymous'] is not None:
             exam.grade_anonymous = args['grade_anonymous']
             db.session.commit()
             return dict(status=200, message="ok"), 200
 
-        return dict(status=400, message=f'One of finalized or anonymous must be present'), 400
+        return dict(status=400, message='One of finalized or anonymous must be present'), 400
 
     patch_parser = reqparse.RequestParser()
     patch_parser.add_argument('name', type=str, required=True)
@@ -457,14 +457,14 @@ class ExamGeneratedPdfs(Resource):
         if exam is None:
             return dict(status=404, message='Exam does not exist.'), 404
         if not exam.finalized:
-            msg = f'Exam is not finalized.'
+            msg = 'Exam is not finalized.'
             return dict(status=403, message=msg), 403
 
         if copies_end < copies_start:
-            msg = f'copies_end should be larger than copies_start'
+            msg = 'copies_end should be larger than copies_start'
             return dict(status=400, message=msg), 400
         if copies_start <= 0:
-            msg = f'copies_start should be larger than 0'
+            msg = 'copies_start should be larger than 0'
             return dict(status=400, message=msg), 400
 
         exam_dir = _get_exam_dir(exam_id)
@@ -500,7 +500,7 @@ class ExamGeneratedPdfs(Resource):
             attachment_filename = f'{exam.name}_{copies_start}-{copies_end}.zip'
             mimetype = 'application/zip'
         else:
-            msg = f'type must be one of ["pdf", "zip"]'
+            msg = 'type must be one of ["pdf", "zip"]'
             return dict(status=400, message=msg), 400
 
         output_file.seek(0)

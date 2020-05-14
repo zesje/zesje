@@ -22,16 +22,13 @@ class Solutions(Resource):
             remarks: string
         """
 
-        problem = Problem.query.get(problem_id)
-        if problem is None:
+        if (problem := Problem.query.get(problem_id)) is None:
             return dict(status=404, message='Problem does not exist.'), 404
 
-        exam = Exam.query.get(exam_id)
-        if exam is None:
+        if Exam.query.get(exam_id) is None:
             return dict(status=404, message='Exam does not exist.'), 404
 
-        sub = Submission.query.get(submission_id)
-        if sub is None:
+        if (sub := Submission.query.get(submission_id)) is None:
             return dict(status=404, message='Submission does not exist.'), 404
 
         if sub.exam_id != exam_id:
@@ -71,16 +68,13 @@ class Solutions(Resource):
 
         args = self.post_parser.parse_args()
 
-        problem = Problem.query.get(problem_id)
-        if problem is None:
+        if (problem := Problem.query.get(problem_id)) is None:
             return dict(status=404, message='Problem does not exist.'), 404
 
-        exam = Exam.query.get(exam_id)
-        if exam is None:
+        if Exam.query.get(exam_id) is None:
             return dict(status=404, message='Exam does not exist.'), 404
 
-        sub = Submission.query.get(submission_id)
-        if sub is None:
+        if (sub := Submission.query.get(submission_id)) is None:
             return dict(status=404, message='Submission does not exist.'), 404
 
         if sub.exam_id != exam_id:
@@ -113,12 +107,10 @@ class Solutions(Resource):
             state: boolean
         """
         args = self.put_parser.parse_args()
-        grader = Grader.query.get(args.graderID)
-        if grader is None:
+        if (grader := Grader.query.get(args.graderID)) is None:
             return dict(status=404, message='Grader does not exist.'), 404
 
-        sub = Submission.query.get(submission_id)
-        if sub is None:
+        if (sub := Submission.query.get(submission_id)) is None:
             return dict(status=404, message='Submission does not exist.'), 404
 
         if sub.exam_id != exam_id:
@@ -129,8 +121,7 @@ class Solutions(Resource):
         if solution is None:
             return dict(status=404, message='Solution does not exist.'), 404
 
-        fb = FeedbackOption.query.get(args.id)
-        if fb is None:
+        if (fb := FeedbackOption.query.get(args.id)) is None:
             return dict(status=404, message='Feedback Option does not exist.'), 404
 
         if fb in solution.feedback:
@@ -178,8 +169,7 @@ class Approve(Resource):
 
         grader = Grader.query.get(args.graderID) if args.graderID is not None else None
 
-        sub = Submission.query.get(submission_id)
-        if sub is None:
+        if (sub := Submission.query.get(submission_id)) is None:
             return dict(status=404, message='Submission does not exist.'), 404
 
         if sub.exam_id != exam_id:

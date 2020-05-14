@@ -43,14 +43,12 @@ class Copies(Resource):
             validated: bool
                 True if the assigned student has been validated by a human.
         """
-        exam = Exam.query.get(exam_id)
-        if exam is None:
+        if (exam := Exam.query.get(exam_id)) is None:
             return dict(status=404, message='Exam does not exist.'), 404
 
         if copy_number:
-            copy = Copy.query.filter(Copy.exam == exam, Copy.number == copy_number).one_or_none()
-
-            if copy is None:
+            if (copy := Copy.query.filter(Copy.exam == exam,
+                                          Copy.number == copy_number).one_or_none()) is None:
                 return dict(status=404, message='Copy does not exist.'), 404
 
             return copy_to_data(copy)
@@ -78,17 +76,14 @@ class Copies(Resource):
         """
         args = self.put_parser.parse_args()
 
-        exam = Exam.query.get(exam_id)
-        if exam is None:
+        if (exam := Exam.query.get(exam_id)) is None:
             return dict(status=404, message='Exam does not exist.'), 404
 
-        copy = Copy.query.filter(Copy.number == copy_number,
-                                 Copy.exam == exam).one_or_none()
-        if copy is None:
+        if (copy := Copy.query.filter(Copy.number == copy_number,
+                                      Copy.exam == exam).one_or_none()) is None:
             return dict(status=404, message='Copy does not exist.'), 404
 
-        student = Student.query.get(args.studentID)
-        if student is None:
+        if (student := Student.query.get(args.studentID)) is None:
             msg = f'Student {args.studentID} does not exist'
             return dict(status=404, message=msg), 404
 

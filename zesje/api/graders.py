@@ -52,9 +52,7 @@ class Graders(Resource):
 
         name = args['name']
 
-        grader = Grader.query.filter(Grader.name == name).one_or_none()
-
-        if grader:
+        if Grader.query.filter(Grader.name == name).one_or_none():
             return dict(status=409, message=f'Grader with name {name} already exists.'), 409
 
         try:

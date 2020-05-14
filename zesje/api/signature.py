@@ -24,13 +24,11 @@ def get(exam_id, copy_number):
     """
     # We could register an app-global error handler for this,
     # but it would add more code then it removes.
-    exam = Exam.query.get(exam_id)
-    if exam is None:
+    if (exam := Exam.query.get(exam_id)) is None:
         return dict(status=404, message='Exam does not exist.'), 404
 
-    copy = Copy.query.filter(Copy.exam == exam,
-                             Copy.number == copy_number).one_or_none()
-    if copy is None:
+    if (copy := Copy.query.filter(Copy.exam == exam,
+                                  Copy.number == copy_number).one_or_none()) is None:
         return dict(status=404, message='Copy does not exist.'), 404
 
     _, student_id_widget_coords = exam_student_id_widget(exam_id)

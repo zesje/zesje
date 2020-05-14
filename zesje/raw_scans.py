@@ -14,7 +14,7 @@ from . import celery
 
 
 RE_FILENAME = re.compile(
-    fr'(?P<studentID>\d{{{ID_GRID_DIGITS}}})-(?P<page>\d+)-?(?P<copy>\d+)?\.(?P<ext>\w+)
+    fr'(?P<studentID>\d{{{ID_GRID_DIGITS}}})-(?P<page>\d+)-?(?P<copy>\d+)?\.(?P<ext>\w+)'
 )
 
 EXIF_METHODS = {

@@ -11,6 +11,48 @@
     resize: vertical;
 }
 
+@media screen and (max-width: 768px) {
+  .is-scrollable-mobile {
+    overflow-y: scroll;
+    height: 500px;
+  }
+}
+
+@media screen and (min-width: 769px), print {
+  .is-scrollable-tablet {
+    overflow-y: scroll;
+    height: 500px;
+  }
+}
+
+@media screen and (max-width: 1023px) {
+  .is-scrollable-touch {
+    overflow-y: scroll;
+    height: 576px;
+  }
+}
+
+@media screen and (min-width: 1024px) {
+  .is-scrollable-desktop {
+    overflow-y: scroll;
+    height: 576px;
+  }
+}
+
+@media screen and (min-width: 1216px) {
+  .is-scrollable-widescreen {
+    overflow-y: scroll;
+    height: 684px;
+  }
+}
+
+@media screen and (min-width: 1408px) {
+  .is-scrollable-fullhd {
+    overflow-y: scroll;
+    height: 792px;
+  }
+}
+
 /* Add a thicker bottom border to every 5th feedback item as divider */
 nav > a.feedback-item:nth-child(5n+6):not(:last-of-type) {
     border-bottom-width: 3px;

@@ -28,8 +28,7 @@ class Scans(Resource):
                 filename of the uploaded PDF
         """
 
-        exam = Exam.query.get(exam_id)
-        if exam is None:
+        if (exam := Exam.query.get(exam_id)) is None:
             return dict(status=404, message='Exam does not exist.'), 404
 
         return [
@@ -65,8 +64,7 @@ class Scans(Resource):
         if args['pdf'].mimetype != 'application/pdf':
             return dict(message='Uploaded file is not a PDF'), 400
 
-        exam = Exam.query.get(exam_id)
-        if exam is None:
+        if (exam := Exam.query.get(exam_id)) is None:
             return dict(status=404, message='Exam does not exist.'), 404
         elif not exam.finalized:
             return dict(status=403, message='Exam is not finalized.'), 403
@@ -125,8 +123,7 @@ class RawScans(Resource):
         if args['file'].mimetype not in ZIP_MIME_TYPES:
             return dict(message='Uploaded file is not a ZIP'), 400
 
-        exam = Exam.query.get(exam_id)
-        if exam is None:
+        if (exam := Exam.query.get(exam_id)) is None:
             return dict(status=404, message='Exam does not exist.'), 404
         elif not exam.finalized:
             return dict(status=403, message='Exam is not finalized.'), 403

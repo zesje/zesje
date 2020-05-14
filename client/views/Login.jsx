@@ -22,7 +22,7 @@ class Login extends React.Component {
           <Hero title='Login' subtitle='Many hands must be authenticated' />
 
           <section className='section has-text-centered'>
-            <a class='button' href={this.state.redirect_url}>Login With {this.state.provider} </a>
+            <a className='button is-link' href={this.state.redirect_url}>Login with {this.state.provider} </a>
           </section>
 
         </div>

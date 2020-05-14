@@ -26,7 +26,6 @@ label_dict = {
     if ': ' in label.name
 }
 
-
 categories = ['impact', 'effort', 'maintainability']
 degrees = ['low', 'medium', 'high']
 

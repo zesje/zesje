@@ -117,17 +117,17 @@ def is_running(config):
         return False
 
 
-def dump(config, database):
+def dump(config, database=None):
     user = config['MYSQL_USER']
     password = config['MYSQL_PASSWORD']
     host = config['MYSQL_HOST']
     database = database if database is not None else config['MYSQL_DATABASE']
-    p = sp.Popen(
-        ['mysqldump', f'--user={user}', f'--password={password}', f'--host={host}', database],
-        stdin=sp.PIPE,
-        stdout=sp.PIPE,
-        stderr=sp.PIPE
-    )
+
+    command = ['mysqldump', '--single-transaction', f'--user={user}', f'--host={host}', database]
+    if password:
+        command += [f'--password={password}']
+
+    p = sp.Popen(command, stdin=sp.PIPE, stdout=sp.PIPE, stderr=sp.PIPE)
     output, err = p.communicate()
 
     if p.returncode != 0:

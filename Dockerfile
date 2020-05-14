@@ -3,22 +3,21 @@
 FROM continuumio/miniconda3
 
 RUN apt-get update && \
-    apt-get install -y \
-        curl \
-        poppler-utils build-essential libgl1-mesa-glx \
-        imagemagick libsm-dev libdmtx-dev libdmtx0b \
-        && \
-    apt-get -y --quiet install git supervisor nginx
+    apt-get install -y libdmtx-dev && \
+    apt-get install -y git supervisor nginx cron
 
 WORKDIR /app
 
-ADD environment.yml /app/environment.yml
-RUN conda env create
+ADD environment.yml .
+RUN conda env create && conda clean --all
 
-# From https://medium.com/@chadlagore/conda-environments-with-docker-82cdc9d25754
-RUN echo "source activate $(head -1 /app/environment.yml | cut -d' ' -f2)" > ~/.bashrc
-ENV PATH /opt/conda/envs/$(head -1 /app/environment.yml | cut -d' ' -f2)/bin:$PATH
+RUN echo "source activate zesje-dev" > ~/.bashrc
+ENV PATH /opt/conda/envs/zesje-dev/bin:$PATH
 
-RUN rm /app/environment.yml
+ADD . .
+RUN yarn install
+RUN yarn build
 
-CMD bash
+RUN rm -rf node_modules
+
+ENTRYPOINT [ "/bin/bash" ]

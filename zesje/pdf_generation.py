@@ -3,14 +3,37 @@ from tempfile import NamedTemporaryFile
 import PIL
 import shutil
 import os
+from io import BytesIO
+
 from flask import current_app
 from pdfrw import PdfReader, PdfWriter, PageMerge
 from pylibdmtx.pylibdmtx import encode
 from reportlab.pdfgen import canvas
+import zipstream
+
+from .database import Exam
 
 
-def generate_pdfs(exam_pdf_file, copy_nums, output_paths, exam_token=None, id_grid_x=0,
-                  id_grid_y=0, datamatrix_x=0, datamatrix_y=0, cb_data=None):
+def exam_dir(exam_id):
+    return os.path.join(
+        current_app.config['DATA_DIRECTORY'],
+        f'{exam_id}_data',
+    )
+
+
+def exam_pdf_path(exam_id):
+    return os.path.join(
+        exam_dir(exam_id),
+        'exam.pdf'
+    )
+
+
+def generate_pdfs(exam_pdf_file,
+                  copy_nums,
+                  exam_token=None,
+                  id_grid_x=0, id_grid_y=0,
+                  datamatrix_x=0, datamatrix_y=0,
+                  cb_data=None):
     """
     Generates an overlay onto the exam PDF file and saves it at the output path.
 
@@ -48,12 +71,15 @@ def generate_pdfs(exam_pdf_file, copy_nums, output_paths, exam_token=None, id_gr
     cb_data : list[ (int, int, int, str)]
         The data needed for drawing a checkbox, namely: the x coordinate; y coordinate; page number and label
 
+    Returns
+    -------
+    generator(tuple, BytesIO) : yields a tuple with copy number and BytesIO of the generated pdf
     """
     exam_pdf = PdfReader(exam_pdf_file)
     mediabox = exam_pdf.pages[0].MediaBox
     pagesize = (float(mediabox[2]), float(mediabox[3]))
 
-    for copy_num, output_path in zip(copy_nums, output_paths):
+    for copy_num in copy_nums:
         # ReportLab can't deal with file handles, but only with file names,
         # so we have to use a named file
         with NamedTemporaryFile() as overlay_file:
@@ -88,24 +114,114 @@ def generate_pdfs(exam_pdf_file, copy_nums, output_paths, exam_token=None, id_gr
                 exam_merge = PageMerge(exam_page).add(overlay_merge)
                 exam_merge.render()
 
-            PdfWriter(output_path, trailer=exam_pdf).write()
+            output = BytesIO()
+            PdfWriter(output, trailer=exam_pdf).write()
+            output.seek(0)
+
+            yield copy_num, output
 
 
-def write_finalized_exam(exam_dir, exam_pdf_file, id_grid_x, id_grid_y, cb_data=None):
+def write_finalized_exam(exam):
+    """Save the exam pdf to the default locatin inside the data directory.
+
+    This function retrives all the necessary data to generate the pdf from `_exam_generate_data`,
+    it then overwrites the existing `exam.pdf` by an empty copy with student id widget and
+    corner markers.
+
+    Parameters
+    ----------
+    exam : Exam
+        The exam to write the finalised pdf for
+    """
+    exam_dir, student_id_widget, _, exam_pdf_file, cb_data = _exam_generate_data(exam)
+
     original_pdf_file = os.path.join(exam_dir, 'original.pdf')
     shutil.move(exam_pdf_file, original_pdf_file)
 
-    generate_pdfs(
+    _, output = next(generate_pdfs(
         exam_pdf_file=original_pdf_file,
         exam_token=None,
         copy_nums=[None],
-        output_paths=[exam_pdf_file],
-        id_grid_x=id_grid_x,
-        id_grid_y=id_grid_y,
+        id_grid_x=student_id_widget.x,
+        id_grid_y=student_id_widget.y,
         cb_data=cb_data
-    )
+    ))
+
+    with open(exam_pdf_file, 'wb') as of:
+        of.write(output.getbuffer())
 
     os.remove(original_pdf_file)
+
+
+def _exam_generate_data(exam):
+    """ Retrieve data necessary to generate exam PDFs
+
+    Parameters
+    ----------
+    exam : Exam
+        The exam to retrieve the data for
+
+    Returns
+    -------
+    exam_dir : path
+        Directory with the exam data
+    student_id_widget : ExamWidget
+        The student id widget
+    barcode_widget : ExamWidget
+        The barcode widget
+    exam_path : path
+        The path to the exam PDF file
+    cb_data : list of tuples
+        List of tuples with checkbox data, each tuple represented as (x, y, page, label)
+    """
+    os.makedirs(exam_dir(exam.id), exist_ok=True)
+
+    student_id_widget = next(
+        widget
+        for widget
+        in exam.widgets
+        if widget.name == 'student_id_widget'
+    )
+
+    barcode_widget = next(
+        widget
+        for widget
+        in exam.widgets
+        if widget.name == 'barcode_widget'
+    )
+
+    exam_path = exam_pdf_path(exam.id)
+
+    cb_data = _checkboxes(exam)
+
+    return exam_dir(exam.id), student_id_widget, barcode_widget, exam_path, cb_data
+
+
+def _checkboxes(exam):
+    """
+    Returns all multiple choice question check boxes for one specific exam
+
+    Parameters
+    ----------
+        exam: the exam
+
+    Returns
+    -------
+        A list of tuples with checkbox data.
+        Each tuple is represented as (x, y, page, label)
+
+        Where
+        x: x position
+        y: y position
+        page: page number
+        label: checkbox label
+    """
+    cb_data = []
+    for problem in exam.problems:
+        page = problem.widget.page
+        cb_data += [(cb.x, cb.y, page, cb.label) for cb in problem.mc_options]
+
+    return cb_data
 
 
 def join_pdfs(output_filename, pdf_paths):
@@ -125,6 +241,70 @@ def join_pdfs(output_filename, pdf_paths):
         writer.addpages(PdfReader(path).pages)
 
     writer.write(output_filename)
+
+
+def generate_zipped_pdfs(exam_id, start, end):
+    """Generates a zip file with all the copies joined together.
+
+    Inside the zip, the copies are named by their copy number.
+
+    Parameters
+    ----------
+    exam_id : int
+        The exam id to generate the pdfs for
+    start : int
+        The start copy number
+    end : int
+        The final copy number, included
+    """
+    exam = Exam.query.get(exam_id)
+    exam_dir, _, barcode_widget, exam_path, _ = _exam_generate_data(exam)
+
+    zf = zipstream.ZipFile(mode='w')
+
+    for copy_num, pdf in generate_pdfs(
+            exam_pdf_file=exam_path,
+            copy_nums=list(range(start, end + 1)),
+            exam_token=exam.token,
+            datamatrix_x=barcode_widget.x,
+            datamatrix_y=barcode_widget.y):
+        zf.writestr(current_app.config['OUTPUT_PDF_FILENAME_FORMAT'].format(copy_num), pdf.getvalue())
+        yield from zf.flush()
+
+    yield from zf
+
+
+def generate_single_pdf(exam, start, end, output_file):
+    """Generates a single pdf file with all the copies joined together.
+
+    It can be used as a shorthand of `generate_pdfs` where the parameters to be passed
+    are returned by `_exam_generate_data`. If `start == end`, then a single copy is generated.
+
+    Parameters
+    ----------
+    exam : Exam
+        The exam to generate the pdfs for
+    start : int
+        The start copy number
+    end : int
+        The final copy number, included
+    output_file : file like object
+        where to write the pdf, needs to implement a write function.
+    """
+    exam_dir, _, barcode_widget, exam_path, _ = _exam_generate_data(exam)
+
+    writer = PdfWriter()
+
+    for copy_num, pdf in generate_pdfs(
+            exam_pdf_file=exam_path,
+            copy_nums=list(range(start, end + 1)),
+            exam_token=exam.token,
+            datamatrix_x=barcode_widget.x,
+            datamatrix_y=barcode_widget.y):
+
+        writer.addpages(PdfReader(pdf).pages)
+
+    writer.write(output_file)
 
 
 def generate_id_grid(canv, x, y):
@@ -435,7 +615,24 @@ def page_is_size(exam_pdf_file, shape, tolerance=0):
     return not invalid
 
 
-def save_with_even_pages(pdf_path, exam_pdf_file):
+def save_with_even_pages(exam_id, exam_pdf_file):
+    """Save a finalized exam pdf with evem number of pages.
+
+    The exam is saved in the path returned by `get_exam_dir(exam_id)` with the name `exam.pdf`.
+
+    If the pdf has an odd number of pages, an extra blank page is added at the end,
+    this is specially usefull for printing and contatenating multiple copies at once.
+
+    Parameters
+    ----------
+    exam_id : int
+        The exam identifier
+    exam_pdf_file : str or File like object
+        The exam pdf to be saved inthe data directory
+    """
+    os.makedirs(exam_dir(exam_id), exist_ok=True)
+    pdf_path = exam_pdf_path(exam_id)
+
     exam_pdf = PdfReader(exam_pdf_file)
     pagecount = len(exam_pdf.pages)
 

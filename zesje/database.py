@@ -94,7 +94,8 @@ class Submission(db.Model):
     exam_id = Column(Integer, ForeignKey('exam.id'), nullable=False)  # backref exam
     solutions = db.relationship('Solution', backref='submission', cascade='all',
                                 order_by='Solution.problem_id', lazy=True)
-    copies = db.relationship('Copy', backref='submission', cascade='all', lazy=True)
+    copies = db.relationship('Copy', backref='submission', cascade='all',
+                             order_by='Copy.number', lazy=True)
     student_id = Column(Integer, ForeignKey('student.id'), nullable=True)  # backref student
     validated = Column(Boolean, default=False, server_default='0', nullable=False)
 

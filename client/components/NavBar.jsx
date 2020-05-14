@@ -49,7 +49,7 @@ const ExamDropdown = (props) => (
 )
 
 const GraderDropdown = (props) => {
-  if (props.disabled) { return null } else {
+  if (props.hidden) { return null } else {
     return (
       <div className='navbar-item has-dropdown is-hoverable'>
         <div className='navbar-link' >
@@ -103,6 +103,12 @@ const ExportDropdown = (props) => {
       </div>
     </div>
   )
+}
+
+const LoginButton = (props) => {
+  if (props.hidden) { return null } else {
+    return (<Link className='navbar-item' hidden onClick={props.logout} to='/login'>Logout</Link>)
+  }
 }
 
 class NavBar extends React.Component {
@@ -227,8 +233,8 @@ class NavBar extends React.Component {
           </div>
 
           <div className='navbar-end'>
-            <GraderDropdown grader={this.displayGrader()} disabled={!this.state.grader} />
-            <Link className='navbar-item' disabled={!this.state.grader} onClick={this.logout} to='/login'>Logout</Link>
+            <GraderDropdown grader={this.displayGrader()} hidden={!this.state.grader} />
+            <LoginButton className='navbar-item' hidden={!this.state.grader} logout={this.logout} />
 
             <div className='navbar-item'>
               <i>Version {__ZESJE_VERSION__}</i>

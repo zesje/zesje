@@ -58,6 +58,7 @@ def process_zipped_images(scan_id):
 
 def _process_zipped_images(scan_id):
     data_directory = current_app.config['DATA_DIRECTORY']
+    scan_directory = current_app.config['SCAN_DIRECTORY']
 
     report_error = functools.partial(write_pdf_status, scan_id, 'error')
     report_progress = functools.partial(write_pdf_status, scan_id, 'processing')
@@ -69,7 +70,7 @@ def _process_zipped_images(scan_id):
 
     report_progress('Importing ZIP')
 
-    zip_path = os.path.join(data_directory, 'scans', f'{scan.id}.zip')
+    zip_path = os.path.join(scan_directory, f'{scan.id}.zip')
     output_directory = os.path.join(data_directory, f'{exam.id}_data', 'submissions')
 
     with ZipFile(zip_path) as zip:

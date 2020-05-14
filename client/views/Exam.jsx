@@ -12,7 +12,6 @@ import update from 'immutability-helper'
 import ExamFinalizeMarkdown from './ExamFinalize.md'
 import ConfirmationModal from '../components/ConfirmationModal.jsx'
 import FeedbackPanel from '../components/feedback/FeedbackPanel.jsx'
-import EditPanel from '../components/feedback/EditPanel.jsx'
 import Tooltip from '../components/Tooltip.jsx'
 import Switch from 'react-bulma-switch/full'
 
@@ -29,7 +28,7 @@ class Exams extends React.Component {
     numPages: null,
     selectedWidgetId: null,
     changedWidgetId: null,
-    widgets: [],
+    widgets: {},
     previewing: false,
     deletingExam: false,
     deletingWidget: false,
@@ -41,7 +40,7 @@ class Exams extends React.Component {
   static getDerivedStateFromProps = (newProps, prevState) => {
     if (newProps.exam.id !== prevState.examID) {
       // initialize array to size of pdf
-      const widgets = []
+      const widgets = {}
       newProps.exam.problems.forEach(problem => {
         // keep page and name of problem as widget.problem object
         widgets[problem.widget.id] = {
@@ -122,9 +121,23 @@ class Exams extends React.Component {
     })
   }
 
-  updateFeedback = (feedback, problemWidget) => {
-    const index = problemWidget.problem.feedback.findIndex(e => { return e.id === feedback.id })
-    this.updateFeedbackAtIndex(feedback, problemWidget, index)
+  updateFeedback = (problemId) => {
+    const problemWidget = Object.values(this.state.widgets).find(widget => widget.problem && widget.problem.id === problemId)
+    const problemWidgetId = problemWidget.id
+    api.get(`problems/${problemId}`).then(problem => {
+      this.setState((prevState) => ({
+        widgets: {
+          ...prevState.widgets,
+          [problemWidgetId]: {
+            ...prevState.widgets[problemWidgetId],
+            problem: {
+              ...prevState.widgets[problemWidgetId].problem,
+              feedback: problem.feedback
+            }
+          }
+        }
+      }))
+    })
   }
 
   /**
@@ -447,7 +460,7 @@ class Exams extends React.Component {
       data.feedback_id = result.feedback_id
       feedback.id = result.feedback_id
       this.addMCOtoState(problemWidget, data)
-      this.updateFeedback(feedback, problemWidget)
+      this.updateFeedback(problemWidget.problem.id)
       return this.generateMCOs(problemWidget, labels, index + 1, xPos + problemWidget.problem.widthMCO, yPos)
     }).catch(err => {
       console.log(err)
@@ -747,14 +760,9 @@ class Exams extends React.Component {
                 <div className='panel-block'>
                   {!this.state.editActive && <label className='label'>Feedback options</label>}
                 </div>
-                {this.state.editActive
-                  ? <EditPanel problemID={props.problem.id} feedback={this.state.feedbackToEdit}
-                    goBack={this.backToFeedback}
-                    updateCallback={(fb) => this.updateFeedback(fb, this.state.widgets[selectedWidgetId])} />
-                  : <FeedbackPanel examID={this.props.examID} problem={props.problem}
-                    editFeedback={this.editFeedback} showTooltips={this.state.showTooltips}
-                    grading={false}
-                  />}
+                <FeedbackPanel examID={this.props.examID} problem={props.problem}
+                  editFeedback={this.editFeedback} showTooltips={this.state.showTooltips}
+                  grading={false} updateFeedback={this.updateFeedback} />
               </React.Fragment>
             }
           </React.Fragment>

@@ -546,7 +546,7 @@ class ExamEditor extends React.Component {
       let widgets = this.props.widgets
       let elementList = []
 
-      widgets.forEach((widget) => {
+      Object.values(widgets).forEach((widget) => {
         if (widget.type === 'exam_widget') {
           elementList = elementList.concat(this.renderExamWidget(widget))
         } else if (widget.type === 'problem_widget') {

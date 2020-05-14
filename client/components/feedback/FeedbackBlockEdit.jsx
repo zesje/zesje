@@ -4,30 +4,29 @@ import ConfirmationModal from '../../components/ConfirmationModal.jsx'
 import * as api from '../../api.jsx'
 import Notification from 'react-bulma-notification'
 
-const BackButton = (props) => (
-  <button className='button is-light is-fullwidth' onClick={props.onClick}>
+const CancelButton = (props) => (
+  <button className='button is-light' onClick={props.onClick}>
     <span className='icon is-small'>
-      <i className='fa fa-chevron-left' />
+      <i className='fa fa-times' />
     </span>
-    <span>back</span>
+    <span>Cancel</span>
   </button>
 )
 
 const SaveButton = (props) => (
-  <button className='button is-link is-fullwidth' disabled={props.disabled} onClick={props.onClick}>
+  <button className='button is-link' disabled={props.disabled} onClick={props.onClick}>
     <span className='icon is-small'>
       <i className='fa fa-floppy-o' />
     </span>
-    <span>{props.exists ? 'save' : 'add'}</span>
+    <span>{props.exists ? 'Save' : 'Add'}</span>
   </button>
 )
 
 const DeleteButton = (props) => (
-  <button className='button is-link is-fullwidth is-danger' disabled={!props.exists} onClick={props.onClick}>
+  <button className='button is-danger' style={{marginLeft: 'auto'}} disabled={!props.exists} onClick={props.onClick}>
     <span className='icon is-small'>
       <i className='fa fa-trash' />
     </span>
-    <span>{'delete'}</span>
   </button>
 )
 
@@ -42,13 +41,13 @@ class EditPanel extends React.Component {
 
   static getDerivedStateFromProps (nextProps, prevState) {
     // In case nothing is set, use an empty function that no-ops
-    const updateCallback = nextProps.updateCallback || (_ => {})
+    const updateCallback = nextProps.updateFeedback || (_ => {})
     if (nextProps.feedback && prevState.id !== nextProps.feedback.id) {
       const fb = nextProps.feedback
       return {
         id: fb.id,
         name: fb.name,
-        description: fb.description,
+        description: fb.description === null ? '' : fb.description,
         score: fb.score,
         updateCallback: updateCallback
       }
@@ -89,14 +88,14 @@ class EditPanel extends React.Component {
       fb.id = this.state.id
       api.put(uri, fb)
         .then(() => {
-          this.state.updateCallback(fb)
+          this.state.updateCallback()
           this.props.goBack()
         })
     } else {
       api.post(uri, fb)
         .then((response) => {
           // Response is the feedback option
-          this.state.updateCallback(response)
+          this.state.updateCallback()
           this.setState({
             id: null,
             name: '',
@@ -111,10 +110,7 @@ class EditPanel extends React.Component {
     if (this.state.id) {
       api.del('feedback/' + this.props.problemID + '/' + this.state.id)
         .then(() => {
-          this.state.updateCallback({
-            id: this.state.id,
-            deleted: true
-          })
+          this.state.updateCallback()
           this.props.goBack()
         })
         .catch(err => {
@@ -122,6 +118,7 @@ class EditPanel extends React.Component {
             Notification.error('Could not delete feedback' +
               (res.message ? ': ' + res.message : ''))
             // update to try and get a consistent state
+            this.state.updateCallback()
             this.props.goBack()
           })
         })
@@ -131,28 +128,27 @@ class EditPanel extends React.Component {
   render () {
     return (
       <React.Fragment>
-        <p className={this.props.grading ? 'panel-heading' : 'panel-heading is-radiusless'}>
-          Manage feedback
-        </p>
-
-        <div className='panel-block'>
-          <div className='field'>
-            <label className='label'>Name</label>
-            <div className='control has-icons-left'>
-              <input className='input' placeholder='Name' name='name'
-                value={this.state.name} onChange={this.changeText} onKeyDown={this.key} />
-              <span className='icon is-small is-left'>
-                <i className='fa fa-quote-left' />
-              </span>
+        <div className='panel-block attach-bottom'>
+          <div className='field-body'>
+            <div className='field no-grow'>
+              <div className='control is-score-control'>
+                <input className='input is-small' placeholder='#'
+                  value={this.state.score} onChange={this.changeScore} onKeyDown={this.key} />
+              </div>
+            </div>
+            <div className='field grow'>
+              <div className='control'>
+                <input className='input' placeholder='Name' name='name'
+                  value={this.state.name} onChange={this.changeText} onKeyDown={this.key} />
+              </div>
             </div>
           </div>
         </div>
-
-        <div className='panel-block'>
-          <div className='field'>
+        <div className='panel-block attach-bottom'>
+          <div className='field is-fullwidth'>
             <label className='label'>Description</label>
             <div className='control has-icons-left'>
-              <textarea className='input' rows='2' placeholder='Description' name='description'
+              <textarea className='input' style={{height: '4rem'}} placeholder='Description' name='description'
                 value={this.state.description} onChange={this.changeText} onKeyDown={this.key} />
               <span className='icon is-small is-left'>
                 <i className='fa fa-comment-o' />
@@ -162,23 +158,14 @@ class EditPanel extends React.Component {
         </div>
 
         <div className='panel-block'>
-          <div className='field'>
-            <label className='label'>Score</label>
-            <div className='control has-icons-left has-icons-right'>
-              <input className='input' placeholder='Score'
-                value={this.state.score} onChange={this.changeScore} onKeyDown={this.key} />
-              <span className='icon is-small is-left'>
-                <i className='fa fa-star' />
-              </span>
+          <div className={'flex-space-between is-fullwidth'}>
+            <div className={'buttons is-marginless'}>
+              <SaveButton onClick={this.saveFeedback} exists={this.props.feedback}
+                disabled={!this.state.name || (!this.state.score && this.state.score !== 0) || isNaN(parseInt(this.state.score))} />
+              <CancelButton onClick={this.props.goBack} />
             </div>
+            <DeleteButton onClick={() => { this.setState({deleting: true}) }} exists={this.props.feedback} />
           </div>
-        </div>
-
-        <div className='panel-block'>
-          <BackButton onClick={this.props.goBack} />
-          <SaveButton onClick={this.saveFeedback} exists={this.props.feedback}
-            disabled={!this.state.name || (!this.state.score && this.state.score !== 0) || isNaN(parseInt(this.state.score))} />
-          <DeleteButton onClick={() => { this.setState({deleting: true}) }} exists={this.props.feedback} />
           <ConfirmationModal
             headerText={`Do you want to irreversibly delete feedback option "${this.state.name}"?`}
             contentText={

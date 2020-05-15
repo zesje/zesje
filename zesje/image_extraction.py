@@ -41,12 +41,9 @@ def extract_images_from_file(file_path_or_buffer, file_info, dpi=300, progress=N
             infolist_files = [zip_info for zip_info in zip_file.infolist() if not zip_info.is_dir()]
 
             # Count number of non pdf files to update total
-            infolist_not_pdf = [
-                zip_info for zip_info in infolist_files
-                if ((info_mime_type := guess_mimetype(zip_info.filename)) is not None
-                    and info_mime_type != 'application/pdf')
-            ]
-            progress['total'] += len(infolist_not_pdf)
+            progress['total'] += sum(
+                1 for zip_info in infolist_files if guess_mimetype([zip_info.filename]) != 'application/pdf'
+            )
 
             for zip_info in infolist_files:
                 with zip_file.open(zip_info, 'r') as zip_info_content:
@@ -220,7 +217,8 @@ def exif_transpose(image):
 
 def guess_mimetype(file_info):
     last_filename = _last_filename(file_info)
-    return mimetypes.guess_type(last_filename)[0]
+    if (mimetype := mimetypes.guess_type(last_filename)):
+        return mimetype[0]
 
 
 def readable_filename(file_info):

@@ -47,13 +47,13 @@ def process_scan(scan_id, scan_type):
     for signal_type in (signal.SIGINT, signal.SIGTERM):
         signal.signal(signal_type, raise_exit)
 
-    scan_types = {
+    scan_pipelines = {
         'normal': process_page,
         'raw': process_page_raw
     }
 
     try:
-        _process_scan(scan_id, scan_types[scan_type])
+        _process_scan(scan_id, scan_pipelines[scan_type])
     except BaseException as error:
         # TODO: When #182 is implemented, properly separate user-facing
         #       messages (written to DB) from developer-facing messages,

@@ -61,6 +61,9 @@ def extract_images_from_file(file_path_or_buffer, file_info, dpi=300, progress=N
 
     if mime_type is None:
         # Unable to determine mime type, just yield what we currently have
+        if len(file_info) == 1:
+            progress['total'] += 1
+
         progress['number'] += 1
         yield file_path_or_buffer, file_info, progress['number'], progress['total']
 

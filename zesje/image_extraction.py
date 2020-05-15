@@ -1,19 +1,84 @@
 from io import BytesIO
 
 import numpy as np
+import mimetypes
+import zipfile
+
+from flask import current_app
 from PIL import Image
-from pikepdf import Pdf, PdfImage
+from pikepdf import Pdf, PdfImage, PdfError
 from tempfile import SpooledTemporaryFile
 from wand.image import Color, Image as WandImage
 
+EXIF_METHODS = {
+    2: Image.FLIP_LEFT_RIGHT,
+    3: Image.ROTATE_180,
+    4: Image.FLIP_TOP_BOTTOM,
+    5: Image.TRANSPOSE,
+    6: Image.ROTATE_270,
+    7: Image.TRANSVERSE,
+    8: Image.ROTATE_90,
+}
 
-def extract_images(filename, dpi=300):
+
+def extract_images_from_file(file_path_or_buffer, file_info, dpi=300, progress=None):
+    """Yield all images from an arbitrary file"""
+    if not progress:
+        progress = dict(number=0, total=0)
+
+    if type(file_info) != list:
+        file_info = [file_info]
+
+    mime_type = guess_mimetype(file_info)
+
+    if mime_type is None:
+        # Unable to determine mime type, just yield what we currently have
+        progress['number'] += 1
+        yield file_path_or_buffer, file_info, progress['number'], progress['total']
+
+    elif mime_type in current_app.config['ZIP_MIME_TYPES']:
+        with zipfile.ZipFile(file_path_or_buffer, mode='r') as zip_file:
+            infolist_files = [zip_info for zip_info in zip_file.infolist() if not zip_info.is_dir()]
+
+            # Count number of non pdf files to update total
+            infolist_not_pdf = [
+                zip_info for zip_info in infolist_files
+                if ((info_mime_type := guess_mimetype(zip_info.filename)) is not None
+                    and info_mime_type != 'application/pdf')
+            ]
+            progress['total'] += len(infolist_not_pdf)
+
+            for zip_info in infolist_files:
+                with zip_file.open(zip_info, 'r') as zip_info_content:
+                    combined_file_info = _combine_file_info(file_info, zip_info.filename)
+                    yield from extract_images_from_file(zip_info_content, combined_file_info, dpi, progress)
+
+    elif mime_type == 'application/pdf':
+        yield from extract_images_from_pdf(file_path_or_buffer, file_info, dpi, progress)
+
+    elif mime_type.startswith('image/'):
+        yield from extract_image_from_image(file_path_or_buffer, file_info, progress)
+
+
+def extract_image_from_image(file_path_or_buffer, file_info, progress):
+    if len(file_info) == 1:
+        progress['total'] += 1
+
+    progress['number'] += 1
+    with Image.open(file_path_or_buffer) as image:
+        image = exif_transpose(image)
+        image = convert_to_rgb(image)
+        yield image, file_info, progress['number'], progress['total']
+
+
+def extract_images_from_pdf(file_path_or_buffer, file_info, dpi=300, progress=dict(number=0, total=0)):
     """Yield all images from a PDF file.
 
     Tries to use PikePDF to extract the images from the given PDF. If PikePDF is not able to extract the image from a
     page, it continues to use Wand to flatten the rest of the pages.
     """
-    with Pdf.open(filename) as pdf_reader:
+    with Pdf.open(file_path_or_buffer) as pdf_reader:
+        progress['total'] += len(pdf_reader.pages)
         use_wand = False
 
         for page_number, page in enumerate(pdf_reader.pages, start=1):
@@ -22,7 +87,7 @@ def extract_images(filename, dpi=300):
                     # Try to use PikePDF, but catch any error it raises
                     img = extract_image_pikepdf(page)
 
-                except (ValueError, AttributeError):
+                except (ValueError, AttributeError, PdfError):
                     # Fallback to Wand if extracting with PikePDF failed
                     use_wand = True
 
@@ -31,7 +96,8 @@ def extract_images(filename, dpi=300):
 
             img = convert_to_rgb(img)
 
-            yield img, page_number
+            progress['number'] += 1
+            yield img, _combine_file_info(file_info, 1), progress['number'], progress['total']
 
 
 def extract_image_pikepdf(page):
@@ -75,7 +141,6 @@ def extract_image_pikepdf(page):
         # Check if the aspect ratio of the image is the same as the aspect ratio of the page up to a 3% relative error.
         if abs(pdf_ratio - image_ratio) > 0.03 * pdf_ratio:
             raise ValueError('Image has incorrect dimensions')
-
         return pdf_image.as_pil_image()
 
 
@@ -127,3 +192,39 @@ def convert_to_rgb(img):
         img = background
 
     return img
+
+
+def exif_transpose(image):
+    """
+    If an image has an EXIF Orientation tag, return a new image that is
+    transposed accordingly.
+
+    Adapted from PIL.ImageOps.exif_transpose.
+    """
+    print(type(image))
+    exif = image._getexif()
+
+    if exif is None:
+        return image
+
+    orientation = exif.get(0x0112)
+    method = EXIF_METHODS.get(orientation)
+
+    return image if not method else image.transpose(method)
+
+
+def guess_mimetype(file_info):
+    last_filename = _last_filename(file_info)
+    return mimetypes.guess_type(last_filename)[0]
+
+
+def readable_filename(file_info):
+    return ', '.join(f'page {info}' if type(info) == int else info for info in file_info)
+
+
+def _combine_file_info(file_info, file_info_to_append):
+    return file_info + [file_info_to_append]
+
+
+def _last_filename(file_info):
+    return file_info[-1]

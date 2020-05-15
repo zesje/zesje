@@ -71,12 +71,18 @@ def extract_image_from_image(file_path_or_buffer, file_info, progress):
         yield image, file_info, progress['number'], progress['total']
 
 
-def extract_images_from_pdf(file_path_or_buffer, file_info, dpi=300, progress=dict(number=0, total=0)):
+def extract_images_from_pdf(file_path_or_buffer, file_info=None, dpi=300, progress=None):
     """Yield all images from a PDF file.
 
     Tries to use PikePDF to extract the images from the given PDF. If PikePDF is not able to extract the image from a
     page, it continues to use Wand to flatten the rest of the pages.
     """
+    if not progress:
+        progress = dict(number=0, total=0)
+
+    if not file_info:
+        file_info = [file_path_or_buffer]
+
     with Pdf.open(file_path_or_buffer) as pdf_reader:
         progress['total'] += len(pdf_reader.pages)
         use_wand = False

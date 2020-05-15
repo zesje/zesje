@@ -1,7 +1,7 @@
 import numpy as np
 import os
 
-from .image_extraction import extract_images
+from .image_extraction import extract_images_from_pdf
 from .images import get_box
 from PIL import Image
 from flask import current_app
@@ -70,9 +70,9 @@ def _extract_reference_images(dpi, exam_id):
     output_directory = os.path.join(data_directory, f'{exam_id}_data')
     pdf_path = os.path.join(output_directory, 'exam.pdf')
 
-    pages = extract_images(pdf_path, dpi)
+    pages = extract_images_from_pdf(pdf_path, dpi=dpi)
 
-    for image, page in pages:
+    for image, _, page, _ in pages:
         _save_image(image, page, dpi, output_directory)
 
 

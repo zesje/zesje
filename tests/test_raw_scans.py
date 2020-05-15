@@ -3,18 +3,20 @@ import zipfile
 
 from io import BytesIO
 from PIL import Image
-from pathlib import Path
 
-from zesje.raw_scans import extract_image_info, create_copy, _process_zipped_images
-from zesje.database import db, Exam, Student, Submission, Scan, Problem
+from zesje.raw_scans import extract_page_info, create_copy, process_page
+from zesje.scans import _process_scan
+from zesje.database import db, Exam, Student, Submission, Scan, Problem, ExamWidget
 
 
 @pytest.fixture
 def app_with_data(app):
     exam = Exam(name='')
+    widget = ExamWidget(name='barcode_widget', exam=exam, x=0, y=0)
     problem = Problem(exam=exam, name='Problem')
     students = [Student(id=i+1000000, first_name='', last_name='') for i in range(2)]
     db.session.add(exam)
+    db.session.add(widget)
     db.session.add(problem)
     for student in students:
         db.session.add(student)
@@ -22,19 +24,33 @@ def app_with_data(app):
     yield app, exam, students
 
 
-@pytest.mark.parametrize('file_name, info', [
-    ('1234567-02.png', (1234567, 1, 1)),
-    ('1234567-1-4.jpeg', (1234567, 0, 4)),
-    ('1234567.png', None),
-    ('ABCDEFG.jpeg', None)],
+@pytest.mark.parametrize('file_info, info', [
+    (['1234567-02.png'], (1234567, 1, 1)),
+    (['1234567-1-4.jpeg'], (1234567, 0, 4)),
+    (['1234567.png'], None),
+    (['ABCDEFG.jpeg'], None),
+    (['1234567.zip', '1.pdf'], (1234567, 0, 1)),
+    (['1234567.zip', '1-2.img'], (1234567, 0, 2)),
+    (['1234567.pdf', 1], (1234567, 0, 1)),
+    (['some.zip', '1234567.pdf', 1], (1234567, 0, 1)),
+    (['some.zip', '1234567/2.pdf', 2], (1234567, 1, 2)),
+    (['some.zip', '1234567-1.jpg'], (1234567, 0, 1)),
+    (['some.zip', '1234567/1.png'], (1234567, 0, 1))],
     ids=[
     'Valid name (no copy)',
     'Valid name (with copy)',
     'Invalid name (no page)',
-    'Invalid name (no student)'])
-def test_extract_image_info(file_name, info):
+    'Invalid name (no student)',
+    'Valid name (pdf page in zip)',
+    'Valid name (with copy, img in zip)',
+    'Valid name (pdf)',
+    'Valid name (pdf in zip)',
+    'Valid name (copy in pdf in zip)',
+    'Valid name (img page in zip)',
+    'Valid name (img in folder in zip'])
+def test_extract_image_info(file_info, info):
     try:
-        ext_info = extract_image_info(file_name)
+        ext_info = extract_page_info(file_info)
     except Exception:
         ext_info = None
 
@@ -74,12 +90,13 @@ def test_zip_process(app_with_data, zip_file):
     db.session.add(scan)
     db.session.commit()
 
-    path = Path(app.config['SCAN_DIRECTORY']) / f'{scan.id}.zip'
-    print(path)
-    with open(str(path), 'wb') as file:
+    with open(str(scan.path), 'wb') as file:
         file.write(zip_file.getvalue())
 
-    _process_zipped_images(scan.id)
+    _process_scan(scan.id, process_page)
+
+    print(scan.message)
+    print(scan.status)
 
     for student in students:
         sub = Submission.query.filter(Submission.student == student,

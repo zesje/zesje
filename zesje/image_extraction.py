@@ -207,7 +207,6 @@ def exif_transpose(image):
 
     Adapted from PIL.ImageOps.exif_transpose.
     """
-    print(type(image))
     exif = image._getexif()
 
     if exif is None:

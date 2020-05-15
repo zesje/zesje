@@ -95,9 +95,6 @@ def test_zip_process(app_with_data, zip_file):
 
     _process_scan(scan.id, process_page)
 
-    print(scan.message)
-    print(scan.status)
-
     for student in students:
         sub = Submission.query.filter(Submission.student == student,
                                       Submission.exam == exam).one()

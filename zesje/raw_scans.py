@@ -22,10 +22,8 @@ RE_STUDENT = re.compile(
 
 
 def process_page(image, file_info, exam_config, output_directory):
-    print(file_info)
     try:
         student_id, page, copy = extract_page_info(file_info)
-        print(student_id, page, copy)
     except Exception as e:
         return False, str(e)
 

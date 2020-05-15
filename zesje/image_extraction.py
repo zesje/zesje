@@ -51,10 +51,10 @@ def extract_images_from_file(file_path_or_buffer, file_info, dpi=300, progress=N
     total : int
         The number of files discovered so far, not guaranteed to be the final number of files.
     """
-    if not progress:
+    if progress is None:
         progress = dict(number=0, total=0)
 
-    if type(file_info) != list:
+    if not isinstance(file_info, list):
         file_info = [file_info]
 
     mime_type = guess_mimetype(file_info)
@@ -132,10 +132,10 @@ def extract_images_from_pdf(file_path_or_buffer, file_info=None, dpi=300, progre
     ------
     Same variables as `extract_images_from_file`.
     """
-    if not progress:
+    if progress is None:
         progress = dict(number=0, total=0)
 
-    if not file_info:
+    if file_info is None:
         file_info = [file_path_or_buffer]
 
     with Pdf.open(file_path_or_buffer) as pdf_reader:

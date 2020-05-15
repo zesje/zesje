@@ -50,7 +50,28 @@ def process_page(image, file_info, exam_config, output_directory):
 
 
 def extract_page_info(file_info):
-    """Extract information about student, copy and page from the file name."""
+    """Extract information about student, copy and page from the file name.
+
+    Supports the following formats:
+    - File of format student-page(-copy).ext
+    - File in ZIP of format student/page(-copy).ext
+    - File of format page(-copy).ext in a ZIP, parent should be student.ext
+    - Page in a PDF, parent path should be student.pdf, student-page.pdf or student/page.pdf
+
+    Params
+    ------
+    file_info : list of str and int
+        See `image_extraction.extract_images_from_file`.
+
+    Returns
+    ------
+    student_id : int
+        Student number
+    page : int
+        Page number, 0-indexed
+    copy : int
+        Copy number, 1-indexed
+    """
     filename = str(file_info[-1])
 
     # File of format student-page-copy.ext

@@ -22,7 +22,35 @@ EXIF_METHODS = {
 
 
 def extract_images_from_file(file_path_or_buffer, file_info, dpi=300, progress=None):
-    """Yield all images from an arbitrary file"""
+    """Recursively yield all images from an arbitrary file
+
+    This method supports ZIP, PDF and image files.
+
+    Params
+    ------
+    file_path_or_buffer : path-like or buffer/stream
+        Points to the file to read from
+    file_info : str or [str]
+        The name of the file, including extension. Is used to determine the mimetype.
+    dpi : int
+        The resolution to use for flattening PDFs, in DPI
+    progress : dict
+        Dictionary containing `number` of files extracted and  `total` number of files discovered so far.
+        Doesn't need to be passed as an argument, only used for recursion.
+
+    Yields
+    ------
+    image : PIL.Image or buffer/stream
+        The extracted image or the buffer/stream of a non-image file
+    file_info : list of str and int
+        The hierarchy of the image origin. Contains a combination of the following:
+        scan filename, filename in the zip or PDF page number.
+        For example: ['scan.zip', 'some_directory_in_zip/student/page.pdf', 3] or ['student-page.png']
+    number : int
+        The number of files extracted so far.
+    total : int
+        The number of files discovered so far, not guaranteed to be the final number of files.
+    """
     if not progress:
         progress = dict(number=0, total=0)
 
@@ -58,6 +86,21 @@ def extract_images_from_file(file_path_or_buffer, file_info, dpi=300, progress=N
 
 
 def extract_image_from_image(file_path_or_buffer, file_info, progress):
+    """Yield an image from a file or buffer/stream
+
+    Params
+    ------
+    file_path_or_buffer : path-like or buffer/stream
+        Points to the image file to read from
+    file_info : [str]
+        The hierarchy of the image origin. See `extract_images_from_file`.
+    progress : dict
+        Dictionary containing `number` of files extracted and `total` number of files discovered so far.
+
+    Yields
+    ------
+    Same variables as `extract_images_from_file`.
+    """
     if len(file_info) == 1:
         progress['total'] += 1
 
@@ -73,6 +116,21 @@ def extract_images_from_pdf(file_path_or_buffer, file_info=None, dpi=300, progre
 
     Tries to use PikePDF to extract the images from the given PDF. If PikePDF is not able to extract the image from a
     page, it continues to use Wand to flatten the rest of the pages.
+
+    Params
+    ------
+    file_path_or_buffer : path-like or buffer/stream
+        Points to the image file to read from
+    file_info : [str]
+        The hierarchy of the image origin. See `extract_images_from_file`.
+    dpi : int
+        The resolution to use for flattening PDFs, in DPI
+    progress : dict
+        Dictionary containing `number` of files extracted and  `total` number of files discovered so far.
+
+    Yields
+    ------
+    Same variables as `extract_images_from_file`.
     """
     if not progress:
         progress = dict(number=0, total=0)
@@ -216,12 +274,26 @@ def exif_transpose(image):
 
 
 def guess_mimetype(file_info):
+    """Guess mime type from extension of `file_info` object
+
+    See `extract_images_from_file` for more information on `file_info`.
+
+    Returns
+    ------
+    mimetype : str or None
+        The mimetype if possible to deduce from the extension.
+        None otherwise.
+    """
     last_filename = _last_filename(file_info)
     if (mimetype := mimetypes.guess_type(last_filename)):
         return mimetype[0]
 
 
 def readable_filename(file_info):
+    """Create a readable file name from a `file_info` object.
+
+    See `extract_images_from_file` for more information on `file_info`.
+    """
     return ', '.join(f'page {info}' if type(info) == int else info for info in file_info)
 
 

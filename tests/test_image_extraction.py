@@ -53,8 +53,11 @@ def test_extract_images_from_zip(config_app):
             assert isinstance(image, Image.Image)
             assert image.size == (10, 10)
             assert number == expected_number
+            assert number <= total
             assert total >= last_total
             last_total = total
+
+        assert last_total == 2
 
 
 def test_extract_images_from_pdf(config_app, datadir):
@@ -66,8 +69,11 @@ def test_extract_images_from_pdf(config_app, datadir):
         assert isinstance(image, Image.Image)
         assert image.size == (827, 1169)
         assert number == expected_number
+        assert number <= total
         assert total >= last_total
         last_total = total
+
+    assert last_total == 2
 
 
 def test_extract_images_from_mixed_zip(config_app, datadir):
@@ -96,5 +102,8 @@ def test_extract_images_from_mixed_zip(config_app, datadir):
             else:
                 assert image == b'1701'
             assert number == expected_number
+            assert number <= total
             assert total >= last_total
             last_total = total
+
+    assert last_total == 5

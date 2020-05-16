@@ -98,9 +98,9 @@ def extract_images_or_infos_from_file(file_path_or_buffer, file_info, dpi=300, p
         Dictionary containing `number` of files extracted and  `total` number of files discovered so far.
         Doesn't need to be passed as an argument, only used for recursion.
     only_info : bool
-        When `True`, yield images and progress. When `False`, yield file tree info.
+        When `False`, yield everything. When `True`, only yield file tree info.
 
-    Yields (when `only_info == False`)
+    Yields
     ------
     image : PIL.Image or buffer/stream
         The extracted image or the buffer/stream of a non-image file
@@ -108,15 +108,11 @@ def extract_images_or_infos_from_file(file_path_or_buffer, file_info, dpi=300, p
         The hierarchy of the file origin. Contains a combination of the following:
         scan filename, filename in the zip or PDF page number.
         For example: ['scan.zip', 'some_directory_in_zip/student/page.pdf', 3] or ['student-page.png']
+        When `only_info` is `True`, this is the only parameter that is yielded.
     number : int
         The number of files extracted so far.
     total : int
         The number of files discovered so far, not guaranteed to be the final number of files.
-
-    Yields (when `only_info == True`)
-    ------
-    file_info : list of str and int
-        See above.
     """
     if progress is None:
         progress = dict(number=0, total=0)

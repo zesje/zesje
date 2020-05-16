@@ -4,7 +4,7 @@ import zipfile
 from io import BytesIO
 from PIL import Image
 
-from zesje.raw_scans import extract_page_info, create_copy, process_page
+from zesje.raw_scans import create_copy, process_page
 from zesje.scans import _process_scan
 from zesje.database import db, Exam, Student, Submission, Scan, Problem, ExamWidget
 
@@ -22,39 +22,6 @@ def app_with_data(app):
         db.session.add(student)
     db.session.commit()
     yield app, exam, students
-
-
-@pytest.mark.parametrize('file_info, info', [
-    (['1234567-02.png'], (1234567, 1, 1)),
-    (['1234567-1-4.jpeg'], (1234567, 0, 4)),
-    (['1234567.png'], None),
-    (['ABCDEFG.jpeg'], None),
-    (['1234567.zip', '1.pdf'], (1234567, 0, 1)),
-    (['1234567.zip', '1-2.img'], (1234567, 0, 2)),
-    (['1234567.pdf', 1], (1234567, 0, 1)),
-    (['some.zip', '1234567.pdf', 1], (1234567, 0, 1)),
-    (['some.zip', '1234567/2.pdf', 2], (1234567, 1, 2)),
-    (['some.zip', '1234567-1.jpg'], (1234567, 0, 1)),
-    (['some.zip', '1234567/1.png'], (1234567, 0, 1))],
-    ids=[
-    'Valid name (no copy)',
-    'Valid name (with copy)',
-    'Invalid name (no page)',
-    'Invalid name (no student)',
-    'Valid name (pdf page in zip)',
-    'Valid name (with copy, img in zip)',
-    'Valid name (pdf)',
-    'Valid name (pdf in zip)',
-    'Valid name (copy in pdf in zip)',
-    'Valid name (img page in zip)',
-    'Valid name (img in folder in zip'])
-def test_extract_image_info(file_info, info):
-    try:
-        ext_info = extract_page_info(file_info)
-    except Exception:
-        ext_info = None
-
-    assert ext_info == info
 
 
 def test_create_copy(app_with_data):

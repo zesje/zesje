@@ -145,7 +145,7 @@ def apply_scan(img, rotation=0, scale=1, skew=(0, 0)):
 
 def test_pipeline(full_app):
     for image, exam_config, examdir in generate_flat_scan_data():
-        success, reason = scans.process_page(image, [], exam_config, examdir)
+        success, reason = scans.process_page(image, [], [], exam_config, examdir)
         assert success is True, reason
 
 
@@ -157,7 +157,7 @@ def test_pipeline(full_app):
 def test_noise(full_app, threshold, expected):
     for image, exam_config, _ in generate_flat_scan_data():
         image = apply_whitenoise(image, threshold)
-        success, reason = scans.process_page(image, [], exam_config)
+        success, reason = scans.process_page(image, [], [], exam_config)
         assert success is expected, reason
 
 
@@ -170,7 +170,7 @@ def test_noise(full_app, threshold, expected):
 def test_rotate(full_app, rotation, expected):
     for image, exam_config, _ in generate_flat_scan_data():
         image = apply_scan(img=image, rotation=rotation)
-        success, reason = scans.process_page(image, [], exam_config)
+        success, reason = scans.process_page(image, [], [], exam_config)
         assert success is expected, reason
 
 
@@ -181,7 +181,7 @@ def test_rotate(full_app, rotation, expected):
 def test_scale(full_app, scale, expected):
     for image, exam_config, _ in generate_flat_scan_data():
         image = apply_scan(img=image, scale=scale)
-        success, reason = scans.process_page(image, [], exam_config)
+        success, reason = scans.process_page(image, [], [], exam_config)
         assert success is expected, reason
 
 
@@ -192,7 +192,7 @@ def test_scale(full_app, scale, expected):
 def test_skew(full_app, skew, expected):
     for image, exam_config, _ in generate_flat_scan_data():
         image = apply_scan(img=image, skew=skew)
-        success, reason = scans.process_page(image, [], exam_config)
+        success, reason = scans.process_page(image, [], [], exam_config)
         assert success is expected, reason
 
 
@@ -204,7 +204,7 @@ def test_all_effects(full_app, rotation, scale, skew, expected):
     for image, exam_config, _ in generate_flat_scan_data():
         image = apply_scan(
             img=image, rotation=rotation, scale=scale, skew=skew)
-        success, reason = scans.process_page(image, [], exam_config)
+        success, reason = scans.process_page(image, [], [], exam_config)
         assert success is expected, reason
 
 

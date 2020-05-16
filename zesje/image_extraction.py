@@ -51,9 +51,6 @@ def extract_pages_from_file(file_path_or_buffer, file_info, dpi=300):
         The name of the file, including extension. Is used to determine the mimetype.
     dpi : int
         The resolution to use for flattening PDFs, in DPI
-    progress : dict
-        Dictionary containing `number` of files extracted and  `total` number of files discovered so far.
-        Doesn't need to be passed as an argument, only used for recursion.
 
     Yields
     ------
@@ -62,11 +59,13 @@ def extract_pages_from_file(file_path_or_buffer, file_info, dpi=300):
     page_info : tuple of (int or None)
         Contains (student_id, page_number, copy_number). All can be None.
     file_info : list of str
-        The file tree of the image.
+        The hierarchy of the file origin. Contains a combination of the following:
+        scan filename, filename in the zip or PDF page number.
+        For example: ['scan.zip', 'some_directory_in_zip/student/page.pdf', 3] or ['student-page.png']
     number : int
         The number of files extracted so far.
     total : int
-        The number of files discovered so far, not guaranteed to be the final number of files.
+        The total number of file to extract
     """
     file_infos = list(extract_images_or_infos_from_file(file_path_or_buffer, file_info, dpi, only_info=True))
     final_total = len(file_infos)
@@ -84,7 +83,7 @@ def extract_pages_from_file(file_path_or_buffer, file_info, dpi=300):
 
 
 def extract_images_or_infos_from_file(file_path_or_buffer, file_info, dpi=300, progress=None, only_info=False):
-    """Extract images of file tree info from an arbitrary file
+    """Extract images or file tree info from an arbitrary file
 
     Params
     ------
@@ -153,7 +152,17 @@ def extract_images_or_infos_from_file(file_path_or_buffer, file_info, dpi=300, p
         yield from _extract_from_unknown(file_path_or_buffer, file_info, progress, only_info)
 
 
-def _extract_from_unknown(file_path_or_buffer, file_info, progress, only_info):
+def _extract_from_unknown(file_path_or_buffer, file_info, progress, only_info=False):
+    """Helper function to yield a file of unknown type
+
+    Params
+    ------
+    Same as `extract_image_from_image`
+
+    Yields
+    ------
+    Same as `extract_images_or_infos_from_file`
+    """
     if len(file_info) == 1:
         progress['total'] += 1
 
@@ -176,13 +185,13 @@ def extract_image_from_image(file_path_or_buffer, file_info, progress, only_info
     file_path_or_buffer : path-like or buffer/stream
         Points to the image file to read from
     file_info : [str]
-        The hierarchy of the image origin. See `extract_images_from_file`.
+        The hierarchy of the image origin. See `extract_pages_from_file`.
     progress : dict
         Dictionary containing `number` of files extracted and `total` number of files discovered so far.
 
     Yields
     ------
-    Same variables as `extract_images_or_info_from_file`.
+    Same as `extract_images_or_infos_from_file`.
     """
     if len(file_info) == 1:
         progress['total'] += 1
@@ -209,7 +218,7 @@ def extract_images_from_pdf(file_path_or_buffer, file_info=None, dpi=300, progre
     file_path_or_buffer : path-like or buffer/stream
         Points to the image file to read from
     file_info : [str]
-        The hierarchy of the image origin. See `extract_images_from_file`.
+        The hierarchy of the image origin. See `extract_pages_from_file`.
     dpi : int
         The resolution to use for flattening PDFs, in DPI
     progress : dict
@@ -217,7 +226,7 @@ def extract_images_from_pdf(file_path_or_buffer, file_info=None, dpi=300, progre
 
     Yields
     ------
-    Same variables as `extract_images_from_file`.
+    Same as `extract_images_or_infos_from_file`.
     """
     if progress is None:
         progress = dict(number=0, total=0)
@@ -334,22 +343,22 @@ def extract_image_wand(page, dpi):
 
 
 def filter_ambiguities(page_infos):
-    """Filters out any ambiguities from partially determined page info
+    """Filters and fixes any ambiguities from partially determined page info
 
     An ambiguity for a student can be:
     - A list of non-unique page numbers with undefined copy numbers
     - A list of unique page numbers with any (but not all) undefined copy number
     - A list containing more than one undefined page number
 
-    This function also fills in data for a student when possible:
+    This function also fills in ambiguous data for a student when possible:
     - A list of unique page numbers without any defined copy => copy = 1
-    - A single unidentified page => page = 1, copy = 1
+    - A single unidentified page => page = 0, copy = 1
 
     Params
     ------
     page_infos : tuple of (None or int)
         Contains (student_id, page, copy). All can be None.
-
+        Page is 0-indexed, copy is 1-indexed.
     Returns
     -------
     page_infos : tuple of (None or int)
@@ -408,7 +417,7 @@ def guess_page_info(file_info, students):
 
     Supports the following formats:
     - File of format student-page(-copy).ext
-    - Any file tree containing student, page or copy (in order)
+    - Any file tree containing student (name or number), page or copy (in order)
 
     Note that the page number in a PDF is also part of the file tree.
 
@@ -431,11 +440,10 @@ def guess_page_info(file_info, students):
     student_id, page, copy = None, None, None
     file_info_splitted = sum((str(info).split('/') for info in file_info), [])
     while len(file_info_splitted) > 0 and (current_info := file_info_splitted.pop(0)):
-        # Test each time if we find a student number
+        # Check each time if we find a student number
         # This is to ensure the second student number in the path
         # is not misinterpreted as page or copy number.
         if (match := RE_STUDENT_AT_LEAST.match(current_info)):
-
             if student_id is not None and match.group('student_id') != student_id:
                 student_id, page, copy = None, None, None
                 break

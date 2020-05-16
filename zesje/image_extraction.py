@@ -434,8 +434,8 @@ def guess_page_info(file_info, students):
         Copy number, 1-indexed
     """
     student_id, page, copy = None, None, None
-    file_info_splitted = sum((str(info).split('/') for info in file_info), [])
-    while len(file_info_splitted) > 0 and (current_info := file_info_splitted.pop(0)):
+    file_info_folders = sum((str(info).split('/') for info in file_info), [])
+    for current_info in file_info_folders:
         # Check each time if we find a student number
         # This is to ensure the second student number in the path
         # is not misinterpreted as page or copy number.

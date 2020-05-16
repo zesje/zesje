@@ -3,12 +3,16 @@ from io import BytesIO
 import numpy as np
 import mimetypes
 import zipfile
+import re
 
 from flask import current_app
 from PIL import Image
 from pikepdf import Pdf, PdfImage, PdfError
 from tempfile import SpooledTemporaryFile
 from wand.image import Color, Image as WandImage
+
+from .database import Student
+from .constants import ID_GRID_DIGITS
 
 EXIF_METHODS = {
     2: Image.FLIP_LEFT_RIGHT,
@@ -20,9 +24,22 @@ EXIF_METHODS = {
     8: Image.ROTATE_90,
 }
 
+RE_STUDENT_AT_LEAST = re.compile(
+    fr'(?P<student_id>\d{{{ID_GRID_DIGITS}}})(\D)*?(-(?P<page>\d+))?(-(?P<copy>\d+))?(\.(?P<ext>\w+))?$'
+)
+RE_PAGE_AT_LEAST = re.compile(
+    r'^(\D*(?P<page>\d+)\D*?)((?P<copy>\d+))?(\.(?P<ext>\w+))?$'
+)
+RE_COPY = re.compile(
+    r'^(\D*(?P<copy>\d+)\D*?)(\.(?P<ext>\w+))?$'
+)
+RE_ANY_NUMBER = re.compile(
+    r'\d'
+)
 
-def extract_images_from_file(file_path_or_buffer, file_info, dpi=300, progress=None):
-    """Recursively yield all images from an arbitrary file
+
+def extract_pages_from_file(file_path_or_buffer, file_info, dpi=300):
+    """Recursively yield all images with page info from an arbitrary file
 
     This method supports ZIP, PDF and image files.
 
@@ -42,14 +59,65 @@ def extract_images_from_file(file_path_or_buffer, file_info, dpi=300, progress=N
     ------
     image : PIL.Image or buffer/stream
         The extracted image or the buffer/stream of a non-image file
+    page_info : tuple of (int or None)
+        Contains (student_id, page_number, copy_number). All can be None.
+    file_info : list of str
+        The file tree of the image.
+    number : int
+        The number of files extracted so far.
+    total : int
+        The number of files discovered so far, not guaranteed to be the final number of files.
+    """
+    file_infos = list(extract_images_or_infos_from_file(file_path_or_buffer, file_info, dpi, only_info=True))
+    final_total = len(file_infos)
+
+    students = Student.query.all()
+    page_infos = [guess_page_info(info, students) for info in file_infos]
+
+    page_infos = filter_ambiguities(page_infos)
+
+    for page_info, (image, file_info, number, total) in zip(
+        page_infos,
+        extract_images_or_infos_from_file(file_path_or_buffer, file_info, dpi, only_info=False)
+    ):
+        yield image, page_info, file_info, number, final_total
+
+
+def extract_images_or_infos_from_file(file_path_or_buffer, file_info, dpi=300, progress=None, only_info=False):
+    """Extract images of file tree info from an arbitrary file
+
+    Params
+    ------
+    file_path_or_buffer : path-like or buffer/stream
+        Points to the file to read from
+    file_info : str or [str]
+        The name of the file, including extension. Is used to determine the mimetype.
+        Also see `file_info` in yields for this function.
+    dpi : int
+        The resolution to use for flattening PDFs, in DPI
+    progress : dict
+        Dictionary containing `number` of files extracted and  `total` number of files discovered so far.
+        Doesn't need to be passed as an argument, only used for recursion.
+    only_info : bool
+        When `True`, yield images and progress. When `False`, yield file tree info.
+
+    Yields (when `only_info == False`)
+    ------
+    image : PIL.Image or buffer/stream
+        The extracted image or the buffer/stream of a non-image file
     file_info : list of str and int
-        The hierarchy of the image origin. Contains a combination of the following:
+        The hierarchy of the file origin. Contains a combination of the following:
         scan filename, filename in the zip or PDF page number.
         For example: ['scan.zip', 'some_directory_in_zip/student/page.pdf', 3] or ['student-page.png']
     number : int
         The number of files extracted so far.
     total : int
         The number of files discovered so far, not guaranteed to be the final number of files.
+
+    Yields (when `only_info == True`)
+    ------
+    file_info : list of str and int
+        See above.
     """
     if progress is None:
         progress = dict(number=0, total=0)
@@ -60,13 +128,7 @@ def extract_images_from_file(file_path_or_buffer, file_info, dpi=300, progress=N
     mime_type = guess_mimetype(file_info)
 
     if mime_type is None:
-        # Unable to determine mime type, just yield what we currently have
-        if len(file_info) == 1:
-            progress['total'] += 1
-
-        progress['number'] += 1
-        yield file_path_or_buffer, file_info, progress['number'], progress['total']
-
+        yield from _extract_from_unknown(file_path_or_buffer, file_info, progress, only_info)
     elif mime_type in current_app.config['ZIP_MIME_TYPES']:
         with zipfile.ZipFile(file_path_or_buffer, mode='r') as zip_file:
             infolist_files = [zip_info for zip_info in zip_file.infolist() if not zip_info.is_dir()]
@@ -79,16 +141,34 @@ def extract_images_from_file(file_path_or_buffer, file_info, dpi=300, progress=N
             for zip_info in infolist_files:
                 with zip_file.open(zip_info, 'r') as zip_info_content:
                     combined_file_info = _combine_file_info(file_info, zip_info.filename)
-                    yield from extract_images_from_file(zip_info_content, combined_file_info, dpi, progress)
+                    yield from extract_images_or_infos_from_file(
+                        zip_info_content, combined_file_info, dpi, progress, only_info=only_info)
 
     elif mime_type == 'application/pdf':
-        yield from extract_images_from_pdf(file_path_or_buffer, file_info, dpi, progress)
+        yield from extract_images_from_pdf(file_path_or_buffer, file_info, dpi, progress, only_info=only_info)
 
     elif mime_type.startswith('image/'):
-        yield from extract_image_from_image(file_path_or_buffer, file_info, progress)
+        yield from extract_image_from_image(file_path_or_buffer, file_info, progress, only_info=only_info)
+    else:
+        yield from _extract_from_unknown(file_path_or_buffer, file_info, progress, only_info)
 
 
-def extract_image_from_image(file_path_or_buffer, file_info, progress):
+def _extract_from_unknown(file_path_or_buffer, file_info, progress, only_info):
+    if len(file_info) == 1:
+        progress['total'] += 1
+
+    progress['number'] += 1
+
+    if not only_info:
+        # No images in here, just yield what we currently have
+        yield file_path_or_buffer, file_info, progress['number'], progress['total']
+    else:
+        # We yield no info for files that are not images.
+        # This ensures they are not included when checking for ambiguities.
+        yield []
+
+
+def extract_image_from_image(file_path_or_buffer, file_info, progress, only_info=False):
     """Yield an image from a file or buffer/stream
 
     Params
@@ -102,19 +182,23 @@ def extract_image_from_image(file_path_or_buffer, file_info, progress):
 
     Yields
     ------
-    Same variables as `extract_images_from_file`.
+    Same variables as `extract_images_or_info_from_file`.
     """
     if len(file_info) == 1:
         progress['total'] += 1
 
     progress['number'] += 1
-    with Image.open(file_path_or_buffer) as image:
-        image = exif_transpose(image)
-        image = convert_to_rgb(image)
-        yield image, file_info, progress['number'], progress['total']
+
+    if not only_info:
+        with Image.open(file_path_or_buffer) as image:
+            image = exif_transpose(image)
+            image = convert_to_rgb(image)
+            yield image, file_info, progress['number'], progress['total']
+    else:
+        yield file_info
 
 
-def extract_images_from_pdf(file_path_or_buffer, file_info=None, dpi=300, progress=None):
+def extract_images_from_pdf(file_path_or_buffer, file_info=None, dpi=300, progress=None, only_info=False):
     """Yield all images from a PDF file.
 
     Tries to use PikePDF to extract the images from the given PDF. If PikePDF is not able to extract the image from a
@@ -146,22 +230,26 @@ def extract_images_from_pdf(file_path_or_buffer, file_info=None, dpi=300, progre
         use_wand = False
 
         for page_number, page in enumerate(pdf_reader.pages, start=1):
-            if not use_wand:
-                try:
-                    # Try to use PikePDF, but catch any error it raises
-                    img = extract_image_pikepdf(page)
-
-                except (ValueError, AttributeError, PdfError):
-                    # Fallback to Wand if extracting with PikePDF failed
-                    use_wand = True
-
-            if use_wand:
-                img = extract_image_wand(page, dpi)
-
-            img = convert_to_rgb(img)
-
             progress['number'] += 1
-            yield img, _combine_file_info(file_info, 1), progress['number'], progress['total']
+            file_info_page = _combine_file_info(file_info, page_number)
+
+            if not only_info:
+                if not use_wand:
+                    try:
+                        # Try to use PikePDF, but catch any error it raises
+                        img = extract_image_pikepdf(page)
+
+                    except (ValueError, AttributeError, PdfError):
+                        # Fallback to Wand if extracting with PikePDF failed
+                        use_wand = True
+
+                if use_wand:
+                    img = extract_image_wand(page, dpi)
+
+                img = convert_to_rgb(img)
+                yield img, file_info_page, progress['number'], progress['total']
+            else:
+                yield file_info_page
 
 
 def extract_image_pikepdf(page):
@@ -243,6 +331,143 @@ def extract_image_wand(page, dpi):
                 img.load()  # Load the data into the PIL image from the Wand image
 
     return img
+
+
+def filter_ambiguities(page_infos):
+    """Filters out any ambiguities from partially determined page info
+
+    An ambiguity for a student can be:
+    - A list of non-unique page numbers with undefined copy numbers
+    - A list of unique page numbers with any (but not all) undefined copy number
+    - A list containing more than one undefined page number
+
+    This function also fills in data for a student when possible:
+    - A list of unique page numbers without any defined copy => copy = 1
+    - A single unidentified page => page = 1, copy = 1
+
+    Params
+    ------
+    page_infos : tuple of (None or int)
+        Contains (student_id, page, copy). All can be None.
+
+    Returns
+    -------
+    page_infos : tuple of (None or int)
+        Same as param `page_infos`, but without ambiguities.
+    """
+    page_info_per_student = {}
+    for index, page_info in enumerate(page_infos):
+        student_id, page, copy = page_info
+        if student_id is None:
+            continue
+
+        student_page_info = page_info_per_student.get(student_id, [])
+        page_info_per_student[student_id] = student_page_info + [(index, page_info)]
+
+    for student_id, student_page_infos in page_info_per_student.items():
+        pages = [page for _, (_, page, _) in student_page_infos]
+        copies = [copy for _, (_, _, copy) in student_page_infos]
+
+        ambiguous = False
+
+        if all(page is not None for page in pages):
+            if len(pages) != len(set(pages)):
+                # Duplicate page numbers while not all are copies known
+                if any(copy is None for copy in copies):
+                    ambiguous = True
+
+            else:
+                # All copies unknown and we have unique known page numbers
+                if all(copy is None for copy in copies):
+                    # We can thus assume all copy numbers are 1
+                    for index, (student_id, page, _) in student_page_infos:
+                        page_infos[index] = (student_id, page, 1)
+
+                # At least one copy number is unknown
+                elif any(copy is None for copy in copies):
+                    ambiguous = True
+
+        # We have an unknown page, but it is not the only page
+        elif (len(pages)) > 1:
+            ambiguous = True
+
+        # We have a single unknown page, guess as page 0
+        else:
+            index, _ = student_page_infos[0]
+            page_infos[index] = (student_id, 0, 1)
+
+        if ambiguous:
+            for index, _ in student_page_infos:
+                page_infos[index] = (student_id, None, None)
+
+    return page_infos
+
+
+def guess_page_info(file_info, students):
+    """Guess information about student, copy and page from the file name.
+
+    Supports the following formats:
+    - File of format student-page(-copy).ext
+    - Any file tree containing student, page or copy (in order)
+
+    Note that the page number in a PDF is also part of the file tree.
+
+    Params
+    ------
+    file_info : list of str and int
+        See `image_extraction._extract_images_or_infos_from_file`.
+    students : list of Student
+        Students to consider for detecting names
+
+    Returns
+    ------
+    student_id : int or None
+        Student number
+    page : int or None
+        Page number, 0-indexed
+    copy : int or None
+        Copy number, 1-indexed
+    """
+    student_id, page, copy = None, None, None
+    file_info_splitted = sum((str(info).split('/') for info in file_info), [])
+    while len(file_info_splitted) > 0 and (current_info := file_info_splitted.pop(0)):
+        # Test each time if we find a student number
+        # This is to ensure the second student number in the path
+        # is not misinterpreted as page or copy number.
+        if (match := RE_STUDENT_AT_LEAST.match(current_info)):
+
+            if student_id is not None and match.group('student_id') != student_id:
+                student_id, page, copy = None, None, None
+                break
+            else:
+                student_id = int(match.group('student_id'))
+                page = int(match.group('page')) - 1 if match.group('page') else None
+                copy = int(match.group('copy')) if match.group('copy') else None
+
+        elif student_id is None:
+            matched_students_names = [
+                student for student in students
+                if ((student.first_name + ' ' + student.last_name) in current_info)
+            ]
+            if len(matched_students_names) > 1:
+                break
+            elif len(matched_students_names) == 1:
+                student_id = matched_students_names[0].id
+
+        elif page is None:
+            if (match := RE_PAGE_AT_LEAST.match(current_info)):
+                page = int(match.group('page')) - 1
+                copy = int(match.group('copy')) if match.group('copy') else None
+        elif copy is None:
+            if (match := RE_COPY.match(current_info)):
+                copy = int(match.group('copy'))
+        else:
+            if RE_ANY_NUMBER.search(current_info):
+                # Return the student number to trigger a page/copy ambiguity
+                page = None
+                copy = None
+
+    return student_id, page, copy
 
 
 def convert_to_rgb(img):

@@ -18,7 +18,7 @@ from reportlab.lib.units import inch
 from .database import db, Scan, Exam, Page, Student, Submission, Copy, Solution, ExamWidget
 from .images import guess_dpi, get_box, is_misaligned
 from .pregrader import grade_problem
-from .image_extraction import extract_images_from_file, readable_filename
+from .image_extraction import extract_pages_from_file, readable_filename
 from .blanks import reference_image
 from .raw_scans import process_page as process_page_raw
 from . import celery
@@ -83,13 +83,13 @@ def _process_scan(scan_id, process_page_function):
 
     failures = []
     try:
-        for image, file_info, number, total in extract_images_from_file(scan.path, scan.name):
+        for image, page_info, file_info, number, total in extract_pages_from_file(scan.path, scan.name):
             report_progress(f'Processing page {number} / {total}')
             if not isinstance(image, Image.Image):
                 failures.append((file_info, 'File is not an image'))
             try:
                 success, description = process_page_function(
-                    image, file_info, exam_config, output_directory
+                    image, page_info, file_info, exam_config, output_directory
                 )
                 if not success:
                     failures.append((file_info, description))
@@ -163,7 +163,7 @@ def write_scan_status(scan_id, status, message):
     db.session.commit()
 
 
-def process_page(image_data, file_info, exam_config, output_dir=None, strict=False):
+def process_page(image_data, page_info, file_info, exam_config, output_dir=None, strict=False):
     """Incorporate a scanned image in the data structure.
 
     For each page perform the following steps:
@@ -180,6 +180,10 @@ def process_page(image_data, file_info, exam_config, output_dir=None, strict=Fal
     Parameters
     ----------
     image_data : PIL Image
+    page_info : list of str
+        See `image_extraction.extract_pages_from_file`.
+    file_info : list of str
+        See `image_extraction.extract_pages_from_file`.
     exam_config : ExamMetadata instance
         Information about the exam to which this page should belong
     output_dir : string, optional

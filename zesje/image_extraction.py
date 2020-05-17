@@ -73,7 +73,7 @@ def extract_pages_from_file(file_path_or_buffer, file_info, dpi=300):
     students = Student.query.all()
     page_infos = [guess_page_info(info, students) for info in file_infos]
 
-    page_infos = filter_ambiguities(page_infos)
+    page_infos = guess_missing_page_info(page_infos)
 
     for page_info, (image, file_info, number, total) in zip(
         page_infos,
@@ -231,7 +231,8 @@ def extract_images_from_pdf(file_path_or_buffer, file_info=None, dpi=300, progre
         file_info = []
 
     with Pdf.open(file_path_or_buffer) as pdf_reader:
-        progress['total'] += len(pdf_reader.pages)
+        number_of_pages = len(pdf_reader.pages)
+        progress['total'] += number_of_pages
         use_wand = False
 
         for page_number, page in enumerate(pdf_reader.pages, start=1):
@@ -343,27 +344,24 @@ def extract_image_wand(page, dpi):
     return img
 
 
-def filter_ambiguities(page_infos):
-    """Filters and fixes any ambiguities from partially determined page info
+def guess_missing_page_info(page_infos):
+    """Guesses any missing page and copy numbers
 
-    An ambiguity for a student can be:
-    - A list of non-unique page numbers with undefined copy numbers
-    - A list of unique page numbers with any (but not all) undefined copy number
-    - A list containing more than one undefined page number
+    Sets all unknown pages to 0 and all unknown copies to 1.
 
-    This function also fills in ambiguous data for a student when possible:
-    - A list of unique page numbers without any defined copy => copy = 1
-    - A single unidentified page => page = 0, copy = 1
+    If a duplicate pair of (page, copy) is detected for a student after guessing,
+    we have an ambiguity, thus set all pages and copies to None for that student.
 
     Params
     ------
     page_infos : tuple of (None or int)
         Contains (student_id, page, copy). All can be None.
         Page is 0-indexed, copy is 1-indexed.
+
     Returns
     -------
     page_infos : tuple of (None or int)
-        Same as param `page_infos`, but without ambiguities.
+        Same as param `page_infos`, but including guessed info.
     """
     page_info_per_student = {}
     for index, page_info in enumerate(page_infos):
@@ -375,40 +373,24 @@ def filter_ambiguities(page_infos):
         page_info_per_student[student_id] = student_page_info + [(index, page_info)]
 
     for student_id, student_page_infos in page_info_per_student.items():
-        pages = [page for _, (_, page, _) in student_page_infos]
-        copies = [copy for _, (_, _, copy) in student_page_infos]
+        # Set all unknown pages to 0, unknown copies to 0
+        for local_index, (index, (_, page, copy)) in enumerate(student_page_infos):
+            if None in (page, copy):
+                page = page if page is not None else 0
+                copy = copy if copy is not None else 1
+                student_page_infos[local_index] = (index, (student_id, page, copy))
 
-        ambiguous = False
+        page_copies = [(page, copy) for (_, (_, page, copy)) in student_page_infos]
 
-        if all(page is not None for page in pages):
-            if len(pages) != len(set(pages)):
-                # Duplicate page numbers while not all are copies known
-                if any(copy is None for copy in copies):
-                    ambiguous = True
-
-            else:
-                # All copies unknown and we have unique known page numbers
-                if all(copy is None for copy in copies):
-                    # We can thus assume all copy numbers are 1
-                    for index, (student_id, page, _) in student_page_infos:
-                        page_infos[index] = (student_id, page, 1)
-
-                # At least one copy number is unknown
-                elif any(copy is None for copy in copies):
-                    ambiguous = True
-
-        # We have an unknown page, but it is not the only page
-        elif (len(pages)) > 1:
-            ambiguous = True
-
-        # We have a single unknown page, guess as page 0
-        else:
-            index, _ = student_page_infos[0]
-            page_infos[index] = (student_id, 0, 1)
-
-        if ambiguous:
+        # If we have duplicates, set all to None
+        if len(page_copies) != len(set(page_copies)):
             for index, _ in student_page_infos:
                 page_infos[index] = (student_id, None, None)
+
+        # Otherwise update the page infos with the guessed info
+        else:
+            for index, page_info in student_page_infos:
+                page_infos[index] = page_info
 
     return page_infos
 

@@ -5,7 +5,7 @@ from pathlib import Path
 from io import BytesIO
 from PIL import Image
 
-from zesje.image_extraction import convert_to_rgb, extract_pages_from_file, guess_page_info, filter_ambiguities
+from zesje.image_extraction import convert_to_rgb, extract_pages_from_file, guess_page_info, guess_missing_page_info
 from zesje.database import Student
 
 image_modes = ['RGB', 'RGBA', 'L', 'P', 'CMYK', 'HSV']
@@ -60,7 +60,7 @@ def test_guess_image_info(file_info, info):
     assert ext_info == info
 
 
-def test_filter_ambiguities():
+def test_guess_missing_page_info():
     page_infos = [
         (None, None, None),
         (1000000, 0, None), (1000000, 1, None),
@@ -69,18 +69,22 @@ def test_filter_ambiguities():
         (1000003, 1, None), (1000003, 1, None),
         (1000004, 1, 1), (1000004, 1, 2),
         (1000005, None, None),
-        (1000006, None, None), (1000006, None, None)
+        (1000006, None, None), (1000006, None, None),
+        (1000007, 0, None), (1000007, 0, 2),
+        (1000008, 0, None), (1000008, 0, 1)
     ]
-    filtered_page_infos = filter_ambiguities(page_infos)
-    assert filtered_page_infos == [
+    fixed_page_infos = guess_missing_page_info(page_infos)
+    assert fixed_page_infos == [
         (None, None, None),
         (1000000, 0, 1), (1000000, 1, 1),
-        (1000001, None, None), (1000001, None, None),
-        (1000002, None, None), (1000002, None, None),
+        (1000001, 0, 1), (1000001, 1, 1),
+        (1000002, 0, 1), (1000002, 1, 1),
         (1000003, None, None), (1000003, None, None),
         (1000004, 1, 1), (1000004, 1, 2),
         (1000005, 0, 1),
-        (1000006, None, None), (1000006, None, None)
+        (1000006, None, None), (1000006, None, None),
+        (1000007, 0, 1), (1000007, 0, 2),
+        (1000008, None, None), (1000008, None, None)
     ]
 
 

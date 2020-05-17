@@ -236,7 +236,12 @@ def extract_images_from_pdf(file_path_or_buffer, file_info=None, dpi=300, progre
 
         for page_number, page in enumerate(pdf_reader.pages, start=1):
             progress['number'] += 1
-            file_info_page = _combine_file_info(file_info, page_number)
+
+            # Only include page number in file_info if there are multiple pages
+            if number_of_pages > 1:
+                file_info_page = _combine_file_info(file_info, page_number)
+            else:
+                file_info_page = file_info
 
             if not only_info:
                 if not use_wand:

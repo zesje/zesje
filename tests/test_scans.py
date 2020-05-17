@@ -68,7 +68,7 @@ def generate_flat_scan_data(copy_number=145):
         generate_single_pdf(exam, copy_number, copy_number, scan_pdf)
         scan_pdf.seek(0)
 
-        for image, *_ in extract_images_from_pdf(scan_pdf.name, dpi=150):
+        for image, _ in extract_images_from_pdf(scan_pdf.name, dpi=150):
             yield image, exam_config, examdir
 
 
@@ -233,9 +233,8 @@ def test_image_extraction_pike(datadir, filename, expected):
 def test_image_extraction(datadir, filename):
     file = os.path.join(datadir, filename)
     page = 0
-    for img, _, pagenr, _ in extract_images_from_pdf(file):
+    for img, _ in extract_images_from_pdf(file, only_info=False):
         page += 1
-        assert pagenr == page
         assert img is not None
         assert np.average(np.array(img)) == 255
     assert page == 2

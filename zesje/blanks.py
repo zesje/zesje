@@ -72,7 +72,7 @@ def _extract_reference_images(dpi, exam_id):
 
     pages = extract_images_from_pdf(pdf_path, dpi=dpi)
 
-    for image, _, page, _ in pages:
+    for page, (image, _) in enumerate(pages, start=1):
         _save_image(image, page, dpi, output_directory)
 
 

@@ -75,14 +75,14 @@ def extract_pages_from_file(file_path_or_buffer, file_info, dpi=300):
 
     page_infos = guess_missing_page_info(page_infos)
 
-    for page_info, (image, file_info, number, total) in zip(
+    for number, (page_info, (image, file_info)) in enumerate(zip(
         page_infos,
         extract_images_or_infos_from_file(file_path_or_buffer, file_info, dpi, only_info=False)
-    ):
+    ), start=1):
         yield image, page_info, file_info, number, final_total
 
 
-def extract_images_or_infos_from_file(file_path_or_buffer, file_info, dpi=300, progress=None, only_info=False):
+def extract_images_or_infos_from_file(file_path_or_buffer, file_info, dpi=300, only_info=False):
     """Extract images or file tree info from an arbitrary file
 
     Params
@@ -94,9 +94,6 @@ def extract_images_or_infos_from_file(file_path_or_buffer, file_info, dpi=300, p
         Also see `file_info` in yields for this function.
     dpi : int
         The resolution to use for flattening PDFs, in DPI
-    progress : dict
-        Dictionary containing `number` of files extracted and  `total` number of files discovered so far.
-        Doesn't need to be passed as an argument, only used for recursion.
     only_info : bool
         When `False`, yield everything. When `True`, only yield file tree info.
 
@@ -109,46 +106,34 @@ def extract_images_or_infos_from_file(file_path_or_buffer, file_info, dpi=300, p
         scan filename, filename in the zip or PDF page number.
         For example: ['scan.zip', 'some_directory_in_zip/student/page.pdf', 3] or ['student-page.png']
         When `only_info` is `True`, this is the only parameter that is yielded.
-    number : int
-        The number of files extracted so far.
-    total : int
-        The number of files discovered so far, not guaranteed to be the final number of files.
     """
-    if progress is None:
-        progress = dict(number=0, total=0)
-
     if not isinstance(file_info, list):
         file_info = [file_info]
 
     mime_type = guess_mimetype(file_info)
 
     if mime_type is None:
-        yield from _extract_from_unknown(file_path_or_buffer, file_info, progress, only_info)
+        yield from _extract_from_unknown(file_path_or_buffer, file_info, only_info)
     elif mime_type in current_app.config['ZIP_MIME_TYPES']:
         with zipfile.ZipFile(file_path_or_buffer, mode='r') as zip_file:
-            infolist_files = [zip_info for zip_info in zip_file.infolist() if not zip_info.is_dir()]
-
-            # Count number of non pdf files to update total
-            progress['total'] += sum(
-                1 for zip_info in infolist_files if guess_mimetype([zip_info.filename]) != 'application/pdf'
-            )
+            infolist_files = (zip_info for zip_info in zip_file.infolist() if not zip_info.is_dir())
 
             for zip_info in infolist_files:
                 with zip_file.open(zip_info, 'r') as zip_info_content:
                     combined_file_info = _combine_file_info(file_info, zip_info.filename)
                     yield from extract_images_or_infos_from_file(
-                        zip_info_content, combined_file_info, dpi, progress, only_info=only_info)
+                        zip_info_content, combined_file_info, dpi, only_info=only_info)
 
     elif mime_type == 'application/pdf':
-        yield from extract_images_from_pdf(file_path_or_buffer, file_info, dpi, progress, only_info=only_info)
+        yield from extract_images_from_pdf(file_path_or_buffer, file_info, dpi, only_info=only_info)
 
     elif mime_type.startswith('image/'):
-        yield from extract_image_from_image(file_path_or_buffer, file_info, progress, only_info=only_info)
+        yield from extract_image_from_image(file_path_or_buffer, file_info, only_info=only_info)
     else:
-        yield from _extract_from_unknown(file_path_or_buffer, file_info, progress, only_info)
+        yield from _extract_from_unknown(file_path_or_buffer, file_info, only_info)
 
 
-def _extract_from_unknown(file_path_or_buffer, file_info, progress, only_info=False):
+def _extract_from_unknown(file_path_or_buffer, file_info, only_info=False):
     """Helper function to yield a file of unknown type
 
     Params
@@ -159,21 +144,17 @@ def _extract_from_unknown(file_path_or_buffer, file_info, progress, only_info=Fa
     ------
     Same as `extract_images_or_infos_from_file`
     """
-    if len(file_info) == 1:
-        progress['total'] += 1
-
-    progress['number'] += 1
-
     if not only_info:
         # No images in here, just yield what we currently have
-        yield file_path_or_buffer, file_info, progress['number'], progress['total']
+        yield file_path_or_buffer, file_info
+
     else:
         # We yield no info for files that are not images.
         # This ensures they are not included when checking for ambiguities.
         yield []
 
 
-def extract_image_from_image(file_path_or_buffer, file_info, progress, only_info=False):
+def extract_image_from_image(file_path_or_buffer, file_info, only_info=False):
     """Yield an image from a file or buffer/stream
 
     Params
@@ -182,28 +163,21 @@ def extract_image_from_image(file_path_or_buffer, file_info, progress, only_info
         Points to the image file to read from
     file_info : [str]
         The hierarchy of the image origin. See `extract_pages_from_file`.
-    progress : dict
-        Dictionary containing `number` of files extracted and `total` number of files discovered so far.
 
     Yields
     ------
     Same as `extract_images_or_infos_from_file`.
     """
-    if len(file_info) == 1:
-        progress['total'] += 1
-
-    progress['number'] += 1
-
     if not only_info:
         with Image.open(file_path_or_buffer) as image:
             image = exif_transpose(image)
             image = convert_to_rgb(image)
-            yield image, file_info, progress['number'], progress['total']
+            yield image, file_info
     else:
         yield file_info
 
 
-def extract_images_from_pdf(file_path_or_buffer, file_info=None, dpi=300, progress=None, only_info=False):
+def extract_images_from_pdf(file_path_or_buffer, file_info=None, dpi=300, only_info=False):
     """Yield all images from a PDF file.
 
     Tries to use PikePDF to extract the images from the given PDF. If PikePDF is not able to extract the image from a
@@ -217,27 +191,19 @@ def extract_images_from_pdf(file_path_or_buffer, file_info=None, dpi=300, progre
         The hierarchy of the image origin. See `extract_pages_from_file`.
     dpi : int
         The resolution to use for flattening PDFs, in DPI
-    progress : dict
-        Dictionary containing `number` of files extracted and  `total` number of files discovered so far.
 
     Yields
     ------
     Same as `extract_images_or_infos_from_file`.
     """
-    if progress is None:
-        progress = dict(number=0, total=0)
-
     if file_info is None:
         file_info = []
 
     with Pdf.open(file_path_or_buffer) as pdf_reader:
         number_of_pages = len(pdf_reader.pages)
-        progress['total'] += number_of_pages
         use_wand = False
 
         for page_number, page in enumerate(pdf_reader.pages, start=1):
-            progress['number'] += 1
-
             # Only include page number in file_info if there are multiple pages
             if number_of_pages > 1:
                 file_info_page = _combine_file_info(file_info, page_number)
@@ -258,7 +224,7 @@ def extract_images_from_pdf(file_path_or_buffer, file_info=None, dpi=300, progre
                     img = extract_image_wand(page, dpi)
 
                 img = convert_to_rgb(img)
-                yield img, file_info_page, progress['number'], progress['total']
+                yield img, file_info_page
             else:
                 yield file_info_page
 

@@ -21,33 +21,32 @@ def test_convert_to_rgb(image_mode):
     assert converted.size == image.size
 
 
-@pytest.mark.parametrize('file_info, info', [
-    (['1234567-02.png'], (1234567, 1, None)),
-    (['1234567-1-4.jpeg'], (1234567, 0, 4)),
-    (['1234567.png'], (1234567, None, None)),
-    (['ABCDEFG.jpeg'], (None, None, None)),
-    (['1234567.zip', '1.png'], (1234567, 0, None)),
-    (['1234567.zip', '1-2.jpg'], (1234567, 0, 2)),
-    (['1234567.pdf', 1], (1234567, 0, None)),
-    (['some.zip', '1234567.pdf', 2], (1234567, 1, None)),
-    (['some.zip', '1234567/2.pdf', 2], (1234567, 1, 2)),
-    (['some.zip', '1234567-1.jpg'], (1234567, 0, None)),
-    (['some.zip', '1234567/1.png'], (1234567, 0, None)),
-    (['some.zip', 'Random First Last 99 Januari 99/submission.pdf', 3], (1000001, 2, None))
-    ],
-    ids=[
-    'Valid name (no copy)',
-    'Valid name (with copy)',
-    'Valid name (no page)',
-    'Invalid name (no student)',
-    'Valid name (no copy, img in zip)',
-    'Valid name (with copy, img in zip)',
-    'Valid name (pdf)',
-    'Valid name (pdf in zip)',
-    'Valid name (copy in pdf in zip)',
-    'Valid name (img page in zip)',
-    'Valid name (img in folder in zip',
-    'Valid name (pdf in folder (student name) in zip'])
+guess_image_info_arguments = [
+    (['1234567-02.png'], (1234567, 1, None), 'Valid student page'),
+    (['1234567-1-4.jpeg'], (1234567, 0, 4), 'Valid student page copy'),
+    (['1234567.png'], (1234567, None, None), 'Valid student'),
+    (['ABCDEFG.jpeg'], (None, None, None), 'Invalid letter'),
+    (['1234567.zip', '1.png'], (1234567, 0, None), 'Vallid zip student page'),
+    (['1234567.zip', '1-2.jpg'], (1234567, 0, 2), 'Valid zip student page copy'),
+    (['1234567.pdf', 1], (1234567, 0, None), 'Valid pdf student page'),
+    (['some.zip', '1234567.pdf', 2], (1234567, 1, None), 'Valid scan zip student page'),
+    (['some.zip', '1234567/2.pdf', 2], (1234567, 1, 2), 'Valid scan zip student page copy'),
+    (['some.zip', '1234567-1.jpg'], (1234567, 0, None), 'Valid scan zip student page'),
+    (['some.zip', '1234567/1.png'], (1234567, 0, None), 'Valid scan zip folder student page'),
+    (['some.zip', 'Random First Last 99 Januari 99/submission.pdf', 3], (1000001, 2, None),
+     'Valid folder name student page'),
+    (['some.zip', 'Random First Last 99 Januari 99/1000001.pdf', 3], (1000001, 2, None),
+     'Valid folder name id student page'),
+    (['tn1234.zip', '1234567/final tn1234.pdf', 5], (1234567, 4, None), 'Valid scan zip pdf number student page'),
+    (['tn1234.zip', '1234567/tn1234 page 1.pdf', 4], (1234567, 0, 4), 'Valid scan zip pdf number student page copy'),
+    (['tn1234.zip', '1234567/tn1234 page 1 copy 2.png'], (1234567, 0, 2), 'Valid scan zip img number student page')
+]
+
+
+@pytest.mark.parametrize(
+    'file_info, info',
+    [(file_info, info) for file_info, info, _ in guess_image_info_arguments],
+    ids=[id for *_, id in guess_image_info_arguments])
 def test_guess_image_info(file_info, info):
     students = [
         Student(id=1000001, first_name='First', last_name='Last')

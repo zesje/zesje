@@ -25,16 +25,16 @@ EXIF_METHODS = {
 }
 
 RE_STUDENT_AT_LEAST = re.compile(
-    fr'(?P<student_id>\d{{{ID_GRID_DIGITS}}})(\D)*?(-(?P<page>\d+))?(-(?P<copy>\d+))?(\.(?P<ext>\w+))?$'
+    fr'(?P<student_id>\d{{{ID_GRID_DIGITS}}})(\D)*?(-(?P<page>\d{{1,2}}))?(-(?P<copy>\d{{1,2}}))?(\.(?P<ext>\w+))?$'
 )
 RE_PAGE_AT_LEAST = re.compile(
-    r'^(\D*(?P<page>\d+)\D*?)((?P<copy>\d+))?(\.(?P<ext>\w+))?$'
+    r'(^|.*?\D+)(?P<page>\d{1,2})(\D+?|$)((?P<copy>\d{1,2}))?(\.(?P<ext>\w+))?$'
 )
 RE_COPY = re.compile(
-    r'^(\D*(?P<copy>\d+)\D*?)(\.(?P<ext>\w+))?$'
+    r'^(\D*(?P<copy>\d{1,2})\D*?)(\.(?P<ext>\w+))?$'
 )
 RE_ANY_NUMBER = re.compile(
-    r'\d'
+    r'(^|\D+)\d{1,2}($|\D+)'
 )
 
 
@@ -393,7 +393,7 @@ def guess_page_info(file_info, students):
         # This is to ensure the second student number in the path
         # is not misinterpreted as page or copy number.
         if (match := RE_STUDENT_AT_LEAST.match(current_info)):
-            if student_id is not None and match.group('student_id') != student_id:
+            if student_id is not None and int(match.group('student_id')) != student_id:
                 student_id, page, copy = None, None, None
                 break
             else:

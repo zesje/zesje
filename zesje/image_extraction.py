@@ -228,7 +228,7 @@ def extract_images_from_pdf(file_path_or_buffer, file_info=None, dpi=300, progre
         progress = dict(number=0, total=0)
 
     if file_info is None:
-        file_info = [file_path_or_buffer]
+        file_info = []
 
     with Pdf.open(file_path_or_buffer) as pdf_reader:
         progress['total'] += len(pdf_reader.pages)

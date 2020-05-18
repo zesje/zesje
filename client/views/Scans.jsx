@@ -154,7 +154,7 @@ class Scans extends React.Component {
                 onDrop={(accepted, rejected) => this.onDropFile(accepted, rejected, 'normal')}
                 disablePreview
                 multiple>
-                <DropzoneContent text='Choose a scan file…' />
+                <DropzoneContent text='Choose a scan file…' center />
               </Dropzone>
             </div>
             <div className='column is-half'>
@@ -185,7 +185,7 @@ class Scans extends React.Component {
                     onDrop={(accepted, rejected) => this.onDropFile(accepted, rejected, 'raw')}
                     disablePreview
                     multiple>
-                    <DropzoneContent text='Choose a scan file…' />
+                    <DropzoneContent text='Choose a scan file…' center />
                   </Dropzone>
                 </div>
               </div>

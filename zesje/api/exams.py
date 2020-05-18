@@ -8,13 +8,13 @@ from werkzeug.datastructures import FileStorage
 from sqlalchemy.orm import selectinload
 from sqlalchemy import func
 
-from zesje.api._helpers import _shuffle
+from zesje.api._helpers import _shuffle, abort
 from zesje.api.problems import problem_to_data
 from ..pdf_generation import exam_pdf_path, _exam_generate_data
 from ..pdf_generation import generate_pdfs, generate_single_pdf, generate_zipped_pdfs
 from ..pdf_generation import page_is_size, save_with_even_pages
 from ..pdf_generation import write_finalized_exam
-from ..database import db, Exam, ExamWidget, Submission, FeedbackOption, token_length
+from ..database import db, Exam, ExamWidget, Submission, FeedbackOption, token_length, ExamType
 from .submissions import sub_to_data
 
 
@@ -31,7 +31,8 @@ def add_blank_feedback(problems):
 
 def generate_exam_token(exam_id, exam_name, exam_pdf):
     hasher = hashlib.sha1()
-    hasher.update(exam_pdf)
+    if exam_pdf:
+        hasher.update(exam_pdf)
     hasher.update(f'{exam_id},{exam_name}'.encode('utf-8'))
     return hasher.hexdigest()[0:12]
 
@@ -146,6 +147,7 @@ class Exams(Resource):
             ],
             'finalized': exam.finalized,
             'gradeAnonymous': exam.grade_anonymous,
+            'type': type_to_data(ExamType(exam.type))
         }
 
     def _get_single_metadata(self, exam_id, shuffle_seed):
@@ -190,8 +192,9 @@ class Exams(Resource):
         }
 
     post_parser = reqparse.RequestParser()
-    post_parser.add_argument('pdf', type=FileStorage, required=True, location='files')
+    post_parser.add_argument('pdf', type=FileStorage, required=False, location='files')
     post_parser.add_argument('exam_name', type=str, required=True, location='form')
+    post_parser.add_argument('type', type=int, required=True, location='form')
 
     def post(self):
         """Add a new exam.
@@ -202,6 +205,8 @@ class Exams(Resource):
             raw pdf file.
         exam_name: str
             name for the exam
+        type: str
+            the type of exam to create, one of `ExamType`
 
         Returns
         -------
@@ -211,19 +216,36 @@ class Exams(Resource):
 
         args = self.post_parser.parse_args()
         exam_name = args['exam_name']
-        pdf_data = args['pdf']
 
+        try:
+            type = ExamType(args['type'])
+        except TypeError:
+            return dict(status=400, message=f'Exam type {args["type"]} is defined'), 400
+
+        if type == ExamType.zesje:
+            pdf_data = args['pdf']
+            exam = self._add_zesje_exam(exam_name, pdf_data)
+        elif type == ExamType.unstructured:
+            exam = self._add_unstructured_exam(exam_name)
+
+        print(f"Added exam {exam.id} (name: {exam_name}, token: {exam.token}) to database")
+
+        return {
+            'id': exam.id
+        }
+
+    def _add_zesje_exam(self, exam_name, pdf_data):
         format = current_app.config['PAGE_FORMAT']
 
         if not page_is_size(pdf_data, current_app.config['PAGE_FORMATS'][format], tolerance=0.01):
-            return (
-                dict(status=400,
-                     message=f'PDF page size is not {format}.'),
-                400
+            return abort(
+                400,
+                message=f'PDF page size is not {format}.'
             )
 
         exam = Exam(
             name=exam_name,
+            type=ExamType.zesje.value
         )
 
         exam.widgets = [
@@ -247,13 +269,22 @@ class Exams(Resource):
         pdf_data.seek(0)
         db.session.commit()
 
-        save_with_even_pages(exam.id, args['pdf'])
+        save_with_even_pages(exam.id, pdf_data)
 
-        print(f"Added exam {exam.id} (name: {exam_name}, token: {exam.token}) to database")
+        return exam
 
-        return {
-            'id': exam.id
-        }
+    def _add_unstructured_exam(self, exam_name):
+        exam = Exam(
+            name=exam_name,
+            type=ExamType.unstructured.value
+        )
+
+        db.session.add(exam)
+        db.session.commit()  # so exam gets an id
+        exam.token = generate_exam_token(exam.id, exam_name, None)
+        db.session.commit()
+
+        return exam
 
     put_parser = reqparse.RequestParser()
     put_parser.add_argument('finalized', type=bool, required=False)
@@ -270,7 +301,8 @@ class Exams(Resource):
         elif args['finalized']:
             add_blank_feedback(exam.problems)
 
-            write_finalized_exam(exam)
+            if exam.type == ExamType.zesje:
+                write_finalized_exam(exam)
 
             exam.finalized = True
             db.session.commit()
@@ -317,6 +349,9 @@ class ExamSource(Resource):
         if (exam := Exam.query.get(exam_id)) is None:
             return dict(status=404, message='Exam does not exist.'), 404
 
+        if exam.type == ExamType.unstructured:
+            return dict(status=404, message='Unstructured exams have no pdf.'), 404
+
         return send_file(
             exam_pdf_path(exam.id),
             cache_timeout=0,
@@ -362,6 +397,8 @@ class ExamGeneratedPdfs(Resource):
         if not exam.finalized:
             msg = 'Exam is not finalized.'
             return dict(status=403, message=msg), 403
+        if exam.type == ExamType.unstructured:
+            return dict(status=404, message='Unstructured exams have no pdf.'), 404
 
         if copies_end < copies_start:
             msg = 'copies_end should be larger than copies_start'
@@ -395,9 +432,10 @@ class ExamGeneratedPdfs(Resource):
 class ExamPreview(Resource):
 
     def get(self, exam_id):
-        exam = Exam.query.get(exam_id)
-        if exam is None:
+        if (exam := Exam.query.get(exam_id)) is None:
             return dict(status=404, message='Exam does not exist.'), 404
+        if exam.type == ExamType.unstructured:
+            return dict(status=404, message='Unstructured exams have no pdf.'), 404
 
         exam_dir, student_id_widget, barcode_widget, exam_path, cb_data = _exam_generate_data(exam)
 
@@ -425,20 +463,32 @@ class ExamPreview(Resource):
             mimetype='application/pdf')
 
 
+def type_to_data(type):
+    if type == ExamType.zesje:
+        return {
+            'name': 'Zesje',
+            'value': ExamType.zesje.value,
+            'acceptsPDF': True,
+            'description': 'This is the default type, specially made for presencial exams. '
+                           'In this mode, the pdf you upload is used as a template to create unique '
+                           'where students can solve the exam. You can create open answer and multiple choice '
+                           'problems, Zesje will take care of cropping the images scaned PDFs with the solutions '
+                           'as well as detecting blank answers and grading multiple choice questions automatically.'
+        }
+    elif type == ExamType.unstructured:
+        return {
+            'name': 'Unstructured',
+            'value': ExamType.unstructured.value,
+            'acceptsPDF': False,
+            'description': 'Image based exam, this is specially made for take-home or virtual exam. '
+                           'It is not based in any PDF, the scans can be images, pdfs or zipfiles made by students. '
+                           'This flexibily comes at a cost, in this mode the creation of multiple choice questions '
+                           'and autograding is not available.'
+        }
+
+
 class ExamTypes(Resource):
 
     def get(self):
 
-        return [
-            {
-                'name': 'Zesje',
-                'value': ExamType.zesje.value,
-                'acceptsPDF': True,
-                'description': 'This is the default type...'
-            }, {
-                'name': 'Unstructured',
-                'value': ExamType.unstructured.value,
-                'acceptsPDF': False,
-                'description': 'Image based...'
-            }
-        ]
+        return [type_to_data(ExamType.zesje), type_to_data(ExamType.unstructured)]

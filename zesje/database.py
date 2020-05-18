@@ -20,6 +20,11 @@ class NoNameMeta(BindMetaMixin, DeclarativeMeta):
     pass
 
 
+class ExamType(enum.Enum):
+    zesje = 0
+    unstructured = 1
+
+
 db = SQLAlchemy(model_class=declarative_base(
     cls=Model, metaclass=NoNameMeta, name='Model'))
 
@@ -60,6 +65,7 @@ class Exam(db.Model):
                               order_by='ExamWidget.id', lazy=True)
     finalized = Column(Boolean, default=False, server_default='0')
     grade_anonymous = Column(Boolean, default=False, server_default='0')
+    type = Column(Integer, default=ExamType.zesje.value, server_default=f'{ExamType.zesje.value}', nullable=False)
 
     @hybrid_property
     def copies(self):

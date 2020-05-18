@@ -43,3 +43,5 @@ MAX_ALIGNMENT_ERROR_MM = 1
 MIN_ANSWER_SIZE_MM2 = 4
 
 SQLALCHEMY_TRACK_MODIFICATIONS = False  # Suppress future deprecation warning
+
+ZIP_MIME_TYPES = ['application/zip', 'application/octet-stream', 'application/x-zip-compressed', 'multipart/x-zip']

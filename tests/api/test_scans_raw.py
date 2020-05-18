@@ -4,7 +4,7 @@ import zipfile
 from io import BytesIO
 
 from zesje.database import db, Exam, Scan
-from zesje.raw_scans import process_zipped_images
+from zesje.scans import process_scan
 
 
 @pytest.fixture
@@ -28,10 +28,11 @@ def zip_file():
 def test_no_zip(test_client, app_with_data):
     app, exam = app_with_data
     data = {
-        'file': (b'abc', 'image.jpg')
+        'file': (b'abc', 'image.jpg'),
+        'scan_type': 'raw'
     }
     response = test_client.post(
-        f'api/scans/raw/{exam.id}', data=data,
+        f'api/scans/{exam.id}', data=data,
         content_type='multipart/form-data'
     )
     assert response.status_code == 400
@@ -39,10 +40,11 @@ def test_no_zip(test_client, app_with_data):
 
 def test_no_exam(test_client, zip_file):
     data = {
-        'file': (zip_file, 'file.zip')
+        'file': (zip_file, 'file.zip'),
+        'scan_type': 'raw'
     }
     response = test_client.post(
-        'api/scans/raw/1', data=data,
+        'api/scans/1', data=data,
         content_type='multipart/form-data'
     )
     assert response.status_code == 404
@@ -54,10 +56,11 @@ def test_not_finalized_exam(test_client, zip_file, app_with_data):
     db.session.commit()
 
     data = {
-        'file': (zip_file, 'file.zip')
+        'file': (zip_file, 'file.zip'),
+        'scan_type': 'raw'
     }
     response = test_client.post(
-        f'api/scans/raw/{exam.id}', data=data,
+        f'api/scans/{exam.id}', data=data,
         content_type='multipart/form-data'
     )
     assert response.status_code == 403
@@ -71,28 +74,43 @@ def test_saving_zip_failed(test_client, zip_file, app_with_data, monkeypatch):
     monkeypatch.setattr(app, 'config', app_config_mock)
 
     data = {
-        'file': (zip_file, 'file.zip')
+        'file': (zip_file, 'file.zip'),
+        'scan_type': 'raw'
     }
     response = test_client.post(
-        f'api/scans/raw/{exam.id}', data=data,
+        f'api/scans/{exam.id}', data=data,
         content_type='multipart/form-data'
     )
     assert response.status_code == 500
     assert len(Scan.query.all()) == 0
 
 
+def test_invalid_scan_type(test_client, zip_file, app_with_data):
+    app, exam = app_with_data
+    data = {
+        'file': (zip_file, 'file.zip'),
+        'scan_type': 'invalid'
+    }
+    response = test_client.post(
+        f'api/scans/{exam.id}', data=data,
+        content_type='multipart/form-data'
+    )
+    assert response.status_code == 400
+
+
 def test_processing_started(test_client, zip_file, app_with_data, monkeypatch):
     app, exam = app_with_data
 
     data = {
-        'file': (zip_file, 'file.zip')
+        'file': (zip_file, 'file.zip'),
+        'scan_type': 'raw'
     }
 
     scan_ids = []
-    monkeypatch.setattr(process_zipped_images, 'delay', lambda scan_id: scan_ids.append(scan_id))
+    monkeypatch.setattr(process_scan, 'delay', lambda scan_id, scan_type: scan_ids.append(scan_id))
 
     response = test_client.post(
-        f'api/scans/raw/{exam.id}', data=data,
+        f'api/scans/{exam.id}', data=data,
         content_type='multipart/form-data'
     )
     assert response.status_code == 200

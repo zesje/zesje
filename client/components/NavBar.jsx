@@ -149,10 +149,9 @@ class NavBar extends React.Component {
   updateGrader = () => {
     if (window.location.pathname !== '/login') {
       api.get('oauth/grader').then(response => {
-        let grader = response.name
-        this.setState({grader: grader})
+        this.setState({grader: response.name})
+        this.props.changeGrader(response)
         this.updateExamList()
-        this.props.changeGrader(grader)
       })
     }
   }

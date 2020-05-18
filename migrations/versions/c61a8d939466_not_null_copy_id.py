@@ -1,7 +1,7 @@
 """ Set copy id NOT NULL constraint in Page table
 
 Revision ID: c61a8d939466
-Revises: ef470a16399e
+Revises: dccc66cf2881
 
 """
 from alembic import op
@@ -9,7 +9,7 @@ from sqlalchemy import Integer
 
 # revision identifiers, used by Alembic.
 revision = 'c61a8d939466'
-down_revision = 'ef470a16399e'
+down_revision = 'dccc66cf2881'
 branch_labels = None
 depends_on = None
 

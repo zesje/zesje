@@ -152,6 +152,7 @@ class NavBar extends React.Component {
         let grader = response.name
         this.setState({grader: grader})
         this.updateExamList()
+        this.props.changeGrader(grader)
       })
     }
   }

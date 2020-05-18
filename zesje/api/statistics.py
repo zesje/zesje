@@ -86,8 +86,7 @@ class Statistics(Resource):
 
         """
 
-        exam = Exam.query.get(exam_id)
-        if exam is None:
+        if (exam := Exam.query.get(exam_id)) is None:
             return dict(status=404, message='Exam does not exist.'), 404
 
         # count the total number of students as the number of validated submissions

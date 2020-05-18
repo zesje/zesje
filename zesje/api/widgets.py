@@ -27,10 +27,7 @@ def force_boundaries(widget):
 class Widgets(Resource):
 
     def patch(self, widget_id):
-
-        widget = Widget.query.get(widget_id)
-
-        if widget is None:
+        if (widget := Widget.query.get(widget_id)) is None:
             msg = f"Widget with id {widget_id} doesn't exist"
             return dict(status=404, message=msg), 404
         elif isinstance(widget, ExamWidget) and widget.exam.finalized:

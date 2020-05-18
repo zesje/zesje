@@ -52,8 +52,7 @@ class Exams(Resource):
             return self._get_all()
 
     def delete(self, exam_id):
-        exam = Exam.query.get(exam_id)
-        if exam is None:
+        if (exam := Exam.query.get(exam_id)) is None:
             return dict(status=404, message='Exam does not exist.'), 404
         elif exam.finalized:
             return dict(status=409, message='Cannot delete a finalized exam.'), 409
@@ -166,8 +165,7 @@ class Exams(Resource):
 
         """
 
-        exam = Exam.query.get(exam_id)
-        if exam is None:
+        if (exam := Exam.query.get(exam_id)) is None:
             return dict(status=404, message='Exam does not exist.'), 404
 
         return {
@@ -262,8 +260,7 @@ class Exams(Resource):
     put_parser.add_argument('grade_anonymous', type=bool, required=False)
 
     def put(self, exam_id):
-        exam = Exam.query.get(exam_id)
-        if exam is None:
+        if (exam := Exam.query.get(exam_id)) is None:
             return dict(status=404, message='Exam does not exist.'), 404
 
         args = self.put_parser.parse_args()
@@ -300,13 +297,11 @@ class Exams(Resource):
             name for the exam
         """
 
-        exam = Exam.query.get(exam_id)
-        if exam is None:
+        if (exam := Exam.query.get(exam_id)) is None:
             return dict(status=404, message='Exam does not exist.'), 404
 
         args = self.patch_parser.parse_args()
-        name = args['name'].strip()
-        if not name:
+        if not (name := args['name'].strip()):
             return dict(status=400, message='Exam name is empty.'), 400
 
         exam.name = name
@@ -319,9 +314,7 @@ class ExamSource(Resource):
 
     def get(self, exam_id):
 
-        exam = Exam.query.get(exam_id)
-
-        if exam is None:
+        if (exam := Exam.query.get(exam_id)) is None:
             return dict(status=404, message='Exam does not exist.'), 404
 
         return send_file(
@@ -364,8 +357,7 @@ class ExamGeneratedPdfs(Resource):
         copies_start = args.get('copies_start')
         copies_end = args.get('copies_end')
 
-        exam = Exam.query.get(exam_id)
-        if exam is None:
+        if (exam := Exam.query.get(exam_id)) is None:
             return dict(status=404, message='Exam does not exist.'), 404
         if not exam.finalized:
             msg = 'Exam is not finalized.'

@@ -57,9 +57,7 @@ def _find_submission(old_submission, problem_id, shuffle_seed, direction, ungrad
 
     """
 
-    problem = Problem.query.get(problem_id)
-
-    if problem is None:
+    if (problem := Problem.query.get(problem_id)) is None:
         return dict(status=404, message='Problem does not exist.'), 404
 
     shuffled_solutions = _shuffle(problem.solutions, shuffle_seed, key_extractor=lambda s: s.submission_id)
@@ -121,13 +119,11 @@ class Submissions(Resource):
             problems: list of problems
         """
         args = self.get_parser.parse_args()
-        exam = Exam.query.get(exam_id)
-        if exam is None:
+        if (exam := Exam.query.get(exam_id)) is None:
             return dict(status=404, message='Exam does not exist.'), 404
 
         if submission_id is not None:
-            sub = Submission.query.get(submission_id)
-            if sub is None:
+            if (sub := Submission.query.get(submission_id)) is None:
                 return dict(status=404, message='Submission does not exist.'), 404
 
             if sub.exam != exam:

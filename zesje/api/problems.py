@@ -54,9 +54,7 @@ class Problems(Resource):
     """ List of problems associated with a particular exam_id """
 
     def get(self, problem_id):
-        problem = Problem.query.get(problem_id)
-
-        if problem is None:
+        if (problem := Problem.query.get(problem_id)) is None:
             return dict(status=404, message=f"Problem with id {problem_id} doesn't exist"), 404
 
         return problem_to_data(problem)
@@ -81,8 +79,7 @@ class Problems(Resource):
 
         exam_id = args['exam_id']
 
-        exam = Exam.query.get(exam_id)
-        if exam is None:
+        if (exam := Exam.query.get(exam_id)) is None:
             msg = f"Exam with id {exam_id} doesn't exist"
             return dict(status=400, message=msg), 400
         else:
@@ -115,9 +112,8 @@ class Problems(Resource):
             pdf_path = os.path.join(data_dir, f'{problem.exam_id}_data', 'exam.pdf')
 
             page = get_problem_page(problem, pdf_path)
-            guessed_title = guess_problem_title(problem, page)
 
-            if guessed_title:
+            if (guessed_title := guess_problem_title(problem, page)):
                 problem.name = guessed_title
 
             db.session.commit()
@@ -150,9 +146,7 @@ class Problems(Resource):
 
         args = self.put_parser.parse_args()
 
-        problem = Problem.query.get(problem_id)
-
-        if problem is None:
+        if (problem := Problem.query.get(problem_id)) is None:
             return dict(status=404, message=f"Problem with id {problem_id} doesn't exist"), 404
 
         for attr, value in args.items():
@@ -164,12 +158,9 @@ class Problems(Resource):
         return dict(status=200, message="ok"), 200
 
     def delete(self, problem_id):
+        if (problem := Problem.query.get(problem_id)) is None:
+            return dict(status=404, message=f"Problem with id {problem_id} doesn't exist"), 404
 
-        problem = Problem.query.get(problem_id)
-
-        if problem is None:
-            msg = f"Problem with id {problem_id} doesn't exist"
-            return dict(status=404, message=msg), 404
         if any([sol.graded_by is not None for sol in problem.solutions]):
             return dict(status=403, message='Problem has already been graded'), 403
         else:

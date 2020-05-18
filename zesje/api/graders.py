@@ -52,10 +52,8 @@ class Graders(Resource):
 
         oauth_id = args['oauth_id']
 
-        grader = Grader.query.filter(Grader.oauth_id == oauth_id).one_or_none()
-
-        if grader:
-            return dict(status=409, message=f'Grader with name {oauth_id} already exists.'), 409
+        if Grader.query.filter(Grader.oauth_id == oauth_id).one_or_none():
+            return dict(status=409, message=f'Grader with id {oauth_id} already exists.'), 409
 
         try:
             db.session.add(Grader(oauth_id=oauth_id))

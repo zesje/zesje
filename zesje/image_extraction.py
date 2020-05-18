@@ -29,14 +29,7 @@ def extract_images(filename, dpi=300):
             if use_wand:
                 img = extract_image_wand(page, dpi)
 
-            if img.mode == 'L' or img.mode == 'CMYK' or img.mode == 'HSV':
-                img = img.convert('RGB')
-            elif img.mode == 'RGBA':
-                # Create a white background, and paste the RGBA image
-                # on top of it with the alpha channel as the mask
-                background = Image.new('RGB', img.size, (255, 255, 255))
-                background.paste(img, mask=img.split()[-1])
-                img = background
+            img = convert_to_rgb(img)
 
             yield img, page_number
 
@@ -119,5 +112,18 @@ def extract_image_wand(page, dpi):
                 img_array = np.asarray(bytearray(page_image.make_blob(format="jpg")), dtype=np.uint8)
                 img = Image.open(BytesIO(img_array))
                 img.load()  # Load the data into the PIL image from the Wand image
+
+    return img
+
+
+def convert_to_rgb(img):
+    if img.mode in ['L', 'P', 'CMYK', 'HSV']:
+        img = img.convert('RGB')
+    elif img.mode == 'RGBA':
+        # Create a white background, and paste the RGBA image
+        # on top of it with the alpha channel as the mask
+        background = Image.new('RGB', img.size, (255, 255, 255))
+        background.paste(img, mask=img.split()[-1])
+        img = background
 
     return img

@@ -21,8 +21,7 @@ class Feedback(Resource):
             used: int
         """
 
-        problem = Problem.query.get(problem_id)
-        if problem is None:
+        if (problem := Problem.query.get(problem_id)) is None:
             return dict(status=404, message=f"Problem with id #{problem_id} does not exist"), 404
 
         return [
@@ -51,8 +50,7 @@ class Feedback(Resource):
             score: int
         """
 
-        problem = Problem.query.get(problem_id)
-        if problem is None:
+        if (problem := Problem.query.get(problem_id)) is None:
             return dict(status=404, message=f"Problem with id #{problem_id} does not exist"), 404
 
         args = self.post_parser.parse_args()
@@ -87,8 +85,7 @@ class Feedback(Resource):
 
         args = self.put_parser.parse_args()
 
-        fb = FeedbackOption.query.get(args.id)
-        if fb is None:
+        if (fb := FeedbackOption.query.get(args.id)) is None:
             return dict(status=404, message=f"Feedback option with id #{args.id} does not exist"), 404
 
         fb.text = args.name
@@ -119,8 +116,7 @@ class Feedback(Resource):
         We use the problem id for extra safety check that we don't corrupt
         things accidentally.
         """
-        fb = FeedbackOption.query.get(feedback_id)
-        if fb is None:
+        if (fb := FeedbackOption.query.get(feedback_id)) is None:
             return dict(status=404, message=f"Feedback option with id #{feedback_id} does not exist"), 404
         problem = fb.problem
         if problem.id != problem_id:

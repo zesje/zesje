@@ -25,16 +25,13 @@ def get(exam_id, problem_id, submission_id, full_page=False):
     -------
     Image (JPEG mimetype)
     """
-    exam = Exam.query.get(exam_id)
-    if exam is None:
+    if (exam := Exam.query.get(exam_id)) is None:
         abort(404, 'Exam does not exist.')
 
-    problem = Problem.query.get(problem_id)
-    if problem is None:
+    if (problem := Problem.query.get(problem_id)) is None:
         abort(404, 'Problem does not exist.')
 
-    sub = Submission.query.get(submission_id)
-    if sub is None:
+    if (sub := Submission.query.get(submission_id)) is None:
         abort(404, 'Submission does not exist.')
 
     # TODO: use points as base unit

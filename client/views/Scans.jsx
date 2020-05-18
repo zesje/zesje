@@ -75,40 +75,22 @@ class Scans extends React.Component {
       })
   }
 
-  onDropPDF = (accepted, rejected) => {
+  onDropFile = (accepted, rejected, type) => {
     if (rejected.length > 0) {
-      Notification.error('Please upload a scan PDF.')
-      return
-    }
-    accepted.map(file => {
-      const data = new window.FormData()
-      data.append('pdf', file)
-      api.post('scans/' + this.props.examID, data)
-        .then(() => {
-          this.updateScans()
-        })
-        .catch(resp => {
-          Notification.error('failed to upload pdf (see javascript console for details)')
-          console.error('failed to upload PDF:', resp)
-        })
-    })
-  }
-
-  onDropZIP = (accepted, rejected) => {
-    if (rejected.length > 0) {
-      Notification.error('Please upload a ZIP file.')
+      Notification.error('Please upload a PDF, ZIP or image.')
       return
     }
     accepted.map(file => {
       const data = new window.FormData()
       data.append('file', file)
-      api.post('scans/raw/' + this.props.exam.id, data)
+      data.append('scan_type', type)
+      api.post('scans/' + this.props.examID, data)
         .then(() => {
           this.updateScans()
         })
         .catch(resp => {
-          Notification.error('failed to upload ZIP (see javascript console for details)')
-          console.error('failed to upload ZIP:', resp)
+          Notification.error('Failed to upload file (see javascript console for details)')
+          console.error('Failed to upload file:', resp)
         })
     })
   }
@@ -156,6 +138,8 @@ class Scans extends React.Component {
         : null
     )
 
+    const acceptedTypes = 'application/pdf,application/zip,application/octet-stream,application/x-zip-compressed,multipart/x-zip,image/*'
+
     return <div>
 
       <Hero title='Scans' subtitle='Upload scans and check missing pages' />
@@ -163,14 +147,14 @@ class Scans extends React.Component {
       <section className='section'>
 
         <div className='container'>
-          <div className='columns'>
-            <div className='column has-text-centered'>
-              <Dropzone accept={'application/pdf'} style={{}}
+          <div className='columns is-multiline is-centered'>
+            <div className='column is-full has-text-centered'>
+              <Dropzone accept={acceptedTypes} style={{}}
                 activeStyle={{ borderStyle: 'dashed', width: 'fit-content', margin: 'auto' }}
-                onDrop={this.onDropPDF}
+                onDrop={(accepted, rejected) => this.onDropFile(accepted, rejected, 'normal')}
                 disablePreview
                 multiple>
-                <DropzoneContent text='Choose a PDF file…' />
+                <DropzoneContent text='Choose a scan file…' />
               </Dropzone>
             </div>
             <div className='column is-half'>
@@ -195,13 +179,13 @@ class Scans extends React.Component {
                     more information please refer to <a href='/#image-based-exam'>Home#image-based-exam</a>.
                   </div>
                   <Dropzone
-                    accept={'application/zip,application/octet-stream,application/x-zip-compressed,multipart/x-zip'}
+                    accept={acceptedTypes}
                     style={{}}
                     activeStyle={{ borderStyle: 'dashed', width: 'fit-content', margin: 'auto' }}
-                    onDrop={this.onDropZIP}
+                    onDrop={(accepted, rejected) => this.onDropFile(accepted, rejected, 'raw')}
                     disablePreview
                     multiple>
-                    <DropzoneContent text='Choose a ZIP file…' />
+                    <DropzoneContent text='Choose a scan file…' />
                   </Dropzone>
                 </div>
               </div>

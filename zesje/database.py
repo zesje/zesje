@@ -13,6 +13,7 @@ from sqlalchemy.orm import backref
 from sqlalchemy.orm.session import object_session
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.ext.associationproxy import association_proxy
+from pathlib import Path
 
 
 # Class for NOT automatically determining table names
@@ -218,6 +219,12 @@ class Scan(db.Model):
     name = Column(Text, nullable=False)
     status = Column(Text, nullable=False)
     message = Column(Text)
+
+    @property
+    def path(self):
+        suffix = Path(self.name).suffix
+        scan_dir = Path(current_app.config['SCAN_DIRECTORY'])
+        return scan_dir / f'{self.id}.{suffix}'
 
 
 class Widget(db.Model):

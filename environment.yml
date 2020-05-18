@@ -30,6 +30,9 @@ dependencies:
         #flask session management
         - flask_login
 
+        #flask role management
+        - flask_principal
+
         # General utilities
         - numpy
         - scipy

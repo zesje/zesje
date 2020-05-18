@@ -11,7 +11,6 @@ from scipy import spatial
 from flask import current_app
 
 from PIL import Image
-from pikepdf import Pdf
 from pylibdmtx import pylibdmtx
 from sqlalchemy.exc import InternalError
 from reportlab.lib.units import inch
@@ -19,8 +18,9 @@ from reportlab.lib.units import inch
 from .database import db, Scan, Exam, Page, Student, Submission, Copy, Solution, ExamWidget
 from .images import guess_dpi, get_box, is_misaligned
 from .pregrader import grade_problem
-from .image_extraction import extract_images
+from .image_extraction import extract_pages_from_file, readable_filename
 from .blanks import reference_image
+from .raw_scans import process_page as process_page_raw
 from . import celery
 
 ExtractedBarcode = namedtuple('ExtractedBarcode', ['token', 'copy', 'page'])
@@ -29,7 +29,7 @@ ExamMetadata = namedtuple('ExamMetadata', ['token', 'barcode_coords'])
 
 
 @celery.task()
-def process_pdf(scan_id):
+def process_scan(scan_id, scan_type):
     """Process a PDF, recording progress to a database
 
     Parameters
@@ -47,28 +47,32 @@ def process_pdf(scan_id):
     for signal_type in (signal.SIGINT, signal.SIGTERM):
         signal.signal(signal_type, raise_exit)
 
+    scan_pipelines = {
+        'normal': process_page,
+        'raw': process_page_raw
+    }
+
     try:
-        _process_pdf(scan_id)
+        _process_scan(scan_id, scan_pipelines[scan_type])
     except BaseException as error:
         # TODO: When #182 is implemented, properly separate user-facing
         #       messages (written to DB) from developer-facing messages,
         #       which should be written into the log.
-        write_pdf_status(scan_id, 'error', "Unexpected error: " + str(error))
+        write_scan_status(scan_id, 'error', "Unexpected error: " + str(error))
 
 
-def _process_pdf(scan_id):
+def _process_scan(scan_id, process_page_function):
     data_directory = current_app.config['DATA_DIRECTORY']
 
-    report_error = functools.partial(write_pdf_status, scan_id, 'error')
-    report_progress = functools.partial(write_pdf_status, scan_id, 'processing')
-    report_success = functools.partial(write_pdf_status, scan_id, 'success')
+    report_error = functools.partial(write_scan_status, scan_id, 'error')
+    report_progress = functools.partial(write_scan_status, scan_id, 'processing')
+    report_success = functools.partial(write_scan_status, scan_id, 'success')
 
     # Raises exception if zero or more than one scans found
     scan = Scan.query.filter(Scan.id == scan_id).one()
 
-    report_progress('Importing PDF')
+    report_progress(f'Importing file {scan.name}')
 
-    pdf_path = os.path.join(data_directory, 'scans', f'{scan.id}.pdf')
     output_directory = os.path.join(data_directory, f'{scan.exam.id}_data')
 
     try:
@@ -77,36 +81,37 @@ def _process_pdf(scan_id):
         report_error(f'Error while reading Exam metadata: {e}')
         raise
 
-    with Pdf.open(pdf_path) as pdf_reader:
-        total = len(pdf_reader.pages)
-
     failures = []
     try:
-        for image, page in extract_images(pdf_path):
-            report_progress(f'Processing page {page} / {total}')
+        for image, page_info, file_info, number, total in extract_pages_from_file(scan.path, scan.name):
+            report_progress(f'Processing page {number} / {total}')
+            if not isinstance(image, Image.Image):
+                failures.append((file_info, 'File is not an image'))
             try:
-                success, description = process_page(
-                    image, exam_config, output_directory
+                success, description = process_page_function(
+                    image, page_info, file_info, exam_config, output_directory
                 )
                 if not success:
-                    print(description)
-                    failures.append(page)
+                    failures.append((file_info, description))
             except Exception as e:
-                report_error(f'Error processing page {page}: {e}')
+                report_error(f'Error processing {readable_filename(file_info)}: {e}')
                 return
     except Exception as e:
-        report_error(f"Failed to read pdf: {e}")
+        report_error(f"Failed to read file {scan.name}: {e}")
         raise
 
     if failures:
         processed = total - len(failures)
         if processed:
             report_error(
-                f'Processed {processed} / {total} pages. '
-                f'Failed on pages: {failures}'
+                f'Processed {processed} / {total} pages.\n' +
+                '\n'.join(f'{readable_filename(file_info)}: {description}' for file_info, description in failures)
             )
         else:
-            report_error(f'Failed on all {total} pages.')
+            report_error(
+                f'Failed on all {total} pages.\n' +
+                '\n'.join(f'{readable_filename(file_info)}: {description}' for file_info, description in failures)
+            )
     else:
         report_success(f'Processed {total} pages.')
 
@@ -151,14 +156,14 @@ def exam_student_id_widget(exam_id):
     return student_id_widget, student_id_widget_coords
 
 
-def write_pdf_status(scan_id, status, message):
+def write_scan_status(scan_id, status, message):
     scan = Scan.query.get(scan_id)
     scan.status = status
     scan.message = message
     db.session.commit()
 
 
-def process_page(image_data, exam_config, output_dir=None, strict=False):
+def process_page(image_data, page_info, file_info, exam_config, output_dir=None, strict=False):
     """Incorporate a scanned image in the data structure.
 
     For each page perform the following steps:
@@ -175,6 +180,10 @@ def process_page(image_data, exam_config, output_dir=None, strict=False):
     Parameters
     ----------
     image_data : PIL Image
+    page_info : list of str
+        See `image_extraction.extract_pages_from_file`.
+    file_info : list of str
+        See `image_extraction.extract_pages_from_file`.
     exam_config : ExamMetadata instance
         Information about the exam to which this page should belong
     output_dir : string, optional

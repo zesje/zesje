@@ -10,7 +10,7 @@ from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
 
 from zesje.scans import decode_barcode, ExamMetadata, ExtractedBarcode, exam_metadata, guess_dpi
-from zesje.image_extraction import extract_image_pikepdf, extract_images
+from zesje.image_extraction import extract_image_pikepdf, extract_images_from_pdf
 from zesje.database import db
 from zesje.api.exams import generate_exam_token, _exam_generate_data
 from zesje.pdf_generation import exam_dir, exam_pdf_path, write_finalized_exam, generate_single_pdf
@@ -68,7 +68,7 @@ def generate_flat_scan_data(copy_number=145):
         generate_single_pdf(exam, copy_number, copy_number, scan_pdf)
         scan_pdf.seek(0)
 
-        for image, _ in extract_images(scan_pdf.name, dpi=150):
+        for image, _ in extract_images_from_pdf(scan_pdf.name, dpi=150):
             yield image, exam_config, examdir
 
 
@@ -145,7 +145,7 @@ def apply_scan(img, rotation=0, scale=1, skew=(0, 0)):
 
 def test_pipeline(full_app):
     for image, exam_config, examdir in generate_flat_scan_data():
-        success, reason = scans.process_page(image, exam_config, examdir)
+        success, reason = scans.process_page(image, [], [], exam_config, examdir)
         assert success is True, reason
 
 
@@ -157,7 +157,7 @@ def test_pipeline(full_app):
 def test_noise(full_app, threshold, expected):
     for image, exam_config, _ in generate_flat_scan_data():
         image = apply_whitenoise(image, threshold)
-        success, reason = scans.process_page(image, exam_config)
+        success, reason = scans.process_page(image, [], [], exam_config)
         assert success is expected, reason
 
 
@@ -170,7 +170,7 @@ def test_noise(full_app, threshold, expected):
 def test_rotate(full_app, rotation, expected):
     for image, exam_config, _ in generate_flat_scan_data():
         image = apply_scan(img=image, rotation=rotation)
-        success, reason = scans.process_page(image, exam_config)
+        success, reason = scans.process_page(image, [], [], exam_config)
         assert success is expected, reason
 
 
@@ -181,7 +181,7 @@ def test_rotate(full_app, rotation, expected):
 def test_scale(full_app, scale, expected):
     for image, exam_config, _ in generate_flat_scan_data():
         image = apply_scan(img=image, scale=scale)
-        success, reason = scans.process_page(image, exam_config)
+        success, reason = scans.process_page(image, [], [], exam_config)
         assert success is expected, reason
 
 
@@ -192,7 +192,7 @@ def test_scale(full_app, scale, expected):
 def test_skew(full_app, skew, expected):
     for image, exam_config, _ in generate_flat_scan_data():
         image = apply_scan(img=image, skew=skew)
-        success, reason = scans.process_page(image, exam_config)
+        success, reason = scans.process_page(image, [], [], exam_config)
         assert success is expected, reason
 
 
@@ -204,7 +204,7 @@ def test_all_effects(full_app, rotation, scale, skew, expected):
     for image, exam_config, _ in generate_flat_scan_data():
         image = apply_scan(
             img=image, rotation=rotation, scale=scale, skew=skew)
-        success, reason = scans.process_page(image, exam_config)
+        success, reason = scans.process_page(image, [], [], exam_config)
         assert success is expected, reason
 
 
@@ -233,9 +233,8 @@ def test_image_extraction_pike(datadir, filename, expected):
 def test_image_extraction(datadir, filename):
     file = os.path.join(datadir, filename)
     page = 0
-    for img, pagenr in scans.extract_images(file):
+    for img, _ in extract_images_from_pdf(file, only_info=False):
         page += 1
-        assert pagenr == page
         assert img is not None
         assert np.average(np.array(img)) == 255
     assert page == 2

@@ -48,7 +48,7 @@ from pathlib import Path
 from lorem.text import TextLorem
 
 from zesje.database import db, Exam, Scan, Submission, Solution, Page, Copy
-from zesje.scans import _process_pdf
+from zesje.scans import _process_scan, process_page
 from zesje.factory import create_app
 import zesje.mysql as mysql
 
@@ -165,7 +165,7 @@ def handle_pdf_processing(app, exam_id, pdf, pages, student_ids, copies_per_stud
     if skip_processing:
         _fake_process_pdf(scan, pages, student_ids, copies_per_student)
     else:
-        _process_pdf(scan_id=scan.id)
+        _process_scan(scan_id=scan.id, process_page_function=process_page)
 
     return {
         'id': scan.id,

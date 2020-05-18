@@ -423,3 +423,22 @@ class ExamPreview(Resource):
             output_file,
             cache_timeout=0,
             mimetype='application/pdf')
+
+
+class ExamTypes(Resource):
+
+    def get(self):
+
+        return [
+            {
+                'name': 'Zesje',
+                'value': ExamType.zesje.value,
+                'acceptsPDF': True,
+                'description': 'This is the default type...'
+            }, {
+                'name': 'Unstructured',
+                'value': ExamType.unstructured.value,
+                'acceptsPDF': False,
+                'description': 'Image based...'
+            }
+        ]

@@ -2,7 +2,7 @@ from flask import Blueprint
 from flask_restful import Api
 
 from .graders import Graders
-from .exams import Exams, ExamSource, ExamGeneratedPdfs, ExamPreview
+from .exams import Exams, ExamSource, ExamGeneratedPdfs, ExamPreview, ExamTypes
 from .scans import Scans, RawScans
 from .students import Students
 from .copies import Copies, MissingPages
@@ -28,6 +28,7 @@ api.add_resource(Exams, '/exams', '/exams/<int:exam_id>', '/exams/<int:exam_id>/
 api.add_resource(ExamSource, '/exams/<int:exam_id>/source_pdf')
 api.add_resource(ExamGeneratedPdfs, '/exams/<int:exam_id>/generated_pdfs')
 api.add_resource(ExamPreview, '/exams/<int:exam_id>/preview')
+api.add_resource(ExamTypes, '/exams/types')
 api.add_resource(Scans, '/scans/<int:exam_id>')
 api.add_resource(RawScans, '/scans/raw/<int:exam_id>')
 api.add_resource(Students, '/students', '/students/<int:student_id>')

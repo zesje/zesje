@@ -47,7 +47,7 @@ from pathlib import Path
 
 from lorem.text import TextLorem
 
-from zesje.database import db, Exam, Scan, Submission, Solution, Page, Copy
+from zesje.database import db, Exam, Scan, Submission, Solution, Page, Copy, ExamType
 from zesje.scans import _process_scan, process_page
 from zesje.factory import create_app
 import zesje.mysql as mysql
@@ -284,6 +284,7 @@ def design_exam(app, client, pages, students, grade, solve, multiple_copies, ski
                               content_type='multipart/form-data',
                               data={
                                   'exam_name': exam_name,
+                                  'type': ExamType.zesje.value,
                                   'pdf': pdf_file}).get_json()['id']
 
     print('\tDesigning a hard exam.')

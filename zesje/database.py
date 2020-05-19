@@ -21,7 +21,7 @@ class NoNameMeta(BindMetaMixin, DeclarativeMeta):
     pass
 
 
-class ExamType(enum.Enum):
+class ExamType(enum.IntEnum):
     zesje = 0
     unstructured = 1
 

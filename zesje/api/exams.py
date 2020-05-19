@@ -206,8 +206,8 @@ class Exams(Resource):
             raw pdf file.
         exam_name: str
             name for the exam
-        type: str
-            the type of exam to create, one of `ExamType`
+        type: int
+            the type of exam to create, one of `ExamType` values
 
         Returns
         -------
@@ -217,17 +217,15 @@ class Exams(Resource):
 
         args = self.post_parser.parse_args()
         exam_name = args['exam_name']
-
-        try:
-            type = ExamType(args['type'])
-        except TypeError:
-            return dict(status=400, message=f'Exam type {args["type"]} is defined'), 400
+        type = args['type']
 
         if type == ExamType.zesje:
             pdf_data = args['pdf']
             exam = self._add_zesje_exam(exam_name, pdf_data)
         elif type == ExamType.unstructured:
             exam = self._add_unstructured_exam(exam_name)
+        else:
+            return dict(status=400, message=f'Exam type {type} is not defined'), 400
 
         print(f"Added exam {exam.id} (name: {exam_name}, token: {exam.token}) to database")
 
@@ -350,7 +348,7 @@ class ExamSource(Resource):
         if (exam := Exam.query.get(exam_id)) is None:
             return dict(status=404, message='Exam does not exist.'), 404
 
-        if exam.type == ExamType.unstructured.value:
+        if exam.type == ExamType.unstructured:
             return dict(status=404, message='Unstructured exams have no pdf.'), 404
 
         return send_file(
@@ -435,7 +433,7 @@ class ExamPreview(Resource):
     def get(self, exam_id):
         if (exam := Exam.query.get(exam_id)) is None:
             return dict(status=404, message='Exam does not exist.'), 404
-        if exam.type == ExamType.unstructured.value:
+        if exam.type == ExamType.unstructured:
             return dict(status=404, message='Unstructured exams have no pdf.'), 404
 
         exam_dir, student_id_widget, barcode_widget, exam_path, cb_data = _exam_generate_data(exam)

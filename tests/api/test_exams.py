@@ -1,7 +1,7 @@
 import pytest
 
 from flask import json
-from zesje.database import db, Exam, Problem, ProblemWidget, Submission
+from zesje.database import db, Exam, Problem, ProblemWidget, Submission, ExamType
 from zesje.api.exams import generate_exam_token
 
 
@@ -99,3 +99,13 @@ def test_get_exams(test_client, no_with_subs, no_without_subs):
         exam_name = f'Submissions {i}'
         assert exam_name in exams
         assert exams[exam_name] == i
+
+
+def test_exam_types(test_client):
+    response = test_client.get('/api/exams/types')
+
+    assert response.status_code == 200
+
+    data = json.loads(response.data)
+
+    assert len(list(ExamType)) == len(data)

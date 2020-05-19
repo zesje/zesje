@@ -15,7 +15,7 @@ from pylibdmtx import pylibdmtx
 from sqlalchemy.exc import InternalError
 from reportlab.lib.units import inch
 
-from .database import db, Scan, Exam, Page, Student, Submission, Copy, Solution, ExamWidget
+from .database import db, Scan, Exam, Page, Student, Submission, Copy, Solution, ExamWidget, ExamType
 from .images import guess_dpi, get_box, is_misaligned
 from .pregrader import grade_problem
 from .image_extraction import extract_pages_from_file, readable_filename
@@ -48,8 +48,8 @@ def process_scan(scan_id, scan_type):
         signal.signal(signal_type, raise_exit)
 
     scan_pipelines = {
-        'normal': process_page,
-        'raw': process_page_raw
+        ExamType.zesje: process_page,
+        ExamType.unstructured: process_page_raw
     }
 
     try:

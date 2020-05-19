@@ -47,8 +47,7 @@ class Scans extends React.Component {
   state = {
     scans: [],
     copies: [],
-    examID: null,
-    showOtherUploadOptions: false
+    examID: null
   };
 
   updateScans = () => {
@@ -75,7 +74,7 @@ class Scans extends React.Component {
       })
   }
 
-  onDropFile = (accepted, rejected, type) => {
+  onDropFile = (accepted, rejected) => {
     if (rejected.length > 0) {
       Notification.error('Please upload a PDF, ZIP or image.')
       return
@@ -83,7 +82,6 @@ class Scans extends React.Component {
     accepted.map(file => {
       const data = new window.FormData()
       data.append('file', file)
-      data.append('scan_type', type)
       api.post('scans/' + this.props.examID, data)
         .then(() => {
           this.updateScans()
@@ -151,44 +149,11 @@ class Scans extends React.Component {
             <div className='column is-full has-text-centered'>
               <Dropzone accept={acceptedTypes} style={{}}
                 activeStyle={{ borderStyle: 'dashed', width: 'fit-content', margin: 'auto' }}
-                onDrop={(accepted, rejected) => this.onDropFile(accepted, rejected, 'normal')}
+                onDrop={(accepted, rejected) => this.onDropFile(accepted, rejected)}
                 disablePreview
                 multiple>
                 <DropzoneContent text='Choose a scan file…' center />
               </Dropzone>
-            </div>
-            <div className='column is-half'>
-              <div className='card'>
-                <header className='card-header'
-                  onClick={() => this.setState({showOtherUploadOptions: !this.state.showOtherUploadOptions})}>
-                  <a className='a card-header-icon'>
-                    <span className='icon'>
-                      <i className={'fa fa-angle-' + (this.state.showOtherUploadOptions ? 'up' : 'down')}
-                        aria-hidden='true' />
-                    </span>
-                  </a>
-                  <a className='card-header-title'>
-                    Other upload options
-                  </a>
-                </header>
-                <div className='card-content'
-                  hidden={!this.state.showOtherUploadOptions}>
-                  <div className='content'>
-                    It is also possible to upload pictures of pages made by students.
-                    These should be contained in a ZIP file, for the exact format and
-                    more information please refer to <a href='/#image-based-exam'>Home#image-based-exam</a>.
-                  </div>
-                  <Dropzone
-                    accept={acceptedTypes}
-                    style={{}}
-                    activeStyle={{ borderStyle: 'dashed', width: 'fit-content', margin: 'auto' }}
-                    onDrop={(accepted, rejected) => this.onDropFile(accepted, rejected, 'raw')}
-                    disablePreview
-                    multiple>
-                    <DropzoneContent text='Choose a scan file…' center />
-                  </Dropzone>
-                </div>
-              </div>
             </div>
             <div className='column is-full has-text-centered'>
               <aside className='menu'>

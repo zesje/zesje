@@ -26,9 +26,8 @@ class PanelEditUnstructured extends React.Component {
   loadProblems = (selectId) => {
     api.get('exams/' + this.props.examID)
       .then(exam => {
-        console.log(exam.problems)
         this.setState({
-          problems: exam.problems
+          problems: exam.problems.sort((p1, p2) => p1.page - p2.page)
         })
         this.selectProblem(selectId)
       })
@@ -62,7 +61,7 @@ class PanelEditUnstructured extends React.Component {
     const formData = new window.FormData()
     formData.append('exam_id', this.props.examID)
     formData.append('name', `Problem (${this.state.problems.length + 1})`)
-    formData.append('page', 0)
+    formData.append('page', this.state.problems.length) // TODO: reorder problems
     formData.append('x', 0)
     formData.append('y', 0)
     formData.append('width', 0)

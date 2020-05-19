@@ -474,9 +474,9 @@ def type_to_data(type):
             'value': ExamType.zesje.value,
             'acceptsPDF': True,
             'description': 'This is the default type, specially made for presencial exams. '
-                           'In this mode, the pdf you upload is used as a template to create unique '
+                           'In this mode, the pdf you upload is used as a template to create unique copies '
                            'where students can solve the exam. You can create open answer and multiple choice '
-                           'problems, Zesje will take care of cropping the images scaned PDFs with the solutions '
+                           'problems, Zesje will take care of cropping the images from scaned PDFs with the solutions '
                            'as well as detecting blank answers and grading multiple choice questions automatically.'
         }
     elif type == ExamType.unstructured:

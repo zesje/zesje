@@ -3,13 +3,15 @@ import React from 'react'
 import Notification from 'react-bulma-notification'
 
 import Hero from '../components/Hero.jsx'
-import './Exam.css'
+import './exam/Exam.css'
 import GeneratedExamPreview from '../components/GeneratedExamPreview.jsx'
 import PanelGenerate from '../components/PanelGenerate.jsx'
 import PanelMCQ from '../components/PanelMCQ.jsx'
-import ExamEditor from './ExamEditor.jsx'
+import ExamEditor from './exam/ExamEditor.jsx'
+import PanelExamName from './exam/PanelExamName.jsx'
+import PanelEditUnstructured from './exam/PanelEditUnstructured.jsx'
 import update from 'immutability-helper'
-import ExamFinalizeMarkdown from './ExamFinalize.md'
+import ExamFinalizeMarkdown from './exam/ExamFinalize.md'
 import ConfirmationModal from '../components/ConfirmationModal.jsx'
 import FeedbackPanel from '../components/feedback/FeedbackPanel.jsx'
 import Tooltip from '../components/Tooltip.jsx'
@@ -17,10 +19,44 @@ import Switch from 'react-bulma-switch/full'
 
 import * as api from '../api.jsx'
 
+const Pager = (props) => {
+  const isDisabled = props.numPages == null
+  const pageNum = isDisabled ? '_' : props.page + 1
+  const numPages = isDisabled ? '_' : props.numPages
+  return (
+    <div className='field has-addons is-mobile'>
+      <div className='control'>
+        <button
+          disabled={isDisabled}
+          type='submit'
+          className='button is-link is-rounded'
+          onClick={() => props.setPage(props.page - 1)}
+        >
+          Previous
+        </button>
+      </div>
+      <div className='control is-expanded'>
+        <div className='field-text is-rounded has-text-centered is-link'>
+          {'Page ' + pageNum + ' of ' + numPages}
+        </div>
+      </div>
+      <div className='control'>
+        <button
+          disabled={isDisabled}
+          type='submit'
+          className='button is-link is-rounded'
+          onClick={() => props.setPage(props.page + 1)}
+        >
+          Next
+        </button>
+      </div>
+    </div>
+  )
+}
+
 class Exams extends React.Component {
   state = {
     examID: null,
-    examName: null,
     page: 0,
     editActive: false,
     feedbackToEdit: null,
@@ -33,8 +69,7 @@ class Exams extends React.Component {
     deletingExam: false,
     deletingWidget: false,
     deletingMCWidget: false,
-    showPanelMCQ: false,
-    editingExamName: false
+    showPanelMCQ: false
   }
 
   static getDerivedStateFromProps = (newProps, prevState) => {
@@ -73,7 +108,6 @@ class Exams extends React.Component {
 
       return {
         examID: newProps.exam.id,
-        examName: newProps.exam.name,
         page: 0,
         numPages: null,
         selectedWidgetId: null,
@@ -362,41 +396,6 @@ class Exams extends React.Component {
     }
   }
 
-  Pager = (props) => {
-    const isDisabled = props.numPages == null
-    const pageNum = isDisabled ? '_' : props.page + 1
-    const numPages = isDisabled ? '_' : props.numPages
-    return (
-      <div className='field has-addons is-mobile'>
-        <div className='control'>
-          <button
-            disabled={isDisabled}
-            type='submit'
-            className='button is-link is-rounded'
-            onClick={() => props.setPage(props.page - 1)}
-          >
-            Previous
-          </button>
-        </div>
-        <div className='control is-expanded'>
-          <div className='field-text is-rounded has-text-centered is-link'>
-            {'Page ' + pageNum + ' of ' + numPages}
-          </div>
-        </div>
-        <div className='control'>
-          <button
-            disabled={isDisabled}
-            type='submit'
-            className='button is-link is-rounded'
-            onClick={() => props.setPage(props.page + 1)}
-          >
-            Next
-          </button>
-        </div>
-      </div>
-    )
-  }
-
   onPDFLoad = (pdf) => {
     this.setState((newProps, prevState) => ({
       numPages: pdf.numPages
@@ -584,7 +583,7 @@ class Exams extends React.Component {
     }))
   }
 
-  SidePanel = (props) => {
+  SidePanelZesje = (props) => {
     const selectedWidgetId = this.state.selectedWidgetId
     let selectedWidget = selectedWidgetId && this.state.widgets[selectedWidgetId]
     let problem = selectedWidget && selectedWidget.problem
@@ -594,7 +593,12 @@ class Exams extends React.Component {
 
     return (
       <React.Fragment>
-        <this.PanelEdit
+        <Pager
+          page={this.state.page}
+          numPages={this.state.numPages}
+          setPage={this.setPage}
+        />
+        <this.PanelEditZesje
           disabledEdit={widgetEditDisabled}
           disabledDelete={widgetDeleteDisabled}
           onDeleteClick={() => {
@@ -624,6 +628,13 @@ class Exams extends React.Component {
     )
   }
 
+  SidePanelUnstructured = (props) => (
+    <React.Fragment>
+      <PanelEditUnstructured examID={props.examID} />
+      <this.PanelGradeAnonymous />
+    </React.Fragment>
+  )
+
   PanelGradeAnonymous = (props) => {
     if (!this.props.exam.finalized) {
       return null
@@ -647,7 +658,8 @@ class Exams extends React.Component {
       </nav>
     )
   }
-  PanelEdit = (props) => {
+
+  PanelEditZesje = (props) => {
     const selectedWidgetId = this.state.selectedWidgetId
     let totalNrAnswers = 9 // the upper limit for the nr of possible answer boxes
 
@@ -892,108 +904,39 @@ class Exams extends React.Component {
     )
   }
 
-  PanelExamName = () => {
-    if (!this.state.editingExamName) {
-      return (
-        <nav className='panel'>
-          <p className='panel-heading'>
-            Exam details
-          </p>
-          <div className='panel-block'>
-            <p className='is-size-3'>
-              {this.state.examName}
-            </p>
-            <Tooltip
-              icon='pencil'
-              location='top'
-              text='Click to edit the exam name.'
-              clickAction={() => this.setState({editingExamName: true})}
-            />
-          </div>
-        </nav>
-      )
-    } else {
-      return (
-        <nav className='panel'>
-          <p className='panel-heading'>
-            Exam details
-          </p>
-          <div className='panel-block'>
-            <input className='input is-link'
-              type='text'
-              placeholder='Exam name'
-              value={this.state.examName}
-              onChange={(e) => {
-                this.setState({
-                  examName: e.target.value
-                })
-              }} />
-          </div>
-          <div className='panel-block field is-grouped'>
-            <button
-              className='button is-danger is-link is-fullwidth'
-              onClick={() => {
-                this.setState({
-                  examName: this.props.exam.name,
-                  editingExamName: false
-                })
-              }}
-            >
-              Cancel
-            </button>
-            <button
-              className='button is-link is-fullwidth'
-              disabled={this.state.examName === this.props.exam.name || this.state.examName === ''}
-              onClick={() => {
-                api.patch(`exams/${this.state.examID}`, {name: this.state.examName})
-                  .then(() => {
-                    this.setState({editingExamName: false})
-
-                    // In order to change the name everywhere in the UI we are forced to
-                    // update the whole exam here as well as the exam list in the navbar.
-                    // This is not ideal and should be addressed in
-                    // https://gitlab.kwant-project.org/zesje/zesje/issues/388
-                    // TODO: implement data locality for this view
-                    this.props.updateExam(this.state.examID)
-                    this.props.updateExamList()
-                  })
-                  .catch(err => {
-                    console.log(err)
-                    err.json().then(e => {
-                      Notification.error('Could not save exam name: ' + e.message)
-                    })
-                  })
-              }}
-            >
-              Save
-            </button>
-          </div>
-        </nav>
-      )
-    }
-  }
-
   render () {
     return <div>
       <Hero />
       <section className='section'>
         <div className='container'>
           <div className='columns is-centered' >
-            <div className='column is-one-quarter-fullhd is-one-third-desktop editor-side-panel' >
-              <this.PanelExamName />
-              <this.Pager
-                page={this.state.page}
-                numPages={this.state.numPages}
-                setPage={this.setPage}
-              />
-              <this.SidePanel
+            <div className={'column editor-side-panel ' +
+                (this.props.exam.type && this.props.exam.type.acceptsPDF
+                  ? 'is-one-quarter-fullhd is-one-third-desktop' : 'is-one-third-desktop ')} >
+              <PanelExamName
+                name={this.props.exam.name}
                 examID={this.state.examID}
-                setHelpPage={this.props.setHelpPage}
-              />
+                onChange={(name) => {
+                  // In order to change the name everywhere in the UI we are forced to
+                  // update the whole exam here as well as the exam list in the navbar.
+                  // This is not ideal and should be addressed in
+                  // https://gitlab.kwant-project.org/zesje/zesje/issues/388
+                  // TODO: implement data locality for this view
+                  this.props.updateExam(this.state.examID)
+                  this.props.updateExamList()
+                }} />
+              {this.props.exam.type && (this.props.exam.type.value === 0
+                ? <this.SidePanelZesje
+                  examID={this.state.examID}
+                  setHelpPage={this.props.setHelpPage} />
+                : <this.SidePanelUnstructured examID={this.state.examID} />)
+              }
             </div>
-            <div className='column is-narrow editor-content' >
-              {this.renderContent()}
-            </div>
+            {this.props.exam.type && this.props.exam.type.acceptsPDF &&
+              <div className='column is-narrow editor-content' >
+                {this.renderContent()}
+              </div>
+            }
           </div>
         </div>
       </section>

@@ -1,23 +1,23 @@
 import React from 'react'
 import Notification from 'react-bulma-notification'
 
-import barcodeExampleImage from '../components/barcode_example.png'
+import barcodeExampleImage from '../../components/barcode_example.png'
 // FIXME!
 // eslint-disable-next-line import/no-webpack-loader-syntax
-import barcodeExampleImageSize from '!image-dimensions-loader!../components/barcode_example.png'
-import studentIdExampleImage from '../components/student_id_example.png'
+import barcodeExampleImageSize from '!image-dimensions-loader!../../components/barcode_example.png'
+import studentIdExampleImage from '../../components/student_id_example.png'
 // FIXME!
 // eslint-disable-next-line import/no-webpack-loader-syntax
-import studentIdExampleImageSize from '!image-dimensions-loader!../components/student_id_example.png'
-import answerBoxImage from '../components/answer_box.png'
-import EmptyPDF from '../components/EmptyPDF.jsx'
-import PDFOverlay from '../components/PDFOverlay.jsx'
+import studentIdExampleImageSize from '!image-dimensions-loader!../../components/student_id_example.png'
+import answerBoxImage from '../../components/answer_box.png'
+import EmptyPDF from '../../components/EmptyPDF.jsx'
+import PDFOverlay from '../../components/PDFOverlay.jsx'
 
 import ResizeAndDrag from 'react-rnd'
 
 import { Document, Page } from 'react-pdf/dist/entry.webpack'
 
-import * as api from '../api.jsx'
+import * as api from '../../api.jsx'
 
 class ExamEditor extends React.Component {
   state = {

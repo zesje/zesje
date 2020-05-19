@@ -3,7 +3,8 @@
 import os
 
 from flask_restful import Resource, reqparse, current_app
-from ..database import db, Exam, Problem, ProblemWidget, Solution, GradingPolicy
+
+from ..database import db, Exam, Problem, ProblemWidget, Solution, GradingPolicy, ExamType
 from zesje.pdf_reader import guess_problem_title, get_problem_page
 
 
@@ -82,32 +83,33 @@ class Problems(Resource):
         if (exam := Exam.query.get(exam_id)) is None:
             msg = f"Exam with id {exam_id} doesn't exist"
             return dict(status=400, message=msg), 400
-        else:
-            widget = ProblemWidget(
-                x=args['x'],
-                y=args['y'],
-                width=args['width'],
-                height=args['height'],
-                page=args['page'],
-            )
 
-            problem = Problem(
-                exam=exam,
-                name=args['name'],
-                widget=widget,
-            )
+        widget = ProblemWidget(
+            x=args['x'],
+            y=args['y'],
+            width=args['width'],
+            height=args['height'],
+            page=args['page'],
+        )
 
-            # Widget is also added because it is used in problem
-            db.session.add(problem)
+        problem = Problem(
+            exam=exam,
+            name=args['name'],
+            widget=widget,
+        )
 
-            # Add solutions for each already existing submission
-            for sub in exam.submissions:
-                db.session.add(Solution(problem=problem, submission=sub))
+        # Widget is also added because it is used in problem
+        db.session.add(problem)
 
-            # Commit so problem gets an id
-            db.session.commit()
-            widget.name = f'problem_{problem.id}'
+        # Add solutions for each already existing submission
+        for sub in exam.submissions:
+            db.session.add(Solution(problem=problem, submission=sub))
 
+        # Commit so problem gets an id
+        db.session.commit()
+        widget.name = f'problem_{problem.id}'
+
+        if exam.type == ExamType.zesje.value:
             data_dir = current_app.config['DATA_DIRECTORY']
             pdf_path = os.path.join(data_dir, f'{problem.exam_id}_data', 'exam.pdf')
 
@@ -118,12 +120,12 @@ class Problems(Resource):
 
             db.session.commit()
 
-            return {
-                'id': problem.id,
-                'widget_id': widget.id,
-                'problem_name': problem.name,
-                'grading_policy': problem.grading_policy.name
-            }
+        return {
+            'id': problem.id,
+            'widget_id': widget.id,
+            'problem_name': problem.name,
+            'grading_policy': problem.grading_policy.name
+        }
 
     put_parser = reqparse.RequestParser()
     put_parser.add_argument('name', type=str)

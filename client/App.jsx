@@ -56,6 +56,7 @@ const Fail = Loadable({
 
 const nullExam = () => ({
   id: null,
+  type: null,
   name: '',
   submissions: [],
   problems: [],

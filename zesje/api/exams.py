@@ -147,7 +147,7 @@ class Exams(Resource):
             ],
             'finalized': exam.finalized,
             'gradeAnonymous': exam.grade_anonymous,
-            'type': type_to_data(ExamType(exam.type))
+            'type': type_to_data(exam.type)
         }
 
     def _get_single_metadata(self, exam_id, shuffle_seed):
@@ -172,6 +172,7 @@ class Exams(Resource):
 
         return {
             'exam_id': exam.id,
+            'type': type_to_data(exam.type),
             'submissions': [
                 {
                     'id': sub.id,
@@ -349,7 +350,7 @@ class ExamSource(Resource):
         if (exam := Exam.query.get(exam_id)) is None:
             return dict(status=404, message='Exam does not exist.'), 404
 
-        if exam.type == ExamType.unstructured:
+        if exam.type == ExamType.unstructured.value:
             return dict(status=404, message='Unstructured exams have no pdf.'), 404
 
         return send_file(
@@ -434,7 +435,7 @@ class ExamPreview(Resource):
     def get(self, exam_id):
         if (exam := Exam.query.get(exam_id)) is None:
             return dict(status=404, message='Exam does not exist.'), 404
-        if exam.type == ExamType.unstructured:
+        if exam.type == ExamType.unstructured.value:
             return dict(status=404, message='Unstructured exams have no pdf.'), 404
 
         exam_dir, student_id_widget, barcode_widget, exam_path, cb_data = _exam_generate_data(exam)
@@ -464,6 +465,9 @@ class ExamPreview(Resource):
 
 
 def type_to_data(type):
+    if isinstance(type, int):
+        type = ExamType(type)
+
     if type == ExamType.zesje:
         return {
             'name': 'Zesje',

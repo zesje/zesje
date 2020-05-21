@@ -149,7 +149,7 @@ class NavBar extends React.Component {
   updateGrader = () => {
     if (window.location.pathname !== '/login') {
       api.get('oauth/grader').then(response => {
-        this.setState({grader: response.name})
+        this.setState({grader: response})
         this.props.changeGrader(response)
         this.updateExamList()
       })
@@ -174,7 +174,7 @@ class NavBar extends React.Component {
 
   displayGrader = () => {
     if (this.state.grader) {
-      return 'Current Grader: ' + this.state.grader
+      return 'Current Grader: ' + this.state.grader.name + ' (' + this.state.grader.oauth_id + ')'
     } else {
       return ''
     }
@@ -233,7 +233,7 @@ class NavBar extends React.Component {
           </div>
 
           <div className='navbar-end'>
-            <GraderDropdown grader={this.displayGrader()} hidden={!this.state.grader} />
+            <GraderDropdown grader={this.displayGrader()} hidden={!`this.state.grader`} />
             <LoginButton className='navbar-item' hidden={!this.state.grader} logout={this.logout} />
 
             <div className='navbar-item'>

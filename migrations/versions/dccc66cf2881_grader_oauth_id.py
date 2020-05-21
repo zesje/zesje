@@ -1,7 +1,7 @@
 """ Added a column oauth_id to store unique ids of oauth providers.
 
 Revision ID: dccc66cf2881
-Revises: ef470a16399e
+Revises: c61a8d939466
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ from sqlalchemy.dialects import mysql
 
 # revision identifiers, used by Alembic.
 revision = 'dccc66cf2881'
-down_revision = 'ef470a16399e'
+down_revision = 'c61a8d939466'
 branch_labels = None
 depends_on = None
 

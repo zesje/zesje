@@ -58,7 +58,8 @@ div.mcq-option img.mcq-box {
 
 .editor-side-panel {
   background: #fff;
-  margin: 0.75em;
+  margin-left: 0.75em;
+  margin-right: 0.75em;
 }
 
 .field-text {
@@ -102,4 +103,3 @@ div.mcq-option img.mcq-box {
 .field.is-horizontal.is-horizontal-mobile > .field-body > .field:not(:is-narrow) {
   flex-grow: 1;
 }
-

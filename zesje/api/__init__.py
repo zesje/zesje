@@ -28,7 +28,9 @@ api.add_resource(Exams, '/exams', '/exams/<int:exam_id>', '/exams/<int:exam_id>/
 api.add_resource(ExamSource, '/exams/<int:exam_id>/source_pdf')
 api.add_resource(ExamGeneratedPdfs, '/exams/<int:exam_id>/generated_pdfs')
 api.add_resource(ExamPreview, '/exams/<int:exam_id>/preview')
-api.add_resource(ExamTypes, '/exams/types')
+api.add_resource(ExamTypes,
+                 '/exams/types',
+                 '/exams/types/<int:exam_id>')
 api.add_resource(Scans, '/scans/<int:exam_id>')
 api.add_resource(Students, '/students', '/students/<int:student_id>')
 api.add_resource(Copies,

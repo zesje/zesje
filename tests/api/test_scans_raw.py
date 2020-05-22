@@ -9,7 +9,7 @@ from zesje.scans import process_scan
 
 @pytest.fixture
 def app_with_data(app):
-    exam = Exam(name='', finalized=True, type=ExamLayout.unstructured)
+    exam = Exam(name='', finalized=True, layout=ExamLayout.unstructured)
     db.session.add(exam)
     db.session.commit()
     yield app, exam

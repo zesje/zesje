@@ -170,16 +170,8 @@ class Problems(Resource):
         if any([sol.graded_by is not None for sol in problem.solutions]):
             return dict(status=403, message='Problem has already been graded'), 403
 
-        exam = problem.exam
-
         # The widget and all associated solutions are automatically deleted
         db.session.delete(problem)
         db.session.commit()
-
-        if exam.layout == ExamLayout.unstructured:
-            # reorder the exams to ensure that each occupies a unique page without blanks
-            for index, problem in enumerate(sorted(exam.problems, key=lambda p: p.widget.page)):
-                problem.widget.page = index
-            db.session.commit()
 
         return dict(status=200, message="ok"), 200

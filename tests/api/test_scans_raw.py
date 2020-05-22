@@ -3,13 +3,13 @@ import zipfile
 
 from io import BytesIO
 
-from zesje.database import db, Exam, Scan, ExamType
+from zesje.database import db, Exam, Scan, ExamLayout
 from zesje.scans import process_scan
 
 
 @pytest.fixture
 def app_with_data(app):
-    exam = Exam(name='', finalized=True, type=ExamType.unstructured.value)
+    exam = Exam(name='', finalized=True, type=ExamLayout.unstructured)
     db.session.add(exam)
     db.session.commit()
     yield app, exam

@@ -73,7 +73,7 @@ class Exams extends React.Component {
 
     const data = new window.FormData()
     data.append('exam_name', this.state.exam_name)
-    data.append('type', this.state.selectedType.value)
+    data.append('layout', this.state.selectedType.value)
     if (this.state.selectedType.acceptsPDF) {
       data.append('pdf', this.state.pdf)
     }

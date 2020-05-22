@@ -1,7 +1,7 @@
 import pytest
 
 from flask import json
-from zesje.database import db, Exam, Problem, ProblemWidget, Submission, ExamType
+from zesje.database import db, Exam, Problem, ProblemWidget, Submission, ExamLayout
 from zesje.api.exams import generate_exam_token
 
 
@@ -108,4 +108,4 @@ def test_exam_types(test_client):
 
     data = json.loads(response.data)
 
-    assert len(list(ExamType)) == len(data)
+    assert len(list(ExamLayout)) == len(data)

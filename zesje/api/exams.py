@@ -14,7 +14,7 @@ from ..pdf_generation import exam_pdf_path, _exam_generate_data
 from ..pdf_generation import generate_pdfs, generate_single_pdf, generate_zipped_pdfs
 from ..pdf_generation import page_is_size, save_with_even_pages
 from ..pdf_generation import write_finalized_exam
-from ..database import db, Exam, ExamWidget, Submission, FeedbackOption, token_length, ExamType
+from ..database import db, Exam, ExamWidget, Submission, FeedbackOption, token_length, ExamLayout
 from .submissions import sub_to_data
 
 
@@ -147,7 +147,7 @@ class Exams(Resource):
             ],
             'finalized': exam.finalized,
             'gradeAnonymous': exam.grade_anonymous,
-            'type': type_to_data(exam.type)
+            'layout': layout_to_data(exam.layout)
         }
 
     def _get_single_metadata(self, exam_id, shuffle_seed):
@@ -172,7 +172,7 @@ class Exams(Resource):
 
         return {
             'exam_id': exam.id,
-            'type': type_to_data(exam.type),
+            'layout': layout_to_data(exam.layout),
             'submissions': [
                 {
                     'id': sub.id,
@@ -195,7 +195,7 @@ class Exams(Resource):
     post_parser = reqparse.RequestParser()
     post_parser.add_argument('pdf', type=FileStorage, required=False, location='files')
     post_parser.add_argument('exam_name', type=str, required=True, location='form')
-    post_parser.add_argument('type', type=int, required=True, location='form')
+    post_parser.add_argument('layout', type=int, required=True, location='form')
 
     def post(self):
         """Add a new exam.
@@ -206,8 +206,8 @@ class Exams(Resource):
             raw pdf file.
         exam_name: str
             name for the exam
-        type: int
-            the type of exam to create, one of `ExamType` values
+        layout: int
+            the type of exam to create, one of `ExamLayout` values
 
         Returns
         -------
@@ -217,12 +217,12 @@ class Exams(Resource):
 
         args = self.post_parser.parse_args()
         exam_name = args['exam_name']
-        type = args['type']
-
-        if type == ExamType.zesje:
+        layout = args['layout']
+        print(layout)
+        if layout == ExamLayout.zesje:
             pdf_data = args['pdf']
             exam = self._add_zesje_exam(exam_name, pdf_data)
-        elif type == ExamType.unstructured:
+        elif layout == ExamLayout.unstructured:
             exam = self._add_unstructured_exam(exam_name)
         else:
             return dict(status=400, message=f'Exam type {type} is not defined'), 400
@@ -234,17 +234,23 @@ class Exams(Resource):
         }
 
     def _add_zesje_exam(self, exam_name, pdf_data):
+        if not pdf_data:
+            abort(
+                404,
+                message='Upload a PDF to add a zesje exam.'
+            )
+
         format = current_app.config['PAGE_FORMAT']
 
         if not page_is_size(pdf_data, current_app.config['PAGE_FORMATS'][format], tolerance=0.01):
-            return abort(
+            abort(
                 400,
                 message=f'PDF page size is not {format}.'
             )
 
         exam = Exam(
             name=exam_name,
-            type=ExamType.zesje.value
+            layout=ExamLayout.zesje
         )
 
         exam.widgets = [
@@ -275,7 +281,7 @@ class Exams(Resource):
     def _add_unstructured_exam(self, exam_name):
         exam = Exam(
             name=exam_name,
-            type=ExamType.unstructured.value
+            layout=ExamLayout.unstructured
         )
 
         db.session.add(exam)
@@ -300,7 +306,7 @@ class Exams(Resource):
         elif args['finalized']:
             add_blank_feedback(exam.problems)
 
-            if exam.type == ExamType.zesje:
+            if exam.layout == ExamLayout.zesje:
                 write_finalized_exam(exam)
 
             exam.finalized = True
@@ -348,7 +354,7 @@ class ExamSource(Resource):
         if (exam := Exam.query.get(exam_id)) is None:
             return dict(status=404, message='Exam does not exist.'), 404
 
-        if exam.type == ExamType.unstructured:
+        if exam.layout == ExamLayout.unstructured:
             return dict(status=404, message='Unstructured exams have no pdf.'), 404
 
         return send_file(
@@ -396,7 +402,7 @@ class ExamGeneratedPdfs(Resource):
         if not exam.finalized:
             msg = 'Exam is not finalized.'
             return dict(status=403, message=msg), 403
-        if exam.type == ExamType.unstructured:
+        if exam.layout == ExamLayout.unstructured:
             return dict(status=404, message='Unstructured exams have no pdf.'), 404
 
         if copies_end < copies_start:
@@ -433,7 +439,7 @@ class ExamPreview(Resource):
     def get(self, exam_id):
         if (exam := Exam.query.get(exam_id)) is None:
             return dict(status=404, message='Exam does not exist.'), 404
-        if exam.type == ExamType.unstructured:
+        if exam.layout == ExamLayout.unstructured:
             return dict(status=404, message='Unstructured exams have no pdf.'), 404
 
         exam_dir, student_id_widget, barcode_widget, exam_path, cb_data = _exam_generate_data(exam)
@@ -462,14 +468,30 @@ class ExamPreview(Resource):
             mimetype='application/pdf')
 
 
-def type_to_data(type):
-    if isinstance(type, int):
-        type = ExamType(type)
+def layout_to_data(layout):
+    """Returns a description for the given exam type.
 
-    if type == ExamType.zesje:
+    Parameters
+    ----------
+    layout : int | ExamLayout
+        the type to explain
+
+    Returns
+    -------
+    dict : the description
+        `name` : str
+            human readable name that clearly distinguishes all types,
+        `value` : int
+            internal value to be passed to the requests (also unique),
+        `acceptsPDF` : bool
+            whether this layout is based on a PDF from that must be passed from the user,
+        `description` : str
+            text with a brief explanation of the layout.
+    """
+    if layout == ExamLayout.zesje:
         return {
             'name': 'Zesje',
-            'value': ExamType.zesje.value,
+            'value': ExamLayout.zesje.value,
             'acceptsPDF': True,
             'description': 'This is the default type, specially made for presencial exams. '
                            'In this mode, the pdf you upload is used as a template to create unique copies '
@@ -477,10 +499,10 @@ def type_to_data(type):
                            'problems, Zesje will take care of cropping the images from scaned PDFs with the solutions '
                            'as well as detecting blank answers and grading multiple choice questions automatically.'
         }
-    elif type == ExamType.unstructured:
+    elif layout == ExamLayout.unstructured:
         return {
             'name': 'Unstructured',
-            'value': ExamType.unstructured.value,
+            'value': ExamLayout.unstructured.value,
             'acceptsPDF': False,
             'description': 'Image based exam, this is specially made for take-home or virtual exam. '
                            'It is not based in any PDF, the scans can be images, pdfs or zipfiles made by students. '
@@ -490,7 +512,13 @@ def type_to_data(type):
 
 
 class ExamTypes(Resource):
+    """Resource to request all the possible layouts to create an exam."""
 
     def get(self):
+        """Returns a list of all possible types ordered by `ExamLayout.value`
 
-        return [type_to_data(ExamType.zesje), type_to_data(ExamType.unstructured)]
+        Returns
+        -------
+        list of dict : see `layout_to_data`.
+        """
+        return [layout_to_data(type) for type in list(ExamLayout)]

@@ -4,7 +4,7 @@ import os
 
 from flask_restful import Resource, reqparse, current_app
 
-from ..database import db, Exam, Problem, ProblemWidget, Solution, GradingPolicy, ExamType
+from ..database import db, Exam, Problem, ProblemWidget, Solution, GradingPolicy, ExamLayout
 from zesje.pdf_reader import guess_problem_title, get_problem_page
 
 
@@ -109,7 +109,7 @@ class Problems(Resource):
         db.session.commit()
         widget.name = f'problem_{problem.id}'
 
-        if exam.type == ExamType.zesje.value:
+        if exam.layout == ExamLayout.zesje:
             data_dir = current_app.config['DATA_DIRECTORY']
             pdf_path = os.path.join(data_dir, f'{problem.exam_id}_data', 'exam.pdf')
 
@@ -159,14 +159,27 @@ class Problems(Resource):
 
         return dict(status=200, message="ok"), 200
 
+    def patch(self, problem_id):
+        # set problem page
+        pass
+
     def delete(self, problem_id):
         if (problem := Problem.query.get(problem_id)) is None:
             return dict(status=404, message=f"Problem with id {problem_id} doesn't exist"), 404
 
         if any([sol.graded_by is not None for sol in problem.solutions]):
             return dict(status=403, message='Problem has already been graded'), 403
-        else:
-            # The widget and all associated solutions are automatically deleted
-            db.session.delete(problem)
+
+        exam = problem.exam
+
+        # The widget and all associated solutions are automatically deleted
+        db.session.delete(problem)
+        db.session.commit()
+
+        if exam.layout == ExamLayout.unstructured:
+            # reorder the exams to ensure that each occupies a unique page without blanks
+            for index, problem in enumerate(sorted(exam.problems, key=lambda p: p.widget.page)):
+                problem.widget.page = index
             db.session.commit()
-            return dict(status=200, message="ok"), 200
+
+        return dict(status=200, message="ok"), 200

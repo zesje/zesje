@@ -3,7 +3,7 @@ from flask_restful import Resource, reqparse
 from werkzeug.datastructures import FileStorage
 
 from ..scans import process_scan
-from ..database import db, Exam, Scan, ExamType
+from ..database import db, Exam, Scan
 
 
 class Scans(Resource):
@@ -89,7 +89,7 @@ class Scans(Resource):
         # TODO: save these into a process-local datastructure, or save
         # it into the DB as well so that we can cull 'processing' tasks
         # that are actually dead.
-        process_scan.delay(scan_id=scan.id, scan_type=ExamType(exam.type))
+        process_scan.delay(scan_id=scan.id, scan_type=exam.layout)
 
         return {
             'id': scan.id,

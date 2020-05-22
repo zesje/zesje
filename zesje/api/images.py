@@ -4,7 +4,7 @@ import cv2
 import numpy as np
 
 from ..images import get_box, guess_dpi, widget_area
-from ..database import Exam, Submission, Problem, Page, Solution, Copy
+from ..database import Exam, Submission, Problem, Page, Solution, Copy, ExamLayout
 from ..scans import exam_student_id_widget
 
 
@@ -19,7 +19,9 @@ def get(exam_id, problem_id, submission_id, full_page=False):
         The id of the submission. This uniquely identifies
         the submission *across all exams*.
     full_page : bool
-        Whether to return a complete page
+        Whether to return a complete page.
+        If exam type is `unstructured` this option is ignored
+            and the full page is always returned.
 
     Returns
     -------
@@ -34,8 +36,9 @@ def get(exam_id, problem_id, submission_id, full_page=False):
     if (sub := Submission.query.get(submission_id)) is None:
         abort(404, 'Submission does not exist.')
 
-    # TODO: use points as base unit
-    widget_area_in = widget_area(problem)
+    if exam.layout == ExamLayout.unstructured:
+        full_page = True
+
     page_number = problem.widget.page
 
     #  get the pages
@@ -53,6 +56,9 @@ def get(exam_id, problem_id, submission_id, full_page=False):
         student_id_widget, coords = exam_student_id_widget(exam.id)
 
     raw_images = []
+
+    # TODO: use points as base unit
+    widget_area_in = widget_area(problem)
 
     for page in pages:
         page_path = page.abs_path

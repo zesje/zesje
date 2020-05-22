@@ -21,11 +21,6 @@ class NoNameMeta(BindMetaMixin, DeclarativeMeta):
     pass
 
 
-class ExamType(enum.IntEnum):
-    zesje = 0
-    unstructured = 1
-
-
 db = SQLAlchemy(model_class=declarative_base(
     cls=Model, metaclass=NoNameMeta, name='Model'))
 
@@ -53,6 +48,12 @@ class Grader(db.Model):
     graded_solutions = db.relationship('Solution', backref='graded_by', lazy=True)
 
 
+ExamLayout = enum.IntEnum(
+    'ExamLayout',
+    'zesje unstructured'
+)
+
+
 class Exam(db.Model):
     """ New instances are created when providing a new exam. """
     __tablename__ = 'exam'
@@ -66,7 +67,7 @@ class Exam(db.Model):
                               order_by='ExamWidget.id', lazy=True)
     finalized = Column(Boolean, default=False, server_default='0')
     grade_anonymous = Column(Boolean, default=False, server_default='0')
-    type = Column(Integer, default=ExamType.zesje.value, server_default=f'{ExamType.zesje.value}', nullable=False)
+    layout = Column('layout', Enum(ExamLayout), server_default='zesje', default=ExamLayout.zesje, nullable=False)
 
     @hybrid_property
     def copies(self):

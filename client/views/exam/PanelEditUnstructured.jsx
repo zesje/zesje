@@ -161,7 +161,7 @@ class PanelEditUnstructured extends React.Component {
                 <label className='label'>Name</label>
                 <div className='control'>
                   <input
-                    className={'input' + this.inputColor(this.state.problemName, problem.name)}
+                    className={'input ' + this.inputColor(this.state.problemName, problem.name)}
                     placeholder='Problem name'
                     value={this.state.problemName}
                     onChange={(e) => this.setState({problemName: e.target.value})}

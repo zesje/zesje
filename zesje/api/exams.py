@@ -202,12 +202,12 @@ class Exams(Resource):
 
         Parameters
         ----------
-        pdf : file
-            raw pdf file.
         exam_name: str
             name for the exam
         layout: int
             the type of exam to create, one of `ExamLayout` values
+        pdf : file, optional
+            raw pdf file.
 
         Returns
         -------
@@ -216,9 +216,12 @@ class Exams(Resource):
         """
 
         args = self.post_parser.parse_args()
-        exam_name = args['exam_name']
+        exam_name = args['exam_name'].strip()
         layout = args['layout']
-        print(layout)
+
+        if not exam_name:
+            return dict(status=400, message='Exam name is empty'), 400
+
         if layout == ExamLayout.zesje:
             pdf_data = args['pdf']
             exam = self._add_zesje_exam(exam_name, pdf_data)

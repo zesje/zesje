@@ -99,6 +99,7 @@ class PanelEditUnstructured extends React.Component {
     this.setState({
       selectedProblemId: problem ? problem.id : null,
       problemName: problem ? problem.name : null,
+      problemPage: problem ? problem.page : -1,
       deletingProblem: false
     })
   }
@@ -123,6 +124,7 @@ class PanelEditUnstructured extends React.Component {
     api.put('problems/' + id, { name: name })
       .then(resp => this.loadProblems(id))
       .catch(e => {
+        this.selectProblem(id) // takes care of updating the problem name to previous state
         console.log(e)
         e.json().then(err => Notification.error('Could not save new problem name: ' + err.message))
       })
@@ -132,6 +134,7 @@ class PanelEditUnstructured extends React.Component {
     api.patch(`widgets/${widgetId}`, {page: page})
       .then(resp => this.loadProblems(problemId))
       .catch(e => {
+        this.selectProblem(problemId)
         console.log(e)
         e.json().then(err => Notification.error('Could not save new problem page: ' + err.message))
       })
@@ -166,6 +169,16 @@ class PanelEditUnstructured extends React.Component {
     }
   }
 
+  updatePage = (newPage) => {
+    const patt = new RegExp(/^(-|(-?[1-9]\d*)|0)?$/)
+
+    if (patt.test(newPage)) {
+      this.setState({
+        page: parseInt(newPage)
+      })
+    }
+  }
+
   PanelProblem = (props) => {
     return (
       (
@@ -192,7 +205,7 @@ class PanelEditUnstructured extends React.Component {
                       value={this.state.problemName}
                       onChange={(e) => this.setState({problemName: e.target.value})}
                       onBlur={(e) => {
-                        this.saveProblemName(this.state.selectedProblemId, e.target.value)
+                        this.saveProblemName(props.problem.id, this.state.problemName)
                       }}
                     />
                   </div>
@@ -204,12 +217,12 @@ class PanelEditUnstructured extends React.Component {
                   <label className='label'>Page</label>
                   <div className='control'>
                     <input
-                      className={'input ' + this.inputColor(this.state.problemName, props.problem.name)}
-                      placeholder='Problem name'
-                      value={this.state.problemName}
-                      onChange={(e) => this.setState({problemName: e.target.value})}
+                      className={'input ' + this.inputColor(this.state.problemPage, props.problem.page)}
+                      placeholder='#'
+                      value={this.state.problemPage}
+                      onChange={(e) => this.updatePage(e.target.value)}
                       onBlur={(e) => {
-                        this.saveProblemName(this.state.selectedProblemId, e.target.value)
+                        this.saveProblemPage(props.problem.id, props.problem.widget.id, this.state.problemPage)
                       }}
                     />
                   </div>
@@ -223,13 +236,13 @@ class PanelEditUnstructured extends React.Component {
                 examID={this.state.examID}
                 problem={props.problem}
                 grading={false}
-                updateFeedback={() => this.loadProblems(this.state.selectedProblemId)} />
+                updateFeedback={() => this.loadProblems(props.problem.id)} />
 
               <div className='panel-block'>
                 <button
                   disabled={props.problem.n_graded > 0}
                   className='button is-danger is-fullwidth'
-                  onClick={() => this.deleteProblem(this.state.selectedProblemId)}
+                  onClick={() => this.setState({deletingProblem: true})}
                 >
                   Delete problem
                 </button>

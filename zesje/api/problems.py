@@ -159,10 +159,6 @@ class Problems(Resource):
 
         return dict(status=200, message="ok"), 200
 
-    def patch(self, problem_id):
-        # set problem page
-        pass
-
     def delete(self, problem_id):
         if (problem := Problem.query.get(problem_id)) is None:
             return dict(status=404, message=f"Problem with id {problem_id} doesn't exist"), 404

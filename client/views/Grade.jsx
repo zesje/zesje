@@ -21,26 +21,46 @@ class Grade extends React.Component {
    */
   constructor (props) {
     super(props)
+    console.log('in constructor')
     this.state = {}
-    api.get(`exams/${this.props.examID}?only_metadata=true` +
-      `&shuffle_seed=${this.props.graderID}`).then(metadata => {
-      const examID = metadata.exam_id
-      const submissionID = metadata.submissions[0].id
-      const problemID = metadata.problems[0].id
-      Promise.all([
-        api.get(`submissions/${examID}/${submissionID}`),
-        api.get(`problems/${problemID}`)
-      ]).then(values => {
-        const submission = values[0]
-        const problem = values[1]
-        this.setState({
-          submission: submission,
-          problem: problem,
-          submissions: metadata.submissions,
-          problems: metadata.problems
-        }, () => this.props.changeURL('/grade/' + this.props.examID + '/' + submission.id + '/' + problem.id))
+    if (this.props.submissionID === undefined || this.props.problemID === undefined) {
+      api.get(`exams/${this.props.examID}?only_metadata=true` +
+        `&shuffle_seed=${this.props.graderID}`).then(metadata => {
+        const examID = metadata.exam_id
+        const submissionID = metadata.submissions[0].id
+        const problemID = metadata.problems[0].id
+        Promise.all([
+          api.get(`submissions/${examID}/${submissionID}`),
+          api.get(`problems/${problemID}`)
+        ]).then(values => {
+          const submission = values[0]
+          const problem = values[1]
+          this.setState({
+            submission: submission,
+            problem: problem,
+            submissions: metadata.submissions,
+            problems: metadata.problems
+          }, () => this.props.changeURL('/grade/' + this.props.examID + '/' + submission.id + '/' + problem.id))
+        })
       })
-    })
+    } else {
+      api.get(`exams/${this.props.examID}?only_metadata=true` +
+        `&shuffle_seed=${this.props.graderID}`).then(metadata => {
+        Promise.all([
+          api.get(`submissions/${this.props.examID}/${this.props.submissionID}`),
+          api.get(`problems/${this.props.problemID}`)
+        ]).then(values => {
+          const submission = values[0]
+          const problem = values[1]
+          this.setState({
+            submission: submission,
+            problem: problem,
+            submissions: metadata.submissions,
+            problems: metadata.problems
+          }, () => console.log('state changed'))
+        })
+      })
+    }
   }
 
   /**

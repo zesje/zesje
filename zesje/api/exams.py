@@ -88,10 +88,10 @@ class Exams(Resource):
             {
                 'id': ex.id,
                 'name': ex.name,
-                'layout': layout_to_data(ex.layout),
-                'submissions': sub_count[ex.id] if ex.id in sub_count else 0
+                'submissions': sub_count[ex.id] if ex.id in sub_count else 0,
+                'finalized': ex.finalized
             }
-            for ex in db.session.query(Exam.id, Exam.name, Exam.layout).order_by(Exam.id).all()
+            for ex in db.session.query(Exam).order_by(Exam.id).all()
         ]
 
     def _get_single(self, exam_id):

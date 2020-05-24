@@ -61,7 +61,7 @@ class Exams extends React.Component {
     }
   }
 
-  onUploadPDF = (event) => {
+  addExam = (event) => {
     if (!this.state.exam_name) {
       Notification.error('Please enter exam name.')
       return
@@ -188,7 +188,7 @@ class Exams extends React.Component {
                   <div className='control'>
                     <button
                       className='button is-info'
-                      onClick={this.onUploadPDF}
+                      onClick={this.addExam}
                       disabled={!this.state.exam_name || (this.state.selectedType !== null && this.state.selectedType.acceptsPDF && this.state.pdf === null)}>
                         Create Exam
                     </button>

@@ -72,14 +72,8 @@ class App extends React.Component {
     grader: null
   }
 
-  updateExam = (examID) => {
-    if (examID === null) {
-      this.setState({ exam: nullExam() })
-    } else {
-      api.get('exams/' + examID)
-        .catch(resp => this.setState({ exam: nullExam() }))
-        .then(ex => this.setState({ exam: ex }))
-    }
+  updateExam = (exam) => {
+    this.setState({ exam: exam || nullExam() })
   }
 
   updateExamList = () => {
@@ -93,20 +87,6 @@ class App extends React.Component {
       .del('exams/' + examID)
       .then(() => {
         this.updateExamList()
-      })
-  }
-  updateSubmission = (submissionID) => {
-    api.get('submissions/' + this.state.exam.id + '/' + submissionID)
-      .then(sub => {
-        let newSubmissions = this.state.exam.submissions
-        const index = newSubmissions.map(sub => sub.id).indexOf(submissionID)
-        newSubmissions[index] = sub
-        this.setState({
-          exam: {
-            ...this.state.exam,
-            submissions: newSubmissions
-          }
-        })
       })
   }
 
@@ -124,17 +104,15 @@ class App extends React.Component {
     return (
       <Router>
         <div>
-          <NavBar exam={exam} updateExam={this.updateExam} grader={grader} changeGrader={this.changeGrader} ref={this.menu} />
+          <NavBar examID={exam.id} grader={grader} changeGrader={this.changeGrader} ref={this.menu} />
           <Switch>
             <Route exact path='/' component={Home} />
             <Route path='/exams/:examID' render={({ match, history }) =>
               <Exam
-                exam={exam}
                 examID={match.params.examID}
                 updateExam={this.updateExam}
                 updateExamList={this.updateExamList}
                 deleteExam={this.deleteExam}
-                updateSubmission={this.updateSubmission}
                 leave={() => history.push('/')}
                 setHelpPage={this.menu.current ? this.menu.current.setHelpPage : null} />} />
             <Route path='/exams' render={({ history }) =>
@@ -151,9 +129,7 @@ class App extends React.Component {
                 : <Fail message='No exams uploaded or no grader selected. Please do not bookmark URLs' />
             )} />
             <Route path='/overview/:examID' render={({ match }) => (
-              exam.submissions.length
-                ? <Overview examID={match.params.examID} />
-                : <Fail message='No exams uploaded. Please do not bookmark URLs' />
+              <Overview examID={match.params.examID} />
             )} />
             <Route path='/email' render={() => (
               exam.submissions.length ? <Email exam={exam} /> : <Fail message='No exams uploaded. Please do not bookmark URLs' />

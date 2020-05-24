@@ -23,15 +23,16 @@ class Exams extends React.Component {
   }
 
   componentDidMount = () => {
-    if (this.props.examID !== this.props.exam.id) this.loadExam(this.props.examID)
+    this.loadExam(this.props.examID)
   }
 
   loadExam = (id) => {
-    // TODO: perform a simpler request which only returns id, name, type
-    // once the data localisation per view is completed
-    api.get(`exams/${id}`)
+    if (!id) return
+
+    return api.get(`exams/${id}`)
       .then(resp => {
         this.setState({exam: resp})
+        this.props.updateExam(resp)
       })
       .catch(err => {
         console.log(err)
@@ -76,8 +77,7 @@ class Exams extends React.Component {
                       // This is not ideal and should be addressed in
                       // https://gitlab.kwant-project.org/zesje/zesje/issues/388
                       // TODO: implement data locality for this view
-                      this.props.updateExam(exam.id)
-                      this.props.updateExamList()
+                      this.loadExam(exam.id).then(() => this.props.updateExamList())
                     }} />
 
                   { this.renderExamContent() }

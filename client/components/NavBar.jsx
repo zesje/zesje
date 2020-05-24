@@ -28,14 +28,14 @@ const TooltipLink = (props) => {
   </div>
 }
 
-const ExamDropdown = (props) => (
-  <div className='navbar-item has-dropdown is-hoverable'>
-    <Link className='navbar-link' to={'/exams/' + (props.exam.id ? props.exam.id : '')}>
-      {props.exam.id ? <i>{props.exam.name}</i> : 'Add exam'}
+const ExamDropdown = (props) => {
+  return (<div className='navbar-item has-dropdown is-hoverable'>
+    <Link className='navbar-link' to={'/exams/' + (props.selExam ? props.selExam.id : '')}>
+      {props.selExam ? <i>{props.selExam.name}</i> : 'Add exam'}
     </Link>
     <div className='navbar-dropdown'>
       {props.list.map((exam) => (
-        <Link className={'navbar-item' + (props.exam.id === exam.id ? ' is-active' : '')}
+        <Link className={'navbar-item' + (props.selExam && props.selExam.id === exam.id ? ' is-active' : '')}
           to={'/exams/' + exam.id} key={exam.id} >
           <i>{exam.name}</i>
         </Link>
@@ -45,8 +45,8 @@ const ExamDropdown = (props) => (
         Add new
       </Link>
     </div>
-  </div>
-)
+  </div>)
+}
 
 const GraderDropdown = (props) => (
   <div className='navbar-item has-dropdown is-hoverable'>
@@ -76,7 +76,7 @@ const ExportDropdown = (props) => {
     { label: 'Zip of (anonymized) pdf files', format: 'pdf' }
   ]
 
-  const exportUrl = format => `/api/export/${format}/${props.exam.id}`
+  const exportUrl = format => `/api/export/${format}/${props.examID}`
 
   return (
     <div className='navbar-item has-dropdown is-hoverable' >
@@ -94,7 +94,7 @@ const ExportDropdown = (props) => {
         )}
         <hr className='navbar-divider' />
         <a className='navbar-item'
-          href={'/api/export/graders/' + props.exam.id}
+          href={'/api/export/graders/' + props.examID}
           disabled={props.disabled}>
           Export grader statistics
         </a>
@@ -117,7 +117,15 @@ class NavBar extends React.Component {
     foldOut: false,
     examList: [],
     graderList: [],
-    helpPage: null
+    helpPage: null,
+    examID: null
+  }
+
+  componentDidUpdate = (prevProps, prevState) => {
+    // in better days we should store and update the exam here and not in App.
+    if (prevProps.examID !== this.props.examID) {
+      this.setState({examID: this.props.examID})
+    }
   }
 
   componentDidMount = () => {
@@ -131,15 +139,6 @@ class NavBar extends React.Component {
         this.setState({
           examList: exams
         })
-        const examIDs = exams.map(exam => exam.id)
-        const examID = this.props.exam.id
-        if (!examIDs.includes(examID) || examID === null) {
-          if (!exams.length) {
-            this.props.updateExam(null)
-          } else {
-            this.props.updateExam(exams[exams.length - 1].id)
-          }
-        }
       })
   }
 
@@ -169,8 +168,10 @@ class NavBar extends React.Component {
   }
 
   render () {
-    const predicateExamNotFinalized = [!this.props.exam.finalized, 'The exam is not finalized yet.']
-    const predicateSubmissionsEmpty = [this.props.exam.submissions.length === 0, 'There are no submissions, please upload some.']
+    const selExam = this.state.examList.find(exam => exam.id === this.state.examID)
+
+    const predicateExamNotFinalized = [!selExam || !selExam.finalized, 'The exam is not finalized yet.']
+    const predicateSubmissionsEmpty = [!selExam || selExam.submissions.length === 0, 'There are no submissions, please upload some.']
     const predicateNoGraderSelected = [this.props.grader === null, 'Please select a grader.']
 
     return (
@@ -193,28 +194,28 @@ class NavBar extends React.Component {
           <div className='navbar-start'>
 
             {this.state.examList.length
-              ? <ExamDropdown exam={this.props.exam} list={this.state.examList} />
+              ? <ExamDropdown selExam={selExam} list={this.state.examList} />
               : <Link className='navbar-item' to='/exams'>Add exam</Link>
             }
 
             <TooltipLink
-              to={'/scans/' + this.props.exam.id}
+              to={'/scans/' + this.props.examID}
               text='Scans'
               predicate={[predicateExamNotFinalized]} />
-            <Link className='navbar-item' to={'/students/' + this.props.exam.id}>Students</Link>
+            <Link className='navbar-item' to={'/students/' + this.props.examID}>Students</Link>
             <TooltipLink
               to='/grade'
               text={<strong><i>Grade</i></strong>}
               predicate={[predicateExamNotFinalized, predicateSubmissionsEmpty, predicateNoGraderSelected]} />
             <TooltipLink
-              to={'/overview/' + this.props.exam.id}
+              to={'/overview/' + this.props.examID}
               text='Overview'
               predicate={[predicateExamNotFinalized, predicateSubmissionsEmpty]} />
             <TooltipLink
               to='/email'
               text='Email'
               predicate={[predicateExamNotFinalized, predicateSubmissionsEmpty]} />
-            <ExportDropdown className='navbar-item' disabled={predicateSubmissionsEmpty[0]} exam={this.props.exam} />
+            <ExportDropdown className='navbar-item' disabled={predicateSubmissionsEmpty[0]} examID={this.props.examID} />
             <a className='navbar-item' onClick={() => this.setHelpPage('shortcuts')}>
               {this.pages['shortcuts'].title}
             </a>

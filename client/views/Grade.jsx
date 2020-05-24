@@ -21,7 +21,6 @@ class Grade extends React.Component {
    */
   constructor (props) {
     super(props)
-    console.log('in constructor')
     this.state = {}
     if (this.props.submissionID === undefined || this.props.problemID === undefined) {
       api.get(`exams/${this.props.examID}?only_metadata=true` +
@@ -67,7 +66,6 @@ class Grade extends React.Component {
    * React lifecycle method. Binds all shortcuts.
    */
   componentDidMount = () => {
-    console.log('component mounted')
     // If we change the keybindings here we should also remember to
     // update the tooltips for the associated widgets (in render()).
     // Also add the shortcut to ./client/components/help/ShortcutsHelp.md
@@ -112,7 +110,6 @@ class Grade extends React.Component {
    * @param ungraded either 'true' or 'false'
    */
   navigate = (direction, ungraded) => {
-    console.log('in here ' + direction)
     api.get(`submissions/${this.props.examID}/${this.state.submission.id}` +
       '?problem_id=' + this.state.problem.id +
       '&shuffle_seed=' + this.props.graderID +
@@ -131,7 +128,6 @@ class Grade extends React.Component {
     this.navigate('prev', 'false')
   }
   next = () => {
-    console.log('next called')
     this.navigate('next', 'false')
   }
   prevUngraded = () => {

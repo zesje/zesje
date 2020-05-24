@@ -290,7 +290,19 @@ class Grade extends React.Component {
   }
   changeURlIfRequired = (params, submission, problem) => {
     if (params.submissionID !== submission.id || params.examID !== this.props.examID || params.problemID !== problem.id) {
-      this.props.changeURL('/grade/' + this.props.examID + '/' + submission.id + '/' + problem.id)
+      Promise.all([
+        api.get(`submissions/${params.examID}/${params.submissionID}`),
+        api.get(`problems/${params.problemID}`)
+      ]).then(values => {
+        const sub = values[0]
+        const prob = values[1]
+        this.setState({
+          submission: sub,
+          problem: prob,
+          submissions: this.state.submissions,
+          problems: this.state.problems
+        }, this.props.changeURL('/grade/' + this.props.examID + '/' + submission.id + '/' + problem.id))
+      })
     }
   }
   render () {

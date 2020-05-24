@@ -85,7 +85,7 @@ class PanelEditUnstructured extends React.Component {
             problems: [],
             selectedProblemId: null,
             problemName: '',
-            deleteProblem: false
+            deletingProblem: false
           })
         })
       })
@@ -132,12 +132,14 @@ class PanelEditUnstructured extends React.Component {
   }
 
   saveProblemPage = (problemId, widgetId, page) => {
-    api.patch(`widgets/${widgetId}`, {page: page})
+    api.patch(`widgets/${widgetId}`, {page: parseInt(page)})
       .then(resp => this.loadProblems(problemId))
       .catch(e => {
-        this.selectProblem(problemId)
         console.log(e)
-        e.json().then(err => Notification.error('Could not save new problem page: ' + err.message))
+        this.loadProblems(problemId)
+        e.json().then(res => {
+          Notification.error('Could not save new problem page: ' + res.message)
+        })
       })
   }
 

@@ -65,6 +65,20 @@ def test_add_exam_invalid_layout(test_client):
     assert response.status_code == 400
 
 
+@pytest.mark.parametrize(
+    'name, status_code',
+    [('New name', 200), ('', 400)],
+    ids=['New name', 'Empty'])
+def test_change_exam_name(test_client, add_test_data, name, status_code):
+    response = test_client.patch('/api/exams/1', data={'name': name})
+
+    assert response.status_code == status_code
+
+    if status_code == 200:
+        data = test_client.get('/api/exams/1').get_json()
+        assert data['name'] == name
+
+
 def test_get_exams_mult_choice(test_client, add_test_data):
     mc_option_1 = {
         'x': 100,
@@ -150,3 +164,23 @@ def test_exam_types(test_client):
     data = json.loads(response.data)
 
     assert len(list(ExamLayout)) == len(data)
+
+
+@pytest.mark.parametrize(
+    'finalized, status_code',
+    [(False, 200), (True, 409)],
+    ids=['Not finalized', 'Finalized'])
+def test_delete_exam(test_client, finalized, status_code):
+    exam = Exam(name='finalized', finalized=finalized)
+    db.session.add(exam)
+    db.session.commit()
+
+    response = test_client.delete(f'/api/exams/{exam.id}')
+
+    assert response.status_code == status_code
+
+    response = test_client.get('/api/exams')
+    data = response.get_json()
+    print(data)
+
+    assert len(data) == (1 if finalized else 0)

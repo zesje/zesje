@@ -88,6 +88,7 @@ class Exams(Resource):
             {
                 'id': ex.id,
                 'name': ex.name,
+                'layout': layout_to_data(ex.layout),
                 'submissions': sub_count[ex.id] if ex.id in sub_count else 0,
                 'finalized': ex.finalized
             }

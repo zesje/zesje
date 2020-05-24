@@ -21,17 +21,18 @@ const ExamContent = (props) => {
   return (
     <div>
       {Object.keys(pages).map(page => (
-        <div className='card'>
+        <div className='card' key={page}>
           <header className='card-header'>
-            <p class='card-header-title'>
+            <p className='card-header-title'>
               {'Page ' + page}
             </p>
           </header>
           <div className='card-content'>
             <div className='content'>
               {pages[page].map(p => (
-                <a className={'button is-fullwidth ' + (props.selectedProblemId === p.id ? 'is-info is-outlined' : '')}
+                <a className={'button is-fullwidth ' + (props.selectedProblemId === p.id ? 'is-primary is-outlined' : '')}
                   onClick={() => props.selectProblem(p.id)}
+                  key={p.id}
                 >
                   {p.name}
                 </a>
@@ -158,7 +159,7 @@ class PanelEditUnstructured extends React.Component {
   }
 
   inputColor = (name, originalName) => {
-    if (name) {
+    if (name !== null) {
       if (name !== originalName) {
         return 'is-success'
       } else {
@@ -174,7 +175,7 @@ class PanelEditUnstructured extends React.Component {
 
     if (patt.test(newPage)) {
       this.setState({
-        page: parseInt(newPage)
+        problemPage: newPage
       })
     }
   }
@@ -219,6 +220,7 @@ class PanelEditUnstructured extends React.Component {
                     <input
                       className={'input ' + this.inputColor(this.state.problemPage, props.problem.page)}
                       placeholder='#'
+                      maxLength={2}
                       value={this.state.problemPage}
                       onChange={(e) => this.updatePage(e.target.value)}
                       onBlur={(e) => {

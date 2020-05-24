@@ -69,9 +69,10 @@ class PanelExamName extends React.Component {
                   })
                 }} />
             </div>
-            <div className='panel-block field is-grouped is-grouped-right'>
+            <div className='panel-block buttons is-right'>
               <button
-                className='button is-danger is-link'
+                className='button is-danger'
+                style={{marginBottom: '0'}}
                 onClick={() => {
                   this.setState({
                     examName: this.props.name,
@@ -83,6 +84,7 @@ class PanelExamName extends React.Component {
               </button>
               <button
                 className='button is-link'
+                style={{marginBottom: '0'}}
                 disabled={this.state.examName === this.props.name || this.state.examName === ''}
                 onClick={() => { this.saveName(this.state.examName) }}
               >

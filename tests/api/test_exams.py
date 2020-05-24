@@ -1,4 +1,5 @@
 import pytest
+import os
 
 from flask import json
 from zesje.database import db, Exam, Problem, ProblemWidget, Submission, ExamLayout
@@ -22,6 +23,46 @@ def add_test_data(app):
 
 
 # Actual tests
+def test_add_zesje_exam(datadir, test_client):
+    with open(os.path.join(datadir, 'blank-a4-2pages.pdf'), 'rb') as pdf:
+        response = test_client.post('/api/exams',
+                                    data={'exam_name': 'The Exam', 'pdf': pdf, 'layout': ExamLayout.zesje.value})
+
+        assert response.status_code == 200
+
+    response = test_client.get('/api/exams')
+    data = response.get_json()
+
+    assert len(data) == 1
+
+    assert data[0]['layout']['value'] == ExamLayout.zesje.value
+
+
+def test_add_zesje_exam_without_pdf(datadir, test_client):
+    response = test_client.post('/api/exams',
+                                data={'exam_name': 'The Exam', 'layout': ExamLayout.zesje.value})
+
+    assert response.status_code == 404
+
+
+def test_add_unstructured_exam(test_client):
+    response = test_client.post('/api/exams',
+                                data={'exam_name': 'The Exam', 'layout': ExamLayout.unstructured.value})
+    assert response.status_code == 200
+
+    response = test_client.get('/api/exams')
+    data = response.get_json()
+
+    assert len(data) == 1
+
+    assert data[0]['layout']['value'] == ExamLayout.unstructured.value
+
+
+def test_add_exam_invalid_layout(test_client):
+    response = test_client.post('/api/exams',
+                                data={'exam_name': 'The Exam', 'layout': -1})
+
+    assert response.status_code == 400
 
 
 def test_get_exams_mult_choice(test_client, add_test_data):

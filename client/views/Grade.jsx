@@ -1,7 +1,7 @@
 import React from 'react'
 import Notification from 'react-bulma-notification'
 import Hero from '../components/Hero.jsx'
-import { BrowserRouter as Router, Route } from 'react-router-dom'
+
 import FeedbackPanel from '../components/feedback/FeedbackPanel.jsx'
 import ProblemSelector from './grade/ProblemSelector.jsx'
 import ProgressBar from '../components/ProgressBar.jsx'
@@ -38,8 +38,7 @@ class Grade extends React.Component {
           problem: problem,
           submissions: metadata.submissions,
           problems: metadata.problems
-        }, this.props.changeURL('/grade/' + this.props.examID + '/' + submission.id + '/' + problem.id))
-        // , this.props.history.push('/grade/' + this.props.examID + '/' + submission.id + '/' + problem.id)
+        }, () => this.props.changeURL('/grade/' + this.props.examID + '/' + submission.id + '/' + problem.id))
       })
     })
   }
@@ -101,7 +100,7 @@ class Grade extends React.Component {
       '&ungraded=' + ungraded).then(sub =>
       this.setState({
         submission: sub
-      }, () => console.log(this.state.submission))
+      }, () => )
     )
     this.setProblemUpdateMetadata(this.state.problem.id)
   }
@@ -291,8 +290,8 @@ class Grade extends React.Component {
   changeURlIfRequired = (params, submission, problem) => {
     if (params.submissionID !== submission.id || params.examID !== this.props.examID || params.problemID !== problem.id) {
       Promise.all([
-        api.get(`submissions/${params.examID}/${params.submissionID}`),
-        api.get(`problems/${params.problemID}`)
+        api.get(`submissions/${this.props.examID}/${submission.id}`),
+        api.get(`problems/${problem.id}`)
       ]).then(values => {
         const sub = values[0]
         const prob = values[1]
@@ -301,8 +300,10 @@ class Grade extends React.Component {
           problem: prob,
           submissions: this.state.submissions,
           problems: this.state.problems
-        }, this.props.changeURL('/grade/' + this.props.examID + '/' + submission.id + '/' + problem.id))
+        }, () => this.props.changeURL('/grade/' + this.props.examID + '/' + sub.id + '/' + prob.id))
       })
+    } else {
+      console.log('kkek')
     }
   }
   render () {
@@ -326,95 +327,90 @@ class Grade extends React.Component {
     const gradedTime = new Date(solution.graded_at)
 
     return (
-      <Router>
-        <div>
+      <div>
 
-          {hero}
-          <Route path='/grade/:examID/:submissionID/:problemID' render={({ match, history }) =>
-            <p>{this.changeURlIfRequired(match.params, submission, problem)}</p>
-          } />
+        {hero}
 
-          <section className='section'>
+        <section className='section'>
 
-            <div className='container'>
-              <div className='columns'>
-                <div className='column is-one-quarter-fullhd is-one-third-desktop editor-side-panel'>
-                  <ProblemSelector
-                    problems={problems}
-                    setProblemUpdateMetadata={this.setProblemUpdateMetadata}
-                    current={problem}
-                    showTooltips={this.state.showTooltips} />
-                  <nav className='panel'>
-                    <FeedbackPanel
-                      examID={examID} submissionID={submission.id} graderID={graderID}
-                      problem={problem} solution={solution}
-                      showTooltips={this.state.showTooltips} grading
-                      setSubmission={this.setSubmission}
-                      toggleOption={this.toggleFeedbackOption}
-                      toggleApprove={this.toggleApprove}
-                      updateFeedback={this.setProblemUpdateMetadata} />
-                  </nav>
-                </div>
-
-                <div className='column'>
-                  <GradeNavigation
-                    submission={submission}
-                    submissions={submissions}
+          <div className='container'>
+            <div className='columns'>
+              <div className='column is-one-quarter-fullhd is-one-third-desktop editor-side-panel'>
+                <ProblemSelector
+                  problems={problems}
+                  setProblemUpdateMetadata={this.setProblemUpdateMetadata}
+                  current={problem}
+                  showTooltips={this.state.showTooltips} />
+                <nav className='panel'>
+                  <FeedbackPanel
+                    examID={examID} submissionID={submission.id} graderID={graderID}
+                    problem={problem} solution={solution}
+                    showTooltips={this.state.showTooltips} grading
                     setSubmission={this.setSubmission}
-                    prevUngraded={this.prevUngraded}
-                    prev={this.prev}
-                    next={this.next}
-                    nextUngraded={this.nextUngraded}
-                    anonymous={this.props.gradeAnonymous}
-                    showTooltips={this.state.showTooltips}
-                  />
+                    toggleOption={this.toggleFeedbackOption}
+                    toggleApprove={this.toggleApprove}
+                    updateFeedback={this.setProblemUpdateMetadata} />
+                </nav>
+              </div>
 
-                  <ProgressBar done={problem.n_graded} total={submissions.length} />
+              <div className='column'>
+                <GradeNavigation
+                  submission={submission}
+                  submissions={submissions}
+                  setSubmission={this.setSubmission}
+                  prevUngraded={this.prevUngraded}
+                  prev={this.prev}
+                  next={this.next}
+                  nextUngraded={this.nextUngraded}
+                  anonymous={this.props.gradeAnonymous}
+                  showTooltips={this.state.showTooltips}
+                />
 
-                  {multiple
-                    ? <article className='message is-info'>
-                      <div className='message-body'>
-                        <p>
+                <ProgressBar done={problem.n_graded} total={submissions.length} />
+
+                {multiple
+                  ? <article className='message is-info'>
+                    <div className='message-body'>
+                      <p>
                         This student has possibly submitted multiple copies: (#{submission.id}, {otherSubmissions})
                         Please verify the student identity to bundle these copies before grading.
-                        </p>
-                      </div>
-                    </article>
-                    : null
-                  }
-
-                  <div className='level'>
-                    <div className='level-left'>
-                      <div className='level-item'>
-                        {solution.graded_by
-                          ? <div>Graded by: {solution.graded_by.name} <i>({gradedTime.toLocaleString()})</i></div>
-                          : <div>Ungraded</div>
-                        }
-                      </div>
+                      </p>
                     </div>
-                    <div className='level-right'>
-                      <div className='level-item'>
-                        <button className={'button is-info is-outlined' + (this.state.showTooltips ? ' tooltip is-tooltip-active' : '')}
-                          data-tooltip='f' onClick={this.toggleFullPage}>
-                          {this.state.fullPage ? 'Focus problem' : 'View full page'}
-                        </button>
-                      </div>
+                  </article>
+                  : null
+                }
+
+                <div className='level'>
+                  <div className='level-left'>
+                    <div className='level-item'>
+                      {solution.graded_by
+                        ? <div>Graded by: {solution.graded_by.name} <i>({gradedTime.toLocaleString()})</i></div>
+                        : <div>Ungraded</div>
+                      }
                     </div>
                   </div>
+                  <div className='level-right'>
+                    <div className='level-item'>
+                      <button className={'button is-info is-outlined' + (this.state.showTooltips ? ' tooltip is-tooltip-active' : '')}
+                        data-tooltip='f' onClick={this.toggleFullPage}>
+                        {this.state.fullPage ? 'Focus problem' : 'View full page'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
 
-                  <p className={'box is-scrollable-tablet' + (solution.graded_at ? ' is-graded' : '')}>
-                    <img
-                      src={examID ? ('api/images/solutions/' + examID + '/' +
+                <p className={'box is-scrollable-tablet' + (solution.graded_at ? ' is-graded' : '')}>
+                  <img
+                    src={examID ? ('api/images/solutions/' + examID + '/' +
                       problem.id + '/' + submission.id + '/' + (this.state.fullPage ? '1' : '0')) + '?' +
                       Grade.getLocationHash(problem) : ''}
-                      alt='' />
-                  </p>
-                </div>
+                    alt='' />
+                </p>
               </div>
             </div>
-          </section>
-        </div>
-      </Router>
+          </div>
+        </section>
+      </div>
     )
   }
 }

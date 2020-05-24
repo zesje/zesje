@@ -100,7 +100,7 @@ class Grade extends React.Component {
       '&ungraded=' + ungraded).then(sub =>
       this.setState({
         submission: sub
-      }, () => )
+      }, () => console.log(this.state.submission))
     )
     this.setProblemUpdateMetadata(this.state.problem.id)
   }

@@ -11,7 +11,7 @@ class Exams extends React.Component {
   state = {
     pdf: null,
     previewPageCount: 0,
-    exam_name: '',
+    examName: '',
     types: null,
     selectedType: null
   };
@@ -53,16 +53,8 @@ class Exams extends React.Component {
     })
   }
 
-  changeInput = (name, regex) => {
-    return (event) => {
-      this.setState({
-        [name]: event.target.value
-      })
-    }
-  }
-
   addExam = (event) => {
-    if (!this.state.exam_name) {
+    if (!this.state.examName) {
       Notification.error('Please enter exam name.')
       return
     }
@@ -72,7 +64,7 @@ class Exams extends React.Component {
     }
 
     const data = new window.FormData()
-    data.append('exam_name', this.state.exam_name)
+    data.append('exam_name', this.state.examName)
     data.append('layout', this.state.selectedType.value)
     if (this.state.selectedType.acceptsPDF) {
       data.append('pdf', this.state.pdf)
@@ -110,11 +102,11 @@ class Exams extends React.Component {
                 <div className='field'>
                   <div className='control'>
                     <input
-                      className={'input' + (this.state.exam_name ? ' is-success' : ' is-danger')}
+                      className={'input' + (this.state.examName ? ' is-success' : ' is-danger')}
                       placeholder='Exam name'
-                      value={this.state.exam_name}
+                      value={this.state.examName}
                       required
-                      onChange={this.changeInput('exam_name')} />
+                      onChange={(e) => this.setState({examName: e.target.value})} />
                   </div>
                 </div>
               </div>
@@ -134,7 +126,7 @@ class Exams extends React.Component {
                         }) : null}
                       </select>
                     </div>
-                    {this.state.selectedType && <p className='help'>{this.state.selectedType.description}</p>}
+                    {this.state.selectedType && <p>{this.state.selectedType.description}</p>}
                   </div>
                 </div>
               </div>
@@ -189,7 +181,7 @@ class Exams extends React.Component {
                     <button
                       className='button is-info'
                       onClick={this.addExam}
-                      disabled={!this.state.exam_name || (this.state.selectedType !== null && this.state.selectedType.acceptsPDF && this.state.pdf === null)}>
+                      disabled={!this.state.examName || (this.state.selectedType !== null && this.state.selectedType.acceptsPDF && this.state.pdf === null)}>
                         Create Exam
                     </button>
                   </div>

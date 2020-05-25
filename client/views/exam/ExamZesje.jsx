@@ -1,13 +1,13 @@
 import React from 'react'
 
 import Notification from 'react-bulma-notification'
-import Switch from 'react-bulma-switch/full'
 
 import './Exam.css'
 import GeneratedExamPreview from '../../components/GeneratedExamPreview.jsx'
 import PanelGenerate from '../../components/PanelGenerate.jsx'
 import PanelMCQ from '../../components/PanelMCQ.jsx'
 import ExamEditor from './ExamEditor.jsx'
+import PanelGradeAnonymous from './PanelGradeAnonymous.jsx'
 import update from 'immutability-helper'
 import ExamFinalizeMarkdown from './ExamFinalize.md'
 import ConfirmationModal from '../../components/ConfirmationModal.jsx'
@@ -608,32 +608,11 @@ class ExamZesje extends React.Component {
           setHelpPage={this.props.setHelpPage}
         />
         <this.PanelExamActions />
-        <this.PanelGradeAnonymous />
+        {!this.props.exam.finalized && <PanelGradeAnonymous
+          examID={this.props.exam.id}
+          gradeAnonymous={this.props.exam.gradeAnonymous}
+          onChange={(anonymous) => this.props.updateExam(null)} />}
       </React.Fragment>
-    )
-  }
-
-  PanelGradeAnonymous = (props) => {
-    if (!this.props.exam.finalized) {
-      return null
-    }
-    return (
-      <nav className='panel'>
-        <p className='panel-heading'>
-          Anonymous grading
-        </p>
-        <div className='panel-block'>
-          <div className='field flex-input'>
-            <label>Hide student info when grading</label>
-            <Switch color='link' value={this.props.exam.gradeAnonymous} onChange={(e) => {
-              api.put(`exams/${this.props.examID}`, {grade_anonymous: !this.props.exam.gradeAnonymous})
-                .then(() => {
-                  this.props.updateExam(this.props.examID)
-                })
-            }} />
-          </div>
-        </div>
-      </nav>
     )
   }
 

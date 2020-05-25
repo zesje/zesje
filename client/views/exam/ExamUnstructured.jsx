@@ -4,6 +4,8 @@ import Notification from 'react-bulma-notification'
 import FeedbackPanel from '../../components/feedback/FeedbackPanel.jsx'
 import ConfirmationModal from '../../components/ConfirmationModal.jsx'
 import ExamUnstructuredMarkdown from './ExamUnstructuredRules.md'
+import PanelGradeAnonymous from './PanelGradeAnonymous.jsx'
+
 import * as api from '../../api.jsx'
 
 const groupBy = (array, key) =>
@@ -51,6 +53,7 @@ const ExamContent = (props) => {
 class PanelEditUnstructured extends React.Component {
   state = {
     examID: null,
+    gradeAnonymous: false,
     problems: [],
     problemName: '',
     problemPage: -1,
@@ -60,16 +63,13 @@ class PanelEditUnstructured extends React.Component {
 
   componentWillMount = () => {
     if (!this.state.examID && this.props.examID !== this.state.examID) {
-      this.setState({examID: this.props.examID}, () => {
-        this.loadProblems(null)
-      })
+      this.setState({examID: this.props.examID}, () => this.loadProblems(null))
     }
   }
 
   componentDidUpdate = (prevProps, prevState) => {
     if (this.props.examID !== prevProps.examID) {
-      this.setState({examID: this.props.examID})
-      this.loadProblems(null)
+      this.setState({examID: this.props.examID}, () => this.loadProblems(null))
     }
   }
 
@@ -77,6 +77,7 @@ class PanelEditUnstructured extends React.Component {
     api.get('exams/' + this.state.examID)
       .then(exam => {
         this.setState({
+          gradeAnonymous: exam.gradeAnonymous,
           problems: exam.problems.sort((p1, p2) => p1.page - p2.page)
         })
         this.selectProblem(selectId)
@@ -264,6 +265,11 @@ class PanelEditUnstructured extends React.Component {
           <div className='column editor-side-panel is-one-third-fullhd is-half-tablet' >
             <this.PanelProblem
               problem={problem} />
+
+            <PanelGradeAnonymous
+              examID={this.state.examID}
+              gradeAnonymous={this.state.gradeAnonymous}
+              text='Please note that the student name or number can still be visible on the pages themselves.' />
 
             <nav className='panel'>
               <p className='panel-heading'>

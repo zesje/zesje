@@ -303,25 +303,7 @@ class Grade extends React.Component {
     }
     return Math.abs(hash)
   }
-  changeURlIfRequired = (params, submission, problem) => {
-    if (params.submissionID !== submission.id || params.examID !== this.props.examID || params.problemID !== problem.id) {
-      Promise.all([
-        api.get(`submissions/${this.props.examID}/${submission.id}`),
-        api.get(`problems/${problem.id}`)
-      ]).then(values => {
-        const sub = values[0]
-        const prob = values[1]
-        this.setState({
-          submission: sub,
-          problem: prob,
-          submissions: this.state.submissions,
-          problems: this.state.problems
-        }, () => this.props.changeURL('/grade/' + this.props.examID + '/' + sub.id + '/' + prob.id))
-      })
-    } else {
-      console.log('kkek')
-    }
-  }
+
   render () {
     const hero = (<Hero title='Grade' subtitle='Assign feedback to each solution' />)
     // Have to not render if no submission exists in the state yet, to prevent crashes.

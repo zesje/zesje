@@ -22,12 +22,12 @@ class Graders(Resource):
         -------
         list of:
             id: int
-            name: str
+            oauth_id: str
         """
         return [
             {
                 'id': g.id,
-                'name': g.oauth_id
+                'oauth_id': g.oauth_id
             }
             for g in Grader.query.filter(Grader.oauth_id != current_app.config['AUTOGRADER_NAME']).all()
         ]
@@ -40,7 +40,7 @@ class Graders(Resource):
 
         Parameters
         ----------
-        name: str
+        oauth_id: str
 
         Returns
         -------

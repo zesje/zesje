@@ -1,7 +1,7 @@
 """ Set copy id NOT NULL constraint in Page table
 
 Revision ID: c61a8d939466
-Revises: dccc66cf2881
+Revises: ef470a16399e
 
 """
 from alembic import op

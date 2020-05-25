@@ -13,6 +13,8 @@ class Login extends React.Component {
           this.props.changeURL('/')
         }
         this.setState({redirect_url: response.redirect_oauth, provider: response.provider})
+        window.sessionStorage.setItem('oauth_provider', response.provider)
+        window.sessionStorage.setItem('oauth_id_field', response.oauth_id_field)
       })
     }
 

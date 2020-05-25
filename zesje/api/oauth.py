@@ -33,7 +33,8 @@ class OAuthStart(Resource):
             'redirect_oauth': authorization_url,
             'provider': current_app.config['OAUTH_PROVIDER'],
             'state': state,
-            'is_authenticated': is_authenticated
+            'is_authenticated': is_authenticated,
+            'oauth_id_field': current_app.config['OAUTH_ID_FIELD']
         }
 
 

@@ -117,7 +117,7 @@ class Grade extends React.Component {
       '&ungraded=' + ungraded).then(sub =>
       this.setState({
         submission: sub
-      }, () => console.log(this.state.submission))
+      }, () => this.props.changeURL('/grade/' + this.props.examID + '/' + this.state.submission.id + '/' + this.state.problem.id))
     )
     this.setProblemUpdateMetadata(this.state.problem.id)
   }

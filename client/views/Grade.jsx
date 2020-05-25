@@ -22,9 +22,32 @@ class Grade extends React.Component {
   constructor (props) {
     super(props)
     this.state = {}
+    api.get(`exams/${this.props.examID}?only_metadata=true` +
+        `&shuffle_seed=${this.props.graderID}`).then(metadata => {
+      const examID = metadata.exam_id
+      const submissionID = metadata.submissions[0].id
+      const problemID = metadata.problems[0].id
+      Promise.all([
+        api.get(`submissions/${examID}/${submissionID}`),
+        api.get(`problems/${problemID}`)
+      ]).then(values => {
+        const submission = values[0]
+        const problem = values[1]
+        this.setState({
+          submission: submission,
+          problem: problem,
+          submissions: metadata.submissions,
+          problems: metadata.problems,
+          examID: this.props.examID
+        }, () => this.syncSubmissionWithUrl())
+      })
+    })
+  }
+
+  syncSubmissionWithUrl = () => {
     if (this.props.submissionID === undefined || this.props.problemID === undefined) {
       api.get(`exams/${this.props.examID}?only_metadata=true` +
-        `&shuffle_seed=${this.props.graderID}`).then(metadata => {
+          `&shuffle_seed=${this.props.graderID}`).then(metadata => {
         const examID = metadata.exam_id
         const submissionID = metadata.submissions[0].id
         const problemID = metadata.problems[0].id
@@ -38,13 +61,13 @@ class Grade extends React.Component {
             submission: submission,
             problem: problem,
             submissions: metadata.submissions,
-            problems: metadata.problems
-          }, () => this.props.changeURL('/grade/' + this.props.examID + '/' + submission.id + '/' + problem.id))
+            problems: metadata.problems,
+            examID: this.props.examID
+          }, () => this.props.changeURL('/grade/' + examID + '/' + submissionID + '/' + problemID))
         })
       })
     } else {
-      api.get(`exams/${this.props.examID}?only_metadata=true` +
-        `&shuffle_seed=${this.props.graderID}`).then(metadata => {
+      if (this.props.problemID !== this.state.problem.id || this.props.submissionID !== this.state.submission.id) {
         Promise.all([
           api.get(`submissions/${this.props.examID}/${this.props.submissionID}`),
           api.get(`problems/${this.props.problemID}`)
@@ -53,12 +76,10 @@ class Grade extends React.Component {
           const problem = values[1]
           this.setState({
             submission: submission,
-            problem: problem,
-            submissions: metadata.submissions,
-            problems: metadata.problems
-          }, () => console.log('state changed'))
+            problem: problem
+          }, () => this.props.changeURL('/grade/' + this.props.examID + '/' + this.props.submissionID + '/' + this.props.problemID))
         })
-      })
+      }
     }
   }
 
@@ -99,6 +120,35 @@ class Grade extends React.Component {
       key = i % 10
       prefix = i > 10 ? 'shift+' : ''
       this.props.bindShortcut(prefix + key, () => this.toggleFeedbackOptionIndex(i - 1))
+    }
+  }
+
+  componentDidUpdate = (prevProps, prevState) => {
+    if (this.props.examID !== this.state.examID) {
+      // api.get(`exams/${this.props.examID}?only_metadata=true` +
+      //     `&shuffle_seed=${this.props.graderID}`).then(metadata => {
+      //   const examID = metadata.exam_id
+      //   const submissionID = metadata.submissions[0].id
+      //   const problemID = metadata.problems[0].id
+      //   Promise.all([
+      //     api.get(`submissions/${examID}/${submissionID}`),
+      //     api.get(`problems/${problemID}`)
+      //   ]).then(values => {
+      //     const submission = values[0]
+      //     const problem = values[1]
+      //     this.setState({
+      //       submission: submission,
+      //       problem: problem,
+      //       submissions: metadata.submissions,
+      //       problems: metadata.problems,
+      //       examID: this.props.examID
+      //     }, () => this.syncSubmissionWithUrl())
+      //   })
+      // })
+      this.setState({
+        examID: this.props.examID
+      }, () => this.updateMetadata())
+      this.syncSubmissionWithUrl()
     }
   }
 
@@ -173,7 +223,8 @@ class Grade extends React.Component {
     `&shuffle_seed=${this.props.graderID}`).then(metadata => {
       this.setState({
         submissions: metadata.submissions,
-        problems: metadata.problems
+        problems: metadata.problems,
+        examID: this.props.examID
       })
     })
   }

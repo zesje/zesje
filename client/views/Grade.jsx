@@ -63,7 +63,7 @@ class Grade extends React.Component {
             submissions: metadata.submissions,
             problems: metadata.problems,
             examID: this.props.examID
-          }, () => this.props.changeURL('/grade/' + examID + '/' + submissionID + '/' + problemID))
+          }, () => this.props.changeURL.replace('/grade/' + examID + '/' + submissionID + '/' + problemID))
         })
       })
     } else {
@@ -77,7 +77,7 @@ class Grade extends React.Component {
           this.setState({
             submission: submission,
             problem: problem
-          }, () => this.props.changeURL('/grade/' + this.props.examID + '/' + this.props.submissionID + '/' + this.props.problemID))
+          }, () => this.props.changeURL.replace('/grade/' + this.props.examID + '/' + this.props.submissionID + '/' + this.props.problemID))
         })
       }
     }
@@ -125,26 +125,6 @@ class Grade extends React.Component {
 
   componentDidUpdate = (prevProps, prevState) => {
     if (this.props.examID !== this.state.examID) {
-      // api.get(`exams/${this.props.examID}?only_metadata=true` +
-      //     `&shuffle_seed=${this.props.graderID}`).then(metadata => {
-      //   const examID = metadata.exam_id
-      //   const submissionID = metadata.submissions[0].id
-      //   const problemID = metadata.problems[0].id
-      //   Promise.all([
-      //     api.get(`submissions/${examID}/${submissionID}`),
-      //     api.get(`problems/${problemID}`)
-      //   ]).then(values => {
-      //     const submission = values[0]
-      //     const problem = values[1]
-      //     this.setState({
-      //       submission: submission,
-      //       problem: problem,
-      //       submissions: metadata.submissions,
-      //       problems: metadata.problems,
-      //       examID: this.props.examID
-      //     }, () => this.syncSubmissionWithUrl())
-      //   })
-      // })
       this.setState({
         examID: this.props.examID
       }, () => this.updateMetadata())
@@ -167,7 +147,7 @@ class Grade extends React.Component {
       '&ungraded=' + ungraded).then(sub =>
       this.setState({
         submission: sub
-      }, () => this.props.changeURL('/grade/' + this.props.examID + '/' + this.state.submission.id + '/' + this.state.problem.id))
+      }, () => this.props.changeURL.replace('/grade/' + this.props.examID + '/' + this.state.submission.id + '/' + this.state.problem.id))
     )
     this.setProblemUpdateMetadata(this.state.problem.id)
   }
@@ -208,7 +188,7 @@ class Grade extends React.Component {
     api.get(`problems/${problemId}`).then(problem => {
       this.setState({
         problem: problem
-      }, () => this.props.changeURL('/grade/' + this.props.examID + '/' + this.state.submission.id + '/' + problemId))
+      }, () => this.props.changeURL.replace('/grade/' + this.props.examID + '/' + this.state.submission.id + '/' + problemId))
     })
     this.updateMetadata()
   }

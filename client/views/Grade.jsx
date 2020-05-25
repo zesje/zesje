@@ -158,7 +158,7 @@ class Grade extends React.Component {
     api.get(`problems/${problemId}`).then(problem => {
       this.setState({
         problem: problem
-      })
+      }, () => this.props.changeURL('/grade/' + this.props.examID + '/' + this.state.submission.id + '/' + problemId))
     })
     this.updateMetadata()
   }

@@ -26,6 +26,7 @@ div.mcq-option img.mcq-box {
 .editor-content {
   background-color: #ddd;
   border-radius: 10px;
+  margin-top: 10px;
   height: 100%;
 }
 
@@ -102,4 +103,13 @@ div.mcq-option img.mcq-box {
 
 .field.is-horizontal.is-horizontal-mobile > .field-body > .field:not(:is-narrow) {
   flex-grow: 1;
+}
+
+.card:not(:first-child) > .card-header {
+  border-top: 4px solid #ddd;
+}
+
+button.problem {
+  margin-bottom: 4px;
+  margin-top: 4px
 }

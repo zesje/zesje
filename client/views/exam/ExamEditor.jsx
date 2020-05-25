@@ -195,9 +195,9 @@ class ExamEditor extends React.Component {
         if (res.status === 409) {
           // exam widget position is not valid, notify and update it
           Notification.warn(res.message)
-          this.props.updateWidget(res.widgetId, {
-            x: { $set: res.position.x },
-            y: { $set: res.position.y }
+          this.props.updateWidget(res.data.id, {
+            x: { $set: res.data.x },
+            y: { $set: res.data.y }
           })
         }
       })

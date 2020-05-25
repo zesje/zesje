@@ -3,6 +3,7 @@ import Notification from 'react-bulma-notification'
 
 import FeedbackPanel from '../../components/feedback/FeedbackPanel.jsx'
 import ConfirmationModal from '../../components/ConfirmationModal.jsx'
+import ExamUnstructuredMarkdown from './ExamUnstructuredRules.md'
 import * as api from '../../api.jsx'
 
 const groupBy = (array, key) =>
@@ -30,12 +31,14 @@ const ExamContent = (props) => {
           <div className='card-content'>
             <div className='content'>
               {pages[page].map(p => (
-                <a className={'button is-fullwidth ' + (props.selectedProblemId === p.id ? 'is-primary is-outlined' : '')}
+                <button
+                  className={'button problem is-fullwidth ' +
+                                    (props.selectedProblemId === p.id ? 'is-primary is-outlined' : '')}
                   onClick={() => props.selectProblem(p.id)}
                   key={p.id}
                 >
                   {p.name}
-                </a>
+                </button>
               ))}
             </div>
           </div>
@@ -109,7 +112,7 @@ class PanelEditUnstructured extends React.Component {
     const formData = new window.FormData()
     formData.append('exam_id', this.state.examID)
     formData.append('name', `Problem (${this.state.problems.length + 1})`)
-    formData.append('page', this.state.problems.length)
+    formData.append('page', 1)
     formData.append('x', 0)
     formData.append('y', 0)
     formData.append('width', 0)
@@ -173,7 +176,7 @@ class PanelEditUnstructured extends React.Component {
   }
 
   updatePage = (newPage) => {
-    const patt = new RegExp(/^(-|(-?[1-9]\d*)|0)?$/)
+    const patt = new RegExp(/^(-|(-?[1-9]\d*))?$/)
 
     if (patt.test(newPage)) {
       this.setState({
@@ -187,14 +190,8 @@ class PanelEditUnstructured extends React.Component {
       (
         <nav className='panel'>
           <p className='panel-heading'>
-            Problems
+            Problem details
           </p>
-
-          <div className='panel-block'>
-            <button className='button is-link is-fullwidth' onClick={() => this.createProblem()}>
-              <span>New Problem</span>
-            </button>
-          </div>
 
           {props.problem &&
             <React.Fragment>
@@ -264,15 +261,27 @@ class PanelEditUnstructured extends React.Component {
     return (
       <React.Fragment>
         <div className='columns is-centered' >
-          <div className='column editor-side-panel is-one-quarter-fullhd is-one-third-desktop' >
+          <div className='column editor-side-panel is-one-third-fullhd is-half-tablet' >
             <this.PanelProblem
               problem={problem} />
+
+            <nav className='panel'>
+              <p className='panel-heading'>
+                Tips
+              </p>
+
+              <div className='content panel-block' dangerouslySetInnerHTML={{__html: ExamUnstructuredMarkdown}} />
+            </nav>
           </div>
-          <div className='column is-two-quarter-fullhd is-one-third-desktop editor-content' >
+          <div className='column is-one-third-fullhd is-half-tablet editor-content' >
             <ExamContent
               problems={this.state.problems}
               selectedProblemId={this.state.selectedProblemId}
               selectProblem={this.selectProblem} />
+
+            <button className='button problem is-link is-fullwidth' onClick={() => this.createProblem()}>
+              <span>Add Problem</span>
+            </button>
           </div>
         </div>
         {problem && <ConfirmationModal

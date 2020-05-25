@@ -77,7 +77,7 @@ class Grade extends React.Component {
           this.setState({
             submission: submission,
             problem: problem
-          }, () => this.props.changeURL.replace('/grade/' + this.props.examID + '/' + this.props.submissionID + '/' + this.props.problemID))
+          })
         })
       }
     }

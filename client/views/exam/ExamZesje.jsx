@@ -65,7 +65,8 @@ class ExamZesje extends React.Component {
     previewing: false,
     deletingWidget: false,
     deletingMCWidget: false,
-    showPanelMCQ: false
+    showPanelMCQ: false,
+    convertToUnstructured: false
   }
 
   static getDerivedStateFromProps = (newProps, prevState) => {
@@ -612,6 +613,11 @@ class ExamZesje extends React.Component {
           examID={this.props.exam.id}
           gradeAnonymous={this.props.exam.gradeAnonymous}
           onChange={(anonymous) => this.props.updateExam(null)} />}
+        <button
+          className='button is-info is-outlined is-fullwidth'
+          onClick={() => this.setState({convertToUnstructured: true})}>
+          Convert to Unstructured
+        </button>
       </React.Fragment>
     )
   }
@@ -900,6 +906,26 @@ class ExamZesje extends React.Component {
             deletingMCWidget: false
           })
           this.deleteMCOs(this.state.selectedWidgetId, 0)
+        }}
+      />
+      <ConfirmationModal
+        active={this.state.convertToUnstructured}
+        color='is-danger'
+        headerText='Are you sure you want to convert this exam to unstructured?'
+        contentText='This option should only be used for those exams created to be solve using images from students.'
+        confirmText='Convert'
+        onCancel={() => this.setState({convertToUnstructured: false})}
+        onConfirm={() => {
+          api.put(`exams/${this.state.examID}`, {convertToUnstructured: true})
+            .then(resp => {
+              this.props.updateExam(this.state.examID)
+              this.setState({convertToUnstructured: false})
+            })
+            .catch(err => {
+              console.log(err)
+              this.setState({convertToUnstructured: false})
+              Notification.danger('Could not convert to unstructured exam')
+            })
         }}
       />
     </React.Fragment>

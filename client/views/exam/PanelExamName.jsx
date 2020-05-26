@@ -6,21 +6,24 @@ import * as api from '../../api.jsx'
 
 class PanelExamName extends React.Component {
   state = {
+    examID: null,
     examName: '',
     editing: false
   }
 
-  componentDidUpdate = (prevProps, prevState) => {
-    if (this.props.name !== prevProps.name) {
-      this.setState({
-        examName: this.props.name,
-        editing: false
-      })
+  static getDerivedStateFromProps (nextProps, prevState) {
+    // In case nothing is set, use an empty function that no-ops
+    const onChange = nextProps.onChange || ((_, name) => {})
+    if (prevState.examID !== nextProps.examID) {
+      return {
+        examID: nextProps.examID,
+        examName: nextProps.name,
+        editing: false,
+        onChange: onChange
+      }
     }
-  }
 
-  componentDidMount = () => {
-    this.setState({examName: this.props.name})
+    return {onChange: onChange}
   }
 
   inputColor = () => {
@@ -38,11 +41,18 @@ class PanelExamName extends React.Component {
   saveName = (name) => {
     api.patch(`exams/${this.props.examID}`, {name: name})
       .then(() => {
-        this.setState({editing: false})
+        this.setState({
+          examName: name,
+          editing: false
+        })
 
         this.props.onChange(name)
       })
       .catch(err => {
+        this.setState({
+          examName: this.props.name,
+          editing: false
+        })
         console.log(err)
         err.json().then(e => {
           Notification.error('Could not save exam name: ' + e.message)

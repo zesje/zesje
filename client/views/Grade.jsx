@@ -63,7 +63,7 @@ class Grade extends React.Component {
             submissions: metadata.submissions,
             problems: metadata.problems,
             examID: this.props.examID
-          }, () => this.props.changeURL.replace('/grade/' + examID + '/' + submissionID + '/' + problemID))
+          }, () => this.props.history.replace('/grade/' + examID + '/' + submissionID + '/' + problemID))
         })
       })
     } else {
@@ -125,10 +125,8 @@ class Grade extends React.Component {
 
   componentDidUpdate = (prevProps, prevState) => {
     if (this.props.examID !== this.state.examID) {
-      this.setState({
-        examID: this.props.examID
-      }, () => this.updateMetadata())
-      this.syncSubmissionWithUrl()
+      console.log('exam did not match state')
+      this.updateMetadata()
     }
   }
 
@@ -147,7 +145,7 @@ class Grade extends React.Component {
       '&ungraded=' + ungraded).then(sub =>
       this.setState({
         submission: sub
-      }, () => this.props.changeURL.replace('/grade/' + this.props.examID + '/' + this.state.submission.id + '/' + this.state.problem.id))
+      }, () => this.props.history.replace('/grade/' + this.props.examID + '/' + this.state.submission.id + '/' + this.state.problem.id))
     )
     this.setProblemUpdateMetadata(this.state.problem.id)
   }
@@ -188,7 +186,7 @@ class Grade extends React.Component {
     api.get(`problems/${problemId}`).then(problem => {
       this.setState({
         problem: problem
-      }, () => this.props.changeURL.replace('/grade/' + this.props.examID + '/' + this.state.submission.id + '/' + problemId))
+      }, () => this.props.history.replace('/grade/' + this.props.examID + '/' + this.state.submission.id + '/' + problemId))
     })
     this.updateMetadata()
   }
@@ -198,14 +196,14 @@ class Grade extends React.Component {
    * id, student for each submission in the exam and
    * id, name for each problem in the exam.
    */
-  updateMetadata = () => {
+  updateMetadata = (callback) => {
     api.get(`exams/${this.props.examID}?only_metadata=true` +
     `&shuffle_seed=${this.props.graderID}`).then(metadata => {
       this.setState({
         submissions: metadata.submissions,
         problems: metadata.problems,
         examID: this.props.examID
-      })
+      }, () => this.syncSubmissionWithUrl())
     })
   }
   /**

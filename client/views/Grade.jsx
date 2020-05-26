@@ -37,7 +37,8 @@ class Grade extends React.Component {
           submission: submission,
           problem: problem,
           submissions: metadata.submissions,
-          problems: metadata.problems
+          problems: metadata.problems,
+          isUnstructured: metadata.layout.value === 2
         })
       })
     })
@@ -369,10 +370,12 @@ class Grade extends React.Component {
                   </div>
                   <div className='level-right'>
                     <div className='level-item'>
-                      <button className={'button is-info is-outlined' + (this.state.showTooltips ? ' tooltip is-tooltip-active' : '')}
-                        data-tooltip='f' onClick={this.toggleFullPage}>
-                        {this.state.fullPage ? 'Focus problem' : 'View full page'}
-                      </button>
+                      {!this.state.isUnstructured &&
+                        <button className={'button is-info is-outlined' + (this.state.showTooltips ? ' tooltip is-tooltip-active' : '')}
+                          data-tooltip='f' onClick={this.toggleFullPage}>
+                          {this.state.fullPage ? 'Focus problem' : 'View full page'}
+                        </button>
+                      }
                     </div>
                   </div>
                 </div>

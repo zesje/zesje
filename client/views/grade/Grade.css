@@ -13,42 +13,42 @@
 
 @media screen and (max-width: 768px) {
   .is-scrollable-mobile {
-    overflow-y: scroll;
+    overflow-y: auto;
     height: 500px;
   }
 }
 
 @media screen and (min-width: 769px), print {
   .is-scrollable-tablet {
-    overflow-y: scroll;
+    overflow-y: auto;
     height: 500px;
   }
 }
 
 @media screen and (max-width: 1023px) {
   .is-scrollable-touch {
-    overflow-y: scroll;
+    overflow-y: auto;
     height: 576px;
   }
 }
 
 @media screen and (min-width: 1024px) {
   .is-scrollable-desktop {
-    overflow-y: scroll;
+    overflow-y: auto;
     height: 576px;
   }
 }
 
 @media screen and (min-width: 1216px) {
   .is-scrollable-widescreen {
-    overflow-y: scroll;
+    overflow-y: auto;
     height: 684px;
   }
 }
 
 @media screen and (min-width: 1408px) {
   .is-scrollable-fullhd {
-    overflow-y: scroll;
+    overflow-y: auto;
     height: 792px;
   }
 }

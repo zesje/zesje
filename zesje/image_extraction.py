@@ -10,6 +10,7 @@ from PIL import Image
 from pikepdf import Pdf, PdfImage, PdfError
 from tempfile import SpooledTemporaryFile
 from wand.image import Color, Image as WandImage
+from reportlab.lib.units import inch
 
 from .database import Student
 from .constants import ID_GRID_DIGITS
@@ -294,6 +295,8 @@ def extract_image_wand(page, dpi):
     page_pdf = Pdf.new()
     page_pdf.pages.append(page)
 
+    dpi = limit_dpi(dpi, page.MediaBox)
+
     with SpooledTemporaryFile() as page_file:
 
         page_pdf.save(page_file)
@@ -308,6 +311,37 @@ def extract_image_wand(page, dpi):
                 img.load()  # Load the data into the PIL image from the Wand image
 
     return img
+
+
+def limit_dpi(dpi, mediabox, max_megapixels=25):
+    """Limit DPI for a page to ensure a maximum amount of pixels
+
+    This method is used to reduce the DPI for PDFs that have
+    very large dimensions, to prevent an irreasonably large image.
+
+    Params
+    ------
+    dpi : int
+        The original DPI
+    mediabox : list of numbers
+        List containing the MediaBox of a page in a PDF
+    max_megapixels : int
+        Maximum amount of pixels to use for limiting the DPI
+
+    Returns
+    -------
+    dpi : int
+        The limited DPI, or the original DPI if no limiting was necessary
+    """
+    page_width = float(mediabox[2] - mediabox[0])
+    page_height = float(mediabox[3] - mediabox[1])
+    expected_pixels = dpi**2 / inch**2 * page_width * page_height
+
+    if expected_pixels > max_megapixels * 1e6:
+        factor = max_megapixels * 1e6 / (expected_pixels)
+        dpi *= factor**0.5
+
+    return int(dpi)
 
 
 def guess_missing_page_info(page_infos):

@@ -46,25 +46,16 @@ class Grade extends React.Component {
 
   syncSubmissionWithUrl = () => {
     if (this.props.submissionID === undefined || this.props.problemID === undefined) {
-      api.get(`exams/${this.props.examID}?only_metadata=true` +
-          `&shuffle_seed=${this.props.graderID}`).then(metadata => {
-        const examID = metadata.exam_id
-        const submissionID = metadata.submissions[0].id
-        const problemID = metadata.problems[0].id
-        Promise.all([
-          api.get(`submissions/${examID}/${submissionID}`),
-          api.get(`problems/${problemID}`)
-        ]).then(values => {
-          const submission = values[0]
-          const problem = values[1]
-          this.setState({
-            submission: submission,
-            problem: problem,
-            submissions: metadata.submissions,
-            problems: metadata.problems,
-            examID: this.props.examID
-          }, () => this.props.history.replace('/grade/' + examID + '/' + submissionID + '/' + problemID))
-        })
+      Promise.all([
+        api.get(`submissions/${this.state.examID}/${this.state.submission.id}`),
+        api.get(`problems/${this.state.problem.id}`)
+      ]).then(values => {
+        const submission = values[0]
+        const problem = values[1]
+        this.setState({
+          submission: submission,
+          problem: problem
+        }, () => this.props.history.replace('/grade/' + this.state.examID + '/' + submission.id + '/' + problem.id))
       })
     } else {
       if (this.props.problemID !== this.state.problem.id || this.props.submissionID !== this.state.submission.id) {
@@ -124,8 +115,16 @@ class Grade extends React.Component {
   }
 
   componentDidUpdate = (prevProps, prevState) => {
-    if (this.props.examID !== this.state.examID) {
+    if (prevProps.examID !== this.props.examID && this.props.examID !== this.state.examID) {
       console.log('exam did not match state')
+      this.updateMetadata()
+    }
+    if (prevProps.problemID !== this.props.problemID && this.props.problemID !== this.state.problemID) {
+      console.log('problem changed')
+      this.updateMetadata()
+    }
+    if (prevProps.submissionID !== this.props.submissionID && this.props.submissionID !== this.state.submissionID) {
+      console.log('problem changed')
       this.updateMetadata()
     }
   }
@@ -146,8 +145,9 @@ class Grade extends React.Component {
       this.setState({
         submission: sub
       }, () => this.props.history.replace('/grade/' + this.props.examID + '/' + this.state.submission.id + '/' + this.state.problem.id))
+    ).then(
+      this.updateProblemUpdateMetadata()
     )
-    this.setProblemUpdateMetadata(this.state.problem.id)
   }
   /**
    * Sugar methods for navigate.
@@ -180,14 +180,9 @@ class Grade extends React.Component {
   /**
    * Updates the problem from the server, and sets it as the current problem.
    * Also updates the metadata.
-   * @param id the id of the problem to update to.
    */
-  setProblemUpdateMetadata = (problemId) => {
-    api.get(`problems/${problemId}`).then(problem => {
-      this.setState({
-        problem: problem
-      }, () => this.props.history.replace('/grade/' + this.props.examID + '/' + this.state.submission.id + '/' + problemId))
-    })
+  updateProblemUpdateMetadata = () => {
+    this.props.history.push('/grade/' + this.props.examID + '/' + this.props.submissionID + '/' + this.props.problemID)
     this.updateMetadata()
   }
   /**
@@ -196,7 +191,7 @@ class Grade extends React.Component {
    * id, student for each submission in the exam and
    * id, name for each problem in the exam.
    */
-  updateMetadata = (callback) => {
+  updateMetadata = () => {
     api.get(`exams/${this.props.examID}?only_metadata=true` +
     `&shuffle_seed=${this.props.graderID}`).then(metadata => {
       this.setState({
@@ -215,7 +210,8 @@ class Grade extends React.Component {
       return
     }
     const newId = this.state.problems[currentIndex - 1].id
-    this.setProblemUpdateMetadata(newId)
+    // this.setProblemUpdateMetadata(newId)
+    this.props.history.push('/grade/' + this.props.examID + '/' + this.state.submission.id + '/' + newId)
   }
   /**
    * Finds the index of the current problem and moves to the next one.
@@ -227,7 +223,12 @@ class Grade extends React.Component {
       return
     }
     const newId = this.state.problems[currentIndex + 1].id
-    this.setProblemUpdateMetadata(newId)
+    // this.setProblemUpdateMetadata(newId)
+    this.props.history.push('/grade/' + this.props.examID + '/' + this.state.submission.id + '/' + newId)
+  }
+
+  navigateProblem = (problemID) => {
+    this.props.history.push('/grade/' + this.props.examID + '/' + this.state.submission.id + '/' + problemID)
   }
 
   /**
@@ -365,7 +366,7 @@ class Grade extends React.Component {
               <div className='column is-one-quarter-fullhd is-one-third-desktop editor-side-panel'>
                 <ProblemSelector
                   problems={problems}
-                  setProblemUpdateMetadata={this.setProblemUpdateMetadata}
+                  navigateProblem={this.navigateProblem}
                   current={problem}
                   showTooltips={this.state.showTooltips} />
                 <nav className='panel'>
@@ -376,7 +377,7 @@ class Grade extends React.Component {
                     setSubmission={this.setSubmission}
                     toggleOption={this.toggleFeedbackOption}
                     toggleApprove={this.toggleApprove}
-                    updateFeedback={this.setProblemUpdateMetadata} />
+                    updateFeedback={this.updateProblemUpdateMetadata} />
                 </nav>
               </div>
 

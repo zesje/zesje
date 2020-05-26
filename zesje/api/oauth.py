@@ -5,7 +5,7 @@ from flask import current_app, session, request, redirect, url_for
 from flask_login import login_user, current_user, logout_user
 from requests_oauthlib import OAuth2Session
 
-from ..database import Grader
+from ..database import db, Grader
 
 
 class OAuthStart(Resource):
@@ -67,6 +67,7 @@ class OAuthCallback(Resource):
             return dict(status=403, message="Your account is Unauthorized. Please contact somebody who has access"), 403
         elif grader.name is None:
             grader.name = current_login[current_app.config['OAUTH_NAME_FIELD']]
+            db.session.commit()
 
         login_user(grader)
 

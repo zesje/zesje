@@ -38,6 +38,7 @@ class Graders extends React.Component {
     api.get('graders')
       .then(graders => {
         this.setState({ graders: graders })
+        console.log(graders)
       })
       .catch(resp => {
         Notification.error('could not fetch graders (see Javascript console for details)')
@@ -86,7 +87,7 @@ class Graders extends React.Component {
               </p>
               <ul className='menu-list'>
                 {this.state.graders.map((grader) =>
-                  <li key={grader.id}>{grader.oauth_id}</li>
+                  <li key={grader.id}>{grader.name ? grader.name : 'Never logged in'} - {grader.oauth_id}</li>
                 )}
               </ul>
             </aside>

@@ -1,11 +1,15 @@
 import pytest
 import zipfile
 
+from reportlab.pdfgen import canvas
+from reportlab.lib.units import inch
+from pikepdf import Pdf
 from pathlib import Path
 from io import BytesIO
 from PIL import Image
 
 from zesje.image_extraction import convert_to_rgb, extract_pages_from_file, guess_page_info, guess_missing_page_info
+from zesje.image_extraction import extract_image_wand
 from zesje.database import Student
 
 image_modes = ['RGB', 'RGBA', 'L', 'P', 'CMYK', 'HSV']
@@ -19,6 +23,25 @@ def test_convert_to_rgb(image_mode):
 
     assert converted.mode == 'RGB'
     assert converted.size == image.size
+
+
+def test_large_mediabox_limit(app):
+    pdf_path = Path(app.config['DATA_DIRECTORY']) / 'large.pdf'
+    page_size = (10000, 15000)
+    dpi = 300
+
+    pdf = canvas.Canvas(str(pdf_path), pagesize=page_size)
+    pdf.showPage()
+    pdf.save()
+
+    with Pdf.open(str(pdf_path)) as pdf:
+        for page in pdf.pages:
+            with pytest.warns(None) as warnings:
+                image = extract_image_wand(page, dpi)
+            assert not warnings
+            assert isinstance(image, Image.Image)
+            h, w = image.size
+            assert h * w < page_size[0] * page_size[1] * inch**2 * dpi**2
 
 
 guess_image_info_arguments = [

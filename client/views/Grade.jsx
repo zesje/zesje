@@ -45,33 +45,21 @@ class Grade extends React.Component {
   }
 
   syncSubmissionWithUrl = () => {
-    if (this.props.submissionID === undefined || this.props.problemID === undefined) {
-      Promise.all([
-        api.get(`submissions/${this.state.examID}/${this.state.submission.id}`),
-        api.get(`problems/${this.state.problem.id}`)
-      ]).then(values => {
-        const submission = values[0]
-        const problem = values[1]
-        this.setState({
-          submission: submission,
-          problem: problem
-        }, () => this.props.history.replace('/grade/' + this.state.examID + '/' + submission.id + '/' + problem.id))
-      })
-    } else {
-      if (this.props.problemID !== this.state.problem.id || this.props.submissionID !== this.state.submission.id) {
-        Promise.all([
-          api.get(`submissions/${this.props.examID}/${this.props.submissionID}`),
-          api.get(`problems/${this.props.problemID}`)
-        ]).then(values => {
-          const submission = values[0]
-          const problem = values[1]
-          this.setState({
-            submission: submission,
-            problem: problem
-          })
-        })
-      }
-    }
+    let isUndefined = (this.props.submissionID === undefined || this.props.problemID === undefined)
+    let isUrlDifferent = (this.props.problemID !== this.state.problem.id || this.props.submissionID !== this.state.submission.id)
+    Promise.all([
+      api.get(`submissions/${isUndefined ? this.state.examID : isUrlDifferent ? this.props.examID : null}/${isUndefined ? this.state.submission.id : isUrlDifferent ? this.props.submissionID : null}`),
+      api.get(`problems/${isUndefined ? this.state.problem.id : isUrlDifferent ? this.props.problemID : null}`)
+    ]).then(values => {
+      const submission = values[0]
+      const problem = values[1]
+      this.setState({
+        submission: submission,
+        problem: problem
+      }, () => this.props.history.replace('/grade/' + this.state.examID + '/' + submission.id + '/' + problem.id))
+    }).catch(err => {
+      console.log('error expected ' + err.status)
+    })
   }
 
   /**
@@ -182,6 +170,7 @@ class Grade extends React.Component {
    * Also updates the metadata.
    */
   updateProblemUpdateMetadata = () => {
+    console.log('pushed url while updating problem')
     this.props.history.push('/grade/' + this.props.examID + '/' + this.props.submissionID + '/' + this.props.problemID)
     this.updateMetadata()
   }

@@ -18,7 +18,7 @@ depends_on = None
 def upgrade():
     # Drop unique constraint for grader name, add unique column oauth_id
     with op.batch_alter_table('grader', schema=None) as batch_op:
-        batch_op.add_column(sa.Column('oauth_id', sa.String(length=320), nullable=True))
+        batch_op.add_column(sa.Column('oauth_id', sa.String(length=320), nullable=False))
         batch_op.alter_column('name',
                               existing_type=mysql.VARCHAR(length=100),
                               nullable=True)

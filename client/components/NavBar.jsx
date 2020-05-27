@@ -174,7 +174,7 @@ class NavBar extends React.Component {
 
   displayGrader = () => {
     if (this.state.grader) {
-      return 'Current Grader: ' + this.state.grader.name + ' (' + this.state.grader.oauth_id + ')'
+      return this.state.grader.name + ' (' + this.state.grader.oauth_id + ')'
     } else {
       return ''
     }

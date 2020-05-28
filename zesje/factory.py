@@ -8,7 +8,7 @@ from flask_login import current_user
 
 from .database import db, login_manager, Grader
 from .api import api_bp
-from .constants import EXEMPTED_ROUTES
+from .constants import EXEMPTED_ROUTES, AUTOGRADER_NAME
 
 STATIC_FOLDER_PATH = os.path.join(abspath(dirname(__file__)), 'static')
 
@@ -45,9 +45,10 @@ def create_app(celery=None, app_config=None):
         os.makedirs(app.config['DATA_DIRECTORY'], exist_ok=True)
         os.makedirs(app.config['SCAN_DIRECTORY'], exist_ok=True)
 
-        # Add instance owner to db if they don't already exist
+        # Add instance owner and autograder to db if they don't already exist
         if Grader.query.filter(Grader.oauth_id == app.config['OWNER_OAUTH_ID']).one_or_none() is None:
             db.session.add(Grader(oauth_id=app.config['OWNER_OAUTH_ID'], name=app.config['OWNER_NAME']))
+            db.session.add(Grader(oauth_id=AUTOGRADER_NAME, name=AUTOGRADER_NAME))
             db.session.commit()
 
     @app.route('/')

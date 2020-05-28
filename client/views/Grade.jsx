@@ -38,7 +38,8 @@ class Grade extends React.Component {
           problem: problem,
           submissions: metadata.submissions,
           problems: metadata.problems,
-          examID: this.props.examID
+          examID: this.props.examID,
+          gradeAnonymous: metadata.gradeAnonymous
         }, () => this.syncSubmissionWithUrl())
       })
     })
@@ -183,10 +184,12 @@ class Grade extends React.Component {
   updateMetadata = () => {
     api.get(`exams/${this.props.examID}?only_metadata=true` +
     `&shuffle_seed=${this.props.graderID}`).then(metadata => {
+      console.log('metadata --> ' + metadata.gradeAnonymous)
       this.setState({
         submissions: metadata.submissions,
         problems: metadata.problems,
-        examID: this.props.examID
+        examID: this.props.examID,
+        gradeAnonymous: metadata.gradeAnonymous
       }, () => this.syncSubmissionWithUrl())
     })
   }
@@ -342,6 +345,7 @@ class Grade extends React.Component {
     ).map((sub) => ' #' + sub.id)
     const multiple = otherSubmissions.length > 0
     const gradedTime = new Date(solution.graded_at)
+    const gradeAnonymous = this.state.gradeAnonymous
 
     return (
       <div>
@@ -379,7 +383,7 @@ class Grade extends React.Component {
                   prev={this.prev}
                   next={this.next}
                   nextUngraded={this.nextUngraded}
-                  anonymous={this.props.gradeAnonymous}
+                  anonymous={gradeAnonymous}
                   showTooltips={this.state.showTooltips}
                 />
 

@@ -158,8 +158,8 @@ class Grade extends React.Component {
    * Updates the submission from the server, and sets it as the current submission.
    * @param id the id of the submission to update to.
   */
-  setSubmission = (id) => {
-    api.get(`submissions/${this.props.examID}/${id}`).then(sub => {
+  updateSubmission = () => {
+    api.get(`submissions/${this.props.examID}/${this.state.submission.id}`).then(sub => {
       this.setState({
         submission: sub
       })
@@ -241,7 +241,7 @@ class Grade extends React.Component {
       id: id,
       graderID: this.props.graderID
     }).then(result => {
-      this.setSubmission(submission.id)
+      this.updateSubmission()
     })
   }
   /**
@@ -256,7 +256,7 @@ class Grade extends React.Component {
     }).catch(resp => {
       resp.json().then(body => Notification.error('Could not approve feedback: ' + body.message))
     }).then(result => {
-      this.setSubmission(submission.id)
+      this.updateSubmission()
     })
   }
 
@@ -281,7 +281,7 @@ class Grade extends React.Component {
          Notification.error('Could not ' + (graderid === null ? 'set aside' : 'approve') + ' feedback: ' + body.message)
        })
      }).then(result => {
-       this.setSubmission(submission.id)
+       this.updateSubmission()
      })
    }
 
@@ -363,7 +363,7 @@ class Grade extends React.Component {
                     examID={examID} submissionID={submission.id} graderID={graderID}
                     problem={problem} solution={solution}
                     showTooltips={this.state.showTooltips} grading
-                    setSubmission={this.setSubmission}
+                    setSubmission={this.updateSubmission}
                     toggleOption={this.toggleFeedbackOption}
                     toggleApprove={this.toggleApprove}
                     updateFeedback={this.updateProblemUpdateMetadata} />
@@ -374,7 +374,7 @@ class Grade extends React.Component {
                 <GradeNavigation
                   submission={submission}
                   submissions={submissions}
-                  setSubmission={this.setSubmission}
+                  setSubmission={this.updateSubmission}
                   prevUngraded={this.prevUngraded}
                   prev={this.prev}
                   next={this.next}

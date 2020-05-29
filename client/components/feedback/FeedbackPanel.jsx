@@ -43,7 +43,7 @@ class FeedbackPanel extends React.Component {
   }
 
   updateFeedback = () => {
-    this.props.updateFeedback(this.state.problemID)
+    this.props.updateFeedback()
   }
 
   componentDidMount = () => {

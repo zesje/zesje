@@ -385,7 +385,7 @@ class Grade extends React.Component {
                     setSubmission={this.updateSubmission}
                     toggleOption={this.toggleFeedbackOption}
                     toggleApprove={this.toggleApprove}
-                    updateFeedback={this.updateProblemUpdateMetadata} />
+                    updateFeedback={this.updateMetadata} />
                 </nav>
               </div>
 

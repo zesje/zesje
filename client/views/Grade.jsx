@@ -45,8 +45,7 @@ class Grade extends React.Component {
     }).catch(err => {
       console.log('something failed')
       this.setState({
-        submissions: null,
-        problems: null
+        submission: null
       }, console.log('error caught' + err))
     })
   }
@@ -65,7 +64,11 @@ class Grade extends React.Component {
         problem: problem
       }, () => this.props.history.replace('/grade/' + this.state.examID + '/' + submission.id + '/' + problem.id))
     }).catch(err => {
-      console.log('error expected ' + err.status)
+      if (err.status === 404) {
+        this.setState({
+          submission: null
+        }, console.log('submission not found'))
+      }
     })
   }
 
@@ -198,8 +201,7 @@ class Grade extends React.Component {
       }, () => this.syncSubmissionWithUrl())
     }).catch(err => {
       this.setState({
-        submissions: null,
-        problems: null
+        submission: null
       }, console.log('error caught' + err))
     })
   }
@@ -338,11 +340,11 @@ class Grade extends React.Component {
 
   render () {
     const hero = (<Hero title='Grade' subtitle='Assign feedback to each solution' />)
-    const fail = (<Hero title='Oops!' subtitle='No exams or problems found' />)
+    const fail = (<Hero title='Oops!' subtitle='No exams uploaded or no such submission found' />)
     // This should happen when there are no submissions or problems for an exam.
     // More specifically, if a user tries to enter a URL for an exam with no submissions.
     // This will also happen while the initial call to update submission in the constructor is still pending.
-    if (!this.state.submission || !this.state.problems || !this.state.problems) {
+    if (!this.state.submission) {
       return fail
     }
 

@@ -42,6 +42,12 @@ class Grade extends React.Component {
           gradeAnonymous: metadata.gradeAnonymous
         }, () => this.syncSubmissionWithUrl())
       })
+    }).catch(err => {
+      console.log('something failed')
+      this.setState({
+        submissions: null,
+        problems: null
+      }, console.log('error caught' + err))
     })
   }
 
@@ -184,13 +190,17 @@ class Grade extends React.Component {
   updateMetadata = () => {
     api.get(`exams/${this.props.examID}?only_metadata=true` +
     `&shuffle_seed=${this.props.graderID}`).then(metadata => {
-      console.log('metadata --> ' + metadata.gradeAnonymous)
       this.setState({
         submissions: metadata.submissions,
         problems: metadata.problems,
         examID: this.props.examID,
         gradeAnonymous: metadata.gradeAnonymous
       }, () => this.syncSubmissionWithUrl())
+    }).catch(err => {
+      this.setState({
+        submissions: null,
+        problems: null
+      }, console.log('error caught' + err))
     })
   }
   /**
@@ -328,11 +338,14 @@ class Grade extends React.Component {
 
   render () {
     const hero = (<Hero title='Grade' subtitle='Assign feedback to each solution' />)
-    // Have to not render if no submission exists in the state yet, to prevent crashes.
-    // This should only happen while the initial call to update submission in the constructor is still pending.
-    if (!this.state.submission) {
-      return hero
+    const fail = (<Hero title='Oops!' subtitle='No exams or problems found' />)
+    // This should happen when there are no submissions or problems for an exam.
+    // More specifically, if a user tries to enter a URL for an exam with no submissions.
+    // This will also happen while the initial call to update submission in the constructor is still pending.
+    if (!this.state.submission || !this.state.problems || !this.state.problems) {
+      return fail
     }
+
     const examID = this.props.examID
     const graderID = this.props.graderID
     const submission = this.state.submission

@@ -145,9 +145,9 @@ class App extends React.Component {
               <Students examID={match.params.examID} />}
             />
             <Route path='/grade/:examID/:submissionID?/:problemID?' render={({ match, history }) => (
-              exam.submissions.length && exam.problems.length && grader
+              grader
                 ? <Grade examID={match.params.examID} graderID={this.state.grader.id} history={history} submissionID={match.params.submissionID} problemID={match.params.problemID} />
-                : <Fail message='No exams uploaded or no grader selected. Please do not bookmark URLs' />
+                : <Fail message='No grader selected. Please do not bookmark URLs' />
             )} />
             <Route path='/overview/:examID' render={({ match }) => (
               exam.submissions.length

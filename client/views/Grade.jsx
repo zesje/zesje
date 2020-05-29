@@ -51,25 +51,36 @@ class Grade extends React.Component {
   }
 
   syncSubmissionWithUrl = () => {
-    let isUndefined = (this.props.submissionID === undefined || this.props.problemID === undefined)
-    let isUrlDifferent = (this.props.problemID !== this.state.problem.id || this.props.submissionID !== this.state.submission.id)
-    Promise.all([
-      api.get(`submissions/${isUndefined ? this.state.examID : isUrlDifferent ? this.props.examID : null}/${isUndefined ? this.state.submission.id : isUrlDifferent ? this.props.submissionID : null}`),
-      api.get(`problems/${isUndefined ? this.state.problem.id : isUrlDifferent ? this.props.problemID : null}`)
-    ]).then(values => {
-      const submission = values[0]
-      const problem = values[1]
-      this.setState({
-        submission: submission,
-        problem: problem
-      }, () => this.props.history.replace('/grade/' + this.state.examID + '/' + submission.id + '/' + problem.id))
-    }).catch(err => {
-      if (err.status === 404) {
+    const bothUndefined = (this.props.submissionID === undefined && this.props.problemID === undefined)
+    const bothDefined = (this.props.submissionID !== undefined && this.props.problemID !== undefined)
+    const isUrlDifferent = (this.props.problemID !== this.state.problem.id || this.props.submissionID !== this.state.submission.id)
+    const submissionID = bothUndefined ? this.state.submission.id : bothDefined ? (isUrlDifferent ? this.props.submissionID : null) : undefined
+    const problemID = bothUndefined ? this.state.problem.id : bothDefined ? (isUrlDifferent ? this.props.problemID : null) : undefined
+    if (submissionID && problemID && submissionID !== null && problemID !== null) {
+      Promise.all([
+        api.get(`submissions/${this.props.examID}/${submissionID}`),
+        api.get(`problems/${problemID}`)
+      ]).then(values => {
+        const submission = values[0]
+        const problem = values[1]
         this.setState({
-          submission: null
-        }, console.log('submission not found'))
-      }
-    })
+          submission: submission,
+          problem: problem
+        }, () => this.props.history.replace('/grade/' + this.state.examID + '/' + submission.id + '/' + problem.id))
+      }).catch(err => {
+        if (err.status === 404) {
+          this.setState({
+            submission: null
+          }, console.log('submission not found'))
+        }
+      })
+    } else if (submissionID === undefined || problemID === undefined) {
+      this.setState({
+        submission: null
+      }, console.log('Malformed URL'))
+    } else {
+      console.log('both should be null => ' + submissionID + ', ' + problemID)
+    }
   }
 
   /**

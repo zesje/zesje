@@ -144,7 +144,7 @@ class App extends React.Component {
             <Route path='/students/:examID' render={({ match }) =>
               <Students examID={match.params.examID} />}
             />
-            <Route path='/grade/:examID/:submissionID?/:problemID?' render={({ match, history }) => (
+            <Route exact path='/grade/:examID/:submissionID?/:problemID?' render={({ match, history }) => (
               grader
                 ? <Grade examID={match.params.examID} graderID={this.state.grader.id} history={history} submissionID={match.params.submissionID} problemID={match.params.problemID} />
                 : <Fail message='No grader selected. Please do not bookmark URLs' />

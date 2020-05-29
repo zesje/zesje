@@ -237,7 +237,7 @@ class Grade extends React.Component {
     }
     const newId = this.state.problems[currentIndex - 1].id
     // this.setProblemUpdateMetadata(newId)
-    this.props.history.push('/grade/' + this.props.examID + '/' + this.state.submission.id + '/' + newId)
+    this.navigateProblem(newId)
   }
   /**
    * Finds the index of the current problem and moves to the next one.
@@ -250,9 +250,13 @@ class Grade extends React.Component {
     }
     const newId = this.state.problems[currentIndex + 1].id
     // this.setProblemUpdateMetadata(newId)
-    this.props.history.push('/grade/' + this.props.examID + '/' + this.state.submission.id + '/' + newId)
+    this.navigateProblem(newId)
   }
 
+  /**
+   * Navigates the problem to the problem corresponding to the specified problem id by pushing a new URL to history.
+   * @param problemID - the id of the problem that we want to navigate to
+   */
   navigateProblem = (problemID) => {
     this.props.history.push('/grade/' + this.props.examID + '/' + this.state.submission.id + '/' + problemID)
   }

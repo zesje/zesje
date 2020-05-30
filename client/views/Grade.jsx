@@ -277,7 +277,7 @@ class Grade extends React.Component {
       this.updateSubmission()
     })
   }
-  
+
   /**
    * Approves the current submission.
    */

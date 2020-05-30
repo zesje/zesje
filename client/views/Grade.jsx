@@ -31,8 +31,8 @@ class Grade extends React.Component {
       api.get(`exams/${this.props.examID}?only_metadata=true` +
         `&shuffle_seed=${this.props.graderID}`).then(metadata => {
         const examID = metadata.exam_id
-        const submissionID = metadata.submissions[0].id
-        const problemID = metadata.problems[0].id
+        const submissionID = this.props.submissionID || metadata.submissions[0].id
+        const problemID = this.props.problemID || metadata.problems[0].id
         Promise.all([
           api.get(`submissions/${examID}/${submissionID}`),
           api.get(`problems/${problemID}`)
@@ -46,7 +46,7 @@ class Grade extends React.Component {
             problems: metadata.problems,
             examID: this.props.examID,
             gradeAnonymous: metadata.gradeAnonymous
-          }, () => this.props.history.replace('/grade/' + this.props.examID + '/' + (this.props.submissionID ? this.props.submissionID : this.state.submission.id) + '/' + (this.props.problemID ? this.props.problemID : this.state.problem.id)))
+          }, () => this.props.history.replace('/grade/' + examID + '/' + submissionID + '/' + problemID))
         })
       }).catch(err => {
         console.log('something failed')
@@ -147,9 +147,11 @@ class Grade extends React.Component {
    * @param prevState - previous state
    */
   componentDidUpdate = (prevProps, prevState) => {
+    const problemID = this.state.problem && String(this.state.problem.id)
+    const submissionID = this.state.submission && String(this.state.submission.id)
     if ((prevProps.examID !== this.props.examID && this.props.examID !== this.state.examID) ||
-      (prevProps.problemID !== this.props.problemID && this.props.problemID !== this.state.problemID) ||
-      (prevProps.submissionID !== this.props.submissionID && this.props.submissionID !== this.state.submissionID)) {
+      (prevProps.problemID !== this.props.problemID && this.props.problemID !== problemID) ||
+      (prevProps.submissionID !== this.props.submissionID && this.props.submissionID !== submissionID)) {
       console.log('exam did not match state')
       this.updateMetadata()
     }

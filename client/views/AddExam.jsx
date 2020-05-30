@@ -102,7 +102,7 @@ class Exams extends React.Component {
                 <div className='field'>
                   <div className='control'>
                     <input
-                      className={'input' + (this.state.examName ? ' is-success' : ' is-danger')}
+                      className='input'
                       placeholder='Exam name'
                       value={this.state.examName}
                       required
@@ -181,7 +181,8 @@ class Exams extends React.Component {
                     <button
                       className='button is-info'
                       onClick={this.addExam}
-                      disabled={!this.state.examName || (this.state.selectedType !== null && this.state.selectedType.acceptsPDF && this.state.pdf === null)}>
+                      disabled={!this.state.examName ||
+                        (this.state.selectedType !== null && this.state.selectedType.acceptsPDF && this.state.pdf === null)}>
                         Create Exam
                     </button>
                   </div>

@@ -137,16 +137,10 @@ class Grade extends React.Component {
    * @param prevState - previous state
    */
   componentDidUpdate = (prevProps, prevState) => {
-    if (prevProps.examID !== this.props.examID && this.props.examID !== this.state.examID) {
+    if ((prevProps.examID !== this.props.examID && this.props.examID !== this.state.examID) ||
+      (prevProps.problemID !== this.props.problemID && this.props.problemID !== this.state.problemID) ||
+      (prevProps.submissionID !== this.props.submissionID && this.props.submissionID !== this.state.submissionID)) {
       console.log('exam did not match state')
-      this.updateMetadata()
-    }
-    if (prevProps.problemID !== this.props.problemID && this.props.problemID !== this.state.problemID) {
-      console.log('problem changed')
-      this.updateMetadata()
-    }
-    if (prevProps.submissionID !== this.props.submissionID && this.props.submissionID !== this.state.submissionID) {
-      console.log('problem changed')
       this.updateMetadata()
     }
   }

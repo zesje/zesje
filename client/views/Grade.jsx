@@ -153,7 +153,7 @@ class Grade extends React.Component {
       (prevProps.problemID !== this.props.problemID && this.props.problemID !== problemID) ||
       (prevProps.submissionID !== this.props.submissionID && this.props.submissionID !== submissionID)) {
       console.log('exam did not match state')
-      this.updateMetadata()
+      this.updateFromUrl()
     }
   }
 
@@ -205,10 +205,10 @@ class Grade extends React.Component {
   }
 
   /**
-   * Updates the metadata for the current exam. In case of unwanted behaviour, sets the submission to null
-   * for displaying error component.
+   * Updates the metadata for the current exam. It then calls syncSubmissionWithUrl to update the submission and problem in the state according to the URL.
+   * In case of unwanted behaviour, sets the submission to null for displaying error component.
    */
-  updateMetadata = () => {
+  updateFromUrl = () => {
     api.get(`exams/${this.props.examID}?only_metadata=true` +
     `&shuffle_seed=${this.props.graderID}`).then(metadata => {
       this.setState({
@@ -410,7 +410,7 @@ class Grade extends React.Component {
                     setSubmission={this.updateSubmission}
                     toggleOption={this.toggleFeedbackOption}
                     toggleApprove={this.toggleApprove}
-                    updateFeedback={this.updateMetadata} />
+                    updateFeedback={this.updateFromUrl} />
                 </nav>
               </div>
 

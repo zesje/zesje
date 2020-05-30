@@ -168,8 +168,6 @@ class Grade extends React.Component {
       this.setState({
         submission: sub
       }, () => this.props.history.push('/grade/' + this.props.examID + '/' + this.state.submission.id + '/' + this.state.problem.id))
-    ).then(
-      this.updateMetadata()
     )
   }
   /**
@@ -199,15 +197,7 @@ class Grade extends React.Component {
       })
     })
   }
-  // /**
-  //  * Updates the problem from the server, and sets it as the current problem.
-  //  * Also updates the metadata.
-  //  */
-  // updateProblemUpdateMetadata = () => {
-  //   console.log('pushed url while updating problem')
-  //   this.props.history.push('/grade/' + this.props.examID + '/' + this.props.submissionID + '/' + this.props.problemID)
-  //   this.updateMetadata()
-  // }
+
   /**
    * Updates the metadata for the current exam. In case of unwanted behaviour, sets the submission to null
    * for displaying error component.
@@ -227,6 +217,7 @@ class Grade extends React.Component {
       }, console.log('error caught' + err))
     })
   }
+
   /**
    * Finds the index of the current problem and moves to the previous one.
    */
@@ -239,6 +230,7 @@ class Grade extends React.Component {
     // this.setProblemUpdateMetadata(newId)
     this.navigateProblem(newId)
   }
+
   /**
    * Finds the index of the current problem and moves to the next one.
    */
@@ -285,6 +277,7 @@ class Grade extends React.Component {
       this.updateSubmission()
     })
   }
+  
   /**
    * Approves the current submission.
    */

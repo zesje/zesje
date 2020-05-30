@@ -23,32 +23,42 @@ class Grade extends React.Component {
   constructor (props) {
     super(props)
     this.state = {}
-    api.get(`exams/${this.props.examID}?only_metadata=true` +
+    const bothUndefined = (this.props.submissionID === undefined && this.props.problemID === undefined)
+    const bothDefined = (this.props.submissionID !== undefined && this.props.problemID !== undefined)
+    console.log('both defined -> ' + bothDefined + ' both undefined -> ' + bothUndefined)
+    console.log('props -> ' + this.props.submissionID + ' props  -> ' + this.props.problemID)
+    if (bothDefined || bothUndefined) {
+      api.get(`exams/${this.props.examID}?only_metadata=true` +
         `&shuffle_seed=${this.props.graderID}`).then(metadata => {
-      const examID = metadata.exam_id
-      const submissionID = metadata.submissions[0].id
-      const problemID = metadata.problems[0].id
-      Promise.all([
-        api.get(`submissions/${examID}/${submissionID}`),
-        api.get(`problems/${problemID}`)
-      ]).then(values => {
-        const submission = values[0]
-        const problem = values[1]
+        const examID = metadata.exam_id
+        const submissionID = metadata.submissions[0].id
+        const problemID = metadata.problems[0].id
+        Promise.all([
+          api.get(`submissions/${examID}/${submissionID}`),
+          api.get(`problems/${problemID}`)
+        ]).then(values => {
+          const submission = values[0]
+          const problem = values[1]
+          this.setState({
+            submission: submission,
+            problem: problem,
+            submissions: metadata.submissions,
+            problems: metadata.problems,
+            examID: this.props.examID,
+            gradeAnonymous: metadata.gradeAnonymous
+          }, () => this.props.history.replace('/grade/' + this.props.examID + '/' + (this.props.submissionID ? this.props.submissionID : this.state.submission.id) + '/' + (this.props.problemID ? this.props.problemID : this.state.problem.id)))
+        })
+      }).catch(err => {
+        console.log('something failed')
         this.setState({
-          submission: submission,
-          problem: problem,
-          submissions: metadata.submissions,
-          problems: metadata.problems,
-          examID: this.props.examID,
-          gradeAnonymous: metadata.gradeAnonymous
-        }, () => this.syncSubmissionWithUrl())
+          submission: null
+        }, console.log('error caught' + err))
       })
-    }).catch(err => {
-      console.log('something failed')
+    } else {
       this.setState({
         submission: null
-      }, console.log('error caught' + err))
-    })
+      }, console.log('malformed URL'))
+    }
   }
 
   /**

@@ -1,7 +1,7 @@
 from flask_restful import Resource
 from flask import current_app, request
 
-from ..database import db, Widget, ExamWidget, MultipleChoiceOption, ProblemWidget, ExamLayout
+from ..database import db, Widget, ExamWidget, MultipleChoiceOption, ExamLayout
 
 
 def widget_to_data(widget):
@@ -48,7 +48,7 @@ def normalise_pages(widgets):
     pages_to_substract = 0
     for widget in sorted_by_page:
         if prev_page < widget.page:
-            # page changed, increment the number of pages tu substact if the difference is bigger than one
+            # page changed, increment the number of pages to substact if the difference is bigger than one
             pages_to_substract += (widget.page - prev_page - 1)
             prev_page = widget.page
 
@@ -80,12 +80,14 @@ class Widgets(Resource):
             except (TypeError, ValueError) as error:
                 return dict(status=400, message=str(error)), 400
 
-        if isinstance(widget, ExamWidget) and widget.exam.layout == ExamLayout.zesje:
+        exam = widget.exam
+
+        if exam.layout == ExamLayout.zesje:
             message = "The Exam widget has to lay between the corner markers region."
             changed = force_boundaries(widget)
-        elif isinstance(widget, ProblemWidget) and widget.problem.exam.layout == ExamLayout.unstructured:
+        elif exam.layout == ExamLayout.unstructured:
             message = "There can't be a gap in the page numbers"
-            changed = normalise_pages(list(p.widget for p in widget.problem.exam.problems))
+            changed = normalise_pages(list(p.widget for p in exam.problems))
         else:
             message = "ok"
             changed = False

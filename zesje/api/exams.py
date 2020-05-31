@@ -241,7 +241,7 @@ class Exams(Resource):
     def _add_zesje_exam(self, exam_name, pdf_data):
         if not pdf_data:
             abort(
-                404,
+                400,
                 message='Upload a PDF to add a zesje exam.'
             )
 

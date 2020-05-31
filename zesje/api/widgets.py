@@ -54,10 +54,7 @@ def normalise_pages(widgets):
 
         widget.page -= pages_to_substract
 
-    if pages_to_substract > 0:
-        return True
-
-    return False
+    return pages_to_substract > 0
 
 
 class Widgets(Resource):

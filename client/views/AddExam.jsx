@@ -126,11 +126,24 @@ class Exams extends React.Component {
                         }) : null}
                       </select>
                     </div>
-                    {this.state.selectedType && <p>{this.state.selectedType.description}</p>}
                   </div>
                 </div>
               </div>
             </div>
+
+            {this.state.selectedType &&
+              <div className='field is-horizontal'>
+                <div className='field-label' />
+
+                <div className='field-body'>
+                  <div className='field'>
+                    <div className='control'>
+                      <p>{this.state.selectedType.description}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            }
 
             {this.state.selectedType && this.state.selectedType.acceptsPDF &&
               <div className='field is-horizontal'>

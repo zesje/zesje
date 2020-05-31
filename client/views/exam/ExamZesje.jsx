@@ -870,13 +870,15 @@ class ExamZesje extends React.Component {
   render () {
     return <React.Fragment>
       <div className='columns is-centered' >
-        <div className='column editor-side-panel is-one-quarter-fullhd is-one-third-desktop' >
+        <div className='column is-one-quarter-fullhd is-one-third-desktop' >
           <this.SidePanel
             examID={this.state.examID}
             setHelpPage={this.props.setHelpPage} />
         </div>
-        <div className='column is-narrow editor-content' >
-          {this.renderContent()}
+        <div className='column is-narrow' >
+          <div className='editor-content'>
+            {this.renderContent()}
+          </div>
         </div>
       </div>
       <ConfirmationModal

@@ -264,7 +264,7 @@ class PanelEditUnstructured extends React.Component {
     return (
       <React.Fragment>
         <div className='columns is-centered' >
-          <div className='column editor-side-panel is-one-third-fullhd is-half-tablet' >
+          <div className='column is-one-third-fullhd is-half-tablet' >
             <this.PanelProblem
               problem={problem} />
 
@@ -281,15 +281,17 @@ class PanelEditUnstructured extends React.Component {
               <div className='content panel-block' dangerouslySetInnerHTML={{__html: ExamUnstructuredMarkdown}} />
             </nav>
           </div>
-          <div className='column is-one-third-fullhd is-half-tablet editor-content' >
-            <ExamContent
-              problems={this.state.problems}
-              selectedProblemId={this.state.selectedProblemId}
-              selectProblem={this.selectProblem} />
+          <div className='column is-one-third-fullhd is-half-tablet'>
+            <div className='editor-content'>
+              <ExamContent
+                problems={this.state.problems}
+                selectedProblemId={this.state.selectedProblemId}
+                selectProblem={this.selectProblem} />
 
-            <button className='button problem is-link is-fullwidth' onClick={() => this.createProblem()}>
-              <span>Add Problem</span>
-            </button>
+              <button className='button problem is-link is-fullwidth' onClick={() => this.createProblem()}>
+                <span>Add Problem</span>
+              </button>
+            </div>
           </div>
         </div>
         {problem && <ConfirmationModal

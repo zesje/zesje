@@ -218,7 +218,7 @@ class Scan(db.Model):
     def path(self):
         suffix = Path(self.name).suffix
         scan_dir = Path(current_app.config['SCAN_DIRECTORY'])
-        return scan_dir / f'{self.id}.{suffix}'
+        return scan_dir / f'{self.id}{suffix}'
 
 
 class Widget(db.Model):

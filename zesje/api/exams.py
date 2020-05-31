@@ -537,4 +537,4 @@ class ExamTypes(Resource):
         -------
         list of dict : see `layout_to_data`.
         """
-        return [layout_to_data(type) for type in list(ExamLayout)]
+        return [layout_to_data(layout) for layout in list(ExamLayout)]

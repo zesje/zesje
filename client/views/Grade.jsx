@@ -58,12 +58,10 @@ class Grade extends React.Component {
    * It also sets the submission to null to display error component when unwanted behaviour is observed.
    */
   syncSubmissionWithUrl = () => {
-    const bothUndefined = (this.props.submissionID === undefined && this.props.problemID === undefined)
-    const bothDefined = (this.props.submissionID !== undefined && this.props.problemID !== undefined)
-    const isUrlDifferent = (this.props.problemID !== this.state.problem.id || this.props.submissionID !== this.state.submission.id)
-    const submissionID = bothUndefined ? this.state.submission.id : bothDefined ? (isUrlDifferent ? this.props.submissionID : null) : undefined
-    const problemID = bothUndefined ? this.state.problem.id : bothDefined ? (isUrlDifferent ? this.props.problemID : null) : undefined
-    if (submissionID && problemID && submissionID !== null && problemID !== null) {
+    const UrlIsDifferent = (this.props.problemID !== this.state.problem.id || this.props.submissionID !== this.state.submission.id)
+    if (UrlIsDifferent) {
+      const submissionID = this.props.submissionID || this.state.submission.id
+      const problemID = this.props.problemID || this.state.problem.id
       Promise.all([
         api.get(`submissions/${this.props.examID}/${submissionID}`),
         api.get(`problems/${problemID}`)
@@ -81,10 +79,6 @@ class Grade extends React.Component {
           }, console.log('Submission not found'))
         }
       })
-    } else if (submissionID === undefined || problemID === undefined) {
-      this.setState({
-        submission: null
-      }, console.log('Malformed URL'))
     }
   }
 

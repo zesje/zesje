@@ -54,8 +54,8 @@ def test_force_boundaries(app, x, y, changed):
 
 
 @pytest.mark.parametrize('pages_before, pages_after', [
-    ([1, 2, 3, 4], [1, 2, 3, 4]), ([2, 3, 4], [1, 2, 3]),
-    ([1, 3, 4], [1, 2, 3]), ([1, 2, 24], [1, 2, 3])
+    ([0, 1, 2, 3], [0, 1, 2, 3]), ([1, 2, 3], [0, 1, 2]),
+    ([0, 2, 3], [0, 1, 2]), ([0, 1, 24], [0, 1, 2])
     ], ids=['Ordered', 'No first page', 'Gap', 'Big gap'])
 def test_normalise_pages(pages_before, pages_after):
     widgets = [ProblemWidget(name=f'problem widget {page}', problem_id=page, page=page,

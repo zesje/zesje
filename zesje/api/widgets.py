@@ -44,7 +44,7 @@ def force_boundaries(widget):
 def normalise_pages(widgets):
     sorted_by_page = sorted(widgets, key=lambda w: w.page)
 
-    prev_page = 0
+    prev_page = -1  # this ensures that the first page is correctly set to 0
     pages_to_substract = 0
     for widget in sorted_by_page:
         if prev_page < widget.page:

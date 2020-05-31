@@ -25,8 +25,6 @@ class Grade extends React.Component {
     this.state = {}
     const bothUndefined = (this.props.submissionID === undefined && this.props.problemID === undefined)
     const bothDefined = (this.props.submissionID !== undefined && this.props.problemID !== undefined)
-    console.log('both defined -> ' + bothDefined + ' both undefined -> ' + bothUndefined)
-    console.log('props -> ' + this.props.submissionID + ' props  -> ' + this.props.problemID)
     if (bothDefined || bothUndefined) {
       api.get(`exams/${this.props.examID}?only_metadata=true` +
         `&shuffle_seed=${this.props.graderID}`).then(metadata => {
@@ -49,15 +47,14 @@ class Grade extends React.Component {
           }, () => this.props.history.replace('/grade/' + examID + '/' + submissionID + '/' + problemID))
         })
       }).catch(err => {
-        console.log('something failed')
         this.setState({
           submission: null
-        }, console.log('error caught' + err))
+        }, console.log('Error caught' + err))
       })
     } else {
       this.setState({
         submission: null
-      }, console.log('malformed URL'))
+      }, console.log('Malformed URL'))
     }
   }
 
@@ -89,15 +86,13 @@ class Grade extends React.Component {
         if (err.status === 404) {
           this.setState({
             submission: null
-          }, console.log('submission not found'))
+          }, console.log('Submission not found'))
         }
       })
     } else if (submissionID === undefined || problemID === undefined) {
       this.setState({
         submission: null
       }, console.log('Malformed URL'))
-    } else {
-      console.log('both should be null => ' + submissionID + ', ' + problemID)
     }
   }
 
@@ -152,7 +147,6 @@ class Grade extends React.Component {
     if ((prevProps.examID !== this.props.examID && this.props.examID !== this.state.examID) ||
       (prevProps.problemID !== this.props.problemID && this.props.problemID !== problemID) ||
       (prevProps.submissionID !== this.props.submissionID && this.props.submissionID !== submissionID)) {
-      console.log('exam did not match state')
       this.updateFromUrl()
     }
   }
@@ -220,7 +214,7 @@ class Grade extends React.Component {
     }).catch(err => {
       this.setState({
         submission: null
-      }, console.log('error caught' + err))
+      }, console.log('Error caught' + err))
     })
   }
 
@@ -233,7 +227,6 @@ class Grade extends React.Component {
       return
     }
     const newId = this.state.problems[currentIndex - 1].id
-    // this.setProblemUpdateMetadata(newId)
     this.navigateProblem(newId)
   }
 
@@ -247,7 +240,6 @@ class Grade extends React.Component {
       return
     }
     const newId = this.state.problems[currentIndex + 1].id
-    // this.setProblemUpdateMetadata(newId)
     this.navigateProblem(newId)
   }
 

@@ -58,11 +58,11 @@ class Grade extends React.Component {
    * and then replaces the URL to reflect the state.
    * It also sets the submission to null to display error component when unwanted behaviour is observed.
    */
-  syncSubmissionWithUrl = () => {
+  syncSubmissionWithUrl = (randomSubmission, randomProblem) => {
     const UrlIsDifferent = (this.props.problemID !== this.state.problem.id || this.props.submissionID !== this.state.submission.id)
     if (UrlIsDifferent) {
-      const submissionID = this.props.submissionID || this.state.submission.id
-      const problemID = this.props.problemID || this.state.problem.id
+      const submissionID = this.props.submissionID || randomSubmission
+      const problemID = this.props.problemID || randomProblem
       Promise.all([
         api.get(`submissions/${this.props.examID}/${submissionID}`),
         api.get(`problems/${problemID}`)
@@ -198,7 +198,7 @@ class Grade extends React.Component {
         problems: metadata.problems,
         examID: this.props.examID,
         gradeAnonymous: metadata.gradeAnonymous
-      }, () => this.syncSubmissionWithUrl())
+      }, () => this.syncSubmissionWithUrl(metadata.submissions[0].id, metadata.problems[0].id))
       // eslint-disable-next-line handle-callback-err
     }).catch(err => {
       this.setState({

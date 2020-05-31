@@ -54,9 +54,10 @@ class Grade extends React.Component {
   /**
    * This method changes the state of the submission and the problem according to the URL.
    * If the submission ID is specified in the URL, then it loads the submission corresponding to the URL.
-   * If it is missing, it uses the submission from the state (loaded by the constructor)
-   * and then replaces the URL to reflect the state.
+   * If it is missing, it loads a random submission from the metadata and then replaces the URL to reflect the state.
    * It also sets the submission to null to display error component when unwanted behaviour is observed.
+   * @param randomSubmission - random submission from the metadata
+   * @param randomProblem - random problem from the metadata
    */
   syncSubmissionWithUrl = (randomSubmission, randomProblem) => {
     const UrlIsDifferent = (this.props.problemID !== this.state.problem.id || this.props.submissionID !== this.state.submission.id)

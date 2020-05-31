@@ -357,7 +357,7 @@ class Grade extends React.Component {
 
   render () {
     const hero = (<Hero title='Grade' subtitle='Assign feedback to each solution' />)
-    const fail = (<Hero title='Oops!' subtitle='No exams uploaded or no such submission found' />)
+    const fail = (<Hero title='Oops!' subtitle='Submission does not exist' />)
     // This should happen when there are no submissions or problems for an exam.
     // More specifically, if a user tries to enter a URL for an exam with no submissions.
     // This will also happen while the initial call to update submission in the constructor is still pending.

@@ -23,39 +23,31 @@ class Grade extends React.Component {
   constructor (props) {
     super(props)
     this.state = {}
-    const bothUndefined = (this.props.submissionID === undefined && this.props.problemID === undefined)
-    const bothDefined = (this.props.submissionID !== undefined && this.props.problemID !== undefined)
-    if (bothDefined || bothUndefined) {
-      api.get(`exams/${this.props.examID}?only_metadata=true` +
+    api.get(`exams/${this.props.examID}?only_metadata=true` +
         `&shuffle_seed=${this.props.graderID}`).then(metadata => {
-        const examID = metadata.exam_id
-        const submissionID = this.props.submissionID || metadata.submissions[0].id
-        const problemID = this.props.problemID || metadata.problems[0].id
-        Promise.all([
-          api.get(`submissions/${examID}/${submissionID}`),
-          api.get(`problems/${problemID}`)
-        ]).then(values => {
-          const submission = values[0]
-          const problem = values[1]
-          this.setState({
-            submission: submission,
-            problem: problem,
-            submissions: metadata.submissions,
-            problems: metadata.problems,
-            examID: this.props.examID,
-            gradeAnonymous: metadata.gradeAnonymous
-          }, () => this.props.history.replace('/grade/' + examID + '/' + submissionID + '/' + problemID))
-        })
-      }).catch(err => {
+      const examID = metadata.exam_id
+      const submissionID = this.props.submissionID || metadata.submissions[0].id
+      const problemID = this.props.problemID || metadata.problems[0].id
+      Promise.all([
+        api.get(`submissions/${examID}/${submissionID}`),
+        api.get(`problems/${problemID}`)
+      ]).then(values => {
+        const submission = values[0]
+        const problem = values[1]
         this.setState({
-          submission: null
-        }, console.log('Error caught' + err))
+          submission: submission,
+          problem: problem,
+          submissions: metadata.submissions,
+          problems: metadata.problems,
+          examID: this.props.examID,
+          gradeAnonymous: metadata.gradeAnonymous
+        }, () => this.props.history.replace('/grade/' + examID + '/' + submissionID + '/' + problemID))
       })
-    } else {
+    }).catch(err => {
       this.setState({
         submission: null
-      }, console.log('Malformed URL'))
-    }
+      }, console.log('Error caught' + err))
+    })
   }
 
   /**

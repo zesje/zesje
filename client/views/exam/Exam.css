@@ -106,7 +106,7 @@ div.mcq-option img.mcq-box {
 }
 
 .card:not(:first-child) > .card-header {
-  border-top: 4px solid #ddd;
+  margin-top: 1em;
 }
 
 button.problem {

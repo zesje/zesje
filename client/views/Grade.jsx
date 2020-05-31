@@ -56,14 +56,12 @@ class Grade extends React.Component {
    * If the submission ID is specified in the URL, then it loads the submission corresponding to the URL.
    * If it is missing, it loads the first submission from the metadata and then replaces the URL to reflect the state.
    * It also sets the submission to null to display error component when unwanted behaviour is observed.
-   * @param randomSubmission - random submission from the metadata
-   * @param firstProblem - random problem from the metadata
    */
-  syncSubmissionWithUrl = (randomSubmission, firstProblem) => {
+  syncSubmissionWithUrl = () => {
     const UrlIsDifferent = (this.props.problemID !== this.state.problem.id || this.props.submissionID !== this.state.submission.id)
     if (UrlIsDifferent) {
-      const submissionID = this.props.submissionID || randomSubmission
-      const problemID = this.props.problemID || firstProblem
+      const submissionID = this.props.submissionID || this.state.submissions[0].id
+      const problemID = this.props.problemID || this.state.problems[0].id
       Promise.all([
         api.get(`submissions/${this.props.examID}/${submissionID}`),
         api.get(`problems/${problemID}`)
@@ -199,7 +197,7 @@ class Grade extends React.Component {
         problems: metadata.problems,
         examID: this.props.examID,
         gradeAnonymous: metadata.gradeAnonymous
-      }, () => this.syncSubmissionWithUrl(metadata.submissions[0].id, metadata.problems[0].id))
+      }, () => this.syncSubmissionWithUrl())
       // eslint-disable-next-line handle-callback-err
     }).catch(err => {
       this.setState({

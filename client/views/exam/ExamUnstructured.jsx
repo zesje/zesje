@@ -35,7 +35,7 @@ const ExamContent = (props) => {
               {pages[page].map(p => (
                 <button
                   className={'button problem is-fullwidth ' +
-                                    (props.selectedProblemId === p.id ? 'is-primary is-outlined' : '')}
+                                    (props.selectedProblemId === p.id ? 'is-primary' : '')}
                   onClick={() => props.selectProblem(p.id)}
                   key={p.id}
                 >

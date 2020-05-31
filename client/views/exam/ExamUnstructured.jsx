@@ -126,6 +126,11 @@ class PanelEditUnstructured extends React.Component {
   }
 
   saveProblemName = (id, name) => {
+    if (!name) {
+      this.selectProblem(id)
+      return
+    }
+
     api.put('problems/' + id, { name: name })
       .then(resp => this.loadProblems(id))
       .catch(e => {
@@ -136,6 +141,11 @@ class PanelEditUnstructured extends React.Component {
   }
 
   saveProblemPage = (problemId, widgetId, page) => {
+    if (!page) {
+      this.selectProblem(problemId)
+      return
+    }
+
     api.patch(`widgets/${widgetId}`, {page: parseInt(page) - 1})
       .then(resp => this.loadProblems(problemId))
       .catch(e => {
@@ -165,7 +175,7 @@ class PanelEditUnstructured extends React.Component {
   }
 
   inputColor = (name, originalName) => {
-    if (name !== null) {
+    if (name) {
       if (name !== originalName) {
         return 'is-success'
       } else {
@@ -218,7 +228,7 @@ class PanelEditUnstructured extends React.Component {
                   <label className='label'>Page</label>
                   <div className='control'>
                     <input
-                      className={'input ' + this.inputColor(this.state.problemPage, props.problem.page)}
+                      className={'input ' + this.inputColor(this.state.problemPage, props.problem.page + 1)}
                       placeholder='#'
                       maxLength={2}
                       value={this.state.problemPage}

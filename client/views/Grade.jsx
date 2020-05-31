@@ -43,10 +43,11 @@ class Grade extends React.Component {
           gradeAnonymous: metadata.gradeAnonymous
         }, () => this.props.history.replace('/grade/' + examID + '/' + submissionID + '/' + problemID))
       })
+      // eslint-disable-next-line handle-callback-err
     }).catch(err => {
       this.setState({
         submission: null
-      }, console.log('Error caught' + err))
+      })
     })
   }
 
@@ -76,7 +77,7 @@ class Grade extends React.Component {
         if (err.status === 404) {
           this.setState({
             submission: null
-          }, console.log('Submission not found'))
+          })
         }
       })
     }
@@ -197,10 +198,11 @@ class Grade extends React.Component {
         examID: this.props.examID,
         gradeAnonymous: metadata.gradeAnonymous
       }, () => this.syncSubmissionWithUrl())
+      // eslint-disable-next-line handle-callback-err
     }).catch(err => {
       this.setState({
         submission: null
-      }, console.log('Error caught' + err))
+      })
     })
   }
 
@@ -220,7 +222,6 @@ class Grade extends React.Component {
    * Finds the index of the current problem and moves to the next one.
    */
   nextProblem = () => {
-    console.log('next problem')
     const currentIndex = this.state.problems.findIndex(p => p.id === this.state.problem.id)
     if (currentIndex === this.state.problems.length - 1) {
       return

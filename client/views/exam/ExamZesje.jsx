@@ -912,7 +912,8 @@ class ExamZesje extends React.Component {
         active={this.state.convertToUnstructured}
         color='is-danger'
         headerText='Are you sure you want to convert this exam to unstructured?'
-        contentText='This option should only be used for those exams created to be solve using images from students.'
+        contentText={`This option should only be used for exams meant to be solved by uploads from students. 
+          The option to convert exams will be removed in the future, please create unstructured exams directly instead.`}
         confirmText='Convert'
         onCancel={() => this.setState({convertToUnstructured: false})}
         onConfirm={() => {

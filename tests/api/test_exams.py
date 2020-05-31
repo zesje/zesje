@@ -56,6 +56,7 @@ def test_add_unstructured_exam(test_client):
     assert len(data) == 1
 
     assert data[0]['layout']['value'] == ExamLayout.unstructured.value
+    assert data[0]['finalized']
 
 
 def test_add_exam_invalid_layout(test_client):

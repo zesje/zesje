@@ -42,7 +42,7 @@ def test_add_zesje_exam_without_pdf(datadir, test_client):
     response = test_client.post('/api/exams',
                                 data={'exam_name': 'The Exam', 'layout': ExamLayout.zesje.value})
 
-    assert response.status_code == 404
+    assert response.status_code == 400
 
 
 def test_add_unstructured_exam(test_client):

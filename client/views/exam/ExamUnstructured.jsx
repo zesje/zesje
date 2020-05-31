@@ -179,7 +179,7 @@ class PanelEditUnstructured extends React.Component {
       if (name !== originalName) {
         return 'is-success'
       } else {
-        return 'is-link'
+        return ''
       }
     } else {
       return 'is-danger'

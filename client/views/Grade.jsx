@@ -17,8 +17,8 @@ import '../components/SubmissionNavigation.css'
 class Grade extends React.Component {
   /**
    * Constructor sets empty state, and requests metadata for the exam.
-   * After getting this metadata, requests and sets the submission and the problem and then syncs
-   * the submission with the URL.
+   * After getting this metadata, if the submissionID is provided in the URL, loads the submission according to the submissionID,
+   * else loads a random submission from the metadata and then replaces the URL to match the submission.
    */
   constructor (props) {
     super(props)
@@ -53,8 +53,8 @@ class Grade extends React.Component {
 
   /**
    * This method changes the state of the submission and the problem according to the URL.
-   * If the submission ID and problem ID is specified in the URL, then it loads the submission corresponding to the URL.
-   * If the submission ID and problem ID are missing, it uses the submission from the state (loaded by the constructor)
+   * If the submission ID is specified in the URL, then it loads the submission corresponding to the URL.
+   * If it is missing, it uses the submission from the state (loaded by the constructor)
    * and then replaces the URL to reflect the state.
    * It also sets the submission to null to display error component when unwanted behaviour is observed.
    */
@@ -134,6 +134,7 @@ class Grade extends React.Component {
     if ((prevProps.examID !== this.props.examID && this.props.examID !== this.state.examID) ||
       (prevProps.problemID !== this.props.problemID && this.props.problemID !== problemID) ||
       (prevProps.submissionID !== this.props.submissionID && this.props.submissionID !== submissionID)) {
+      // The URL has changed and at least one of exam metadata, problem or submission does not match the URL
       this.updateFromUrl()
     }
   }

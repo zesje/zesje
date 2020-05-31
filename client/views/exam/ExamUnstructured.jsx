@@ -24,10 +24,10 @@ const ExamContent = (props) => {
   return (
     <div>
       {Object.keys(pages).map(page => (
-        <div className='card' key={page}>
+        <div className='card page-card' key={page}>
           <header className='card-header'>
             <p className='card-header-title'>
-              {'Page ' + page}
+              {`Page ${(parseInt(page) + 1)}`}
             </p>
           </header>
           <div className='card-content'>
@@ -104,7 +104,7 @@ class PanelEditUnstructured extends React.Component {
     this.setState({
       selectedProblemId: problem ? problem.id : null,
       problemName: problem ? problem.name : null,
-      problemPage: problem ? problem.page : -1,
+      problemPage: problem ? problem.page + 1 : -1,
       deletingProblem: false
     })
   }
@@ -113,7 +113,7 @@ class PanelEditUnstructured extends React.Component {
     const formData = new window.FormData()
     formData.append('exam_id', this.state.examID)
     formData.append('name', `Problem (${this.state.problems.length + 1})`)
-    formData.append('page', 1)
+    formData.append('page', this.state.problems.length > 1 ? this.state.problems[this.state.problems.length - 1].page : 0)
     formData.append('x', 0)
     formData.append('y', 0)
     formData.append('width', 0)
@@ -136,13 +136,13 @@ class PanelEditUnstructured extends React.Component {
   }
 
   saveProblemPage = (problemId, widgetId, page) => {
-    api.patch(`widgets/${widgetId}`, {page: parseInt(page)})
+    api.patch(`widgets/${widgetId}`, {page: parseInt(page) - 1})
       .then(resp => this.loadProblems(problemId))
       .catch(e => {
         console.log(e)
         this.loadProblems(problemId)
         e.json().then(res => {
-          Notification.error('Could not save new problem page: ' + res.message)
+          Notification.warn('Could not save new problem page: ' + res.message)
         })
       })
   }
@@ -194,8 +194,8 @@ class PanelEditUnstructured extends React.Component {
             Problem details
           </p>
 
-          {props.problem &&
-            <React.Fragment>
+          {props.problem
+            ? <React.Fragment>
               <div className='panel-block'>
                 <div className='field' style={{flexGrow: 1}}>
                   <label className='label'>Name</label>
@@ -249,7 +249,9 @@ class PanelEditUnstructured extends React.Component {
                   Delete problem
                 </button>
               </div>
-            </React.Fragment>
+            </React.Fragment> : (
+              <p>Select a problem on the right panel or add a new one.</p>
+            )
           }
         </nav>
       )

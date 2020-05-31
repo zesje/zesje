@@ -322,9 +322,6 @@ class Exams(Resource):
             return dict(status=403, message='Exam can not be unfinalized'), 403
 
         if args['convertToUnstructured'] is not None and exam.layout == ExamLayout.zesje:
-            for problem in exam.problems:
-                problem.widget.page += 1
-
             exam.finalized = True
             exam.layout = ExamLayout.unstructured
             db.session.commit()

@@ -30,12 +30,12 @@ const TooltipLink = (props) => {
 
 const ExamDropdown = (props) => {
   return (<div className='navbar-item has-dropdown is-hoverable'>
-    <Link className='navbar-link' to={'/exams/' + (props.selExam ? props.selExam.id : '')}>
-      {props.selExam ? <i>{props.selExam.name}</i> : 'Add exam'}
+    <Link className='navbar-link' to={'/exams/' + (props.selectedExam ? props.selectedExam.id : '')}>
+      {props.selectedExam ? <i>{props.selectedExam.name}</i> : 'Add exam'}
     </Link>
     <div className='navbar-dropdown'>
       {props.list.map((exam) => (
-        <Link className={'navbar-item' + (props.selExam && props.selExam.id === exam.id ? ' is-active' : '')}
+        <Link className={'navbar-item' + (props.selectedExam && props.selectedExam.id === exam.id ? ' is-active' : '')}
           to={'/exams/' + exam.id} key={exam.id} >
           <i>{exam.name}</i>
         </Link>
@@ -122,7 +122,6 @@ class NavBar extends React.Component {
   }
 
   componentDidUpdate = (prevProps, prevState) => {
-    // in better days we should store and update the exam here and not in App.
     if (prevProps.examID !== this.props.examID) {
       this.setState({examID: this.props.examID})
     }
@@ -136,9 +135,10 @@ class NavBar extends React.Component {
   updateExamList = () => {
     api.get('exams')
       .then(exams => {
-        this.setState({
-          examList: exams
-        })
+        this.setState(prevState => ({
+          examList: exams,
+          examID: prevState.examID || (exams.length > 1 ? exams[exams.length - 1].id : null)
+        }))
       })
   }
 
@@ -168,10 +168,10 @@ class NavBar extends React.Component {
   }
 
   render () {
-    const selExam = this.state.examList.find(exam => exam.id === this.state.examID)
+    const selectedExam = this.state.examList.find(exam => exam.id === this.state.examID)
 
-    const predicateExamNotFinalized = [!selExam || !selExam.finalized, 'The exam is not finalized yet.']
-    const predicateSubmissionsEmpty = [!selExam || selExam.submissions.length === 0, 'There are no submissions, please upload some.']
+    const predicateExamNotFinalized = [!selectedExam || !selectedExam.finalized, 'The exam is not finalized yet.']
+    const predicateSubmissionsEmpty = [!selectedExam || selectedExam.submissions.length === 0, 'There are no submissions, please upload some.']
     const predicateNoGraderSelected = [this.props.grader === null, 'Please select a grader.']
 
     return (
@@ -194,7 +194,7 @@ class NavBar extends React.Component {
           <div className='navbar-start'>
 
             {this.state.examList.length
-              ? <ExamDropdown selExam={selExam} list={this.state.examList} />
+              ? <ExamDropdown selectedExam={selectedExam} list={this.state.examList} />
               : <Link className='navbar-item' to='/exams'>Add exam</Link>
             }
 

@@ -47,13 +47,8 @@ def process_scan(scan_id, scan_type):
     for signal_type in (signal.SIGINT, signal.SIGTERM):
         signal.signal(signal_type, raise_exit)
 
-    scan_pipelines = {
-        ExamLayout.zesje: process_page,
-        ExamLayout.unstructured: process_page_raw
-    }
-
     try:
-        _process_scan(scan_id, scan_pipelines[scan_type])
+        _process_scan(scan_id, scan_type)
     except BaseException as error:
         # TODO: When #182 is implemented, properly separate user-facing
         #       messages (written to DB) from developer-facing messages,
@@ -61,7 +56,7 @@ def process_scan(scan_id, scan_type):
         write_scan_status(scan_id, 'error', "Unexpected error: " + str(error))
 
 
-def _process_scan(scan_id, process_page_function):
+def _process_scan(scan_id, exam_layout):
     data_directory = current_app.config['DATA_DIRECTORY']
 
     report_error = functools.partial(write_scan_status, scan_id, 'error')
@@ -80,6 +75,13 @@ def _process_scan(scan_id, process_page_function):
     except Exception as e:
         report_error(f'Error while reading Exam metadata: {e}')
         raise
+
+    if exam_layout == ExamLayout.zesje:
+        process_page_function = process_page
+    elif exam_layout == ExamLayout.unstructured:
+        process_page_function = process_page_raw
+    else:
+        raise ValueError(f'Exam layout {exam_layout} is not defined.')
 
     failures = []
     try:

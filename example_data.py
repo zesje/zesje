@@ -48,7 +48,7 @@ from pathlib import Path
 from lorem.text import TextLorem
 
 from zesje.database import db, Exam, Scan, Submission, Solution, Page, Copy, ExamLayout
-from zesje.scans import _process_scan, process_page
+from zesje.scans import _process_scan
 from zesje.factory import create_app
 import zesje.mysql as mysql
 
@@ -151,21 +151,26 @@ def _fake_process_pdf(scan, pages, student_ids, copies_per_student):
 
 def handle_pdf_processing(app, exam_id, pdf, pages, student_ids, copies_per_student, skip_processing=False):
     exam = Exam.query.get(exam_id)
-    scan = Scan(exam=exam, name=pdf.name,
+    scan = Scan(exam=exam, name=pdf.name if pdf else exam.name,
                 status='processing', message='Waiting...')
 
     db.session.add(scan)
     db.session.commit()
 
-    path = os.path.join(app.config['SCAN_DIRECTORY'], f'{scan.id}.pdf')
-    with open(path, 'wb') as outfile:
-        outfile.write(pdf.read())
-        pdf.seek(0)
+    # update the name so that `extract_images_from_pdf can process the pdf`
+    scan.name = f'{scan.id}.pdf'
+    db.session.commit()
+
+    if pdf:
+        path = os.path.join(app.config['SCAN_DIRECTORY'], f'{scan.id}.pdf')
+        with open(path, 'wb') as outfile:
+            outfile.write(pdf.read())
+            pdf.seek(0)
 
     if skip_processing:
         _fake_process_pdf(scan, pages, student_ids, copies_per_student)
     else:
-        _process_scan(scan_id=scan.id, process_page_function=process_page)
+        _process_scan(scan_id=scan.id, exam_layout=exam.layout)
 
     return {
         'id': scan.id,
@@ -175,8 +180,7 @@ def handle_pdf_processing(app, exam_id, pdf, pages, student_ids, copies_per_stud
     }
 
 
-def generate_solution(pdf, student_id, problems, mc_problems, solve):
-    pages = len(problems) // 3
+def generate_solution(pdf, pages, student_id, problems):
 
     pdf.setFillColorRGB(0, 0.1, 0.4)
 
@@ -185,24 +189,22 @@ def generate_solution(pdf, student_id, problems, mc_problems, solve):
         d = int(sID[k])
         pdf.rect(66 + k * 16, int(A4[1]) - 82 - d * 16, 9, 9, fill=1, stroke=0)
 
-    for p in range(pages):
+    for page in range(pages):
         pdf.setFont('HugoHandwriting', 19)
         pdf.setFillColorRGB(0, 0.1, 0.4)
 
-        if p > 0 and random.random() < solve:
-            o = random.choice(mc_problems[p - 1]['mc_options'])
-            pdf.rect(o['x'] + 2, o['y'] + 4, 5, 5, fill=1, stroke=0)
-
-        for i in range(3):
-            prob = problems[3 * p + i]
-            if random.random() < solve:
+        for problem in (p for p in problems if p['page'] == page):
+            if 'mc_options' in problem:
+                o = random.choice(problem['mc_options'])
+                pdf.rect(o['x'] + 2, o['y'] + 4, 5, 5, fill=1, stroke=0)
+            else:
                 for i in range(random.randint(1, 3)):
-                    pdf.drawString(prob['x'] + 20, prob['y'] - 30 - (20 * i), lorem.sentence())
+                    pdf.drawString(problem['x'] + 20, problem['y'] - 30 - (20 * i), lorem.sentence())
 
         pdf.showPage()
 
 
-def solve_problems(pdf_file, pages, student_ids, problems, mc_problems, solve, copies_per_student):
+def solve_problems(pdf_file, pages, student_ids, problems, solve, copies_per_student):
     if solve < 0.01:
         # nothing to solve
         return
@@ -212,7 +214,7 @@ def solve_problems(pdf_file, pages, student_ids, problems, mc_problems, solve, c
 
         for id, number_of_copies in zip(student_ids, copies_per_student):
             for _ in range(number_of_copies):
-                generate_solution(pdf, id, problems, mc_problems, solve)
+                generate_solution(pdf, pages, id, [p for p in problems if random.random() < solve])
 
                 if pages % 2 == 1:
                     # for an odd number of pages, zesje adds a blank page at the end
@@ -259,10 +261,10 @@ def grade_problems(client, exam_id, graders, problems, submissions, grade):
                            })
 
 
-def design_exam(app, client, pages, students, grade, solve, multiple_copies, skip_processing):
+def add_zesje_exam(pages):
     exam_name = lorem_name.sentence().replace('.', '')
     problems = [{
-        'question': str(i + 1) + '. ' + lorem_prob.sentence().replace('.', '?'),
+        'question': f'{i + 1}. ' + lorem_prob.sentence().replace('.', '?'),
         'page': (i // 3),
         'x': 75, 'y': int(A4[1]) - 300 - (170 * (i % 3)),
         'w': 450, 'h': 120
@@ -273,10 +275,12 @@ def design_exam(app, client, pages, students, grade, solve, multiple_copies, ski
         'x': 75, 'y': int(A4[1]) - 150,
         'w': 300, 'h': 75,
         'page': i,
-        'mc_options': []
+        'mc_options': [{
+            'name': chr(65 + k),
+            'x': 75 + 20 * (k + 1),
+            'y': int(A4[1]) - 200
+            } for k in range(random.randint(2, 5))]
     } for i in range(1, pages)]
-
-    register_fonts()
 
     with NamedTemporaryFile() as pdf_file:
         generate_exam_pdf(pdf_file, exam_name, pages, problems, mc_problems)
@@ -287,30 +291,39 @@ def design_exam(app, client, pages, students, grade, solve, multiple_copies, ski
                                   'layout': ExamLayout.zesje.value,
                                   'pdf': pdf_file}).get_json()['id']
 
+    return exam_id, problems + mc_problems
+
+
+def add_unstructured_exam(pages):
+    exam_name = lorem_name.sentence().replace('.', '')
+    problems = [{
+        'question': f'{i + 1}. ' + lorem_prob.sentence().replace('.', '?'),
+        'page': (i // 3),
+        'x': 0, 'y': 0,
+        'w': 0, 'h': 0
+    } for i in range(pages * 3)]
+
+    exam_id = client.post('/api/exams',
+                          content_type='multipart/form-data',
+                          data={
+                              'exam_name': exam_name,
+                              'layout': ExamLayout.unstructured.value}
+                          ).get_json()['id']
+
+    return exam_id, problems
+
+
+def design_exam(app, client, layout, pages, students, grade, solve, multiple_copies, skip_processing):
+    register_fonts()
+
+    if layout == ExamLayout.zesje:
+        exam_id, problems = add_zesje_exam(pages)
+    elif layout == ExamLayout.unstructured:
+        exam_id, problems = add_unstructured_exam(pages)
+
     print('\tDesigning a hard exam.')
     # Create problems
     for problem in problems:
-        problem_id = client.post('api/problems', data={
-            'exam_id': exam_id,
-            'name': problem['question'],
-            'page': problem['page'],
-            # add some padding to x, y, w, h
-            'x': problem['x'] - 20,
-            'y': problem['y'] + 60,
-            'width': problem['w'] + 40,
-            'height': problem['h'] + 60,
-        }).get_json()['id']
-        # Have to put name again, because the endpoint first guesses a name.
-        client.put(f'api/problems/{problem_id}', data={'name': problem['question'], 'grading_policy': 'set_blank'})
-
-        for _ in range(random.randint(2, 10)):
-            client.post(f'api/feedback/{problem_id}', data={
-                'name': lorem_name.sentence(),
-                'description': (lorem.sentence() if random.choice([True, False]) else ''),
-                'score': random.randint(0, 10)
-            })
-
-    for problem in mc_problems:
         problem_id = client.post('api/problems', data={
             'exam_id': exam_id,
             'name': problem['question'],
@@ -321,47 +334,58 @@ def design_exam(app, client, pages, students, grade, solve, multiple_copies, ski
             'width': problem['w'] + 40,
             'height': problem['h'] + 40,
         }).get_json()['id']
+
+        is_mcq = 'mc_options' in problem
         # Have to put name again, because the endpoint first guesses a name.
-        client.put(f'api/problems/{problem_id}', data={'name': problem['question'], 'grading_policy': 'set_single'})
+        client.put(f'api/problems/{problem_id}',
+                   data={'name': problem['question'], 'grading_policy': 'set_single' if is_mcq else 'set_blank'})
 
-        fops = []
-        for k in range(random.randint(2, 5)):
-            label = chr(65 + k)
-            x = problem['x'] + 20 * (k + 1)
-            problem['mc_options'].append({'name': label, 'x': x, 'y': problem['y'] - 50})
-            resp = client.put('api/mult-choice/', data={
-                'problem_id': problem_id,
-                'name': label, 'label': label,
-                'x': x,
-                'y': int(A4[1]) - problem['y'] + 40
-            })
-            fops.append((resp.get_json()['feedback_id'], chr(k + 65)))
+        if is_mcq:
+            fops = []
+            for option in problem['mc_options']:
+                resp = client.put('api/mult-choice/', data={
+                    'problem_id': problem_id,
+                    'name': option['name'], 'label': option['name'],
+                    'x': option['x'],
+                    'y': int(A4[1]) - option['y']
+                })
+                fops.append((resp.get_json()['feedback_id'], option['name']))
 
-        correct = random.choice(fops)
-        client.put(f'api/feedback/{problem_id}', data={'id': correct[0], 'name': correct[1], 'score': 1})
+            correct = random.choice(fops)
+            client.put(f'api/feedback/{problem_id}', data={'id': correct[0], 'name': correct[1], 'score': 1})
+        else:
+            for _ in range(random.randint(2, 10)):
+                client.post(f'api/feedback/{problem_id}', data={
+                    'name': lorem_name.sentence(),
+                    'description': (lorem.sentence() if random.choice([True, False]) else ''),
+                    'score': random.randint(0, 10)
+                })
 
     client.put(f'api/exams/{exam_id}', data={'finalized': True})
-
-    # Download PDFs
-    copies_per_student = [2 if random.random() < multiple_copies else 1 for _ in range(students)]
-    generated = client.get(f'api/exams/{exam_id}/generated_pdfs',
-                           data={"copies_start": 1, "copies_end": sum(copies_per_student), 'type': 'pdf'})
 
     student_ids = [s['id'] for s in client.get('/api/students').get_json()]
     random.shuffle(student_ids)
     student_ids = student_ids[:students]
+    copies_per_student = [2 if random.random() < multiple_copies else 1 for _ in range(students)]
 
-    # Upload submissions
-    with NamedTemporaryFile(mode='w+b') as submission_pdf:
-        submission_pdf.write(generated.data)
-        submission_pdf.seek(0)
+    if layout == ExamLayout.zesje:
+        # Download PDFs
+        generated = client.get(f'api/exams/{exam_id}/generated_pdfs',
+                               data={"copies_start": 1, "copies_end": sum(copies_per_student), 'type': 'pdf'})
 
-        print('\tWaiting for students to solve it.')
-        solve_problems(submission_pdf, pages, student_ids, problems, mc_problems, solve, copies_per_student)
-        submission_pdf.seek(0)
+        # Upload submissions
+        with NamedTemporaryFile(mode='w+b') as submission_pdf:
+            submission_pdf.write(generated.data)
+            submission_pdf.seek(0)
 
-        print('\tProcessing scans (this may take a while).',)
-        handle_pdf_processing(app, exam_id, submission_pdf, pages, student_ids, copies_per_student, skip_processing)
+            print('\tWaiting for students to solve it.')
+            solve_problems(submission_pdf, pages, student_ids, problems, solve, copies_per_student)
+            submission_pdf.seek(0)
+
+            print('\tProcessing scans (this may take a while).',)
+            handle_pdf_processing(app, exam_id, submission_pdf, pages, student_ids, copies_per_student, skip_processing)
+    elif layout == ExamLayout.unstructured:
+        handle_pdf_processing(app, exam_id, None, pages, student_ids, copies_per_student, True)
 
     # Validate signatures
     copies = client.get(f'api/copies/{exam_id}').get_json()
@@ -379,7 +403,17 @@ def design_exam(app, client, pages, students, grade, solve, multiple_copies, ski
     return client.get('/api/exams/' + str(exam_id)).get_json()
 
 
-def create_exams(app, client, exams, pages, students, graders, solve, grade, multiple_copies, skip_processing=False):
+def create_exams(app,
+                 client,
+                 exams,
+                 layout,
+                 pages,
+                 students,
+                 graders,
+                 solve,
+                 grade,
+                 multiple_copies,
+                 skip_processing=False):
     # create students
     for student in generate_students(students):
         client.put('api/students', data=student)
@@ -390,7 +424,7 @@ def create_exams(app, client, exams, pages, students, graders, solve, grade, mul
 
     generated_exams = []
     for _ in range(exams):
-        generated_exams.append(design_exam(app, client, max(1, pages), students, grade,
+        generated_exams.append(design_exam(app, client, layout, max(1, pages), students, grade,
                                            solve, multiple_copies, skip_processing))
 
     return generated_exams
@@ -421,6 +455,10 @@ if __name__ == '__main__':
     parser.add_argument('--skip-processing', action='store_true', help='fakes the pdf processing to reduce time. \
                         As a drawback, blanks will not be detected.')
     parser.add_argument('--exams', type=int, default=1, help='number of exams to add')
+    parser.add_argument('--layout', type=int, default=ExamLayout.zesje.value,
+                        choices=[layout.value for layout in ExamLayout],
+                        help='the layout of the exams: '
+                             + ', '.join(f'{layout.value} for {layout.name}' for layout in ExamLayout))
     parser.add_argument('--pages', type=int, default=3, help='number of pages per exam (min is 1)')
     parser.add_argument('--students', type=int, default=30, help='number of students per exam')
     parser.add_argument('--graders', type=int, default=4, help='number of graders (min is 1)')
@@ -437,6 +475,7 @@ if __name__ == '__main__':
     with app.test_client() as client:
         create_exams(app, client,
                      args.exams,
+                     args.layout,
                      args.pages,
                      args.students,
                      args.graders,

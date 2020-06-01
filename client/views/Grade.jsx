@@ -17,16 +17,17 @@ import '../components/SubmissionNavigation.css'
 class Grade extends React.Component {
   /**
    * Constructor sets empty state, and requests metadata for the exam.
-   * After getting this metadata, requests and sets the submission and the problem.
+   * After getting this metadata, if the submissionID is provided in the URL, loads the submission according to the submissionID,
+   * else loads the first submission from the metadata and then replaces the URL to match the submission.
    */
   constructor (props) {
     super(props)
     this.state = {}
     api.get(`exams/${this.props.examID}?only_metadata=true` +
-      `&shuffle_seed=${this.props.graderID}`).then(metadata => {
+        `&shuffle_seed=${this.props.graderID}`).then(metadata => {
       const examID = metadata.exam_id
-      const submissionID = metadata.submissions[0].id
-      const problemID = metadata.problems[0].id
+      const submissionID = this.props.submissionID || metadata.submissions[0].id
+      const problemID = this.props.problemID || metadata.problems[0].id
       Promise.all([
         api.get(`submissions/${examID}/${submissionID}`),
         api.get(`problems/${problemID}`)
@@ -38,10 +39,48 @@ class Grade extends React.Component {
           problem: problem,
           submissions: metadata.submissions,
           problems: metadata.problems,
-          isUnstructured: metadata.layout.value === 2
-        })
+          isUnstructured: metadata.layout.value === 2,
+          examID: this.props.examID,
+          gradeAnonymous: metadata.gradeAnonymous
+        }, () => this.props.history.replace(`/grade/${examID}/${submissionID}/${problemID}`))
+      })
+      // eslint-disable-next-line handle-callback-err
+    }).catch(err => {
+      this.setState({
+        submission: null
       })
     })
+  }
+
+  /**
+   * This method changes the state of the submission and the problem according to the URL. This method is called once the latest metadata is fetched from the backend.
+   * If the submission ID is specified in the URL, then it loads the submission corresponding to the URL.
+   * If it is missing, it loads the first submission from the metadata and then replaces the URL to reflect the state.
+   * It also sets the submission to null to display error component when unwanted behaviour is observed.
+   */
+  syncSubmissionWithUrl = () => {
+    const UrlIsDifferent = (this.props.problemID !== this.state.problem.id || this.props.submissionID !== this.state.submission.id)
+    if (UrlIsDifferent) {
+      const submissionID = this.props.submissionID || this.state.submissions[0].id
+      const problemID = this.props.problemID || this.state.problems[0].id
+      Promise.all([
+        api.get(`submissions/${this.props.examID}/${submissionID}`),
+        api.get(`problems/${problemID}`)
+      ]).then(values => {
+        const submission = values[0]
+        const problem = values[1]
+        this.setState({
+          submission: submission,
+          problem: problem
+        }, () => this.props.history.replace(`/grade/${this.state.examID}/${submission.id}/${problem.id}`))
+      }).catch(err => {
+        if (err.status === 404) {
+          this.setState({
+            submission: null
+          })
+        }
+      })
+    }
   }
 
   /**
@@ -85,7 +124,24 @@ class Grade extends React.Component {
   }
 
   /**
+   * React lifecycle method. Updates the metadata to keep all submissions and problems up-to-date.
+   * @param prevProps - previous properties
+   * @param prevState - previous state
+   */
+  componentDidUpdate = (prevProps, prevState) => {
+    const problemID = this.state.problem && String(this.state.problem.id)
+    const submissionID = this.state.submission && String(this.state.submission.id)
+    if ((prevProps.examID !== this.props.examID && this.props.examID !== this.state.examID) ||
+      (prevProps.problemID !== this.props.problemID && this.props.problemID !== problemID) ||
+      (prevProps.submissionID !== this.props.submissionID && this.props.submissionID !== submissionID)) {
+      // The URL has changed and at least one of exam metadata, problem or submission does not match the URL
+      this.updateFromUrl()
+    }
+  }
+
+  /**
    * Navigates the current submission forwards or backwards, and either just to the next, or to the next ungraded.
+   * It then pushes the URL of the updated submission to history.
    * Also updates the metadata, and the current problem, to make sure that the
    * progress bar and feedback options are both up to date.
    * @param direction either 'prev' or 'next'
@@ -99,9 +155,8 @@ class Grade extends React.Component {
       '&ungraded=' + ungraded).then(sub =>
       this.setState({
         submission: sub
-      })
+      }, () => this.props.history.push(`/grade/${this.props.examID}/${this.state.submission.id}/${this.state.problem.id}`))
     )
-    this.setProblemUpdateMetadata(this.state.problem.id)
   }
   /**
    * Sugar methods for navigate.
@@ -122,43 +177,36 @@ class Grade extends React.Component {
 
   /**
    * Updates the submission from the server, and sets it as the current submission.
-   * @param id the id of the submission to update to.
   */
-  setSubmission = (id) => {
-    api.get(`submissions/${this.props.examID}/${id}`).then(sub => {
+  updateSubmission = () => {
+    api.get(`submissions/${this.props.examID}/${this.state.submission.id}`).then(sub => {
       this.setState({
         submission: sub
       })
     })
   }
+
   /**
-   * Updates the problem from the server, and sets it as the current problem.
-   * Also updates the metadata.
-   * @param id the id of the problem to update to.
+   * Updates the metadata for the current exam. It then calls syncSubmissionWithUrl to update the submission and problem in the state according to the URL.
+   * In case of unwanted behaviour, sets the submission to null for displaying error component.
    */
-  setProblemUpdateMetadata = (problemId) => {
-    api.get(`problems/${problemId}`).then(problem => {
-      this.setState({
-        problem: problem
-      })
-    })
-    this.updateMetadata()
-  }
-  /**
-   * Updates the metadata for the current exam.
-   * This metadata has:
-   * id, student for each submission in the exam and
-   * id, name for each problem in the exam.
-   */
-  updateMetadata = () => {
+  updateFromUrl = () => {
     api.get(`exams/${this.props.examID}?only_metadata=true` +
     `&shuffle_seed=${this.props.graderID}`).then(metadata => {
       this.setState({
         submissions: metadata.submissions,
-        problems: metadata.problems
+        problems: metadata.problems,
+        examID: this.props.examID,
+        gradeAnonymous: metadata.gradeAnonymous
+      }, () => this.syncSubmissionWithUrl())
+      // eslint-disable-next-line handle-callback-err
+    }).catch(err => {
+      this.setState({
+        submission: null
       })
     })
   }
+
   /**
    * Finds the index of the current problem and moves to the previous one.
    */
@@ -168,8 +216,9 @@ class Grade extends React.Component {
       return
     }
     const newId = this.state.problems[currentIndex - 1].id
-    this.setProblemUpdateMetadata(newId)
+    this.navigateProblem(newId)
   }
+
   /**
    * Finds the index of the current problem and moves to the next one.
    */
@@ -179,7 +228,15 @@ class Grade extends React.Component {
       return
     }
     const newId = this.state.problems[currentIndex + 1].id
-    this.setProblemUpdateMetadata(newId)
+    this.navigateProblem(newId)
+  }
+
+  /**
+   * Navigates the problem to the problem corresponding to the specified problem id by pushing a new URL to history.
+   * @param problemID - the id of the problem that we want to navigate to
+   */
+  navigateProblem = (problemID) => {
+    this.props.history.push(`/grade/${this.props.examID}/${this.props.submissionID}/${problemID}`)
   }
 
   /**
@@ -203,9 +260,10 @@ class Grade extends React.Component {
       id: id,
       graderID: this.props.graderID
     }).then(result => {
-      this.setSubmission(submission.id)
+      this.updateSubmission()
     })
   }
+
   /**
    * Approves the current submission.
    */
@@ -218,7 +276,7 @@ class Grade extends React.Component {
     }).catch(resp => {
       resp.json().then(body => Notification.error('Could not approve feedback: ' + body.message))
     }).then(result => {
-      this.setSubmission(submission.id)
+      this.updateSubmission()
     })
   }
 
@@ -243,7 +301,7 @@ class Grade extends React.Component {
          Notification.error('Could not ' + (graderid === null ? 'set aside' : 'approve') + ' feedback: ' + body.message)
        })
      }).then(result => {
-       this.setSubmission(submission.id)
+       this.updateSubmission()
      })
    }
 
@@ -287,11 +345,14 @@ class Grade extends React.Component {
 
   render () {
     const hero = (<Hero title='Grade' subtitle='Assign feedback to each solution' />)
-    // Have to not render if no submission exists in the state yet, to prevent crashes.
-    // This should only happen while the initial call to update submission in the constructor is still pending.
+    const fail = (<Hero title='Oops!' subtitle='Submission does not exist' />)
+    // This should happen when there are no submissions or problems for an exam.
+    // More specifically, if a user tries to enter a URL for an exam with no submissions.
+    // This will also happen while the initial call to update submission in the constructor is still pending.
     if (!this.state.submission) {
-      return hero
+      return fail
     }
+
     const examID = this.props.examID
     const graderID = this.props.graderID
     const submission = this.state.submission
@@ -304,6 +365,7 @@ class Grade extends React.Component {
     ).map((sub) => ' #' + sub.id)
     const multiple = otherSubmissions.length > 0
     const gradedTime = new Date(solution.graded_at)
+    const gradeAnonymous = this.state.gradeAnonymous
 
     return (
       <div>
@@ -317,7 +379,7 @@ class Grade extends React.Component {
               <div className='column is-one-quarter-fullhd is-one-third-desktop'>
                 <ProblemSelector
                   problems={problems}
-                  setProblemUpdateMetadata={this.setProblemUpdateMetadata}
+                  navigateProblem={this.navigateProblem}
                   current={problem}
                   showTooltips={this.state.showTooltips} />
                 <nav className='panel'>
@@ -325,10 +387,10 @@ class Grade extends React.Component {
                     examID={examID} submissionID={submission.id} graderID={graderID}
                     problem={problem} solution={solution}
                     showTooltips={this.state.showTooltips} grading
-                    setSubmission={this.setSubmission}
+                    setSubmission={this.updateSubmission}
                     toggleOption={this.toggleFeedbackOption}
                     toggleApprove={this.toggleApprove}
-                    updateFeedback={this.setProblemUpdateMetadata} />
+                    updateFeedback={this.updateFromUrl} />
                 </nav>
               </div>
 
@@ -336,12 +398,12 @@ class Grade extends React.Component {
                 <GradeNavigation
                   submission={submission}
                   submissions={submissions}
-                  setSubmission={this.setSubmission}
+                  setSubmission={this.updateSubmission}
                   prevUngraded={this.prevUngraded}
                   prev={this.prev}
                   next={this.next}
                   nextUngraded={this.nextUngraded}
-                  anonymous={this.props.gradeAnonymous}
+                  anonymous={gradeAnonymous}
                   showTooltips={this.state.showTooltips}
                 />
 

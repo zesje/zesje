@@ -190,7 +190,8 @@ class Exams(Resource):
                 {
                     'id': problem.id,
                     'name': problem.name,
-                } for problem in exam.problems]
+                } for problem in exam.problems],
+            'gradeAnonymous': exam.grade_anonymous,
 
         }
 

@@ -18,7 +18,7 @@ class Grade extends React.Component {
   /**
    * Constructor sets empty state, and requests metadata for the exam.
    * After getting this metadata, if the submissionID is provided in the URL, loads the submission according to the submissionID,
-   * else loads a random submission from the metadata and then replaces the URL to match the submission.
+   * else loads the first submission from the metadata and then replaces the URL to match the submission.
    */
   constructor (props) {
     super(props)

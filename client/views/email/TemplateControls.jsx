@@ -30,7 +30,7 @@ class TemplateControls extends React.Component {
   saveTemplate = async () => {
     try {
       await api.put(
-        `templates/${this.props.exam.id}`,
+        `templates/${this.props.examID}`,
         { template: this.props.template }
       )
       Notification.success('Template saved')

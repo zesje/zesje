@@ -10,7 +10,7 @@ const renderTemplate = async (props) => {
   }
   return api
     .post(
-      `templates/rendered/${props.exam.id}/${props.student.id}`,
+      `templates/rendered/${props.examID}/${props.student.id}`,
       { template: props.template }
     )
 }

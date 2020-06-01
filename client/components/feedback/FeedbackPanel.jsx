@@ -42,10 +42,6 @@ class FeedbackPanel extends React.Component {
     })
   }
 
-  updateFeedback = () => {
-    this.props.updateFeedback(this.state.problemID)
-  }
-
   componentDidMount = () => {
     if (this.props.grading) {
       this.props.bindShortcut(['up', 'k'], (event) => {
@@ -170,11 +166,11 @@ class FeedbackPanel extends React.Component {
               submissionID={this.props.submissionID} selected={selectedFeedbackId === feedback.id || feedback.highlight}
               showIndex={this.props.showTooltips} index={index + 1} />
             : <FeedbackBlockEdit key={feedback.id} feedback={feedback} problemID={this.state.problemID}
-              goBack={this.backToFeedback} updateFeedback={this.updateFeedback} />
+              goBack={this.backToFeedback} updateFeedback={this.props.updateFeedback} />
         ))}
         {(this.state.feedbackToEditId === -1)
           ? <FeedbackBlockEdit feedback={null} problemID={this.state.problemID} goBack={this.backToFeedback}
-            updateFeedback={this.updateFeedback} />
+            updateFeedback={this.props.updateFeedback} />
           : <div className='panel-block'>
             <button className='button is-link is-outlined is-fullwidth' onClick={() => this.editFeedback(-1)}>
               <span className='icon is-small'>

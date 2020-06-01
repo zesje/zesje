@@ -62,7 +62,7 @@ def generate_flat_scan_data(copy_number=145):
     exam = Exam.query.first()
     examdir, _, barcode_widget, exam_path, _ = _exam_generate_data(exam)
 
-    exam_config = exam_metadata(exam.id)
+    exam_config = exam_metadata(exam)
 
     with NamedTemporaryFile() as scan_pdf:
         generate_single_pdf(exam, copy_number, copy_number, scan_pdf)

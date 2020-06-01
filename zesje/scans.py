@@ -71,7 +71,7 @@ def _process_scan(scan_id, exam_layout):
     output_directory = os.path.join(data_directory, f'{scan.exam.id}_data')
 
     try:
-        exam_config = exam_metadata(scan.exam.id)
+        exam_config = exam_metadata(scan.exam)
     except Exception as e:
         report_error(f'Error while reading Exam metadata: {e}')
         raise
@@ -118,19 +118,25 @@ def _process_scan(scan_id, exam_layout):
         report_success(f'Processed {total} pages.')
 
 
-def exam_metadata(exam_id):
+def exam_metadata(exam):
     """Read off exam token and barcode coordinates from the database."""
-    # Raises exception if zero or more than one barcode widgets found
-    barcode_widget = ExamWidget.query.filter(ExamWidget.exam_id == exam_id, ExamWidget.name == "barcode_widget").one()
+
+    if exam.layout == ExamLayout.zesje:
+        # Raises exception if zero or more than one barcode widgets found
+        barcode_widget = ExamWidget.query.filter(ExamWidget.exam_id == exam.id,
+                                                 ExamWidget.name == "barcode_widget").one()
+    else:
+        # unstructured exams have no barcode
+        barcode_widget = None
 
     return ExamMetadata(
-            token=barcode_widget.exam.token,
+            token=exam.token,
             barcode_coords=[
                 max(0, barcode_widget.y),
                 max(0, barcode_widget.y + 50),
                 max(0, barcode_widget.x),
                 max(0, barcode_widget.x + 50),
-            ],
+            ] if barcode_widget else None,
         )
 
 

@@ -261,7 +261,7 @@ def grade_problems(client, exam_id, graders, problems, submissions, grade):
                            })
 
 
-def add_zesje_exam(pages):
+def add_zesje_exam(client, pages):
     exam_name = lorem_name.sentence().replace('.', '')
     problems = [{
         'question': f'{i + 1}. ' + lorem_prob.sentence().replace('.', '?'),
@@ -294,7 +294,7 @@ def add_zesje_exam(pages):
     return exam_id, problems + mc_problems
 
 
-def add_unstructured_exam(pages):
+def add_unstructured_exam(client, pages):
     exam_name = lorem_name.sentence().replace('.', '')
     problems = [{
         'question': f'{i + 1}. ' + lorem_prob.sentence().replace('.', '?'),
@@ -317,9 +317,11 @@ def design_exam(app, client, layout, pages, students, grade, solve, multiple_cop
     register_fonts()
 
     if layout == ExamLayout.zesje:
-        exam_id, problems = add_zesje_exam(pages)
+        exam_id, problems = add_zesje_exam(client, pages)
     elif layout == ExamLayout.unstructured:
-        exam_id, problems = add_unstructured_exam(pages)
+        exam_id, problems = add_unstructured_exam(client, pages)
+    else:
+        return None
 
     print('\tDesigning a hard exam.')
     # Create problems

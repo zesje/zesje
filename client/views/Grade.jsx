@@ -18,7 +18,7 @@ class Grade extends React.Component {
   /**
    * Constructor sets empty state, and requests metadata for the exam.
    * After getting this metadata, if the submissionID is provided in the URL, loads the submission according to the submissionID,
-   * else loads a random submission from the metadata and then replaces the URL to match the submission.
+   * else loads the first submission from the metadata and then replaces the URL to match the submission.
    */
   constructor (props) {
     super(props)
@@ -52,17 +52,16 @@ class Grade extends React.Component {
   }
 
   /**
-   * This method changes the state of the submission and the problem according to the URL.
+   * This method changes the state of the submission and the problem according to the URL. This method is called once the latest metadata is fetched from the backend.
    * If the submission ID is specified in the URL, then it loads the submission corresponding to the URL.
-   * If it is missing, it uses the submission from the state (loaded by the constructor)
-   * and then replaces the URL to reflect the state.
+   * If it is missing, it loads the first submission from the metadata and then replaces the URL to reflect the state.
    * It also sets the submission to null to display error component when unwanted behaviour is observed.
    */
   syncSubmissionWithUrl = () => {
     const UrlIsDifferent = (this.props.problemID !== this.state.problem.id || this.props.submissionID !== this.state.submission.id)
     if (UrlIsDifferent) {
-      const submissionID = this.props.submissionID || this.state.submission.id
-      const problemID = this.props.problemID || this.state.problem.id
+      const submissionID = this.props.submissionID || this.state.submissions[0].id
+      const problemID = this.props.problemID || this.state.problems[0].id
       Promise.all([
         api.get(`submissions/${this.props.examID}/${submissionID}`),
         api.get(`problems/${problemID}`)
@@ -236,7 +235,7 @@ class Grade extends React.Component {
    * @param problemID - the id of the problem that we want to navigate to
    */
   navigateProblem = (problemID) => {
-    this.props.history.push(`/grade/${this.props.examID}/${this.state.submission.id}/${problemID}`)
+    this.props.history.push(`/grade/${this.props.examID}/${this.props.submissionID}/${problemID}`)
   }
 
   /**

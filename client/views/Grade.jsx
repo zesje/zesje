@@ -235,7 +235,7 @@ class Grade extends React.Component {
    * @param problemID - the id of the problem that we want to navigate to
    */
   navigateProblem = (problemID) => {
-    this.props.history.push(`/grade/${this.props.examID}/${this.state.submission.id}/${problemID}`)
+    this.props.history.push(`/grade/${this.props.examID}/${this.props.submissionID}/${problemID}`)
   }
 
   /**

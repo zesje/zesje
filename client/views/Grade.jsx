@@ -52,7 +52,7 @@ class Grade extends React.Component {
   }
 
   /**
-   * This method changes the state of the submission and the problem according to the URL. This method is called once the latest metada is fetched from the backend.
+   * This method changes the state of the submission and the problem according to the URL. This method is called once the latest metadata is fetched from the backend.
    * If the submission ID is specified in the URL, then it loads the submission corresponding to the URL.
    * If it is missing, it loads the first submission from the metadata and then replaces the URL to reflect the state.
    * It also sets the submission to null to display error component when unwanted behaviour is observed.

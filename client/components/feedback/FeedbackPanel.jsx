@@ -42,7 +42,6 @@ class FeedbackPanel extends React.Component {
     })
   }
 
-
   componentDidMount = () => {
     if (this.props.grading) {
       this.props.bindShortcut(['up', 'k'], (event) => {

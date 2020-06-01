@@ -170,9 +170,14 @@ class NavBar extends React.Component {
   render () {
     const selectedExam = this.state.examList.find(exam => exam.id === this.state.examID)
 
-    const predicateExamNotFinalized = [!selectedExam || !selectedExam.finalized, 'The exam is not finalized yet.']
-    const predicateSubmissionsEmpty = [!selectedExam || selectedExam.submissions.length === 0, 'There are no submissions, please upload some.']
-    const predicateNoGraderSelected = [this.props.grader === null, 'Please select a grader.']
+    const predicateNoExam = [selectedExam === null || selectedExam === undefined,
+      'No exam selected.']
+    const predicateExamNotFinalized = [!predicateNoExam[0] && !selectedExam.finalized,
+      'The exam is not finalized yet.']
+    const predicateSubmissionsEmpty = [!predicateNoExam[0] && selectedExam.submissions.length === 0,
+      'There are no submissions, please upload some.']
+    const predicateNoGraderSelected = [this.props.grader === null,
+      'Please select a grader.']
 
     return (
       <nav className='navbar' role='navigation' aria-label='dropdown navigation'>
@@ -201,20 +206,20 @@ class NavBar extends React.Component {
             <TooltipLink
               to={'/scans/' + this.props.examID}
               text='Scans'
-              predicate={[predicateExamNotFinalized]} />
+              predicate={[predicateNoExam, predicateExamNotFinalized]} />
             <Link className='navbar-item' to={'/students/' + this.props.examID}>Students</Link>
             <TooltipLink
               to={'/grade/' + this.props.examID}
               text={<strong><i>Grade</i></strong>}
-              predicate={[predicateExamNotFinalized, predicateSubmissionsEmpty, predicateNoGraderSelected]} />
+              predicate={[predicateNoExam, predicateExamNotFinalized, predicateSubmissionsEmpty, predicateNoGraderSelected]} />
             <TooltipLink
               to={'/overview/' + this.props.examID}
               text='Overview'
-              predicate={[predicateExamNotFinalized, predicateSubmissionsEmpty]} />
+              predicate={[predicateNoExam, predicateExamNotFinalized, predicateSubmissionsEmpty]} />
             <TooltipLink
               to='/email'
               text='Email'
-              predicate={[predicateExamNotFinalized, predicateSubmissionsEmpty]} />
+              predicate={[predicateNoExam, predicateExamNotFinalized, predicateSubmissionsEmpty]} />
             <ExportDropdown className='navbar-item' disabled={predicateSubmissionsEmpty[0]} examID={this.props.examID} />
             <a className='navbar-item' onClick={() => this.setHelpPage('shortcuts')}>
               {this.pages['shortcuts'].title}

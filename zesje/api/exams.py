@@ -1,5 +1,6 @@
 import hashlib
 from io import BytesIO
+import os
 
 from flask import current_app, send_file, stream_with_context, Response
 from flask_restful import Resource, reqparse
@@ -10,7 +11,7 @@ from sqlalchemy import func
 
 from zesje.api._helpers import _shuffle, abort
 from zesje.api.problems import problem_to_data
-from ..pdf_generation import exam_pdf_path, _exam_generate_data
+from ..pdf_generation import exam_dir, exam_pdf_path, _exam_generate_data
 from ..pdf_generation import generate_pdfs, generate_single_pdf, generate_zipped_pdfs
 from ..pdf_generation import page_is_size, save_with_even_pages
 from ..pdf_generation import write_finalized_exam
@@ -295,6 +296,8 @@ class Exams(Resource):
         db.session.commit()  # so exam gets an id
         exam.token = generate_exam_token(exam.id, exam_name, None)
         db.session.commit()
+
+        os.makedirs(exam_dir(exam.id), exist_ok=True)
 
         return exam
 

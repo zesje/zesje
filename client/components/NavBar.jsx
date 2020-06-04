@@ -217,7 +217,7 @@ class NavBar extends React.Component {
               text='Overview'
               predicate={[predicateNoExam, predicateExamNotFinalized, predicateSubmissionsEmpty]} />
             <TooltipLink
-              to='/email'
+              to={'/email/' + this.props.exam.id}
               text='Email'
               predicate={[predicateNoExam, predicateExamNotFinalized, predicateSubmissionsEmpty]} />
             <ExportDropdown className='navbar-item' disabled={predicateSubmissionsEmpty[0]} examID={this.props.examID} />

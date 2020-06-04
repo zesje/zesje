@@ -131,8 +131,8 @@ class App extends React.Component {
             <Route path='/overview/:examID' render={({ match }) => (
               <Overview examID={match.params.examID} />
             )} />
-            <Route path='/email' render={() => (
-              exam.submissions.length ? <Email exam={exam} /> : <Fail message='No exams uploaded. Please do not bookmark URLs' />
+            <Route path='/email/:examID' render={({ match }) => (
+              exam.submissions.length ? <Email examID={match.params.examID} /> : <Fail message='No exams uploaded. Please do not bookmark URLs' />
             )} />
             <Route path='/graders' render={() =>
               <Graders updateGraderList={this.menu.current ? this.menu.current.updateGraderList : null} />} />

@@ -304,7 +304,6 @@ class Exams(Resource):
     put_parser = reqparse.RequestParser()
     put_parser.add_argument('finalized', type=bool, required=False)
     put_parser.add_argument('grade_anonymous', type=bool, required=False)
-    put_parser.add_argument('convertToUnstructured', type=bool, required=False)
 
     def put(self, exam_id):
         if (exam := Exam.query.get(exam_id)) is None:
@@ -325,13 +324,6 @@ class Exams(Resource):
             return dict(status=200, message="ok"), 200
         else:
             return dict(status=403, message='Exam can not be unfinalized'), 403
-
-        if args['convertToUnstructured'] is not None and exam.layout == ExamLayout.zesje:
-            exam.finalized = True
-            exam.layout = ExamLayout.unstructured
-            db.session.commit()
-
-            return dict(status=200, message="ok"), 200
 
         if args['grade_anonymous'] is not None:
             exam.grade_anonymous = args['grade_anonymous']

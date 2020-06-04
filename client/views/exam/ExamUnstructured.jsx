@@ -29,6 +29,14 @@ const ExamContent = (props) => {
             <p className='card-header-title'>
               {`Page ${(parseInt(page) + 1)}`}
             </p>
+            <a
+              className='card-header-icon'
+              onClick={() => props.createProblem(parseInt(page))}>
+              <span className='icon is-medium'>
+                <i className='fa fa-plus ' />
+              </span>
+              <span>Add problem</span>
+            </a>
           </header>
           <div className='card-content'>
             <div className='content'>
@@ -109,11 +117,16 @@ class PanelEditUnstructured extends React.Component {
     })
   }
 
-  createProblem = () => {
+  addPage = () => {
+    const lastPage = this.state.problems.length > 1 ? this.state.problems[this.state.problems.length - 1].page : -1
+    this.createProblem(lastPage + 1)
+  }
+
+  createProblem = (page) => {
     const formData = new window.FormData()
     formData.append('exam_id', this.state.examID)
     formData.append('name', `Problem (${this.state.problems.length + 1})`)
-    formData.append('page', this.state.problems.length > 1 ? this.state.problems[this.state.problems.length - 1].page : 0)
+    formData.append('page', page)
     formData.append('x', 0)
     formData.append('y', 0)
     formData.append('width', 0)
@@ -296,10 +309,13 @@ class PanelEditUnstructured extends React.Component {
               <ExamContent
                 problems={this.state.problems}
                 selectedProblemId={this.state.selectedProblemId}
-                selectProblem={this.selectProblem} />
+                selectProblem={this.selectProblem}
+                createProblem={this.createProblem} />
 
-              <button className='button problem is-link is-fullwidth' onClick={() => this.createProblem()}>
-                <span>Add Problem</span>
+              <button
+                className='button problem is-link is-fullwidth'
+                onClick={this.addPage}>
+                <span>Add Page</span>
               </button>
             </div>
           </div>

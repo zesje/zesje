@@ -32,7 +32,6 @@ class Exams extends React.Component {
     return api.get(`exams/${id}`)
       .then(resp => {
         this.setState({exam: resp})
-        this.props.updateExam(resp)
       })
       .catch(err => {
         console.log(err)
@@ -77,7 +76,8 @@ class Exams extends React.Component {
                       // This is not ideal and should be addressed in
                       // https://gitlab.kwant-project.org/zesje/zesje/issues/388
                       // TODO: implement data locality for this view
-                      this.loadExam(exam.id).then(() => this.props.updateExamList())
+                      this.loadExam(exam.id)
+                      this.props.updateExamList()
                     }} />
 
                   { this.renderExamContent() }

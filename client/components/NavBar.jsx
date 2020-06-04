@@ -128,16 +128,19 @@ class NavBar extends React.Component {
   }
 
   componentDidMount = () => {
-    this.updateExamList()
     this.updateGraderList()
+    this.setState({examID: this.props.examID}, () => this.updateExamList())
   }
 
   updateExamList = () => {
     api.get('exams')
       .then(exams => {
+        let exam = exams.find(exam => exam.id === this.state.examID)
+        if (!exam && exams.length > 1) exam = exams[exams.length - 1]
+
         this.setState(prevState => ({
           examList: exams,
-          examID: prevState.examID || (exams.length > 1 ? exams[exams.length - 1].id : null)
+          examID: exam ? exam.id : null
         }))
       })
   }
@@ -169,6 +172,7 @@ class NavBar extends React.Component {
 
   render () {
     const selectedExam = this.state.examList.find(exam => exam.id === this.state.examID)
+    console.log(selectedExam)
 
     const predicateNoExam = [selectedExam === null || selectedExam === undefined,
       'No exam selected.']
@@ -217,7 +221,7 @@ class NavBar extends React.Component {
               text='Overview'
               predicate={[predicateNoExam, predicateExamNotFinalized, predicateSubmissionsEmpty]} />
             <TooltipLink
-              to={'/email/' + this.props.exam.id}
+              to={'/email/' + this.props.examID}
               text='Email'
               predicate={[predicateNoExam, predicateExamNotFinalized, predicateSubmissionsEmpty]} />
             <ExportDropdown className='navbar-item' disabled={predicateSubmissionsEmpty[0]} examID={this.props.examID} />

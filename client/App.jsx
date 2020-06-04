@@ -54,26 +54,12 @@ const Fail = Loadable({
   loading: Loading
 })
 
-const nullExam = () => ({
-  id: null,
-  layout: null,
-  name: '',
-  submissions: [],
-  problems: [],
-  widgets: [],
-  finalized: false
-})
-
 class App extends React.Component {
   menu = React.createRef();
 
   state = {
-    exam: nullExam(),
+    examID: null,
     grader: null
-  }
-
-  updateExam = (exam) => {
-    this.setState({ exam: exam || nullExam() })
   }
 
   updateExamList = () => {
@@ -98,19 +84,17 @@ class App extends React.Component {
   }
 
   render () {
-    const exam = this.state.exam
     const grader = this.state.grader
 
     return (
       <Router>
         <div>
-          <NavBar examID={exam.id} grader={grader} changeGrader={this.changeGrader} ref={this.menu} />
+          <NavBar examID={this.state.examID} grader={grader} changeGrader={this.changeGrader} ref={this.menu} />
           <Switch>
             <Route exact path='/' component={Home} />
             <Route path='/exams/:examID' render={({ match, history }) =>
               <Exam
                 examID={match.params.examID}
-                updateExam={this.updateExam}
                 updateExamList={this.updateExamList}
                 deleteExam={this.deleteExam}
                 leave={() => history.push('/')}
@@ -132,7 +116,7 @@ class App extends React.Component {
               <Overview examID={match.params.examID} />
             )} />
             <Route path='/email/:examID' render={({ match }) => (
-              exam.submissions.length ? <Email examID={match.params.examID} /> : <Fail message='No exams uploaded. Please do not bookmark URLs' />
+              <Email examID={match.params.examID} />
             )} />
             <Route path='/graders' render={() =>
               <Graders updateGraderList={this.menu.current ? this.menu.current.updateGraderList : null} />} />

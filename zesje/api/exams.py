@@ -280,9 +280,10 @@ class Exams(Resource):
             return dict(status=403, message='Exam can not be unfinalized'), 403
 
         if args['grade_anonymous'] is not None:
+            changed = exam.grade_anonymous != args['grade_anonymous']
             exam.grade_anonymous = args['grade_anonymous']
             db.session.commit()
-            return dict(status=200, message="ok"), 200
+            return dict(status=200, message="ok", changed=changed), 200
 
         return dict(status=400, message='One of finalized or anonymous must be present'), 400
 

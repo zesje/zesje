@@ -1,6 +1,8 @@
 import React from 'react'
+import Notification from 'react-bulma-notification'
 
 import SearchBox from '../../components/SearchBox.jsx'
+import * as api from '../../api.jsx'
 
 function withoutDuplicates (items, keyFn = (x => x)) {
   let seenKeys = new Set()
@@ -20,13 +22,32 @@ class StudentControls extends React.Component {
   }
 
   componentWillMount () {
-    // Need to de-duplicate, as some students
-    const students = withoutDuplicates(
-      this.props.exam.submissions.map(s => s.student).filter(s => s !== null),
-      student => student.id
-    )
-    this.setState({ students })
-    this.props.setStudent(students[0] || null) // in case 'students' is empty
+    this.updateStudents()
+  }
+
+  componentDidUpdate = (prevProps, prevState) => {
+    if (this.props.examID !== prevProps.examID) {
+      this.updateStudents()
+    }
+  }
+
+  updateStudents = () => {
+    api.get('submissions/' + this.props.examID)
+      .then(submissions => {
+        // Need to de-duplicate, as some students
+        const students = withoutDuplicates(
+          submissions.map(s => s.student).filter(s => s !== null),
+          student => student.id
+        )
+        this.setState({ students })
+        this.props.setStudent(students[0] || null) // in case 'students' is empty
+      })
+      .catch(err => {
+        console.log(err)
+        this.setState({students: []})
+        this.props.setStudent(null)
+        Notification.error('Failed to load students.')
+      })
   }
 
   render () {

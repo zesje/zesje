@@ -160,6 +160,23 @@ class EmailEveryoneControls extends React.Component {
     sending: false
   }
 
+  disableAnonymousMode = () => {
+    api.put(`exams/${this.props.examID}`, {grade_anonymous: false}).then(resp => {
+      if (resp.changed) {
+        Notification.info(
+          <div>
+            <p>
+              'Turned off anonymous grading for this exam'
+            </p>
+            <a onClick={() => api.put(`exams/${this.props.examID}`, {grade_anonymous: true})}>
+              (undo)
+            </a>
+          </div>
+        )
+      }
+    })
+  }
+
   sendEmail = async () => {
     this.setState({ sending: true })
     try {
@@ -212,6 +229,7 @@ class EmailEveryoneControls extends React.Component {
       }
     } finally {
       this.setState({ sending: false })
+      this.disableAnonymousMode()
     }
   }
 

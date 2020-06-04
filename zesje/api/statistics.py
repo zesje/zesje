@@ -2,7 +2,7 @@ from math import isnan, nan
 from flask_restful import Resource
 import pandas as pd
 
-from ..database import db, Exam, Submission
+from ..database import db, Exam, Submission, ExamLayout
 from ..statistics import grader_data
 
 
@@ -207,7 +207,7 @@ class Statistics(Resource):
             'id': exam.id,
             'name': exam.name,
             'students': len(student_ids),
-            'copies': len(exam.copies),
+            'copies': len(exam.copies) if exam.layout == ExamLayout.zesje else len(student_ids),
             'problems': data,
             'total': {
                 'alpha': alpha,

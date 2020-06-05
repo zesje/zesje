@@ -124,7 +124,6 @@ class NavBar extends React.Component {
   componentDidUpdate = (prevProps, prevState) => {
     if (prevProps.examID !== this.props.examID) {
       this.setState({examID: this.props.examID})
-      console.log(`exam in navbar ${this.props.examID}`)
     }
   }
 
@@ -173,7 +172,6 @@ class NavBar extends React.Component {
 
   render () {
     const selectedExam = this.state.examList.find(exam => exam.id === this.state.examID)
-    console.log(`exam in navbar render ${selectedExam}`)
 
     const predicateNoExam = [selectedExam === null || selectedExam === undefined,
       'No exam selected.']

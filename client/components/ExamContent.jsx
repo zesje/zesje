@@ -26,14 +26,9 @@ class ExamContent extends React.Component {
     if (prevProps.examID !== examID && examID !== this.state.examID) {
       this.updateExam(examID)
     }
-
-    // if (prevProps.graderID !== this.props.graderID) {
-    //  this.setState({graderID: this.props.graderID})
-    // }
   }
 
   updateExam = (examID) => {
-    console.log(`exam content ${examID}`)
     this.setState({ examID })
     this.props.selectExam(examID)
   }

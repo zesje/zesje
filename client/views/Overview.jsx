@@ -124,8 +124,19 @@ class Overview extends React.Component {
     selectedStudentId: null
   }
 
-  componentWillMount () {
-    api.get(`stats/${this.props.examID}`)
+  componentDidMount = () => {
+    if (this.props.examID !== null) this.loadStats(this.props.examID)
+  }
+
+  componentDidUpdate = (prevProps, prevState) => {
+    const examID = this.props.examID
+    if (examID !== prevProps.examID) {
+      this.loadStats(examID)
+    }
+  }
+
+  loadStats = (id) => {
+    api.get(`stats/${id}`)
       .then(stats => {
         this.setState({
           stats: stats,

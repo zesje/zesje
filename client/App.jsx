@@ -7,8 +7,6 @@ import 'bulma/css/bulma.css'
 import 'react-bulma-notification/build/css/index.css'
 import 'font-awesome/css/font-awesome.css'
 
-import * as api from './api.jsx'
-
 import NavBar from './components/NavBar.jsx'
 import Footer from './components/Footer.jsx'
 import Loading from './views/Loading.jsx'
@@ -21,32 +19,12 @@ const AddExam = Loadable({
   loader: () => import('./views/AddExam.jsx'),
   loading: Loading
 })
-const Exam = Loadable({
-  loader: () => import('./views/Exam.jsx'),
-  loading: Loading
-})
-const Scans = Loadable({
-  loader: () => import('./views/Scans.jsx'),
-  loading: Loading
-})
-const Students = Loadable({
-  loader: () => import('./views/Students.jsx'),
-  loading: Loading
-})
-const Grade = Loadable({
-  loader: () => import('./views/Grade.jsx'),
-  loading: Loading
-})
 const Graders = Loadable({
   loader: () => import('./views/Graders.jsx'),
   loading: Loading
 })
-const Overview = Loadable({
-  loader: () => import('./views/Overview.jsx'),
-  loading: Loading
-})
-const Email = Loadable({
-  loader: () => import('./views/Email.jsx'),
+const ExamContent = Loadable({
+  loader: () => import('./components/ExamContent.jsx'),
   loading: Loading
 })
 const Fail = Loadable({
@@ -62,18 +40,14 @@ class App extends React.Component {
     grader: null
   }
 
+  selectExam = (id) => {
+    this.setState({ examID: parseInt(id) })
+  }
+
   updateExamList = () => {
     if (this.menu.current) {
       this.menu.current.updateExamList()
     }
-  }
-
-  deleteExam = (examID) => {
-    return api
-      .del('exams/' + examID)
-      .then(() => {
-        this.updateExamList()
-      })
   }
 
   changeGrader = (grader) => {
@@ -92,33 +66,18 @@ class App extends React.Component {
           <NavBar examID={this.state.examID} grader={grader} changeGrader={this.changeGrader} ref={this.menu} />
           <Switch>
             <Route exact path='/' component={Home} />
-            <Route path='/exams/:examID' render={({ match, history }) =>
-              <Exam
+            <Route exact path='/exams' render={({ history }) =>
+              <AddExam updateExamList={this.menu.current ? this.menu.current.updateExamList : null} changeURL={history.push} />}
+            />
+            <Route path='/exams/:examID/' render={({ match }) =>
+              <ExamContent
                 examID={match.params.examID}
+                graderID={grader ? grader.id : null}
+                selectExam={this.selectExam}
                 updateExamList={this.updateExamList}
-                deleteExam={this.deleteExam}
-                leave={() => history.push('/')}
-                setHelpPage={this.menu.current ? this.menu.current.setHelpPage : null} />} />
-            <Route path='/exams' render={({ history }) =>
-              <AddExam updateExamList={this.menu.current ? this.menu.current.updateExamList : null} changeURL={history.push} />} />
-            <Route path='/scans/:examID' render={({ match }) =>
-              <Scans examID={match.params.examID} />}
-            />
-            <Route path='/students/:examID' render={({ match }) =>
-              <Students examID={match.params.examID} />}
-            />
-            <Route exact path='/grade/:examID/:submissionID?/:problemID?' render={({ match, history }) => (
-              grader
-                ? <Grade examID={match.params.examID} graderID={this.state.grader.id} history={history} submissionID={match.params.submissionID} problemID={match.params.problemID} />
-                : <Fail message='No grader selected. Please do not bookmark URLs' />
-            )} />
-            <Route path='/overview/:examID' render={({ match }) => (
-              <Overview examID={match.params.examID} />
-            )} />
-            <Route path='/email/:examID' render={({ match }) => (
-              <Email examID={match.params.examID} />
-            )} />
-            <Route path='/graders' render={() =>
+                setHelpPage={this.menu.current ? this.menu.current.setHelpPage : null} />
+            } />
+            <Route exact path='/graders' render={() =>
               <Graders updateGraderList={this.menu.current ? this.menu.current.updateGraderList : null} />} />
             <Route render={() =>
               <Fail message="404. Could not find that page :'(" />} />

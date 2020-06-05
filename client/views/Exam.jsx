@@ -96,7 +96,7 @@ class Exams extends React.Component {
         confirmText='Delete exam'
         onCancel={() => this.setState({deletingExam: false})}
         onConfirm={() => {
-          this.props.deleteExam(exam.id).then(this.props.leave)
+          this.props.deleteExam(exam.id)
         }}
       />}
     </div>

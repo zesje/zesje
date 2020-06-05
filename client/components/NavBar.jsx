@@ -124,6 +124,7 @@ class NavBar extends React.Component {
   componentDidUpdate = (prevProps, prevState) => {
     if (prevProps.examID !== this.props.examID) {
       this.setState({examID: this.props.examID})
+      console.log(`exam in navbar ${this.props.examID}`)
     }
   }
 
@@ -172,7 +173,7 @@ class NavBar extends React.Component {
 
   render () {
     const selectedExam = this.state.examList.find(exam => exam.id === this.state.examID)
-    console.log(selectedExam)
+    console.log(`exam in navbar render ${selectedExam}`)
 
     const predicateNoExam = [selectedExam === null || selectedExam === undefined,
       'No exam selected.']
@@ -208,20 +209,20 @@ class NavBar extends React.Component {
             }
 
             <TooltipLink
-              to={'/scans/' + this.props.examID}
+              to={`/exams/${this.state.examID}/scans`}
               text='Scans'
               predicate={[predicateNoExam, predicateExamNotFinalized]} />
-            <Link className='navbar-item' to={'/students/' + this.props.examID}>Students</Link>
+            <Link className='navbar-item' to={`/exams/${this.state.examID}/students`}>Students</Link>
             <TooltipLink
-              to={'/grade/' + this.props.examID}
+              to={`/exams/${this.state.examID}/grade`}
               text={<strong><i>Grade</i></strong>}
               predicate={[predicateNoExam, predicateExamNotFinalized, predicateSubmissionsEmpty, predicateNoGraderSelected]} />
             <TooltipLink
-              to={'/overview/' + this.props.examID}
+              to={`/exams/${this.state.examID}/overview`}
               text='Overview'
               predicate={[predicateNoExam, predicateExamNotFinalized, predicateSubmissionsEmpty]} />
             <TooltipLink
-              to={'/email/' + this.props.examID}
+              to={`/exams/${this.state.examID}/email`}
               text='Email'
               predicate={[predicateNoExam, predicateExamNotFinalized, predicateSubmissionsEmpty]} />
             <ExportDropdown className='navbar-item' disabled={predicateSubmissionsEmpty[0]} examID={this.props.examID} />

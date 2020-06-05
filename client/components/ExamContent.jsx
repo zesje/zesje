@@ -13,7 +13,8 @@ import * as api from '../api.jsx'
 
 class ExamContent extends React.Component {
   state = {
-    examID: null
+    examID: null,
+    graderID: null
   }
 
   componentDidMount = () => {
@@ -22,10 +23,13 @@ class ExamContent extends React.Component {
 
   componentDidUpdate = (prevProps, prevState) => {
     const examID = this.props.examID
-    if ((prevProps.examID !== examID && examID !== this.state.examID)) {
-      // The URL has changed and at least one of exam metadata, problem or submission does not match the URL
+    if (prevProps.examID !== examID && examID !== this.state.examID) {
       this.updateExam(examID)
     }
+
+    // if (prevProps.graderID !== this.props.graderID) {
+    //  this.setState({graderID: this.props.graderID})
+    // }
   }
 
   updateExam = (examID) => {
@@ -44,8 +48,6 @@ class ExamContent extends React.Component {
   }
 
   render () {
-    const grader = this.props.grader
-
     return (
       <Switch>
         <Route path='/exams/:examID/scans' render={({ match }) =>
@@ -55,10 +57,10 @@ class ExamContent extends React.Component {
           <Students examID={this.state.examID} />}
         />
         <Route path='/exams/:examID/grade/:submissionID?/:problemID?' render={({ match, history }) => (
-          grader ? (
+          this.props.graderID ? (
             <Grade
               examID={this.state.examID}
-              graderID={this.props.grader.id}
+              graderID={this.props.graderID}
               history={history}
               submissionID={match.params.submissionID}
               problemID={match.params.problemID} />

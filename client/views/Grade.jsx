@@ -42,7 +42,7 @@ class Grade extends React.Component {
           isUnstructured: metadata.layout.value === 2,
           examID: this.props.examID,
           gradeAnonymous: metadata.gradeAnonymous
-        }, () => this.props.history.replace(`grade/${submissionID}/${problemID}`))
+        }, () => this.props.history.replace(`${this.props.parentURL}/grade/${submissionID}/${problemID}`))
       })
       // eslint-disable-next-line handle-callback-err
     }).catch(err => {
@@ -73,7 +73,7 @@ class Grade extends React.Component {
         this.setState({
           submission: submission,
           problem: problem
-        }, () => this.props.history.replace(`grade/${submission.id}/${problem.id}`))
+        }, () => this.props.history.replace(`${this.props.parentURL}/grade/${submission.id}/${problem.id}`))
       }).catch(err => {
         if (err.status === 404) {
           this.setState({
@@ -156,7 +156,7 @@ class Grade extends React.Component {
       '&ungraded=' + ungraded).then(sub =>
       this.setState({
         submission: sub
-      }, () => this.props.history.push(`grade/${this.state.submission.id}/${this.state.problem.id}`))
+      }, () => this.props.history.push(`${this.props.parentURL}/grade/${this.state.submission.id}/${this.state.problem.id}`))
     )
   }
   /**
@@ -237,7 +237,7 @@ class Grade extends React.Component {
    * @param problemID - the id of the problem that we want to navigate to
    */
   navigateProblem = (problemID) => {
-    this.props.history.push(`grade/${this.props.submissionID}/${problemID}`)
+    this.props.history.push(`${this.props.parentURL}/grade/${this.props.submissionID}/${problemID}`)
   }
 
   /**

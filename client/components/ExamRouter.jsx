@@ -71,6 +71,7 @@ class ExamRouter extends React.PureComponent {
               examID={this.props.examID}
               graderID={this.props.graderID}
               history={history}
+              parentURL={parentURL}
               submissionID={match.params.submissionID}
               problemID={match.params.problemID} />
           ) : <Fail message='No grader selected. Please do not bookmark URLs' />

@@ -8,6 +8,7 @@ import 'react-bulma-notification/build/css/index.css'
 import 'font-awesome/css/font-awesome.css'
 
 import NavBar from './components/NavBar.jsx'
+import ExamRouter from './components/ExamRouter.jsx'
 import Footer from './components/Footer.jsx'
 import Loading from './views/Loading.jsx'
 
@@ -23,10 +24,7 @@ const Graders = Loadable({
   loader: () => import('./views/Graders.jsx'),
   loading: Loading
 })
-const ExamContent = Loadable({
-  loader: () => import('./components/ExamContent.jsx'),
-  loading: Loading
-})
+
 const Fail = Loadable({
   loader: () => import('./views/Fail.jsx'),
   loading: Loading
@@ -59,6 +57,9 @@ class App extends React.Component {
 
   render () {
     const grader = this.state.grader
+    const updateExamList = this.menu.current ? this.menu.current.updateExamList : () => {}
+    const updateGraderList = this.menu.current ? this.menu.current.updateGraderList : () => {}
+    const setHelpPage = this.menu.current ? this.menu.current.setHelpPage : (help) => {}
 
     return (
       <Router>
@@ -67,18 +68,19 @@ class App extends React.Component {
           <Switch>
             <Route exact path='/' component={Home} />
             <Route exact path='/exams' render={({ history }) =>
-              <AddExam updateExamList={this.menu.current ? this.menu.current.updateExamList : null} changeURL={history.push} />}
+              <AddExam updateExamList={updateExamList} changeURL={history.push} />}
             />
             <Route path='/exams/:examID/' render={({ match }) =>
-              <ExamContent
+              <ExamRouter
+                parentURL={match.url}
                 examID={match.params.examID}
                 graderID={grader ? grader.id : null}
                 selectExam={this.selectExam}
-                updateExamList={this.updateExamList}
-                setHelpPage={this.menu.current ? this.menu.current.setHelpPage : null} />
+                updateExamList={updateExamList}
+                setHelpPage={setHelpPage} />
             } />
             <Route exact path='/graders' render={() =>
-              <Graders updateGraderList={this.menu.current ? this.menu.current.updateGraderList : null} />} />
+              <Graders updateGraderList={updateGraderList} />} />
             <Route render={() =>
               <Fail message="404. Could not find that page :'(" />} />
           </Switch>

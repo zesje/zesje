@@ -4,7 +4,7 @@ from flask import current_app as app
 from flask_restful import Resource, reqparse
 from pdfrw import PdfReader
 
-from ..database import db, Exam, Submission, Student, Copy, Solution
+from ..database import db, Exam, Submission, Student, Copy, Solution, ExamLayout
 
 
 def copy_to_data(copy):
@@ -78,6 +78,9 @@ class Copies(Resource):
 
         if (exam := Exam.query.get(exam_id)) is None:
             return dict(status=404, message='Exam does not exist.'), 404
+
+        if exam.layout == ExamLayout.unstructured:
+            return dict(status=403, message='Signatures cannot be validated for unstructured exams.'), 403
 
         if (copy := Copy.query.filter(Copy.number == copy_number,
                                       Copy.exam == exam).one_or_none()) is None:

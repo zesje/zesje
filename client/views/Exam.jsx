@@ -4,7 +4,6 @@ import Hero from '../components/Hero.jsx'
 import ConfirmationModal from '../components/ConfirmationModal.jsx'
 import ExamZesje from './exam/ExamZesje.jsx'
 import ExamUnstructured from './exam/ExamUnstructured.jsx'
-import PanelExamName from './exam/PanelExamName.jsx'
 
 import * as api from '../api.jsx'
 
@@ -43,16 +42,24 @@ class Exams extends React.Component {
 
   renderExamContent = () => {
     const layout = this.state.exam.layout.value
+    const commonProps = {
+      'examID': this.state.exam.id,
+      'examName': this.state.exam.name,
+      'updateExamList': this.props.updateExamList,
+      'updateExam': this.loadExam
+    }
+
     if (layout === 1) {
       // zesje exam
       return <ExamZesje
         exam={this.state.exam}
-        updateExam={this.loadExam}
         deleteExam={() => { this.setState({deletingExam: true}) }}
-        setHelpPage={this.props.setHelpPage} />
+        setHelpPage={this.props.setHelpPage}
+        {...commonProps} />
     } else if (layout === 2) {
       // unstructured
-      return <ExamUnstructured examID={this.state.exam.id} />
+      return <ExamUnstructured
+        {...commonProps} />
     }
   }
 
@@ -67,18 +74,6 @@ class Exams extends React.Component {
             exam
               ? (
                 <React.Fragment>
-                  <PanelExamName
-                    name={exam.name}
-                    examID={exam.id}
-                    onChange={(name) => {
-                      // In order to change the name everywhere in the UI we are forced to
-                      // update the whole exam here as well as the exam list in the navbar.
-                      // This is not ideal and should be addressed in
-                      // https://gitlab.kwant-project.org/zesje/zesje/issues/388
-                      // TODO: implement data locality for this view
-                      this.loadExam(exam.id)
-                      this.props.updateExamList()
-                    }} />
 
                   { this.renderExamContent() }
                 </React.Fragment>

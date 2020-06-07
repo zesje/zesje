@@ -1,18 +1,21 @@
 import React from 'react'
 
 import Notification from 'react-bulma-notification'
+import update from 'immutability-helper'
 
-import './Exam.css'
 import GeneratedExamPreview from '../../components/GeneratedExamPreview.jsx'
 import PanelGenerate from '../../components/PanelGenerate.jsx'
 import PanelMCQ from '../../components/PanelMCQ.jsx'
-import ExamEditor from './ExamEditor.jsx'
-import PanelGradeAnonymous from './PanelGradeAnonymous.jsx'
-import update from 'immutability-helper'
-import ExamFinalizeMarkdown from './ExamFinalize.md'
 import ConfirmationModal from '../../components/ConfirmationModal.jsx'
 import FeedbackPanel from '../../components/feedback/FeedbackPanel.jsx'
 import Tooltip from '../../components/Tooltip.jsx'
+
+import ExamEditor from './ExamEditor.jsx'
+import PanelGradeAnonymous from './PanelGradeAnonymous.jsx'
+import ExamFinalizeMarkdown from './ExamFinalize.md'
+import PanelExamName from './PanelExamName.jsx'
+
+import './Exam.css'
 
 import * as api from '../../api.jsx'
 
@@ -865,6 +868,11 @@ class ExamZesje extends React.Component {
     return <React.Fragment>
       <div className='columns is-centered' >
         <div className='column is-one-quarter-fullhd is-one-third-desktop' >
+          <PanelExamName
+            name={this.props.examName}
+            examID={this.state.examID}
+            updateExam={this.props.updateExam}
+            updateExamList={this.props.updateExamList} />
           <this.SidePanel
             examID={this.state.examID}
             setHelpPage={this.props.setHelpPage} />

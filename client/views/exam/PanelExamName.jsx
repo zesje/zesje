@@ -13,17 +13,14 @@ class PanelExamName extends React.Component {
 
   static getDerivedStateFromProps (nextProps, prevState) {
     // In case nothing is set, use an empty function that no-ops
-    const onChange = nextProps.onChange || ((_, name) => {})
     if (prevState.examID !== nextProps.examID) {
       return {
         examID: nextProps.examID,
         examName: nextProps.name,
-        editing: false,
-        onChange: onChange
+        editing: false
       }
     }
-
-    return {onChange: onChange}
+    return null
   }
 
   inputColor = () => {
@@ -46,7 +43,7 @@ class PanelExamName extends React.Component {
           editing: false
         })
 
-        this.props.onChange(name)
+        this.onChange()
       })
       .catch(err => {
         this.setState({
@@ -60,69 +57,72 @@ class PanelExamName extends React.Component {
       })
   }
 
-  render = () => {
-    return <div className='columns is-centered'>
-      <div className='column is-one-third-desktop is-half-tablet is-full-mobile'>
-        { this.state.editing ? (
-          <nav className='panel'>
-            <p className='panel-heading'>
-              Exam details
-            </p>
-            <div className='panel-block'>
-              <input className={'input ' + this.inputColor()}
-                type='text'
-                placeholder='Exam name'
-                value={this.state.examName}
-                onChange={(e) => {
-                  this.setState({
-                    examName: e.target.value
-                  })
-                }} />
-            </div>
-            <div className='panel-block buttons is-right'>
-              <button
-                className='button is-danger'
-                style={{marginBottom: '0'}}
-                onClick={() => {
-                  this.setState({
-                    examName: this.props.name,
-                    editing: false
-                  })
-                }}
-              >
-                Cancel
-              </button>
-              <button
-                className='button is-link'
-                style={{marginBottom: '0'}}
-                disabled={this.state.examName === this.props.name || this.state.examName === ''}
-                onClick={() => { this.saveName(this.state.examName) }}
-              >
-                Save
-              </button>
-            </div>
-          </nav>
-        ) : (
-          <nav className='panel'>
-            <p className='panel-heading'>
-              Exam details
-            </p>
-            <div className='panel-block'>
-              <p className='is-size-3'>
-                {this.state.examName}
-              </p>
-              <Tooltip
-                icon='pencil'
-                location='top'
-                text='Click to edit the exam name.'
-                clickAction={() => this.setState({editing: true})}
-              />
-            </div>
-          </nav>
-        ) }
-      </div>
-    </div>
+  onChange = () => {
+    // In order to change the name everywhere in the UI we are forced to
+    // update the whole exam here as well as the exam list in the navbar.
+    // This is not ideal and should be addressed in
+    // https://gitlab.kwant-project.org/zesje/zesje/issues/388
+    // TODO: implement data locality for this view
+    this.props.updateExam(this.state.examID)
+    this.props.updateExamList()
   }
+
+  render = () => (
+    <nav className='panel'>
+      <p className='panel-heading'>
+        Exam details
+      </p>
+      {this.state.editing ? (
+        <React.Fragment>
+          <div className='panel-block'>
+            <input className={'input ' + this.inputColor()}
+              type='text'
+              placeholder='Exam name'
+              value={this.state.examName}
+              onChange={(e) => {
+                this.setState({
+                  examName: e.target.value
+                })
+              }} />
+          </div>
+          <div className='panel-block buttons is-right'>
+            <button
+              className='button is-danger'
+              style={{marginBottom: '0'}}
+              onClick={() => {
+                this.setState({
+                  examName: this.props.name,
+                  editing: false
+                })
+              }}
+            >
+              Cancel
+            </button>
+            <button
+              className='button is-link'
+              style={{marginBottom: '0'}}
+              disabled={this.state.examName === this.props.name || this.state.examName === ''}
+              onClick={() => { this.saveName(this.state.examName) }}
+            >
+              Save
+            </button>
+          </div>
+        </React.Fragment>
+      ) : (
+        <div className='panel-block'>
+          <p className='is-size-3'>
+            {this.state.examName}
+          </p>
+          <Tooltip
+            icon='pencil'
+            location='top'
+            text='Click to edit the exam name.'
+            clickAction={() => this.setState({editing: true})}
+          />
+        </div>
+      )}
+    </nav>
+  )
 }
 
 export default PanelExamName

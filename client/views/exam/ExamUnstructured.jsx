@@ -5,6 +5,7 @@ import FeedbackPanel from '../../components/feedback/FeedbackPanel.jsx'
 import ConfirmationModal from '../../components/ConfirmationModal.jsx'
 import ExamUnstructuredMarkdown from './ExamUnstructuredRules.md'
 import PanelGradeAnonymous from './PanelGradeAnonymous.jsx'
+import PanelExamName from './PanelExamName.jsx'
 
 import * as api from '../../api.jsx'
 
@@ -294,6 +295,12 @@ class PanelEditUnstructured extends React.Component {
       <React.Fragment>
         <div className='columns is-centered' >
           <div className='column is-one-third-fullhd is-half-tablet' >
+            <PanelExamName
+              name={this.props.examName}
+              examID={this.props.examID}
+              updateExam={this.props.updateExam}
+              updateExamList={this.props.updateExamList} />
+
             <this.PanelProblem
               problem={problem} />
 

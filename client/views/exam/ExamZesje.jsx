@@ -611,7 +611,7 @@ class ExamZesje extends React.Component {
           setHelpPage={this.props.setHelpPage}
         />
         <this.PanelExamActions />
-        {!this.props.exam.finalized && <PanelGradeAnonymous
+        {this.props.exam.finalized && <PanelGradeAnonymous
           examID={this.props.exam.id}
           gradeAnonymous={this.props.exam.gradeAnonymous}
           onChange={(anonymous) => this.props.updateExam(null)} />}

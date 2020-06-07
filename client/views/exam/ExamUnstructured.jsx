@@ -280,7 +280,9 @@ class PanelEditUnstructured extends React.Component {
                 </button>
               </div>
             </React.Fragment> : (
-              <p>Select a problem on the right panel or add a new one.</p>
+              <div className='panel-block'>
+                <p>Select a problem on the right panel or add a new one.</p>
+              </div>
             )
           }
         </nav>

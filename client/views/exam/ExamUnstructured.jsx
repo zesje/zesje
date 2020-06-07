@@ -16,18 +16,19 @@ const groupBy = (array, key) =>
   }, {})
 
 const ExamContent = (props) => {
-  if (props.problems.length === 0) {
-    return <p className='is-size-5 has-text-centered'>No problems</p>
-  }
+  const problemCount = props.problems.length
+  const pages = problemCount > 0 ? groupBy(props.problems, 'page') : {0: []}
 
-  const pages = groupBy(props.problems, 'page')
+  const pageCount = Object.keys(pages).length
+  const pageTitle = pageCount === 1 && 'Problem list'
+  const addPageButtonText = pageCount === 1 ? 'Specify pages' : 'Add page'
   return (
     <div>
       {Object.keys(pages).map(page => (
         <div className='card page-card' key={page}>
           <header className='card-header'>
             <p className='card-header-title'>
-              {`Page ${(parseInt(page) + 1)}`}
+              {pageTitle || `Page ${(parseInt(page) + 1)}`}
             </p>
             <a
               className='card-header-icon'
@@ -40,7 +41,7 @@ const ExamContent = (props) => {
           </header>
           <div className='card-content'>
             <div className='content'>
-              {pages[page].map(p => (
+              {problemCount ? pages[page].map(p => (
                 <button
                   className={'button problem is-fullwidth ' +
                                     (props.selectedProblemId === p.id ? 'is-primary' : '')}
@@ -49,11 +50,16 @@ const ExamContent = (props) => {
                 >
                   {p.name}
                 </button>
-              ))}
+              )) : <p>No problems</p>}
             </div>
           </div>
         </div>
       ))}
+      <button
+        className='button problem is-link is-fullwidth'
+        onClick={props.addPage}>
+        <span>{addPageButtonText}</span>
+      </button>
     </div>
   )
 }
@@ -310,13 +316,8 @@ class PanelEditUnstructured extends React.Component {
                 problems={this.state.problems}
                 selectedProblemId={this.state.selectedProblemId}
                 selectProblem={this.selectProblem}
-                createProblem={this.createProblem} />
-
-              <button
-                className='button problem is-link is-fullwidth'
-                onClick={this.addPage}>
-                <span>Add Page</span>
-              </button>
+                createProblem={this.createProblem}
+                addPage={this.addPage} />
             </div>
           </div>
         </div>

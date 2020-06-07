@@ -55,11 +55,11 @@ const ExamContent = (props) => {
           </div>
         </div>
       ))}
-      <button
+      {problemCount ? <button
         className='button problem is-link is-fullwidth'
         onClick={props.addPage}>
         <span>{addPageButtonText}</span>
-      </button>
+      </button> : null}
     </div>
   )
 }
@@ -124,7 +124,7 @@ class PanelEditUnstructured extends React.Component {
   }
 
   addPage = () => {
-    const lastPage = this.state.problems.length > 1 ? this.state.problems[this.state.problems.length - 1].page : -1
+    const lastPage = this.state.problems.length > 0 ? this.state.problems[this.state.problems.length - 1].page : -1
     this.createProblem(lastPage + 1)
   }
 

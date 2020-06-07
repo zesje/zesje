@@ -25,6 +25,14 @@ class Grade extends React.Component {
     this.state = {}
     api.get(`exams/${this.props.examID}?only_metadata=true` +
         `&shuffle_seed=${this.props.graderID}`).then(metadata => {
+      const partialState = {
+        submissions: metadata.submissions,
+        problems: metadata.problems,
+        isUnstructured: metadata.layout.value === 2,
+        examID: this.props.examID,
+        gradeAnonymous: metadata.gradeAnonymous
+      }
+
       const examID = metadata.exam_id
       const submissionID = this.props.submissionID || metadata.submissions[0].id
       const problemID = this.props.problemID || metadata.problems[0].id
@@ -37,14 +45,17 @@ class Grade extends React.Component {
         this.setState({
           submission: submission,
           problem: problem,
-          submissions: metadata.submissions,
-          problems: metadata.problems,
-          isUnstructured: metadata.layout.value === 2,
-          examID: this.props.examID,
-          gradeAnonymous: metadata.gradeAnonymous
+          ...partialState
         }, () => this.props.history.replace(`${this.props.parentURL}/grade/${submissionID}/${problemID}`))
-      })
       // eslint-disable-next-line handle-callback-err
+      }).catch(err => {
+        this.setState({
+          submission: null,
+          problem: null,
+          ...partialState
+        })
+      })
+    // eslint-disable-next-line handle-callback-err
     }).catch(err => {
       this.setState({
         submission: null
@@ -59,7 +70,7 @@ class Grade extends React.Component {
    * It also sets the submission to null to display error component when unwanted behaviour is observed.
    */
   syncSubmissionWithUrl = () => {
-    const UrlIsDifferent = (this.state.problem === undefined || this.state.submission === undefined ||
+    const UrlIsDifferent = (!this.state.problem || !this.state.submission ||
       this.props.problemID !== this.state.problem.id || this.props.submissionID !== this.state.submission.id)
     if (UrlIsDifferent) {
       const submissionID = this.props.submissionID || this.state.submissions[0].id
@@ -77,7 +88,8 @@ class Grade extends React.Component {
       }).catch(err => {
         if (err.status === 404) {
           this.setState({
-            submission: null
+            submission: null,
+            problem: null
           })
         }
       })
@@ -133,9 +145,10 @@ class Grade extends React.Component {
     const problemID = this.state.problem && String(this.state.problem.id)
     const submissionID = this.state.submission && String(this.state.submission.id)
     if ((prevProps.examID !== this.props.examID && this.props.examID !== this.state.examID) ||
-      (prevProps.problemID !== this.props.problemID && this.props.problemID !== problemID) ||
-      (prevProps.submissionID !== this.props.submissionID && this.props.submissionID !== submissionID)) {
+      (prevProps.problemID !== this.props.problemID && (!problemID || this.props.problemID !== problemID)) ||
+      (prevProps.submissionID !== this.props.submissionID && (!submissionID || this.props.submissionID !== submissionID))) {
       // The URL has changed and at least one of exam metadata, problem or submission does not match the URL
+      // or the URL has changed and submission or problem is not defined
       this.updateFromUrl()
     }
   }
@@ -203,7 +216,8 @@ class Grade extends React.Component {
       // eslint-disable-next-line handle-callback-err
     }).catch(err => {
       this.setState({
-        submission: null
+        submission: null,
+        problem: null
       })
     })
   }
@@ -346,12 +360,13 @@ class Grade extends React.Component {
 
   render () {
     const hero = (<Hero title='Grade' subtitle='Assign feedback to each solution' />)
-    const fail = (<Hero title='Oops!' subtitle='Submission does not exist' />)
     // This should happen when there are no submissions or problems for an exam.
     // More specifically, if a user tries to enter a URL for an exam with no submissions.
     // This will also happen while the initial call to update submission in the constructor is still pending.
     if (!this.state.submission) {
-      return fail
+      const message = ((this.state.submissions && this.state.submissions.length > 0)
+        ? 'Submission does not exist' : 'There are no submissions yet')
+      return <Hero title='Oops!' subtitle={message} />
     }
 
     const examID = this.props.examID

@@ -50,7 +50,7 @@ class Grader(db.Model):
 
 ExamLayout = enum.IntEnum(
     'ExamLayout',
-    'zesje unstructured'
+    'templated unstructured'
 )
 
 
@@ -67,7 +67,8 @@ class Exam(db.Model):
                               order_by='ExamWidget.id', lazy=True)
     finalized = Column(Boolean, default=False, server_default='0')
     grade_anonymous = Column(Boolean, default=False, server_default='0')
-    layout = Column('layout', Enum(ExamLayout), server_default='zesje', default=ExamLayout.zesje, nullable=False)
+    layout = Column('layout', Enum(ExamLayout), server_default='templated', default=ExamLayout.templated,
+                    nullable=False)
 
     @hybrid_property
     def copies(self):

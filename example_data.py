@@ -261,7 +261,7 @@ def grade_problems(client, exam_id, graders, problems, submissions, grade):
                            })
 
 
-def add_zesje_exam(client, pages):
+def add_templated_exam(client, pages):
     exam_name = lorem_name.sentence().replace('.', '')
     problems = [{
         'question': f'{i + 1}. ' + lorem_prob.sentence().replace('.', '?'),
@@ -288,7 +288,7 @@ def add_zesje_exam(client, pages):
                               content_type='multipart/form-data',
                               data={
                                   'exam_name': exam_name,
-                                  'layout': ExamLayout.zesje.value,
+                                  'layout': ExamLayout.templated.value,
                                   'pdf': pdf_file}).get_json()['id']
 
     return exam_id, problems + mc_problems
@@ -316,8 +316,8 @@ def add_unstructured_exam(client, pages):
 def design_exam(app, client, layout, pages, students, grade, solve, multiple_copies, skip_processing):
     register_fonts()
 
-    if layout == ExamLayout.zesje:
-        exam_id, problems = add_zesje_exam(client, pages)
+    if layout == ExamLayout.templated:
+        exam_id, problems = add_templated_exam(client, pages)
     elif layout == ExamLayout.unstructured:
         exam_id, problems = add_unstructured_exam(client, pages)
     else:
@@ -370,7 +370,7 @@ def design_exam(app, client, layout, pages, students, grade, solve, multiple_cop
     student_ids = student_ids[:students]
     copies_per_student = [2 if random.random() < multiple_copies else 1 for _ in range(students)]
 
-    if layout == ExamLayout.zesje:
+    if layout == ExamLayout.templated:
         # Download PDFs
         generated = client.get(f'api/exams/{exam_id}/generated_pdfs',
                                data={"copies_start": 1, "copies_end": sum(copies_per_student), 'type': 'pdf'})
@@ -457,7 +457,7 @@ if __name__ == '__main__':
     parser.add_argument('--skip-processing', action='store_true', help='fakes the pdf processing to reduce time. \
                         As a drawback, blanks will not be detected.')
     parser.add_argument('--exams', type=int, default=1, help='number of exams to add')
-    parser.add_argument('--layout', type=int, default=ExamLayout.zesje.value,
+    parser.add_argument('--layout', type=int, default=ExamLayout.templated.value,
                         choices=[layout.value for layout in ExamLayout],
                         help='the layout of the exams: '
                              + ', '.join(f'{layout.value} for {layout.name}' for layout in ExamLayout))

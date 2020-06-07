@@ -2,7 +2,7 @@ import React from 'react'
 
 import Hero from '../components/Hero.jsx'
 import ConfirmationModal from '../components/ConfirmationModal.jsx'
-import ExamZesje from './exam/ExamZesje.jsx'
+import ExamTemplated from './exam/ExamTemplated.jsx'
 import ExamUnstructured from './exam/ExamUnstructured.jsx'
 
 import * as api from '../api.jsx'
@@ -50,8 +50,8 @@ class Exams extends React.Component {
     }
 
     if (layout === 1) {
-      // zesje exam
-      return <ExamZesje
+      // templated exam
+      return <ExamTemplated
         exam={this.state.exam}
         deleteExam={() => { this.setState({deletingExam: true}) }}
         setHelpPage={this.props.setHelpPage}

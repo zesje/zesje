@@ -76,7 +76,7 @@ def _process_scan(scan_id, exam_layout):
         report_error(f'Error while reading Exam metadata: {e}')
         raise
 
-    if exam_layout == ExamLayout.zesje:
+    if exam_layout == ExamLayout.templated:
         process_page_function = process_page
     elif exam_layout == ExamLayout.unstructured:
         process_page_function = process_page_raw
@@ -121,7 +121,7 @@ def _process_scan(scan_id, exam_layout):
 def exam_metadata(exam):
     """Read off exam token and barcode coordinates from the database."""
 
-    if exam.layout == ExamLayout.zesje:
+    if exam.layout == ExamLayout.templated:
         # Raises exception if zero or more than one barcode widgets found
         barcode_widget = ExamWidget.query.filter(ExamWidget.exam_id == exam.id,
                                                  ExamWidget.name == "barcode_widget").one()

@@ -226,9 +226,9 @@ class Exams(Resource):
         if not exam_name:
             return dict(status=400, message='Exam name is empty'), 400
 
-        if layout == ExamLayout.zesje:
+        if layout == ExamLayout.templated:
             pdf_data = args['pdf']
-            exam = self._add_zesje_exam(exam_name, pdf_data)
+            exam = self._add_templated_exam(exam_name, pdf_data)
         elif layout == ExamLayout.unstructured:
             exam = self._add_unstructured_exam(exam_name)
         else:
@@ -240,11 +240,11 @@ class Exams(Resource):
             'id': exam.id
         }
 
-    def _add_zesje_exam(self, exam_name, pdf_data):
+    def _add_templated_exam(self, exam_name, pdf_data):
         if not pdf_data:
             abort(
                 400,
-                message='Upload a PDF to add a zesje exam.'
+                message='Upload a PDF to add a templated exam.'
             )
 
         format = current_app.config['PAGE_FORMAT']
@@ -257,7 +257,7 @@ class Exams(Resource):
 
         exam = Exam(
             name=exam_name,
-            layout=ExamLayout.zesje
+            layout=ExamLayout.templated
         )
 
         exam.widgets = [
@@ -316,7 +316,7 @@ class Exams(Resource):
         elif args['finalized']:
             add_blank_feedback(exam.problems)
 
-            if exam.layout == ExamLayout.zesje:
+            if exam.layout == ExamLayout.templated:
                 write_finalized_exam(exam)
 
             exam.finalized = True
@@ -499,10 +499,10 @@ def layout_to_data(layout):
         `description` : str
             text with a brief explanation of the layout.
     """
-    if layout == ExamLayout.zesje:
+    if layout == ExamLayout.templated:
         return {
             'name': 'Zesje',
-            'value': ExamLayout.zesje.value,
+            'value': ExamLayout.templated.value,
             'acceptsPDF': True,
             'description': 'This is the default type, specially made for presencial exams. '
                            'In this mode, the pdf you upload is used as a template to create unique copies '

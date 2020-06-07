@@ -207,7 +207,7 @@ class Statistics(Resource):
             'id': exam.id,
             'name': exam.name,
             'students': len(student_ids),
-            'copies': len(exam.copies) if exam.layout == ExamLayout.zesje else len(student_ids),
+            'copies': len(exam.copies) if exam.layout == ExamLayout.templated else len(student_ids),
             'problems': data,
             'total': {
                 'alpha': alpha,

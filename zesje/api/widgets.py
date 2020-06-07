@@ -82,7 +82,7 @@ class Widgets(Resource):
 
         exam = widget.exam
 
-        if exam.layout == ExamLayout.zesje:
+        if exam.layout == ExamLayout.templated:
             message = "The Exam widget has to lay between the corner markers region."
             changed = force_boundaries(widget)
         elif exam.layout == ExamLayout.unstructured:

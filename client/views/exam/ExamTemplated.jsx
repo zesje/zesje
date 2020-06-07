@@ -54,7 +54,7 @@ const Pager = (props) => {
   )
 }
 
-class ExamZesje extends React.Component {
+class ExamTemplated extends React.Component {
   state = {
     examID: null,
     page: 0,
@@ -916,4 +916,4 @@ class ExamZesje extends React.Component {
   }
 }
 
-export default ExamZesje
+export default ExamTemplated

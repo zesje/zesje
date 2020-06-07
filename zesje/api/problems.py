@@ -122,7 +122,7 @@ class Problems(Resource):
         db.session.commit()
         widget.name = f'problem_{problem.id}'
 
-        if exam.layout == ExamLayout.zesje:
+        if exam.layout == ExamLayout.templated:
             data_dir = current_app.config['DATA_DIRECTORY']
             pdf_path = os.path.join(data_dir, f'{problem.exam_id}_data', 'exam.pdf')
 

@@ -23,10 +23,10 @@ def add_test_data(app):
 
 
 # Actual tests
-def test_add_zesje_exam(datadir, test_client):
+def test_add_templated_exam(datadir, test_client):
     with open(os.path.join(datadir, 'blank-a4-2pages.pdf'), 'rb') as pdf:
         response = test_client.post('/api/exams',
-                                    data={'exam_name': 'The Exam', 'pdf': pdf, 'layout': ExamLayout.zesje.value})
+                                    data={'exam_name': 'The Exam', 'pdf': pdf, 'layout': ExamLayout.templated.value})
 
         assert response.status_code == 200
 
@@ -35,12 +35,12 @@ def test_add_zesje_exam(datadir, test_client):
 
     assert len(data) == 1
 
-    assert data[0]['layout']['value'] == ExamLayout.zesje.value
+    assert data[0]['layout']['value'] == ExamLayout.templated.value
 
 
-def test_add_zesje_exam_without_pdf(datadir, test_client):
+def test_add_templated_exam_without_pdf(datadir, test_client):
     response = test_client.post('/api/exams',
-                                data={'exam_name': 'The Exam', 'layout': ExamLayout.zesje.value})
+                                data={'exam_name': 'The Exam', 'layout': ExamLayout.templated.value})
 
     assert response.status_code == 400
 

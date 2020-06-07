@@ -19,8 +19,8 @@ def upgrade():
     # add the `layout` column with default value `zesje`
     with op.batch_alter_table('exam', schema=None) as batch_op:
         batch_op.add_column(sa.Column('layout',
-                                      sa.Enum('zesje', 'unstructured', name='examlayout'),
-                                      server_default='zesje',
+                                      sa.Enum('templated', 'unstructured', name='examlayout'),
+                                      server_default='templated',
                                       nullable=False))
 
 

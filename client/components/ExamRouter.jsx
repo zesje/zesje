@@ -37,12 +37,13 @@ const Fail = Loadable({
 
 class ExamRouter extends React.PureComponent {
   componentDidMount = () => {
-    this.props.selectExam(this.props.examID)
+    this.props.selectExam(this.props.parentMatch.params.examID)
   }
 
   componentDidUpdate = (prevProps, prevState) => {
-    if (prevProps.examID !== this.props.examID) {
-      this.props.selectExam(this.props.examID)
+    const examID = this.props.parentMatch.params.examID
+    if (prevProps.parentMatch.params.examID !== examID) {
+      this.props.selectExam(examID)
     }
   }
 
@@ -56,19 +57,21 @@ class ExamRouter extends React.PureComponent {
   }
 
   render = () => {
-    const parentURL = this.props.parentURL
+    const examID = this.props.parentMatch.params.examID
+    const parentURL = this.props.parentMatch.url
+
     return (
       <Switch>
         <Route path={`${parentURL}/scans`} render={({ match }) =>
-          <Scans examID={this.props.examID} />}
+          <Scans examID={examID} />}
         />
         <Route path={`${parentURL}/students`} render={({ match }) =>
-          <Students examID={this.props.examID} />}
+          <Students examID={examID} />}
         />
         <Route path={`${parentURL}/grade/:submissionID?/:problemID?`} render={({ match, history }) => (
           this.props.graderID ? (
             <Grade
-              examID={this.props.examID}
+              examID={examID}
               graderID={this.props.graderID}
               history={history}
               parentURL={parentURL}
@@ -77,14 +80,14 @@ class ExamRouter extends React.PureComponent {
           ) : <Fail message='No grader selected. Please do not bookmark URLs' />
         )} />
         <Route path={`${parentURL}/overview`} render={({ match }) => (
-          <Overview examID={this.props.examID} />
+          <Overview examID={examID} />
         )} />
         <Route path={`${parentURL}/email`} render={({ match }) => (
-          <Email examID={this.props.examID} />
+          <Email examID={examID} />
         )} />
         <Route path={`${parentURL}`} render={({ match, history }) =>
           <Exam
-            examID={this.props.examID}
+            examID={examID}
             updateExamList={this.props.updateExamList}
             deleteExam={(id) => this.deleteExam(history, id)}
             setHelpPage={this.props.setHelpPage} />} />

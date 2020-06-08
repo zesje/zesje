@@ -72,8 +72,7 @@ class App extends React.Component {
             />
             <Route path='/exams/:examID/' render={({ match }) =>
               <ExamRouter
-                parentURL={match.url}
-                examID={match.params.examID}
+                parentMatch={match}
                 graderID={grader ? grader.id : null}
                 selectExam={this.selectExam}
                 updateExamList={updateExamList}

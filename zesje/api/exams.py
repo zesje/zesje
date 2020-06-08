@@ -199,7 +199,8 @@ class Exams(Resource):
     post_parser = reqparse.RequestParser()
     post_parser.add_argument('pdf', type=FileStorage, required=False, location='files')
     post_parser.add_argument('exam_name', type=str, required=True, location='form')
-    post_parser.add_argument('layout', type=int, required=True, location='form')
+    post_parser.add_argument('layout', type=str, required=True, location='form',
+                             choices=[layout.name for layout in ExamLayout])
 
     def post(self):
         """Add a new exam.
@@ -226,13 +227,13 @@ class Exams(Resource):
         if not exam_name:
             return dict(status=400, message='Exam name is empty'), 400
 
-        if layout == ExamLayout.templated:
+        if layout == ExamLayout.templated.name:
             pdf_data = args['pdf']
             exam = self._add_templated_exam(exam_name, pdf_data)
-        elif layout == ExamLayout.unstructured:
+        elif layout == ExamLayout.unstructured.name:
             exam = self._add_unstructured_exam(exam_name)
         else:
-            return dict(status=400, message=f'Exam type {type} is not defined'), 400
+            return dict(status=400, message=f'Exam type {layout} is not defined'), 400
 
         print(f"Added exam {exam.id} (name: {exam_name}, token: {exam.token}) to database")
 
@@ -501,8 +502,8 @@ def layout_to_data(layout):
     """
     if layout == ExamLayout.templated:
         return {
-            'name': 'Zesje',
-            'value': ExamLayout.templated.value,
+            'name': 'Templated',
+            'value': ExamLayout.templated.name,
             'acceptsPDF': True,
             'description': 'This is the default type, specially made for presencial exams. '
                            'In this mode, the pdf you upload is used as a template to create unique copies '
@@ -513,7 +514,7 @@ def layout_to_data(layout):
     elif layout == ExamLayout.unstructured:
         return {
             'name': 'Unstructured',
-            'value': ExamLayout.unstructured.value,
+            'value': ExamLayout.unstructured.name,
             'acceptsPDF': False,
             'description': 'Image based exam, this is specially made for take-home or virtual exam. '
                            'It is not based in any PDF, the scans can be images, pdfs or zipfiles made by students. '
@@ -522,7 +523,7 @@ def layout_to_data(layout):
         }
 
 
-class ExamTypes(Resource):
+class ExamLayouts(Resource):
     """Resource to request all the possible layouts to create an exam."""
 
     def get(self):

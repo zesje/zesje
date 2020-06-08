@@ -12,28 +12,28 @@ class Exams extends React.Component {
     pdf: null,
     previewPageCount: 0,
     examName: '',
-    types: null,
-    selectedType: null
+    layouts: null,
+    selectedLayout: null
   };
 
   componentDidMount = () => {
-    api.get('/exams/types')
-      .then(types => {
-        this.setState({ types: types, selectedType: types[0] })
+    api.get('/exams/layouts')
+      .then(layouts => {
+        this.setState({ layouts: layouts, selectedLayout: layouts[0] })
       })
   }
 
-  onChangeType = (index) => {
-    const newtype = this.state.types[index]
+  onChangeLayout = (event) => {
+    const newtype = this.state.layouts[event.target.value]
     if (!newtype.acceptsPDF) {
       this.setState({
-        selectedType: newtype,
+        selectedLayout: newtype,
         pdf: null,
         previewPageCount: 0
       })
     } else {
       this.setState({
-        selectedType: newtype
+        selectedLayout: newtype
       })
     }
   }
@@ -58,15 +58,15 @@ class Exams extends React.Component {
       Notification.error('Please enter exam name.')
       return
     }
-    if (this.state.selectedType.acceptsPDF && !this.state.pdf) {
+    if (this.state.selectedLayout.acceptsPDF && !this.state.pdf) {
       Notification.error('Please upload a PDF.')
       return
     }
 
     const data = new window.FormData()
     data.append('exam_name', this.state.examName)
-    data.append('layout', this.state.selectedType.value)
-    if (this.state.selectedType.acceptsPDF) {
+    data.append('layout', this.state.selectedLayout.value)
+    if (this.state.selectedLayout.acceptsPDF) {
       data.append('pdf', this.state.pdf)
     }
     api.post('exams', data)
@@ -120,9 +120,9 @@ class Exams extends React.Component {
                 <div className='field'>
                   <div className='control'>
                     <div className='select'>
-                      <select onChange={(e) => this.onChangeType(e.target.value)}>
-                        {this.state.types !== null ? this.state.types.map((type, index) => {
-                          return <option key={`key_${index}`} value={index}>{type.name}</option>
+                      <select onChange={this.onChangeLayout}>
+                        {this.state.layouts !== null ? this.state.layouts.map((layout, index) => {
+                          return <option key={`key_${index}`} value={index}>{layout.name}</option>
                         }) : null}
                       </select>
                     </div>
@@ -131,21 +131,21 @@ class Exams extends React.Component {
               </div>
             </div>
 
-            {this.state.selectedType &&
+            {this.state.selectedLayout &&
               <div className='field is-horizontal'>
                 <div className='field-label' />
 
                 <div className='field-body'>
                   <div className='field'>
                     <div className='control'>
-                      <p>{this.state.selectedType.description}</p>
+                      <p>{this.state.selectedLayout.description}</p>
                     </div>
                   </div>
                 </div>
               </div>
             }
 
-            {this.state.selectedType && this.state.selectedType.acceptsPDF &&
+            {this.state.selectedLayout && this.state.selectedLayout.acceptsPDF &&
               <div className='field is-horizontal'>
                 <div className='field-label'>
                   <label className='label'>Upload PDF</label>
@@ -195,8 +195,9 @@ class Exams extends React.Component {
                       className='button is-info'
                       onClick={this.addExam}
                       disabled={!this.state.examName ||
-                        (this.state.selectedType !== null && this.state.selectedType.acceptsPDF && this.state.pdf === null)}>
-                        Create Exam
+                        (this.state.selectedLayout !== null && this.state.selectedLayout.acceptsPDF && this.state.pdf === null)}
+                    >
+                      Create Exam
                     </button>
                   </div>
                 </div>

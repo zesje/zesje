@@ -43,20 +43,20 @@ class Exams extends React.Component {
   renderExamContent = () => {
     const layout = this.state.exam.layout.value
     const commonProps = {
-      'examID': this.state.exam.id,
-      'examName': this.state.exam.name,
-      'updateExamList': this.props.updateExamList,
-      'updateExam': this.loadExam
+      examID: this.state.exam.id,
+      examName: this.state.exam.name,
+      updateExamList: this.props.updateExamList,
+      updateExam: this.loadExam
     }
 
-    if (layout === 1) {
+    if (layout === 'templated') {
       // templated exam
       return <ExamTemplated
         exam={this.state.exam}
         deleteExam={() => { this.setState({deletingExam: true}) }}
         setHelpPage={this.props.setHelpPage}
         {...commonProps} />
-    } else if (layout === 2) {
+    } else if (layout === 'unstructured') {
       // unstructured
       return <ExamUnstructured
         {...commonProps} />

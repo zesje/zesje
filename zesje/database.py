@@ -48,7 +48,7 @@ class Grader(db.Model):
     graded_solutions = db.relationship('Solution', backref='graded_by', lazy=True)
 
 
-ExamLayout = enum.IntEnum(
+ExamLayout = enum.Enum(
     'ExamLayout',
     'templated unstructured'
 )

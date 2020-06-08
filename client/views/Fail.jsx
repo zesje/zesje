@@ -6,7 +6,10 @@ const Home = (props) => {
   return (
     <div>
 
-      <Hero title='Oops!' subtitle={props.message ? props.message : "Something went wrong :'("} />
+      <Hero
+        title='Oops!'
+        subtitle={props.message ? props.message : "Something went wrong :'("}
+        colour='is-danger' />
 
       <section className='section'>
 

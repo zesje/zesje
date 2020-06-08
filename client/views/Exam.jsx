@@ -1,6 +1,7 @@
 import React from 'react'
 
 import Hero from '../components/Hero.jsx'
+import Fail from './Fail.jsx'
 import ConfirmationModal from '../components/ConfirmationModal.jsx'
 import ExamTemplated from './exam/ExamTemplated.jsx'
 import ExamUnstructured from './exam/ExamUnstructured.jsx'
@@ -15,7 +16,6 @@ class Exams extends React.Component {
   }
 
   componentDidUpdate = (prevProps, prevState) => {
-    // in better days we should store and update the exam here and not in App.
     if (prevProps.examID !== this.props.examID) {
       this.loadExam(this.props.examID)
     }
@@ -65,6 +65,10 @@ class Exams extends React.Component {
 
   render () {
     const exam = this.state.exam
+
+    if (!exam && this.state.status) {
+      return <Fail message={this.state.status} />
+    }
 
     return <div>
       <Hero />

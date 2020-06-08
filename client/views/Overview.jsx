@@ -7,6 +7,7 @@ import {range, exp, sqrt, pow, pi, zeros, min, max} from 'mathjs'
 
 import humanizeDuration from 'humanize-duration'
 import Hero from '../components/Hero.jsx'
+import Fail from './Fail.jsx'
 import * as api from '../api.jsx'
 
 const Plot = createPlotlyComponent(Plotly)
@@ -118,8 +119,8 @@ const estimateGradingTime = (graders) => {
 
 class Overview extends React.Component {
   state = {
-    stats: null,
-    loadingText: 'Loading statistics...',
+    stats: undefined,
+    error: 'Loading statistics...',
     selectedProblemId: null,
     selectedStudentId: null
   }
@@ -131,7 +132,12 @@ class Overview extends React.Component {
   componentDidUpdate = (prevProps, prevState) => {
     const examID = this.props.examID
     if (examID !== prevProps.examID) {
-      this.loadStats(examID)
+      this.setState({
+        stats: undefined,
+        error: '',
+        selectedProblemId: null,
+        selectedStudentId: null
+      }, () => this.loadStats(examID))
     }
   }
 
@@ -147,7 +153,7 @@ class Overview extends React.Component {
         err.json().then(res => {
           this.setState({
             stats: null,
-            loadingText: 'Error loading statistics: ' + res.message
+            error: 'Error loading statistics: ' + res.message
           })
         })
       })
@@ -633,44 +639,48 @@ class Overview extends React.Component {
   }
 
   render () {
+    const hero = <Hero title='Overview' subtitle='Analyse the exam results' />
+
+    if (this.state.stats === undefined) {
+      // stats are being loaded, we just want to show a loading screen
+      return hero
+    }
+
+    if (this.state.stats === null) {
+      // no stats, show the error message
+      return <Fail message={this.state.error} />
+    }
+
     return (
       <div>
 
         <Hero title='Overview' subtitle='Analyse the exam results' />
 
-        { this.state.stats
-          ? (
-            <div className='container has-text-centered'>
-              <h1 className='is-size-1'> {this.state.stats.name} </h1>
-              <span className='select is-medium'>
-                <select
-                  onChange={(e) => {
-                    this.setState({
-                      selectedProblemId: parseInt(e.target.value)
-                    })
-                  }}
-                >
-                  <option key='key_0' value='0'>Overview</option>
-                  {this.state.stats.problems.map((problem, index) => {
-                    return <option key={'key_' + (index + 1)} value={problem.id}>{problem.name}</option>
-                  })}
-                </select>
-              </span>
-              <section className='section'>
-                <div className='container'>
-                  { this.state.selectedProblemId === 0
-                    ? this.renderAtGlance()
-                    : this.renderProblemSummary(this.state.selectedProblemId)
-                  }
-                </div>
-              </section>
-            </div>
-          ) : (
+        <div className='container has-text-centered'>
+          <h1 className='is-size-1'> {this.state.stats.name} </h1>
+          <span className='select is-medium'>
+            <select
+              onChange={(e) => {
+                this.setState({
+                  selectedProblemId: parseInt(e.target.value)
+                })
+              }}
+            >
+              <option key='key_0' value='0'>Overview</option>
+              {this.state.stats.problems.map((problem, index) => {
+                return <option key={'key_' + (index + 1)} value={problem.id}>{problem.name}</option>
+              })}
+            </select>
+          </span>
+          <section className='section'>
             <div className='container'>
-              <p className='container has-text-centered is-size-5'> {this.state.loadingText} </p>
+              { this.state.selectedProblemId === 0
+                ? this.renderAtGlance()
+                : this.renderProblemSummary(this.state.selectedProblemId)
+              }
             </div>
-          )
-        }
+          </section>
+        </div>
 
       </div >
     )

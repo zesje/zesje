@@ -1,6 +1,7 @@
 import React from 'react'
 import Notification from 'react-bulma-notification'
 import Hero from '../components/Hero.jsx'
+import Fail from './Fail.jsx'
 
 import FeedbackPanel from '../components/feedback/FeedbackPanel.jsx'
 import ProblemSelector from './grade/ProblemSelector.jsx'
@@ -363,10 +364,16 @@ class Grade extends React.Component {
     // This should happen when there are no submissions or problems for an exam.
     // More specifically, if a user tries to enter a URL for an exam with no submissions.
     // This will also happen while the initial call to update submission in the constructor is still pending.
-    if (!this.state.submission) {
+    if (this.state.submission === undefined) {
+      // submission is being loaded, we just want to show a loading screen
+      return hero
+    }
+
+    if (this.state.submission === null) {
+      // no stats, show the error message
       const message = ((this.state.submissions && this.state.submissions.length > 0)
         ? 'Submission does not exist' : 'There are no submissions yet')
-      return <Hero title='Oops!' subtitle={message} />
+      return <Fail message={message} />
     }
 
     const examID = this.props.examID

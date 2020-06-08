@@ -58,11 +58,8 @@ class PanelExamName extends React.Component {
   }
 
   onChange = () => {
-    // In order to change the name everywhere in the UI we are forced to
-    // update the whole exam here as well as the exam list in the navbar.
-    // This is not ideal and should be addressed in
-    // https://gitlab.kwant-project.org/zesje/zesje/issues/388
-    // TODO: implement data locality for this view
+    // In order to change the name everywhere in the UI we need to update the exam
+    // in the parent view and reload the exam list in the navbar
     this.props.updateExam(this.state.examID)
     this.props.updateExamList()
   }

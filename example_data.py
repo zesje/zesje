@@ -129,7 +129,7 @@ def generate_students(students):
     } for i in range(students)]
 
 
-def _fake_process_pdf(scan, pages, student_ids, copies_per_student):
+def _fake_process_pdf(scan, pages, student_ids, copies_per_student, validate=False):
     copy_number = 0
     for student_id, number_of_copies in zip(student_ids, copies_per_student):
         for _ in range(number_of_copies):
@@ -140,7 +140,7 @@ def _fake_process_pdf(scan, pages, student_ids, copies_per_student):
             for page in range(pages + 1):
                 db.session.add(Page(path=os.path.join(base_copy_path, f'page{page:02d}.jpg'), copy=copy, number=page))
 
-            sub = Submission(copies=[copy], exam=scan.exam, student_id=student_id)
+            sub = Submission(copies=[copy], exam=scan.exam, student_id=student_id, validated=validate)
             db.session.add(sub)
 
             for problem in scan.exam.problems:
@@ -158,7 +158,7 @@ def handle_pdf_processing(app, exam_id, pdf, pages, student_ids, copies_per_stud
     db.session.add(scan)
     db.session.commit()
 
-    # update the name so that `extract_images_from_pdf can process the pdf`
+    # update the name so that `extract_images_from_pdf` can process the pdf
     scan.name = f'{scan.id}.pdf'
     db.session.commit()
 
@@ -169,7 +169,8 @@ def handle_pdf_processing(app, exam_id, pdf, pages, student_ids, copies_per_stud
             pdf.seek(0)
 
     if skip_processing:
-        _fake_process_pdf(scan, pages, student_ids, copies_per_student)
+        _fake_process_pdf(scan, pages, student_ids, copies_per_student,
+                          validate=exam.layout == ExamLayout.unstructured)
     else:
         _process_scan(scan_id=scan.id, exam_layout=exam.layout)
 

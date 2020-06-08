@@ -290,7 +290,7 @@ def add_templated_exam(client, pages):
                               content_type='multipart/form-data',
                               data={
                                   'exam_name': exam_name,
-                                  'layout': ExamLayout.templated.value,
+                                  'layout': ExamLayout.templated.name,
                                   'pdf': pdf_file}).get_json()['id']
 
     return exam_id, problems + mc_problems
@@ -309,7 +309,7 @@ def add_unstructured_exam(client, pages):
                           content_type='multipart/form-data',
                           data={
                               'exam_name': exam_name,
-                              'layout': ExamLayout.unstructured.value}
+                              'layout': ExamLayout.unstructured.name}
                           ).get_json()['id']
 
     return exam_id, problems
@@ -318,9 +318,9 @@ def add_unstructured_exam(client, pages):
 def design_exam(app, client, layout, pages, students, grade, solve, multiple_copies, skip_processing):
     register_fonts()
 
-    if layout == ExamLayout.templated:
+    if layout == ExamLayout.templated.name:
         exam_id, problems = add_templated_exam(client, pages)
-    elif layout == ExamLayout.unstructured:
+    elif layout == ExamLayout.unstructured.name:
         exam_id, problems = add_unstructured_exam(client, pages)
     else:
         return None
@@ -372,7 +372,7 @@ def design_exam(app, client, layout, pages, students, grade, solve, multiple_cop
     student_ids = student_ids[:students]
     copies_per_student = [2 if random.random() < multiple_copies else 1 for _ in range(students)]
 
-    if layout == ExamLayout.templated:
+    if layout == ExamLayout.templated.name:
         # Download PDFs
         generated = client.get(f'api/exams/{exam_id}/generated_pdfs',
                                data={"copies_start": 1, "copies_end": sum(copies_per_student), 'type': 'pdf'})
@@ -388,7 +388,7 @@ def design_exam(app, client, layout, pages, students, grade, solve, multiple_cop
 
             print('\tProcessing scans (this may take a while).',)
             handle_pdf_processing(app, exam_id, submission_pdf, pages, student_ids, copies_per_student, skip_processing)
-    elif layout == ExamLayout.unstructured:
+    elif layout == ExamLayout.unstructured.name:
         handle_pdf_processing(app, exam_id, None, pages, student_ids, copies_per_student, True)
 
     # Validate signatures
@@ -459,10 +459,10 @@ if __name__ == '__main__':
     parser.add_argument('--skip-processing', action='store_true', help='fakes the pdf processing to reduce time. \
                         As a drawback, blanks will not be detected.')
     parser.add_argument('--exams', type=int, default=1, help='number of exams to add')
-    parser.add_argument('--layout', type=int, default=ExamLayout.templated.value,
-                        choices=[layout.value for layout in ExamLayout],
-                        help='the layout of the exams: '
-                             + ', '.join(f'{layout.value} for {layout.name}' for layout in ExamLayout))
+    parser.add_argument('--layout', type=str, default=ExamLayout.templated.name,
+                        choices=[layout.name for layout in ExamLayout],
+                        help='the layout of the exams, any of: '
+                             + ', '.join(layout.name for layout in ExamLayout))
     parser.add_argument('--pages', type=int, default=3, help='number of pages per exam (min is 1)')
     parser.add_argument('--students', type=int, default=30, help='number of students per exam')
     parser.add_argument('--graders', type=int, default=4, help='number of graders (min is 1)')

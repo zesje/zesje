@@ -26,7 +26,7 @@ def add_test_data(app):
 def test_add_templated_exam(datadir, test_client):
     with open(os.path.join(datadir, 'blank-a4-2pages.pdf'), 'rb') as pdf:
         response = test_client.post('/api/exams',
-                                    data={'exam_name': 'The Exam', 'pdf': pdf, 'layout': ExamLayout.templated.value})
+                                    data={'exam_name': 'The Exam', 'pdf': pdf, 'layout': ExamLayout.templated.name})
 
         assert response.status_code == 200
 
@@ -35,19 +35,19 @@ def test_add_templated_exam(datadir, test_client):
 
     assert len(data) == 1
 
-    assert data[0]['layout']['value'] == ExamLayout.templated.value
+    assert data[0]['layout']['value'] == ExamLayout.templated.name
 
 
 def test_add_templated_exam_without_pdf(datadir, test_client):
     response = test_client.post('/api/exams',
-                                data={'exam_name': 'The Exam', 'layout': ExamLayout.templated.value})
+                                data={'exam_name': 'The Exam', 'layout': ExamLayout.templated.name})
 
     assert response.status_code == 400
 
 
 def test_add_unstructured_exam(test_client):
     response = test_client.post('/api/exams',
-                                data={'exam_name': 'The Exam', 'layout': ExamLayout.unstructured.value})
+                                data={'exam_name': 'The Exam', 'layout': ExamLayout.unstructured.name})
     assert response.status_code == 200
 
     response = test_client.get('/api/exams')
@@ -55,7 +55,7 @@ def test_add_unstructured_exam(test_client):
 
     assert len(data) == 1
 
-    assert data[0]['layout']['value'] == ExamLayout.unstructured.value
+    assert data[0]['layout']['value'] == ExamLayout.unstructured.name
     assert data[0]['finalized']
 
 
@@ -158,7 +158,7 @@ def test_get_exams(test_client, no_with_subs, no_without_subs):
 
 
 def test_exam_types(test_client):
-    response = test_client.get('/api/exams/types')
+    response = test_client.get('/api/exams/layouts')
 
     assert response.status_code == 200
 

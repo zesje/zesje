@@ -64,6 +64,7 @@ lorem_prob = TextLorem(srange=(2, 5))
 def init_app(delete):
     app = create_app()
 
+    mysql_was_running_before_delete = False
     if os.path.exists(app.config['DATA_DIRECTORY']) and delete:
         mysql_was_running_before_delete = mysql.is_running(app.config)
         if mysql_was_running_before_delete:
@@ -196,7 +197,7 @@ def generate_solution(pdf, pages, student_id, problems):
         for problem in (p for p in problems if p['page'] == page):
             if 'mc_options' in problem:
                 o = random.choice(problem['mc_options'])
-                pdf.rect(o['x'] + 2, o['y'] + 4, 5, 5, fill=1, stroke=0)
+                pdf.rect(o['x'], o['y'] - 8, 9, 8, fill=1, stroke=0)
             else:
                 for i in range(random.randint(1, 3)):
                     pdf.drawString(problem['x'] + 20, problem['y'] - 30 - (20 * i), lorem.sentence())

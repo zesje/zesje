@@ -52,8 +52,10 @@ def get(exam_id, problem_id, submission_id, full_page=False):
     solution = Solution.query.filter(Solution.submission_id == sub.id,
                                      Solution.problem_id == problem_id).one()
 
-    if exam.grade_anonymous and page_number == 0:
+    if exam.layout == ExamLayout.templated and exam.grade_anonymous and page_number == 0:
         student_id_widget, coords = exam_student_id_widget(exam.id)
+    else:
+        student_id_widget = None
 
     raw_images = []
 
@@ -65,7 +67,7 @@ def get(exam_id, problem_id, submission_id, full_page=False):
         page_im = cv2.imread(page_path)
         dpi = guess_dpi(page_im)
 
-        if exam.grade_anonymous and page_number == 0:
+        if student_id_widget:
             # coords are [ymin, ymax, xmin, xmax]
             page_im = _grey_out_student_widget(page_im, coords, dpi)
 

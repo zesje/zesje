@@ -89,7 +89,7 @@ class Scans(Resource):
         # TODO: save these into a process-local datastructure, or save
         # it into the DB as well so that we can cull 'processing' tasks
         # that are actually dead.
-        process_scan.delay(scan_id=scan.id, scan_type=exam.layout)
+        process_scan.delay(scan_id=scan.id, scan_type=exam.layout.value)
 
         return {
             'id': scan.id,

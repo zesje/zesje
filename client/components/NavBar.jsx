@@ -136,7 +136,7 @@ class NavBar extends React.Component {
     api.get('exams')
       .then(exams => {
         let exam = exams.find(exam => exam.id === this.state.examID)
-        if (!exam && exams.length > 1) exam = exams[exams.length - 1]
+        if (!exam && exams.length) exam = exams[exams.length - 1]
 
         this.setState(prevState => ({
           examList: exams,

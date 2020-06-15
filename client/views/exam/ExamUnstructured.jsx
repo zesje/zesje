@@ -77,8 +77,10 @@ class PanelEditUnstructured extends React.Component {
   }
 
   componentWillMount = () => {
-    if (!this.state.examID && this.props.examID !== this.state.examID) {
-      this.setState({examID: this.props.examID}, () => this.loadProblems(null))
+    if (this.props.examID !== null) {
+      this.setState(
+        { examID: this.props.examID }, () => this.loadProblems(null)
+      )
     }
   }
 

@@ -29,7 +29,7 @@ class Grade extends React.Component {
       const partialState = {
         submissions: metadata.submissions,
         problems: metadata.problems,
-        isUnstructured: metadata.layout.value === 2,
+        isUnstructured: metadata.layout.value === 'unstructured',
         examID: this.props.examID,
         gradeAnonymous: metadata.gradeAnonymous
       }

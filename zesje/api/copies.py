@@ -180,9 +180,13 @@ class MissingPages(Resource):
         if exam is None:
             return dict(status=404, message='Exam does not exist.'), 404
 
-        all_pages = set(range(len(
-            PdfReader(os.path.join(app.config['DATA_DIRECTORY'], f'{exam_id}_data/exam.pdf')).pages)
-        ))
+        if exam.layout == ExamLayout.templated:
+            all_pages = set(range(len(
+                PdfReader(os.path.join(app.config['DATA_DIRECTORY'], f'{exam_id}_data/exam.pdf')).pages)
+            ))
+        elif exam.layout == ExamLayout.unstructured:
+            all_pages = set(problem.widget.page for problem in exam.problems)
+
         return [
             {
                 'number': copy.number,

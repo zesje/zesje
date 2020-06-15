@@ -1,10 +1,9 @@
-import os
-
 from flask import current_app as app
 from flask_restful import Resource, reqparse
 from pdfrw import PdfReader
 
 from ..database import db, Exam, Submission, Student, Copy, Solution, ExamLayout
+from ..pdf_generation import exam_pdf_path
 
 
 def copy_to_data(copy):
@@ -182,7 +181,7 @@ class MissingPages(Resource):
 
         if exam.layout == ExamLayout.templated:
             all_pages = set(range(len(
-                PdfReader(os.path.join(app.config['DATA_DIRECTORY'], f'{exam_id}_data/exam.pdf')).pages)
+                PdfReader(exam_pdf_path(exam.id)).pages)
             ))
         elif exam.layout == ExamLayout.unstructured:
             all_pages = set(problem.widget.page for problem in exam.problems)

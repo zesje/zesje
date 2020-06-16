@@ -465,7 +465,8 @@ class Grade extends React.Component {
                   </div>
                 </div>
 
-                <p className={'box is-scrollable-tablet' + (solution.graded_at ? ' is-graded' : '')}>
+                <p className={'box is-scrollable-desktop is-scrollable-tablet' +
+                  (solution.graded_at ? ' is-graded' : '')}>
                   <img
                     src={examID ? ('api/images/solutions/' + examID + '/' +
                       problem.id + '/' + submission.id + '/' + (this.state.fullPage ? '1' : '0')) + '?' +

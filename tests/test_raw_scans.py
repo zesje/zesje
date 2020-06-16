@@ -6,16 +6,18 @@ from PIL import Image
 
 from zesje.raw_scans import create_copy
 from zesje.scans import _process_scan
-from zesje.database import db, Exam, Student, Submission, Scan, Problem, ExamLayout
+from zesje.database import db, Exam, Student, Submission, Scan, Problem, ProblemWidget, ExamLayout
 
 
 @pytest.fixture
 def app_with_data(app):
     exam = Exam(name='', layout=ExamLayout.unstructured)
     problem = Problem(exam=exam, name='Problem')
+    widget = ProblemWidget(problem=problem, x=0, y=0, width=0, height=0)
     students = [Student(id=i+1000000, first_name='', last_name='') for i in range(2)]
     db.session.add(exam)
     db.session.add(problem)
+    db.session.add(widget)
     for student in students:
         db.session.add(student)
     db.session.commit()

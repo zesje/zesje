@@ -41,7 +41,7 @@ class Exams extends React.Component {
   }
 
   renderExamContent = () => {
-    const layout = this.state.exam.layout.value
+    const layout = this.state.exam.layout
     const commonProps = {
       examID: this.state.exam.id,
       examName: this.state.exam.name,

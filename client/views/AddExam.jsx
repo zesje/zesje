@@ -7,33 +7,47 @@ import * as api from '../api.jsx'
 import Hero from '../components/Hero.jsx'
 import DropzoneContent from '../components/DropzoneContent.jsx'
 
+const LAYOUTS = [
+  {
+    name: 'Templated',
+    value: 'templated',
+    acceptsPDF: true,
+    description: 'This is the default type, specially made for presencial exams. ' +
+                'In this mode, the pdf you upload is used as a template to create unique copies ' +
+                 'where students can solve the exam. You can create open answer and multiple choice ' +
+                 'problems, Zesje will take care of cropping the images from scaned PDFs with the solutions ' +
+                 'as well as detecting blank answers and grading multiple choice questions automatically.'
+  },
+  {
+    name: 'Unstructured',
+    value: 'unstructured',
+    acceptsPDF: false,
+    description: 'Image based exam, this is specially made for take-home or virtual exam. ' +
+                 'It is not based in any PDF, the scans can be images, pdfs or zipfiles made by students. ' +
+                 'This flexibily comes at a cost, in this mode the creation of multiple choice questions ' +
+                 'and autograding is not available.'
+  }
+]
+
 class Exams extends React.Component {
   state = {
     pdf: null,
     previewPageCount: 0,
     examName: '',
-    layouts: null,
-    selectedLayout: null
+    selectedLayout: LAYOUTS[0]
   };
 
-  componentDidMount = () => {
-    api.get('/exams/layouts')
-      .then(layouts => {
-        this.setState({ layouts: layouts, selectedLayout: layouts[0] })
-      })
-  }
-
   onChangeLayout = (event) => {
-    const newtype = this.state.layouts[event.target.value]
-    if (!newtype.acceptsPDF) {
+    const newLayout = LAYOUTS[event.target.value]
+    if (!newLayout.acceptsPDF) {
       this.setState({
-        selectedLayout: newtype,
+        selectedLayout: newLayout,
         pdf: null,
         previewPageCount: 0
       })
     } else {
       this.setState({
-        selectedLayout: newtype
+        selectedLayout: newLayout
       })
     }
   }
@@ -121,9 +135,9 @@ class Exams extends React.Component {
                   <div className='control'>
                     <div className='select'>
                       <select onChange={this.onChangeLayout}>
-                        {this.state.layouts !== null ? this.state.layouts.map((layout, index) => {
+                        {LAYOUTS.map((layout, index) => {
                           return <option key={`key_${index}`} value={index}>{layout.name}</option>
-                        }) : null}
+                        })}
                       </select>
                     </div>
                   </div>

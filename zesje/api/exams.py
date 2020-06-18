@@ -89,7 +89,7 @@ class Exams(Resource):
             {
                 'id': ex.id,
                 'name': ex.name,
-                'layout': layout_to_data(ex.layout),
+                'layout': ex.layout.name,
                 'submissions': sub_count[ex.id] if ex.id in sub_count else 0,
                 'finalized': ex.finalized
             }
@@ -150,7 +150,7 @@ class Exams(Resource):
             ],
             'finalized': exam.finalized,
             'gradeAnonymous': exam.grade_anonymous,
-            'layout': layout_to_data(exam.layout)
+            'layout': exam.layout.name
         }
 
     def _get_single_metadata(self, exam_id, shuffle_seed):
@@ -175,7 +175,7 @@ class Exams(Resource):
 
         return {
             'exam_id': exam.id,
-            'layout': layout_to_data(exam.layout),
+            'layout': exam.layout.name,
             'submissions': [
                 {
                     'id': sub.id,
@@ -478,59 +478,3 @@ class ExamPreview(Resource):
             output_file,
             cache_timeout=0,
             mimetype='application/pdf')
-
-
-def layout_to_data(layout):
-    """Returns a description for the given exam type.
-
-    Parameters
-    ----------
-    layout : int | ExamLayout
-        the type to explain
-
-    Returns
-    -------
-    dict : the description
-        `name` : str
-            human readable name that clearly distinguishes all types,
-        `value` : int
-            internal value to be passed to the requests (also unique),
-        `acceptsPDF` : bool
-            whether this layout is based on a PDF from that must be passed from the user,
-        `description` : str
-            text with a brief explanation of the layout.
-    """
-    if layout == ExamLayout.templated:
-        return {
-            'name': 'Templated',
-            'value': ExamLayout.templated.name,
-            'acceptsPDF': True,
-            'description': 'This is the default type, specially made for presencial exams. '
-                           'In this mode, the pdf you upload is used as a template to create unique copies '
-                           'where students can solve the exam. You can create open answer and multiple choice '
-                           'problems, Zesje will take care of cropping the images from scaned PDFs with the solutions '
-                           'as well as detecting blank answers and grading multiple choice questions automatically.'
-        }
-    elif layout == ExamLayout.unstructured:
-        return {
-            'name': 'Unstructured',
-            'value': ExamLayout.unstructured.name,
-            'acceptsPDF': False,
-            'description': 'Image based exam, this is specially made for take-home or virtual exam. '
-                           'It is not based in any PDF, the scans can be images, pdfs or zipfiles made by students. '
-                           'This flexibily comes at a cost, in this mode the creation of multiple choice questions '
-                           'and autograding is not available.'
-        }
-
-
-class ExamLayouts(Resource):
-    """Resource to request all the possible layouts to create an exam."""
-
-    def get(self):
-        """Returns a list of all possible types ordered by `ExamLayout.value`
-
-        Returns
-        -------
-        list of dict : see `layout_to_data`.
-        """
-        return [layout_to_data(layout) for layout in list(ExamLayout)]

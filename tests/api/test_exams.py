@@ -35,7 +35,7 @@ def test_add_templated_exam(datadir, test_client):
 
     assert len(data) == 1
 
-    assert data[0]['layout']['value'] == ExamLayout.templated.name
+    assert data[0]['layout'] == ExamLayout.templated.name
 
 
 def test_add_templated_exam_without_pdf(datadir, test_client):
@@ -55,7 +55,7 @@ def test_add_unstructured_exam(test_client):
 
     assert len(data) == 1
 
-    assert data[0]['layout']['value'] == ExamLayout.unstructured.name
+    assert data[0]['layout'] == ExamLayout.unstructured.name
     assert data[0]['finalized']
 
 
@@ -155,16 +155,6 @@ def test_get_exams(test_client, no_with_subs, no_without_subs):
         exam_name = f'Submissions {i}'
         assert exam_name in exams
         assert exams[exam_name] == i
-
-
-def test_exam_types(test_client):
-    response = test_client.get('/api/exams/layouts')
-
-    assert response.status_code == 200
-
-    data = json.loads(response.data)
-
-    assert len(list(ExamLayout)) == len(data)
 
 
 @pytest.mark.parametrize(

@@ -19,11 +19,6 @@ def process_page(image, page_info, file_info, exam_config, output_directory):
 
     exam = Exam.query.filter(Exam.token == exam_config.token).one()
 
-    if max(problem.widget.page for problem in exam.problems) == 0 and any('.pdf' in info for info in file_info):
-        # single paged exam, each page of the pdf is treated as a different copy instead of a different page
-        # this ensures that in the frontend the images are concatenated vertically
-        page, copy = copy - 1, page + 1
-
     copy = retrieve_copy(exam, student_id, copy)
 
     image_dir = Path(output_directory) / 'submissions' / f'{copy.number}'

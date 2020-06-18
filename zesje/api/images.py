@@ -36,15 +36,26 @@ def get(exam_id, problem_id, submission_id, full_page=False):
     if (sub := Submission.query.get(submission_id)) is None:
         abort(404, 'Submission does not exist.')
 
+    pages = None
     if exam.layout == ExamLayout.unstructured:
         full_page = True
 
-    page_number = problem.widget.page
+        if max(problem.widget.page for problem in exam.problems) == 0:
+            # single paged exam, show all pages from all copies
+            pages = Page.query.filter(Page.copy_id == Copy.id,
+                                      Copy.submission == sub)\
+                              .order_by(Page.number, Copy.number)\
+                              .all()
 
-    #  get the pages
-    pages = Page.query.filter(Page.copy_id == Copy.id,
-                              Copy.submission == sub,
-                              Page.number == page_number).all()
+    if not pages:
+        page_number = problem.widget.page
+
+        #  get the pages
+        pages = Page.query.filter(Page.copy_id == Copy.id,
+                                  Copy.submission == sub,
+                                  Page.number == page_number)\
+                          .order_by(Copy.number)\
+                          .all()
 
     if len(pages) == 0:
         abort(404, f'Page #{page_number} is missing for all copies of submission #{submission_id}.')

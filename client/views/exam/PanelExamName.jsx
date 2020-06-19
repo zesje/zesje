@@ -12,7 +12,6 @@ class PanelExamName extends React.Component {
   }
 
   static getDerivedStateFromProps (nextProps, prevState) {
-    // In case nothing is set, use an empty function that no-ops
     if (prevState.examID !== nextProps.examID) {
       return {
         examID: nextProps.examID,
@@ -20,6 +19,7 @@ class PanelExamName extends React.Component {
         editing: false
       }
     }
+
     return null
   }
 
@@ -60,7 +60,7 @@ class PanelExamName extends React.Component {
   onChange = () => {
     // In order to change the name everywhere in the UI we need to update the exam
     // in the parent view and reload the exam list in the navbar
-    this.props.updateExam(this.state.examID)
+    this.props.updateExam()
     this.props.updateExamList()
   }
 

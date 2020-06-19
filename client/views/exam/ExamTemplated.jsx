@@ -14,6 +14,7 @@ import ExamEditor from './ExamEditor.jsx'
 import PanelGradeAnonymous from './PanelGradeAnonymous.jsx'
 import ExamFinalizeMarkdown from './ExamFinalize.md'
 import PanelExamName from './PanelExamName.jsx'
+import PanelFinalize from './PanelFinalize.jsx'
 
 import './Exam.css'
 
@@ -220,7 +221,7 @@ class ExamTemplated extends React.Component {
   }
 
   backToFeedback = () => {
-    this.props.updateExam(this.props.exam.id)
+    this.props.updateExam()
     this.setState({
       editActive: false
     })
@@ -317,7 +318,7 @@ class ExamTemplated extends React.Component {
             Notification.error('Could not delete problem' +
               (res.message ? ': ' + res.message : ''))
             // update to try and get a consistent state
-            this.props.updateExam(this.props.examID)
+            this.props.updateExam()
           })
         })
     }
@@ -376,9 +377,7 @@ class ExamTemplated extends React.Component {
             })
           }}
           createNewWidget={this.createNewWidget}
-          updateExam={() => {
-            this.props.updateExam(this.props.examID)
-          }}
+          updateExam={this.props.updateExam}
         />
       )
     }
@@ -388,7 +387,7 @@ class ExamTemplated extends React.Component {
     this.setState((newProps, prevState) => ({
       numPages: pdf.numPages
     }), () => {
-      this.props.updateExam(this.props.examID)
+      this.props.updateExam()
     })
   }
 
@@ -455,7 +454,7 @@ class ExamTemplated extends React.Component {
         Notification.error('Could not create multiple choice option' +
           (res.message ? ': ' + res.message : ''))
         // update to try and get a consistent state
-        this.props.updateExam(this.props.examID)
+        this.props.updateExam()
         this.setState({
           selectedWidgetId: null
         })
@@ -529,7 +528,7 @@ class ExamTemplated extends React.Component {
           Notification.error('Could not delete multiple choice option' +
             (res.message ? ': ' + res.message : ''))
           // update to try and get a consistent state
-          this.props.updateExam(this.props.examID)
+          this.props.updateExam()
           this.setState({
             selectedWidgetId: null
           })
@@ -614,7 +613,7 @@ class ExamTemplated extends React.Component {
         {this.props.exam.finalized && <PanelGradeAnonymous
           examID={this.props.exam.id}
           gradeAnonymous={this.props.exam.gradeAnonymous}
-          onChange={(anonymous) => this.props.updateExam(null)} />}
+          onChange={(anonymous) => this.props.updateExam()} />}
       </React.Fragment>
     )
   }
@@ -721,7 +720,7 @@ class ExamTemplated extends React.Component {
                           Notification.error('Could not update feedback' +
                             (res.message ? ': ' + res.message : ''))
                           // update to try and get a consistent state
-                          this.props.updateExam(this.props.examID)
+                          this.props.updateExam()
                         })
                       })
                   })
@@ -777,90 +776,13 @@ class ExamTemplated extends React.Component {
       return <PanelGenerate examID={this.state.examID} />
     }
 
-    let actionsBody
-    if (this.state.previewing) {
-      actionsBody =
-        <this.PanelConfirm
-          onYesClick={() =>
-            api.put(`exams/${this.props.examID}`, {finalized: true})
-              .then(() => {
-                this.props.updateExam(this.props.examID)
-                this.setState({ previewing: false })
-              })
-          }
-          onNoClick={() => this.setState({
-            previewing: false
-          })}
-        />
-    } else {
-      actionsBody =
-        <div className='panel-block field is-grouped'>
-          <this.Finalize />
-          <this.Delete />
-        </div>
-    }
-
     return (
-      <nav className='panel'>
-        <p className='panel-heading'>
-          Actions
-        </p>
-        {actionsBody}
-      </nav>
-    )
-  }
-
-  Finalize = (props) => {
-    return (
-      <button
-        className='button is-link is-fullwidth'
-        onClick={() => {
-          this.setState({
-            selectedWidgetId: null,
-            previewing: true
-          })
-        }}
-      >
-        Finalize
-      </button>
-    )
-  }
-
-  Delete = (props) => {
-    return (
-      <button
-        className='button is-link is-fullwidth is-danger'
-        onClick={() => this.props.deleteExam()}
-      >
-        Delete exam
-      </button>
-    )
-  }
-
-  PanelConfirm = (props) => {
-    return (
-      <div>
-        <div className='panel-block'>
-          <label className='label'>Are you sure?</label>
-        </div>
-        <div className='content panel-block' dangerouslySetInnerHTML={{__html: ExamFinalizeMarkdown}} />
-        <div className='panel-block field is-grouped'>
-          <button
-            disabled={props.disabled}
-            className='button is-danger is-link is-fullwidth'
-            onClick={() => props.onYesClick()}
-          >
-            Yes
-          </button>
-          <button
-            disabled={props.disabled}
-            className='button is-link is-fullwidth'
-            onClick={() => props.onNoClick()}
-          >
-            No
-          </button>
-        </div>
-      </div>
+      <PanelFinalize
+        examID={this.props.examID}
+        onFinalise={() => this.props.updateExam()}
+        deleteExam={this.props.deleteExam}>
+        <p className='content' dangerouslySetInnerHTML={{__html: ExamFinalizeMarkdown}} />
+      </PanelFinalize>
     )
   }
 

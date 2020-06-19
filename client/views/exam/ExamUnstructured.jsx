@@ -6,6 +6,7 @@ import ConfirmationModal from '../../components/ConfirmationModal.jsx'
 import ExamUnstructuredMarkdown from './ExamUnstructuredRules.md'
 import PanelGradeAnonymous from './PanelGradeAnonymous.jsx'
 import PanelExamName from './PanelExamName.jsx'
+import PanelFinalize from './PanelFinalize.jsx'
 
 import * as api from '../../api.jsx'
 
@@ -23,6 +24,7 @@ const ExamContent = (props) => {
   const pageCount = Object.keys(pages).length
   const pageTitle = pageCount === 1 && 'Problem list'
   const addPageButtonText = pageCount === 1 ? 'Specify pages' : 'Add page'
+
   return (
     <div>
       {Object.keys(pages).map(page => (
@@ -56,7 +58,7 @@ const ExamContent = (props) => {
           </div>
         </div>
       ))}
-      {problemCount ? <button
+      {problemCount && !props.finalized ? <button
         className='button problem is-link is-fullwidth'
         onClick={props.addPage}>
         <span>{addPageButtonText}</span>
@@ -67,8 +69,7 @@ const ExamContent = (props) => {
 
 class PanelEditUnstructured extends React.Component {
   state = {
-    examID: null,
-    gradeAnonymous: false,
+    exam: null,
     problems: [],
     problemName: '',
     problemPage: -1,
@@ -76,40 +77,33 @@ class PanelEditUnstructured extends React.Component {
     deletingProblem: false
   }
 
-  componentWillMount = () => {
-    if (this.props.examID !== null) {
-      this.setState(
-        { examID: this.props.examID }, () => this.loadProblems(null)
-      )
+  static getDerivedStateFromProps = (newProps, prevState) => {
+    if (prevState.exam !== newProps.exam) {
+      const problems = newProps.exam.problems.sort((p1, p2) => p1.page - p2.page)
+      let problem = problems.find(p => p.id === prevState.selectedProblemId)
+      if (!problem && problems.length > 0) {
+        problem = problems[0]
+      }
+
+      return {
+        exam: newProps.exam,
+        problems: problems,
+        selectedProblemId: problem ? problem.id : null,
+        problemName: problem ? problem.name : null,
+        problemPage: problem ? problem.page + 1 : -1,
+        deletingProblem: false
+      }
     }
+
+    return null
   }
 
-  componentDidUpdate = (prevProps, prevState) => {
-    if (this.props.examID !== prevProps.examID) {
-      this.setState({examID: this.props.examID}, () => this.loadProblems(null))
+  componentWillUnmount = () => {
+    // This might try to save the name unnecessary, but better twice than never.
+    if (this.selectedProblemId !== null) {
+      this.saveProblemPage()
+      this.saveProblemName()
     }
-  }
-
-  loadProblems = (selectId) => {
-    api.get('exams/' + this.state.examID)
-      .then(exam => {
-        this.setState({
-          gradeAnonymous: exam.gradeAnonymous,
-          problems: exam.problems.sort((p1, p2) => p1.page - p2.page)
-        })
-        this.selectProblem(selectId)
-      })
-      .catch(err => {
-        console.log(err)
-        err.json().then(res => {
-          this.setState({
-            problems: [],
-            selectedProblemId: null,
-            problemName: '',
-            deletingProblem: false
-          })
-        })
-      })
   }
 
   selectProblem = (id) => {
@@ -133,7 +127,7 @@ class PanelEditUnstructured extends React.Component {
 
   createProblem = (page) => {
     const formData = new window.FormData()
-    formData.append('exam_id', this.state.examID)
+    formData.append('exam_id', this.props.examID)
     formData.append('name', `Problem (${this.state.problems.length + 1})`)
     formData.append('page', page)
     formData.append('x', 0)
@@ -141,7 +135,7 @@ class PanelEditUnstructured extends React.Component {
     formData.append('width', 0)
     formData.append('height', 0)
     api.post('problems', formData).then(result => {
-      this.loadProblems(result.id)
+      this.setState({ selectedProblemId: result.id }, () => this.props.updateExam())
     }).catch(err => {
       console.log(err)
     })
@@ -154,7 +148,7 @@ class PanelEditUnstructured extends React.Component {
     }
 
     api.put('problems/' + id, { name: name })
-      .then(resp => this.loadProblems(id))
+      .then(resp => this.props.updateExam())
       .catch(e => {
         this.selectProblem(id) // takes care of updating the problem name to previous state
         console.log(e)
@@ -169,10 +163,10 @@ class PanelEditUnstructured extends React.Component {
     }
 
     api.patch(`widgets/${widgetId}`, {page: parseInt(page) - 1})
-      .then(resp => this.loadProblems(problemId))
+      .then(resp => this.props.updateExam())
       .catch(e => {
         console.log(e)
-        this.loadProblems(problemId)
+        this.props.updateExam()
         e.json().then(res => {
           Notification.warn('Could not save new problem page: ' + res.message)
         })
@@ -182,7 +176,7 @@ class PanelEditUnstructured extends React.Component {
   deleteProblem = (id) => {
     api.del('problems/' + id)
       .then(() => {
-        this.loadProblems(null)
+        this.props.updateExam()
       })
       .catch(err => {
         console.log(err)
@@ -198,11 +192,7 @@ class PanelEditUnstructured extends React.Component {
 
   inputColor = (name, originalName) => {
     if (name) {
-      if (name !== originalName) {
-        return 'is-success'
-      } else {
-        return ''
-      }
+      return name !== originalName ? 'is-success' : ''
     } else {
       return 'is-danger'
     }
@@ -267,10 +257,10 @@ class PanelEditUnstructured extends React.Component {
                 {!this.state.editActive && <label className='label'>Feedback options</label>}
               </div>
               <FeedbackPanel
-                examID={this.state.examID}
+                examID={this.props.examID}
                 problem={props.problem}
                 grading={false}
-                updateFeedback={() => this.loadProblems(props.problem.id)} />
+                updateFeedback={() => this.props.updateExam()} />
 
               <div className='panel-block'>
                 <button
@@ -297,28 +287,36 @@ class PanelEditUnstructured extends React.Component {
 
     return (
       <React.Fragment>
-        <div className='columns is-centered' >
-          <div className='column is-one-third-fullhd is-half-tablet' >
+        <div className='columns is-centered is-multiline' >
+          <div className='column is-one-third-fullhd is-two-thirds-tablet' >
             <PanelExamName
-              name={this.props.examName}
+              name={this.state.exam.name}
               examID={this.props.examID}
               updateExam={this.props.updateExam}
               updateExamList={this.props.updateExamList} />
 
-            <this.PanelProblem
-              problem={problem} />
-
             <PanelGradeAnonymous
-              examID={this.state.examID}
-              gradeAnonymous={this.state.gradeAnonymous}
+              examID={this.props.examID}
+              gradeAnonymous={this.state.exam.gradeAnonymous}
               text='Please note that the student name or number can still be visible on the pages themselves.' />
+
+            {!this.state.exam.finalized &&
+              <PanelFinalize
+                examID={this.props.examID}
+                onFinalise={() => this.props.updateExam()}
+                deleteExam={this.props.deleteExam}>
+                Be careful, changing the amount of pages after finalization can lead to incorrect display of images during grading.
+              </PanelFinalize>
+            }
 
             <nav className='panel'>
               <p className='panel-heading'>
                 Tips
               </p>
 
-              <div className='content panel-block' dangerouslySetInnerHTML={{__html: ExamUnstructuredMarkdown}} />
+              <div className='panel-block'>
+                <p className='content' dangerouslySetInnerHTML={{__html: ExamUnstructuredMarkdown}} />
+              </div>
             </nav>
           </div>
           <div className='column is-one-third-fullhd is-half-tablet'>
@@ -328,8 +326,13 @@ class PanelEditUnstructured extends React.Component {
                 selectedProblemId={this.state.selectedProblemId}
                 selectProblem={this.selectProblem}
                 createProblem={this.createProblem}
-                addPage={this.addPage} />
+                addPage={this.addPage}
+                finalized={this.state.finalized} />
             </div>
+          </div>
+          <div className='column is-one-third-fullhd is-half-tablet'>
+            <this.PanelProblem
+              problem={problem} />
           </div>
         </div>
         {problem && <ConfirmationModal

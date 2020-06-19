@@ -25,17 +25,17 @@ class Exams extends React.Component {
     this.loadExam(this.props.examID)
   }
 
-  loadExam = (id) => {
-    if (!id) return
+  loadExam = () => {
+    if (!this.props.examID) return
 
-    return api.get(`exams/${id}`)
+    return api.get(`exams/${this.props.examID}`)
       .then(resp => {
-        this.setState({exam: resp})
+        this.setState({ exam: resp })
       })
       .catch(err => {
         console.log(err)
         err.json().then(data => {
-          this.setState({exam: null, status: data.message})
+          this.setState({ exam: null, status: data.message })
         })
       })
   }
@@ -43,17 +43,17 @@ class Exams extends React.Component {
   renderExamContent = () => {
     const layout = this.state.exam.layout
     const commonProps = {
+      exam: this.state.exam,
       examID: this.state.exam.id,
       examName: this.state.exam.name,
       updateExamList: this.props.updateExamList,
-      updateExam: this.loadExam
+      updateExam: this.loadExam,
+      deleteExam: () => { this.setState({deletingExam: true}) }
     }
 
     if (layout === 'templated') {
       // templated exam
       return <ExamTemplated
-        exam={this.state.exam}
-        deleteExam={() => { this.setState({deletingExam: true}) }}
         setHelpPage={this.props.setHelpPage}
         {...commonProps} />
     } else if (layout === 'unstructured') {

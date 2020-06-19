@@ -289,8 +289,7 @@ class Exams(Resource):
     def _add_unstructured_exam(self, exam_name):
         exam = Exam(
             name=exam_name,
-            layout=ExamLayout.unstructured,
-            finalized=True
+            layout=ExamLayout.unstructured
         )
 
         db.session.add(exam)

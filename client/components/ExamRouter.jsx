@@ -51,7 +51,7 @@ class ExamRouter extends React.PureComponent {
     return api
       .del('exams/' + examID)
       .then(() => {
-        this.updateExamList()
+        this.props.updateExamList()
         history.push('/')
       })
   }

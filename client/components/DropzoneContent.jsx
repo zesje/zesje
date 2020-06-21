@@ -1,7 +1,7 @@
 import React from 'react'
 
 const DropzoneContent = (props) => (
-  <div className='file has-name is-boxed is-centered'>
+  <div className={'file has-name is-boxed' + (props.center ? ' is-centered' : '')}>
     <label className='file-label'>
       <span className='file-cta'>
         <span className='file-icon'>

@@ -1,6 +1,7 @@
 import React from 'react'
 
 import Hero from '../components/Hero.jsx'
+import Fail from './Fail.jsx'
 import * as api from '../api.jsx'
 
 import EmailControls from './email/EmailControls.jsx'
@@ -42,7 +43,7 @@ class Email extends React.Component {
   render () {
     // This should happen when the exam does not exist.
     if (this.state.error) {
-      return <Hero title='Oops!' subtitle={this.state.error} />
+      return <Fail message={this.state.error} />
     }
 
     return (

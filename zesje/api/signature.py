@@ -4,7 +4,7 @@ import numpy as np
 import cv2
 
 from ..images import get_box
-from ..database import Exam, Copy
+from ..database import Exam, Copy, ExamLayout
 from ..scans import exam_student_id_widget
 
 
@@ -26,6 +26,9 @@ def get(exam_id, copy_number):
     # but it would add more code then it removes.
     if (exam := Exam.query.get(exam_id)) is None:
         return dict(status=404, message='Exam does not exist.'), 404
+
+    if exam.layout == ExamLayout.unstructured:
+        return dict(status=400, message='Signatures are not available for unstructured exams.'), 400
 
     if (copy := Copy.query.filter(Copy.exam == exam,
                                   Copy.number == copy_number).one_or_none()) is None:

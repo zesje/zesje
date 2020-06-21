@@ -4,7 +4,7 @@ import cv2
 import numpy as np
 
 from ..images import get_box, guess_dpi, widget_area
-from ..database import Exam, Submission, Problem, Page, Solution, Copy
+from ..database import Exam, Submission, Problem, Page, Solution, Copy, ExamLayout
 from ..scans import exam_student_id_widget
 
 
@@ -19,7 +19,9 @@ def get(exam_id, problem_id, submission_id, full_page=False):
         The id of the submission. This uniquely identifies
         the submission *across all exams*.
     full_page : bool
-        Whether to return a complete page
+        Whether to return a complete page.
+        If exam type is `unstructured` this option is ignored
+            and the full page is always returned.
 
     Returns
     -------
@@ -34,14 +36,26 @@ def get(exam_id, problem_id, submission_id, full_page=False):
     if (sub := Submission.query.get(submission_id)) is None:
         abort(404, 'Submission does not exist.')
 
-    # TODO: use points as base unit
-    widget_area_in = widget_area(problem)
-    page_number = problem.widget.page
+    pages = None
+    if exam.layout == ExamLayout.unstructured:
+        full_page = True
 
-    #  get the pages
-    pages = Page.query.filter(Page.copy_id == Copy.id,
-                              Copy.submission == sub,
-                              Page.number == page_number).all()
+        if max(problem.widget.page for problem in exam.problems) == 0:
+            # single paged exam, show all pages from all copies
+            pages = Page.query.filter(Page.copy_id == Copy.id,
+                                      Copy.submission == sub)\
+                              .order_by(Page.number, Copy.number)\
+                              .all()
+
+    if not pages:
+        page_number = problem.widget.page
+
+        #  get the pages
+        pages = Page.query.filter(Page.copy_id == Copy.id,
+                                  Copy.submission == sub,
+                                  Page.number == page_number)\
+                          .order_by(Copy.number)\
+                          .all()
 
     if len(pages) == 0:
         abort(404, f'Page #{page_number} is missing for all copies of submission #{submission_id}.')
@@ -49,17 +63,22 @@ def get(exam_id, problem_id, submission_id, full_page=False):
     solution = Solution.query.filter(Solution.submission_id == sub.id,
                                      Solution.problem_id == problem_id).one()
 
-    if exam.grade_anonymous and page_number == 0:
+    if exam.layout == ExamLayout.templated and exam.grade_anonymous and page_number == 0:
         student_id_widget, coords = exam_student_id_widget(exam.id)
+    else:
+        student_id_widget = None
 
     raw_images = []
+
+    # TODO: use points as base unit
+    widget_area_in = widget_area(problem)
 
     for page in pages:
         page_path = page.abs_path
         page_im = cv2.imread(page_path)
         dpi = guess_dpi(page_im)
 
-        if exam.grade_anonymous and page_number == 0:
+        if student_id_widget:
             # coords are [ymin, ymax, xmin, xmax]
             page_im = _grey_out_student_widget(page_im, coords, dpi)
 

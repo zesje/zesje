@@ -1,7 +1,24 @@
 from flask_restful import Resource
 from flask import current_app, request
 
-from ..database import db, Widget, ExamWidget, MultipleChoiceOption
+from ..database import db, Widget, ExamWidget, MultipleChoiceOption, ExamLayout
+
+
+def widget_to_data(widget):
+    if isinstance(widget, ExamWidget):
+        width, height = widget.size
+    else:
+        width, height = widget.width, widget.height
+
+    return {
+        'id': widget.id,
+        'name': widget.name,
+        'x': widget.x,
+        'y': widget.y,
+        'width': width,
+        'height': height,
+        'type': widget.type
+    }
 
 
 def force_boundaries(widget):
@@ -22,6 +39,22 @@ def force_boundaries(widget):
         return True
 
     return False
+
+
+def normalise_pages(widgets):
+    sorted_by_page = sorted(widgets, key=lambda w: w.page)
+
+    prev_page = -1  # this ensures that the first page is correctly set to 0
+    pages_to_substract = 0
+    for widget in sorted_by_page:
+        if prev_page < widget.page:
+            # page changed, increment the number of pages to substact if the difference is bigger than one
+            pages_to_substract += (widget.page - prev_page - 1)
+            prev_page = widget.page
+
+        widget.page -= pages_to_substract
+
+    return pages_to_substract > 0
 
 
 class Widgets(Resource):
@@ -47,15 +80,24 @@ class Widgets(Resource):
             except (TypeError, ValueError) as error:
                 return dict(status=400, message=str(error)), 400
 
-        changed = force_boundaries(widget)
+        exam = widget.exam
+
+        if exam.layout == ExamLayout.templated:
+            message = "The Exam widget has to lay between the corner markers region."
+            changed = force_boundaries(widget)
+        elif exam.layout == ExamLayout.unstructured:
+            message = "There can't be a gap in the page numbers"
+            changed = normalise_pages(list(p.widget for p in exam.problems))
+        else:
+            message = "ok"
+            changed = False
 
         db.session.commit()
 
         if changed:
-            # this response forces the client to move the widget to the specified position
+            # this response forces the client to update the widget to the new state
             return dict(status=409,
-                        message="The Exam widget has to lay between the corner markers region.",
-                        widgetId=widget_id,
-                        position={'x': widget.x, 'y': widget.y}), 409
+                        message=message,
+                        data=widget_to_data(widget)), 409
 
         return dict(status=200, message="ok"), 200

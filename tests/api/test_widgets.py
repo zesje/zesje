@@ -2,7 +2,8 @@ import pytest
 
 from flask import json
 
-from zesje.database import db, Exam, Problem, FeedbackOption, MultipleChoiceOption, ProblemWidget
+from zesje.database import db, Exam, Problem, FeedbackOption, MultipleChoiceOption, ProblemWidget, ExamWidget
+from zesje.api.widgets import normalise_pages, force_boundaries
 
 
 @pytest.fixture
@@ -42,3 +43,26 @@ def test_update_mco_finalized_exam(test_client, add_test_data):
     data = json.loads(result.data)
 
     assert data['status'] == 405
+
+
+@pytest.mark.parametrize('x, y, changed', [
+    (50, 50, False), (0, 0, True), (0, 1000, True), (0, 600, True), (1000, 600, True)
+], ids=['No change', 'Top+Left', 'Bottom+Left', 'Top+Right', 'Bottom+Right'])
+def test_force_boundaries(app, x, y, changed):
+    exam_widget = ExamWidget(name='student_id_widget', exam_id=1, x=x, y=y)
+    assert changed == force_boundaries(exam_widget)
+
+
+@pytest.mark.parametrize('pages_before, pages_after', [
+    ([0, 1, 2, 3], [0, 1, 2, 3]), ([1, 2, 3], [0, 1, 2]),
+    ([0, 2, 3], [0, 1, 2]), ([0, 1, 24], [0, 1, 2])
+    ], ids=['Ordered', 'No first page', 'Gap', 'Big gap'])
+def test_normalise_pages(pages_before, pages_after):
+    widgets = [ProblemWidget(name=f'problem widget {page}', problem_id=page, page=page,
+                             width=100, height=150, x=40, y=200, type='problem_widget')
+               for page in pages_before]
+
+    normalise_pages(widgets)
+
+    pages = [w.page for w in widgets]
+    assert pages == pages_after

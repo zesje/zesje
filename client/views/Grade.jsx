@@ -1,6 +1,7 @@
 import React from 'react'
 import Notification from 'react-bulma-notification'
 import Hero from '../components/Hero.jsx'
+import Fail from './Fail.jsx'
 
 import FeedbackPanel from '../components/feedback/FeedbackPanel.jsx'
 import ProblemSelector from './grade/ProblemSelector.jsx'
@@ -25,6 +26,14 @@ class Grade extends React.Component {
     this.state = {}
     api.get(`exams/${this.props.examID}?only_metadata=true` +
         `&shuffle_seed=${this.props.graderID}`).then(metadata => {
+      const partialState = {
+        submissions: metadata.submissions,
+        problems: metadata.problems,
+        isUnstructured: metadata.layout === 'unstructured',
+        examID: this.props.examID,
+        gradeAnonymous: metadata.gradeAnonymous
+      }
+
       const examID = metadata.exam_id
       const submissionID = this.props.submissionID || metadata.submissions[0].id
       const problemID = this.props.problemID || metadata.problems[0].id
@@ -37,13 +46,17 @@ class Grade extends React.Component {
         this.setState({
           submission: submission,
           problem: problem,
-          submissions: metadata.submissions,
-          problems: metadata.problems,
-          examID: this.props.examID,
-          gradeAnonymous: metadata.gradeAnonymous
-        }, () => this.props.history.replace(`/grade/${examID}/${submissionID}/${problemID}`))
-      })
+          ...partialState
+        }, () => this.props.history.replace(`${this.props.parentURL}/grade/${submissionID}/${problemID}`))
       // eslint-disable-next-line handle-callback-err
+      }).catch(err => {
+        this.setState({
+          submission: null,
+          problem: null,
+          ...partialState
+        })
+      })
+    // eslint-disable-next-line handle-callback-err
     }).catch(err => {
       this.setState({
         submission: null
@@ -58,7 +71,8 @@ class Grade extends React.Component {
    * It also sets the submission to null to display error component when unwanted behaviour is observed.
    */
   syncSubmissionWithUrl = () => {
-    const UrlIsDifferent = (this.props.problemID !== this.state.problem.id || this.props.submissionID !== this.state.submission.id)
+    const UrlIsDifferent = (!this.state.problem || !this.state.submission ||
+      this.props.problemID !== this.state.problem.id || this.props.submissionID !== this.state.submission.id)
     if (UrlIsDifferent) {
       const submissionID = this.props.submissionID || this.state.submissions[0].id
       const problemID = this.props.problemID || this.state.problems[0].id
@@ -71,11 +85,12 @@ class Grade extends React.Component {
         this.setState({
           submission: submission,
           problem: problem
-        }, () => this.props.history.replace(`/grade/${this.state.examID}/${submission.id}/${problem.id}`))
+        }, () => this.props.history.replace(`${this.props.parentURL}/grade/${submission.id}/${problem.id}`))
       }).catch(err => {
         if (err.status === 404) {
           this.setState({
-            submission: null
+            submission: null,
+            problem: null
           })
         }
       })
@@ -131,9 +146,10 @@ class Grade extends React.Component {
     const problemID = this.state.problem && String(this.state.problem.id)
     const submissionID = this.state.submission && String(this.state.submission.id)
     if ((prevProps.examID !== this.props.examID && this.props.examID !== this.state.examID) ||
-      (prevProps.problemID !== this.props.problemID && this.props.problemID !== problemID) ||
-      (prevProps.submissionID !== this.props.submissionID && this.props.submissionID !== submissionID)) {
+      (prevProps.problemID !== this.props.problemID && (!problemID || this.props.problemID !== problemID)) ||
+      (prevProps.submissionID !== this.props.submissionID && (!submissionID || this.props.submissionID !== submissionID))) {
       // The URL has changed and at least one of exam metadata, problem or submission does not match the URL
+      // or the URL has changed and submission or problem is not defined
       this.updateFromUrl()
     }
   }
@@ -154,7 +170,7 @@ class Grade extends React.Component {
       '&ungraded=' + ungraded).then(sub =>
       this.setState({
         submission: sub
-      }, () => this.props.history.push(`/grade/${this.props.examID}/${this.state.submission.id}/${this.state.problem.id}`))
+      }, () => this.props.history.push(`${this.props.parentURL}/grade/${this.state.submission.id}/${this.state.problem.id}`))
     )
   }
   /**
@@ -201,7 +217,8 @@ class Grade extends React.Component {
       // eslint-disable-next-line handle-callback-err
     }).catch(err => {
       this.setState({
-        submission: null
+        submission: null,
+        problem: null
       })
     })
   }
@@ -235,7 +252,7 @@ class Grade extends React.Component {
    * @param problemID - the id of the problem that we want to navigate to
    */
   navigateProblem = (problemID) => {
-    this.props.history.push(`/grade/${this.props.examID}/${this.props.submissionID}/${problemID}`)
+    this.props.history.push(`${this.props.parentURL}/grade/${this.props.submissionID}/${problemID}`)
   }
 
   /**
@@ -344,12 +361,19 @@ class Grade extends React.Component {
 
   render () {
     const hero = (<Hero title='Grade' subtitle='Assign feedback to each solution' />)
-    const fail = (<Hero title='Oops!' subtitle='Submission does not exist' />)
     // This should happen when there are no submissions or problems for an exam.
     // More specifically, if a user tries to enter a URL for an exam with no submissions.
     // This will also happen while the initial call to update submission in the constructor is still pending.
-    if (!this.state.submission) {
-      return fail
+    if (this.state.submission === undefined) {
+      // submission is being loaded, we just want to show a loading screen
+      return hero
+    }
+
+    if (this.state.submission === null) {
+      // no stats, show the error message
+      const message = ((this.state.submissions && this.state.submissions.length > 0)
+        ? 'Submission does not exist' : 'There are no submissions yet')
+      return <Fail message={message} />
     }
 
     const examID = this.props.examID
@@ -375,7 +399,7 @@ class Grade extends React.Component {
 
           <div className='container'>
             <div className='columns'>
-              <div className='column is-one-quarter-fullhd is-one-third-desktop editor-side-panel'>
+              <div className='column is-one-quarter-fullhd is-one-third-desktop'>
                 <ProblemSelector
                   problems={problems}
                   navigateProblem={this.navigateProblem}
@@ -431,15 +455,18 @@ class Grade extends React.Component {
                   </div>
                   <div className='level-right'>
                     <div className='level-item'>
-                      <button className={'button is-info is-outlined' + (this.state.showTooltips ? ' tooltip is-tooltip-active' : '')}
-                        data-tooltip='f' onClick={this.toggleFullPage}>
-                        {this.state.fullPage ? 'Focus problem' : 'View full page'}
-                      </button>
+                      {!this.state.isUnstructured &&
+                        <button className={'button is-info is-outlined' + (this.state.showTooltips ? ' tooltip is-tooltip-active' : '')}
+                          data-tooltip='f' onClick={this.toggleFullPage}>
+                          {this.state.fullPage ? 'Focus problem' : 'View full page'}
+                        </button>
+                      }
                     </div>
                   </div>
                 </div>
 
-                <p className={'box is-scrollable-tablet' + (solution.graded_at ? ' is-graded' : '')}>
+                <p className={'box is-scrollable-desktop is-scrollable-tablet' +
+                  (solution.graded_at ? ' is-graded' : '')}>
                   <img
                     src={examID ? ('api/images/solutions/' + examID + '/' +
                       problem.id + '/' + submission.id + '/' + (this.state.fullPage ? '1' : '0')) + '?' +

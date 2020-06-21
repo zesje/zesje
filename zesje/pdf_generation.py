@@ -122,7 +122,7 @@ def generate_pdfs(exam_pdf_file,
 
 
 def write_finalized_exam(exam):
-    """Save the exam pdf to the default locatin inside the data directory.
+    """Save the exam pdf to the default location inside the data directory.
 
     This function retrives all the necessary data to generate the pdf from `_exam_generate_data`,
     it then overwrites the existing `exam.pdf` by an empty copy with student id widget and

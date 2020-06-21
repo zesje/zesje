@@ -25,8 +25,8 @@ div.mcq-option img.mcq-box {
 
 .editor-content {
   background-color: #ddd;
-  border-radius: 10px;
-  height: 100%;
+  border-radius: 4px;
+  padding: .75rem;
 }
 
 .selection-area {
@@ -54,11 +54,6 @@ div.mcq-option img.mcq-box {
 
 .widget.selected .mcq-option:hover {
     background-color: rgb(25, 149, 216);
-}
-
-.editor-side-panel {
-  background: #fff;
-  margin: 0.75em;
 }
 
 .field-text {
@@ -103,3 +98,6 @@ div.mcq-option img.mcq-box {
   flex-grow: 1;
 }
 
+.page-card:not(:first-child), .button.problem:not(:first-child) {
+  margin-top: .75rem;
+}

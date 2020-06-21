@@ -298,14 +298,15 @@ class PanelEditUnstructured extends React.Component {
             <PanelGradeAnonymous
               examID={this.props.examID}
               gradeAnonymous={this.state.exam.gradeAnonymous}
-              text='Please note that the student name or number can still be visible on the pages themselves.' />
+              text='Student name or number may still be visible on the pages themselves.' />
 
             {!this.state.exam.finalized &&
               <PanelFinalize
                 examID={this.props.examID}
                 onFinalise={() => this.props.updateExam()}
                 deleteExam={this.props.deleteExam}>
-                Be careful, changing the amount of pages after finalization can lead to incorrect display of images during grading.
+                Finalized exams cannot be deleted.
+                Take care to not delete or add pages after finalization.
               </PanelFinalize>
             }
 

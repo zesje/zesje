@@ -65,7 +65,7 @@ class PanelFinalize extends React.Component {
         {this.state.previewing ? (
           <div>
             <div className='panel-block'>
-              <label className='label'>Are you sure?</label>
+              <label className='label'>Finalize exam?</label>
             </div>
             <div className='panel-block'>
               {this.props.children}

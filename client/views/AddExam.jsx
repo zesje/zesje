@@ -12,20 +12,14 @@ const LAYOUTS = [
     name: 'Templated',
     value: 'templated',
     acceptsPDF: true,
-    description: 'This is the default type, specially made for presencial exams. ' +
-                'In this mode, the pdf you upload is used as a template to create unique copies ' +
-                 'where students can solve the exam. You can create open answer and multiple choice ' +
-                 'problems, Zesje will take care of cropping the images from scaned PDFs with the solutions ' +
-                 'as well as detecting blank answers and grading multiple choice questions automatically.'
+    description: 'Upload a PDF, add student ID field and page markers, and distribute to students.' +
+                 'Supports automated student identification, blank detection, and multiple choice questions.'
   },
   {
     name: 'Unstructured',
     value: 'unstructured',
     acceptsPDF: false,
-    description: 'Image based exam, this is specially made for take-home or virtual exam. ' +
-                 'It is not based in any PDF, the scans can be images, pdfs or zipfiles made by students. ' +
-                 'This flexibily comes at a cost, in this mode the creation of multiple choice questions ' +
-                 'and autograding is not available.'
+    description: 'Upload any PDF or image files from students and grade (no automatic scan processing).'
   }
 ]
 
@@ -102,7 +96,7 @@ class Exams extends React.Component {
       </div>
     })
     return (
-      <div>
+      <React.Fragment>
 
         <Hero title='Add exam' subtitle='first step' />
 
@@ -222,7 +216,7 @@ class Exams extends React.Component {
 
         </section>
 
-      </div >
+      </React.Fragment>
     )
   }
 }

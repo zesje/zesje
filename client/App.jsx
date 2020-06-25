@@ -128,7 +128,7 @@ class App extends React.Component {
     return (
       <Router>
         <div>
-          <NavBar exam={exam} updateExam={this.updateExam} grader={grader} changeGrader={this.changeGrader} ref={this.menu} />
+          <NavBar exam={exam} updateExam={this.updateExam} changeGrader={this.changeGrader} ref={this.menu} />
           <Switch>
             <Route exact path='/' component={Home} />
             <Route path='/login' render={({ history }) => <Login changeURL={history.push} />} />

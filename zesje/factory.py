@@ -8,7 +8,7 @@ from flask_login import current_user
 
 from .database import db, login_manager, Grader
 from .api import api_bp
-from .constants import EXEMPTED_ROUTES, AUTOGRADER_NAME
+from .constants import EXEMPTED_ROUTES
 
 STATIC_FOLDER_PATH = os.path.join(abspath(dirname(__file__)), 'static')
 
@@ -35,7 +35,7 @@ def create_app(celery=None, app_config=None):
     @api_bp.before_request
     def check_user_auth():
         # Force authentication if endpoint not one of the exempted routes
-        if (current_user is None or not current_user.is_authenticated) and request.endpoint not in EXEMPTED_ROUTES:
+        if request.endpoint not in EXEMPTED_ROUTES and not (current_user and current_user.is_authenticated):
             return dict(status=401, message=request.endpoint), 401
 
     app.register_blueprint(api_bp, url_prefix='/api')
@@ -48,7 +48,6 @@ def create_app(celery=None, app_config=None):
         # Add instance owner and autograder to db if they don't already exist
         if Grader.query.filter(Grader.oauth_id == app.config['OWNER_OAUTH_ID']).one_or_none() is None:
             db.session.add(Grader(oauth_id=app.config['OWNER_OAUTH_ID'], name=app.config['OWNER_NAME']))
-            db.session.add(Grader(oauth_id=AUTOGRADER_NAME, name=AUTOGRADER_NAME))
             db.session.commit()
 
     @app.route('/')

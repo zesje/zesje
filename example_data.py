@@ -44,10 +44,11 @@ from reportlab.pdfbase import pdfmetrics
 from pdfrw import PdfReader, PdfWriter, PageMerge
 from tempfile import NamedTemporaryFile
 from pathlib import Path
+from requests_mock import Mocker
 
 from lorem.text import TextLorem
 
-from zesje.database import db, Exam, Scan, Submission, Solution, Page, Copy
+from zesje.database import db, Exam, Scan, Submission, Solution, Page, Copy, Grader
 from zesje.scans import _process_scan, process_page
 from zesje.factory import create_app
 import zesje.mysql as mysql
@@ -61,9 +62,19 @@ lorem_name = TextLorem(srange=(1, 3))
 lorem_prob = TextLorem(srange=(2, 5))
 
 
+def auth_user(app, client, grader):
+    result = client.get('/api/oauth/start')
+    with Mocker() as m:
+        m.post(app.config['OAUTH_TOKEN_URL'], json={'access_token': 'test', 'token_type': 'Bearer'})
+        m.get(app.config['OAUTH_USERINFO_URL'], json={app.config['OAUTH_ID_FIELD']: grader.oauth_id,
+                                                      app.config['OAUTH_NAME_FIELD']: grader.name})
+        client.get('/api/oauth/callback?code=test&state=' + result.get_json()['state'])
+
+
 def init_app(delete):
     app = create_app()
 
+    mysql_was_running_before_delete = False
     if os.path.exists(app.config['DATA_DIRECTORY']) and delete:
         mysql_was_running_before_delete = mysql.is_running(app.config)
         if mysql_was_running_before_delete:
@@ -146,6 +157,7 @@ def _fake_process_pdf(scan, pages, student_ids, copies_per_student):
                 db.session.add(Solution(problem=problem, submission=sub))
 
     scan.status = 'success'
+    scan.message = 'Successfully skipped processing.'
     db.session.commit()
 
 
@@ -379,13 +391,19 @@ def design_exam(app, client, pages, students, grade, solve, multiple_copies, ski
 
 
 def create_exams(app, client, exams, pages, students, graders, solve, grade, multiple_copies, skip_processing=False):
+    # create graders
+    for _ in range(max(1, graders)):
+        name = names.get_full_name()
+        email = '.'.join(name.split(' ')).lower() + '@fake.tudelft.nl'
+        grader = Grader(name=name, oauth_id=email)
+        db.session.add(grader)
+    db.session.commit()
+
+    auth_user(app, client, grader)
+
     # create students
     for student in generate_students(students):
         client.put('api/students', data=student)
-
-    # create graders
-    for _ in range(max(1, graders)):
-        client.post('/api/graders', data={'oauth_id': names.get_full_name()})
 
     generated_exams = []
     for _ in range(exams):
@@ -433,7 +451,7 @@ if __name__ == '__main__':
 
     app, mysql_was_running = init_app(args.delete)
 
-    with app.test_client() as client:
+    with app.test_client() as client, app.app_context():
         create_exams(app, client,
                      args.exams,
                      args.pages,

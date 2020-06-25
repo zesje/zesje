@@ -7,7 +7,6 @@ Revises: c61a8d939466
 from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import mysql
-from zesje.database import db, Grader
 
 # revision identifiers, used by Alembic.
 revision = 'dccc66cf2881'
@@ -20,22 +19,17 @@ def upgrade():
     # Drop unique constraint for grader name, add unique column oauth_id
     with op.batch_alter_table('grader', schema=None) as batch_op:
         batch_op.add_column(sa.Column('oauth_id', sa.String(length=320), nullable=True))
-
-        batch_op.alter_column('name',
-                              existing_type=mysql.VARCHAR(length=100),
-                              nullable=True)
+        batch_op.alter_column('name', existing_type=sa.String(length=100), nullable=True)
         batch_op.drop_index('name')
-        batch_op.create_unique_constraint(None, ['oauth_id'])
+
+    conn = op.get_bind()
+
+    # assign oauth id to existing graders
+    conn.execute('INSERT INTO grader (id, oauth_id) SELECT id, name FROM grader')
 
     with op.batch_alter_table('grader', schema=None) as batch_op:
-        for grader in Grader.query.all():
-            grader.oauth_id = grader.name
-
-        db.session.commit()
-
-        batch_op.alter_column(sa.Column('oauth_id', existing_type=sa.String(length=320), nullable=False))
-
-    # ### end Alembic commands ###
+        batch_op.alter_column('oauth_id', existing_type=sa.String(length=320), nullable=False)
+        batch_op.create_unique_constraint(None, ['oauth_id'])
 
 
 def downgrade():
@@ -47,5 +41,3 @@ def downgrade():
                               existing_type=mysql.VARCHAR(length=100),
                               nullable=False)
         batch_op.drop_column('oauth_id')
-
-    # ### end Alembic commands ###

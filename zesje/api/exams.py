@@ -1,5 +1,6 @@
 import hashlib
 from io import BytesIO
+import os
 
 from flask import current_app, send_file, stream_with_context, Response
 from flask_restful import Resource, reqparse
@@ -8,13 +9,13 @@ from werkzeug.datastructures import FileStorage
 from sqlalchemy.orm import selectinload
 from sqlalchemy import func
 
-from zesje.api._helpers import _shuffle
+from zesje.api._helpers import _shuffle, abort
 from zesje.api.problems import problem_to_data
-from ..pdf_generation import exam_pdf_path, _exam_generate_data
+from ..pdf_generation import exam_dir, exam_pdf_path, _exam_generate_data
 from ..pdf_generation import generate_pdfs, generate_single_pdf, generate_zipped_pdfs
 from ..pdf_generation import page_is_size, save_with_even_pages
 from ..pdf_generation import write_finalized_exam
-from ..database import db, Exam, ExamWidget, Submission, FeedbackOption, token_length
+from ..database import db, Exam, ExamWidget, Submission, FeedbackOption, token_length, ExamLayout
 from .submissions import sub_to_data
 
 
@@ -31,7 +32,8 @@ def add_blank_feedback(problems):
 
 def generate_exam_token(exam_id, exam_name, exam_pdf):
     hasher = hashlib.sha1()
-    hasher.update(exam_pdf)
+    if exam_pdf:
+        hasher.update(exam_pdf)
     hasher.update(f'{exam_id},{exam_name}'.encode('utf-8'))
     return hasher.hexdigest()[0:12]
 
@@ -87,9 +89,11 @@ class Exams(Resource):
             {
                 'id': ex.id,
                 'name': ex.name,
-                'submissions': sub_count[ex.id] if ex.id in sub_count else 0
+                'layout': ex.layout.name,
+                'submissions': sub_count[ex.id] if ex.id in sub_count else 0,
+                'finalized': ex.finalized
             }
-            for ex in db.session.query(Exam.id, Exam.name).order_by(Exam.id).all()
+            for ex in db.session.query(Exam).order_by(Exam.id).all()
         ]
 
     def _get_single(self, exam_id):
@@ -146,6 +150,7 @@ class Exams(Resource):
             ],
             'finalized': exam.finalized,
             'gradeAnonymous': exam.grade_anonymous,
+            'layout': exam.layout.name
         }
 
     def _get_single_metadata(self, exam_id, shuffle_seed):
@@ -170,6 +175,7 @@ class Exams(Resource):
 
         return {
             'exam_id': exam.id,
+            'layout': exam.layout.name,
             'submissions': [
                 {
                     'id': sub.id,
@@ -185,23 +191,28 @@ class Exams(Resource):
                 {
                     'id': problem.id,
                     'name': problem.name,
-                } for problem in exam.problems]
+                } for problem in exam.problems],
+            'gradeAnonymous': exam.grade_anonymous,
 
         }
 
     post_parser = reqparse.RequestParser()
-    post_parser.add_argument('pdf', type=FileStorage, required=True, location='files')
+    post_parser.add_argument('pdf', type=FileStorage, required=False, location='files')
     post_parser.add_argument('exam_name', type=str, required=True, location='form')
+    post_parser.add_argument('layout', type=str, required=True, location='form',
+                             choices=[layout.name for layout in ExamLayout])
 
     def post(self):
         """Add a new exam.
 
         Parameters
         ----------
-        pdf : file
-            raw pdf file.
         exam_name: str
             name for the exam
+        layout: int
+            the type of exam to create, one of `ExamLayout` values
+        pdf : file, optional
+            raw pdf file.
 
         Returns
         -------
@@ -210,20 +221,44 @@ class Exams(Resource):
         """
 
         args = self.post_parser.parse_args()
-        exam_name = args['exam_name']
-        pdf_data = args['pdf']
+        exam_name = args['exam_name'].strip()
+        layout = args['layout']
+
+        if not exam_name:
+            return dict(status=400, message='Exam name is empty'), 400
+
+        if layout == ExamLayout.templated.name:
+            pdf_data = args['pdf']
+            exam = self._add_templated_exam(exam_name, pdf_data)
+        elif layout == ExamLayout.unstructured.name:
+            exam = self._add_unstructured_exam(exam_name)
+        else:
+            return dict(status=400, message=f'Exam type {layout} is not defined'), 400
+
+        print(f"Added exam {exam.id} (name: {exam_name}, token: {exam.token}) to database")
+
+        return {
+            'id': exam.id
+        }
+
+    def _add_templated_exam(self, exam_name, pdf_data):
+        if not pdf_data:
+            abort(
+                400,
+                message='Upload a PDF to add a templated exam.'
+            )
 
         format = current_app.config['PAGE_FORMAT']
 
         if not page_is_size(pdf_data, current_app.config['PAGE_FORMATS'][format], tolerance=0.01):
-            return (
-                dict(status=400,
-                     message=f'PDF page size is not {format}.'),
-                400
+            abort(
+                400,
+                message=f'PDF page size is not {format}.'
             )
 
         exam = Exam(
             name=exam_name,
+            layout=ExamLayout.templated
         )
 
         exam.widgets = [
@@ -247,13 +282,24 @@ class Exams(Resource):
         pdf_data.seek(0)
         db.session.commit()
 
-        save_with_even_pages(exam.id, args['pdf'])
+        save_with_even_pages(exam.id, pdf_data)
 
-        print(f"Added exam {exam.id} (name: {exam_name}, token: {exam.token}) to database")
+        return exam
 
-        return {
-            'id': exam.id
-        }
+    def _add_unstructured_exam(self, exam_name):
+        exam = Exam(
+            name=exam_name,
+            layout=ExamLayout.unstructured
+        )
+
+        db.session.add(exam)
+        db.session.commit()  # so exam gets an id
+        exam.token = generate_exam_token(exam.id, exam_name, None)
+        db.session.commit()
+
+        os.makedirs(exam_dir(exam.id), exist_ok=True)
+
+        return exam
 
     put_parser = reqparse.RequestParser()
     put_parser.add_argument('finalized', type=bool, required=False)
@@ -270,7 +316,8 @@ class Exams(Resource):
         elif args['finalized']:
             add_blank_feedback(exam.problems)
 
-            write_finalized_exam(exam)
+            if exam.layout == ExamLayout.templated:
+                write_finalized_exam(exam)
 
             exam.finalized = True
             db.session.commit()
@@ -279,9 +326,10 @@ class Exams(Resource):
             return dict(status=403, message='Exam can not be unfinalized'), 403
 
         if args['grade_anonymous'] is not None:
+            changed = exam.grade_anonymous != args['grade_anonymous']
             exam.grade_anonymous = args['grade_anonymous']
             db.session.commit()
-            return dict(status=200, message="ok"), 200
+            return dict(status=200, message="ok", changed=changed), 200
 
         return dict(status=400, message='One of finalized or anonymous must be present'), 400
 
@@ -316,6 +364,9 @@ class ExamSource(Resource):
 
         if (exam := Exam.query.get(exam_id)) is None:
             return dict(status=404, message='Exam does not exist.'), 404
+
+        if exam.layout == ExamLayout.unstructured:
+            return dict(status=404, message='Unstructured exams have no pdf.'), 404
 
         return send_file(
             exam_pdf_path(exam.id),
@@ -362,6 +413,8 @@ class ExamGeneratedPdfs(Resource):
         if not exam.finalized:
             msg = 'Exam is not finalized.'
             return dict(status=403, message=msg), 403
+        if exam.layout == ExamLayout.unstructured:
+            return dict(status=404, message='Unstructured exams have no pdf.'), 404
 
         if copies_end < copies_start:
             msg = 'copies_end should be larger than copies_start'
@@ -395,9 +448,10 @@ class ExamGeneratedPdfs(Resource):
 class ExamPreview(Resource):
 
     def get(self, exam_id):
-        exam = Exam.query.get(exam_id)
-        if exam is None:
+        if (exam := Exam.query.get(exam_id)) is None:
             return dict(status=404, message='Exam does not exist.'), 404
+        if exam.layout == ExamLayout.unstructured:
+            return dict(status=404, message='Unstructured exams have no pdf.'), 404
 
         exam_dir, student_id_widget, barcode_widget, exam_path, cb_data = _exam_generate_data(exam)
 

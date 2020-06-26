@@ -1,7 +1,8 @@
 import pytest
+import os
 
 from flask import json
-from zesje.database import db, Exam, Problem, ProblemWidget, Submission
+from zesje.database import db, Exam, Problem, ProblemWidget, Submission, ExamLayout
 from zesje.api.exams import generate_exam_token
 
 
@@ -22,6 +23,60 @@ def add_test_data(app):
 
 
 # Actual tests
+def test_add_templated_exam(datadir, test_client):
+    with open(os.path.join(datadir, 'blank-a4-2pages.pdf'), 'rb') as pdf:
+        response = test_client.post('/api/exams',
+                                    data={'exam_name': 'The Exam', 'pdf': pdf, 'layout': ExamLayout.templated.name})
+
+        assert response.status_code == 200
+
+    response = test_client.get('/api/exams')
+    data = response.get_json()
+
+    assert len(data) == 1
+
+    assert data[0]['layout'] == ExamLayout.templated.name
+
+
+def test_add_templated_exam_without_pdf(datadir, test_client):
+    response = test_client.post('/api/exams',
+                                data={'exam_name': 'The Exam', 'layout': ExamLayout.templated.name})
+
+    assert response.status_code == 400
+
+
+def test_add_unstructured_exam(test_client):
+    response = test_client.post('/api/exams',
+                                data={'exam_name': 'The Exam', 'layout': ExamLayout.unstructured.name})
+    assert response.status_code == 200
+
+    response = test_client.get('/api/exams')
+    data = response.get_json()
+
+    assert len(data) == 1
+
+    assert data[0]['layout'] == ExamLayout.unstructured.name
+
+
+def test_add_exam_invalid_layout(test_client):
+    response = test_client.post('/api/exams',
+                                data={'exam_name': 'The Exam', 'layout': -1})
+
+    assert response.status_code == 400
+
+
+@pytest.mark.parametrize(
+    'name, status_code',
+    [('New name', 200), ('', 400)],
+    ids=['New name', 'Empty'])
+def test_change_exam_name(test_client, add_test_data, name, status_code):
+    response = test_client.patch('/api/exams/1', data={'name': name})
+
+    assert response.status_code == status_code
+
+    if status_code == 200:
+        data = test_client.get('/api/exams/1').get_json()
+        assert data['name'] == name
 
 
 def test_get_exams_mult_choice(test_client, add_test_data):
@@ -99,3 +154,23 @@ def test_get_exams(test_client, no_with_subs, no_without_subs):
         exam_name = f'Submissions {i}'
         assert exam_name in exams
         assert exams[exam_name] == i
+
+
+@pytest.mark.parametrize(
+    'finalized, status_code',
+    [(False, 200), (True, 409)],
+    ids=['Not finalized', 'Finalized'])
+def test_delete_exam(test_client, finalized, status_code):
+    exam = Exam(name='finalized', finalized=finalized)
+    db.session.add(exam)
+    db.session.commit()
+
+    response = test_client.delete(f'/api/exams/{exam.id}')
+
+    assert response.status_code == status_code
+
+    response = test_client.get('/api/exams')
+    data = response.get_json()
+    print(data)
+
+    assert len(data) == (1 if finalized else 0)

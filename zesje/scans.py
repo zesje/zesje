@@ -15,7 +15,7 @@ from pylibdmtx import pylibdmtx
 from sqlalchemy.exc import InternalError
 from reportlab.lib.units import inch
 
-from .database import db, Scan, Exam, Page, Student, Submission, Copy, Solution, ExamWidget
+from .database import db, Scan, Exam, Page, Student, Submission, Copy, Solution, ExamWidget, ExamLayout
 from .images import guess_dpi, get_box, is_misaligned
 from .pregrader import grade_problem
 from .image_extraction import extract_pages_from_file, readable_filename
@@ -47,13 +47,8 @@ def process_scan(scan_id, scan_type):
     for signal_type in (signal.SIGINT, signal.SIGTERM):
         signal.signal(signal_type, raise_exit)
 
-    scan_pipelines = {
-        'normal': process_page,
-        'raw': process_page_raw
-    }
-
     try:
-        _process_scan(scan_id, scan_pipelines[scan_type])
+        _process_scan(scan_id, ExamLayout(scan_type))
     except BaseException as error:
         # TODO: When #182 is implemented, properly separate user-facing
         #       messages (written to DB) from developer-facing messages,
@@ -61,7 +56,7 @@ def process_scan(scan_id, scan_type):
         write_scan_status(scan_id, 'error', "Unexpected error: " + str(error))
 
 
-def _process_scan(scan_id, process_page_function):
+def _process_scan(scan_id, exam_layout):
     data_directory = current_app.config['DATA_DIRECTORY']
 
     report_error = functools.partial(write_scan_status, scan_id, 'error')
@@ -76,10 +71,17 @@ def _process_scan(scan_id, process_page_function):
     output_directory = os.path.join(data_directory, f'{scan.exam.id}_data')
 
     try:
-        exam_config = exam_metadata(scan.exam.id)
+        exam_config = exam_metadata(scan.exam)
     except Exception as e:
         report_error(f'Error while reading Exam metadata: {e}')
         raise
+
+    if exam_layout == ExamLayout.templated:
+        process_page_function = process_page
+    elif exam_layout == ExamLayout.unstructured:
+        process_page_function = process_page_raw
+    else:
+        raise ValueError(f'Exam layout {exam_layout} is not defined.')
 
     failures = []
     try:
@@ -116,19 +118,25 @@ def _process_scan(scan_id, process_page_function):
         report_success(f'Processed {total} pages.')
 
 
-def exam_metadata(exam_id):
+def exam_metadata(exam):
     """Read off exam token and barcode coordinates from the database."""
-    # Raises exception if zero or more than one barcode widgets found
-    barcode_widget = ExamWidget.query.filter(ExamWidget.exam_id == exam_id, ExamWidget.name == "barcode_widget").one()
+
+    if exam.layout == ExamLayout.templated:
+        # Raises exception if zero or more than one barcode widgets found
+        barcode_widget = ExamWidget.query.filter(ExamWidget.exam_id == exam.id,
+                                                 ExamWidget.name == "barcode_widget").one()
+    else:
+        # unstructured exams have no barcode
+        barcode_widget = None
 
     return ExamMetadata(
-            token=barcode_widget.exam.token,
+            token=exam.token,
             barcode_coords=[
                 max(0, barcode_widget.y),
                 max(0, barcode_widget.y + 50),
                 max(0, barcode_widget.x),
                 max(0, barcode_widget.x + 50),
-            ],
+            ] if barcode_widget else None,
         )
 
 

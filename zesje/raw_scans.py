@@ -18,6 +18,7 @@ def process_page(image, page_info, file_info, exam_config, output_directory):
         return False, 'Unable to unambiguously determine page and copy number.'
 
     exam = Exam.query.filter(Exam.token == exam_config.token).one()
+
     copy = retrieve_copy(exam, student_id, copy)
 
     image_dir = Path(output_directory) / 'submissions' / f'{copy.number}'

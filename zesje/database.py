@@ -58,6 +58,12 @@ class Grader(UserMixin, db.Model):
     graded_solutions = db.relationship('Solution', backref='graded_by', lazy=True)
 
 
+ExamLayout = enum.Enum(
+    'ExamLayout',
+    'templated unstructured'
+)
+
+
 class Exam(db.Model):
     """ New instances are created when providing a new exam. """
     __tablename__ = 'exam'
@@ -71,6 +77,8 @@ class Exam(db.Model):
                               order_by='ExamWidget.id', lazy=True)
     finalized = Column(Boolean, default=False, server_default='0')
     grade_anonymous = Column(Boolean, default=False, server_default='0')
+    layout = Column('layout', Enum(ExamLayout), server_default='templated', default=ExamLayout.templated,
+                    nullable=False)
 
     @hybrid_property
     def copies(self):
@@ -228,7 +236,7 @@ class Scan(db.Model):
     def path(self):
         suffix = Path(self.name).suffix
         scan_dir = Path(current_app.config['SCAN_DIRECTORY'])
-        return scan_dir / f'{self.id}.{suffix}'
+        return scan_dir / f'{self.id}{suffix}'
 
 
 class Widget(db.Model):
@@ -257,6 +265,10 @@ class MultipleChoiceOption(Widget):
         'polymorphic_identity': 'mcq_widget'
     }
 
+    @property
+    def exam(self):
+        return self.feedback.problem.exam
+
 
 class ExamWidget(Widget):
     __tablename__ = 'exam_widget'
@@ -266,6 +278,10 @@ class ExamWidget(Widget):
     __mapper_args__ = {
         'polymorphic_identity': 'exam_widget'
     }
+
+    @property
+    def exam(self):
+        return self.exam
 
     @property
     def size(self):
@@ -298,3 +314,7 @@ class ProblemWidget(Widget):
     __mapper_args__ = {
         'polymorphic_identity': 'problem_widget'
     }
+
+    @property
+    def exam(self):
+        return self.problem.exam

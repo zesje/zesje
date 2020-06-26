@@ -46,7 +46,6 @@ class Scans(Resource):
     post_parser = reqparse.RequestParser()
     post_parser.add_argument('file', type=FileStorage, required=True,
                              location='files')
-    post_parser.add_argument('scan_type', type=str, choices=['normal', 'raw'], required=True)
 
     def post(self, exam_id):
         """Upload a scan PDF
@@ -90,7 +89,7 @@ class Scans(Resource):
         # TODO: save these into a process-local datastructure, or save
         # it into the DB as well so that we can cull 'processing' tasks
         # that are actually dead.
-        process_scan.delay(scan_id=scan.id, scan_type=args['scan_type'])
+        process_scan.delay(scan_id=scan.id, scan_type=exam.layout.value)
 
         return {
             'id': scan.id,

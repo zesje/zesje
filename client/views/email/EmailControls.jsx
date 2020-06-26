@@ -97,7 +97,7 @@ class EmailIndividualControls extends React.Component {
     this.setState({ sending: true })
     try {
       await api.post(
-        `email/${this.props.exam.id}/${this.props.student.id}`,
+        `email/${this.props.examID}/${this.props.student.id}`,
         {
           template: this.props.template,
           attach: this.state.attachPDF,
@@ -159,29 +159,29 @@ class EmailEveryoneControls extends React.Component {
     attachPDF: true,
     sending: false
   }
+
   disableAnonymousMode = () => {
-    console.log(this.props.exam)
-    if (this.props.exam.gradeAnonymous) {
-      api.put(`exams/${this.props.exam.id}`, {grade_anonymous: false}).then(
+    api.put(`exams/${this.props.examID}`, {grade_anonymous: false}).then(resp => {
+      if (resp.changed) {
         Notification.info(
           <div>
             <p>
               'Turned off anonymous grading for this exam'
             </p>
-            <a onClick={() => api.put(`exams/${this.props.exam.id}`, {grade_anonymous: true})}>
+            <a onClick={() => api.put(`exams/${this.props.examID}`, {grade_anonymous: true})}>
               (undo)
             </a>
           </div>
         )
-      )
-    }
+      }
+    })
   }
 
   sendEmail = async () => {
     this.setState({ sending: true })
     try {
       const response = await api.post(
-        `email/${this.props.exam.id}`,
+        `email/${this.props.examID}`,
         {
           template: this.props.template,
           attach: this.state.attachPDF
@@ -263,7 +263,7 @@ class EmailControls extends React.Component {
               name: 'Individual',
               panel: (
                 <EmailIndividualControls
-                  exam={this.props.exam}
+                  examID={this.props.examID}
                   student={this.props.student}
                   template={this.props.template}
                 />
@@ -273,7 +273,7 @@ class EmailControls extends React.Component {
               name: 'Everyone',
               panel: (
                 <EmailEveryoneControls
-                  exam={this.props.exam}
+                  examID={this.props.examID}
                   template={this.props.template}
                 />
               )

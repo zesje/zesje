@@ -88,6 +88,9 @@ class EmailTemplate(Resource):
 
     def get(self, exam_id):
         """Get an email template for a given exam."""
+        if not Exam.query.get(exam_id):
+            return dict(status=404, message='Exam does not exist.'), 404
+
         try:
             with open(template_path(exam_id)) as f:
                 return f.read()
@@ -101,6 +104,9 @@ class EmailTemplate(Resource):
 
     def put(self, exam_id):
         """Update an email template."""
+        if not Exam.query.get(exam_id):
+            return dict(status=404, message='Exam does not exist.'), 404
+
         email_template = self.put_parser.parse_args().template
         try:
             Template(email_template)

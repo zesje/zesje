@@ -2,7 +2,7 @@ import React from 'react'
 
 const Hero = (props) => {
   return (
-    <section className='hero is-primary is-info is-small'>
+    <section className={'hero is-small ' + (props.colour ? props.colour : 'is-info')}>
       <div className='hero-body'>
         <div className='container'>
           <h1 className='title'>

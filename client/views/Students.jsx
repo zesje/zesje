@@ -112,9 +112,9 @@ class CheckStudents extends React.Component {
         this.nextUnchecked()
       })
       .catch(err => {
-        Notification.error('failed to put submission (see javascript console for details)')
-        console.error('failed to put submission:', err)
-        throw err
+        err.json().then(res => {
+          Notification.error(`Failed to validate copy: ${res.message}`)
+        })
       })
   }
 

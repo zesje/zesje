@@ -3,7 +3,9 @@
 import os
 
 from flask_restful import Resource, reqparse, current_app
-from ..database import db, Exam, Problem, ProblemWidget, Solution, GradingPolicy
+
+from .widgets import widget_to_data, normalise_pages
+from ..database import db, Exam, Problem, ProblemWidget, Solution, GradingPolicy, ExamLayout
 from zesje.pdf_reader import guess_problem_title, get_problem_page
 
 
@@ -23,15 +25,7 @@ def problem_to_data(problem):
             in problem.feedback_options  # Sorted by fb.id
         ],
         'page': problem.widget.page,
-        'widget': {
-            'id': problem.widget.id,
-            'name': problem.widget.name,
-            'x': problem.widget.x,
-            'y': problem.widget.y,
-            'width': problem.widget.width,
-            'height': problem.widget.height,
-            'type': problem.widget.type
-        },
+        'widget': widget_to_data(problem.widget),
         'n_graded': len([sol for sol in problem.solutions if sol.graded_by is not None]),
         'grading_policy': problem.grading_policy.name,
         'mc_options': [
@@ -73,6 +67,26 @@ class Problems(Resource):
 
         Will error if exam for given id does not exist
 
+        Parameters
+        ----------
+        exam_id : int
+            the exam to which the problem belongs
+        name : str
+            the name of the problem. If none, the name is guessed from the PDF.
+        page : int
+            the page where to place the widget
+        x, y : int
+            left and top coordinates of the widget
+        width, height: int
+            size of the widget
+
+        Returns
+        -------
+        dict : the problem
+            `id`: the problem id,
+            `name`: the problem name,
+            `widget_id`: the problem widget id,
+            `grading_policy`: the grading policy
         """
 
         args = self.post_parser.parse_args()
@@ -82,32 +96,33 @@ class Problems(Resource):
         if (exam := Exam.query.get(exam_id)) is None:
             msg = f"Exam with id {exam_id} doesn't exist"
             return dict(status=400, message=msg), 400
-        else:
-            widget = ProblemWidget(
-                x=args['x'],
-                y=args['y'],
-                width=args['width'],
-                height=args['height'],
-                page=args['page'],
-            )
 
-            problem = Problem(
-                exam=exam,
-                name=args['name'],
-                widget=widget,
-            )
+        widget = ProblemWidget(
+            x=args['x'],
+            y=args['y'],
+            width=args['width'],
+            height=args['height'],
+            page=args['page'],
+        )
 
-            # Widget is also added because it is used in problem
-            db.session.add(problem)
+        problem = Problem(
+            exam=exam,
+            name=args['name'],
+            widget=widget,
+        )
 
-            # Add solutions for each already existing submission
-            for sub in exam.submissions:
-                db.session.add(Solution(problem=problem, submission=sub))
+        # Widget is also added because it is used in problem
+        db.session.add(problem)
 
-            # Commit so problem gets an id
-            db.session.commit()
-            widget.name = f'problem_{problem.id}'
+        # Add solutions for each already existing submission
+        for sub in exam.submissions:
+            db.session.add(Solution(problem=problem, submission=sub))
 
+        # Commit so problem gets an id
+        db.session.commit()
+        widget.name = f'problem_{problem.id}'
+
+        if exam.layout == ExamLayout.templated:
             data_dir = current_app.config['DATA_DIRECTORY']
             pdf_path = os.path.join(data_dir, f'{problem.exam_id}_data', 'exam.pdf')
 
@@ -118,12 +133,12 @@ class Problems(Resource):
 
             db.session.commit()
 
-            return {
-                'id': problem.id,
-                'widget_id': widget.id,
-                'problem_name': problem.name,
-                'grading_policy': problem.grading_policy.name
-            }
+        return {
+            'id': problem.id,
+            'widget_id': widget.id,
+            'problem_name': problem.name,
+            'grading_policy': problem.grading_policy.name
+        }
 
     put_parser = reqparse.RequestParser()
     put_parser.add_argument('name', type=str)
@@ -158,13 +173,21 @@ class Problems(Resource):
         return dict(status=200, message="ok"), 200
 
     def delete(self, problem_id):
+        """Deletes a problem of an exam if nothing has been graded."""
         if (problem := Problem.query.get(problem_id)) is None:
             return dict(status=404, message=f"Problem with id {problem_id} doesn't exist"), 404
 
         if any([sol.graded_by is not None for sol in problem.solutions]):
             return dict(status=403, message='Problem has already been graded'), 403
-        else:
-            # The widget and all associated solutions are automatically deleted
-            db.session.delete(problem)
-            db.session.commit()
-            return dict(status=200, message="ok"), 200
+
+        exam = problem.exam
+
+        # The widget and all associated solutions are automatically deleted
+        db.session.delete(problem)
+        db.session.commit()
+
+        if exam.layout == ExamLayout.unstructured:
+            if normalise_pages([p.widget for p in exam.problems]):
+                db.session.commit()
+
+        return dict(status=200, message="ok"), 200

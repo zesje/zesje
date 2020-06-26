@@ -1,6 +1,7 @@
 import React from 'react'
 
 import Hero from '../components/Hero.jsx'
+import Fail from './Fail.jsx'
 import * as api from '../api.jsx'
 
 import EmailControls from './email/EmailControls.jsx'
@@ -11,16 +12,40 @@ import TemplateEditor from './email/TemplateEditor.jsx'
 class Email extends React.Component {
   state = {
     template: null,
-    selectedStudent: null
+    selectedStudent: null,
+    error: null
   }
 
   componentWillMount () {
+    this.loadTemplate()
+  }
+
+  componentDidUpdate = (prevProps, prevState) => {
+    if (this.props.examID !== prevProps.examID) {
+      this.loadTemplate()
+    }
+  }
+
+  loadTemplate = () => {
     api
-      .get(`templates/${this.props.exam.id}`)
+      .get(`templates/${this.props.examID}`)
       .then(template => this.setState({ template }))
+      .catch(err => {
+        console.log(err)
+        err.json().then(e => {
+          if (e.status === 404) {
+            this.setState({error: e.message})
+          }
+        })
+      })
   }
 
   render () {
+    // This should happen when the exam does not exist.
+    if (this.state.error) {
+      return <Fail message={this.state.error} />
+    }
+
     return (
       <React.Fragment>
         <Hero title='Email' subtitle='So the students get their feedback' />
@@ -29,11 +54,11 @@ class Email extends React.Component {
             <div className='columns is-tablet'>
               <div className='column is-3-tablet'>
                 <TemplateControls
-                  exam={this.props.exam}
+                  examID={this.props.examID}
                   template={this.state.template}
                 />
                 <StudentControls
-                  exam={this.props.exam}
+                  examID={this.props.examID}
                   selectedStudent={this.state.selectedStudent}
                   setStudent={student => {
                     this.setState({
@@ -43,13 +68,13 @@ class Email extends React.Component {
                 />
                 <EmailControls
                   template={this.state.template}
-                  exam={this.props.exam}
+                  examID={this.props.examID}
                   student={this.state.selectedStudent}
                 />
               </div>
 
               <TemplateEditor
-                exam={this.props.exam}
+                examID={this.props.examID}
                 student={this.state.selectedStudent}
                 template={this.state.template}
                 onTemplateChange={template => {

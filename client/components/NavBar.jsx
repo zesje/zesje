@@ -130,14 +130,14 @@ class NavBar extends React.Component {
   }
 
   componentDidUpdate = (prevProps, prevState) => {
-    if (prevProps.examID !== this.props.examID) {
+    if (prevState.examID !== this.props.examID) {
+      console.log(this.props.examID)
       this.setState({examID: this.props.examID})
     }
   }
 
   componentDidMount = () => {
     this.updateGrader()
-    this.setState({examID: this.props.examID}, () => this.updateExamList())
   }
 
   updateExamList = () => {
@@ -175,7 +175,11 @@ class NavBar extends React.Component {
 
   logout = () => {
     api.get('oauth/logout')
-      .then(() => this.setState({ grader: null }))
+      .then(() => this.setState({
+        grader: null,
+        examList: [],
+        examID: null
+      }))
       .catch(response => { console.log(response) })
   }
 
@@ -210,7 +214,7 @@ class NavBar extends React.Component {
           <div className='navbar-start'>
 
             {this.state.examList.length && this.state.grader
-              ? <ExamDropdown exam={this.props.exam} list={this.state.examList} />
+              ? <ExamDropdown selectedExam={selectedExam} list={this.state.examList} />
               : <TooltipLink to='/exams' text='Add exam' predicate={[predicateNoGrader]} />
             }
 
@@ -235,7 +239,7 @@ class NavBar extends React.Component {
               text='Email'
               predicate={[predicateNoGrader, predicateExamNotFinalized, predicateSubmissionsEmpty]} />
             <ExportDropdown
-              disabled={predicateSubmissionsEmpty[0]}
+              disabled={predicateNoExam[0] || predicateSubmissionsEmpty[0]}
               fullDisabled={predicateNoGrader[0]}
               examID={this.state.examID} />
             <a className='navbar-item' onClick={() => this.setHelpPage('shortcuts')}>

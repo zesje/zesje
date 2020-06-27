@@ -67,7 +67,12 @@ def widget_area(problem):
     return widget_area_in
 
 
-def covers(cover_img, to_cover_img, padding_pixels=0, threshold=0, kernel_size=9):
+def covers(cover_img,
+           to_cover_img,
+           padding_pixels=0,
+           threshold=0,
+           binary_threshold=150,
+           kernel_size=9):
     """Check if an image covers another image
 
     First, both images are converted to binary. Then, all the content
@@ -86,14 +91,16 @@ def covers(cover_img, to_cover_img, padding_pixels=0, threshold=0, kernel_size=9
         The amount of padding to remove before checking if it is covered
     threshold: int
         The amount of pixels that are allowed to not be covered
+    binary_threshold: int, between 0 and 255
+        The value used to convert grayscale images to binary
     kernel_size: int
         The diameter in pixels of the kernel that is used to thicken the lines
     """
     cover = cv2.cvtColor(cover_img, cv2.COLOR_BGR2GRAY)
-    _, cover_bin = cv2.threshold(cover, 150, 255, cv2.THRESH_BINARY)
+    _, cover_bin = cv2.threshold(cover, binary_threshold, 255, cv2.THRESH_BINARY)
 
     to_cover = cv2.cvtColor(to_cover_img, cv2.COLOR_BGR2GRAY)
-    _, to_cover_bin = cv2.threshold(to_cover, 150, 255, cv2.THRESH_BINARY)
+    _, to_cover_bin = cv2.threshold(to_cover, binary_threshold, 255, cv2.THRESH_BINARY)
 
     kernel = np.ones((kernel_size, kernel_size), dtype=np.uint8)
     cover_thick = cv2.erode(cover_bin, kernel, iterations=1)
@@ -135,6 +142,9 @@ def is_misaligned(area_inch, img, reference, padding_inch=0.2):
     img_cropped = get_box(img, area_inch, padding=padding_inch)
     reference_cropped = get_box(reference, area_inch, padding=padding_inch)
 
+    binary_threshold = current_app.config['THRESHOLD_MISALIGMENT']
+
     return not covers(img_cropped, reference_cropped,
                       padding_pixels=padding_pixels,
+                      binary_threshold=binary_threshold,
                       kernel_size=kernel_size)

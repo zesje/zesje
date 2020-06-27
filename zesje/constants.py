@@ -45,3 +45,10 @@ MIN_ANSWER_SIZE_MM2 = 4
 SQLALCHEMY_TRACK_MODIFICATIONS = False  # Suppress future deprecation warning
 
 ZIP_MIME_TYPES = ['application/zip', 'application/octet-stream', 'application/x-zip-compressed', 'multipart/x-zip']
+
+# threshold for converting color images to binary
+THRESHOLD_STUDENT_ID = 210
+THRESHOLD_BLANK = 210
+THRESHOLD_CORNER_MARKER = 175
+THRESHOLD_MCQ = 175
+THRESHOLD_MISALIGMENT = 175

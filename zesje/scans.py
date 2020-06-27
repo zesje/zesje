@@ -455,7 +455,8 @@ def get_student_number(image, student_id_widget_coords):
 
     widget_image = get_box(image, student_id_widget_coords_inch, padding=0.0)
 
-    _, thresholded = cv2.threshold(widget_image, 150, 255, cv2.THRESH_BINARY)
+    threshold = current_app.config['THRESHOLD_STUDENT_ID']
+    _, thresholded = cv2.threshold(widget_image, threshold, 255, cv2.THRESH_BINARY)
 
     box_size = current_app.config['ID_GRID_BOX_SIZE'] / inch * dpi
     margin = current_app.config['ID_GRID_MARGIN'] / inch * dpi
@@ -539,6 +540,8 @@ def find_corner_marker_keypoints(image_array, corner_sizes=[0.125, 0.25, 0.5]):
     marker_area = marker_length * marker_width * 2
     marker_area_min = max(marker_length * (marker_width - 1) * 2, 0)  # One pixel thinner due to possible aliasing
 
+    binary_threshold = current_app.config['THRESHOLD_CORNER_MARKER']
+
     corner_points = []
 
     top_bottom = (True, False)
@@ -553,7 +556,7 @@ def find_corner_marker_keypoints(image_array, corner_sizes=[0.125, 0.25, 0.5]):
             w_slice = slice(0, int(w*corner_size)) if is_left else slice(int(w*(1-corner_size)), None)
 
             gray_im = cv2.cvtColor(image_array[h_slice, w_slice], cv2.COLOR_BGR2GRAY)
-            _, inv_im = cv2.threshold(gray_im, 175, 255, cv2.THRESH_BINARY_INV)
+            _, inv_im = cv2.threshold(gray_im, binary_threshold, 255, cv2.THRESH_BINARY_INV)
             ret, labels = cv2.connectedComponents(inv_im)
             for label in range(1, ret):
                 new_img = (labels == label)

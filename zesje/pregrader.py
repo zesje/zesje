@@ -81,13 +81,14 @@ def grade_mcq(sol, page_img):
         A numpy array of the image scan
     """
     box_size = current_app.config['CHECKBOX_SIZE']
+    binary_threshold = current_app.config['THRESHOLD_MCQ']
     problem = sol.problem
     mc_filled_counter = 0
 
     for mc_option in problem.mc_options:
         box = (mc_option.x, mc_option.y)
 
-        if box_is_filled(box, page_img, box_size=box_size):
+        if box_is_filled(box, page_img, binary_threshold=binary_threshold, box_size=box_size):
             feedback = mc_option.feedback
             sol.feedback.append(feedback)
             mc_filled_counter += 1
@@ -198,16 +199,24 @@ def is_blank(problem, page_img, reference_img):
 
     min_answer_area_pixels = int(current_app.config['MIN_ANSWER_SIZE_MM2'] * dpi**2 / (mm_per_inch)**2)
 
+    binary_threshold = current_app.config['THRESHOLD_BLANK']
+
     student = get_box(page_img, widget_area_in, padding=padding_inch)
     reference = get_box(reference_img, widget_area_in, padding=padding_inch)
 
     return covers(reference, student,
                   padding_pixels=padding_pixels,
                   kernel_size=kernel_size,
-                  threshold=min_answer_area_pixels)
+                  threshold=min_answer_area_pixels,
+                  binary_threshold=binary_threshold)
 
 
-def box_is_filled(box, page_img, threshold=225, cut_padding=0.05, box_size=9):
+def box_is_filled(box,
+                  page_img,
+                  threshold=225,
+                  binary_threshold=160,
+                  cut_padding=0.05,
+                  box_size=9):
     """
     A function that finds the checkbox in a general area and then checks if it is filled in.
 
@@ -220,6 +229,8 @@ def box_is_filled(box, page_img, threshold=225, cut_padding=0.05, box_size=9):
     threshold: int
         the threshold needed for a checkbox to be considered marked range is between 0 (fully black)
         and 255 (absolutely white).
+    binary_threshold: int, between 0 and 255
+        The value used to convert grayscale images to binary
     cut_padding: float
         The extra padding when retrieving an area where the checkbox is in inches.
     box_size: int
@@ -239,7 +250,7 @@ def box_is_filled(box, page_img, threshold=225, cut_padding=0.05, box_size=9):
     cut_im = get_box(page_img, coords, padding=cut_padding)
 
     gray_im = cv2.cvtColor(cut_im, cv2.COLOR_BGR2GRAY)
-    _, bin_im = cv2.threshold(gray_im, 160, 255, cv2.THRESH_BINARY)
+    _, bin_im = cv2.threshold(gray_im, binary_threshold, 255, cv2.THRESH_BINARY)
 
     h_bin, w_bin, *_ = bin_im.shape
     mask = np.zeros((h_bin+2, w_bin+2), np.uint8)

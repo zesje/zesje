@@ -24,13 +24,18 @@ def process_page(image, page_info, file_info, exam_config, output_directory):
     image_dir = Path(output_directory) / 'submissions' / f'{copy.number}'
     image_dir.mkdir(exist_ok=True, parents=True)
 
-    path = image_dir / f'page{page:02d}.jpg'
+    page = retrieve_page(copy, page)
 
+    # Delete old image of this page if it exists
+    if page.path:
+        old_path = Path(page.abs_path)
+        if old_path.exists():
+            old_path.unlink()  # Remove file
+
+    path = image_dir / f'page{page.number:02d}.jpg'
     image.save(path)
 
-    db.session.add(Page(path=str(path.relative_to(current_app.config['DATA_DIRECTORY'])),
-                        copy=copy,
-                        number=page))
+    page.path = str(path.relative_to(current_app.config['DATA_DIRECTORY']))
     db.session.commit()
 
     return True, 'success'
@@ -52,6 +57,12 @@ def retrieve_copy(exam, student_id, copy):
         copy = copies[copy - 1]
 
     return copy
+
+
+def retrieve_page(copy, page_number):
+    """Returns a page associated with the given copy and page number"""
+    return (Page.query.filter(Page.copy == copy, Page.number == page_number).one_or_none() or
+            Page(copy=copy, number=page_number))
 
 
 def create_submission(exam, student_id, validated):

@@ -343,12 +343,6 @@ def add_to_correct_copy(image_path, barcode):
     return copy
 
 
-def retrieve_page(copy, page_number):
-    """Returns a page associated with the given copy and page number"""
-    return (Page.query.filter(Page.copy == copy, Page.number == page_number).one_or_none() or
-            Page(copy=copy, number=page_number))
-
-
 def decode_barcode(image, exam_config):
     """Extract a barcode from a PIL Image."""
 

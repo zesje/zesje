@@ -333,13 +333,20 @@ def add_to_correct_copy(image_path, barcode):
 
     # We may have added this page in previous uploads but we only want a single
     # 'Page' entry regardless
-    if Page.query.filter(Page.copy == copy, Page.number == barcode.page).one_or_none() is None:
-        rel_path = os.path.relpath(image_path, start=current_app.config['DATA_DIRECTORY'])
-        db.session.add(Page(path=rel_path, copy=copy, number=barcode.page))
+    page = Page.retrieve(copy, barcode.page)
+    if not page.path:
+        page.path = os.path.relpath(image_path, start=current_app.config['DATA_DIRECTORY'])
+        db.session.add(page)
 
     db.session.commit()
 
     return copy
+
+
+def retrieve_page(copy, page_number):
+    """Returns a page associated with the given copy and page number"""
+    return (Page.query.filter(Page.copy == copy, Page.number == page_number).one_or_none() or
+            Page(copy=copy, number=page_number))
 
 
 def decode_barcode(image, exam_config):

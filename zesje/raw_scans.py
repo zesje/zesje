@@ -1,7 +1,7 @@
 from flask import current_app
 from pathlib import Path
 
-from .database import db, Exam, Page, Submission, Solution, Student, Copy
+from .database import db, Exam, Submission, Solution, Student, Copy, Page
 
 
 def process_page(image, page_info, file_info, exam_config, output_directory):
@@ -24,7 +24,7 @@ def process_page(image, page_info, file_info, exam_config, output_directory):
     image_dir = Path(output_directory) / 'submissions' / f'{copy.number}'
     image_dir.mkdir(exist_ok=True, parents=True)
 
-    page = retrieve_page(copy, page)
+    page = Page.retrieve(copy, page)
 
     # Delete old image of this page if it exists
     if page.path:
@@ -57,12 +57,6 @@ def retrieve_copy(exam, student_id, copy):
         copy = copies[copy - 1]
 
     return copy
-
-
-def retrieve_page(copy, page_number):
-    """Returns a page associated with the given copy and page number"""
-    return (Page.query.filter(Page.copy == copy, Page.number == page_number).one_or_none() or
-            Page(copy=copy, number=page_number))
 
 
 def create_submission(exam, student_id, validated):

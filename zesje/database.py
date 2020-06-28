@@ -144,6 +144,12 @@ class Page(db.Model):
     def abs_path(self):
         return os.path.join(current_app.config['DATA_DIRECTORY'], self.path)
 
+    @classmethod
+    def retrieve(cls, copy, page_number):
+        """Retrieve an existing page or create a new one"""
+        return (cls.query.filter(cls.copy == copy, cls.number == page_number).one_or_none() or
+                cls(copy=copy, number=page_number))
+
 
 """
 Enum for the grading policy of a problem

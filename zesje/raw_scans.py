@@ -1,7 +1,7 @@
 from flask import current_app
 from pathlib import Path
 
-from .database import db, Exam, Page, Submission, Solution, Student, Copy
+from .database import db, Exam, Submission, Solution, Student, Copy, Page
 
 
 def process_page(image, page_info, file_info, exam_config, output_directory):
@@ -24,13 +24,18 @@ def process_page(image, page_info, file_info, exam_config, output_directory):
     image_dir = Path(output_directory) / 'submissions' / f'{copy.number}'
     image_dir.mkdir(exist_ok=True, parents=True)
 
-    path = image_dir / f'page{page:02d}.jpg'
+    page = Page.retrieve(copy, page)
 
+    # Delete old image of this page if it exists
+    if page.path:
+        old_path = Path(page.abs_path)
+        if old_path.exists():
+            old_path.unlink()  # Remove file
+
+    path = image_dir / f'page{page.number:02d}.jpg'
     image.save(path)
 
-    db.session.add(Page(path=str(path.relative_to(current_app.config['DATA_DIRECTORY'])),
-                        copy=copy,
-                        number=page))
+    page.path = str(path.relative_to(current_app.config['DATA_DIRECTORY']))
     db.session.commit()
 
     return True, 'success'

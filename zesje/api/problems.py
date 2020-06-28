@@ -97,6 +97,13 @@ class Problems(Resource):
             msg = f"Exam with id {exam_id} doesn't exist"
             return dict(status=400, message=msg), 400
 
+        page_size = current_app.config['PAGE_FORMATS'][current_app.config['PAGE_FORMAT']]
+        if not (args['x'] >= 0 and
+                args['y'] >= 0 and
+                args['width'] + args['x'] < page_size[0] and
+                args['height'] + args['y'] < page_size[1]):
+            return dict(status=400, message='Problem size exceeds the page size.'), 400
+
         widget = ProblemWidget(
             x=args['x'],
             y=args['y'],

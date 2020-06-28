@@ -121,6 +121,7 @@ class ExamEditor extends React.Component {
           this.props.createNewWidget(widgetData)
         }).catch(err => {
           console.log(err)
+          err.json().then(e => Notification.error(e.message))
         })
       }
     }
@@ -141,18 +142,19 @@ class ExamEditor extends React.Component {
 
   /**
    * Calculate selection box dimensions
-   *
-   * TODO: Clamp values to parent
    */
   calculateSelectionBox = (selectionStartPoint, selectionEndPoint) => {
     if (!this.state.mouseDown || selectionEndPoint === null || selectionStartPoint === null) {
       return null
     }
 
-    const left = Math.min(selectionStartPoint.x, selectionEndPoint.x)
-    const top = Math.min(selectionStartPoint.y, selectionEndPoint.y)
-    const width = Math.abs(selectionStartPoint.x - selectionEndPoint.x)
-    const height = Math.abs(selectionStartPoint.y - selectionEndPoint.y)
+    // add a small padding to all the sides
+    const padding = 1
+
+    const left = Math.max(Math.min(selectionStartPoint.x, selectionEndPoint.x), padding)
+    const top = Math.max(Math.min(selectionStartPoint.y, selectionEndPoint.y), padding)
+    const width = Math.min(Math.abs(left - Math.max(selectionStartPoint.x, selectionEndPoint.x)), 595 - padding - left)
+    const height = Math.min(Math.abs(top - Math.max(selectionStartPoint.y, selectionEndPoint.y)), 841 - padding - top)
     const result = {
       left: left,
       top: top,

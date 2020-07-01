@@ -1,4 +1,7 @@
-from flask import abort, Response, current_app
+from flask import abort, Response, current_app, request
+from pathlib import Path
+from werkzeug.http import parse_date, http_date
+from datetime import datetime
 
 import cv2
 import numpy as np
@@ -60,6 +63,15 @@ def get(exam_id, problem_id, submission_id, full_page=False):
     if len(pages) == 0:
         abort(404, f'Page #{page_number} is missing for all copies of submission #{submission_id}.')
 
+    # Convert to int to match the time resolution of HTTP headers (seconds)
+    last_modified = int(max(Path(page.abs_path).stat().st_mtime for page in pages))
+
+    if modified_since := request.headers.get('If-Modified-Since'):
+        modified_since = parse_date(modified_since).timestamp()
+        if last_modified == modified_since:
+            # Send 304 Not Modified with empty body
+            return '', 304
+
     solution = Solution.query.filter(Solution.submission_id == sub.id,
                                      Solution.problem_id == problem_id).one()
 
@@ -110,7 +122,12 @@ def get(exam_id, problem_id, submission_id, full_page=False):
         stitched_image = np.concatenate(tuple(resized_images), axis=0)
 
     image_encoded = cv2.imencode(".jpg", stitched_image)[1].tostring()
-    return Response(image_encoded, 200, mimetype='image/jpeg')
+
+    headers = {
+        'Last-Modified': http_date(datetime.fromtimestamp(last_modified)),
+        'Cache-Control': 'no-cache'
+    }
+    return Response(image_encoded, 200, headers=headers, mimetype='image/jpeg')
 
 
 def _grey_out_student_widget(page_im, coords, dpi):

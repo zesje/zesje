@@ -15,10 +15,6 @@ import 'bulma-tooltip/dist/css/bulma-tooltip.min.css'
 import './grade/Grade.css'
 import '../components/SubmissionNavigation.css'
 
-const getURL = (parentURL, submissionID, problemID) => {
-  return `${parentURL}/grade/${submissionID}/${problemID}`
-}
-
 class Grade extends React.Component {
   /**
    * Constructor sets empty state, and requests metadata for the exam.
@@ -51,7 +47,7 @@ class Grade extends React.Component {
           submission: submission,
           problem: problem,
           ...partialState
-        }, () => this.props.history.replace(getURL(this.props.parentURL, submissionID, problemID)))
+        }, () => this.props.history.replace(this.getURL(submissionID, problemID)))
       // eslint-disable-next-line handle-callback-err
       }).catch(err => {
         this.setState({
@@ -89,7 +85,7 @@ class Grade extends React.Component {
         this.setState({
           submission: submission,
           problem: problem
-        }, () => this.props.history.replace(getURL(this.props.parentURL, submission.id, problem.id)))
+        }, () => this.props.history.replace(this.getURL(submission.id, problem.id)))
       }).catch(err => {
         if (err.status === 404) {
           this.setState({
@@ -158,6 +154,10 @@ class Grade extends React.Component {
     }
   }
 
+  getURL = (submissionID, problemID) => {
+    return `${this.props.parentURL}/grade/${submissionID}/${problemID}`
+  }
+
   /**
    * Navigates the current submission forwards or backwards, and either just to the next, or to the next ungraded.
    * It then pushes the URL of the updated submission to history.
@@ -174,7 +174,7 @@ class Grade extends React.Component {
       '&ungraded=' + ungraded).then(sub =>
       this.setState({
         submission: sub
-      }, () => this.props.history.push(getURL(this.props.parentURL, this.state.submission.id, this.state.problem.id)))
+      }, () => this.props.history.push(this.getURL(this.state.submission.id, this.state.problem.id)))
     )
   }
   /**
@@ -256,7 +256,7 @@ class Grade extends React.Component {
    * @param problemID - the id of the problem that we want to navigate to
    */
   navigateProblem = (problemID) => {
-    this.props.history.push(getURL(this.props.parentURL, this.props.submissionID, problemID))
+    this.props.history.push(this.getURL(this.props.submissionID, problemID))
   }
 
   /**
@@ -264,7 +264,7 @@ class Grade extends React.Component {
    * @param submissionID - the id of the submission that we want to navigate to
    */
   navigateSubmission = (submissionID) => {
-    this.props.history.push(getURL(this.props.parentURL, submissionID, this.props.problemID))
+    this.props.history.push(this.getURL(submissionID, this.props.problemID))
   }
 
   /**

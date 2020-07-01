@@ -61,7 +61,6 @@ class Email extends React.Component {
                   examID={this.props.examID}
                   selectedStudent={this.state.selectedStudent}
                   setStudent={student => {
-                    console.log(student)
                     this.setState({
                       selectedStudent: student
                     })

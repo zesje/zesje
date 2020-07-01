@@ -67,9 +67,8 @@ class StudentControls extends React.Component {
                     'firstName',
                     'lastName'
                   ]}
-                  setSelected={studentID => {
-                    const idx = this.state.students.findIndex(s => s.id === studentID)
-                    this.props.setStudent(this.state.students[idx])
+                  setSelected={student => {
+                    this.props.setStudent(student)
                   }}
                   renderSelected={(student) => (
                     student !== null

@@ -67,7 +67,7 @@ class SearchBox extends React.Component {
     event.target.select()
   }
   onSuggestionSelected = (event, { suggestion }) => {
-    this.props.setSelected(suggestion.id)
+    this.props.setSelected(suggestion)
   }
 
   // Autosuggest will call this function every time you need to update suggestions.

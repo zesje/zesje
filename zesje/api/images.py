@@ -100,8 +100,6 @@ def get(exam_id, problem_id, submission_id, full_page=False):
 
         raw_images.append(raw_image)
 
-    max_width = max(img.shape[1] for img in raw_images)
-
     if len(raw_images) == 1:
         stitched_image = raw_images[0]
     else:

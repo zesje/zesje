@@ -100,13 +100,22 @@ def get(exam_id, problem_id, submission_id, full_page=False):
 
         raw_images.append(raw_image)
 
-    max_height = max(img.shape[0] for img in raw_images)
     max_width = max(img.shape[1] for img in raw_images)
 
     if len(raw_images) == 1:
         stitched_image = raw_images[0]
     else:
-        resized_images = (cv2.resize(raw_image, (max_width, max_height)) for raw_image in raw_images)
+        max_width = max(img.shape[1] for img in raw_images)
+
+        resized_images = []
+        for raw_image in raw_images:
+            if max_width == raw_image.shape[1]:
+                resized_images.append(raw_image)
+            else:
+                factor = max_width / raw_image.shape[1]
+                new_height = int(factor * raw_image.shape[0])
+                resized_images.append(cv2.resize(raw_image, (max_width, new_height)))
+
         stitched_image = np.concatenate(tuple(resized_images), axis=0)
 
     image_encoded = cv2.imencode(".jpg", stitched_image)[1].tostring()

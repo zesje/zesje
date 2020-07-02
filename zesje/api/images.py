@@ -109,10 +109,11 @@ def get(exam_id, problem_id, submission_id, full_page=False):
         for raw_image in raw_images:
             if max_width == raw_image.shape[1]:
                 resized_images.append(raw_image)
-            else:
-                factor = max_width / raw_image.shape[1]
-                new_height = int(factor * raw_image.shape[0])
-                resized_images.append(cv2.resize(raw_image, (max_width, new_height)))
+                continue
+
+            factor = max_width / raw_image.shape[1]
+            new_height = int(factor * raw_image.shape[0])
+            resized_images.append(cv2.resize(raw_image, (max_width, new_height)))
 
         stitched_image = np.concatenate(tuple(resized_images), axis=0)
 

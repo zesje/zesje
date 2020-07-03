@@ -208,7 +208,7 @@ class PanelEditUnstructured extends React.Component {
     }
   }
 
-  onFinalise = () => {
+  onFinalize = () => {
     this.props.updateExam()
     // needed to enable tabs in navbar
     this.props.updateExamList()
@@ -309,7 +309,7 @@ class PanelEditUnstructured extends React.Component {
             {!this.state.exam.finalized &&
               <PanelFinalize
                 examID={this.props.examID}
-                onFinalise={this.onFinalise}
+                onFinalize={this.onFinalize}
                 deleteExam={this.props.deleteExam}>
                 Finalized exams cannot be deleted.
                 Take care to not delete or add pages after finalization.

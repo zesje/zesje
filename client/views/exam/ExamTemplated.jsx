@@ -771,7 +771,7 @@ class ExamTemplated extends React.Component {
     )
   }
 
-  onFinalise = () => {
+  onFinalize = () => {
     this.props.updateExam()
     // needed to enable tabs in navbar
     this.props.updateExamList()
@@ -785,7 +785,7 @@ class ExamTemplated extends React.Component {
     return (
       <PanelFinalize
         examID={this.props.examID}
-        onFinalise={this.onFinalise}
+        onFinalize={this.onFinalize}
         deleteExam={this.props.deleteExam}>
         <p className='content' dangerouslySetInnerHTML={{__html: ExamFinalizeMarkdown}} />
       </PanelFinalize>

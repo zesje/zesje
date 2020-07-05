@@ -4,13 +4,12 @@
 }
 
 .control.is-score-control {
-    width: 1.5rem;
+    width: 3rem;
     margin-right: 0;
 }
 
 .control.is-score-control > .input {
     text-align: center;
-    margin-top: 0.25rem;
     padding-left: 0.1rem;
     padding-right: 0.1rem;
 }

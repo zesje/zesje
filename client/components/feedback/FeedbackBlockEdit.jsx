@@ -1,6 +1,7 @@
 import React from 'react'
 
-import ConfirmationModal from '../../components/ConfirmationModal.jsx'
+import ConfirmationModal from '../ConfirmationModal.jsx'
+import ColorInput from '../ColorInput.jsx'
 import * as api from '../../api.jsx'
 import Notification from 'react-bulma-notification'
 
@@ -131,15 +132,24 @@ class EditPanel extends React.Component {
         <div className='panel-block attach-bottom'>
           <div className='field-body'>
             <div className='field no-grow'>
+              <p className='label'>Score</p>
               <div className='control is-score-control'>
-                <input className='input is-small' placeholder='#'
-                  value={this.state.score} onChange={this.changeScore} onKeyDown={this.key} />
+                <ColorInput
+                  placeholder='7'
+                  value={this.state.score}
+                  onChange={this.changeScore}
+                  onKeyDown={this.key} />
               </div>
             </div>
             <div className='field grow'>
+              <p className='label'>Name</p>
               <div className='control'>
-                <input className='input' placeholder='Name' name='name'
-                  value={this.state.name} onChange={this.changeText} onKeyDown={this.key} />
+                <ColorInput
+                  placeholder='e.g. Correct solution'
+                  name='name'
+                  value={this.state.name}
+                  onChange={this.changeText}
+                  onKeyDown={this.key} />
               </div>
             </div>
           </div>
@@ -148,8 +158,13 @@ class EditPanel extends React.Component {
           <div className='field is-fullwidth'>
             <label className='label'>Description</label>
             <div className='control has-icons-left'>
-              <textarea className='input' style={{height: '4rem'}} placeholder='Description' name='description'
-                value={this.state.description} onChange={this.changeText} onKeyDown={this.key} />
+              <textarea className='input'
+                style={{height: '4rem'}}
+                placeholder='Description'
+                name='description'
+                value={this.state.description}
+                onChange={this.changeText}
+                onKeyDown={this.key} />
               <span className='icon is-small is-left'>
                 <i className='fa fa-comment-o' />
               </span>

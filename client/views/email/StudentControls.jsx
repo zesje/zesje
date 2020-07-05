@@ -36,7 +36,7 @@ class StudentControls extends React.Component {
       .then(submissions => {
         // Need to de-duplicate, as some students
         const students = withoutDuplicates(
-          submissions.map(s => s.student).filter(s => s !== null),
+          submissions.reduce((acc, sub) => sub.validated && sub.student ? acc.concat(sub.student) : acc, []),
           student => student.id
         )
         this.setState({ students })

@@ -213,7 +213,7 @@ class Email(Resource):
                 404,
                 message="Exam does not exist"
             )
-        student_ids = [sub.student_id for sub in exam.submissions if sub.student_id]
+        student_ids = [sub.student_id for sub in exam.submissions if sub.student_id and sub.validated]
 
         failed_to_build = list()
         to_send = dict()

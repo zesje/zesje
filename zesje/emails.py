@@ -39,7 +39,10 @@ def solution_pdf(exam_id, student_id, anonymous=False):
     """
     sub = Submission.query.filter(Submission.exam_id == exam_id,
                                   Submission.student_id == student_id,
-                                  Submission.validated).one()
+                                  Submission.validated).one_or_none()
+    if sub is None:
+        raise RuntimeError('Student did not make a submission for this exam')
+
     pages = sorted((page for copy in sub.copies for page in copy.pages), key=(lambda p: (p.copy.number, p.number)))
 
     page_size = current_app.config['PAGE_FORMATS'][current_app.config['PAGE_FORMAT']]

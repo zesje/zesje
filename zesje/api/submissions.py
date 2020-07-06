@@ -15,6 +15,7 @@ def sub_to_data(sub):
             'lastName': sub.student.last_name,
             'email': sub.student.email
         } if sub.student else None,
+        'validated': sub.validated,
         'problems': [
             {
                 'id': sol.problem.id,

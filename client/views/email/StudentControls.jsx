@@ -4,18 +4,6 @@ import Notification from 'react-bulma-notification'
 import SearchBox from '../../components/SearchBox.jsx'
 import * as api from '../../api.jsx'
 
-function withoutDuplicates (items, keyFn = (x => x)) {
-  let seenKeys = new Set()
-  let uniqueItems = []
-  for (const item of items) {
-    if (!seenKeys.has(keyFn(item))) {
-      uniqueItems.push(item)
-      seenKeys.add(keyFn(item))
-    }
-  }
-  return uniqueItems
-}
-
 class StudentControls extends React.Component {
   state = {
     students: []
@@ -34,13 +22,15 @@ class StudentControls extends React.Component {
   updateStudents = () => {
     api.get('submissions/' + this.props.examID)
       .then(submissions => {
-        // Need to de-duplicate, as some students
-        const students = withoutDuplicates(
-          submissions.map(s => s.student).filter(s => s !== null),
-          student => student.id
-        )
+        // filter list of students with validated submissions
+        const students = submissions.reduce((acc, sub) => {
+          return sub.validated && sub.student ? acc.concat(sub.student) : acc
+        }, [])
         this.setState({ students })
         this.props.setStudent(students[0] || null) // in case 'students' is empty
+        if (students.length !== submissions.length) {
+          Notification.warn('There are students with unvalidated submissions, go to the Students tab before sending emails to them.')
+        }
       })
       .catch(err => {
         console.log(err)
@@ -85,7 +75,7 @@ class StudentControls extends React.Component {
               </div>
             </div>
           ) : (
-            <p>No submissions found for this exam.</p>
+            <p className='has-text-danger'>No submissions found for this exam.</p>
           )}
         </div>
       </div>

@@ -2,6 +2,7 @@ import React from 'react'
 import Notification from 'react-bulma-notification'
 import Hero from '../components/Hero.jsx'
 import Fail from './Fail.jsx'
+import update from 'immutability-helper'
 
 import FeedbackPanel from '../components/feedback/FeedbackPanel.jsx'
 import ProblemSelector from './grade/ProblemSelector.jsx'
@@ -271,7 +272,7 @@ class Grade extends React.Component {
    * Toggles a feedback option by it's index in the problems list of feedback.
    * @param index the index of the feedback option.
    */
-  toggleFeedbackOptionIndex (index) {
+  toggleFeedbackOptionIndex = (index) => {
     this.toggleFeedbackOption(this.state.problem.feedback[index].id)
   }
 
@@ -289,22 +290,7 @@ class Grade extends React.Component {
       graderID: this.props.graderID
     }).then(result => {
       this.updateSubmission()
-    })
-  }
-
-  /**
-   * Approves the current submission.
-   */
-  approve = () => {
-    const submission = this.state.submission
-    const problem = this.state.problem
-
-    api.put(`solution/approve/${this.props.examID}/${submission.id}/${problem.id}`, {
-      graderID: this.props.graderID
-    }).catch(resp => {
-      resp.json().then(body => Notification.error('Could not approve feedback: ' + body.message))
-    }).then(result => {
-      this.updateSubmission()
+      this.updateProgressBar(result.state)
     })
   }
 
@@ -330,8 +316,17 @@ class Grade extends React.Component {
        })
      }).then(result => {
        this.updateSubmission()
+       this.updateProgressBar(result.state)
      })
    }
+
+   updateProgressBar = (graded) => this.setState(prevState => ({
+     problem: update(prevState.problem, {
+       n_graded: {
+         $set: prevState.problem.n_graded + (graded ? 1 : -1)
+       }
+     })
+   }))
 
   /**
    * Toggles full page view.

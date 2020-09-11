@@ -1,48 +1,54 @@
 import pytest
 from datetime import datetime
 
-from zesje.database import db, Exam, Problem, FeedbackOption, ProblemWidget, Student, Submission, Solution, Grader
+from zesje.database import db, Exam, ExamLayout, Problem, FeedbackOption,\
+                           ProblemWidget, Student, Submission, Solution, Grader
 
 
 @pytest.fixture
 def add_test_data(app):
-    exam = Exam(id=1, name='exam 1', finalized=True)
-    db.session.add(exam)
+    for layout in ExamLayout:
+        id = layout.value
+        print(id)
+        exam = Exam(id=id, name=f'exam {layout.name}', finalized=True, layout=layout)
+        db.session.add(exam)
 
-    problem = Problem(id=1, name='Problem 1', exam_id=1)
-    db.session.add(problem)
+        problem = Problem(id=id, name=f'Problem {layout.name}', exam_id=id)
+        db.session.add(problem)
 
-    problem_widget = ProblemWidget(id=1, name='problem widget', problem_id=1, page=2,
-                                   width=100, height=150, x=40, y=200, type='problem_widget')
-    db.session.add(problem_widget)
-    db.session.commit()
+        problem_widget = ProblemWidget(id=id, name=f'problem widget {layout.name}', problem_id=id, page=2,
+                                       width=100, height=150, x=40, y=200, type='problem_widget')
+        db.session.add(problem_widget)
+        db.session.commit()
 
-    feedback_option = FeedbackOption(id=1, problem_id=1, text='text', description='desc', score=1)
-    db.session.add(feedback_option)
-    db.session.commit()
+        feedback_option = FeedbackOption(id=id, problem_id=id, text='text', description='desc', score=1)
+        db.session.add(feedback_option)
+        db.session.commit()
 
-    yield app, exam, problem
+    yield app
 
 
 @pytest.mark.parametrize('id, status', [
     (1, 200),
+    (2, 200),
     (42, 404)
-], ids=['Exists', 'Not exists'])
+], ids=['Exists Templated', 'Exists unstructured', 'Not exists'])
 def test_get_problem(test_client, add_test_data, id, status):
     result = test_client.get(f'/api/problems/{id}')
 
     assert result.status_code == status
 
 
-@pytest.mark.parametrize('position, status', [
-    ((-1, 4, 400, 200), 409),
-    ((10, -5, 400, 200), 409),
-    ((10, 10, 800, 200), 409),
-    ((10, 700, 400, 500), 409)
-], ids=['Exceeds left', 'Exceeds top', 'Exceeds right', 'Exceeds bottom'])
-def test_add_problem(test_client, add_test_data, position, status):
+@pytest.mark.parametrize('exam_id, position, status', [
+    (1, (-1, 4, 400, 200), 409),
+    (1, (10, -5, 400, 200), 409),
+    (1, (10, 10, 800, 200), 409),
+    (1, (10, 700, 400, 500), 409),
+    (2, (-24, 5, 10000, 200), 200)
+], ids=['Exceeds left', 'Exceeds top', 'Exceeds right', 'Exceeds bottom', 'Allowed unstructured'])
+def test_add_problem(test_client, add_test_data, exam_id, position, status):
     req_body = {
-        'exam_id': 1,
+        'exam_id': exam_id,
         'x': position[0],
         'y': position[1],
         'width': position[2],
@@ -57,8 +63,9 @@ def test_add_problem(test_client, add_test_data, position, status):
 
 @pytest.mark.parametrize('id, status', [
     (1, 200),
+    (2, 200),
     (42, 404),
-], ids=['Exists', 'Not exists'])
+], ids=['Allowed templated', 'Allowed unstructured', 'Not exists'])
 def test_rename_problem(test_client, add_test_data, id, status):
     new_name = 'New'
     result = test_client.put(f'/api/problems/{id}', data={'name': new_name})
@@ -70,8 +77,9 @@ def test_rename_problem(test_client, add_test_data, id, status):
 
 @pytest.mark.parametrize('id, status', [
     (1, 200),
+    (2, 200),
     (42, 404),
-], ids=['Exists', 'Not exists'])
+], ids=['Allowed templated', 'Allowed unstructured', 'Not exists'])
 def test_delete_problem(test_client, add_test_data, id, status):
     result = test_client.delete(f'/api/problems/{id}')
 
@@ -79,22 +87,24 @@ def test_delete_problem(test_client, add_test_data, id, status):
     assert Problem.query.get(id) is None
 
 
-def test_delete_problem_graded(test_client, add_test_data):
-    app, exam, problem = add_test_data
-
+@pytest.mark.parametrize('exam_id, problem_id', [
+    (1, 1),
+    (2, 2),
+], ids=['Templated', 'Unstructured'])
+def test_delete_problem_graded(test_client, add_test_data, exam_id, problem_id):
     student = Student(first_name='', last_name='')
     db.session.add(student)
     grader = Grader(name='Zesje')
     db.session.add(grader)
     db.session.commit()
-    sub = Submission(student=student, exam=exam)
+    sub = Submission(student=student, exam_id=exam_id)
     db.session.add(sub)
     db.session.commit()
-    sol = Solution(problem=problem, submission=sub, graded_by=grader, graded_at=datetime.now())
+    sol = Solution(problem_id=problem_id, submission=sub, graded_by=grader, graded_at=datetime.now())
     db.session.add(sol)
     db.session.commit()
 
-    result = test_client.delete(f'/api/problems/{problem.id}')
+    result = test_client.delete(f'/api/problems/{problem_id}')
 
     assert result.status_code == 403
-    assert Problem.query.get(problem.id) is not None
+    assert Problem.query.get(problem_id) is not None

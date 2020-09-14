@@ -38,6 +38,10 @@ BLANK_FEEDBACK_NAME = 'Blank'
 # Allow up to 1 mm misalignment in any direction
 MAX_ALIGNMENT_ERROR_MM = 1
 
+# Maximal image size
+MAX_WIDTH = 1500
+MAX_HEIGHT = 65000
+
 # Make sure a roughly 1 cm long line written with
 # a ballpoint pen is regarded as not blank.
 MIN_ANSWER_SIZE_MM2 = 4

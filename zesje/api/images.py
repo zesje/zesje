@@ -115,16 +115,21 @@ def get(exam_id, problem_id, submission_id, full_page=False):
     if len(raw_images) == 1:
         stitched_image = raw_images[0]
     else:
-        max_width = max(img.shape[1] for img in raw_images)
+        heights, widths = np.array([img.shape[:1] for img in raw_images]).T
+        max_width = min(np.max(widths), current_app.config['MAX_WIDTH'])
+        factors = max_width / widths
+        height_factor = current_app.config['MAX_HEIGHT'] / np.sum(heights * factors)
+        height_factor = min(height_factor, 1)
+        max_width = int(max_width * height_factor)
+        factors *= height_factor
 
         resized_images = []
-        for raw_image in raw_images:
+        for raw_image, factor in zip(raw_images, factors):
             if max_width == raw_image.shape[1]:
                 resized_images.append(raw_image)
                 continue
 
-            factor = max_width / raw_image.shape[1]
-            new_height = int(factor * raw_image.shape[0])
+            new_height = round(factor * raw_image.shape[0])
             resized_images.append(cv2.resize(raw_image, (max_width, new_height)))
 
         stitched_image = np.concatenate(tuple(resized_images), axis=0)

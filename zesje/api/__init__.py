@@ -25,9 +25,20 @@ from . import export
 
 
 def authenticate(func):
+    """
+    Function decorator that checks if the user is logged in before executing the actual function.
+    If the user is not logged in it returns a 401 UNAUTHORIZED respons.
+    If the endpoint belongs to the excempt routes, the method belongs to the excempt methods or
+    login is disabled (useful during development) the function is executed without checking for authentication.
+
+    See Also
+    --------
+    flask_login.login_required
+    """
     @wraps(func)
     def decorated_view(*args, **kwargs):
-        if request.method in current_app.config['EXEMPT_ROUTES']:
+        if request.endpoint in current_app.config['EXEMPT_ROUTES'] \
+                or request.method in current_app.config['EXEMPT_METHODS']:
             return func(*args, **kwargs)
         elif current_app.config.get('LOGIN_DISABLED'):
             return func(*args, **kwargs)

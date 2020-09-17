@@ -44,7 +44,6 @@ from reportlab.pdfbase import pdfmetrics
 from pdfrw import PdfReader, PdfWriter, PageMerge
 from tempfile import NamedTemporaryFile
 from pathlib import Path
-from requests_mock import Mocker
 
 from lorem.text import TextLorem
 
@@ -60,15 +59,6 @@ if 'ZESJE_SETTINGS' not in os.environ:
 
 lorem_name = TextLorem(srange=(1, 3))
 lorem_prob = TextLorem(srange=(2, 5))
-
-
-def auth_user(app, client, grader):
-    result = client.get('/api/oauth/start')
-    with Mocker() as m:
-        m.post(app.config['OAUTH_TOKEN_URL'], json={'access_token': 'test', 'token_type': 'Bearer'})
-        m.get(app.config['OAUTH_USERINFO_URL'], json={app.config['OAUTH_ID_FIELD']: grader.oauth_id,
-                                                      app.config['OAUTH_NAME_FIELD']: grader.name})
-        client.get('/api/oauth/callback?code=test&state=' + result.get_json()['state'])
 
 
 def init_app(delete):
@@ -436,8 +426,6 @@ def create_exams(app,
         grader = Grader(name=name, oauth_id=email)
         db.session.add(grader)
     db.session.commit()
-
-    auth_user(app, client, grader)
 
     # create students
     for student in generate_students(students):

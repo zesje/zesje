@@ -40,6 +40,7 @@ OAUTH_INSECURE_TRANSPORT = False
 
 # Routes exempted from authentication
 EXEMPT_ROUTES = ['zesje.api.oauthstart', 'zesje.api.oauthcallback']
+EXEMPT_METHODS = ['OPTIONS']
 
 # Instance owner details
 OWNER_OAUTH_ID = None

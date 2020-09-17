@@ -1,7 +1,7 @@
 import React from 'react'
 import Loadable from 'react-loadable'
 import { hot } from 'react-hot-loader'
-import { BrowserRouter as Router, Route, Switch } from 'react-router-dom'
+import { BrowserRouter as Router, Route, Switch, Redirect } from 'react-router-dom'
 
 import 'bulma/css/bulma.css'
 import 'react-bulma-notification/build/css/index.css'
@@ -35,6 +35,26 @@ const Fail = Loadable({
   loading: Loading
 })
 
+const PrivateRoute = ({ isAuthenticated, render, ...rest }) => {
+  return (
+    <Route
+      {...rest}
+      render={({ location, history, match }) =>
+        isAuthenticated ? (
+          render({ location, history, match })
+        ) : (
+          <Redirect
+            to={{
+              pathname: '/login',
+              state: { from: location }
+            }}
+          />
+        )
+      }
+    />
+  )
+}
+
 class App extends React.Component {
   menu = React.createRef();
 
@@ -57,7 +77,7 @@ class App extends React.Component {
     this.setState({
       grader: grader
     })
-    window.sessionStorage.setItem('graderID', grader.id)
+    window.sessionStorage.setItem('graderID', grader ? grader.id : null)
   }
 
   render () {
@@ -73,10 +93,12 @@ class App extends React.Component {
           <Switch>
             <Route exact path='/' component={Home} />
             <Route path='/login' render={({ history }) => <Login changeURL={history.push} />} />
-            <Route exact path='/exams' render={({ history }) =>
-              <AddExam updateExamList={updateExamList} changeURL={history.push} />}
+            <PrivateRoute
+              isAuthenticated={grader !== null}
+              exact path='/exams'
+              render={({ history }) => <AddExam updateExamList={updateExamList} changeURL={history.push} />}
             />
-            <Route path='/exams/:examID/' render={({ match }) =>
+            <PrivateRoute isAuthenticated={grader !== null} path='/exams/:examID/' render={({ match }) =>
               <ExamRouter
                 parentMatch={match}
                 graderID={grader ? grader.id : null}

@@ -175,11 +175,14 @@ class NavBar extends React.Component {
 
   logout = () => {
     api.get('oauth/logout')
-      .then(() => this.setState({
-        grader: null,
-        examList: [],
-        examID: null
-      }))
+      .then(() => {
+        this.setState({
+          grader: null,
+          examList: [],
+          examID: null
+        })
+        this.props.changeGrader(null)
+      })
       .catch(response => { console.log(response) })
   }
 

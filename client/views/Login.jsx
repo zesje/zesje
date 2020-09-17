@@ -7,14 +7,16 @@ class Login extends React.Component {
       redirect_url: '',
       provider: ''
     }
+
     componentDidMount = () => {
       api.get('oauth/start').then(response => {
         if (response.is_authenticated) {
           this.props.changeURL('/')
+        } else {
+          this.setState({redirect_url: response.redirect_oauth, provider: response.provider})
+          window.sessionStorage.setItem('oauth_provider', response.provider)
+          window.sessionStorage.setItem('oauth_id_field', response.oauth_id_field)
         }
-        this.setState({redirect_url: response.redirect_oauth, provider: response.provider})
-        window.sessionStorage.setItem('oauth_provider', response.provider)
-        window.sessionStorage.setItem('oauth_id_field', response.oauth_id_field)
       })
     }
 

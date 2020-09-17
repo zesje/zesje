@@ -25,7 +25,7 @@ def upgrade():
     conn = op.get_bind()
 
     # assign oauth id to existing graders
-    conn.execute('INSERT INTO grader (id, oauth_id) SELECT id, name FROM grader')
+    conn.execute('UPDATE grader SET grader.oauth_id = CONCAT("grader_", CAST(grader.id AS CHAR))')
 
     with op.batch_alter_table('grader', schema=None) as batch_op:
         batch_op.alter_column('oauth_id', existing_type=sa.String(length=320), nullable=False)

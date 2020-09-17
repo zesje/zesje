@@ -1,5 +1,8 @@
-from flask import Blueprint
+from functools import wraps
+
+from flask import current_app, request, Blueprint
 from flask_restful import Api
+from flask_login import current_user
 
 from .graders import Graders
 from .exams import Exams, ExamSource, ExamGeneratedPdfs, ExamPreview
@@ -20,9 +23,23 @@ from . import signature
 from . import images
 from . import export
 
+
+def authenticate(func):
+    @wraps(func)
+    def decorated_view(*args, **kwargs):
+        if request.method in current_app.config['EXEMPT_ROUTES']:
+            return func(*args, **kwargs)
+        elif current_app.config.get('LOGIN_DISABLED'):
+            return func(*args, **kwargs)
+        elif not current_user.is_authenticated:
+            return current_app.login_manager.unauthorized()
+        return func(*args, **kwargs)
+    return decorated_view
+
+
 api_bp = Blueprint(__name__, __name__)
 
-api = Api(api_bp)
+api = Api(api_bp, decorators=[authenticate])
 
 api.add_resource(Graders, '/graders')
 api.add_resource(Exams, '/exams', '/exams/<int:exam_id>', '/exams/<int:exam_id>/<string:attr>')

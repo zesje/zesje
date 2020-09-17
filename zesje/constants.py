@@ -44,6 +44,4 @@ MIN_ANSWER_SIZE_MM2 = 4
 
 SQLALCHEMY_TRACK_MODIFICATIONS = False  # Suppress future deprecation warning
 
-# Routes exempted from authentication
-EXEMPTED_ROUTES = ['zesje.api.oauthstart', 'zesje.api.oauthcallback']
 ZIP_MIME_TYPES = ['application/zip', 'application/octet-stream', 'application/x-zip-compressed', 'multipart/x-zip']

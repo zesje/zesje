@@ -1,23 +1,18 @@
 import os
 from os.path import abspath, dirname
 
-from flask import Flask, request
+from flask import Flask
 from flask_migrate import Migrate
 from werkzeug.exceptions import NotFound
-from flask_login import current_user
 
 from .database import db, login_manager, Grader
 from .api import api_bp
-from .constants import EXEMPTED_ROUTES
 
 STATIC_FOLDER_PATH = os.path.join(abspath(dirname(__file__)), 'static')
 
 
 def create_app(celery=None, app_config=None):
     app = Flask(__name__, static_folder=STATIC_FOLDER_PATH)
-
-    login_manager.init_app(app)
-
     create_config(app.config, app_config)
 
     if app.config['OAUTH_INSECURE_TRANSPORT']:
@@ -26,17 +21,13 @@ def create_app(celery=None, app_config=None):
     if app.config['SECRET_KEY'] is None:
         raise KeyError
 
+    login_manager.init_app(app)
+
     if celery is not None:
         attach_celery(app, celery)
 
     db.init_app(app)
     Migrate(app, db)
-
-    @api_bp.before_request
-    def check_user_auth():
-        # Force authentication if endpoint not one of the exempted routes
-        if request.endpoint not in EXEMPTED_ROUTES and not (current_user and current_user.is_authenticated):
-            return dict(status=401, message=request.endpoint), 401
 
     app.register_blueprint(api_bp, url_prefix='/api')
 

@@ -10,3 +10,5 @@ OAUTH_TOKEN_URL = "https://test.com/oauth/token"
 OAUTH_USERINFO_URL = "https://test.com/user"
 OAUTH_ID_FIELD = 'email'
 OAUTH_NAME_FIELD = 'name'
+
+LOGIN_DISABLED = True

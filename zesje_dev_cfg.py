@@ -13,6 +13,8 @@ FROM_ADDRESS = 'noreply@tudelft.nl'
 SMTP_USERNAME = ''
 SMTP_PASSWORD = ''
 
+LOGIN_DISABLED = True
+
 # Enable debug mode
 DEBUG = 1
 

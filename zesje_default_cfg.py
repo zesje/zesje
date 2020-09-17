@@ -22,6 +22,8 @@ MYSQL_CONNECTOR = 'mysql+pymysql'
 CELERY_BROKER_URL = 'redis://localhost:6479',
 CELERY_RESULT_BACKEND = 'redis://localhost:6479'
 
+LOGIN_DISABLED = False
+
 # Secret key required for flask.session
 SECRET_KEY = None
 
@@ -35,6 +37,9 @@ OAUTH_ID_FIELD = None
 OAUTH_NAME_FIELD = None
 OAUTH_PROVIDER = None
 OAUTH_INSECURE_TRANSPORT = False
+
+# Routes exempted from authentication
+EXEMPT_ROUTES = ['zesje.api.oauthstart', 'zesje.api.oauthcallback']
 
 # Instance owner details
 OWNER_OAUTH_ID = None

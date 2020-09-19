@@ -118,8 +118,14 @@ class CheckStudents extends React.Component {
     // If we change the keybindings here we should also remember to
     // update the tooltips for the associated widgets (in render()).
     // Also add the shortcut to ./client/components/help/ShortcutsHelp.md
-    this.props.bindShortcut(['left', 'h'], this.prev)
-    this.props.bindShortcut(['right', 'l'], this.next)
+    this.props.bindShortcut(['left', 'h'], (event) => {
+      event.preventDefault()
+      this.prev()
+    })
+    this.props.bindShortcut(['right', 'l'], (event) => {
+      event.preventDefault()
+      this.next()
+    })
     this.props.bindShortcut(['up', 'k'], (event) => {
       event.preventDefault()
       this.nextUnchecked()
@@ -252,7 +258,6 @@ class CheckStudents extends React.Component {
 
   render () {
     const copies = this.state.copies
-    const copy = this.state.copy
 
     const hero = <Hero title='Match Students' subtitle='Check that all submissions are correctly identified' />
 
@@ -261,6 +266,7 @@ class CheckStudents extends React.Component {
       return hero
     }
 
+    const copy = this.state.copy
     const validated = copy && copy.validated
     const total = copies.length
     const done = copies.filter(c => c.validated).length
@@ -298,17 +304,10 @@ class CheckStudents extends React.Component {
                     <div className='level-item make-wider'>
                       <div className='field has-addons is-mobile'>
                         <div className='control'>
-                          <button
-                            type='submit' className='button is-info is-rounded is-hidden-mobile'
-                            onClick={this.prevUnchecked}
-                          >unchecked
-                          </button>
-                          <button
-                            type='submit'
-                            className={'button is-radiusless' + (copy.validated ? ' is-success' : ' is-link')}
-                            onClick={this.prev}
-                          >Previous
-                          </button>
+                          <button type='submit' className='button is-info is-rounded is-hidden-mobile'
+                            onClick={this.prevUnchecked}>unchecked</button>
+                          <button type='submit' className={'button' + (validated ? ' is-success' : ' is-link')}
+                            onClick={this.prev}>Previous</button>
                         </div>
                         <div className='control is-wider'>
                           <SearchBox
@@ -368,7 +367,7 @@ class CheckStudents extends React.Component {
                   <ProgressBar done={done} total={total} />
 
                   <p className='box'>
-                    <img src={'api/images/signature/' + this.state.examID + '/' + copy.number} alt='' />
+                    <img src={'api/images/signature/' + this.state.examID + '/' + (copy && copy.number)} alt='' />
                   </p>
 
                 </div>

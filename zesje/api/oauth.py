@@ -53,9 +53,9 @@ class OAuthCallback(Resource):
             authorization_response=request.url,
         )
 
-        session['oauth_token'] = token  # token can used to make requests with OAuth provider later if needed
+        # session['oauth_token'] = token  # token can used to make requests with OAuth provider later if needed
 
-        oauth_provider = OAuth2Session(current_app.config['OAUTH_CLIENT_ID'], token=session['oauth_token'])
+        oauth_provider = OAuth2Session(current_app.config['OAUTH_CLIENT_ID'], token=token)
         current_login = oauth_provider.get(current_app.config['OAUTH_USERINFO_URL']).json()
 
         grader = Grader.query.filter(Grader.oauth_id ==

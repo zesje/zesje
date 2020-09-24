@@ -192,11 +192,10 @@ class NavBar extends React.Component {
     const selectedExam = this.state.examList.find(exam => exam.id === this.state.examID)
 
     const predicateNoGrader = [!this.state.grader, 'Log in before using the app.']
-    const predicateNoExam = [selectedExam === null || selectedExam === undefined,
-      'No exam selected.']
-    const predicateExamNotFinalized = [!predicateNoExam[0] && !selectedExam.finalized,
+    const predicateNoExam = [!selectedExam, 'No exam selected.']
+    const predicateExamNotFinalized = [predicateNoExam[0] || !selectedExam.finalized,
       'The exam is not finalized yet.']
-    const predicateSubmissionsEmpty = [!predicateNoExam[0] && selectedExam.submissions.length === 0,
+    const predicateSubmissionsEmpty = [predicateNoExam[0] || selectedExam.submissions.length === 0,
       'There are no submissions, please upload some.']
 
     return (
@@ -230,7 +229,7 @@ class NavBar extends React.Component {
             <TooltipLink
               to={`/exams/${this.state.examID}/students`}
               text='Students'
-              predicate={[predicateNoGrader]} />
+              predicate={[predicateNoGrader, predicateNoExam]} />
             <TooltipLink
               to={`/exams/${this.state.examID}/grade`}
               text={<strong><i>Grade</i></strong>}

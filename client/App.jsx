@@ -25,11 +25,6 @@ const Graders = Loadable({
   loading: Loading
 })
 
-const Login = Loadable({
-  loader: () => import('./views/Login.jsx'),
-  loading: Loading
-})
-
 const Fail = Loadable({
   loader: () => import('./views/Fail.jsx'),
   loading: Loading
@@ -45,7 +40,7 @@ const PrivateRoute = ({ isAuthenticated, render, ...rest }) => {
         ) : (
           <Redirect
             to={{
-              pathname: '/login',
+              pathname: '/',
               state: { from: location }
             }}
           />
@@ -60,7 +55,7 @@ class App extends React.Component {
 
   state = {
     examID: null,
-    grader: null
+    graderID: null
   }
 
   selectExam = (id) => {
@@ -73,35 +68,32 @@ class App extends React.Component {
     }
   }
 
-  changeGrader = (grader) => {
+  changeGrader = (grader) =>
     this.setState({
-      grader: grader
-    })
-    window.sessionStorage.setItem('graderID', grader ? grader.id : null)
-  }
+      graderID: grader ? grader.id : null
+    }, () => window.sessionStorage.setItem('graderID', this.state.graderID))
 
   render () {
-    const grader = this.state.grader
     const updateExamList = this.menu.current ? this.menu.current.updateExamList : () => {}
     const updateGraderList = this.menu.current ? this.menu.current.updateGraderList : () => {}
     const setHelpPage = this.menu.current ? this.menu.current.setHelpPage : (help) => {}
+    const isAuthenticated = this.state.graderID !== null
 
     return (
       <Router>
         <div>
-          <NavBar examID={this.state.examID} grader={grader} changeGrader={this.changeGrader} ref={this.menu} />
+          <NavBar examID={this.state.examID} changeGrader={this.changeGrader} ref={this.menu} />
           <Switch>
             <Route exact path='/' component={Home} />
-            <Route path='/login' render={({ history }) => <Login changeURL={history.push} />} />
             <PrivateRoute
-              isAuthenticated={grader !== null}
+              isAuthenticated={isAuthenticated}
               exact path='/exams'
               render={({ history }) => <AddExam updateExamList={updateExamList} changeURL={history.push} />}
             />
-            <PrivateRoute isAuthenticated={grader !== null} path='/exams/:examID/' render={({ match }) =>
+            <PrivateRoute isAuthenticated={isAuthenticated} path='/exams/:examID/' render={({ match }) =>
               <ExamRouter
                 parentMatch={match}
-                graderID={grader ? grader.id : null}
+                graderID={this.state.graderID}
                 selectExam={this.selectExam}
                 updateExamList={updateExamList}
                 setHelpPage={setHelpPage} />

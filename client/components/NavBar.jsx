@@ -8,6 +8,7 @@ import 'bulma-tooltip/dist/css/bulma-tooltip.min.css'
 import HelpModal from './help/HelpModal.jsx'
 import shortcutsMarkdown from './help/ShortcutsHelp.md'
 import gradingPolicyMarkdown from './help/GradingPolicyHelp.md'
+import Login from './Login.jsx'
 
 const BurgerButton = (props) => (
   <button className={'button navbar-burger' + (props.foldOut ? ' is-active' : '')}
@@ -51,16 +52,21 @@ const ExamDropdown = (props) => {
 const GraderDropdown = (props) => {
   if (!props.grader) {
     return (
-      <Link className='navbar-item'
-        to='/login' >
-        Log In
-      </Link>
+      <div className='navbar-item'>
+        <Login />
+      </div>
     )
   }
+
   return (
     <div className='navbar-item has-dropdown is-hoverable'>
-      <div className='navbar-link' >
-        {props.grader.name} ({props.grader.oauth_id})
+      <div className='navbar-link'>
+        <span className='icon'>
+          <i className='fa fa-user-circle-o' aria-hidden='true' />
+        </span>
+        <span>
+          {props.grader.name} ({props.grader.oauth_id})
+        </span>
       </div>
 
       <div className='navbar-dropdown'>
@@ -68,7 +74,7 @@ const GraderDropdown = (props) => {
           Add grader
         </Link>
         <hr className='navbar-divider' />
-        <Link className='navbar-item' onClick={props.logout} to='/login'>Logout</Link>
+        <Link className='navbar-item' onClick={props.logout} to='/'>Logout</Link>
       </div>
     </div>
   )
@@ -131,7 +137,6 @@ class NavBar extends React.Component {
 
   componentDidUpdate = (prevProps, prevState) => {
     if (prevState.examID !== this.props.examID) {
-      console.log(this.props.examID)
       this.setState({examID: this.props.examID})
     }
   }
@@ -153,16 +158,6 @@ class NavBar extends React.Component {
       })
   }
 
-  updateGrader = () => {
-    if (window.location.pathname !== '/login') {
-      api.get('oauth/grader').then(response => {
-        this.setState({grader: response})
-        this.props.changeGrader(response)
-        this.updateExamList()
-      })
-    }
-  }
-
   burgerClick = () => {
     this.setState({
       foldOut: !this.state.foldOut
@@ -173,7 +168,15 @@ class NavBar extends React.Component {
     this.setState({ helpPage: helpPage })
   }
 
-  logout = () => {
+  updateGrader = () =>
+    api.get('oauth/grader').then(grader => {
+      console.log(grader)
+      this.setState({ grader })
+      this.props.changeGrader(grader)
+      this.updateExamList()
+    })
+
+  logout = () =>
     api.get('oauth/logout')
       .then(() => {
         this.setState({
@@ -184,7 +187,6 @@ class NavBar extends React.Component {
         this.props.changeGrader(null)
       })
       .catch(response => { console.log(response) })
-  }
 
   render () {
     const selectedExam = this.state.examList.find(exam => exam.id === this.state.examID)

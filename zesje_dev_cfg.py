@@ -29,9 +29,9 @@ OAUTH_TOKEN_URL = 'http://localhost:8080/token'
 OAUTH_USERINFO_URL = 'http://localhost:8080/user'
 OAUTH_ID_FIELD = "email"
 OAUTH_NAME_FIELD = "name"
-OAUTH_PROVIDER = 'Mock_Provider'
+OAUTH_PROVIDER = 'Mock Provider'
 OAUTH_INSECURE_TRANSPORT = True
 
 # Instance owner details
-OWNER_OAUTH_ID = 'mock'
-OWNER_NAME = 'mock_name'
+OWNER_OAUTH_ID = 'anonymous@tudelft.nl'
+OWNER_NAME = 'Anonymous'

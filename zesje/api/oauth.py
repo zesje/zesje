@@ -27,13 +27,11 @@ class OAuthStart(Resource):
 
         session['oauth_state'] = state
 
-        is_authenticated = (current_user is not None) and current_user.is_authenticated
-
         return {
             'redirect_oauth': authorization_url,
             'provider': current_app.config['OAUTH_PROVIDER'],
             'state': state,
-            'is_authenticated': is_authenticated,
+            'is_authenticated': current_user.is_authenticated,
             'oauth_id_field': current_app.config['OAUTH_ID_FIELD']
         }
 
@@ -64,7 +62,8 @@ class OAuthCallback(Resource):
                                      current_login[current_app.config['OAUTH_ID_FIELD']]).one_or_none()
 
         if grader is None:
-            return dict(status=403, message="Your account is Unauthorized. Please contact somebody who has access"), 403
+            return dict(status=403,
+                        message="Your account is NOT authorized. Please contact somebody who has access."), 403
         elif grader.name is None:
             grader.name = current_login[current_app.config['OAUTH_NAME_FIELD']]
             db.session.commit()
@@ -84,7 +83,7 @@ class OAuthGrader(Resource):
         name: str
         oauth_id: str
         """
-        if current_user is None or (not current_user.is_authenticated):
+        if current_app.config['LOGIN_DISABLED'] and not current_user.is_authenticated:
             return dict(status=401, message="Not logged in"), 401
 
         return dict(

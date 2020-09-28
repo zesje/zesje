@@ -22,7 +22,9 @@ class OAuthStart(Resource):
          returns current state, used for testing
         is_authenticated: boolean
         """
-        oauth2_session = OAuth2Session(current_app.config['OAUTH_CLIENT_ID'])
+        oauth2_session = OAuth2Session(current_app.config['OAUTH_CLIENT_ID'],
+                                       redirect_uri=current_app.config['OAUTH_REDIRECT_URI'],
+                                       scope=current_app.config['OAUTH_SCOPES'])
         authorization_url, state = oauth2_session.authorization_url(current_app.config['OAUTH_AUTHORIZATION_BASE_URL'])
 
         session['oauth_state'] = state
@@ -45,7 +47,9 @@ class OAuthCallback(Resource):
         redirect to /
         """
 
-        oauth2_session = OAuth2Session(current_app.config['OAUTH_CLIENT_ID'], state=session['oauth_state'])
+        oauth2_session = OAuth2Session(current_app.config['OAUTH_CLIENT_ID'],
+                                       redirect_uri=current_app.config['OAUTH_REDIRECT_URI'],
+                                       state=session['oauth_state'])
 
         token = oauth2_session.fetch_token(
             current_app.config['OAUTH_TOKEN_URL'],
@@ -62,8 +66,17 @@ class OAuthCallback(Resource):
                                      current_login[current_app.config['OAUTH_ID_FIELD']]).one_or_none()
 
         if grader is None:
+            # TODO: A new only is authorized iff the owner granted access by adding the oauth_id in Grader
+            # otherwise the app rejects login in because full authorization is not implemeted.
+            # Once !306 is finished, the new user can be safely added in the db and he won't have access to any resource
             return dict(status=403,
                         message="Your account is NOT authorized. Please contact somebody who has access."), 403
+            # grader = Grader(
+            #     oauth_id=current_login[current_app.config['OAUTH_ID_FIELD']],
+            #     name=current_login[current_app.config['OAUTH_NAME_FIELD']]
+            # )
+            # db.session.add(grader)
+            # db.session.commit()
         elif grader.name is None:
             grader.name = current_login[current_app.config['OAUTH_NAME_FIELD']]
             db.session.commit()

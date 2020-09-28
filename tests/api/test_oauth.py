@@ -2,6 +2,7 @@
 from zesje.database import db, Grader
 import pytest
 import requests_mock
+from urllib.parse import urlparse, parse_qs
 
 
 @pytest.fixture
@@ -36,9 +37,11 @@ def callback_request(login_client, login_app):
 def test_oauth_start(login_client, login_app):
     result = login_client.get('/api/oauth/start')
     assert result.status_code == 200
-    assert result.get_json()['redirect_oauth'] == \
-        login_app.config['OAUTH_AUTHORIZATION_BASE_URL'] + '?response_type=code&client_id=' + \
-        login_app.config['OAUTH_CLIENT_ID'] + '&state=' + result.get_json()['state']
+
+    parsed = urlparse(result.get_json()['redirect_oauth'])
+    query = parse_qs(parsed.query)
+    assert query['client_id'][0] == login_app.config['OAUTH_CLIENT_ID']
+    assert query['redirect_uri'][0] == login_app.config['OAUTH_REDIRECT_URI']
 
 
 def test_oauth_callback_unauthorized_grader(callback_request):

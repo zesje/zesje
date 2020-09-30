@@ -24,14 +24,15 @@ SECRET_KEY = os.urandom(25)
 # OAuth Details
 OAUTH_CLIENT_ID = 'dev'
 OAUTH_CLIENT_SECRET = 'dev_secret'
-OAUTH_AUTHORIZATION_BASE_URL = 'http://localhost:8080/authorize'
-OAUTH_TOKEN_URL = 'http://localhost:8080/token'
-OAUTH_USERINFO_URL = 'http://localhost:8080/user'
+OAUTH_AUTHORIZATION_BASE_URL = 'https://connect.test.surfconext.nl/oidc/authorize'
+OAUTH_TOKEN_URL = 'https://connect.test.surfconext.nl/oidc/token'
+OAUTH_USERINFO_URL = 'https://connect.test.surfconext.nl/oidc/userinfo'
 OAUTH_ID_FIELD = "email"
 OAUTH_NAME_FIELD = "name"
-OAUTH_PROVIDER = 'Mock Provider'
+OAUTH_PROVIDER = 'Surf Context'
+OAUTH_SCOPES = ['openid']
 OAUTH_INSECURE_TRANSPORT = True
 
 # Instance owner details
-OWNER_OAUTH_ID = 'anonymous@tudelft.nl'
-OWNER_NAME = 'Anonymous'
+OWNER_OAUTH_ID = 'admin@admin'
+OWNER_NAME = 'admin'

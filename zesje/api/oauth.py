@@ -22,10 +22,16 @@ class OAuthStart(Resource):
          returns current state, used for testing
         is_authenticated: boolean
         """
-        oauth2_session = OAuth2Session(current_app.config['OAUTH_CLIENT_ID'],
-                                       redirect_uri=current_app.config['OAUTH_REDIRECT_URI'],
-                                       scope=current_app.config['OAUTH_SCOPES'])
-        authorization_url, state = oauth2_session.authorization_url(current_app.config['OAUTH_AUTHORIZATION_BASE_URL'])
+        if current_app.config['LOGIN_DISABLED']:
+            authorization_url, state = url_for('zesje.api.oauthcallback'), 'state'
+        else:
+            oauth2_session = OAuth2Session(current_app.config['OAUTH_CLIENT_ID'],
+                                           redirect_uri=current_app.config['OAUTH_REDIRECT_URI'],
+                                           scope=current_app.config['OAUTH_SCOPES'])
+            # add prompt='login' below to force surf context to ask for login everytime disabling single sign-on, see:
+            # https://wiki.surfnet.nl/display/surfconextdev/OpenID+Connect+features#OpenIDConnectfeatures-Prompt=login
+            authorization_url, state = oauth2_session\
+                .authorization_url(current_app.config['OAUTH_AUTHORIZATION_BASE_URL'])
 
         session['oauth_state'] = state
 
@@ -46,6 +52,9 @@ class OAuthCallback(Resource):
         -------
         redirect to /
         """
+        if current_app.config['LOGIN_DISABLED']:
+            login_user(Grader.query.first())
+            return redirect(url_for('index'))
 
         oauth2_session = OAuth2Session(current_app.config['OAUTH_CLIENT_ID'],
                                        redirect_uri=current_app.config['OAUTH_REDIRECT_URI'],
@@ -58,7 +67,7 @@ class OAuthCallback(Resource):
         )
 
         # token can used to make requests with OAuth provider later if needed
-        # session['oauth_token'] = token
+        session['oauth_token'] = token
 
         oauth_provider = OAuth2Session(current_app.config['OAUTH_CLIENT_ID'], token=token)
         current_login = oauth_provider.get(current_app.config['OAUTH_USERINFO_URL']).json()
@@ -97,7 +106,7 @@ class OAuthGrader(Resource):
         name: str
         oauth_id: str
         """
-        if current_app.config['LOGIN_DISABLED'] and not current_user.is_authenticated:
+        if not current_user.is_authenticated:
             return dict(status=401, message="Not logged in"), 401
 
         return dict(

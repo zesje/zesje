@@ -12,7 +12,7 @@ class Graders extends React.Component {
     oauth_id_field: ''
   };
 
-  changeName = (event) => {
+  changeIdField = (event) => {
     this.setState({ oauth_id_field: event.target.value })
   }
 
@@ -47,6 +47,9 @@ class Graders extends React.Component {
   }
 
   render () {
+    const idField = window.sessionStorage.getItem('oauth_id_field')
+    const provider = window.sessionStorage.getItem('oauth_provider')
+
     return (
 
       <div>
@@ -55,19 +58,20 @@ class Graders extends React.Component {
 
         <section className='section'>
           <div className='container'>
-            <h1 className='title'>Enter {window.sessionStorage.getItem('oauth_id_field')} </h1>
-            <h5 className='subtitle'>This instance of Zesje is configured to
-              use {window.sessionStorage.getItem('oauth_provider')} for authentication. To allow a grader to log in
-              using {window.sessionStorage.getItem('oauth_provider')}, please add
-               their {window.sessionStorage.getItem('oauth_id_field')}.</h5>
+            <h1 className='title'>Enter {idField}</h1>
+            <h5 className='subtitle'>
+              This instance of Zesje is configured to use {idField} for authentication.
+              To allow a grader to log in using {provider}, please add their {idField}.
+            </h5>
             <hr />
 
             <form onSubmit={this.submitName}>
               <div className='field has-addons'>
                 <div className='control'>
-                  <input name='first_name' value={this.state.oauth_id_field}
-                    onChange={this.changeName} className='input' type='text'
-                    maxLength={100} placeholder={window.sessionStorage.getItem('oauth_id_field')} />
+                  <input className='input'
+                    name='first_name' value={this.state.oauth_id_field}
+                    onChange={this.changeIdField} type='text'
+                    maxLength={100} placeholder={idField} />
                 </div>
                 <div className='control'>
                   <button type='submit' className='button is-info'>

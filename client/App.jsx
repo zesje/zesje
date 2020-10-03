@@ -100,6 +100,8 @@ class App extends React.Component {
             } />
             <Route exact path='/graders' render={() =>
               <Graders updateGraderList={updateGraderList} />} />
+            <Route exact path='/unauthorized' render={() =>
+              <Fail message='Your account is not authorized to access this instance of Zejse. Please contact with the administrator.' />} />
             <Route render={() =>
               <Fail message="404. Could not find that page :'(" />} />
           </Switch>

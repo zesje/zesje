@@ -28,16 +28,7 @@ LOGIN_DISABLED = False
 SECRET_KEY = None
 
 # OAuth Details
-OAUTH_CLIENT_ID = None
-OAUTH_CLIENT_SECRET = None
-OAUTH_AUTHORIZATION_BASE_URL = None
-OAUTH_TOKEN_URL = None
-OAUTH_USERINFO_URL = None
-OAUTH_ID_FIELD = None
-OAUTH_NAME_FIELD = None
-OAUTH_PROVIDER = None
-OAUTH_REDIRECT_URI = 'http://127.0.0.1:8881/api/oauth/callback'
-OAUTH_SCOPES = ['read_user']
+OAUTH_REDIRECT_URI = ''
 OAUTH_INSECURE_TRANSPORT = False
 
 # Routes exempted from authentication

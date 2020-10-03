@@ -22,15 +22,8 @@ DEBUG = 1
 SECRET_KEY = os.urandom(25)
 
 # OAuth Details
-OAUTH_CLIENT_ID = 'dev'
-OAUTH_CLIENT_SECRET = 'dev_secret'
-OAUTH_AUTHORIZATION_BASE_URL = 'https://connect.test.surfconext.nl/oidc/authorize'
-OAUTH_TOKEN_URL = 'https://connect.test.surfconext.nl/oidc/token'
-OAUTH_USERINFO_URL = 'https://connect.test.surfconext.nl/oidc/userinfo'
-OAUTH_ID_FIELD = "email"
-OAUTH_NAME_FIELD = "name"
-OAUTH_PROVIDER = 'Surf Context'
-OAUTH_SCOPES = ['openid']
+OAUTH_PROVIDER = 'gitlab'
+OAUTH_REDIRECT_URI = 'http://127.0.0.1:8881/api/oauth/callback'
 OAUTH_INSECURE_TRANSPORT = True
 
 # Instance owner details

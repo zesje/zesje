@@ -45,3 +45,47 @@ MIN_ANSWER_SIZE_MM2 = 4
 SQLALCHEMY_TRACK_MODIFICATIONS = False  # Suppress future deprecation warning
 
 ZIP_MIME_TYPES = ['application/zip', 'application/octet-stream', 'application/x-zip-compressed', 'multipart/x-zip']
+
+OAUTH_PROVIDERS = {
+    'gitlab': {
+        'AUTHORIZATION_BASE_URL': 'https://gitlab.kwant-project.org/oauth/authorize',
+        'TOKEN_URL': 'https://gitlab.kwant-project.org/oauth/token',
+        'USERINFO_URL': 'https://gitlab.kwant-project.org/api/v4/user',
+        'ID_FIELD': 'email',
+        'NAME_FIELD': 'name',
+        'PROVIDER': 'GitLab',
+        'SCOPES': ['read_user'],
+    },
+    'surfconext-test': {
+        'CLIENT_ID': '',
+        'CLIENT_SECRET': '',
+        'AUTHORIZATION_BASE_URL': 'https://connect.test.surfconext.nl/oidc/authorize',
+        'TOKEN_URL': 'https://connect.test.surfconext.nl/oidc/token',
+        'USERINFO_URL': 'https://connect.test.surfconext.nl/oidc/userinfo',
+        'ID_FIELD': 'email',
+        'NAME_FIELD': 'name',
+        'PROVIDER': 'Surf Conext',
+        'SCOPES': ['openid'],
+    },
+    'mock': {
+        'CLIENT_ID': 'dev',
+        'CLIENT_SECRET': 'dev_secret',
+        'AUTHORIZATION_BASE_URL': 'http://localhost:8080/authorize',
+        'TOKEN_URL': 'http://localhost:8080/token',
+        'USERINFO_URL': 'http://localhost:8080/user',
+        'ID_FIELD': 'email',
+        'NAME_FIELD': 'name',
+        'PROVIDER': 'Mock Server',
+    },
+    'test': {
+        'CLIENT_ID': 'test',
+        'CLIENT_SECRET': 'test_secret',
+        'AUTHORIZATION_BASE_URL': 'https://test.com/oauth/start',
+        'TOKEN_URL': 'https://test.com/oauth/token',
+        'USERINFO_URL': 'https://test.com/oauth/userinfo',
+        'ID_FIELD': 'email',
+        'NAME_FIELD': 'name',
+        'PROVIDER': 'Mock Server',
+        'SCOPES': [],
+    }
+}

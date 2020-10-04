@@ -253,10 +253,6 @@ class NavBar extends React.Component {
 
           <div className='navbar-end'>
             <GraderDropdown grader={this.state.grader} logout={this.logout} />
-
-            <div className='navbar-item'>
-              <i>Version {__ZESJE_VERSION__}</i>
-            </div>
           </div>
 
         </div>

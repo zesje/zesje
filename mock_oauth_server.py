@@ -15,15 +15,17 @@ else:
 
 @app.route('/authorize', methods=['GET'])
 def authorize():
+    """Authorises the user and redirects to the desired location."""
     parsed_url = urlparse(request.url)
     query_params = parse_qs(parsed_url.query)
     return redirect(
-        f"{app.config['OAUTH_REDIRECT_URI']}?code=test&state={query_params['state'][0]}"
+        f"{query_params['redirect_uri'][0]}?code=test&state={query_params['state'][0]}"
     )
 
 
 @app.route('/user', methods=['GET'])
 def user():
+    """Returns user information"""
     return dict(
         email=app.config['OWNER_OAUTH_ID'],
         name=app.config['OWNER_NAME']
@@ -32,6 +34,7 @@ def user():
 
 @app.route('/token', methods=['POST'])
 def token():
+    """Returns the Oauth2 token to be used"""
     return dict(
         access_token='token',
         token_type='bearer'

@@ -28,7 +28,7 @@ LOGIN_DISABLED = False
 SECRET_KEY = None
 
 # OAuth Details
-OAUTH_REDIRECT_URI = ''
+OAUTH_PROVIDER = 'gitlab'
 OAUTH_INSECURE_TRANSPORT = False
 
 # Routes exempted from authentication

@@ -22,8 +22,7 @@ DEBUG = 1
 SECRET_KEY = os.urandom(25)
 
 # OAuth Details
-OAUTH_PROVIDER = 'gitlab'
-OAUTH_REDIRECT_URI = 'http://127.0.0.1:8881/api/oauth/callback'
+OAUTH_PROVIDER = 'mock'
 OAUTH_INSECURE_TRANSPORT = True
 
 # Instance owner details

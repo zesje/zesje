@@ -43,9 +43,9 @@ def test_oauth_start(login_client, login_app):
 
     parsed = urlparse(result.get_json()['redirect_oauth'])
     query = parse_qs(parsed.query)
-    print(parsed, query)
     assert query['client_id'][0] == OAUTH_PROVIDERS[login_app.config['OAUTH_PROVIDER']]['CLIENT_ID']
-    assert query['redirect_uri'][0] == login_app.config['OAUTH_REDIRECT_URI']
+    assert 'redirect_uri' in query and len(query['redirect_uri']) == 1
+    assert 'state' in query and len(query['state']) == 1
 
 
 def test_oauth_callback_unauthorized_grader(callback_request):

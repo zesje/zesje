@@ -76,6 +76,7 @@ OAUTH_PROVIDERS = {
         'ID_FIELD': 'email',
         'NAME_FIELD': 'name',
         'PROVIDER': 'Mock Server',
+        'SCOPES': []
     },
     'test': {
         'CLIENT_ID': 'test',

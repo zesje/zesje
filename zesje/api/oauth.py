@@ -27,15 +27,14 @@ class OAuthStart(Resource):
             authorization_url, state = url_for('zesje.api.oauthcallback'), 'state'
         else:
             oauth2_session = OAuth2Session(OAUTH_PROVIDERS[current_app.config['OAUTH_PROVIDER']]['CLIENT_ID'],
-                                           redirect_uri=current_app.config['OAUTH_REDIRECT_URI'],
+                                           redirect_uri=url_for('zesje.api.oauthcallback', _external=True),
                                            scope=OAUTH_PROVIDERS[current_app.config['OAUTH_PROVIDER']]['SCOPES'])
-            # add prompt='login' below to force surf context to ask for login everytime disabling single sign-on, see:
+            # add prompt='login' below to force surf conext to ask for login everytime disabling single sign-on, see:
             # https://wiki.surfnet.nl/display/surfconextdev/OpenID+Connect+features#OpenIDConnectfeatures-Prompt=login
             authorization_url, state = oauth2_session\
                 .authorization_url(OAUTH_PROVIDERS[current_app.config['OAUTH_PROVIDER']]['AUTHORIZATION_BASE_URL'])
 
         session['oauth_state'] = state
-        print('start', state)
 
         return {
             'redirect_oauth': authorization_url,
@@ -57,9 +56,9 @@ class OAuthCallback(Resource):
         if current_app.config['LOGIN_DISABLED']:
             login_user(Grader.query.first())
             return redirect(url_for('index'))
-        print('callback', session)
+
         oauth2_session = OAuth2Session(OAUTH_PROVIDERS[current_app.config['OAUTH_PROVIDER']]['CLIENT_ID'],
-                                       redirect_uri=current_app.config['OAUTH_REDIRECT_URI'],
+                                       redirect_uri=url_for('zesje.api.oauthcallback', _external=True),
                                        state=session['oauth_state'])
 
         token = oauth2_session.fetch_token(
@@ -73,7 +72,6 @@ class OAuthCallback(Resource):
 
         oauth_provider = OAuth2Session(OAUTH_PROVIDERS[current_app.config['OAUTH_PROVIDER']]['CLIENT_ID'], token=token)
         current_login = oauth_provider.get(OAUTH_PROVIDERS[current_app.config['OAUTH_PROVIDER']]['USERINFO_URL']).json()
-        print(current_login)
         oauth_id = current_login[OAUTH_PROVIDERS[current_app.config['OAUTH_PROVIDER']]['ID_FIELD']]
         grader = Grader.query.filter(Grader.oauth_id == oauth_id).one_or_none()
 

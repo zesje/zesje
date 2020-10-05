@@ -9,18 +9,38 @@ import * as api from '../api.jsx'
 class Graders extends React.Component {
   state = {
     graders: [],
+    oauth_id: '',
+    oauth_provider: '',
     oauth_id_field: ''
-  };
+  }
+
+  componentDidMount = () => {
+    api.get('oauth/start').then(response => {
+      this.setState({
+        oauth_id_field: response.oauth_id_field,
+        oauth_provider: response.provider
+      })
+    })
+
+    api.get('graders')
+      .then(graders => {
+        this.setState({ graders: graders })
+      })
+      .catch(resp => {
+        Notification.error('Could not fetch graders (see Javascript console for details)')
+        console.error('Error fetching graders:', resp)
+      })
+  }
 
   changeIdField = (event) => {
-    this.setState({ oauth_id_field: event.target.value })
+    this.setState({ oauth_id: event.target.value })
   }
 
   submitName = (event) => {
-    api.post('graders', { oauth_id: this.state.oauth_id_field })
+    api.post('graders', { oauth_id: this.state.oauth_id })
       .then(graders => {
         this.setState({
-          oauth_id_field: '',
+          oauth_id: '',
           graders: graders
         })
       })
@@ -34,21 +54,9 @@ class Graders extends React.Component {
     event.preventDefault()
   }
 
-  componentDidMount = () => {
-    api.get('graders')
-      .then(graders => {
-        this.setState({ graders: graders })
-        console.log(graders)
-      })
-      .catch(resp => {
-        Notification.error('could not fetch graders (see Javascript console for details)')
-        console.error('Error fetching graders:', resp)
-      })
-  }
-
   render () {
-    const idField = window.sessionStorage.getItem('oauth_id_field')
-    const provider = window.sessionStorage.getItem('oauth_provider')
+    const idField = this.state.oauth_id_field
+    const provider = this.state.oauth_provider
 
     return (
 
@@ -69,7 +77,7 @@ class Graders extends React.Component {
               <div className='field has-addons'>
                 <div className='control'>
                   <input className='input'
-                    name='first_name' value={this.state.oauth_id_field}
+                    name='first_name' value={this.state.oauth_id}
                     onChange={this.changeIdField} type='text'
                     maxLength={100} placeholder={idField} />
                 </div>

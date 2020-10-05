@@ -1,5 +1,5 @@
 import React from 'react'
-import {Link} from 'react-router-dom'
+import { Link } from 'react-router-dom'
 
 import './NavBar.css'
 import * as api from '../api.jsx'
@@ -172,7 +172,7 @@ class NavBar extends React.Component {
     api.get('oauth/grader').then(grader => {
       console.log(grader)
       this.setState({ grader })
-      this.props.changeGrader(grader)
+      this.props.setGrader(grader)
       this.updateExamList()
     })
 
@@ -184,9 +184,8 @@ class NavBar extends React.Component {
           examList: [],
           examID: null
         })
-        this.props.changeGrader(null)
+        this.props.setGrader(null)
       })
-      .catch(response => { console.log(response) })
 
   render () {
     const selectedExam = this.state.examList.find(exam => exam.id === this.state.examID)

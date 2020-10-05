@@ -58,9 +58,7 @@ class App extends React.Component {
     graderID: null
   }
 
-  selectExam = (id) => {
-    this.setState({ examID: parseInt(id) })
-  }
+  selectExam = (id) => this.setState({ examID: parseInt(id) })
 
   updateExamList = () => {
     if (this.menu.current) {
@@ -68,10 +66,7 @@ class App extends React.Component {
     }
   }
 
-  changeGrader = (grader) =>
-    this.setState({
-      graderID: grader ? grader.id : null
-    }, () => window.sessionStorage.setItem('graderID', this.state.graderID))
+  setGrader = (grader) => this.setState({ graderID: grader ? grader.id : null })
 
   render () {
     const updateExamList = this.menu.current ? this.menu.current.updateExamList : () => {}
@@ -82,7 +77,7 @@ class App extends React.Component {
     return (
       <Router>
         <div>
-          <NavBar examID={this.state.examID} changeGrader={this.changeGrader} ref={this.menu} />
+          <NavBar examID={this.state.examID} setGrader={this.setGrader} ref={this.menu} />
           <Switch>
             <Route exact path='/' component={Home} />
             <PrivateRoute
@@ -98,10 +93,10 @@ class App extends React.Component {
                 updateExamList={updateExamList}
                 setHelpPage={setHelpPage} />
             } />
-            <Route exact path='/graders' render={() =>
+            <PrivateRoute isAuthenticated={isAuthenticated} exact path='/graders' render={() =>
               <Graders updateGraderList={updateGraderList} />} />
             <Route exact path='/unauthorized' render={() =>
-              <Fail message='Your account is not authorized to access this instance of Zejse. Please contact with the administrator.' />} />
+              <Fail message='Your account is not authorized to access this instance of Zesje.' />} />
             <Route render={() =>
               <Fail message="404. Could not find that page :'(" />} />
           </Switch>

@@ -63,6 +63,7 @@ lorem_prob = TextLorem(srange=(2, 5))
 
 def init_app(delete):
     app = create_app()
+    app.config['LOGIN_DISABLED'] = True
 
     mysql_was_running_before_delete = False
     if os.path.exists(app.config['DATA_DIRECTORY']) and delete:

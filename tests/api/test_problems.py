@@ -9,7 +9,6 @@ from zesje.database import db, Exam, ExamLayout, Problem, FeedbackOption,\
 def add_test_data(app):
     for layout in ExamLayout:
         id = layout.value
-        print(id)
         exam = Exam(id=id, name=f'exam {layout.name}', finalized=True, layout=layout)
         db.session.add(exam)
 
@@ -94,7 +93,7 @@ def test_delete_problem(test_client, add_test_data, id, status):
 def test_delete_problem_graded(test_client, add_test_data, exam_id, problem_id):
     student = Student(first_name='', last_name='')
     db.session.add(student)
-    grader = Grader(name='Zesje')
+    grader = Grader(name='Zesje', oauth_id='zesje')
     db.session.add(grader)
     db.session.commit()
     sub = Submission(student=student, exam_id=exam_id)

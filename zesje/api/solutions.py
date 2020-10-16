@@ -189,4 +189,4 @@ class Approve(Resource):
         else:
             return dict(status=409, message='At least one feedback option must be selected.'), 409
 
-        return {'state': graded}
+        return {'state': grader is not None}

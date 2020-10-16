@@ -217,7 +217,7 @@ def extract_images_from_pdf(file_path_or_buffer, file_info=None, dpi=300, only_i
                         # Try to use PikePDF, but catch any error it raises
                         img = extract_image_pikepdf(page)
 
-                    except (ValueError, AttributeError, PdfError):
+                    except (ValueError, AttributeError, NotImplementedError, PdfError):
                         # Fallback to Wand if extracting with PikePDF failed
                         use_wand = True
 

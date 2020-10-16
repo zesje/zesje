@@ -78,6 +78,10 @@ class CheckStudents extends React.Component {
     }
   }
 
+  selectCopy = (copy) => {
+    this.setCopyIndex(this.state.copies.findIndex((c) => c.number === copy.number))
+  }
+
   prev = () => {
     this.setCopyIndex(this.state.index - 1)
   }
@@ -180,7 +184,7 @@ class CheckStudents extends React.Component {
                               'student.lastName',
                               'student.id'
                             ]}
-                            setSelected={this.setCopyIndex}
+                            setSelected={this.selectCopy}
                             renderSelected={({number, student}) => {
                               if (student) {
                                 return `#${number}: ${student.firstName} ${student.lastName} (${student.id})`

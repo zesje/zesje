@@ -9,7 +9,7 @@ dependencies:
     - redis
     - pip
     - imagemagick
-    - mysql
+    - mysql=5.7.20
     - pymysql
 
     - pip:

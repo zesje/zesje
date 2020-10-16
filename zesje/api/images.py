@@ -1,4 +1,7 @@
-from flask import abort, Response, current_app
+from flask import abort, Response, current_app, request
+from pathlib import Path
+from werkzeug.http import parse_date, http_date
+from datetime import datetime
 
 import cv2
 import numpy as np
@@ -60,6 +63,15 @@ def get(exam_id, problem_id, submission_id, full_page=False):
     if len(pages) == 0:
         abort(404, f'Page #{page_number} is missing for all copies of submission #{submission_id}.')
 
+    # Convert to int to match the time resolution of HTTP headers (seconds)
+    last_modified = int(max(Path(page.abs_path).stat().st_mtime for page in pages))
+
+    if modified_since := request.headers.get('If-Modified-Since'):
+        modified_since = parse_date(modified_since).timestamp()
+        if last_modified == modified_since:
+            # Send 304 Not Modified with empty body
+            return '', 304
+
     solution = Solution.query.filter(Solution.submission_id == sub.id,
                                      Solution.problem_id == problem_id).one()
 
@@ -100,17 +112,35 @@ def get(exam_id, problem_id, submission_id, full_page=False):
 
         raw_images.append(raw_image)
 
-    max_height = max(img.shape[0] for img in raw_images)
-    max_width = max(img.shape[1] for img in raw_images)
-
     if len(raw_images) == 1:
         stitched_image = raw_images[0]
     else:
-        resized_images = (cv2.resize(raw_image, (max_width, max_height)) for raw_image in raw_images)
+        heights, widths = np.array([img.shape[:1] for img in raw_images]).T
+        max_width = min(np.max(widths), current_app.config['MAX_WIDTH'])
+        factors = max_width / widths
+        height_factor = current_app.config['MAX_HEIGHT'] / np.sum(heights * factors)
+        height_factor = min(height_factor, 1)
+        max_width = int(max_width * height_factor)
+        factors *= height_factor
+
+        resized_images = []
+        for raw_image, factor in zip(raw_images, factors):
+            if max_width == raw_image.shape[1]:
+                resized_images.append(raw_image)
+                continue
+
+            new_height = round(factor * raw_image.shape[0])
+            resized_images.append(cv2.resize(raw_image, (max_width, new_height)))
+
         stitched_image = np.concatenate(tuple(resized_images), axis=0)
 
     image_encoded = cv2.imencode(".jpg", stitched_image)[1].tostring()
-    return Response(image_encoded, 200, mimetype='image/jpeg')
+
+    headers = {
+        'Last-Modified': http_date(datetime.fromtimestamp(last_modified)),
+        'Cache-Control': 'no-cache'
+    }
+    return Response(image_encoded, 200, headers=headers, mimetype='image/jpeg')
 
 
 def _grey_out_student_widget(page_im, coords, dpi):

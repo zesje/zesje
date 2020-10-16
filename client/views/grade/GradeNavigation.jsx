@@ -2,6 +2,10 @@ import React from 'react'
 import SearchBox from '../../components/SearchBox.jsx'
 
 class GradeNavigation extends React.Component {
+  setSubmission = (submission) => {
+    this.props.setSubmission(submission.id)
+  }
+
   render () {
     const submission = this.props.submission
     const submissions = this.props.submissions
@@ -26,7 +30,7 @@ class GradeNavigation extends React.Component {
               data-tooltip='Press ctrl to hide shortcuts'>
               <SearchBox
                 placeholder='Search for a submission'
-                setSelected={this.props.setSubmission}
+                setSelected={this.setSubmission}
                 selected={submission}
                 options={submissions}
                 suggestionKeys={(this.props.anonymous ? ['id'] : [

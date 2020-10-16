@@ -2,6 +2,7 @@ import React from 'react'
 import Notification from 'react-bulma-notification'
 import Hero from '../components/Hero.jsx'
 import Fail from './Fail.jsx'
+import update from 'immutability-helper'
 
 import FeedbackPanel from '../components/feedback/FeedbackPanel.jsx'
 import ProblemSelector from './grade/ProblemSelector.jsx'
@@ -47,7 +48,7 @@ class Grade extends React.Component {
           submission: submission,
           problem: problem,
           ...partialState
-        }, () => this.props.history.replace(`${this.props.parentURL}/grade/${submissionID}/${problemID}`))
+        }, () => this.props.history.replace(this.getURL(submissionID, problemID)))
       // eslint-disable-next-line handle-callback-err
       }).catch(err => {
         this.setState({
@@ -85,7 +86,7 @@ class Grade extends React.Component {
         this.setState({
           submission: submission,
           problem: problem
-        }, () => this.props.history.replace(`${this.props.parentURL}/grade/${submission.id}/${problem.id}`))
+        }, () => this.props.history.replace(this.getURL(submission.id, problem.id)))
       }).catch(err => {
         if (err.status === 404) {
           this.setState({
@@ -154,6 +155,10 @@ class Grade extends React.Component {
     }
   }
 
+  getURL = (submissionID, problemID) => {
+    return `${this.props.parentURL}/grade/${submissionID}/${problemID}`
+  }
+
   /**
    * Navigates the current submission forwards or backwards, and either just to the next, or to the next ungraded.
    * It then pushes the URL of the updated submission to history.
@@ -170,7 +175,7 @@ class Grade extends React.Component {
       '&ungraded=' + ungraded).then(sub =>
       this.setState({
         submission: sub
-      }, () => this.props.history.push(`${this.props.parentURL}/grade/${this.state.submission.id}/${this.state.problem.id}`))
+      }, () => this.props.history.push(this.getURL(this.state.submission.id, this.state.problem.id)))
     )
   }
   /**
@@ -248,18 +253,26 @@ class Grade extends React.Component {
   }
 
   /**
-   * Navigates the problem to the problem corresponding to the specified problem id by pushing a new URL to history.
+   * Navigates to the given problem by pushing a new URL to history without changing the submission.
    * @param problemID - the id of the problem that we want to navigate to
    */
   navigateProblem = (problemID) => {
-    this.props.history.push(`${this.props.parentURL}/grade/${this.props.submissionID}/${problemID}`)
+    this.props.history.push(this.getURL(this.props.submissionID, problemID))
+  }
+
+  /**
+   * Navigates to the given submission by pushing a new URL to history without changing the problem.
+   * @param submissionID - the id of the submission that we want to navigate to
+   */
+  navigateSubmission = (submissionID) => {
+    this.props.history.push(this.getURL(submissionID, this.props.problemID))
   }
 
   /**
    * Toggles a feedback option by it's index in the problems list of feedback.
    * @param index the index of the feedback option.
    */
-  toggleFeedbackOptionIndex (index) {
+  toggleFeedbackOptionIndex = (index) => {
     this.toggleFeedbackOption(this.state.problem.feedback[index].id)
   }
 
@@ -277,22 +290,7 @@ class Grade extends React.Component {
       graderID: this.props.graderID
     }).then(result => {
       this.updateSubmission()
-    })
-  }
-
-  /**
-   * Approves the current submission.
-   */
-  approve = () => {
-    const submission = this.state.submission
-    const problem = this.state.problem
-
-    api.put(`solution/approve/${this.props.examID}/${submission.id}/${problem.id}`, {
-      graderID: this.props.graderID
-    }).catch(resp => {
-      resp.json().then(body => Notification.error('Could not approve feedback: ' + body.message))
-    }).then(result => {
-      this.updateSubmission()
+      this.updateProgressBar(result.state)
     })
   }
 
@@ -318,8 +316,17 @@ class Grade extends React.Component {
        })
      }).then(result => {
        this.updateSubmission()
+       this.updateProgressBar(result.state)
      })
    }
+
+   updateProgressBar = (graded) => this.setState(prevState => ({
+     problem: update(prevState.problem, {
+       n_graded: {
+         $set: prevState.problem.n_graded + (graded ? 1 : -1)
+       }
+     })
+   }))
 
   /**
    * Toggles full page view.
@@ -421,7 +428,7 @@ class Grade extends React.Component {
                 <GradeNavigation
                   submission={submission}
                   submissions={submissions}
-                  setSubmission={this.updateSubmission}
+                  setSubmission={this.navigateSubmission}
                   prevUngraded={this.prevUngraded}
                   prev={this.prev}
                   next={this.next}

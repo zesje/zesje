@@ -25,7 +25,7 @@ class PanelFinalize extends React.Component {
   finalize = () => {
     api.put(`exams/${this.state.examID}`, { finalized: true })
       .then(() => {
-        this.props.onFinalise()
+        this.props.onFinalize()
         this.setState({ previewing: false })
       })
   }

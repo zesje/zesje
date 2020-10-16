@@ -88,3 +88,17 @@ def test_is_misaligned(config_app, coords, student_misaligned, reference):
                                    width=coords[2], height=coords[2])
 
     assert pregrader.is_problem_misaligned(problem, student_misaligned, reference)
+
+
+def test_threshold(config_app, datadir):
+    dir = os.path.join(datadir, 'thresholds')
+    files = os.listdir(dir)
+    for filename in files:
+        img = Image.open(os.path.join(dir, filename))
+        problem = Problem(name='Problem')
+        problem.widget = ProblemWidget(x=0, y=0, width=img.size[0], height=img.size[1])
+
+        data = np.array(img)
+        reference = np.full_like(data, 255)
+
+        assert not pregrader.is_blank(problem, data, reference)

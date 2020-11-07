@@ -210,7 +210,10 @@ class NavBar extends React.Component {
               to={`/exams/${this.state.examID}/scans`}
               text='Scans'
               predicate={[predicateNoExam, predicateExamNotFinalized]} />
-            <Link className='navbar-item' to={`/exams/${this.state.examID}/students`}>Students</Link>
+            <TooltipLink
+              to={`/exams/${this.state.examID}/students`}
+              text='Students'
+              predicate={[predicateNoExam]} />
             <TooltipLink
               to={`/exams/${this.state.examID}/grade`}
               text={<strong><i>Grade</i></strong>}

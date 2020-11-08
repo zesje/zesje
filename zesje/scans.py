@@ -87,17 +87,19 @@ def _process_scan(scan_id, exam_layout):
     try:
         for image, page_info, file_info, number, total in extract_pages_from_file(scan.path, scan.name):
             report_progress(f'Processing page {number} / {total}')
-            if not isinstance(image, Image.Image):
-                failures.append((file_info, 'File is not an image'))
-            try:
-                success, description = process_page_function(
-                    image, page_info, file_info, exam_config, output_directory
-                )
-                if not success:
-                    failures.append((file_info, description))
-            except Exception as e:
-                report_error(f'Error processing {readable_filename(file_info)}: {e}')
-                return
+            if isinstance(image, Exception):
+                failures.append((file_info, str(image)))
+            elif not isinstance(image, Image.Image):
+                failures.append((file_info, 'File is not an image.'))
+            else:
+                try:
+                    success, description = process_page_function(
+                        image, page_info, file_info, exam_config, output_directory
+                    )
+                    if not success:
+                        failures.append((file_info, description))
+                except Exception as e:
+                    report_error(f'Error processing {readable_filename(file_info)}: {e}')
     except Exception as e:
         report_error(f"Failed to read file {scan.name}: {e}")
         raise

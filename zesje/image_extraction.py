@@ -67,7 +67,7 @@ def extract_pages_from_file(file_path_or_buffer, file_info, dpi=300):
     number : int
         The number of files extracted so far.
     total : int
-        The total number of file to extract
+        The total number of files to extract.
     """
     file_infos = list(extract_images_or_infos_from_file(file_path_or_buffer, file_info, dpi, only_info=True))
     final_total = len(file_infos)
@@ -171,10 +171,13 @@ def extract_image_from_image(file_path_or_buffer, file_info, only_info=False):
     Same as `extract_images_or_infos_from_file`.
     """
     if not only_info:
-        with Image.open(file_path_or_buffer) as image:
-            image = exif_transpose(image)
-            image = convert_to_rgb(image)
-            yield image, file_info
+        try:
+            with Image.open(file_path_or_buffer) as image:
+                image = exif_transpose(image)
+                image = convert_to_rgb(image)
+                yield image, file_info
+        except Exception as e:
+            yield e, file_info
     else:
         yield file_info
 
@@ -201,35 +204,47 @@ def extract_images_from_pdf(file_path_or_buffer, file_info=None, dpi=300, only_i
     if file_info is None:
         file_info = []
 
-    with Pdf.open(file_path_or_buffer) as pdf_reader:
-        number_of_pages = len(pdf_reader.pages)
-        use_wand = False
+    try:
+        with Pdf.open(file_path_or_buffer) as pdf_reader:
+            number_of_pages = len(pdf_reader.pages)
+            use_wand = False
 
-        for page_number, page in enumerate(pdf_reader.pages, start=1):
-            # Only include page number in file_info if there are multiple pages
-            if number_of_pages > 1:
-                file_info_page = _combine_file_info(file_info, page_number)
-            else:
-                file_info_page = file_info
+            for page_number, page in enumerate(pdf_reader.pages, start=1):
+                # Only include page number in file_info if there are multiple pages
+                if number_of_pages > 1:
+                    file_info_page = _combine_file_info(file_info, page_number)
+                else:
+                    file_info_page = file_info
 
-            if not only_info:
-                if not use_wand:
-                    try:
-                        # Try to use PikePDF, but catch any error it raises
-                        img = extract_image_pikepdf(page)
+                if not only_info:
+                    if not use_wand:
+                        try:
+                            # Try to use PikePDF, but catch any error it raises
+                            img = extract_image_pikepdf(page)
 
-                    except (ValueError, AttributeError, NotImplementedError, UnsupportedImageTypeError, PdfError):
-                        # Fallback to Wand if extracting with PikePDF failed
-                        # UnsupportedImageTypeError is raised when /CCITTFaxDecode with /EncodedByteAlign true (535)
-                        use_wand = True
+                        except (ValueError, AttributeError, NotImplementedError, UnsupportedImageTypeError, PdfError):
+                            # Fallback to Wand if extracting with PikePDF failed
+                            use_wand = True
+                        except Exception as e:
+                            yield e, file_info_page
+                            continue
 
-                if use_wand:
-                    img = extract_image_wand(page, dpi)
+                    if use_wand:
+                        try:
+                            img = extract_image_wand(page, dpi)
+                        except Exception as e:
+                            yield e, file_info_page
+                            continue
 
-                img = convert_to_rgb(img)
-                yield img, file_info_page
-            else:
-                yield file_info_page
+                    img = convert_to_rgb(img)
+                    yield img, file_info_page
+                else:
+                    yield file_info_page
+    except Exception as e:
+        if only_info:
+            yield file_info
+        else:
+            yield e, file_info
 
 
 def extract_image_pikepdf(page):

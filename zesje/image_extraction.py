@@ -8,6 +8,7 @@ import re
 from flask import current_app
 from PIL import Image
 from pikepdf import Pdf, PdfImage, PdfError
+from pikepdf.models.image import UnsupportedImageTypeError
 from tempfile import SpooledTemporaryFile
 from wand.image import Color, Image as WandImage
 from reportlab.lib.units import inch
@@ -221,7 +222,7 @@ def extract_images_from_pdf(file_path_or_buffer, file_info=None, dpi=300, only_i
                             # Try to use PikePDF, but catch any error it raises
                             img = extract_image_pikepdf(page)
 
-                        except (ValueError, AttributeError, NotImplementedError, PdfError):
+                        except (ValueError, AttributeError, NotImplementedError, UnsupportedImageTypeError, PdfError):
                             # Fallback to Wand if extracting with PikePDF failed
                             use_wand = True
                         except Exception as e:

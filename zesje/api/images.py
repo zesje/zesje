@@ -115,7 +115,7 @@ def get(exam_id, problem_id, submission_id, full_page=False):
     if len(raw_images) == 1:
         stitched_image = raw_images[0]
     else:
-        heights, widths = np.array([img.shape[:1] for img in raw_images]).T
+        heights, widths = np.array([img.shape[:2] for img in raw_images]).T
         max_width = min(np.max(widths), current_app.config['MAX_WIDTH'])
         factors = max_width / widths
         height_factor = current_app.config['MAX_HEIGHT'] / np.sum(heights * factors)

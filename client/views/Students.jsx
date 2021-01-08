@@ -7,6 +7,7 @@ import Hero from '../components/Hero.jsx'
 import ProgressBar from '../components/ProgressBar.jsx'
 import SearchBox from '../components/SearchBox.jsx'
 import withShortcuts from '../components/ShortcutBinder.jsx'
+import Fail from './Fail.jsx'
 
 import SearchPanel from './students/SearchPanel.jsx'
 import EditPanel from './students/EditPanel.jsx'
@@ -19,7 +20,7 @@ class CheckStudents extends React.Component {
     editStud: null,
     index: 0,
     copies: [],
-    examID: null // The exam ID the loaded copies belong to
+    examID: undefined // The exam ID the loaded copies belong to
   }
 
   componentDidMount = () => {
@@ -40,14 +41,14 @@ class CheckStudents extends React.Component {
     this.fetchCopies()
   }
 
-  componentDidUpdate = () => {
-    if (this.state.examID !== this.props.examID) {
+  componentDidUpdate = (prevProps, prevState) => {
+    if (prevProps.examID !== this.props.examID) {
       this.fetchCopies()
     }
   }
 
   fetchCopies = () => {
-    if (this.props.examID === null) return
+    if (!this.props.examID || isNaN(this.props.examID)) return
 
     api.get(`copies/${this.props.examID}`).then(copies => {
       const newIndex = this.state.index < copies.length ? this.state.index : 0
@@ -55,6 +56,13 @@ class CheckStudents extends React.Component {
         index: newIndex,
         copies: copies,
         examID: this.props.examID
+      })
+    }).catch(err => {
+      console.log(err)
+      this.setState({
+        index: 0,
+        copies: [],
+        examID: null
       })
     })
   }
@@ -144,10 +152,18 @@ class CheckStudents extends React.Component {
     const total = copies.length
     const done = copies.filter(c => c.validated).length
 
+    const hero = <Hero title='Match Students' subtitle='Check that all submissions are correctly identified' />
+
+    if (this.state.examID === undefined && this) return hero
+
+    if (!this.state.examID) {
+      return <Fail message={'No copies where found for this exam'} />
+    }
+
     return (
       <div>
 
-        <Hero title='Match Students' subtitle='Check that all submissions are correctly identified' />
+        {hero}
 
         <section className='section'>
 

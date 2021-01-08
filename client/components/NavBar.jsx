@@ -122,7 +122,7 @@ class NavBar extends React.Component {
   }
 
   componentDidUpdate = (prevProps, prevState) => {
-    if (prevProps.examID !== this.props.examID) {
+    if (prevProps.examID !== this.props.examID && !isNaN(this.props.examID)) {
       this.setState({examID: this.props.examID})
     }
   }

@@ -112,12 +112,34 @@ def test_guess_missing_page_info():
 
 def test_extract_pages_no_image(app):
     file_content = b'1701'
-    result = [result for result in extract_pages_from_file(file_content, 'notanimage.nopng')]
+    result = list(extract_pages_from_file(file_content, 'notanimage.nopng'))
     assert len(result) == 1
 
     image, page_info, file_info, number, total = result[0]
     assert not isinstance(image, Image.Image)
     assert image == file_content
+    assert number == 1
+    assert total == 1
+
+
+def test_extract_pages_corrupted_image(app):
+    file_content = b'1701'
+    result = list(extract_pages_from_file(file_content, 'corrupted_image.png'))
+    assert len(result) == 1
+
+    image, page_info, file_info, number, total = result[0]
+    assert isinstance(image, Exception)
+    assert number == 1
+    assert total == 1
+
+
+def test_extract_pages_corrupted_pdf(app):
+    file_content = b'1701'
+    result = list(extract_pages_from_file(file_content, 'corrupted_pdf.pdf'))
+    assert len(result) == 1
+
+    image, page_info, file_info, number, total = result[0]
+    assert isinstance(image, Exception)
     assert number == 1
     assert total == 1
 

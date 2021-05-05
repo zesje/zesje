@@ -43,6 +43,7 @@ class ExamRouter extends React.PureComponent {
   componentDidUpdate = (prevProps, prevState) => {
     const examID = this.props.parentMatch.params.examID
     if (prevProps.parentMatch.params.examID !== examID) {
+      // sends the selected exam to the navbar
       this.props.selectExam(examID)
     }
   }
@@ -59,6 +60,10 @@ class ExamRouter extends React.PureComponent {
   render = () => {
     const examID = this.props.parentMatch.params.examID
     const parentURL = this.props.parentMatch.url
+
+    if (!examID || isNaN(examID)) {
+      return <Fail message={'Invalid exam'} />
+    }
 
     return (
       <Switch>

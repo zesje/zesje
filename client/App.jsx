@@ -4,6 +4,7 @@ import { hot } from 'react-hot-loader'
 import { BrowserRouter as Router, Route, Switch } from 'react-router-dom'
 
 import 'bulma/css/bulma.css'
+import 'bulma-popover/css/bulma-popover.css'
 import 'react-bulma-notification/build/css/index.css'
 import 'font-awesome/css/font-awesome.css'
 

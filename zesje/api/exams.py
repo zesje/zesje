@@ -119,7 +119,7 @@ class Exams(Resource):
         """
         # Load exam using the following most efficient strategy
         exam = Exam.query.options(selectinload(Exam.submissions).
-                                  subqueryload(Submission.solutions)).get(exam_id)
+                                  selectinload(Submission.solutions)).get(exam_id)
 
         if exam is None:
             return dict(status=404, message='Exam does not exist.'), 404

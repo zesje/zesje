@@ -210,7 +210,7 @@ class Solution(db.Model):
     # if grader_id, and thus graded_by, is null, this has not yet been graded
     grader_id = Column(Integer, ForeignKey('grader.id'), nullable=True)  # backref graded_by
     graded_at = Column(DateTime, nullable=True)
-    feedback = db.relationship('FeedbackOption', secondary=solution_feedback, backref='solutions', lazy='subquery')
+    feedback = db.relationship('FeedbackOption', secondary=solution_feedback, backref='solutions', lazy=True)
     remarks = Column(Text)
 
     @property

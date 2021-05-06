@@ -9,18 +9,18 @@ class FeedbackBlock extends React.Component {
       edit: false,
       filter: false
     },
-    filterMode: 'dont_care' // 'dont_care' 'required' 'not_required'
+    filterMode: 'no_filter' // 'no_filter' 'required' 'excluded'
   }
 
   filterIcons = {
-    'dont_care': 'fa-filter',
+    'no_filter': 'fa-filter',
     'required': 'fa-check',
-    'not_required': 'fa-ban'
+    'excluded': 'fa-ban'
   }
   filterColors = {
-    'dont_care': '',
+    'no_filter': '',
     'required': 'is-success',
-    'not_required': 'is-danger'
+    'excluded': 'is-danger'
   }
 
   leave = (component) => {
@@ -49,7 +49,7 @@ class FeedbackBlock extends React.Component {
   applyFilter = (e, newFilterMode) => {
     e.stopPropagation()
     this.setState({
-      filterMode: this.state.filterMode === newFilterMode ? 'dont_care' : newFilterMode
+      filterMode: this.state.filterMode === newFilterMode ? 'no_filter' : newFilterMode
     })
   }
 
@@ -85,15 +85,15 @@ class FeedbackBlock extends React.Component {
         </span>
         <span
           className={'popover is-popover-bottom tag is-pulled-right ' +
-          (this.state.hover['block'] || this.state.filterMode === 'required' || this.state.filterMode === 'not_required' ? '' : 'is-invisible ') +
+          (this.state.hover['block'] || this.state.filterMode === 'required' || this.state.filterMode === 'excluded' ? '' : 'is-invisible ') +
           (this.state.hover['filter'] ? ' is-link ' : '') + this.filterColors[this.state.filterMode]}
           onMouseEnter={() => this.enter('filter')} onMouseLeave={() => this.leave('filter')}
         >
           <i className={`fa ${this.filterIcons[this.state.filterMode]}`} />
-          <div style={{display: this.state.hover['filter'] ? '' : 'none', position: 'absolute', width: '4em', height: '4em'}} onClick={e => this.applyFilter(e, 'dont_care')} />
+          <div style={{display: this.state.hover['filter'] ? '' : 'none', position: 'absolute', width: '4em', height: '4em'}} onClick={e => this.applyFilter(e, 'no_filter')} />
           <div className='popover-content' style={{}}>
             <button className={`button popover-trigger fa ${this.filterIcons.required} ${this.filterColors['required']}`} onClick={e => this.applyFilter(e, 'required')} />
-            <button className={`button popover-trigger fa ${this.filterIcons.not_required} ${this.filterColors['not_required']}`} onClick={(e) => this.applyFilter(e, 'not_required')} />
+            <button className={`button popover-trigger fa ${this.filterIcons.excluded} ${this.filterColors['excluded']}`} onClick={(e) => this.applyFilter(e, 'excluded')} />
           </div>
         </span>
       </a>

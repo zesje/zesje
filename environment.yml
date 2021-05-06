@@ -17,7 +17,7 @@ dependencies:
         - flask
         - flask_restful
         - flask_sqlalchemy
-        - sqlalchemy
+        - sqlalchemy>=1.4.13
         - Flask-Migrate
         - alembic
         - pyyaml

@@ -32,8 +32,13 @@ def sub_to_data(sub):
         ]
     }
 
+#returns true if the solution meets the requirements
+def has_all_required_feedback(sol, required_feedback, excluded_feedback):
+    has_required = required_feedback is None or all(fb_id in sol.feedback for fb_id in required_feedback)
+    doesnt_have_excluded = excluded_feedback is None or not any(fb_id in sol.feedback for fb_id in excluded_feedback)
+    return has_required and doesnt_have_excluded
 
-def _find_submission(old_submission, problem_id, shuffle_seed, direction, ungraded):
+def _find_submission(old_submission, problem_id, shuffle_seed, direction, ungraded, required_feedback, excluded_feedback):
     """
     Finds a submission based on the parameters of the function.
     Finds all solutions for the problem, and shuffles them based on the shuffle_seed.
@@ -62,20 +67,29 @@ def _find_submission(old_submission, problem_id, shuffle_seed, direction, ungrad
         return dict(status=404, message='Problem does not exist.'), 404
 
     shuffled_solutions = _shuffle(problem.solutions, shuffle_seed, key_extractor=lambda s: s.submission_id)
-    old_submission_index = next(i for i, s in enumerate(shuffled_solutions) if s.submission_id == old_submission.id)
+
+    #make shuffled_solutions smaller by only including solutions fitting criteria or the solution currently open.
+    shuffled_filtered_solutions = [
+        sol for sol in shuffled_solutions if \
+            sol.submission_id == old_submission.id or \
+            has_all_required_feedback(sol, required_feedback, excluded_feedback)
+    ]
+
+    #this new list is then used to find the next submission in the same way as before
+    old_submission_index = next(i for i, s in enumerate(shuffled_filtered_solutions) if s.submission_id == old_submission.id)
 
     if (old_submission_index == 0 and direction == 'prev') or \
-            (old_submission_index == len(shuffled_solutions) - 1 and direction == 'next'):
+            (old_submission_index == len(shuffled_filtered_solutions) - 1 and direction == 'next'):
         return sub_to_data(old_submission)
 
     if not ungraded:
         offset = 1 if direction == 'next' else -1
-        return sub_to_data(shuffled_solutions[old_submission_index + offset].submission)
+        return sub_to_data(shuffled_filtered_solutions[old_submission_index + offset].submission)
 
     # If direction is next, search submissions from the one after the old, up to the end of the list.
-    # If direction is previous search from the start to the old, in reverse order.
-    solutions_to_search = shuffled_solutions[old_submission_index + 1:] if direction == 'next' \
-        else shuffled_solutions[old_submission_index - 1::-1]
+    # If direction is previous search from the start to the old, in reverse order. 
+    solutions_to_search = shuffled_filtered_solutions[old_submission_index + 1:] if direction == 'next' \
+        else shuffled_filtered_solutions[old_submission_index - 1::-1]
 
     if len(solutions_to_search) == 0:
         return sub_to_data(old_submission)
@@ -95,6 +109,8 @@ class Submissions(Resource):
     get_parser.add_argument('shuffle_seed', type=int, required=False)
     get_parser.add_argument('ungraded', type=boolean, required=False)
     get_parser.add_argument('direction', type=str, required=False, choices=["next", "prev"])
+    get_parser.add_argument('required_feedback', type=int, required=False, action='append')
+    get_parser.add_argument('excluded_feedback', type=int, required=False, action='append')
 
     def get(self, exam_id, submission_id=None):
         """get submissions for the given exam
@@ -133,7 +149,7 @@ class Submissions(Resource):
             if args.direction:
                 if args.problem_id is None or args.shuffle_seed is None or args.ungraded is None:
                     return dict(status=400, message='One of problem_id, grader_id, ungraded, direction not provided')
-                return _find_submission(sub, args.problem_id, args.shuffle_seed, args.direction, args.ungraded)
+                return _find_submission(sub, args.problem_id, args.shuffle_seed, args.direction, args.ungraded, args.required_feedback, args.excluded_feedback)
 
             return sub_to_data(sub)
 

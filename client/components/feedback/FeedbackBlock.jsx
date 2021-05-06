@@ -6,9 +6,23 @@ class FeedbackBlock extends React.Component {
   state = {
     hover: {
       block: false,
-      edit: false
-    }
+      edit: false,
+      filter: false
+    },
+    filterMode: 'no_filter' // 'no_filter' 'required' 'excluded'
   }
+
+  filterIcons = {
+    'no_filter': 'fa-filter',
+    'required': 'fa-check',
+    'excluded': 'fa-ban'
+  }
+  filterColors = {
+    'no_filter': '',
+    'required': 'is-success',
+    'excluded': 'is-danger'
+  }
+
   leave = (component) => {
     this.setState(prevState => ({
       hover: {
@@ -30,6 +44,13 @@ class FeedbackBlock extends React.Component {
     if (!this.state.hover['edit']) {
       this.props.toggleOption(this.props.feedback.id)
     }
+  }
+
+  applyFilter = (e, newFilterMode) => {
+    e.stopPropagation()
+    this.setState({
+      filterMode: this.state.filterMode === newFilterMode ? 'no_filter' : newFilterMode
+    })
   }
 
   render () {
@@ -62,7 +83,19 @@ class FeedbackBlock extends React.Component {
         >
           <i className='fa fa-pencil' />
         </span>
-
+        <span
+          className={'popover is-popover-bottom tag is-pulled-right ' +
+          (this.state.hover['block'] || this.state.filterMode === 'required' || this.state.filterMode === 'excluded' ? '' : 'is-invisible ') +
+          (this.state.hover['filter'] ? ' is-link ' : '') + this.filterColors[this.state.filterMode]}
+          onMouseEnter={() => this.enter('filter')} onMouseLeave={() => this.leave('filter')}
+        >
+          <i className={`fa ${this.filterIcons[this.state.filterMode]}`} />
+          <div style={{display: this.state.hover['filter'] ? '' : 'none', position: 'absolute', width: '4em', height: '4em'}} onClick={e => this.applyFilter(e, 'no_filter')} />
+          <div className='popover-content' style={{}}>
+            <button className={`button popover-trigger fa ${this.filterIcons.required} ${this.filterColors['required']}`} onClick={e => this.applyFilter(e, 'required')} />
+            <button className={`button popover-trigger fa ${this.filterIcons.excluded} ${this.filterColors['excluded']}`} onClick={(e) => this.applyFilter(e, 'excluded')} />
+          </div>
+        </span>
       </a>
     )
   }

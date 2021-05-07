@@ -91,7 +91,7 @@ class FeedbackBlock extends React.Component {
         >
           <i className={`fa ${this.filterIcons[this.state.filterMode]}`} />
           <div style={{display: this.state.hover['filter'] ? '' : 'none', position: 'absolute', left: 0, width: '4em', height: '2em'}} onClick={e => this.applyFilter(e, 'no_filter')} />
-          <div className='popover-content' style={{}}>
+          <div className='popover-content' style={{display: 'grid', gridAutoFlow: 'column', gap: '1em'}}>
             <button className={`button popover-trigger fa ${this.filterIcons.required} ${this.filterColors['required']}`} onClick={e => this.applyFilter(e, 'required')} />
             <button className={`button popover-trigger fa ${this.filterIcons.excluded} ${this.filterColors['excluded']}`} onClick={(e) => this.applyFilter(e, 'excluded')} />
           </div>

@@ -35,11 +35,10 @@ def sub_to_data(sub):
 
 # Returns true if the solution meets the requirements
 def has_all_required_feedback(sol, required_feedback, excluded_feedback):
-    has_required = required_feedback is None or \
-         all(fb_id in sol.feedback for fb_id in required_feedback)
+    feedback_ids = set([fb.id for fb in sol.feedback])
+    has_required = required_feedback is None or set(required_feedback) <= feedback_ids
     if has_required:
-        doesnt_have_excluded = excluded_feedback is None or not \
-            any(fb_id in sol.feedback for fb_id in excluded_feedback)
+        doesnt_have_excluded = excluded_feedback is None or set(excluded_feedback).intersection(feedback_ids) == set()
         return doesnt_have_excluded
     else:
         return False
@@ -75,10 +74,10 @@ def _find_submission(old_submission, problem_id, shuffle_seed, direction, ungrad
         return dict(status=404, message='Problem does not exist.'), 404
 
     filtered_solutions = [
-            sol for sol in problem.solutions if
-            sol.submission_id == old_submission.id or
-            has_all_required_feedback(sol, required_feedback, excluded_feedback)
-        ]
+        sol for sol in problem.solutions if
+        sol.submission_id == old_submission.id or
+        has_all_required_feedback(sol, required_feedback, excluded_feedback)
+    ]
     # Make shuffled_solutions smaller by only including solutions fitting criteria or the solution currently open.
     shuffled_solutions = _shuffle(filtered_solutions, shuffle_seed, key_extractor=lambda s: s.submission_id)
 

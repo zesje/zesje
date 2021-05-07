@@ -33,8 +33,26 @@ def sub_to_data(sub):
     }
 
 
-# Returns true if the solution meets the requirements
 def has_all_required_feedback(sol, required_feedback, excluded_feedback):
+
+    """
+    If solution has all the required feedback and non of the excluded_feedback returns true
+    else return false.
+
+    Parameters
+    ----------
+    sol : Solution
+        the solution to be checked
+    required_feedback : List[int]
+        the feedback_id's which the found submission should have
+    excluded_feedback : List[int]
+        the feedback_id's which the found submission should not have
+
+    Returns
+    -------
+    A boolean, true if sol meets all requirements false otherwhise.
+
+    """
     feedback_ids = set([fb.id for fb in sol.feedback])
     has_required = required_feedback is None or set(required_feedback) <= feedback_ids
     if has_required:
@@ -64,6 +82,10 @@ def _find_submission(old_submission, problem_id, shuffle_seed, direction, ungrad
         either 'next' or 'prev'
     ungraded : bool
         value indicating whether the found submission should be ungraded.
+    required_feedback : List[int]
+        the feedback_id's which the found submission should have
+    excluded_feedback : List[int]
+        the feedback_id's which the found submission should not have
     Returns
     -------
     A new submission, or the old one if no submission matching the criteria is found.
@@ -81,7 +103,6 @@ def _find_submission(old_submission, problem_id, shuffle_seed, direction, ungrad
     # Make shuffled_solutions smaller by only including solutions fitting criteria or the solution currently open.
     shuffled_solutions = _shuffle(filtered_solutions, shuffle_seed, key_extractor=lambda s: s.submission_id)
 
-    # This new list is then used to find the next submission in the same way as before.
     old_submission_index = next(i for i, s in enumerate(shuffled_solutions) if s.submission_id == old_submission.id)
 
     if (old_submission_index == 0 and direction == 'prev') or \

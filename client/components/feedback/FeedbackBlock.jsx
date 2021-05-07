@@ -48,8 +48,10 @@ class FeedbackBlock extends React.Component {
 
   applyFilter = (e, newFilterMode) => {
     e.stopPropagation()
+    newFilterMode = this.state.filterMode === newFilterMode ? 'no_filter' : newFilterMode
+    this.props.feedbackFilter(newFilterMode)
     this.setState({
-      filterMode: this.state.filterMode === newFilterMode ? 'no_filter' : newFilterMode
+      filterMode: newFilterMode
     })
   }
 

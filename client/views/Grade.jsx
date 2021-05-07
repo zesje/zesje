@@ -24,7 +24,7 @@ class Grade extends React.Component {
    */
   constructor (props) {
     super(props)
-    this.state = {}
+    this.state = {requiredList: [], excludedList: []}
     api.get(`exams/${this.props.examID}?only_metadata=true` +
         `&shuffle_seed=${this.props.graderID}`).then(metadata => {
       const partialState = {
@@ -172,7 +172,9 @@ class Grade extends React.Component {
       '?problem_id=' + this.state.problem.id +
       '&shuffle_seed=' + this.props.graderID +
       '&direction=' + direction +
-      '&ungraded=' + ungraded).then(sub =>
+      '&ungraded=' + ungraded +
+      this.state.requiredList.map(id => `&required_feedback=${id}`).join() +
+      this.state.excludedList.map(id => `&excluded_feedback=${id}`).join()).then(sub =>
       this.setState({
         submission: sub
       }, () => this.props.history.push(this.getURL(this.state.submission.id, this.state.problem.id)))
@@ -337,6 +339,14 @@ class Grade extends React.Component {
     })
   }
 
+  feedbackFilter = (feedbackId, newState) => {
+    let requiredList = this.state.requiredList.filter(id => id !== feedbackId)
+    let excludedList = this.state.excludedList.filter(id => id !== feedbackId)
+    if (newState === 'required') requiredList.push(feedbackId)
+    if (newState === 'excluded') excludedList.push(feedbackId)
+    this.setState({ requiredList, excludedList })
+  }
+
   /**
    * Hashes the location of the current problems widget.
    * @param problem the problem to hash the widget location for.
@@ -420,6 +430,7 @@ class Grade extends React.Component {
                     setSubmission={this.updateSubmission}
                     toggleOption={this.toggleFeedbackOption}
                     toggleApprove={this.toggleApprove}
+                    feedbackFilter={this.feedbackFilter}
                     updateFeedback={this.updateFromUrl} />
                 </nav>
               </div>

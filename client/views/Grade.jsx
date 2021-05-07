@@ -173,8 +173,8 @@ class Grade extends React.Component {
       '&shuffle_seed=' + this.props.graderID +
       '&direction=' + direction +
       '&ungraded=' + ungraded +
-      this.state.requiredList.map(id => `&required_feedback=${id}`).join() +
-      this.state.excludedList.map(id => `&excluded_feedback=${id}`).join()).then(sub =>
+      this.state.requiredList.map(id => `&required_feedback=${id}`).join('') +
+      this.state.excludedList.map(id => `&excluded_feedback=${id}`).join('')).then(sub =>
       this.setState({
         submission: sub
       }, () => this.props.history.push(this.getURL(this.state.submission.id, this.state.problem.id)))

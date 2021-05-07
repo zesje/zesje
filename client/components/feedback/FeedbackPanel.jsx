@@ -28,6 +28,7 @@ class FeedbackPanel extends React.Component {
    * @param feedback the feedback to edit.
    */
   editFeedback = (feedbackId) => {
+    this.props.feedbackFilter(feedbackId, 'no_filter')
     this.setState({
       feedbackToEditId: feedbackId
     })

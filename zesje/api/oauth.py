@@ -76,18 +76,9 @@ class OAuthCallback(Resource):
         grader = Grader.query.filter(Grader.oauth_id == oauth_id).one_or_none()
 
         if grader is None:
-            # TODO: A new only is authorized iff the owner granted access by adding the oauth_id in Grader
-            # otherwise the app rejects login in because full authorization is not implemeted.
-            # Once !306 is finished, the new user can be safely added in the db and he won't have access to any resource
-            # return dict(status=403,
-            #             message="Your account is NOT authorized. Please contact somebody who has access."), 403
+            # TODO: the app rejects any access to everyone who is not added to the list of allowed graders by the owner
+            # In !306 this will change, all new users can be added to the db as they won't have acess to any course
             return redirect(url_for('index') + 'unauthorized')
-            # grader = Grader(
-            #     oauth_id=current_login[current_app.config['OAUTH_ID_FIELD']],
-            #     name=current_login[current_app.config['OAUTH_NAME_FIELD']]
-            # )
-            # db.session.add(grader)
-            # db.session.commit()
         elif grader.name is None:
             grader.name = current_login[OAUTH_PROVIDERS[current_app.config['OAUTH_PROVIDER']]['NAME_FIELD']]
             db.session.commit()

@@ -1,3 +1,5 @@
+from hashlib import md5
+from sqlalchemy.sql import operators
 from flask_restful import Resource, reqparse
 from flask_restful.inputs import boolean
 
@@ -90,37 +92,22 @@ def _find_submission(old_submission, problem_id, shuffle_seed, direction, ungrad
     if (problem := Problem.query.get(problem_id)) is None:
         return dict(status=404, message='Problem does not exist.'), 404
 
-    filtered_solutions = [
-        sol for sol in problem.solutions if
-        sol.submission_id == old_submission.id or
-        has_all_required_feedback(sol, set(required_feedback or []), set(excluded_feedback or []))
-    ]
-    # Make shuffled_solutions smaller by only including solutions fitting criteria or the solution currently open.
-    shuffled_solutions = _shuffle(filtered_solutions, shuffle_seed, key_extractor=lambda s: s.submission_id)
-
-    old_submission_index = next(i for i, s in enumerate(shuffled_solutions) if s.submission_id == old_submission.id)
-
-    if (old_submission_index == 0 and direction == 'prev') or \
-            (old_submission_index == len(shuffled_solutions) - 1 and direction == 'next'):
-        return sub_to_data(old_submission)
-
-    if not ungraded:
-        offset = 1 if direction == 'next' else -1
-        return sub_to_data(shuffled_solutions[old_submission_index + offset].submission)
-
-    # If direction is next, search submissions from the one after the old, up to the end of the list.
-    # If direction is previous search from the start to the old, in reverse order.
-    solutions_to_search = shuffled_solutions[old_submission_index + 1:] if direction == 'next' \
-        else shuffled_solutions[old_submission_index - 1::-1]
-
-    if len(solutions_to_search) == 0:
-        return sub_to_data(old_submission)
-
-    # Get the next submission for which the solution to our problem was not graded yet
-    submission = next((solution.submission for solution in solutions_to_search if
-                       solution.graded_by is None),
-                      old_submission)  # Returns the old submission in case no suitable submission was found
-    return sub_to_data(submission)
+    key = lambda sub: md5(b'%i %i' % (sub.id, shuffle_seed)).digest()
+    old_key = key(old_submission)
+    next_, follows = (min, operators.gt) if direction == 'next' else (max, operators.lt)
+    submission_to_return = next_(
+      (
+        sol.submission for sol in problem.solutions
+        if (
+          has_all_required_feedback(sol, set(required_feedback or []), set(excluded_feedback or []))
+          and follows(key(sol.submission), old_key)
+          and (not ungraded or sol.graded_by is None)
+        )
+      ),
+      key=key,
+      default=old_submission
+    )
+    return sub_to_data(submission_to_return)
 
 
 class Submissions(Resource):

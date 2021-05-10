@@ -24,7 +24,7 @@ class Grade extends React.Component {
    */
   constructor (props) {
     super(props)
-    this.state = {requiredList: [], excludedList: []}
+    this.state = {required: [], excluded: []}
     api.get(`exams/${this.props.examID}?only_metadata=true` +
         `&shuffle_seed=${this.props.graderID}`).then(metadata => {
       const partialState = {
@@ -173,8 +173,8 @@ class Grade extends React.Component {
       '&shuffle_seed=' + this.props.graderID +
       '&direction=' + direction +
       '&ungraded=' + ungraded +
-      this.state.requiredList.map(id => `&required_feedback=${id}`).join('') +
-      this.state.excludedList.map(id => `&excluded_feedback=${id}`).join('')).then(sub =>
+      this.state.required.map(id => `&required_feedback=${id}`).join('') +
+      this.state.excluded.map(id => `&excluded_feedback=${id}`).join('')).then(sub =>
       this.setState({
         submission: sub
       }, () => this.props.history.push(this.getURL(this.state.submission.id, this.state.problem.id)))
@@ -340,11 +340,11 @@ class Grade extends React.Component {
   }
 
   feedbackFilter = (feedbackId, newState) => {
-    let requiredList = this.state.requiredList.filter(id => id !== feedbackId)
-    let excludedList = this.state.excludedList.filter(id => id !== feedbackId)
-    if (newState === 'required') requiredList.push(feedbackId)
-    if (newState === 'excluded') excludedList.push(feedbackId)
-    this.setState({ requiredList, excludedList })
+    let required = this.state.required.filter(id => id !== feedbackId)
+    let excluded = this.state.excluded.filter(id => id !== feedbackId)
+    if (newState === 'required') required.push(feedbackId)
+    if (newState === 'excluded') excluded.push(feedbackId)
+    this.setState({ required, excluded })
   }
 
   /**

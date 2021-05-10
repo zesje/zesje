@@ -18,7 +18,9 @@ class Feedback(Resource):
             name: str
             description: str
             score: int
+            parent: int
             used: int
+
         """
 
         if (problem := Problem.query.get(problem_id)) is None:
@@ -30,7 +32,9 @@ class Feedback(Resource):
                 'name': fb.text,
                 'description': fb.description,
                 'score': fb.score,
+                'parent': fb.parent,
                 'used': len(fb.solutions)
+
             }
             for fb in FeedbackOption.query.filter(FeedbackOption.problem == problem)
         ]
@@ -39,6 +43,7 @@ class Feedback(Resource):
     post_parser.add_argument('name', type=str, required=True)
     post_parser.add_argument('description', type=str, required=False)
     post_parser.add_argument('score', type=int, required=False)
+    post_parser.add_argument('parent', type=int, required=False)
 
     def post(self, problem_id):
         """Post a new feedback option
@@ -48,6 +53,7 @@ class Feedback(Resource):
             name: str
             description: str
             score: int
+            parent: int
         """
 
         if (problem := Problem.query.get(problem_id)) is None:
@@ -55,7 +61,8 @@ class Feedback(Resource):
 
         args = self.post_parser.parse_args()
 
-        fb = FeedbackOption(problem=problem, text=args.name, description=args.description, score=args.score)
+        fb = FeedbackOption(problem=problem, text=args.name, description=args.description, score=args.score,
+                            parent=args.parent)
         db.session.add(fb)
         db.session.commit()
 
@@ -63,7 +70,8 @@ class Feedback(Resource):
             'id': fb.id,
             'name': fb.text,
             'description': fb.description,
-            'score': fb.score
+            'score': fb.score,
+            'parent': fb.parent
         }
 
     put_parser = reqparse.RequestParser()
@@ -71,6 +79,7 @@ class Feedback(Resource):
     put_parser.add_argument('name', type=str, required=True)
     put_parser.add_argument('description', type=str, required=False)
     put_parser.add_argument('score', type=int, required=False)
+    put_parser.add_argument('parent', type=int, required=False)
 
     def put(self, problem_id):
         """Modify an existing feedback option
@@ -81,6 +90,7 @@ class Feedback(Resource):
             name: str
             description: str
             score: int
+            parent: int
         """
 
         args = self.put_parser.parse_args()
@@ -91,6 +101,7 @@ class Feedback(Resource):
         fb.text = args.name
         fb.description = args.description
         fb.score = args.score
+        fb.parent = args.parent
 
         db.session.commit()
 
@@ -98,7 +109,8 @@ class Feedback(Resource):
             'id': fb.id,
             'name': fb.text,
             'description': fb.description,
-            'score': fb.score
+            'score': fb.score,
+            'parent': fb.parent
         }
 
     def delete(self, problem_id, feedback_id):

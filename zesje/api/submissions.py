@@ -43,9 +43,9 @@ def has_all_required_feedback(sol, required_feedback, excluded_feedback):
     ----------
     sol : Solution
         the solution to be checked
-    required_feedback : List[int]
+    required_feedback : Set[int]
         the feedback_id's which the found submission should have
-    excluded_feedback : List[int]
+    excluded_feedback : Set[int]
         the feedback_id's which the found submission should not have
 
     Returns
@@ -54,12 +54,7 @@ def has_all_required_feedback(sol, required_feedback, excluded_feedback):
 
     """
     feedback_ids = set([fb.id for fb in sol.feedback])
-    has_required = required_feedback is None or set(required_feedback) <= feedback_ids
-    if has_required:
-        doesnt_have_excluded = excluded_feedback is None or set(excluded_feedback).intersection(feedback_ids) == set()
-        return doesnt_have_excluded
-    else:
-        return False
+    return (required_feedback <= feedback_ids) and (not excluded_feedback & feedback_ids)
 
 
 def _find_submission(old_submission, problem_id, shuffle_seed, direction, ungraded,
@@ -98,7 +93,7 @@ def _find_submission(old_submission, problem_id, shuffle_seed, direction, ungrad
     filtered_solutions = [
         sol for sol in problem.solutions if
         sol.submission_id == old_submission.id or
-        has_all_required_feedback(sol, required_feedback, excluded_feedback)
+        has_all_required_feedback(sol, set(required_feedback or []), set(excluded_feedback or []))
     ]
     # Make shuffled_solutions smaller by only including solutions fitting criteria or the solution currently open.
     shuffled_solutions = _shuffle(filtered_solutions, shuffle_seed, key_extractor=lambda s: s.submission_id)

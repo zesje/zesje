@@ -205,7 +205,7 @@ class FeedbackOption(db.Model):
     mc_option = db.relationship('MultipleChoiceOption', backref=backref('feedback', cascade='all'),
                                 cascade='all', uselist=False, lazy=True)
     parent = Column(Integer, ForeignKey('feedback_option.id'), nullable=True)
-    #possible future extension: mut_excl_children = Column(Boolean, nullable=True)
+    # possible future extension: mut_excl_children = Column(Boolean, nullable=True)
 
 
 # Table for many to many relationship of FeedbackOption and Solution

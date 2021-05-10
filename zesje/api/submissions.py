@@ -95,11 +95,13 @@ def _find_submission(old_submission, problem_id, shuffle_seed, direction, ungrad
     key = lambda sub: md5(b'%i %i' % (sub.id, shuffle_seed)).digest()
     old_key = key(old_submission)
     next_, follows = (min, operators.gt) if direction == 'next' else (max, operators.lt)
+    required_feedback = set(required_feedback or [])
+    excluded_feedback = set(excluded_feedback or [])
     submission_to_return = next_(
       (
         sol.submission for sol in problem.solutions
         if (
-          has_all_required_feedback(sol, set(required_feedback or []), set(excluded_feedback or []))
+          has_all_required_feedback(sol, required_feedback, excluded_feedback)
           and follows(key(sol.submission), old_key)
           and (not ungraded or sol.graded_by is None)
         )

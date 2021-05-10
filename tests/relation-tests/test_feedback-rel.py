@@ -29,7 +29,8 @@ def fo_json():
 
 # Actual tests
 
-def test_create__fo(test_client, add_test_data):
+
+def test_create_and_get_fo(test_client, add_test_data):
     fo = fo_json()
 
     result = test_client.post('/api/feedback/1', data=fo)
@@ -38,3 +39,8 @@ def test_create__fo(test_client, add_test_data):
     assert data['name'] == fo['name']
     assert data['description'] == fo['description']
     assert data['score'] == fo['score']
+
+    result_get = test_client.get('/api/feedback/1')
+    data_get = json.loads(result_get.data)
+    data_get = data_get[0]
+    assert data_get['name'] == 'fully correct'

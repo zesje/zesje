@@ -141,6 +141,22 @@ def test_cascades_mco_fb(app, feedback_option, mc_option):
 
     assert feedback_option not in db.session
 
+"""
+Test to be added, when Parent-Child relationship is implemented
+
+def test_cascades_fb_parent(app, feedback_option, feedback_option_child):
+    db.session.add_all([feedback_option, feedback_option_child])
+    db.session.commit()
+
+    assert feedback_option in db.session
+    assert feedback_option_child in db.session
+
+    db.session.delete(feedback_option)
+    db.session.commit()
+
+    assert feedback_option not in db.session
+    assert feedback_option_child not in db.session
+"""
 
 @pytest.fixture
 def mc_option():
@@ -195,3 +211,7 @@ def page():
 @pytest.fixture
 def feedback_option():
     return FeedbackOption(text='')
+
+@pytest.fixture
+def feedback_option_child(feedback_option):
+    return FeedbackOption(text='child of feedback_option', parent_id = parent_option.id)

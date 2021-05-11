@@ -2,11 +2,10 @@ MYSQL_DATABASE = 'course_test'
 
 SECRET_KEY = 'test_secret_key'
 
-# OAuth Details
-OAUTH_PROVIDER = 'TestProvider'
-
 LOGIN_DISABLED = True
 
+# OAuth Details
+OAUTHLIB_INSECURE_TRANSPORT = True
 OAUTH_PROVIDER = 'Mock Server'
 OAUTH_CLIENT_ID = 'test'
 OAUTH_CLIENT_SECRET = 'test_secret'

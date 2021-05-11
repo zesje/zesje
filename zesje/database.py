@@ -56,6 +56,7 @@ class Grader(UserMixin, db.Model):
     name = Column(String(100), nullable=True)
     oauth_id = Column(String(320), nullable=False, unique=True)
     graded_solutions = db.relationship('Solution', backref='graded_by', lazy=True)
+    internal = Column(Boolean, default=False, server_default='0')
 
 
 ExamLayout = enum.Enum(

@@ -74,7 +74,7 @@ class OAuthCallback(Resource):
         oauth_id = current_login[current_app.config['OAUTH_ID_FIELD']]
         grader = Grader.query.filter(Grader.oauth_id == oauth_id).one_or_none()
 
-        if grader is None:
+        if grader is None or grader.internal:
             # TODO: the app rejects any access to everyone who is not added to the list of allowed graders by the owner
             # In !306 this will change, all new users can be added to the db as they won't have acess to any course
             return redirect(url_for('index') + 'unauthorized')

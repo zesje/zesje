@@ -19,13 +19,14 @@ def upgrade():
     # Drop unique constraint for grader name, add unique column oauth_id
     with op.batch_alter_table('grader', schema=None) as batch_op:
         batch_op.add_column(sa.Column('oauth_id', sa.String(length=320), nullable=True))
+        batch_op.add_column(sa.Column('internal', sa.Boolean(), nullable=False, server_default='0'))
         batch_op.alter_column('name', existing_type=sa.String(length=100), nullable=True)
         batch_op.drop_index('name')
 
     conn = op.get_bind()
 
     # assign oauth id to existing graders
-    conn.execute('UPDATE grader SET grader.oauth_id = CONCAT("grader_", CAST(grader.id AS CHAR))')
+    conn.execute('UPDATE grader SET grader.oauth_id = CONCAT("grader_", CAST(grader.id AS CHAR)), grader.internal = 1')
 
     with op.batch_alter_table('grader', schema=None) as batch_op:
         batch_op.alter_column('oauth_id', existing_type=sa.String(length=320), nullable=False)

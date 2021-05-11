@@ -21,10 +21,18 @@ DEBUG = 1
 # Secret key required for flask.session
 SECRET_KEY = os.urandom(25)
 
-# OAuth Details
-OAUTH_PROVIDER = 'mock'
-OAUTH_INSECURE_TRANSPORT = True
-
 # Instance owner details
 OWNER_OAUTH_ID = 'admin@admin'
 OWNER_NAME = 'admin'
+
+OAUTH_PROVIDER = 'Mock Server'
+OAUTH_CLIENT_ID = 'dev'
+OAUTH_CLIENT_SECRET = 'dev_secret'
+OAUTH_AUTHORIZATION_URL = 'http://localhost:8080/authorize'
+OAUTH_TOKEN_URL = 'http://localhost:8080/token'
+OAUTH_INFO_URL = 'http://localhost:8080/user'
+OAUTH_ID_FIELD = 'email'
+OAUTH_NAME_FIELD = 'name'
+OAUTH_SCOPES = []
+
+OAUTH_INSECURE_TRANSPORT = True

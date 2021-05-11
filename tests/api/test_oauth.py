@@ -20,20 +20,20 @@ def login_client(login_app):
 
 @pytest.fixture
 def add_grader(login_app):
-    db.session.add(Grader(oauth_id='test'))
+    db.session.add(Grader(name=login_app.config['OWNER_NAME'], oauth_id=login_app.config['OWNER_OAUTH_ID']))
     db.session.commit()
 
 
 @pytest.fixture
 def callback_request(login_client, login_app):
-    result = login_client.get('/api/oauth/start')
+    result = login_client.get('/api/oauth/start').get_json()
     with requests_mock.Mocker() as m:
         m.post(login_app.config['OAUTH_TOKEN_URL'],
                json={'access_token': 'test', 'token_type': 'Bearer'})
         m.get(login_app.config['OAUTH_INFO_URL'],
-              json={login_app.config['OAUTH_ID_FIELD']: 'test',
-                    login_app.config['OAUTH_NAME_FIELD']: 'test_name'})
-        return login_client.get('/api/oauth/callback?code=test&state=' + result.get_json()['state'])
+              json={login_app.config['OAUTH_ID_FIELD']: login_app.config['OWNER_OAUTH_ID'],
+                    login_app.config['OAUTH_NAME_FIELD']: login_app.config['OWNER_NAME']})
+        return login_client.get('/api/oauth/callback?code=test&state=' + result['state'])
 
 
 def test_oauth_start(login_client, login_app):
@@ -55,10 +55,10 @@ def test_oauth_callback_authorized_grader(add_grader, callback_request):
     assert callback_request.status_code == 302
 
 
-def test_current_grader(login_client, add_grader, callback_request):
+def test_current_grader(login_app, login_client, add_grader, callback_request):
     result = login_client.get('/api/oauth/grader')
     assert result.status_code == 200
-    assert result.get_json()['oauth_id'] == 'test'
+    assert result.get_json()['oauth_id'] == login_app.config['OWNER_OAUTH_ID']
 
 
 def test_logout(login_client, add_grader, callback_request):

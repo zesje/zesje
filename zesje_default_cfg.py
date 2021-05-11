@@ -28,7 +28,7 @@ LOGIN_DISABLED = False
 SECRET_KEY = None
 
 # Routes exempted from authentication
-EXEMPT_ROUTES = ['zesje.api.oauthstart' 'zesje.api.oauthcallback']
+EXEMPT_ROUTES = ['zesje.api.oauthstart', 'zesje.api.oauthcallback']
 EXEMPT_METHODS = ['OPTIONS']
 
 # Instance owner details

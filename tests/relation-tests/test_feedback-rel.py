@@ -134,6 +134,32 @@ def test_delete_fo_with_parent(test_client, add_test_data):
     assert len(data_get) == 1
 
 
+def test_delete_parent_of_fo(test_client, add_test_data):
+    fop = fo_parent_json()
+
+    result = test_client.post('/api/feedback/1', data=fop)
+    data = json.loads(result.data)
+
+    assert data['id']
+
+    problem_id = 1  # Was inserted in add_test_data()
+
+    result_get = test_client.get('/api/feedback/1')
+    data_get = json.loads(result_get.data)
+
+    assert len(data_get) == 2
+
+    result = test_client.delete(f'/api/feedback/{problem_id}/5')
+    data = json.loads(result.data)
+
+    assert data['status'] == 200
+
+    result_get = test_client.get('/api/feedback/1')
+    data_get = json.loads(result_get.data)
+
+    assert len(data_get) == 0
+
+
 def test_get_children(test_client, add_test_data):
 
     result = test_client.get('/api/feedback/1')

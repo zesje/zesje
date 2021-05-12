@@ -137,6 +137,10 @@ class Feedback(Resource):
         if fb.mc_option:
             return dict(status=403, message='Cannot delete feedback option'
                                             + ' attached to a multiple choice option.'), 403
+        # All feedback options, that are the child of the original feedback option will be deleted
+        child_feedback = [feedback.id for feedback in list(FeedbackOption.query.filter(FeedbackOption.parent == fb.id))]
+        for i in range(len(child_feedback)):
+            self.delete(problem_id, child_feedback[i])
 
         db.session.delete(fb)
 

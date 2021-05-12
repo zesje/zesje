@@ -76,6 +76,11 @@ def test_create_and_get_fo_with_parent(test_client, add_test_data):
 def test_delete_fo(test_client, add_test_data):
     fo = fo_json()
 
+    result_get = test_client.get('/api/feedback/1')
+    data_get = json.loads(result_get.data)
+
+    assert len(data_get) == 1
+
     result = test_client.post('/api/feedback/1', data=fo)
     data = json.loads(result.data)
 
@@ -88,6 +93,8 @@ def test_delete_fo(test_client, add_test_data):
     data_get = json.loads(result_get.data)
 
     assert len(data_get) == 2
+
+    data_get = data_get[0]
 
     result = test_client.delete(f'/api/feedback/{problem_id}/{fb_id}')
     data = json.loads(result.data)
@@ -125,3 +132,27 @@ def test_delete_fo_with_parent(test_client, add_test_data):
     data_get = json.loads(result_get.data)
 
     assert len(data_get) == 1
+
+
+def test_get_children(test_client, add_test_data):
+
+    result = test_client.get('/api/feedback/1')
+    data = json.loads(result.data)
+
+    fb = next(x for x in data if x['id'] == int(5))
+
+    assert len(fb['children']) == 0
+
+    fo_p = fo_parent_json()
+
+    result = test_client.post('/api/feedback/1', data=fo_p)
+    data = json.loads(result.data)
+
+    assert data['parent'] == fo_p['parent']
+
+    result = test_client.get("/api/feedback/1")
+    data = json.loads(result.data)
+
+    fb = next(x for x in data if x['id'] == int(5))
+
+    assert len(fb['children']) == 1

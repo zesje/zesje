@@ -33,8 +33,9 @@ class Feedback(Resource):
                 'description': fb.description,
                 'score': fb.score,
                 'parent': fb.parent,
-                'used': len(fb.solutions)
-
+                'used': len(fb.solutions),
+                'children':
+                    [feedback.id for feedback in list(FeedbackOption.query.filter(FeedbackOption.parent == fb.id))]
             }
             for fb in FeedbackOption.query.filter(FeedbackOption.problem == problem)
         ]

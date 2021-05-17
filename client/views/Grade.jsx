@@ -24,7 +24,7 @@ class Grade extends React.Component {
    */
   constructor (props) {
     super(props)
-    this.state = {required: [], excluded: []}
+    this.state = {feedbackFilters: {}}
     api.get(`exams/${this.props.examID}?only_metadata=true` +
         `&shuffle_seed=${this.props.graderID}`).then(metadata => {
       const partialState = {
@@ -173,8 +173,8 @@ class Grade extends React.Component {
       '&shuffle_seed=' + this.props.graderID +
       '&direction=' + direction +
       '&ungraded=' + ungraded +
-      this.state.required.map(id => `&required_feedback=${id}`).join('') +
-      this.state.excluded.map(id => `&excluded_feedback=${id}`).join('')).then(sub =>
+      Object.entries(this.state.feedbackFilters).filter(entry => entry[1] === 'excluded' || entry[1] === 'required').map(entry => `&${entry[1]}_feedback=${entry[0]}`).join('')
+    ).then(sub =>
       this.setState({
         submission: sub
       }, () => this.props.history.push(this.getURL(this.state.submission.id, this.state.problem.id)))
@@ -339,14 +339,6 @@ class Grade extends React.Component {
     })
   }
 
-  feedbackFilter = (feedbackId, newState) => {
-    let required = this.state.required.filter(id => id !== feedbackId)
-    let excluded = this.state.excluded.filter(id => id !== feedbackId)
-    if (newState === 'required') required.push(feedbackId)
-    if (newState === 'excluded') excluded.push(feedbackId)
-    this.setState({ required, excluded })
-  }
-
   /**
    * Hashes the location of the current problems widget.
    * @param problem the problem to hash the widget location for.
@@ -374,6 +366,17 @@ class Grade extends React.Component {
       hash |= 0 // Convert to 32bit integer
     }
     return Math.abs(hash)
+  }
+
+  applyFilter = (e, id, newFilterMode) => {
+    e.stopPropagation()
+    this.setState({
+      feedbackFilters: {
+        ...this.state.feedbackFilters,
+        [id]: this.state.feedbackFilters[id] === newFilterMode ? 'no_filter' : newFilterMode
+      }
+    })
+    console.log(this.state.feedbackFilters)
   }
 
   render () {
@@ -430,7 +433,8 @@ class Grade extends React.Component {
                     setSubmission={this.updateSubmission}
                     toggleOption={this.toggleFeedbackOption}
                     toggleApprove={this.toggleApprove}
-                    feedbackFilter={this.feedbackFilter}
+                    feedbackFilters={this.state.feedbackFilters}
+                    applyFilter={this.applyFilter}
                     updateFeedback={this.updateFromUrl} />
                 </nav>
               </div>

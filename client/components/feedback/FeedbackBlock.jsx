@@ -8,14 +8,13 @@ class FeedbackBlock extends React.Component {
       block: false,
       edit: false,
       filter: false
-    },
-    filterMode: 'no_filter' // 'no_filter' 'required' 'excluded'
+    }
   }
 
   filterIcons = {
     'no_filter': 'fa-filter',
-    'required': 'fa-check',
-    'excluded': 'fa-ban'
+    'required': 'fa-plus',
+    'excluded': 'fa-minus'
   }
   filterColors = {
     'no_filter': '',
@@ -44,15 +43,6 @@ class FeedbackBlock extends React.Component {
     if (!this.state.hover['edit']) {
       this.props.toggleOption(this.props.feedback.id)
     }
-  }
-
-  applyFilter = (e, newFilterMode) => {
-    e.stopPropagation()
-    newFilterMode = this.state.filterMode === newFilterMode ? 'no_filter' : newFilterMode
-    this.props.feedbackFilter(newFilterMode)
-    this.setState({
-      filterMode: newFilterMode
-    })
   }
 
   render () {
@@ -86,16 +76,16 @@ class FeedbackBlock extends React.Component {
           <i className='fa fa-pencil' />
         </span>
         <span
-          className={'popover is-popover-bottom tag is-pulled-right ' +
-          (this.state.hover['block'] || this.state.filterMode === 'required' || this.state.filterMode === 'excluded' ? '' : 'is-invisible ') +
-          (this.state.hover['filter'] ? ' is-link ' : '') + this.filterColors[this.state.filterMode]}
+          className={'popover is-popover-right tag is-pulled-right ' +
+          (this.state.hover['block'] || this.props.filterMode === 'required' || this.props.filterMode === 'excluded' ? '' : 'is-invisible ') +
+          (this.state.hover['filter'] ? ' is-link ' : '') + this.filterColors[this.props.filterMode]}
           onMouseEnter={() => this.enter('filter')} onMouseLeave={() => this.leave('filter')}
         >
-          <i className={`fa ${this.filterIcons[this.state.filterMode]}`} />
-          <div style={{display: this.state.hover['filter'] ? '' : 'none', position: 'absolute', width: '4em', height: '4em'}} onClick={e => this.applyFilter(e, 'no_filter')} />
-          <div className='popover-content' style={{}}>
-            <button className={`button popover-trigger fa ${this.filterIcons.required} ${this.filterColors['required']}`} onClick={e => this.applyFilter(e, 'required')} />
-            <button className={`button popover-trigger fa ${this.filterIcons.excluded} ${this.filterColors['excluded']}`} onClick={(e) => this.applyFilter(e, 'excluded')} />
+          <i className={`fa ${this.filterIcons[this.props.filterMode]}`} />
+          <div style={{display: this.state.hover['filter'] ? '' : 'none', position: 'absolute', left: 0, width: '4em', height: '2em'}} onClick={e => this.props.applyFilter(e, 'no_filter')} />
+          <div className='popover-content' style={{display: 'grid', gridAutoFlow: 'column', gap: '1em'}}>
+            <button className={`button popover-trigger is-inverted fa ${this.filterIcons.required} ${this.filterColors['required']}`} onClick={e => this.props.applyFilter(e, 'required')} />
+            <button className={`button popover-trigger is-inverted fa ${this.filterIcons.excluded} ${this.filterColors['excluded']}`} onClick={(e) => this.props.applyFilter(e, 'excluded')} />
           </div>
         </span>
       </a>

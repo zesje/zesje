@@ -158,7 +158,6 @@ def test_delete_parent_of_fo(test_client, add_test_data):
 
     result_get = test_client.get('/api/feedback/1')
     data_get = json.loads(result_get.data)
-
     assert len(data_get) == 0
 
 

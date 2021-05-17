@@ -19,7 +19,6 @@ def add_test_data(app):
 
     fo1 = FeedbackOption(id=5, problem_id=1, text='fully incorrect', score=2)
     db.session.add(fo1)
-
     db.session.commit()
 
 
@@ -33,11 +32,12 @@ def fo_json():
 
 def fo_parent_json():
     return {
-        'name': "fully correct",
+        'name': "minor math error",
         'description': "",
         'score': 4,
         'parent': 5
     }
+
 
 # Actual tests
 
@@ -54,8 +54,9 @@ def test_create_and_get_fo(test_client, add_test_data):
 
     result_get = test_client.get('/api/feedback/1')
     data_get = json.loads(result_get.data)
-    data_get = data_get[1]
-    assert data_get['name'] == 'fully correct'
+
+    feedback_list = [feedback for feedback in data_get if feedback['name'] == 'fully correct']
+    assert len(feedback_list) == 1
 
 
 def test_create_and_get_fo_with_parent(test_client, add_test_data):
@@ -63,14 +64,15 @@ def test_create_and_get_fo_with_parent(test_client, add_test_data):
 
     result = test_client.post('api/feedback/1', data=fo_p)
     data = json.loads(result.data)
-
     assert data['parent'] == fo_p['parent']
 
     result_get = test_client.get('/api/feedback/1')
     data_get = json.loads(result_get.data)
+    fb = [feedback for feedback in data_get if feedback['name'] == 'minor math error']
+    assert len(fb) == 1
+    fb = fb[0]
 
-    data_get = data_get[1]
-    assert data_get['parent'] == 5
+    assert fb['parent'] == 5
 
 
 def test_delete_fo(test_client, add_test_data):
@@ -161,7 +163,6 @@ def test_delete_parent_of_fo(test_client, add_test_data):
 
 
 def test_get_children(test_client, add_test_data):
-
     result = test_client.get('/api/feedback/1')
     data = json.loads(result.data)
 
@@ -182,3 +183,8 @@ def test_get_children(test_client, add_test_data):
     fb = next(x for x in data if x['id'] == int(5))
 
     assert len(fb['children']) == 1
+    children = fb['children']
+    child_id = children[0]
+    child = FeedbackOption.query.get(child_id)
+
+    assert child.parent_id == 5

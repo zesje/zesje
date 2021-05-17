@@ -204,8 +204,9 @@ class FeedbackOption(db.Model):
     score = Column(Integer, nullable=True)
     mc_option = db.relationship('MultipleChoiceOption', backref=backref('feedback', cascade='all'),
                                 cascade='all', uselist=False, lazy=True)
-    parent = Column(Integer, ForeignKey('feedback_option.id'), nullable=True)
+    parent_id = Column(Integer, ForeignKey('feedback_option.id'), nullable=True)
     # possible future extension: mut_excl_children = Column(Boolean, nullable=True)
+    children = db.relationship("FeedbackOption", backref=backref('parent', remote_side=[id]))
 
 
 # Table for many to many relationship of FeedbackOption and Solution

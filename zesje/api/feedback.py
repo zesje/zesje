@@ -32,10 +32,10 @@ class Feedback(Resource):
                 'name': fb.text,
                 'description': fb.description,
                 'score': fb.score,
-                'parent': fb.parent,
+                'parent': fb.parent_id,
                 'used': len(fb.solutions),
                 'children':
-                    [feedback.id for feedback in list(FeedbackOption.query.filter(FeedbackOption.parent == fb.id))]
+                    [feedback.id for feedback in fb.children]
             }
             for fb in FeedbackOption.query.filter(FeedbackOption.problem == problem)
         ]
@@ -61,10 +61,23 @@ class Feedback(Resource):
             return dict(status=404, message=f"Problem with id #{problem_id} does not exist"), 404
 
         args = self.post_parser.parse_args()
+        parent_id = args.parent
+        fb = FeedbackOption(problem=problem, text=args.name, description=args.description, score=args.score)
 
-        fb = FeedbackOption(problem=problem, text=args.name, description=args.description, score=args.score,
-                            parent=args.parent)
-        db.session.add(fb)
+        if args.parent is None:  # Will only be the case when the initial "null" root has to be created
+            # All feedback options must have a parent
+            db.session.add(fb)
+
+        else:
+            # if (parent := FeedbackOption.query.get(args.parent)) is None:
+            #     return dict(status=404, message=f"FeedbackOption with id #{args.parent} does not exist"), 404
+            #
+            # else:
+            parent_id = int(parent_id)
+            parent = FeedbackOption.query.get(parent_id)
+            parent.children.append(fb)
+
+        # db.session.add(fb)
         db.session.commit()
 
         return {
@@ -72,7 +85,7 @@ class Feedback(Resource):
             'name': fb.text,
             'description': fb.description,
             'score': fb.score,
-            'parent': fb.parent
+            'parent': fb.parent_id
         }
 
     put_parser = reqparse.RequestParser()
@@ -111,7 +124,7 @@ class Feedback(Resource):
             'name': fb.text,
             'description': fb.description,
             'score': fb.score,
-            'parent': fb.parent
+            'parent': fb.parent_id
         }
 
     def delete(self, problem_id, feedback_id):

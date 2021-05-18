@@ -64,16 +64,15 @@ class Feedback(Resource):
         parent_id = args.parent
         fb = FeedbackOption(problem=problem, text=args.name, description=args.description, score=args.score)
 
-        if args.parent is None:  # Will only be the case when the initial "null" root has to be created
+        if parent_id is None:  # Will only be the case when the initial "null" root has to be created
             # All feedback options must have a parent
             db.session.add(fb)
 
         else:
-            if (parent := FeedbackOption.query.get(args.parent)) is None:
-                return dict(status=404, message=f"FeedbackOption with id #{args.parent} does not exist"), 404
+            if (parent := FeedbackOption.query.get(parent_id)) is None:
+                return dict(status=404, message=f"FeedbackOption with id #{parent_id} does not exist"), 404
 
             else:
-                parent_id = int(parent_id)
                 parent = FeedbackOption.query.get(parent_id)
                 parent.children.append(fb)
 

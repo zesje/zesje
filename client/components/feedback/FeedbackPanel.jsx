@@ -179,7 +179,7 @@ class FeedbackPanel extends React.Component {
               <span className='icon is-small'>
                 <i className='fa fa-plus' />
               </span>
-              <span>Add option</span>
+              <span>option here</span>
             </button>
           </div>
           : <div className='panel-block'>
@@ -187,9 +187,19 @@ class FeedbackPanel extends React.Component {
               <span className='icon is-small'>
                 <i className='fa fa-plus' />
               </span>
-              <span>option</span>
+              <span>options</span>
             </button>
           </div>
+        }
+        {(this.state.feedbackToEditId === -1) &&
+        <div className='panel-block'>
+          <button className='button is-link is-outlined is-fullwidth' onClick={() => this.backToFeedback()}>
+            <span className='icon is-small'>
+              <i className='fa fa-chevron-left' />
+            </span>
+            <span>back</span>
+          </button>
+        </div>
         }
         {this.props.grading &&
           <div className='panel-block'>

@@ -40,7 +40,7 @@ class FeedbackBlock extends React.Component {
   }
 
   toggle = () => {
-    if (!this.state.hover['edit']) {
+    if (!this.state.hover['edit'] && this.props.showIcons) {
       this.props.toggleOption(this.props.feedback.id)
     }
   }
@@ -100,7 +100,13 @@ class FeedbackBlock extends React.Component {
               />
             </div>
           </div>
-        }
+        </div>
+        <span
+          className={'tag ' +
+          (this.props.showIcons ? ' is-hidden' : '')}
+        >
+          <i className='fa fa-plus' />
+        </span>
       </a>
     )
   }

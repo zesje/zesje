@@ -30,12 +30,20 @@ def fo_json():
     }
 
 
-def fo_parent_json():
+def fo_child_json():
     return {
         'name': "minor math error",
         'description': "",
         'score': 4,
         'parent': 5
+    }
+
+
+def fo_subchild_json():
+    return {
+        'name': "integration error",
+        'description': '',
+        'score': 2
     }
 
 
@@ -60,11 +68,11 @@ def test_create_and_get_fo(test_client, add_test_data):
 
 
 def test_create_and_get_fo_with_parent(test_client, add_test_data):
-    fo_p = fo_parent_json()
+    fo_child = fo_child_json()
 
-    result = test_client.post('api/feedback/1', data=fo_p)
+    result = test_client.post('api/feedback/1', data=fo_child)
     data = json.loads(result.data)
-    assert data['parent'] == fo_p['parent']
+    assert data['parent'] == fo_child['parent']
 
     result_get = test_client.get('/api/feedback/1')
     data_get = json.loads(result_get.data)
@@ -110,9 +118,9 @@ def test_delete_fo(test_client, add_test_data):
 
 
 def test_delete_fo_with_parent(test_client, add_test_data):
-    fop = fo_parent_json()
+    fo_child = fo_child_json()
 
-    result = test_client.post('/api/feedback/1', data=fop)
+    result = test_client.post('/api/feedback/1', data=fo_child)
     data = json.loads(result.data)
 
     assert data['id']
@@ -137,9 +145,9 @@ def test_delete_fo_with_parent(test_client, add_test_data):
 
 
 def test_delete_parent_of_fo(test_client, add_test_data):
-    fop = fo_parent_json()
+    fo_child = fo_child_json()
 
-    result = test_client.post('/api/feedback/1', data=fop)
+    result = test_client.post('/api/feedback/1', data=fo_child)
     data = json.loads(result.data)
 
     assert data['id']
@@ -161,6 +169,45 @@ def test_delete_parent_of_fo(test_client, add_test_data):
     assert len(data_get) == 0
 
 
+def test_delete_parent_with_subchildren(test_client, add_test_data):
+    fo_child = fo_child_json()
+
+    result = test_client.post('/api/feedback/1', data=fo_child)
+    data = json.loads(result.data)
+
+    assert data['id']
+    parent_id = data['id']
+
+    problem_id = 1  # Was inserted in add_test_data()
+
+    result_get = test_client.get('/api/feedback/1')
+    data_get = json.loads(result_get.data)
+
+    assert len(data_get) == 2
+
+    fo_subchild = fo_subchild_json()
+    fo_subchild['parent'] = parent_id
+
+    result = test_client.post('/api/feedback/1', data=fo_subchild)
+    data = json.loads(result.data)
+
+    assert data['id']
+
+    result_get = test_client.get('/api/feedback/1')
+    data_get = json.loads(result_get.data)
+
+    assert len(data_get) == 3
+
+    result = test_client.delete(f'/api/feedback/{problem_id}/5')
+    data = json.loads(result.data)
+
+    assert data['status'] == 200
+
+    result_get = test_client.get('/api/feedback/1')
+    data_get = json.loads(result_get.data)
+    assert len(data_get) == 0
+
+
 def test_get_children(test_client, add_test_data):
     result = test_client.get('/api/feedback/1')
     data = json.loads(result.data)
@@ -169,7 +216,7 @@ def test_get_children(test_client, add_test_data):
 
     assert len(fb['children']) == 0
 
-    fo_p = fo_parent_json()
+    fo_p = fo_child_json()
 
     result = test_client.post('/api/feedback/1', data=fo_p)
     data = json.loads(result.data)

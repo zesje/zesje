@@ -58,7 +58,7 @@ class MultipleChoice(Resource):
 
         # Insert new empty feedback option that links to the same problem
         new_feedback_option = FeedbackOption(problem_id=problem_id, text=label,
-                                             description='', score=0)
+                                             description='', score=0, parent=problem.root_feedback)
         db.session.add(new_feedback_option)
         db.session.commit()
 

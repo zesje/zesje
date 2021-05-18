@@ -189,10 +189,10 @@ class Grade extends React.Component {
     })
     let key = 0
     let prefix = ''
-    for (let i = 1; i < 21; i++) {
+    for (let i = 0; i < 21; i++) {
       key = i % 10
       prefix = i > 10 ? 'shift+' : ''
-      this.props.bindShortcut(prefix + key, () => this.toggleFeedbackOptionIndex(i - 1))
+      this.props.bindShortcut(prefix + key, () => this.toggleFeedbackOptionIndex(i))
     }
   }
 
@@ -371,7 +371,12 @@ class Grade extends React.Component {
    * @param index the index of the feedback option.
    */
   toggleFeedbackOptionIndex = (index) => {
-    this.toggleFeedbackOption(this.state.problem.feedback[index].id)
+    const root = this.addIndex(this.state.problem.root)
+    const fb = this.findIndex(root, index)
+    if (fb.parent === null) {
+      return null
+    }
+    this.toggleFeedbackOption(fb.id)
   }
 
   /**
@@ -460,7 +465,7 @@ class Grade extends React.Component {
     })
   }
 
-  applyFilter = (e, id, newFilterMode) => {
+  applyFeedbackFilter = (e, id, newFilterMode) => {
     e.stopPropagation()
     this.setState(oldState => {
       newFilterMode = oldState.feedbackFilters[id] === newFilterMode ? 'no_filter' : newFilterMode
@@ -550,7 +555,7 @@ class Grade extends React.Component {
                     toggleOption={this.toggleFeedbackOption}
                     toggleApprove={this.toggleApprove}
                     feedbackFilters={this.state.feedbackFilters}
-                    applyFilter={this.applyFilter}
+                    applyFilter={this.applyFeedbackFilter}
                     updateFeedback={this.syncSubmission}
                   />
                 </nav>

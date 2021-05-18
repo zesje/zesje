@@ -214,7 +214,7 @@ def test_delete_mco_check_feedback(test_client, add_test_data):
     response = test_client.get(f'/api/feedback/{problem.id}')
     data = json.loads(response.data)
 
-    assert len(data) == 0
+    assert data['id']
 
 
 def test_delete_not_present(test_client, add_test_data):

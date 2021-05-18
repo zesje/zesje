@@ -7,6 +7,7 @@ from flask_restful import Resource, reqparse, current_app
 from .widgets import widget_to_data, normalise_pages
 from ..database import db, Exam, Problem, ProblemWidget, Solution, GradingPolicy, ExamLayout
 from zesje.pdf_reader import guess_problem_title, get_problem_page
+from zesje.api.feedback import feedback_to_data
 
 
 def problem_to_data(problem):
@@ -19,11 +20,14 @@ def problem_to_data(problem):
                 'name': fb.text,
                 'description': fb.description,
                 'score': fb.score,
-                'used': len(fb.solutions)
+                'parent': fb.parent_id,
+                'used': len(fb.solutions),
+                'children': [feedback.id for feedback in fb.children]
             }
             for fb
             in problem.feedback_options  # Sorted by fb.id
         ],
+        'root': feedback_to_data(problem.root_feedback),
         'page': problem.widget.page,
         'widget': widget_to_data(problem.widget),
         'n_graded': len([sol for sol in problem.solutions if sol.graded_by is not None]),
@@ -126,6 +130,7 @@ class Problems(Resource):
 
         # Commit so problem gets an id
         db.session.commit()
+
         widget.name = f'problem_{problem.id}'
 
         if exam.layout == ExamLayout.templated:

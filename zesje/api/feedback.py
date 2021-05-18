@@ -5,6 +5,18 @@ from flask_restful import Resource, reqparse
 from ..database import db, Problem, FeedbackOption, Solution
 
 
+def feedback_to_data(feedback):
+    return {
+        'id': feedback.id,
+        'name': feedback.text,
+        'description': feedback.description,
+        'score': feedback.score,
+        'parent': feedback.parent_id,
+        'used': len(feedback.solutions),
+        'children': [feedback_to_data(child) for child in feedback.children]
+    }
+
+
 class Feedback(Resource):
     """ List of feedback options of a problem """
 
@@ -28,18 +40,7 @@ class Feedback(Resource):
         if (problem := Problem.query.get(problem_id)) is None:
             return dict(status=404, message=f"Problem with id #{problem_id} does not exist"), 404
 
-        return [
-            {
-                'id': fb.id,
-                'name': fb.text,
-                'description': fb.description,
-                'score': fb.score,
-                'parent': fb.parent_id,
-                'used': len(fb.solutions),
-                'children': [feedback.id for feedback in fb.children]
-            }
-            for fb in FeedbackOption.query.filter(FeedbackOption.problem == problem)
-        ]
+        return feedback_to_data(problem.root_feedback)
 
     post_parser = reqparse.RequestParser()
     post_parser.add_argument('name', type=str, required=True)
@@ -62,19 +63,16 @@ class Feedback(Resource):
             return dict(status=404, message=f"Problem with id #{problem_id} does not exist"), 404
 
         args = self.post_parser.parse_args()
-        parent_id = args.parent
-        fb = FeedbackOption(problem=problem, text=args.name, description=args.description, score=args.score)
+        parent = FeedbackOption.query.get(args.parent)
+        if parent is None:
+            return dict(status=404, message=f"FeedbackOption with id #{args.parent} does not exist"), 404
 
-        if parent_id is None:  # Will only be the case when the initial "null" root has to be created
-            # All feedback options must have a parent
-            db.session.add(fb)
-
-        else:
-            parent = FeedbackOption.query.get(parent_id)
-            if parent is None:
-                return dict(status=404, message=f"FeedbackOption with id #{parent_id} does not exist"), 404
-
-            parent.children.append(fb)
+        fb = FeedbackOption(problem=problem,
+                            text=args.name,
+                            description=args.description,
+                            score=args.score,
+                            parent=parent)
+        db.session.add(fb)
 
         db.session.commit()
 
@@ -145,6 +143,9 @@ class Feedback(Resource):
         if fb.mc_option:
             return dict(status=403, message='Cannot delete feedback option'
                                             + ' attached to a multiple choice option.'), 403
+        if fb.parent_id is None:
+            return dict(status=403, message='Cannot delete root feedback option.'), 403
+
         # All feedback options, that are the child of the original feedback option will be deleted
 
         db.session.delete(fb)

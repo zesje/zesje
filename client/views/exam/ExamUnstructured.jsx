@@ -1,7 +1,7 @@
 import React from 'react'
 import Notification from 'react-bulma-notification'
 
-import FeedbackPanel from '../../components/feedback/FeedbackPanel.jsx'
+import FeedbackMenu from '../../components/feedback/FeedbackMenu.jsx'
 import ConfirmationModal from '../../components/ConfirmationModal.jsx'
 import ExamUnstructuredMarkdown from './ExamUnstructuredRules.md'
 import PanelGradeAnonymous from './PanelGradeAnonymous.jsx'
@@ -262,11 +262,9 @@ class PanelEditUnstructured extends React.Component {
               <div className='panel-block'>
                 {!this.state.editActive && <label className='label'>Feedback options</label>}
               </div>
-              <FeedbackPanel
-                examID={this.props.examID}
+              <FeedbackMenu
                 problem={props.problem}
-                grading={false}
-                updateFeedback={() => this.props.updateExam()} />
+                updateFeedback={this.props.updateExam} />
 
               <div className='panel-block'>
                 <button

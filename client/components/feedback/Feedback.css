@@ -16,6 +16,9 @@
 
 .panel-block.feedback-item {
     display: flex;
+    border-top: hidden;
+    border-left: hidden;
+    border-right: hidden;
 }
 
 .grow {

@@ -126,9 +126,15 @@ class Solutions(Resource):
 
         if fb in solution.feedback:
             solution.feedback.remove(fb)
+            for descendant in fb.all_descendants:
+                if descendant in solution.feedback:
+                    solution.feedback.remove(descendant)
             state = False
         else:
             solution.feedback.append(fb)
+            for ancestor in fb.all_ancestors:
+                if ancestor not in solution.feedback:
+                    solution.feedback.append(ancestor)
             state = True
 
         graded = len(solution.feedback)

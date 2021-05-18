@@ -164,17 +164,25 @@ class FeedbackPanel extends React.Component {
               editFeedback={() => this.editFeedback(feedback.id)} toggleOption={this.props.toggleOption}
               ref={(selectedFeedbackId === feedback.id) ? this.feedbackBlock : null} grading={this.props.grading}
               submissionID={this.props.submissionID} selected={selectedFeedbackId === feedback.id || feedback.highlight}
-              showIndex={this.props.showTooltips}
-              index={index + 1}
-              filterMode={this.props.grading ? this.props.feedbackFilters[feedback.id] || 'no_filter' : 'no_filter'}
+              showIndex={this.props.showTooltips} 
+              index={index + 1} 
+              showIcons={this.state.feedbackToEditId !== -1}
+              filterMode={this.props.feedbackFilters[feedback.id] || 'no_filter'}
               applyFilter={(e, newFilterMode) => this.props.applyFilter(e, feedback.id, newFilterMode)}
             />
             : <FeedbackBlockEdit key={feedback.id} feedback={feedback} problemID={this.state.problemID}
               goBack={this.backToFeedback} updateFeedback={this.props.updateFeedback} />
         ))}
         {(this.state.feedbackToEditId === -1)
-          ? <FeedbackBlockEdit feedback={null} problemID={this.state.problemID} goBack={this.backToFeedback}
-            updateFeedback={this.props.updateFeedback} />
+          ? <div className='panel-block'>
+          <button className='button is-link is-outlined is-fullwidth' onClick={() => this.editFeedback(-1)}>
+            <span className='icon is-small'>
+              <i className='fa fa-plus' />
+            </span>
+            <span>Add option</span>
+          </button>
+          <div className='tag is-pulled-right is-hidden'></div>
+        </div>
           : <div className='panel-block'>
             <button className='button is-link is-outlined is-fullwidth' onClick={() => this.editFeedback(-1)}>
               <span className='icon is-small'>

@@ -35,7 +35,6 @@ def sub_to_data(sub):
 
 
 def has_all_required_feedback(sol, required_feedback, excluded_feedback):
-
     """
     If solution has all the required feedback and non of the excluded_feedback returns true
     else return false.
@@ -91,7 +90,8 @@ def _find_submission(old_submission, problem_id, shuffle_seed, direction, ungrad
     if (problem := Problem.query.get(problem_id)) is None:
         return dict(status=404, message='Problem does not exist.'), 404
 
-    key = lambda sub: md5(b'%i %i' % (sub.id, shuffle_seed)).digest()
+    def key(sub):
+        return md5(b'%i %i' % (sub.id, shuffle_seed)).digest()
     old_key = key(old_submission)
     next_, follows = (min, operators.gt) if direction == 'next' else (max, operators.lt)
     required_feedback = set(required_feedback or [])

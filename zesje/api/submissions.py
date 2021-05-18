@@ -57,7 +57,7 @@ def has_all_required_feedback(sol, required_feedback, excluded_feedback):
     return (required_feedback <= feedback_ids) and (not excluded_feedback & feedback_ids)
 
 
-def _find_submission(old_submission, problem_id, shuffle_seed, direction, ungraded,
+def _find_submission(old_submission, problem, shuffle_seed, direction, ungraded,
                      required_feedback, excluded_feedback):
     """
     Finds a submission based on the parameters of the function.
@@ -67,10 +67,10 @@ def _find_submission(old_submission, problem_id, shuffle_seed, direction, ungrad
 
     Parameters
     ----------
-    old_submission : submission
+    old_submission : Submission
         the submission to base next or prev on.
-    problem_id : int
-        id of the current problem.
+    problem : Problem
+        current problem.
     shuffle_seed : int
         the seed to shuffle the submissions on.
     direction : string
@@ -81,21 +81,18 @@ def _find_submission(old_submission, problem_id, shuffle_seed, direction, ungrad
         the feedback_id's which the found submission should have
     excluded_feedback : List[int]
         the feedback_id's which the found submission should not have
+
     Returns
     -------
     A new submission, or the old one if no submission matching the criteria is found.
-
     """
-
-    if (problem := Problem.query.get(problem_id)) is None:
-        return dict(status=404, message='Problem does not exist.'), 404
-
     def key(sub):
         return md5(b'%i %i' % (sub.id, shuffle_seed)).digest()
+
     old_key = key(old_submission)
     next_, follows = (min, operators.gt) if direction == 'next' else (max, operators.lt)
-    required_feedback = set(required_feedback or [])
-    excluded_feedback = set(excluded_feedback or [])
+    required_feedback = set(required_feedback)
+    excluded_feedback = set(excluded_feedback)
     submission_to_return = next_(
       (
         sol.submission for sol in problem.solutions
@@ -108,7 +105,7 @@ def _find_submission(old_submission, problem_id, shuffle_seed, direction, ungrad
       key=key,
       default=old_submission
     )
-    return sub_to_data(submission_to_return)
+    return submission_to_return
 
 
 class Submissions(Resource):
@@ -138,30 +135,37 @@ class Submissions(Resource):
 
         Returns
         -------
-        If 'submission_id' not provided provides a single instance of
-        (otherwise a list of):
-            id: int
-            student: Student
-                Student that completed this submission, null if not assigned.
-            problems: list of problems
+        Either a single dictionary with the data of the requested submission, or
+        a list of such dictionaries corresponding to all submissions in the exam.
+
+        See `sub_to_data` for the dictionary format.
         """
         args = self.get_parser.parse_args()
         if (exam := Exam.query.get(exam_id)) is None:
             return dict(status=404, message='Exam does not exist.'), 404
 
-        if submission_id is not None:
-            if (sub := Submission.query.get(submission_id)) is None:
-                return dict(status=404, message='Submission does not exist.'), 404
+        if submission_id is None:
+            return [sub_to_data(sub) for sub in exam.submissions]
 
-            if sub.exam != exam:
-                return dict(status=400, message='Submission does not belong to this exam.'), 400
+        if (sub := Submission.query.get(submission_id)) is None:
+            return dict(status=404, message='Submission does not exist.'), 404
 
-            if args.direction:
-                if args.problem_id is None or args.shuffle_seed is None or args.ungraded is None:
-                    return dict(status=400, message='One of problem_id, grader_id, ungraded, direction not provided')
-                return _find_submission(sub, args.problem_id, args.shuffle_seed, args.direction, args.ungraded,
-                                        args.required_feedback, args.excluded_feedback)
+        if sub.exam != exam:
+            return dict(status=400, message='Submission does not belong to this exam.'), 400
 
-            return sub_to_data(sub)
+        if args.direction:
+            if any(arg is None for arg in (args.problem_id, args.shuffle_seed, args.ungraded)):
+                return dict(
+                    status=400,
+                    message='One of problem_id, grader_id, ungraded, direction not provided'
+                )
 
-        return [sub_to_data(sub) for sub in exam.submissions]
+            if (problem := Problem.query.get(args.problem_id)) is None:
+                return dict(status=404, message='Problem does not exist.'), 404
+
+            sub = _find_submission(
+                sub, problem, args.shuffle_seed, args.direction, args.ungraded,
+                args.required_feedback or [], args.excluded_feedback or []
+            )
+
+        return sub_to_data(sub)

@@ -20,6 +20,7 @@ class Feedback(Resource):
             score: int
             parent: int
             used: int
+            children: list of int (children ids)
 
         """
 
@@ -91,7 +92,6 @@ class Feedback(Resource):
     put_parser.add_argument('name', type=str, required=True)
     put_parser.add_argument('description', type=str, required=False)
     put_parser.add_argument('score', type=int, required=False)
-    put_parser.add_argument('parent', type=int, required=False)
 
     def put(self, problem_id):
         """Modify an existing feedback option
@@ -102,7 +102,6 @@ class Feedback(Resource):
             name: str
             description: str
             score: int
-            parent: int
         """
 
         args = self.put_parser.parse_args()
@@ -113,7 +112,6 @@ class Feedback(Resource):
         fb.text = args.name
         fb.description = args.description
         fb.score = args.score
-        fb.parent = args.parent
 
         db.session.commit()
 

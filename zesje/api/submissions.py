@@ -3,7 +3,6 @@ from sqlalchemy.sql import operators
 from flask_restful import Resource, reqparse
 from flask_restful.inputs import boolean
 
-from zesje.api._helpers import _shuffle
 from ..database import Exam, Submission, Problem
 
 

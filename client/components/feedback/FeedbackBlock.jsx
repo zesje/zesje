@@ -68,6 +68,7 @@ class FeedbackBlock extends React.Component {
         </span>
         <button
           className={'button is-pulled-right is-small is-light' +
+          (this.props.showIcons ? '' : ' is-hidden') +
           (this.state.hover['block'] ? '' : ' is-invisible') +
           (this.state.hover['edit'] ? ' is-link' : '')}
           onMouseEnter={() => this.enter('edit')} onMouseLeave={() => this.leave('edit')}

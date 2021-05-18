@@ -150,9 +150,8 @@ class Feedback(Resource):
                                             + ' attached to a multiple choice option.'), 403
         # All feedback options, that are the child of the original feedback option will be deleted
 
-        child_feedback = fb.children
-        for i in range(len(child_feedback)):
-            self.delete(problem_id, child_feedback[i].id)
+        for child_feedback in fb.children:
+            self.delete(problem_id, child_feedback.id)
 
         db.session.delete(fb)
 

@@ -206,7 +206,7 @@ class FeedbackOption(db.Model):
                                 cascade='all', uselist=False, lazy=True)
     parent_id = Column(Integer, ForeignKey('feedback_option.id'), nullable=True)
     # possible future extension: mut_excl_children = Column(Boolean, nullable=True)
-    children = db.relationship("FeedbackOption", backref=backref('parent', remote_side=[id]))
+    children = db.relationship("FeedbackOption", backref=backref('parent', remote_side=[id]), cascade='all, delete')
 
 
 # Table for many to many relationship of FeedbackOption and Solution

@@ -34,8 +34,7 @@ class Feedback(Resource):
                 'score': fb.score,
                 'parent': fb.parent_id,
                 'used': len(fb.solutions),
-                'children':
-                    [feedback.id for feedback in fb.children]
+                'children': [feedback.id for feedback in fb.children]
             }
             for fb in FeedbackOption.query.filter(FeedbackOption.problem == problem)
         ]
@@ -69,15 +68,14 @@ class Feedback(Resource):
             db.session.add(fb)
 
         else:
-            # if (parent := FeedbackOption.query.get(args.parent)) is None:
-            #     return dict(status=404, message=f"FeedbackOption with id #{args.parent} does not exist"), 404
-            #
-            # else:
-            parent_id = int(parent_id)
-            parent = FeedbackOption.query.get(parent_id)
-            parent.children.append(fb)
+            if (parent := FeedbackOption.query.get(args.parent)) is None:
+                return dict(status=404, message=f"FeedbackOption with id #{args.parent} does not exist"), 404
 
-        # db.session.add(fb)
+            else:
+                parent_id = int(parent_id)
+                parent = FeedbackOption.query.get(parent_id)
+                parent.children.append(fb)
+
         db.session.commit()
 
         return {

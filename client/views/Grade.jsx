@@ -167,18 +167,27 @@ class Grade extends React.Component {
    * @param direction either 'prev' or 'next'
    * @param ungraded either 'true' or 'false'
    */
-  navigate = (direction, ungraded) => {
-    api.get(`submissions/${this.props.examID}/${this.state.submission.id}` +
+  navigate =async (direction, ungraded) => {
+    const fb = (await api.get(`feedback/${this.props.problemID}`)).map(fb => fb.id)
+
+    this.setState({
+      feedbackFilters: Object.entries(this.state.feedbackFilters).filter(
+        option => fb.includes(parseInt(option[0]))
+      )
+        .reduce(
+          (previous, current) => ({...previous, [parseInt(current[0])]: current[1]}), {})
+    })
+
+    const sub = await api.get(`submissions/${this.props.examID}/${this.state.submission.id}` +
       '?problem_id=' + this.state.problem.id +
       '&shuffle_seed=' + this.props.graderID +
       '&direction=' + direction +
       '&ungraded=' + ungraded +
-      Object.entries(this.state.feedbackFilters).filter(entry => entry[1] === 'excluded' || entry[1] === 'required').map(entry => `&${entry[1]}_feedback=${entry[0]}`).join('')
-    ).then(sub =>
-      this.setState({
-        submission: sub
-      }, () => this.props.history.push(this.getURL(this.state.submission.id, this.state.problem.id)))
+      Object.entries(this.state.feedbackFilters).filter(entry => entry[1] !== 'no_filter').map(entry => `&${entry[1]}_feedback=${entry[0]}`).join('')
     )
+    this.setState({
+      submission: sub
+    }, () => this.props.history.push(this.getURL(this.state.submission.id, this.state.problem.id)))
   }
   /**
    * Sugar methods for navigate.

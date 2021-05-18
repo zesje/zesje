@@ -179,7 +179,7 @@ class FeedbackPanel extends React.Component {
               <span className='icon is-small'>
                 <i className='fa fa-plus' />
               </span>
-              <span>Add option</span>
+              <span>option here</span>
             </button>
           </div>
           : <div className='panel-block'>

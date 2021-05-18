@@ -55,7 +55,7 @@ def has_all_required_feedback(sol, required_feedback, excluded_feedback):
     A boolean, true if sol meets all requirements false otherwhise.
 
     """
-    feedback_ids = set([fb.id for fb in sol.feedback])
+    feedback_ids = set(fb.id for fb in sol.feedback)
     return (required_feedback <= feedback_ids) and (not excluded_feedback & feedback_ids)
 
 

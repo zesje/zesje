@@ -1,7 +1,5 @@
 import pytest
-from zesje.api.submissions import has_all_required_feedback
-from zesje.api.submissions import _find_submission
-from zesje.api.submissions import sub_to_data
+from zesje.api.submissions import has_all_required_feedback, _find_submission
 from datetime import datetime
 from zesje.database import db, Exam, Problem, FeedbackOption,\
                            Student, Submission, Solution, Grader
@@ -60,8 +58,5 @@ def test_find_next(add_test_data, get_first_feedback, get_second_feedback):
     sol.feedback = get_first_feedback
     sol2.feedback = get_second_feedback
 
-    result = _find_submission(sub, 20, 1, 'next', False, set([3]), set([2]))
-    assert result == sub_to_data(sub2)
-
-    result2 = _find_submission(sub, 12, 1, 'next', False, set([3]), set([2]))
-    assert result2[1] == 404
+    result = _find_submission(sub, Problem.query.get(20), 1, 'next', False, set([3]), set([2]))
+    assert result == sub2

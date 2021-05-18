@@ -175,14 +175,13 @@ class FeedbackPanel extends React.Component {
         ))}
         {(this.state.feedbackToEditId === -1)
           ? <div className='panel-block'>
-          <button className='button is-link is-outlined is-fullwidth' onClick={() => this.editFeedback(-1)}>
-            <span className='icon is-small'>
-              <i className='fa fa-plus' />
-            </span>
-            <span>Add option</span>
-          </button>
-          <div className='tag is-pulled-right is-hidden'></div>
-        </div>
+            <button className='button is-link is-outlined is-fullwidth' onClick={() => this.editFeedback(-1)}>
+              <span className='icon is-small'>
+                <i className='fa fa-plus' />
+              </span>
+              <span>Add option</span>
+            </button>
+          </div>
           : <div className='panel-block'>
             <button className='button is-link is-outlined is-fullwidth' onClick={() => this.editFeedback(-1)}>
               <span className='icon is-small'>

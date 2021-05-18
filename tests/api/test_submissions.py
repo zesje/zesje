@@ -63,23 +63,5 @@ def test_find_next(add_test_data, get_first_feedback, get_second_feedback):
     result = _find_submission(sub, 20, 1, 'next', False, set([3]), set([2]))
     assert result == sub_to_data(sub2)
 
-
-def test_error_code(add_test_data, get_first_feedback, get_second_feedback):
-
-    student = Student(first_name='', last_name='')
-    student2 = Student(first_name='bob', last_name='alice')
-
-    grader = Grader(name='Zesje')
-
-    sub = Submission(id=25, student=student, exam_id=42)
-    sub2 = Submission(id=26, student=student2, exam_id=42)
-
-    sol = Solution(problem_id=20, submission=sub, graded_by=grader, graded_at=datetime.now(), )
-    db.session.add(sol)
-    sol2 = Solution(problem_id=20, submission=sub2, graded_by=grader, graded_at=datetime.now())
-
-    sol.feedback = get_first_feedback
-    sol2.feedback = get_second_feedback
-
-    result = _find_submission(sub, 12, 1, 'next', False, set([3]), set([2]))
-    assert result[1] == 404
+    result2 = _find_submission(sub, 12, 1, 'next', False, set([3]), set([2]))
+    assert result2[1] == 404

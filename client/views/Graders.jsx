@@ -66,8 +66,6 @@ class Graders extends React.Component {
 
         <section className='section'>
           <div className='container'>
-
-
             <form onSubmit={this.submitName}>
               <div className='field has-addons'>
                 <div className='control'>

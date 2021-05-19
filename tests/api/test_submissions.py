@@ -51,9 +51,29 @@ def test_find_next(add_test_data, get_first_feedback, get_second_feedback):
     sol = Solution(problem_id=20, submission=sub, graded_by=grader, graded_at=datetime.now())
     db.session.add(sol)
     sol2 = Solution(problem_id=20, submission=sub2, graded_by=grader, graded_at=datetime.now())
+    db.session.add(sol2)
 
     sol.feedback = get_first_feedback
     sol2.feedback = get_second_feedback
 
-    result = _find_submission(sub, Problem.query.get(20), 1, 'next', False, set([3]), set([2]))
+    result = _find_submission(sub, Problem.query.get(20), 1, 'next', False, set([3]), set([2]), None)
     assert result == sub2
+
+def test_find_next_graded_by(add_test_data):
+    student = Student(first_name='', last_name='')
+    student2 = Student(first_name='bob', last_name='alice')
+
+    grader = Grader(id=1, name='Zesje', oauth_id='Zesje')
+    grader2= Grader(id=2, name='Alice', oauth_id='Smith')
+
+    sub = Submission(id=25, student=student, exam_id=42)
+    sub2 = Submission(id=26, student=student2, exam_id=42)
+
+    sol = Solution(problem_id=20, submission=sub, graded_by=grader, graded_at=datetime.now())
+    db.session.add(sol)
+    sol2 = Solution(problem_id=20, submission=sub2, graded_by=grader2, graded_at=datetime.now())
+    db.session.add(sol2)
+
+    result = _find_submission(sub, Problem.query.get(20), 1, 'next', False, set(), set(), 2)
+    assert result == sub2
+

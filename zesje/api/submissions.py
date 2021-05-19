@@ -94,13 +94,14 @@ def _find_submission(old_submission, problem, shuffle_seed, direction, ungraded,
     old_key = key(old_submission)
     next_, follows = (min, operators.gt) if direction == 'next' else (max, operators.lt)
     required_feedback = set(required_feedback)
+    print(graded_by)
     excluded_feedback = set(excluded_feedback)
     submission_to_return = next_(
       (
         sol.submission for sol in problem.solutions
         if (
           has_all_required_feedback(sol, required_feedback, excluded_feedback) and
-          (graded_by is None or sol.graded_by == graded_by)
+          (graded_by is None or sol.graded_by.id == graded_by)
           and follows(key(sol.submission), old_key)
           and (not ungraded or sol.graded_by is None)
         )

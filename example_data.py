@@ -47,7 +47,7 @@ from pathlib import Path
 
 from lorem.text import TextLorem
 
-from zesje.database import db, Exam, Scan, Submission, Solution, Page, Copy, ExamLayout
+from zesje.database import db, Exam, Grader, Scan, Submission, Solution, Page, Copy, ExamLayout
 from zesje.scans import _process_scan
 from zesje.factory import create_app
 import zesje.mysql as mysql
@@ -63,6 +63,7 @@ lorem_prob = TextLorem(srange=(2, 5))
 
 def init_app(delete):
     app = create_app()
+    app.config['LOGIN_DISABLED'] = True
 
     mysql_was_running_before_delete = False
     if os.path.exists(app.config['DATA_DIRECTORY']) and delete:
@@ -147,6 +148,7 @@ def _fake_process_pdf(scan, pages, student_ids, copies_per_student, validate=Fal
                 db.session.add(Solution(problem=problem, submission=sub))
 
     scan.status = 'success'
+    scan.message = 'Successfully skipped processing.'
     db.session.commit()
 
 
@@ -418,13 +420,17 @@ def create_exams(app,
                  grade,
                  multiple_copies,
                  skip_processing=False):
+    # create graders
+    for _ in range(max(1, graders)):
+        name = names.get_full_name()
+        email = '.'.join(name.split(' ')).lower() + '@fake.tudelft.nl'
+        grader = Grader(name=name, oauth_id=email)
+        db.session.add(grader)
+    db.session.commit()
+
     # create students
     for student in generate_students(students):
         client.put('api/students', data=student)
-
-    # create graders
-    for _ in range(max(1, graders)):
-        client.post('/api/graders', data={'name': names.get_full_name()})
 
     generated_exams = []
     for _ in range(exams):
@@ -476,7 +482,7 @@ if __name__ == '__main__':
 
     app, mysql_was_running = init_app(args.delete)
 
-    with app.test_client() as client:
+    with app.test_client() as client, app.app_context():
         create_exams(app, client,
                      args.exams,
                      args.layout,

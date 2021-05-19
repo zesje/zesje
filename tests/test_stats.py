@@ -5,6 +5,7 @@ from zesje import statistics as stats
 
 # Tests
 
+
 # Returns mock grader timings
 @pytest.fixture
 def mock_get_grade_timings(monkeypatch):

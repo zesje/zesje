@@ -66,6 +66,7 @@ dependencies:
         - pytest
         - pyssim
         - pytest-cov
+        - requests-mock
 
         # Linting
         - flake8

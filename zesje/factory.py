@@ -5,17 +5,23 @@ from flask import Flask
 from flask_migrate import Migrate
 from werkzeug.exceptions import NotFound
 
-from .database import db
+from .database import db, login_manager, Grader
 from .api import api_bp
-
 
 STATIC_FOLDER_PATH = os.path.join(abspath(dirname(__file__)), 'static')
 
 
 def create_app(celery=None, app_config=None):
     app = Flask(__name__, static_folder=STATIC_FOLDER_PATH)
-
     create_config(app.config, app_config)
+
+    if app.config['OAUTH_INSECURE_TRANSPORT']:
+        os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = '1'
+
+    if app.config['SECRET_KEY'] is None:
+        raise KeyError
+
+    login_manager.init_app(app)
 
     if celery is not None:
         attach_celery(app, celery)
@@ -29,6 +35,11 @@ def create_app(celery=None, app_config=None):
     def setup():
         os.makedirs(app.config['DATA_DIRECTORY'], exist_ok=True)
         os.makedirs(app.config['SCAN_DIRECTORY'], exist_ok=True)
+
+        # Add instance owner and autograder to db if they don't already exist
+        if Grader.query.filter(Grader.oauth_id == app.config['OWNER_OAUTH_ID']).one_or_none() is None:
+            db.session.add(Grader(oauth_id=app.config['OWNER_OAUTH_ID'], name=app.config['OWNER_NAME']))
+            db.session.commit()
 
     @app.route('/')
     @app.route('/<path:path>')

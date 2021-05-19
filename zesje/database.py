@@ -13,6 +13,8 @@ from sqlalchemy.orm import backref
 from sqlalchemy.orm.session import object_session
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.ext.associationproxy import association_proxy
+
+from flask_login import UserMixin, LoginManager
 from pathlib import Path
 
 
@@ -26,6 +28,13 @@ db = SQLAlchemy(model_class=declarative_base(
 
 token_length = 12
 
+# Initializing login-manager and the user loader function required for login-manager
+login_manager = LoginManager()
+
+
+@login_manager.user_loader
+def load_grader(grader_id):
+    return Grader.query.get(grader_id)
 
 # db.Models #
 
@@ -40,12 +49,14 @@ class Student(db.Model):
     submissions = db.relationship('Submission', backref='student', lazy=True)
 
 
-class Grader(db.Model):
+class Grader(UserMixin, db.Model):
     """Graders can be created by any user at any time, but are immutable once they are created"""
     __tablename__ = 'grader'
     id = Column(Integer, primary_key=True, autoincrement=True)
-    name = Column(String(100), nullable=False, unique=True)
+    name = Column(String(100), nullable=True)
+    oauth_id = Column(String(320), nullable=False, unique=True)
     graded_solutions = db.relationship('Solution', backref='graded_by', lazy=True)
+    internal = Column(Boolean, default=False, server_default='0')
 
 
 ExamLayout = enum.Enum(

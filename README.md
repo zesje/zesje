@@ -93,6 +93,16 @@ to start the development server, which you can access on http://127.0.0.1:8881.
 It will automatically reload whenever you change any source files in `client/`
 or `zesje/`.
 
+### Running Oauth2 Mock Server
+By default, login is disabled during development but it can be enabled by setting `LOGIN_DISABLED = False` in
+the [development configuration file](./zesje_dev_cfg.py). You can see the set of supported login providers in
+[constants.py](./zesje/constants.py) but take into account that for GitLab and Surf Conext you will need to request
+for a valid `CLIENT_ID` and `CLIENT_SECRET`.
+
+In case you only want to test the flow, you can set the provider to `mock` and start the
+[mock oauth server](./mock_oauth_server.py) in a different terminal from where you
+started the development server by running `yarn dev:oauth`.
+
 ### Generate sample data
 
 The script `example_data.py` can be used to create a sample exam that mimics the appearance and behavior of a typical grading process in Zesje. The prototype exam consist on 3 open answer questions per page and 1 multiple choice question per page (excluding the first one). The script partially solves those questions and assigns random feedback to the answered questions while the not answered questions are processed as blank.

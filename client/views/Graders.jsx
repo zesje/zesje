@@ -9,21 +9,40 @@ import * as api from '../api.jsx'
 class Graders extends React.Component {
   state = {
     graders: [],
-    name: ''
-  };
+    oauth_id: '',
+    oauth_provider: '',
+    oauth_id_field: ''
+  }
 
-  changeName = (event) => {
-    this.setState({ name: event.target.value })
+  componentDidMount = () => {
+    api.get('oauth/start').then(response => {
+      this.setState({
+        oauth_id_field: response.oauth_id_field,
+        oauth_provider: response.provider
+      })
+    })
+
+    api.get('graders')
+      .then(graders => {
+        this.setState({ graders: graders })
+      })
+      .catch(resp => {
+        Notification.error('Could not fetch graders (see Javascript console for details)')
+        console.error('Error fetching graders:', resp)
+      })
+  }
+
+  changeIdField = (event) => {
+    this.setState({ oauth_id: event.target.value })
   }
 
   submitName = (event) => {
-    api.post('graders', { name: this.state.name })
+    api.post('graders', { oauth_id: this.state.oauth_id })
       .then(graders => {
         this.setState({
-          name: '',
+          oauth_id: '',
           graders: graders
         })
-        this.props.updateGraderList()
       })
       .catch(resp => {
         resp.json().then(e => {
@@ -35,18 +54,10 @@ class Graders extends React.Component {
     event.preventDefault()
   }
 
-  componentDidMount = () => {
-    api.get('graders')
-      .then(graders => {
-        this.setState({ graders: graders })
-      })
-      .catch(resp => {
-        Notification.error('could not fetch graders (see Javascript console for details)')
-        console.error('Error fetching graders:', resp)
-      })
-  }
-
   render () {
+    const idField = this.state.oauth_id_field
+    const provider = this.state.oauth_provider
+
     return (
 
       <div>
@@ -55,16 +66,13 @@ class Graders extends React.Component {
 
         <section className='section'>
           <div className='container'>
-            <h1 className='title'>Enter the names</h1>
-            <h5 className='subtitle'>to add them to the system</h5>
-            <hr />
-
             <form onSubmit={this.submitName}>
               <div className='field has-addons'>
                 <div className='control'>
-                  <input name='first_name' value={this.state.name}
-                    onChange={this.changeName} className='input' type='text'
-                    maxLength={100} placeholder='Name' />
+                  <input className='input'
+                    name='first_name' value={this.state.oauth_id}
+                    onChange={this.changeIdField} type='text'
+                    maxLength={100} placeholder={provider + ' ' + idField} />
                 </div>
                 <div className='control'>
                   <button type='submit' className='button is-info'>
@@ -75,6 +83,8 @@ class Graders extends React.Component {
                   </button>
                 </div>
               </div>
+              <p>This instance of Zesje is configured to use {idField} for authentication.
+                To allow a grader to log in using {provider}, please add their {idField}.</p>
             </form>
             <br />
 
@@ -84,7 +94,7 @@ class Graders extends React.Component {
               </p>
               <ul className='menu-list'>
                 {this.state.graders.map((grader) =>
-                  <li key={grader.id}>{grader.name}</li>
+                  <li key={grader.id}>{grader.name ? grader.name : 'Never logged in'} - {grader.oauth_id}</li>
                 )}
               </ul>
             </aside>

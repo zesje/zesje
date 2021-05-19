@@ -8,6 +8,7 @@
     "dev:webpack": "webpack-dev-server --hot --inline --progress --config webpack.dev.js",
     "dev:celery": "ZESJE_SETTINGS=$(pwd)/zesje_dev_cfg.py celery -A zesje.wsgi.celery worker -l info --autoscale=4,1 --max-tasks-per-child=16",
     "dev:redis": "redis-server redis.conf",
+    "dev:oauth": "python $(pwd)/mock_oauth_server.py",
     "build": "webpack --config webpack.prod.js",
     "ci": "yarn lint; yarn test",
     "lint": "yarn lint:js; yarn lint:py",

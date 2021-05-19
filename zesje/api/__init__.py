@@ -1,5 +1,8 @@
-from flask import Blueprint
+from functools import wraps
+
+from flask import current_app, request, Blueprint
 from flask_restful import Api
+from flask_login import current_user
 
 from .graders import Graders
 from .exams import Exams, ExamSource, ExamGeneratedPdfs, ExamPreview
@@ -14,14 +17,41 @@ from .widgets import Widgets
 from .emails import EmailTemplate, RenderedEmailTemplate, Email
 from .mult_choice import MultipleChoice
 from .statistics import Statistics
+from .oauth import OAuthStart, OAuthCallback, OAuthGrader, OAuthLogout
 
 from . import signature
 from . import images
 from . import export
 
+
+def authenticate(func):
+    """
+    Function decorator that checks if the user is logged in before executing the actual function.
+    If the user is not logged in it returns a 401 UNAUTHORIZED response.
+    If the endpoint belongs to the exempt routes, the method belongs to the exempt methods or
+    login is disabled (useful during development) the function is executed without checking for authentication.
+
+    See Also
+    --------
+    `flask_login.login_required
+    https://flask-login.readthedocs.io/en/latest/_modules/flask_login/utils.html#login_required`_
+    """
+    @wraps(func)
+    def decorated_view(*args, **kwargs):
+        if request.endpoint in current_app.config['EXEMPT_ROUTES'] \
+                or request.method in current_app.config['EXEMPT_METHODS']:
+            return func(*args, **kwargs)
+        elif current_app.config.get('LOGIN_DISABLED'):
+            return func(*args, **kwargs)
+        elif not current_user.is_authenticated:
+            return current_app.login_manager.unauthorized()
+        return func(*args, **kwargs)
+    return decorated_view
+
+
 api_bp = Blueprint(__name__, __name__)
 
-api = Api(api_bp)
+api = Api(api_bp, decorators=[authenticate])
 
 api.add_resource(Graders, '/graders')
 api.add_resource(Exams, '/exams', '/exams/<int:exam_id>', '/exams/<int:exam_id>/<string:attr>')
@@ -62,6 +92,10 @@ api.add_resource(MultipleChoice,
                  '/mult-choice/')
 api.add_resource(Statistics,
                  '/stats/<int:exam_id>')
+api.add_resource(OAuthGrader, '/oauth/grader')
+api.add_resource(OAuthStart, '/oauth/start')
+api.add_resource(OAuthCallback, '/oauth/callback')
+api.add_resource(OAuthLogout, '/oauth/logout')
 # Other resources that don't return JSON
 # It is possible to get flask_restful to work with these, but not
 # very idiomatic.

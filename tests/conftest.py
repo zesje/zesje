@@ -12,7 +12,7 @@ from sqlalchemy import event, create_engine
 sys.path.insert(0, str(Path.cwd()))
 
 from zesje.api import api_bp  # noqa: E402
-from zesje.database import db  # noqa: E402
+from zesje.database import db, login_manager  # noqa: E402
 from zesje.factory import create_config  # noqa: E402
 
 
@@ -28,6 +28,13 @@ def datadir():
 def base_config_app():
     app = Flask(__name__, static_folder=None)
     create_config(app.config, None)
+    os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
+    login_manager.init_app(app)
+
+    @app.route('/')
+    def index():
+        """OAuth callback redirects to index. Required to build url for endpoint index"""
+        return 'success'
     return app
 
 

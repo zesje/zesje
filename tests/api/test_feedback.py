@@ -51,4 +51,4 @@ def test_delete_with_mc_option(test_client, add_test_data):
     result = test_client.delete(f'/api/feedback/{problem_id}/{fb_id}')
     data = json.loads(result.data)
 
-    assert data['status'] == 401
+    assert data['status'] == 403

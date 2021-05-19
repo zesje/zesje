@@ -38,7 +38,7 @@ def grade_problem(copy, page, page_img):
     # TODO Support pregrading for submissions with multiple copies.
     solutions_to_grade = [
         sol for sol in sub.solutions
-        if (not sol.graded_by or sol.graded_by.name == AUTOGRADER_NAME) and sol.problem.widget.page == page
+        if (not sol.graded_by or sol.graded_by.oauth_id == AUTOGRADER_NAME) and sol.problem.widget.page == page
     ] if len(sub.copies) == 1 else []
 
     if solutions_to_grade:
@@ -140,7 +140,8 @@ def set_auto_grader(solution):
         The solution
     """
     AUTOGRADER_NAME = current_app.config['AUTOGRADER_NAME']
-    zesje_grader = Grader.query.filter(Grader.name == AUTOGRADER_NAME).one_or_none() or Grader(name=AUTOGRADER_NAME)
+    zesje_grader = Grader.query.filter(Grader.oauth_id == AUTOGRADER_NAME).one_or_none() or \
+        Grader(oauth_id=AUTOGRADER_NAME, name=AUTOGRADER_NAME, internal=True)
 
     solution.graded_by = zesje_grader
     solution.graded_at = datetime.now()

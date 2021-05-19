@@ -66,12 +66,7 @@ class Graders extends React.Component {
 
         <section className='section'>
           <div className='container'>
-            <h1 className='title'>Enter {idField}</h1>
-            <h5 className='subtitle'>
-              This instance of Zesje is configured to use {idField} for authentication.
-              To allow a grader to log in using {provider}, please add their {idField}.
-            </h5>
-            <hr />
+
 
             <form onSubmit={this.submitName}>
               <div className='field has-addons'>
@@ -79,7 +74,7 @@ class Graders extends React.Component {
                   <input className='input'
                     name='first_name' value={this.state.oauth_id}
                     onChange={this.changeIdField} type='text'
-                    maxLength={100} placeholder={idField} />
+                    maxLength={100} placeholder={provider + ' ' + idField} />
                 </div>
                 <div className='control'>
                   <button type='submit' className='button is-info'>
@@ -90,6 +85,8 @@ class Graders extends React.Component {
                   </button>
                 </div>
               </div>
+              <p>This instance of Zesje is configured to use {idField} for authentication.
+                To allow a grader to log in using {provider}, please add their {idField}.</p>
             </form>
             <br />
 

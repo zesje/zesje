@@ -7,7 +7,6 @@ from zesje.database import db, Exam, Problem, FeedbackOption,\
 
 @pytest.fixture
 def add_test_data(app):
-
     exam = Exam(id=42, name='exam f', finalized=True, layout="unstructured")
     db.session.add(exam)
 
@@ -31,9 +30,8 @@ def get_second_feedback():
 
 
 def test_has_all_required(get_first_feedback):
-
     student = Student(first_name='', last_name='')
-    grader = Grader(name='Zesje')
+    grader = Grader(name='Zesje', oauth_id='Zesje')
     sub = Submission(student=student, exam_id=42)
     sol = Solution(problem_id=20, submission=sub, graded_by=grader, graded_at=datetime.now())
     sol.feedback = get_first_feedback
@@ -42,11 +40,10 @@ def test_has_all_required(get_first_feedback):
 
 
 def test_find_next(add_test_data, get_first_feedback, get_second_feedback):
-
     student = Student(first_name='', last_name='')
     student2 = Student(first_name='bob', last_name='alice')
 
-    grader = Grader(name='Zesje')
+    grader = Grader(name='Zesje', oauth_id='Zesje')
 
     sub = Submission(id=25, student=student, exam_id=42)
     sub2 = Submission(id=26, student=student2, exam_id=42)

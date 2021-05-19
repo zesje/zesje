@@ -43,6 +43,7 @@
     "babel-plugin-transform-class-properties": "^6.24.1",
     "babel-plugin-transform-object-rest-spread": "^6.26.0",
     "bulma": "^0.7.1",
+    "bulma-popover": "^1.0.3",
     "bulma-switch": "^2.0.0",
     "bulma-tooltip": "^2.0.1",
     "concurrently": "^3.6.0",

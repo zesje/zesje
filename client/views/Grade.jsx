@@ -24,7 +24,7 @@ class Grade extends React.Component {
    */
   constructor (props) {
     super(props)
-    this.state = {}
+    this.state = {feedbackFilters: {}}
     api.get(`exams/${this.props.examID}?only_metadata=true` +
         `&shuffle_seed=${this.props.graderID}`).then(metadata => {
       const partialState = {
@@ -167,16 +167,27 @@ class Grade extends React.Component {
    * @param direction either 'prev' or 'next'
    * @param ungraded either 'true' or 'false'
    */
-  navigate = (direction, ungraded) => {
-    api.get(`submissions/${this.props.examID}/${this.state.submission.id}` +
+  navigate =async (direction, ungraded) => {
+    const fb = (await api.get(`feedback/${this.props.problemID}`)).map(fb => fb.id)
+
+    this.setState({
+      feedbackFilters: Object.entries(this.state.feedbackFilters).filter(
+        option => fb.includes(parseInt(option[0]))
+      )
+        .reduce(
+          (previous, current) => ({...previous, [parseInt(current[0])]: current[1]}), {})
+    })
+
+    const sub = await api.get(`submissions/${this.props.examID}/${this.state.submission.id}` +
       '?problem_id=' + this.state.problem.id +
       '&shuffle_seed=' + this.props.graderID +
       '&direction=' + direction +
-      '&ungraded=' + ungraded).then(sub =>
-      this.setState({
-        submission: sub
-      }, () => this.props.history.push(this.getURL(this.state.submission.id, this.state.problem.id)))
+      '&ungraded=' + ungraded +
+      Object.entries(this.state.feedbackFilters).filter(entry => entry[1] !== 'no_filter').map(entry => `&${entry[1]}_feedback=${entry[0]}`).join('')
     )
+    this.setState({
+      submission: sub
+    }, () => this.props.history.push(this.getURL(this.state.submission.id, this.state.problem.id)))
   }
   /**
    * Sugar methods for navigate.
@@ -366,6 +377,17 @@ class Grade extends React.Component {
     return Math.abs(hash)
   }
 
+  applyFilter = (e, id, newFilterMode) => {
+    e.stopPropagation()
+    this.setState({
+      feedbackFilters: {
+        ...this.state.feedbackFilters,
+        [id]: this.state.feedbackFilters[id] === newFilterMode ? 'no_filter' : newFilterMode
+      }
+    })
+    console.log(this.state.feedbackFilters)
+  }
+
   render () {
     const hero = (<Hero title='Grade' subtitle='Assign feedback to each solution' />)
     // This should happen when there are no submissions or problems for an exam.
@@ -420,6 +442,8 @@ class Grade extends React.Component {
                     setSubmission={this.updateSubmission}
                     toggleOption={this.toggleFeedbackOption}
                     toggleApprove={this.toggleApprove}
+                    feedbackFilters={this.state.feedbackFilters}
+                    applyFilter={this.applyFilter}
                     updateFeedback={this.updateFromUrl} />
                 </nav>
               </div>

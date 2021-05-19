@@ -58,7 +58,7 @@ def has_all_required_feedback(sol, required_feedback, excluded_feedback):
 
 
 def _find_submission(old_submission, problem, shuffle_seed, direction, ungraded,
-                     required_feedback, excluded_feedback):
+                     required_feedback, excluded_feedback, graded_by):
     """
     Finds a submission based on the parameters of the function.
     Finds all solutions for the problem, and shuffles them based on the shuffle_seed.
@@ -81,6 +81,8 @@ def _find_submission(old_submission, problem, shuffle_seed, direction, ungraded,
         the feedback_id's which the found submission should have
     excluded_feedback : List[int]
         the feedback_id's which the found submission should not have
+    graded_by : int
+        the id of the grader that should have graded that submission, optional
 
     Returns
     -------
@@ -97,7 +99,8 @@ def _find_submission(old_submission, problem, shuffle_seed, direction, ungraded,
       (
         sol.submission for sol in problem.solutions
         if (
-          has_all_required_feedback(sol, required_feedback, excluded_feedback)
+          has_all_required_feedback(sol, required_feedback, excluded_feedback) and
+          (graded_by is None or sol.graded_by.id == graded_by)
           and follows(key(sol.submission), old_key)
           and (not ungraded or sol.graded_by is None)
         )
@@ -118,6 +121,7 @@ class Submissions(Resource):
     get_parser.add_argument('direction', type=str, required=False, choices=["next", "prev"])
     get_parser.add_argument('required_feedback', type=int, required=False, action='append')
     get_parser.add_argument('excluded_feedback', type=int, required=False, action='append')
+    get_parser.add_argument('graded_by', type=int, required=False)
 
     def get(self, exam_id, submission_id=None):
         """get submissions for the given exam
@@ -165,7 +169,7 @@ class Submissions(Resource):
 
             sub = _find_submission(
                 sub, problem, args.shuffle_seed, args.direction, args.ungraded,
-                args.required_feedback or [], args.excluded_feedback or []
+                args.required_feedback or [], args.excluded_feedback or [], args.graded_by
             )
 
         return sub_to_data(sub)

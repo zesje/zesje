@@ -94,7 +94,6 @@ def _find_submission(old_submission, problem, shuffle_seed, direction, ungraded,
     old_key = key(old_submission)
     next_, follows = (min, operators.gt) if direction == 'next' else (max, operators.lt)
     required_feedback = set(required_feedback)
-    print(graded_by)
     excluded_feedback = set(excluded_feedback)
     submission_to_return = next_(
       (

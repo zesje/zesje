@@ -141,7 +141,7 @@ def set_auto_grader(solution):
     """
     AUTOGRADER_NAME = current_app.config['AUTOGRADER_NAME']
     zesje_grader = Grader.query.filter(Grader.oauth_id == AUTOGRADER_NAME).one_or_none() or \
-        Grader(oauth_id=AUTOGRADER_NAME, name=AUTOGRADER_NAME)
+        Grader(oauth_id=AUTOGRADER_NAME, name=AUTOGRADER_NAME, internal=True)
 
     solution.graded_by = zesje_grader
     solution.graded_at = datetime.now()

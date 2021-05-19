@@ -28,7 +28,7 @@ def authenticate(func):
     """
     Function decorator that checks if the user is logged in before executing the actual function.
     If the user is not logged in it returns a 401 UNAUTHORIZED response.
-    If the endpoint belongs to the excempt routes, the method belongs to the excempt methods or
+    If the endpoint belongs to the exempt routes, the method belongs to the exempt methods or
     login is disabled (useful during development) the function is executed without checking for authentication.
 
     See Also

@@ -82,7 +82,7 @@ def _find_submission(old_submission, problem, shuffle_seed, direction, ungraded,
     excluded_feedback : List[int]
         the feedback_id's which the found submission should not have
     graded_by : int
-        the id of the grader that should have graded that submission, none when no specific grader is specified.
+        the id of the grader that should have graded that submission, optional
 
     Returns
     -------

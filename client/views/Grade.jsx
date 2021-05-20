@@ -385,7 +385,6 @@ class Grade extends React.Component {
         [id]: this.state.feedbackFilters[id] === newFilterMode ? 'no_filter' : newFilterMode
       }
     })
-    console.log(this.state.feedbackFilters)
   }
 
   render () {

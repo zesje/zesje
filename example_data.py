@@ -38,6 +38,7 @@ import time
 import lorem
 import names
 import flask_migrate
+from flask import json
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfbase import pdfmetrics
@@ -360,12 +361,27 @@ def design_exam(app, client, layout, pages, students, grade, solve, multiple_cop
             correct = random.choice(fops)
             client.put(f'api/feedback/{problem_id}', data={'id': correct[0], 'name': correct[1], 'score': 1})
         else:
+            fb_ids = []
             for _ in range(random.randint(2, 10)):
-                client.post(f'api/feedback/{problem_id}', data={
+                result = client.post(f'api/feedback/{problem_id}', data={
                     'name': lorem_name.sentence(),
                     'description': (lorem.sentence() if random.choice([True, False]) else ''),
                     'score': random.randint(0, 10)
                 })
+                # use return from post to get ids
+                data = json.loads(result.data)
+                fb_ids.append(data['id'])
+            for _ in range(random.randint(2, 5)):
+                # get random id from list
+                parent_id = fb_ids[random.randint(0, len(fb_ids) - 1)]
+                client.post(f'api/feedback/{problem_id}', data={
+                    'name': lorem_name.sentence(),
+                    'description': (lorem.sentence() if random.choice([True, False]) else ''),
+                    'score': random.randint(0, 10),
+                    'parent': parent_id
+                })
+                data = json.loads(result.data)
+                fb_ids.append(data['id'])
 
     client.put(f'api/exams/{exam_id}', data={'finalized': True})
 

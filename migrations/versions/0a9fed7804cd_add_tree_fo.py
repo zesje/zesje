@@ -1,4 +1,4 @@
-""" empty message
+""" Add tree structure for FeedbackOptions
 
 Revision ID: 0a9fed7804cd
 Revises: dccc66cf2881
@@ -6,7 +6,6 @@ Revises: dccc66cf2881
 """
 from alembic import op
 import sqlalchemy as sa
-from sqlalchemy.dialects import mysql
 
 # revision identifiers, used by Alembic.
 revision = '0a9fed7804cd'

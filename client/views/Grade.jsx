@@ -387,6 +387,12 @@ class Grade extends React.Component {
     })
   }
 
+  clearFilters = () => {
+    this.setState({
+      feedbackFilters: {}
+    })
+  }
+
   render () {
     const hero = (<Hero title='Grade' subtitle='Assign feedback to each solution' />)
     // This should happen when there are no submissions or problems for an exam.
@@ -443,7 +449,9 @@ class Grade extends React.Component {
                     toggleApprove={this.toggleApprove}
                     feedbackFilters={this.state.feedbackFilters}
                     applyFilter={this.applyFilter}
-                    updateFeedback={this.updateFromUrl} />
+                    updateFeedback={this.updateFromUrl}
+                    clearFilters={this.clearFilters}
+                  />
                 </nav>
               </div>
 

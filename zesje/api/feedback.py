@@ -70,11 +70,11 @@ class Feedback(Resource):
             db.session.add(fb)
 
         else:
-            if (parent := FeedbackOption.query.get(parent_id)) is None:
+            parent = FeedbackOption.query.get(parent_id)
+            if parent is None:
                 return dict(status=404, message=f"FeedbackOption with id #{parent_id} does not exist"), 404
 
             else:
-                parent = FeedbackOption.query.get(parent_id)
                 parent.children.append(fb)
 
         db.session.commit()

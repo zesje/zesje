@@ -15,10 +15,6 @@ depends_on = None
 
 
 def upgrade():
-    # If you make any changes to the Exam table, please use
-    # a batch operation and supply the sqlite_autoincrement
-    # argument to preserve the AUTOINCREMENT keyword.
-    # See ./6b926be35894_exam_autoincrement.py for a reference.
     with op.batch_alter_table('feedback_option', schema=None) as batch_op:
         batch_op.add_column(sa.Column('parent_id', sa.Integer(), nullable=True))
         batch_op.create_foreign_key(None, 'feedback_option', ['parent_id'], ['id'])

@@ -74,8 +74,7 @@ class Feedback(Resource):
             if parent is None:
                 return dict(status=404, message=f"FeedbackOption with id #{parent_id} does not exist"), 404
 
-            else:
-                parent.children.append(fb)
+            parent.children.append(fb)
 
         db.session.commit()
 

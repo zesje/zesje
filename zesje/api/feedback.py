@@ -20,7 +20,8 @@ class Feedback(Resource):
             score: int
             parent: int
             used: int
-            children: list of int (children ids)
+            children: List(int)
+                list of children ids
 
         """
 

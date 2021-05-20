@@ -63,9 +63,7 @@ def fo_subchild_json():
 
 
 def test_delete_with_mc_option(test_client, add_test_data):
-    """
-    Attempt to delete a FeedbackOption related to a MultipleChoiceOption
-    """
+    """Attempt to delete a FeedbackOption related to a MultipleChoiceOption"""
     req = mco_json()
 
     result = test_client.put('/api/mult-choice/', data=req)
@@ -83,9 +81,7 @@ def test_delete_with_mc_option(test_client, add_test_data):
 
 
 def test_create_and_get_fo(test_client, add_test_data):
-    """
-        Create a new FeedbackOption without a parent
-    """
+    """Create a new FeedbackOption without a parent"""
     fo = fo_json()
 
     result = test_client.post('/api/feedback/1', data=fo)
@@ -103,9 +99,7 @@ def test_create_and_get_fo(test_client, add_test_data):
 
 
 def test_create_and_get_fo_with_parent(test_client, add_test_data):
-    """
-        Create a new FeedbackOption with a parent
-    """
+    """Create a new FeedbackOption with a parent"""
     fo_child = fo_child_json()
 
     result = test_client.post('api/feedback/1', data=fo_child)
@@ -122,9 +116,7 @@ def test_create_and_get_fo_with_parent(test_client, add_test_data):
 
 
 def test_delete_fo(test_client, add_test_data):
-    """
-        Delete a FeedbackOption without a parent
-    """
+    """Delete a FeedbackOption without a parent"""
     fo = fo_json()
 
     result_get = test_client.get('/api/feedback/1')
@@ -159,9 +151,7 @@ def test_delete_fo(test_client, add_test_data):
 
 
 def test_delete_fo_with_parent(test_client, add_test_data):
-    """
-        Delete a FeedbackOption with a parent
-    """
+    """Delete a FeedbackOption with a parent"""
     fo_child = fo_child_json()
 
     result = test_client.post('/api/feedback/1', data=fo_child)
@@ -189,9 +179,7 @@ def test_delete_fo_with_parent(test_client, add_test_data):
 
 
 def test_delete_parent_of_fo(test_client, add_test_data):
-    """
-        Delete a FeedbackOption with 1 level of children, check if children also get deleted
-    """
+    """Delete a FeedbackOption with 1 level of children, check if children also get deleted"""
     fo_child = fo_child_json()
 
     result = test_client.post('/api/feedback/1', data=fo_child)
@@ -217,9 +205,7 @@ def test_delete_parent_of_fo(test_client, add_test_data):
 
 
 def test_delete_parent_with_subchildren(test_client, add_test_data):
-    """
-        Delete a FeedbackOption with 2 levels of children, check if sub-children also get deleted
-    """
+    """Delete a FeedbackOption with 2 levels of children, check if sub-children also get deleted"""
     fo_child = fo_child_json()
 
     result = test_client.post('/api/feedback/1', data=fo_child)
@@ -259,9 +245,7 @@ def test_delete_parent_with_subchildren(test_client, add_test_data):
 
 
 def test_get_children(test_client, add_test_data):
-    """
-        Get the children of a FeedbackOption
-    """
+    """Get the children of a FeedbackOption"""
     result = test_client.get('/api/feedback/1')
     data = json.loads(result.data)
 

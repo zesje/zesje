@@ -171,10 +171,10 @@ class FeedbackPanel extends React.Component {
               applyFilter={(e, newFilterMode) => this.props.applyFilter(e, feedback.id, newFilterMode)}
             />
             : <FeedbackBlockEdit key={feedback.id} feedback={feedback} problemID={this.state.problemID}
-              goBack={this.backToFeedback} updateFeedback={this.props.updateFeedback} />
+              goBack={this.backToFeedback} showCancel={this.state.feedbackToEditId !== -1} updateFeedback={this.props.updateFeedback} />
         ))}
         {(this.state.feedbackToEditId === -1)
-          ? <FeedbackBlockEdit feedback={null} problemID={this.state.problemID} goBack={this.backToFeedback}
+          ? <FeedbackBlockEdit feedback={null} problemID={this.state.problemID} goBack={() => this.editFeedback(-1)} showCancel={this.state.feedbackToEditId !== -1}
             updateFeedback={this.props.updateFeedback} />
           : <div className='panel-block'>
             <button className='button is-link is-outlined is-fullwidth' onClick={() => this.editFeedback(-1)}>

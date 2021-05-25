@@ -1,14 +1,14 @@
 import itertools
 
-from pdfminer3.converter import PDFPageAggregator
-from pdfminer3.layout import LAParams
-from pdfminer3.layout import LTFigure
-from pdfminer3.layout import LTTextBoxHorizontal
-from pdfminer3.pdfdocument import PDFDocument
-from pdfminer3.pdfinterp import PDFResourceManager
-from pdfminer3.pdfinterp import PDFPageInterpreter
-from pdfminer3.pdfpage import PDFPage
-from pdfminer3.pdfparser import PDFParser
+from pdfminer.converter import PDFPageAggregator
+from pdfminer.layout import LAParams
+from pdfminer.layout import LTFigure
+from pdfminer.layout import LTTextBoxHorizontal
+from pdfminer.pdfdocument import PDFDocument
+from pdfminer.pdfinterp import PDFResourceManager
+from pdfminer.pdfinterp import PDFPageInterpreter
+from pdfminer.pdfpage import PDFPage
+from pdfminer.pdfparser import PDFParser
 
 
 def get_problem_page(problem, pdf_path):

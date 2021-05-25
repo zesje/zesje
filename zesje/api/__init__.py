@@ -49,7 +49,7 @@ def authenticate(func):
     return decorated_view
 
 
-api_bp = Blueprint(__name__, __name__)
+api_bp = Blueprint('zesje', __name__)
 
 api = Api(api_bp, decorators=[authenticate])
 

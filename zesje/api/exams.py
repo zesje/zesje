@@ -370,7 +370,7 @@ class ExamSource(Resource):
 
         return send_file(
             exam_pdf_path(exam.id),
-            cache_timeout=0,
+            max_age=0,
             mimetype='application/pdf')
 
 
@@ -432,8 +432,8 @@ class ExamGeneratedPdfs(Resource):
             output_file.seek(0)
             return send_file(
                 output_file,
-                cache_timeout=0,
-                attachment_filename=attachment_filename,
+                max_age=0,
+                download_name=attachment_filename,
                 as_attachment=True,
                 mimetype=mimetype)
         elif args['type'] == 'zip':

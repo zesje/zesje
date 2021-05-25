@@ -23,10 +23,10 @@ class OAuthStart(Resource):
         is_authenticated: boolean
         """
         if current_app.config['LOGIN_DISABLED']:
-            authorization_url, state = url_for('zesje.api.oauthcallback'), 'state'
+            authorization_url, state = url_for('zesje.oauthcallback'), 'state'
         else:
             oauth2_session = OAuth2Session(current_app.config['OAUTH_CLIENT_ID'],
-                                           redirect_uri=url_for('zesje.api.oauthcallback', _external=True),
+                                           redirect_uri=url_for('zesje.oauthcallback', _external=True),
                                            scope=current_app.config['OAUTH_SCOPES'])
             # add prompt='login' below to force surf conext to ask for login everytime disabling single sign-on, see:
             # https://wiki.surfnet.nl/display/surfconextdev/OpenID+Connect+features#OpenIDConnectfeatures-Prompt=login
@@ -57,7 +57,7 @@ class OAuthCallback(Resource):
             return redirect(url_for('index'))
 
         oauth2_session = OAuth2Session(current_app.config['OAUTH_CLIENT_ID'],
-                                       redirect_uri=url_for('zesje.api.oauthcallback', _external=True),
+                                       redirect_uri=url_for('zesje.oauthcallback', _external=True),
                                        state=session['oauth_state'])
 
         token = oauth2_session.fetch_token(

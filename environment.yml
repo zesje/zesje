@@ -14,45 +14,40 @@ dependencies:
 
     - pip:
         # Core components
-        - flask
-        - flask_restful
-        - flask_sqlalchemy
-        - sqlalchemy>=1.4.13
-        - Flask-Migrate
-        - alembic
+        - flask>=2.0.1,<3.0.0
+        - flask-restful>=0.3.9
+        - flask-sqlalchemy>=2.5.1,<3.0.0
+        - flask-migrate>=3.0.0,<4.0.0
+        - sqlalchemy>=1.4.13,<2.0.0
+        - alembic>=1.6.4,<2.0.0
         - pyyaml
-        - celery
-        - redis
+        - celery>=5.1.0,<6.0.0
+        - redis>=3.5.3
 
         #oauth library
-        - requests_oauthlib
+        - requests-oauthlib>=1.3.0,<2.0.0
 
         #flask session management
-        - flask_login
+        - flask-login
 
         #flask role management
-        - flask_principal
+        - flask-principal
 
         # General utilities
         - numpy
         - scipy
 
         # PDF generation
-        - pdfrw
-        - reportlab
-        - Wand
-        - Pillow  # also scan processing
-        - zipstream-new
-
-        # Sandbox data generation
-        - lorem # For random text
-        - names # For random names
+        - pdfrw>=0.4
+        - reportlab>=3.5.0
+        - wand>=0.6.6
+        - pillow>=8.2.0  # also scan processing
+        - zipstream-new>=1.1.8
 
         # Scan processing
-        - opencv-python
-        - pikepdf
-        - pylibdmtx
-        - pdfminer3
+        - opencv-python>=4.5
+        - pikepdf>=2.12.1
+        - pylibdmtx>=0.1.9
 
         # Exporting
         - pandas
@@ -61,6 +56,10 @@ dependencies:
         #
         # Development dependencies
         #
+
+        # Sandbox data generation
+        - lorem # For random text
+        - names # For random names
 
         # Tests
         - pytest

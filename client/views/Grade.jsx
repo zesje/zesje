@@ -188,7 +188,7 @@ class Grade extends React.Component {
       '&direction=' + direction +
       '&ungraded=' + ungraded +
       Object.entries(this.state.feedbackFilters).filter(entry => entry[1] !== 'no_filter').map(entry => `&${entry[1]}_feedback=${entry[0]}`).join('') +
-      '&graded_by=' + this.state.graded_by
+      (this.state.graded_by > 0 ? '&graded_by=' + this.state.graded_by : '')
     )
     this.setState({
       submission: sub

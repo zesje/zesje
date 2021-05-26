@@ -381,6 +381,10 @@ class Grade extends React.Component {
     return Math.abs(hash)
   }
 
+  applyGraderFilter = (e) => {
+    console.log(e.target.value)
+  }
+
   applyFilter = (e, id, newFilterMode) => {
     e.stopPropagation()
     this.setState({
@@ -448,6 +452,7 @@ class Grade extends React.Component {
                     toggleApprove={this.toggleApprove}
                     feedbackFilters={this.state.feedbackFilters}
                     applyFilter={this.applyFilter}
+                    applyGraderFilter={this.applyGraderFilter}
                     updateFeedback={this.updateFromUrl} />
                 </nav>
               </div>
@@ -492,12 +497,14 @@ class Grade extends React.Component {
 
                   <div className='level-right'>
                     <div class='select is-link is-normal' style={{marginRight: '0.5em'}}>
-                      <select>
-                        <option>Filter by Graders</option>
-                        <option>Ungraded</option>
-                        <option>No filter</option>
+                      <select onChange={(e) => this.applyGraderFilter(e)}>
+                        <option value='0'>Filter by Graders</option>
+                        <option value='-1'>Ungraded</option>
+                        <option value='-2'>No filter</option>
                         {this.state.graders.map((grader) =>
-                          <option key={grader.id}>{grader.name ? grader.name : 'Never logged in'}</option>
+                          <option value={grader.id} key={grader.id}>
+                            {grader.name ? grader.name : 'Never logged in'}
+                          </option>
                         )}
                       </select>
                     </div>

@@ -187,7 +187,8 @@ class Grade extends React.Component {
       '&shuffle_seed=' + this.props.graderID +
       '&direction=' + direction +
       '&ungraded=' + ungraded +
-      Object.entries(this.state.feedbackFilters).filter(entry => entry[1] !== 'no_filter').map(entry => `&${entry[1]}_feedback=${entry[0]}`).join('')
+      Object.entries(this.state.feedbackFilters).filter(entry => entry[1] !== 'no_filter').map(entry => `&${entry[1]}_feedback=${entry[0]}`).join('') +
+      '&graded_by=' + this.state.graded_by
     )
     this.setState({
       submission: sub
@@ -382,7 +383,8 @@ class Grade extends React.Component {
   }
 
   applyGraderFilter = (e) => {
-    console.log(e.target.value)
+    e.stopPropagation()
+    this.setState({graded_by: e.target.value})
   }
 
   applyFilter = (e, id, newFilterMode) => {
@@ -498,9 +500,9 @@ class Grade extends React.Component {
                   <div className='level-right'>
                     <div class='select is-link is-normal' style={{marginRight: '0.5em'}}>
                       <select onChange={(e) => this.applyGraderFilter(e)}>
-                        <option value='0'>Filter by Graders</option>
+                        <option selected disabled hidden>Filter by Graders</option>
                         <option value='-1'>Ungraded</option>
-                        <option value='-2'>No filter</option>
+                        <option value='0'>No filter</option>
                         {this.state.graders.map((grader) =>
                           <option value={grader.id} key={grader.id}>
                             {grader.name ? grader.name : 'Never logged in'}

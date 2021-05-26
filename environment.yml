@@ -46,6 +46,7 @@ dependencies:
 
         # Scan processing
         - opencv-python>=4.5
+        - opencv-python-headless>=4.5
         - pikepdf>=2.12.1
         - pylibdmtx>=0.1.9
         - pdfminer.six>=20201018

@@ -40,13 +40,17 @@ class Grade extends React.Component {
       const problemID = this.props.problemID || metadata.problems[0].id
       Promise.all([
         api.get(`submissions/${examID}/${submissionID}`),
-        api.get(`problems/${problemID}`)
+        api.get(`problems/${problemID}`),
+        api.get(`graders`)
       ]).then(values => {
         const submission = values[0]
         const problem = values[1]
+        const graders = values[2].filter(grader => grader.oauth_id !== 'admin@admin')
+        console.log(graders)
         this.setState({
           submission: submission,
           problem: problem,
+          graders: graders,
           ...partialState
         }, () => this.props.history.replace(this.getURL(submissionID, problemID)))
       // eslint-disable-next-line handle-callback-err
@@ -477,14 +481,27 @@ class Grade extends React.Component {
 
                 <div className='level'>
                   <div className='level-left'>
+
                     <div className='level-item'>
-                      {solution.graded_by
-                        ? <div>Graded by: {solution.graded_by.name} <i>({gradedTime.toLocaleString()})</i></div>
+                      {solution.graded_by ? <div>Graded by: {solution.graded_by.name} <i>({gradedTime.toLocaleString()})</i></div>
                         : <div>Ungraded</div>
                       }
                     </div>
+
                   </div>
+
                   <div className='level-right'>
+                    <div class='select is-link is-normal' style={{marginRight: '0.5em'}}>
+                      <select>
+                        <option>Filter by Graders</option>
+                        <option>Ungraded</option>
+                        <option>No filter</option>
+                        {this.state.graders.map((grader) =>
+                          <option key={grader.id}>{grader.name ? grader.name : 'Never logged in'}</option>
+                        )}
+                      </select>
+                    </div>
+
                     <div className='level-item'>
                       {!this.state.isUnstructured &&
                         <button className={'button is-info is-outlined' + (this.state.showTooltips ? ' tooltip is-tooltip-active' : '')}

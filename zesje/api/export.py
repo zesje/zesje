@@ -27,9 +27,9 @@ def full():
     return send_file(
         BytesIO(output),
         as_attachment=True,
-        attachment_filename='course.sql',
+        download_name='course.sql',
         mimetype="application/sql",
-        cache_timeout=0,
+        max_age=0
     )
 
 
@@ -82,9 +82,9 @@ def exam(file_format, exam_id):
     return send_file(
         serialized,
         as_attachment=True,
-        attachment_filename=f'exam{exam_id}.{extension}',
+        download_name=f'exam{exam_id}.{extension}',
         mimetype=mimetype,
-        cache_timeout=0,
+        max_age=0
     )
 
 
@@ -174,9 +174,9 @@ def grader_statistics(exam_id):
     return send_file(
         serialized,
         as_attachment=True,
-        attachment_filename=f'grader_statistics_exam_{exam_id}.json',
+        download_name=f'grader_statistics_exam_{exam_id}.json',
         mimetype='application/json',
-        cache_timeout=0,
+        max_age=0
     )
 
 

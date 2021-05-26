@@ -501,8 +501,8 @@ class Grade extends React.Component {
                     <div class='select is-link is-normal' style={{marginRight: '0.5em'}}>
                       <select onChange={(e) => this.applyGraderFilter(e)}>
                         <option selected disabled hidden>Filter by Graders</option>
-                        <option value='-1'>Ungraded</option>
                         <option value='0'>No filter</option>
+                        <option value='-1'>Ungraded</option>
                         {this.state.graders.map((grader) =>
                           <option value={grader.id} key={grader.id}>
                             {grader.name ? grader.name : 'Never logged in'}

@@ -57,6 +57,33 @@ def has_all_required_feedback(sol, required_feedback, excluded_feedback):
     return (required_feedback <= feedback_ids) and (not excluded_feedback & feedback_ids)
 
 
+def all_filters(sol, required_feedback, excluded_feedback, graded_by, ungraded):
+    """
+    Returns whether a submission meets all requirements.
+
+    Parameters
+    ----------
+
+    sol: Solution
+        the solution to check if it meets all the requirements.
+    required_feedback: Set[int]
+        the feedback_id's which the submission should have.
+    excluded_feedback: Set[int]
+        the feedback_id's which the submission should not have.
+    graded_by: int
+        the id of the grader that should have graded the exam, optional
+    ungraded: bool
+        value whether the solution should be ungraded or you do not care.
+
+    Retuns
+    ----------
+    If this current submission matches all the filters.
+    """
+    return (has_all_required_feedback(sol, required_feedback, excluded_feedback) and
+            (graded_by is None or (sol.graded_by is not None and sol.graded_by.id == graded_by)) and
+            (not ungraded or sol.graded_by is None))
+
+
 def find_number_of_matches(problem, ungraded, required_feedback, excluded_feedback, graded_by):
     """
     Finds the number of solutions that match all the filtering criteria.
@@ -73,21 +100,17 @@ def find_number_of_matches(problem, ungraded, required_feedback, excluded_feedba
         the feedback_id's which the macthed submissions should not have.
     graded_by : int
         the id of the grader that should have graded the matched submissions, optional.
-    
+
     Returns
     --------
     The number of submissions that match all the filtering criteria.
     """
     return len(
-        sol for sol in problem.solutions
-        if (
-            has_all_required_feedback(sol, required_feedback, excluded_feedback) and
-            (
-                (ungraded and sol.graded_by is None) or
-                not ungraded and (graded_by is None or (sol.graded_by is not None and sol.graded_by.id == graded_by))
-            )
+        [
+            sol for sol in problem.solutions
+            if (all_filters(sol, set(required_feedback), set(excluded_feedback), graded_by, ungraded))
+            ]
         )
-    )
 
 
 def _find_submission(old_submission, problem, shuffle_seed, direction, ungraded,
@@ -131,12 +154,9 @@ def _find_submission(old_submission, problem, shuffle_seed, direction, ungraded,
     submission_to_return = next_(
       (
         sol.submission for sol in problem.solutions
-        if (
-          has_all_required_feedback(sol, required_feedback, excluded_feedback) and
-          (graded_by is None or sol.graded_by.id == graded_by)
-          and follows(key(sol.submission), old_key)
-          and (not ungraded or sol.graded_by is None)
-        )
+        if (all_filters(sol, required_feedback, excluded_feedback, graded_by, ungraded)
+            and follows(key(sol.submission), old_key)
+            )
       ),
       key=key,
       default=old_submission

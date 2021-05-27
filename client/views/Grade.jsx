@@ -109,17 +109,9 @@ class Grade extends React.Component {
     // If we change the keybindings here we should also remember to
     // update the tooltips for the associated widgets (in render()).
     // Also add the shortcut to ./client/components/help/ShortcutsHelp.md
-    this.props.bindShortcut(['shift+left', 'shift+h'], this.prev)
-    this.props.bindShortcut(['shift+right', 'shift+l'], this.next)
+    this.props.bindShortcut(['left', 'h'], this.prev)
+    this.props.bindShortcut(['right', 'l'], this.next)
     this.props.bindShortcut(['a'], this.toggleApprove)
-    this.props.bindShortcut(['left', 'h'], (event) => {
-      event.preventDefault()
-      this.prevUngraded()
-    })
-    this.props.bindShortcut(['right', 'l'], (event) => {
-      event.preventDefault()
-      this.nextUngraded()
-    })
     this.props.bindShortcut(['shift+up', 'shift+k'], (event) => {
       event.preventDefault()
       this.prevProblem()
@@ -202,13 +194,6 @@ class Grade extends React.Component {
   }
   next = () => {
     this.navigate('next', 'false')
-  }
-  prevUngraded = () => {
-    this.navigate('prev', 'true')
-  }
-
-  nextUngraded = () => {
-    this.navigate('next', 'true')
   }
 
   /**
@@ -464,10 +449,8 @@ class Grade extends React.Component {
                   submission={submission}
                   submissions={submissions}
                   setSubmission={this.navigateSubmission}
-                  prevUngraded={this.prevUngraded}
                   prev={this.prev}
                   next={this.next}
-                  nextUngraded={this.nextUngraded}
                   anonymous={gradeAnonymous}
                   showTooltips={this.state.showTooltips}
                 />

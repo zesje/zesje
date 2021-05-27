@@ -11,10 +11,8 @@ All the available shortcuts are listed below, grouped by page.
 | `shift` + `1 - 9, 0` | Toggle option 11-20    |
 | `shift` + `↑`        | Previous problem       |
 | `shift` + `↓`        | Next problem           |
-| `shift` + `←`        | Previous submission    |
-| `shift` + `→`        | Next submission        |
-| `←`                  | Previous ungraded      |
-| `→`                  | Next ungraded          |
+| `←`                  | Previous submission    |
+| `→`                  | Next submission        |
 | `a`                  | Approve/Set aside feedback |
 | `f`                  | Toggle full page       |
 

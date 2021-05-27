@@ -16,14 +16,9 @@ class GradeNavigation extends React.Component {
           <div className='field has-addons is-mobile'>
             <div className='control'>
               <button type='submit'
-                className={'button is-info is-rounded is-hidden-mobile' +
+                className={'button is-link is-rounded' +
                       (this.props.showTooltips ? ' tooltip is-tooltip-active' : '')}
                 data-tooltip='←'
-                onClick={this.props.prevUngraded}>Ungraded</button>
-              <button type='submit'
-                className={'button is-link' +
-                      (this.props.showTooltips ? ' tooltip is-tooltip-active' : '')}
-                data-tooltip='shift + ←'
                 onClick={this.props.prev}>Previous</button>
             </div>
             <div id='search' className={'control is-wider ' + (this.props.showTooltips ? 'tooltip is-tooltip-active tooltip-no-arrow' : '')}
@@ -72,15 +67,10 @@ class GradeNavigation extends React.Component {
             </div>
             <div className='control'>
               <button type='submit'
-                className={'button is-link' +
-                    (this.props.showTooltips ? ' tooltip is-tooltip-active' : '')}
-                data-tooltip='shift + →'
-                onClick={this.props.next}>Next</button>
-              <button type='submit'
-                className={'button is-info is-rounded is-hidden-mobile' +
+                className={'button is-link is-rounded' +
                     (this.props.showTooltips ? ' tooltip is-tooltip-active' : '')}
                 data-tooltip='→'
-                onClick={this.props.nextUngraded}>Ungraded</button>
+                onClick={this.props.next}>Next</button>
             </div>
           </div>
         </div>

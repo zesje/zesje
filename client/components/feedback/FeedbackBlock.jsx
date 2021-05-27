@@ -50,43 +50,35 @@ class FeedbackBlock extends React.Component {
     return (
       <li>
         <a
-        className='panel-block feedback-item'
-        onClick={this.props.grading ? this.toggle : this.props.editFeedback}
-        style={this.props.selected ? {backgroundColor: '#209cee'} : {}}
-        onMouseEnter={() => this.enter('block')} onMouseLeave={() => this.leave('block')}
+          className='panel-block feedback-item'
+          onClick={this.props.grading ? this.toggle : this.props.editFeedback}
+          style={this.props.selected ? {backgroundColor: '#209cee'} : {}}
+          onMouseEnter={() => this.enter('block')} onMouseLeave={() => this.leave('block')}
         >
-        <span
-          style={{ width: '1.5rem' }}
-          className={'tag' +
-            (this.props.checked ? ' is-link' : '') +
-            ((this.props.showIndex && this.props.index <= 20) ? ' tooltip is-tooltip-active is-tooltip-left' : '')}
-          data-tooltip={shortcut}>
-          {this.props.feedback.score}
-        </span>
-        <span className='grow' style={{ paddingLeft: '0.5em' }}>
-          {this.props.feedback.name}
-          <Tooltip text={this.props.feedback.description} />
-        </span>
-        <button
-          className={'button is-pulled-right is-small is-light' +
-          (this.state.hover['block'] ? '' : ' is-invisible') +
-          (this.state.hover['edit'] ? ' is-link' : '')}
-          onMouseEnter={() => this.enter('edit')} onMouseLeave={() => this.leave('edit')}
-          onClick={this.props.editFeedback}
-        >
-          <i className='fa fa-pencil' />
-        </button>
-        <div
-          className={`popover is-popover-right button is-pulled-right is-small is-light
-          ${(this.props.filterMode !== 'no_filter' ? 'is-inverted' : (this.state.hover['block'] ? '' : 'is-invisible'))}
-          ${this.filterColors[this.props.filterMode]}`}
-          onMouseEnter={() => this.enter('filter')} onMouseLeave={() => this.leave('filter')}
-        >
-          <i className={`fa ${this.filterIcons[this.props.filterMode]}`} />
+          <span
+            style={{ width: '1.5rem' }}
+            className={'tag' +
+              (this.props.checked ? ' is-link' : '') +
+              ((this.props.showIndex && this.props.index <= 20) ? ' tooltip is-tooltip-active is-tooltip-left' : '')}
+            data-tooltip={shortcut}>
+            {this.props.feedback.score}
+          </span>
+          <span className={'grow'} style={{ paddingLeft: '0.5em' }}>
+            {this.props.feedback.name}
+            <Tooltip text={this.props.feedback.description} />
+          </span>
+          <button
+            className={'button is-pulled-right is-small is-light' +
+            (this.state.hover['block'] ? '' : ' is-invisible') +
+            (this.state.hover['edit'] ? ' is-link' : '')}
+            onMouseEnter={() => this.enter('edit')} onMouseLeave={() => this.leave('edit')}
+            onClick={this.props.editFeedback}
+          >
+            <i className='fa fa-pencil' />
+          </button>
           <div
             className={`popover is-popover-right button is-pulled-right is-small is-light
             ${(this.props.filterMode !== 'no_filter' ? 'is-inverted' : (this.state.hover['block'] ? '' : 'is-invisible'))}
-            ${this.state.hover['filter'] ? 'is-link' : ''}
             ${this.filterColors[this.props.filterMode]}`}
             onMouseEnter={() => this.enter('filter')} onMouseLeave={() => this.leave('filter')}
           >
@@ -106,9 +98,8 @@ class FeedbackBlock extends React.Component {
               />
             </div>
           </div>
-        </div>
-      </a>
-        </li>
+        </a>
+      </li>
     )
   }
 }

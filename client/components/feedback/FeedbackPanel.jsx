@@ -157,21 +157,25 @@ class FeedbackPanel extends React.Component {
             </div>
           </div>
         }
-        {this.props.problem.feedback.map((feedback, index) => (
-          feedback.id !== this.state.feedbackToEditId
-            ? <FeedbackBlock key={feedback.id} uri={blockURI} graderID={this.props.graderID}
-              feedback={feedback} checked={this.props.grading && this.props.solution.feedback.includes(feedback.id)}
-              editFeedback={() => this.editFeedback(feedback.id)} toggleOption={this.props.toggleOption}
-              ref={(selectedFeedbackId === feedback.id) ? this.feedbackBlock : null} grading={this.props.grading}
-              submissionID={this.props.submissionID} selected={selectedFeedbackId === feedback.id || feedback.highlight}
-              showIndex={this.props.showTooltips}
-              index={index + 1}
-              filterMode={this.props.feedbackFilters[feedback.id] || 'no_filter'}
-              applyFilter={(e, newFilterMode) => this.props.applyFilter(e, feedback.id, newFilterMode)}
-            />
-            : <FeedbackBlockEdit key={feedback.id} feedback={feedback} problemID={this.state.problemID}
-              goBack={this.backToFeedback} updateFeedback={this.props.updateFeedback} />
-        ))}
+        <aside class='menu'>
+          <ul class='menu-list'>
+            {this.props.problem.feedback.map((feedback, index) => (
+              feedback.id !== this.state.feedbackToEditId
+                ? <FeedbackBlock key={feedback.id} uri={blockURI} graderID={this.props.graderID}
+                  feedback={feedback} checked={this.props.grading && this.props.solution.feedback.includes(feedback.id)}
+                  editFeedback={() => this.editFeedback(feedback.id)} toggleOption={this.props.toggleOption}
+                  ref={(selectedFeedbackId === feedback.id) ? this.feedbackBlock : null} grading={this.props.grading}
+                  submissionID={this.props.submissionID} selected={selectedFeedbackId === feedback.id || feedback.highlight}
+                  showIndex={this.props.showTooltips}
+                  index={index + 1}
+                  filterMode={this.props.feedbackFilters[feedback.id] || 'no_filter'}
+                  applyFilter={(e, newFilterMode) => this.props.applyFilter(e, feedback.id, newFilterMode)}
+                />
+                : <FeedbackBlockEdit key={feedback.id} feedback={feedback} problemID={this.state.problemID}
+                  goBack={this.backToFeedback} updateFeedback={this.props.updateFeedback} />
+            ))}
+          </ul>
+        </aside>
         {(this.state.feedbackToEditId === -1)
           ? <FeedbackBlockEdit feedback={null} problemID={this.state.problemID} goBack={this.backToFeedback}
             updateFeedback={this.props.updateFeedback} />

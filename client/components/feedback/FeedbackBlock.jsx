@@ -48,12 +48,13 @@ class FeedbackBlock extends React.Component {
   render () {
     const shortcut = (this.props.index < 11 ? '' : 'shift + ') + this.props.index % 10
     return (
-      <a
+      <li>
+        <a
         className='panel-block feedback-item'
         onClick={this.props.grading ? this.toggle : this.props.editFeedback}
         style={this.props.selected ? {backgroundColor: '#209cee'} : {}}
         onMouseEnter={() => this.enter('block')} onMouseLeave={() => this.leave('block')}
-      >
+        >
         <span
           style={{ width: '1.5rem' }}
           className={'tag' +
@@ -107,6 +108,7 @@ class FeedbackBlock extends React.Component {
           </div>
         </div>
       </a>
+        </li>
     )
   }
 }

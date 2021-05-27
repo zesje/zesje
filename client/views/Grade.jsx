@@ -45,7 +45,7 @@ class Grade extends React.Component {
         const submission = values[0]
         const problem = values[1]
         this.setState({
-          submission: submission,
+          submission: submission.submission,
           problem: problem,
           ...partialState
         }, () => this.props.history.replace(this.getURL(submissionID, problemID)))
@@ -84,7 +84,7 @@ class Grade extends React.Component {
         const submission = values[0]
         const problem = values[1]
         this.setState({
-          submission: submission,
+          submission: submission.submission,
           problem: problem
         }, () => this.props.history.replace(this.getURL(submission.id, problem.id)))
       }).catch(err => {
@@ -178,7 +178,7 @@ class Grade extends React.Component {
           (previous, current) => ({...previous, [parseInt(current[0])]: current[1]}), {})
     })
 
-    const sub = await api.get(`submissions/${this.props.examID}/${this.state.submission.id}` +
+    const {submission} = await api.get(`submissions/${this.props.examID}/${this.state.submission.id}` +
       '?problem_id=' + this.state.problem.id +
       '&shuffle_seed=' + this.props.graderID +
       '&direction=' + direction +
@@ -186,7 +186,7 @@ class Grade extends React.Component {
       Object.entries(this.state.feedbackFilters).filter(entry => entry[1] !== 'no_filter').map(entry => `&${entry[1]}_feedback=${entry[0]}`).join('')
     )
     this.setState({
-      submission: sub
+      submission
     }, () => this.props.history.push(this.getURL(this.state.submission.id, this.state.problem.id)))
   }
   /**
@@ -210,9 +210,9 @@ class Grade extends React.Component {
    * Updates the submission from the server, and sets it as the current submission.
   */
   updateSubmission = () => {
-    api.get(`submissions/${this.props.examID}/${this.state.submission.id}`).then(sub => {
+    api.get(`submissions/${this.props.examID}/${this.state.submission.id}`).then(({submission}) => {
       this.setState({
-        submission: sub
+        submission
       })
     })
   }

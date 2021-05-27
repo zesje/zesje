@@ -209,6 +209,8 @@ class Submissions(Resource):
 
         if sub.exam != exam:
             return dict(status=400, message='Submission does not belong to this exam.'), 400
+        
+        matched = len(exam.submissions)
 
         if args.direction:
             if any(arg is None for arg in (args.problem_id, args.shuffle_seed, args.ungraded)):
@@ -225,4 +227,9 @@ class Submissions(Resource):
                 args.required_feedback or [], args.excluded_feedback or [], args.graded_by
             )
 
-        return sub_to_data(sub)
+            matched = find_number_of_matches(
+                problem, args.ungraded, args.required_feedback or [],
+                args.excluded_feedback or [], args.graded_by)
+
+        return {'filter_matches': matched,
+                'submission': sub_to_data(sub)}

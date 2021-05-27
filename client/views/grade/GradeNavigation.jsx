@@ -18,6 +18,7 @@ class GradeNavigation extends React.Component {
               <button type='submit'
                 className={'button is-link is-rounded' +
                       (this.props.showTooltips ? ' tooltip is-tooltip-active' : '')}
+                style={{width: '6em'}}
                 data-tooltip='←'
                 onClick={this.props.prev}>Previous</button>
             </div>
@@ -69,6 +70,7 @@ class GradeNavigation extends React.Component {
               <button type='submit'
                 className={'button is-link is-rounded' +
                     (this.props.showTooltips ? ' tooltip is-tooltip-active' : '')}
+                style={{width: '6em'}}
                 data-tooltip='→'
                 onClick={this.props.next}>Next</button>
             </div>

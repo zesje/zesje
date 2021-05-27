@@ -15,6 +15,7 @@ import * as api from '../api.jsx'
 import 'bulma-tooltip/dist/css/bulma-tooltip.min.css'
 import './grade/Grade.css'
 import '../components/SubmissionNavigation.css'
+import template from 'babel-template'
 
 class Grade extends React.Component {
   /**
@@ -51,6 +52,7 @@ class Grade extends React.Component {
           submission: submission,
           problem: problem,
           graders: graders,
+          graded_by: '-1',
           ...partialState
         }, () => this.props.history.replace(this.getURL(submissionID, problemID)))
       // eslint-disable-next-line handle-callback-err
@@ -445,16 +447,29 @@ class Grade extends React.Component {
               </div>
 
               <div className='column'>
-                <GradeNavigation
-                  submission={submission}
-                  submissions={submissions}
-                  setSubmission={this.navigateSubmission}
-                  prev={this.prev}
-                  next={this.next}
-                  anonymous={gradeAnonymous}
-                  showTooltips={this.state.showTooltips}
-                />
+                <div style={{display: 'grid', gridTemplateColumns: '1fr max-content'}}>
+                  <GradeNavigation
+                    submission={submission}
+                    submissions={submissions}
+                    setSubmission={this.navigateSubmission}
+                    prev={this.prev}
+                    next={this.next}
+                    anonymous={gradeAnonymous}
+                    showTooltips={this.state.showTooltips}
+                  />
 
+                  <div className='select is-link is-normal' style={{marginLeft: '0.5em'}}>
+                    <select onChange={(e) => this.applyGraderFilter(e)}>
+                      <option value='-1'>Ungraded</option>
+                      <option>All</option>
+                      {this.state.graders.map((grader) =>
+                        <option value={grader.id} key={grader.id}>
+                          {grader.name}
+                        </option>
+                      )}
+                    </select>
+                  </div>
+                </div>
                 <ProgressBar done={problem.n_graded} total={submissions.length} />
 
                 {multiple
@@ -481,19 +496,6 @@ class Grade extends React.Component {
                   </div>
 
                   <div className='level-right'>
-                    <div class='select is-link is-normal' style={{marginRight: '0.5em'}}>
-                      <select onChange={(e) => this.applyGraderFilter(e)}>
-                        <option selected disabled hidden>Filter by Graders</option>
-                        <option>No filter</option>
-                        <option value='-1'>Ungraded</option>
-                        {this.state.graders.map((grader) =>
-                          <option value={grader.id} key={grader.id}>
-                            {grader.name ? grader.name : 'Never logged in'}
-                          </option>
-                        )}
-                      </select>
-                    </div>
-
                     <div className='level-item'>
                       {!this.state.isUnstructured &&
                         <button className={'button is-info is-outlined' + (this.state.showTooltips ? ' tooltip is-tooltip-active' : '')}

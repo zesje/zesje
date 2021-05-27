@@ -45,7 +45,7 @@ class Grade extends React.Component {
       ]).then(values => {
         const submission = values[0]
         const problem = values[1]
-        const graders = values[2].filter(grader => grader.oauth_id !== 'admin@admin')
+        const graders = values[2]
         console.log(graders)
         this.setState({
           submission: submission,

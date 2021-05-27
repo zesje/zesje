@@ -57,6 +57,39 @@ def has_all_required_feedback(sol, required_feedback, excluded_feedback):
     return (required_feedback <= feedback_ids) and (not excluded_feedback & feedback_ids)
 
 
+def find_number_of_matches(problem, ungraded, required_feedback, excluded_feedback, graded_by):
+    """
+    Finds the number of solutions that match all the filtering criteria.
+
+    Parameters
+    ----------
+    problem : Problem
+        current problem.
+    ungraded: bool
+        value whether the solution should be ungraded or you do not care.
+    required_feedback : List[int]
+        the feedback_id's which the matched submissions should have.
+    excluded_feedback : List[int]
+        the feedback_id's which the macthed submissions should not have.
+    graded_by : int
+        the id of the grader that should have graded the matched submissions, optional.
+    
+    Returns
+    --------
+    The number of submissions that match all the filtering criteria.
+    """
+    return len(
+        sol for sol in problem.solutions
+        if (
+            has_all_required_feedback(sol, required_feedback, excluded_feedback) and
+            (
+                (ungraded and sol.graded_by is None) or
+                not ungraded and (graded_by is None or (sol.graded_by is not None and sol.graded_by.id == graded_by))
+            )
+        )
+    )
+
+
 def _find_submission(old_submission, problem, shuffle_seed, direction, ungraded,
                      required_feedback, excluded_feedback, graded_by):
     """

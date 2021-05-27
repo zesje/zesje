@@ -50,7 +50,7 @@ class Grade extends React.Component {
           submission: submission,
           problem: problem,
           graders: graders,
-          graded_by: -1,
+          graded_by: '-1',
           ...partialState
         }, () => this.props.history.replace(this.getURL(submissionID, problemID)))
       // eslint-disable-next-line handle-callback-err
@@ -367,9 +367,8 @@ class Grade extends React.Component {
     return Math.abs(hash)
   }
 
-  applyGraderFilter = (e) => {
-    e.stopPropagation()
-    this.setState({graded_by: e.target.value})
+  applyGraderFilter = (graderid) => {
+    this.setState({graded_by: graderid})
   }
 
   applyFilter = (e, id, newFilterMode) => {
@@ -455,7 +454,7 @@ class Grade extends React.Component {
                   />
 
                   <div className='select is-link is-normal' style={{marginLeft: '0.5em'}}>
-                    <select onChange={(e) => this.applyGraderFilter(e)}>
+                    <select onChange={(e) => this.applyGraderFilter(e.target.value)}>
                       <option value='-1' key='-1'>Ungraded</option>
                       <option value='0' key='0'>All</option>
                       {this.state.graders.map((grader) =>
@@ -484,7 +483,7 @@ class Grade extends React.Component {
                   <div className='level-left'>
 
                     <div className='level-item'>
-                      {solution.graded_by ? <div>Graded by: {solution.graded_by.oauth_id} <i>({gradedTime.toLocaleString()})</i></div>
+                      {solution.graded_by ? <div>Graded by: {(solution.graded_by.name ? solution.graded_by.name + ' - ' : '') + solution.graded_by.oauth_id} <i>({gradedTime.toLocaleString()})</i></div>
                         : <div>Ungraded</div>
                       }
                     </div>

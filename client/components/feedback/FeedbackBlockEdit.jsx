@@ -177,9 +177,7 @@ class EditPanel extends React.Component {
             <div className={'buttons is-marginless'}>
               <SaveButton onClick={this.saveFeedback} exists={this.props.feedback}
                 disabled={!this.state.name || (!this.state.score && this.state.score !== 0) || isNaN(parseInt(this.state.score))} />
-              {(this.props.showCancel) &&
-                <CancelButton onClick={this.props.goBack} />
-              }
+              <CancelButton onClick={this.props.goBack} />
             </div>
             <DeleteButton onClick={() => { this.setState({deleting: true}) }} exists={this.props.feedback} />
           </div>

@@ -46,12 +46,11 @@ class Grade extends React.Component {
         const submission = values[0]
         const problem = values[1]
         const graders = values[2]
-        console.log(graders)
         this.setState({
           submission: submission,
           problem: problem,
           graders: graders,
-          graded_by: '-1',
+          graded_by: -1,
           ...partialState
         }, () => this.props.history.replace(this.getURL(submissionID, problemID)))
       // eslint-disable-next-line handle-callback-err
@@ -381,7 +380,6 @@ class Grade extends React.Component {
         [id]: this.state.feedbackFilters[id] === newFilterMode ? 'no_filter' : newFilterMode
       }
     })
-    console.log(this.state.feedbackFilters)
   }
 
   render () {
@@ -440,7 +438,6 @@ class Grade extends React.Component {
                     toggleApprove={this.toggleApprove}
                     feedbackFilters={this.state.feedbackFilters}
                     applyFilter={this.applyFilter}
-                    applyGraderFilter={this.applyGraderFilter}
                     updateFeedback={this.updateFromUrl} />
                 </nav>
               </div>
@@ -459,11 +456,11 @@ class Grade extends React.Component {
 
                   <div className='select is-link is-normal' style={{marginLeft: '0.5em'}}>
                     <select onChange={(e) => this.applyGraderFilter(e)}>
-                      <option value='-1'>Ungraded</option>
-                      <option>All</option>
+                      <option value='-1' key='-1'>Ungraded</option>
+                      <option value='0' key='0'>All</option>
                       {this.state.graders.map((grader) =>
                         <option value={grader.id} key={grader.id}>
-                          {grader.name}
+                          {grader.oauth_id}
                         </option>
                       )}
                     </select>
@@ -487,7 +484,7 @@ class Grade extends React.Component {
                   <div className='level-left'>
 
                     <div className='level-item'>
-                      {solution.graded_by ? <div>Graded by: {solution.graded_by.name} <i>({gradedTime.toLocaleString()})</i></div>
+                      {solution.graded_by ? <div>Graded by: {solution.graded_by.oauth_id} <i>({gradedTime.toLocaleString()})</i></div>
                         : <div>Ungraded</div>
                       }
                     </div>

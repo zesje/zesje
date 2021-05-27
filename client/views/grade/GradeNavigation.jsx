@@ -16,11 +16,11 @@ class GradeNavigation extends React.Component {
           <div className='field has-addons is-mobile'>
             <div className='control'>
               <button type='submit'
-                className={'button is-link is-rounded' +
+                className={'button is-link is-rounded fa fa-angle-left' +
                       (this.props.showTooltips ? ' tooltip is-tooltip-active' : '')}
-                style={{width: '6em'}}
+                style={{width: '4em'}}
                 data-tooltip='←'
-                onClick={this.props.prev}>Previous</button>
+                onClick={this.props.prev} />
             </div>
             <div id='search' className={'control is-wider ' + (this.props.showTooltips ? 'tooltip is-tooltip-active tooltip-no-arrow' : '')}
               data-tooltip='Press ctrl to hide shortcuts'>
@@ -68,11 +68,11 @@ class GradeNavigation extends React.Component {
             </div>
             <div className='control'>
               <button type='submit'
-                className={'button is-link is-rounded' +
+                className={'button is-link is-rounded fa fa-angle-right' +
                     (this.props.showTooltips ? ' tooltip is-tooltip-active' : '')}
-                style={{width: '6em'}}
+                style={{width: '4em'}}
                 data-tooltip='→'
-                onClick={this.props.next}>Next</button>
+                onClick={this.props.next} />
             </div>
           </div>
         </div>

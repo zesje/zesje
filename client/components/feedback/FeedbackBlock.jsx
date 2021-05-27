@@ -40,7 +40,7 @@ class FeedbackBlock extends React.Component {
   }
 
   toggle = () => {
-    if (!this.state.hover['edit'] && this.props.showIcons) {
+    if (!this.state.hover['edit']) {
       this.props.toggleOption(this.props.feedback.id)
     }
   }
@@ -68,7 +68,6 @@ class FeedbackBlock extends React.Component {
         </span>
         <button
           className={'button is-pulled-right is-small is-light' +
-          (this.props.showIcons ? '' : ' is-hidden') +
           (this.state.hover['block'] ? '' : ' is-invisible') +
           (this.state.hover['edit'] ? ' is-link' : '')}
           onMouseEnter={() => this.enter('edit')} onMouseLeave={() => this.leave('edit')}
@@ -76,7 +75,13 @@ class FeedbackBlock extends React.Component {
         >
           <i className='fa fa-pencil' />
         </button>
-        {this.props.grading &&
+        <div
+          className={`popover is-popover-right button is-pulled-right is-small is-light
+          ${(this.props.filterMode !== 'no_filter' ? 'is-inverted' : (this.state.hover['block'] ? '' : 'is-invisible'))}
+          ${this.filterColors[this.props.filterMode]}`}
+          onMouseEnter={() => this.enter('filter')} onMouseLeave={() => this.leave('filter')}
+        >
+          <i className={`fa ${this.filterIcons[this.props.filterMode]}`} />
           <div
             className={`popover is-popover-right button is-pulled-right is-small is-light
             ${(this.props.filterMode !== 'no_filter' ? 'is-inverted' : (this.state.hover['block'] ? '' : 'is-invisible'))}
@@ -101,12 +106,6 @@ class FeedbackBlock extends React.Component {
             </div>
           </div>
         </div>
-        <span
-          className={'tag ' +
-          (this.props.showIcons ? ' is-hidden' : '')}
-        >
-          <i className='fa fa-plus' />
-        </span>
       </a>
     )
   }

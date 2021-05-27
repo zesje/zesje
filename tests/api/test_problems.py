@@ -1,8 +1,8 @@
 import pytest
 from datetime import datetime
-
-from zesje.database import db, Exam, ExamLayout, Problem, FeedbackOption,\
-                           ProblemWidget, Student, Submission, Solution, Grader
+from flask import json
+from zesje.database import db, Exam, ExamLayout, Problem, FeedbackOption, \
+    ProblemWidget, Student, Submission, Solution, Grader
 
 
 @pytest.fixture
@@ -107,3 +107,23 @@ def test_delete_problem_graded(test_client, add_test_data, exam_id, problem_id):
 
     assert result.status_code == 403
     assert Problem.query.get(problem_id) is not None
+
+
+def test_new_problem_has_root_fo(test_client, add_test_data):
+    req_body = {
+        'exam_id': 2,
+        'x': 0,
+        'y': 0,
+        'width': 400,
+        'height': 200,
+        'page': 1,
+        'name': 'Problem'
+    }
+    result = test_client.post('/api/problems', data=req_body)
+
+    data = json.loads(result.data)
+    assert result.status_code == 200
+    id = data['id']
+    result = test_client.get(f'/api/problems/{id}')
+    data = json.loads(result.data)
+    assert len(data['feedback']) == 1

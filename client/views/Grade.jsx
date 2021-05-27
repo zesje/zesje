@@ -301,7 +301,7 @@ class Grade extends React.Component {
       graderID: this.props.graderID
     }).then(result => {
       this.updateSubmission()
-      this.updateProgressBar(result.state)
+      this.updateProgressBar()
     })
   }
 
@@ -327,17 +327,24 @@ class Grade extends React.Component {
        })
      }).then(result => {
        this.updateSubmission()
-       this.updateProgressBar(result.state)
+       this.updateProgressBar()
      })
    }
 
-   updateProgressBar = (graded) => this.setState(prevState => ({
-     problem: update(prevState.problem, {
-       n_graded: {
-         $set: prevState.problem.n_graded + (graded ? 1 : -1)
-       }
-     })
-   }))
+  updateProgressBar = async () => {
+    const submissionID = this.props.submissionID
+    const subData = await api.get(
+      `submissions/${this.props.examID}/${submissionID}?` +
+      `problem_id=${this.state.problem.id}`
+    )
+    this.setState(prevState => ({
+      problem: update(prevState.problem, {
+        n_graded: {
+          $set: subData.n_graded
+        }
+      })
+    }))
+  }
 
   /**
    * Toggles full page view.

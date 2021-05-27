@@ -212,15 +212,19 @@ class Submissions(Resource):
         
         matched = len(exam.submissions)
 
+        problem = None
+        n_graded = None
+        if args.problem_id:
+            if (problem := Problem.query.get(args.problem_id)) is None:
+                return dict(status=404, message='Problem does not exist.'), 404
+            n_graded = len([sol for sol in problem.solutions if sol.graded_by is not None])
+
         if args.direction:
             if any(arg is None for arg in (args.problem_id, args.shuffle_seed, args.ungraded)):
                 return dict(
                     status=400,
                     message='One of problem_id, grader_id, ungraded, direction not provided'
                 )
-
-            if (problem := Problem.query.get(args.problem_id)) is None:
-                return dict(status=404, message='Problem does not exist.'), 404
 
             sub = _find_submission(
                 sub, problem, args.shuffle_seed, args.direction, args.ungraded,
@@ -232,4 +236,5 @@ class Submissions(Resource):
                 args.excluded_feedback or [], args.graded_by)
 
         return {'filter_matches': matched,
+                'n_graded': n_graded,
                 'submission': sub_to_data(sub)}

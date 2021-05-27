@@ -15,7 +15,6 @@ import * as api from '../api.jsx'
 import 'bulma-tooltip/dist/css/bulma-tooltip.min.css'
 import './grade/Grade.css'
 import '../components/SubmissionNavigation.css'
-import template from 'babel-template'
 
 class Grade extends React.Component {
   /**

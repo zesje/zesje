@@ -11,6 +11,8 @@ All the available shortcuts are listed below, grouped by page.
 | `shift` + `1 - 9, 0` | Toggle option 11-20    |
 | `shift` + `↑`        | Previous problem       |
 | `shift` + `↓`        | Next problem           |
+| `shift` + `←`        | First submission       |
+| `shift` + `→`        | Last submission        |
 | `←`                  | Previous submission    |
 | `→`                  | Next submission        |
 | `a`                  | Approve/Set aside feedback |

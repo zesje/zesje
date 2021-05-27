@@ -119,7 +119,7 @@ def _find_submission(old_submission, problem, shuffle_seed, direction, ungraded,
     """
     Finds a submission based on the parameters of the function.
     Finds all solutions for the problem, and shuffles them based on the shuffle_seed.
-    Then finds the first (ungraded) submission, either in 'next' or 'prev' direction.
+    Then finds the first (ungraded) submission, either in 'next' or 'prev' direction or 'first' or 'last'.
     If no such submission exists, returns the old submission.
 
     Parameters
@@ -131,7 +131,7 @@ def _find_submission(old_submission, problem, shuffle_seed, direction, ungraded,
     shuffle_seed : int
         the seed to shuffle the submissions on.
     direction : string
-        either 'next' or 'prev'
+        either 'next', 'prev', 'first' or 'last'
     ungraded : bool
         value indicating whether the found submission should be ungraded.
     required_feedback : List[int]
@@ -149,9 +149,15 @@ def _find_submission(old_submission, problem, shuffle_seed, direction, ungraded,
         return md5(b'%i %i' % (sub.id, shuffle_seed)).digest()
 
     old_key = key(old_submission)
-    next_, follows = (min, operators.gt) if direction == 'next' else (max, operators.lt)
+    next_, follows = {
+      'next': (min, operators.gt),
+      'prev': (max, operators.lt),
+      'first': (min, operators.lt),
+      'last': (max, operators.gt)
+    }[direction]
     required_feedback = set(required_feedback)
     excluded_feedback = set(excluded_feedback)
+    is_neighbour = direction == 'next' or direction == 'prev'
     submission_to_return = next_(
       (
         sol.submission for sol in problem.solutions
@@ -172,7 +178,7 @@ class Submissions(Resource):
     get_parser.add_argument('problem_id', type=int, required=False)
     get_parser.add_argument('shuffle_seed', type=int, required=False)
     get_parser.add_argument('ungraded', type=boolean, required=False)
-    get_parser.add_argument('direction', type=str, required=False, choices=["next", "prev"])
+    get_parser.add_argument('direction', type=str, required=False, choices=["next", "prev", "first", "last"])
     get_parser.add_argument('required_feedback', type=int, required=False, action='append')
     get_parser.add_argument('excluded_feedback', type=int, required=False, action='append')
     get_parser.add_argument('graded_by', type=int, required=False)

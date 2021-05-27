@@ -16,7 +16,13 @@ class GradeNavigation extends React.Component {
           <div className='field has-addons is-mobile'>
             <div className='control'>
               <button type='submit'
-                className={'button is-link is-rounded fa fa-angle-left' +
+                className={'button is-info is-rounded fa fa-angle-double-left' +
+                      (this.props.showTooltips ? ' tooltip is-tooltip-active' : '')}
+                style={{width: '4em'}}
+                data-tooltip='shift + ←'
+                onClick={this.props.first} />
+              <button type='submit'
+                className={'button is-link fa fa-angle-left' +
                       (this.props.showTooltips ? ' tooltip is-tooltip-active' : '')}
                 style={{width: '4em'}}
                 data-tooltip='←'
@@ -68,11 +74,17 @@ class GradeNavigation extends React.Component {
             </div>
             <div className='control'>
               <button type='submit'
-                className={'button is-link is-rounded fa fa-angle-right' +
+                className={'button is-link fa fa-angle-right' +
                     (this.props.showTooltips ? ' tooltip is-tooltip-active' : '')}
                 style={{width: '4em'}}
                 data-tooltip='→'
                 onClick={this.props.next} />
+              <button type='submit'
+                className={'button is-info is-rounded fa fa-angle-double-right' +
+                    (this.props.showTooltips ? ' tooltip is-tooltip-active' : '')}
+                style={{width: '4em'}}
+                data-tooltip='shift + →'
+                onClick={this.props.last} />
             </div>
           </div>
         </div>

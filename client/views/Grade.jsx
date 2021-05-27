@@ -109,9 +109,17 @@ class Grade extends React.Component {
     // If we change the keybindings here we should also remember to
     // update the tooltips for the associated widgets (in render()).
     // Also add the shortcut to ./client/components/help/ShortcutsHelp.md
-    this.props.bindShortcut(['left', 'h'], this.prev)
-    this.props.bindShortcut(['right', 'l'], this.next)
+    this.props.bindShortcut(['shift+left', 'shift+h'], this.first)
+    this.props.bindShortcut(['shift+right', 'shift+l'], this.last)
     this.props.bindShortcut(['a'], this.toggleApprove)
+    this.props.bindShortcut(['left', 'h'], (event) => {
+      event.preventDefault()
+      this.prev()
+    })
+    this.props.bindShortcut(['right', 'l'], (event) => {
+      event.preventDefault()
+      this.next()
+    })
     this.props.bindShortcut(['shift+up', 'shift+k'], (event) => {
       event.preventDefault()
       this.prevProblem()
@@ -160,10 +168,9 @@ class Grade extends React.Component {
    * It then pushes the URL of the updated submission to history.
    * Also updates the metadata, and the current problem, to make sure that the
    * progress bar and feedback options are both up to date.
-   * @param direction either 'prev' or 'next'
-   * @param ungraded either 'true' or 'false'
+   * @param direction either 'prev', 'next', 'first' or 'last'
    */
-  navigate =async (direction, ungraded) => {
+  navigate = async (direction) => {
     const fb = (await api.get(`feedback/${this.props.problemID}`)).map(fb => fb.id)
 
     this.setState({
@@ -190,10 +197,16 @@ class Grade extends React.Component {
    * Sugar methods for navigate.
    */
   prev = () => {
-    this.navigate('prev', 'false')
+    this.navigate('prev')
   }
   next = () => {
-    this.navigate('next', 'false')
+    this.navigate('next')
+  }
+  first = () => {
+    this.navigate('first')
+  }
+  last = () => {
+    this.navigate('last')
   }
 
   /**
@@ -462,8 +475,10 @@ class Grade extends React.Component {
                     submission={submission}
                     submissions={submissions}
                     setSubmission={this.navigateSubmission}
-                    prev={this.prev}
-                    next={this.next}
+										first={this.first}
+										prev={this.prev}
+										next={this.next}
+										last={this.last}
                     anonymous={gradeAnonymous}
                     showTooltips={this.state.showTooltips}
                   />

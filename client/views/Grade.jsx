@@ -186,7 +186,7 @@ class Grade extends React.Component {
       '?problem_id=' + this.state.problem.id +
       '&shuffle_seed=' + this.props.graderID +
       '&direction=' + direction +
-      '&ungraded=' + ungraded +
+      '&ungraded=' + (this.state.graded_by < 0 ? 'true' : 'false') +
       Object.entries(this.state.feedbackFilters).filter(entry => entry[1] !== 'no_filter').map(entry => `&${entry[1]}_feedback=${entry[0]}`).join('') +
       (this.state.graded_by > 0 ? '&graded_by=' + this.state.graded_by : '')
     )
@@ -501,7 +501,7 @@ class Grade extends React.Component {
                     <div class='select is-link is-normal' style={{marginRight: '0.5em'}}>
                       <select onChange={(e) => this.applyGraderFilter(e)}>
                         <option selected disabled hidden>Filter by Graders</option>
-                        <option value='0'>No filter</option>
+                        <option>No filter</option>
                         <option value='-1'>Ungraded</option>
                         {this.state.graders.map((grader) =>
                           <option value={grader.id} key={grader.id}>

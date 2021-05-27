@@ -100,7 +100,7 @@ def _find_submission(old_submission, problem, shuffle_seed, direction, ungraded,
         sol.submission for sol in problem.solutions
         if (
           has_all_required_feedback(sol, required_feedback, excluded_feedback) and
-          (graded_by is None or sol.graded_by.id == graded_by)
+          (graded_by is None or (sol.graded_by is not None and sol.graded_by.id == graded_by))
           and follows(key(sol.submission), old_key)
           and (not ungraded or sol.graded_by is None)
         )

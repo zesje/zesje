@@ -40,13 +40,17 @@ class Grade extends React.Component {
       const problemID = this.props.problemID || metadata.problems[0].id
       Promise.all([
         api.get(`submissions/${examID}/${submissionID}`),
-        api.get(`problems/${problemID}`)
+        api.get(`problems/${problemID}`),
+        api.get(`graders`)
       ]).then(values => {
         const submission = values[0]
         const problem = values[1]
+        const graders = values[2]
         this.setState({
           submission: submission.submission,
           problem: problem,
+          graders: graders,
+          graded_by: '-1',
           ...partialState
         }, () => this.props.history.replace(this.getURL(submissionID, problemID)))
       // eslint-disable-next-line handle-callback-err
@@ -105,17 +109,9 @@ class Grade extends React.Component {
     // If we change the keybindings here we should also remember to
     // update the tooltips for the associated widgets (in render()).
     // Also add the shortcut to ./client/components/help/ShortcutsHelp.md
-    this.props.bindShortcut(['shift+left', 'shift+h'], this.prev)
-    this.props.bindShortcut(['shift+right', 'shift+l'], this.next)
+    this.props.bindShortcut(['left', 'h'], this.prev)
+    this.props.bindShortcut(['right', 'l'], this.next)
     this.props.bindShortcut(['a'], this.toggleApprove)
-    this.props.bindShortcut(['left', 'h'], (event) => {
-      event.preventDefault()
-      this.prevUngraded()
-    })
-    this.props.bindShortcut(['right', 'l'], (event) => {
-      event.preventDefault()
-      this.nextUngraded()
-    })
     this.props.bindShortcut(['shift+up', 'shift+k'], (event) => {
       event.preventDefault()
       this.prevProblem()
@@ -182,8 +178,9 @@ class Grade extends React.Component {
       '?problem_id=' + this.state.problem.id +
       '&shuffle_seed=' + this.props.graderID +
       '&direction=' + direction +
-      '&ungraded=' + ungraded +
-      Object.entries(this.state.feedbackFilters).filter(entry => entry[1] !== 'no_filter').map(entry => `&${entry[1]}_feedback=${entry[0]}`).join('')
+      '&ungraded=' + (this.state.graded_by < 0 ? 'true' : 'false') +
+      Object.entries(this.state.feedbackFilters).filter(entry => entry[1] !== 'no_filter').map(entry => `&${entry[1]}_feedback=${entry[0]}`).join('') +
+      (this.state.graded_by > 0 ? '&graded_by=' + this.state.graded_by : '')
     )
     this.setState({
       submission
@@ -197,13 +194,6 @@ class Grade extends React.Component {
   }
   next = () => {
     this.navigate('next', 'false')
-  }
-  prevUngraded = () => {
-    this.navigate('prev', 'true')
-  }
-
-  nextUngraded = () => {
-    this.navigate('next', 'true')
   }
 
   /**
@@ -384,6 +374,10 @@ class Grade extends React.Component {
     return Math.abs(hash)
   }
 
+  applyGraderFilter = (graderid) => {
+    this.setState({graded_by: graderid})
+  }
+
   applyFilter = (e, id, newFilterMode) => {
     e.stopPropagation()
     this.setState({
@@ -463,18 +457,29 @@ class Grade extends React.Component {
               </div>
 
               <div className='column'>
-                <GradeNavigation
-                  submission={submission}
-                  submissions={submissions}
-                  setSubmission={this.navigateSubmission}
-                  prevUngraded={this.prevUngraded}
-                  prev={this.prev}
-                  next={this.next}
-                  nextUngraded={this.nextUngraded}
-                  anonymous={gradeAnonymous}
-                  showTooltips={this.state.showTooltips}
-                />
+                <div style={{display: 'grid', gridTemplateColumns: '1fr max-content'}}>
+                  <GradeNavigation
+                    submission={submission}
+                    submissions={submissions}
+                    setSubmission={this.navigateSubmission}
+                    prev={this.prev}
+                    next={this.next}
+                    anonymous={gradeAnonymous}
+                    showTooltips={this.state.showTooltips}
+                  />
 
+                  <div className='select is-link is-normal' style={{marginLeft: '0.5em'}}>
+                    <select onChange={(e) => this.applyGraderFilter(e.target.value)}>
+                      <option value='-1' key='-1'>Ungraded</option>
+                      <option value='0' key='0'>All</option>
+                      {this.state.graders.map((grader) =>
+                        <option value={grader.id} key={grader.id}>
+                          {grader.oauth_id}
+                        </option>
+                      )}
+                    </select>
+                  </div>
+                </div>
                 <ProgressBar done={problem.n_graded} total={submissions.length} />
 
                 {multiple
@@ -491,13 +496,15 @@ class Grade extends React.Component {
 
                 <div className='level'>
                   <div className='level-left'>
+
                     <div className='level-item'>
-                      {solution.graded_by
-                        ? <div>Graded by: {solution.graded_by.name} <i>({gradedTime.toLocaleString()})</i></div>
+                      {solution.graded_by ? <div>Graded by: {(solution.graded_by.name ? solution.graded_by.name + ' - ' : '') + solution.graded_by.oauth_id} <i>({gradedTime.toLocaleString()})</i></div>
                         : <div>Ungraded</div>
                       }
                     </div>
+
                   </div>
+
                   <div className='level-right'>
                     <div className='level-item'>
                       {!this.state.isUnstructured &&

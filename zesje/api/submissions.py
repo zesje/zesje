@@ -22,7 +22,8 @@ def sub_to_data(sub):
                 'id': sol.problem.id,
                 'graded_by': {
                     'id': sol.graded_by.id,
-                    'name': sol.graded_by.name
+                    'name': sol.graded_by.name,
+                    'oauth_id': sol.graded_by.oauth_id
                 } if sol.graded_by else None,
                 'graded_at': sol.graded_at.isoformat() if sol.graded_at else None,
                 'feedback': [
@@ -209,7 +210,7 @@ class Submissions(Resource):
 
         if sub.exam != exam:
             return dict(status=400, message='Submission does not belong to this exam.'), 400
-        
+
         matched = len(exam.submissions)
 
         problem = None

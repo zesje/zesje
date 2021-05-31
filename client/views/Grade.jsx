@@ -392,7 +392,12 @@ class Grade extends React.Component {
         [id]: this.state.feedbackFilters[id] === newFilterMode ? 'no_filter' : newFilterMode
       }
     })
-    console.log(this.state.feedbackFilters)
+  }
+
+  clearFilters = () => {
+    this.setState({
+      feedbackFilters: {}
+    })
   }
 
   render () {
@@ -451,7 +456,9 @@ class Grade extends React.Component {
                     toggleApprove={this.toggleApprove}
                     feedbackFilters={this.state.feedbackFilters}
                     applyFilter={this.applyFilter}
-                    updateFeedback={this.updateFromUrl} />
+                    updateFeedback={this.updateFromUrl}
+                    clearFilters={this.clearFilters}
+                  />
                 </nav>
               </div>
 

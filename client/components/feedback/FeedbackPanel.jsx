@@ -140,20 +140,33 @@ class FeedbackPanel extends React.Component {
     return (
       <React.Fragment>
         {this.props.grading &&
-          <div className='panel-heading level' style={{marginBottom: 0 + 'px'}}>
-            <div className='level-left'>
+          <div
+            className='panel-heading level'
+            style={{display: 'grid', marginBottom: 0, gap: '0.5em', gridTemplateAreas: '"total set_aside" "nothing clear_filter"'}}
+          >
+            <div style={{gridArea: 'total'}}>
               {this.props.solution.feedback.length !== 0 && <p>Total:&nbsp;<b>{totalScore}</b></p>}
             </div>
-            <div className='level-right'>
-              <div className={this.props.showTooltips ? ' tooltip is-tooltip-active is-tooltip-top' : ''}
-                data-tooltip='approve/set aside feedback: a'>
-                <button title={this.props.solution.feedback.length === 0 ? 'At least one feedback option must be selected' : ''}
-                  className='button is-info'
-                  disabled={this.props.solution.feedback.length === 0}
-                  onClick={this.props.toggleApprove}>
-                  {this.props.solution.graded_by === null ? 'Approve' : 'Set aside'}
-                </button>
-              </div>
+            <div
+              className={this.props.showTooltips ? ' tooltip is-tooltip-active is-tooltip-top' : ''}
+              style={{gridArea: 'set_aside', width: '100%'}}
+              data-tooltip='approve/set aside feedback: a'>
+              <button title={this.props.solution.feedback.length === 0 ? 'At least one feedback option must be selected' : ''}
+                className='button is-info is-fullwidth'
+                disabled={this.props.solution.feedback.length === 0}
+                onClick={this.props.toggleApprove}>
+                {this.props.solution.graded_by === null ? 'Approve' : 'Set aside'}
+              </button>
+            </div>
+            <div
+              style={{gridArea: 'clear_filter', width: '100%'}}>
+              <button
+                className='button is-info is-fullwidth'
+                onClick={this.props.clearFilters}
+                disabled={Object.keys(this.props.feedbackFilters).length === 0}
+              >
+                Clear Filters
+              </button>
             </div>
           </div>
         }

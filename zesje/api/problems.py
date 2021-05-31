@@ -19,7 +19,9 @@ def problem_to_data(problem):
                 'name': fb.text,
                 'description': fb.description,
                 'score': fb.score,
-                'used': len(fb.solutions)
+                'parent': fb.parent_id,
+                'used': len(fb.solutions),
+                'children': [feedback.id for feedback in fb.children]
             }
             for fb
             in problem.feedback_options  # Sorted by fb.id
@@ -131,6 +133,7 @@ class Problems(Resource):
 
         # Commit so problem gets an id
         db.session.commit()
+
         widget.name = f'problem_{problem.id}'
 
         if exam.layout == ExamLayout.templated:

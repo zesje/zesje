@@ -127,3 +127,6 @@ def test_new_problem_has_root_fo(test_client, add_test_data):
     result = test_client.get(f'/api/problems/{id}')
     data = json.loads(result.data)
     assert len(data['feedback']) == 1
+    fb = data['feedback'][0]
+    assert fb['parent'] is None
+    assert len(fb['children']) == 0

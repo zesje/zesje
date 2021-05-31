@@ -180,39 +180,23 @@ class FeedbackPanel extends React.Component {
           ? <FeedbackBlockEdit feedback={null} problemID={this.state.problemID} goBack={this.backToFeedback}
             updateFeedback={this.props.updateFeedback} />
           : <div className='panel-block'>
-            <div class="dropdown is-hoverable is-fullwidth">
-            <div class="dropdown-trigger"></div>
+            <div class='dropdown is-hoverable is-fullwidth'>
+              <div class='dropdown-trigger' />
               <button className='button is-link is-outlined is-fullwidth aria-controls="dropdown-menu3"' onClick={() => this.editFeedback(-1)}>
                 <span className='icon is-small'>
                   <i className='fa fa-plus' />
                 </span>
                 <span>option</span>
               </button>
-              <div class="dropdown-menu" id="dropdown-menu3" role="menu">
-              <div class="dropdown-content is-fullwidth">
-                <a href="#" class="dropdown-item">
-                  Parent 1
-                </a>
-                <a href="#" class="dropdown-item">
-                  Parent 2
-                </a>
-                <a href="#" class="dropdown-item">
-                  Parent 3
-                </a>
-                <a href="#" class="dropdown-item">
-                  Parent 4
-                </a>
-                <a href="#" class="dropdown-item">
-                  Parent 5
-                </a>
-                <a href="#" class="dropdown-item">
-                  Parent 6
-                </a>
-                <a href="#" class="dropdown-item">
-                  Parent 7
-                </a>
+              <div class='dropdown-menu' id='dropdown-menu3' role='menu'>
+                <div class='dropdown-content is-fullwidth'>
+                  {this.props.problem.feedback.map((feedback, index) =>
+                    <a href='#' class='dropdown-item'>
+                      Add as a child of {feedback.name}
+                    </a>
+                  )}
+                </div>
               </div>
-            </div>
             </div>
           </div>
         }

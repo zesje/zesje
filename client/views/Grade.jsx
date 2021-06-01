@@ -100,7 +100,7 @@ class Grade extends React.Component {
           problem: problem,
           matchingResults: submission.filter_matches
         }, () => {
-          this.props.history.replace(this.getURL(submission.id, problem.id))
+          this.props.history.replace(this.getURL(submission.submission.id, problem.id))
         })
       }).catch(err => {
         if (err.status === 404) {

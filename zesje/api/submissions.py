@@ -157,7 +157,6 @@ def _find_submission(old_submission, problem, shuffle_seed, direction, ungraded,
     }[direction]
     required_feedback = set(required_feedback)
     excluded_feedback = set(excluded_feedback)
-    is_neighbour = direction == 'next' or direction == 'prev'
     submission_to_return = next_(
       (
         sol.submission for sol in problem.solutions

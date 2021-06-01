@@ -182,6 +182,7 @@ class Submissions(Resource):
     get_parser.add_argument('required_feedback', type=int, required=False, action='append')
     get_parser.add_argument('excluded_feedback', type=int, required=False, action='append')
     get_parser.add_argument('graded_by', type=int, required=False)
+    get_parser.add_argument('only_metadata', type=boolean, required=False, default=False)
 
     def get(self, exam_id, submission_id=None):
         """get submissions for the given exam
@@ -226,6 +227,10 @@ class Submissions(Resource):
                 return dict(status=404, message='Problem does not exist.'), 404
             n_graded = len([sol for sol in problem.solutions if sol.graded_by is not None])
 
+        matched = find_number_of_matches(
+            problem, args.ungraded, args.required_feedback or [],
+            args.excluded_feedback or [], args.graded_by)
+
         if args.direction:
             if any(arg is None for arg in (args.problem_id, args.shuffle_seed, args.ungraded)):
                 return dict(
@@ -237,10 +242,6 @@ class Submissions(Resource):
                 sub, problem, args.shuffle_seed, args.direction, args.ungraded,
                 args.required_feedback or [], args.excluded_feedback or [], args.graded_by
             )
-
-            matched = find_number_of_matches(
-                problem, args.ungraded, args.required_feedback or [],
-                args.excluded_feedback or [], args.graded_by)
 
         return {'filter_matches': matched,
                 'n_graded': n_graded,

@@ -24,7 +24,7 @@ class Grade extends React.Component {
    */
   constructor (props) {
     super(props)
-    this.state = {feedbackFilters: {}}
+    this.state = {feedbackFilters: {}, gradedBy: '-1'}
     api.get(`exams/${this.props.examID}?only_metadata=true` +
         `&shuffle_seed=${this.props.graderID}`).then(metadata => {
       const partialState = {
@@ -39,7 +39,10 @@ class Grade extends React.Component {
       const submissionID = this.props.submissionID || metadata.submissions[0].id
       const problemID = this.props.problemID || metadata.problems[0].id
       Promise.all([
-        api.get(`submissions/${examID}/${submissionID}`),
+        api.get(`submissions/${examID}/${submissionID}?${[
+          `problem_id=${problemID}`,
+          ...this.getFilterArguments()
+        ].join('&')}`),
         api.get(`problems/${problemID}`),
         api.get(`graders`)
       ]).then(values => {
@@ -50,7 +53,6 @@ class Grade extends React.Component {
           submission: submission.submission,
           problem: problem,
           graders: graders,
-          gradedBy: '-1',
           matchingResults: submission.filter_matches,
           ...partialState
         }, () => this.props.history.replace(this.getURL(submissionID, problemID)))
@@ -83,15 +85,23 @@ class Grade extends React.Component {
       const submissionID = this.props.submissionID || this.state.submissions[0].id
       const problemID = this.props.problemID || this.state.problems[0].id
       Promise.all([
-        api.get(`submissions/${this.props.examID}/${submissionID}`),
+        api.get(`submissions/${this.props.examID}/${submissionID}?${
+          [
+            `problem_id=${problemID}`,
+            ...this.getFilterArguments()
+          ].join('&')
+        }`),
         api.get(`problems/${problemID}`)
       ]).then(values => {
         const submission = values[0]
         const problem = values[1]
         this.setState({
           submission: submission.submission,
-          problem: problem
-        }, () => this.props.history.replace(this.getURL(submission.id, problem.id)))
+          problem: problem,
+          matchingResults: submission.filter_matches
+        }, () => {
+          this.props.history.replace(this.getURL(submission.id, problem.id))
+        })
       }).catch(err => {
         if (err.status === 404) {
           this.setState({
@@ -182,18 +192,20 @@ class Grade extends React.Component {
           (previous, current) => ({...previous, [parseInt(current[0])]: current[1]}), {})
     })
 
-    const {submission, filter_matches: matchingResults} = await api.get(`submissions/${this.props.examID}/${this.state.submission.id}` +
-      '?problem_id=' + this.state.problem.id +
-      '&shuffle_seed=' + this.props.graderID +
-      '&direction=' + direction +
-      '&ungraded=' + (this.state.gradedBy < 0 ? 'true' : 'false') +
-      Object.entries(this.state.feedbackFilters).filter(entry => entry[1] !== 'no_filter').map(entry => `&${entry[1]}_feedback=${entry[0]}`).join('') +
-      (this.state.gradedBy > 0 ? '&graded_by=' + this.state.gradedBy : '')
+    const {submission, filter_matches: matchingResults} = await api.get(
+      `submissions/${this.props.examID}/${this.state.submission.id}?${[
+        `problem_id=${this.state.problem.id}`,
+        `shuffle_seed=${this.props.graderID}`,
+        `direction=${direction}`,
+        ...this.getFilterArguments()
+      ].join('&')}`
     )
     this.setState({
       submission,
       matchingResults
-    }, () => this.props.history.push(this.getURL(this.state.submission.id, this.state.problem.id)))
+    }, () => {
+      this.props.history.push(this.getURL(this.state.submission.id, this.state.problem.id))
+    })
   }
   /**
    * Sugar methods for navigate.
@@ -211,13 +223,30 @@ class Grade extends React.Component {
     this.navigate('last')
   }
 
+  getFilterArguments = () => {
+    const filterArguments = [
+      `ungraded=${(this.state.gradedBy < 0).toString()}`,
+      ...Object.entries(this.state.feedbackFilters)
+        .filter(entry => entry[1] !== 'no_filter')
+        .map(entry => `${entry[1]}_feedback=${entry[0]}`)
+    ]
+    if (this.state.gradedBy > 0) {
+      filterArguments.push(`graded_by=${this.state.gradedBy}`)
+    }
+    return filterArguments
+  }
+
   /**
    * Updates the submission from the server, and sets it as the current submission.
   */
   updateSubmission = () => {
-    api.get(`submissions/${this.props.examID}/${this.state.submission.id}`).then(({submission}) => {
+    api.get(`submissions/${this.props.examID}/${this.state.submission.id}?${[
+      `problem_id=${this.state.problem.id}`,
+      ...this.getFilterArguments()
+    ].join('&')}`).then(({submission, filter_matches: matchingResults}) => {
       this.setState({
-        submission
+        submission,
+        matchingResults
       })
     })
   }
@@ -339,8 +368,10 @@ class Grade extends React.Component {
   updateProgressBar = async () => {
     const submissionID = this.props.submissionID
     const subData = await api.get(
-      `submissions/${this.props.examID}/${submissionID}?` +
-      `problem_id=${this.state.problem.id}`
+      `submissions/${this.props.examID}/${submissionID}?${[
+        `problem_id=${this.state.problem.id}`,
+        ...this.getFilterArguments()
+      ].join('&')}`
     )
     this.setState(prevState => ({
       problem: update(prevState.problem, {
@@ -390,7 +421,9 @@ class Grade extends React.Component {
   }
 
   applyGraderFilter = (graderId) => {
-    this.setState({gradedBy: graderId})
+    this.setState({gradedBy: graderId}, () => {
+      this.updateSubmission()
+    })
   }
 
   applyFilter = (e, id, newFilterMode) => {
@@ -400,14 +433,18 @@ class Grade extends React.Component {
         ...this.state.feedbackFilters,
         [id]: this.state.feedbackFilters[id] === newFilterMode ? 'no_filter' : newFilterMode
       }
+    }, () => {
+      this.updateSubmission()
     })
   }
 
   clearFilters = () => {
-    this.setState({ feedbackFilters: {} })
     const selectFilterBy = document.getElementById('filter_graded_by')
     selectFilterBy.selectedIndex = 0
     this.applyGraderFilter(selectFilterBy.value)
+    this.setState({ feedbackFilters: {} }, () => {
+      this.updateSubmission()
+    })
   }
 
   render () {
@@ -489,6 +526,7 @@ class Grade extends React.Component {
                     <select
                       id='filter_graded_by'
                       style={{width: '100%'}}
+                      value={this.state.gradedBy}
                       onChange={(e) => this.applyGraderFilter(e.target.value)}
                     >
                       <option value='-1' key='-1'>Ungraded</option>

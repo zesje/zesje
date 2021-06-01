@@ -142,7 +142,7 @@ class FeedbackPanel extends React.Component {
         {this.props.grading &&
           <div
             className='panel-heading level'
-            style={{display: 'grid', marginBottom: 0, gap: '0.5em', gridTemplateAreas: '"total set_aside" "nothing clear_filter"'}}
+            style={{display: 'grid', marginBottom: 0, gap: '0.5em', gridTemplateAreas: '"total set_aside"'}}
           >
             <div style={{gridArea: 'total'}}>
               {this.props.solution.feedback.length !== 0 && <p>Total:&nbsp;<b>{totalScore}</b></p>}
@@ -156,16 +156,6 @@ class FeedbackPanel extends React.Component {
                 disabled={this.props.solution.feedback.length === 0}
                 onClick={this.props.toggleApprove}>
                 {this.props.solution.graded_by === null ? 'Approve' : 'Set aside'}
-              </button>
-            </div>
-            <div
-              style={{gridArea: 'clear_filter', width: '100%'}}>
-              <button
-                className='button is-info is-fullwidth'
-                onClick={this.props.clearFilters}
-                disabled={Object.keys(this.props.feedbackFilters).length === 0}
-              >
-                Clear Filters
               </button>
             </div>
           </div>

@@ -50,7 +50,8 @@ class Grade extends React.Component {
           submission: submission.submission,
           problem: problem,
           graders: graders,
-          graded_by: '-1',
+          gradedBy: '-1',
+          matchingResults: submission.filter_matches,
           ...partialState
         }, () => this.props.history.replace(this.getURL(submissionID, problemID)))
       // eslint-disable-next-line handle-callback-err
@@ -181,16 +182,17 @@ class Grade extends React.Component {
           (previous, current) => ({...previous, [parseInt(current[0])]: current[1]}), {})
     })
 
-    const {submission} = await api.get(`submissions/${this.props.examID}/${this.state.submission.id}` +
+    const {submission, filter_matches: matchingResults} = await api.get(`submissions/${this.props.examID}/${this.state.submission.id}` +
       '?problem_id=' + this.state.problem.id +
       '&shuffle_seed=' + this.props.graderID +
       '&direction=' + direction +
-      '&ungraded=' + (this.state.graded_by < 0 ? 'true' : 'false') +
+      '&ungraded=' + (this.state.gradedBy < 0 ? 'true' : 'false') +
       Object.entries(this.state.feedbackFilters).filter(entry => entry[1] !== 'no_filter').map(entry => `&${entry[1]}_feedback=${entry[0]}`).join('') +
-      (this.state.graded_by > 0 ? '&graded_by=' + this.state.graded_by : '')
+      (this.state.gradedBy > 0 ? '&graded_by=' + this.state.gradedBy : '')
     )
     this.setState({
-      submission
+      submission,
+      matchingResults
     }, () => this.props.history.push(this.getURL(this.state.submission.id, this.state.problem.id)))
   }
   /**
@@ -387,8 +389,8 @@ class Grade extends React.Component {
     return Math.abs(hash)
   }
 
-  applyGraderFilter = (graderid) => {
-    this.setState({graded_by: graderid})
+  applyGraderFilter = (graderId) => {
+    this.setState({gradedBy: graderId})
   }
 
   applyFilter = (e, id, newFilterMode) => {
@@ -402,9 +404,10 @@ class Grade extends React.Component {
   }
 
   clearFilters = () => {
-    this.setState({
-      feedbackFilters: {}
-    })
+    this.setState({ feedbackFilters: {} })
+    const selectFilterBy = document.getElementById('filter_graded_by')
+    selectFilterBy.selectedIndex = 0
+    this.applyGraderFilter(selectFilterBy.value)
   }
 
   render () {
@@ -464,27 +467,30 @@ class Grade extends React.Component {
                     feedbackFilters={this.state.feedbackFilters}
                     applyFilter={this.applyFilter}
                     updateFeedback={this.updateFromUrl}
-                    clearFilters={this.clearFilters}
                   />
                 </nav>
               </div>
 
               <div className='column'>
-                <div style={{display: 'grid', gridTemplateColumns: '1fr max-content'}}>
+                <div style={{display: 'grid', gridTemplateColumns: '5fr 1.8fr 2fr', gap: '1em'}}>
                   <GradeNavigation
                     submission={submission}
                     submissions={submissions}
                     setSubmission={this.navigateSubmission}
-										first={this.first}
-										prev={this.prev}
-										next={this.next}
-										last={this.last}
+                    first={this.first}
+                    prev={this.prev}
+                    next={this.next}
+                    last={this.last}
                     anonymous={gradeAnonymous}
                     showTooltips={this.state.showTooltips}
                   />
 
-                  <div className='select is-link is-normal' style={{marginLeft: '0.5em'}}>
-                    <select onChange={(e) => this.applyGraderFilter(e.target.value)}>
+                  <div className='select is-link is-normal'>
+                    <select
+                      id='filter_graded_by'
+                      style={{width: '100%'}}
+                      onChange={(e) => this.applyGraderFilter(e.target.value)}
+                    >
                       <option value='-1' key='-1'>Ungraded</option>
                       <option value='0' key='0'>All</option>
                       {this.state.graders.map((grader) =>
@@ -493,6 +499,36 @@ class Grade extends React.Component {
                         </option>
                       )}
                     </select>
+                  </div>
+
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: '1fr max-content',
+                    gap: '0.5em',
+                    justifyItems: 'end',
+                    height: 'max-content',
+                    alignItems: 'center'
+                  }}>
+                    {this.state.matchingResults} matching solutions
+                    <button
+                      className='button is-danger'
+                      style={{width: 'max-content'}}
+                      onClick={this.clearFilters}
+                      // disabled={Object.keys(this.props.feedbackFilters).length === 0 || false}
+                    >
+                      <span className='icon is-medium'>
+                        <i
+                          className='fa fa-lg fa-filter'
+                          style={{transform: 'translateX(-17%)'}}
+                        />
+                        <span
+                          className='icon is-small'
+                          style={{position: 'absolute', right: '12%', bottom: 0}}
+                        >
+                          <i className='fa fa-times' />
+                        </span>
+                      </span>
+                    </button>
                   </div>
                 </div>
                 <ProgressBar done={problem.n_graded} total={submissions.length} />

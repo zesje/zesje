@@ -26,7 +26,6 @@ def update_mc_option(mc_option, args, feedback_id=None):
 
 
 class MultipleChoice(Resource):
-
     put_parser = reqparse.RequestParser()
 
     # Arguments that can be supplied in the request body
@@ -54,11 +53,12 @@ class MultipleChoice(Resource):
 
         if problem.exam.finalized:
             return dict(status=405, message='Cannot create multiple choice option and corresponding feedback option'
-                        + ' in a finalized exam.'), 405
+                                            + ' in a finalized exam.'), 405
 
+        root = next(fb for fb in problem.feedback_options if fb.parent is None)
         # Insert new empty feedback option that links to the same problem
         new_feedback_option = FeedbackOption(problem_id=problem_id, text=label,
-                                             description='', score=0)
+                                             description='', score=0, parent_id=root.id)
         db.session.add(new_feedback_option)
         db.session.commit()
 
@@ -72,7 +72,7 @@ class MultipleChoice(Resource):
 
         return dict(status=200, mult_choice_id=mc_entry.id, feedback_id=new_feedback_option.id,
                     message=f'New multiple choice question with id {mc_entry.id} inserted. '
-                    + f'New feedback option with id {new_feedback_option.id} inserted.'), 200
+                            + f'New feedback option with id {new_feedback_option.id} inserted.'), 200
 
     def get(self, id):
         """Fetches multiple choice option from the database
@@ -164,4 +164,4 @@ class MultipleChoice(Resource):
 
         return dict(status=200, mult_choice_id=id, feedback_id=mult_choice.feedback_id,
                     message=f'Multiple choice question with id {id} deleted.'
-                    + f'Feedback option with id {mult_choice.feedback_id} deleted.'), 200
+                            + f'Feedback option with id {mult_choice.feedback_id} deleted.'), 200

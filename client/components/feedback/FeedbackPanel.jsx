@@ -134,7 +134,9 @@ class FeedbackPanel extends React.Component {
         if (probIndex >= 0) totalScore += this.props.problem.feedback[probIndex].score
       }
     }
-
+    let fbs = this.props.problem.feedback.filter(fb => fb.parent === null)
+    console.log(fbs)
+    // const fbs = this.props.root.children // All top level fb options (children of the root fb)
     let selectedFeedbackId = this.state.selectedFeedbackIndex !== null &&
       this.props.problem.feedback[this.state.selectedFeedbackIndex].id
     return (
@@ -157,8 +159,8 @@ class FeedbackPanel extends React.Component {
             </div>
           </div>
         }
-        <aside class='menu'>
-          <ul class='menu-list'>
+        <aside className='menu'>
+          <ul className='menu-list'>
             {this.props.problem.feedback.map((feedback, index) => (
               feedback.id !== this.state.feedbackToEditId
                 ? <FeedbackBlock key={feedback.id} uri={blockURI} graderID={this.props.graderID}

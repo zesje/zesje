@@ -239,16 +239,21 @@ class Grade extends React.Component {
   /**
    * Updates the submission from the server, and sets it as the current submission.
   */
-  updateSubmission = () => {
-    api.get(`submissions/${this.props.examID}/${this.state.submission.id}?${[
+  updateSubmission = async () => {
+    const data = await api.get(`submissions/${this.props.examID}/${this.state.submission.id}?${[
       `problem_id=${this.state.problem.id}`,
       ...this.getFilterArguments()
-    ].join('&')}`).then(({submission, filter_matches: matchingResults}) => {
-      this.setState({
-        submission,
-        matchingResults
+    ].join('&')}`)
+
+    this.setState(prevState => ({
+      submission: data.submission,
+      matchingResults: data.filter_matches,
+      problem: update(prevState.problem, {
+        n_graded: {
+          $set: data.n_graded
+        }
       })
-    })
+    }))
   }
 
   /**
@@ -335,7 +340,6 @@ class Grade extends React.Component {
       graderID: this.props.graderID
     }).then(result => {
       this.updateSubmission()
-      this.updateProgressBar()
     })
   }
 
@@ -361,26 +365,8 @@ class Grade extends React.Component {
        })
      }).then(result => {
        this.updateSubmission()
-       this.updateProgressBar()
      })
    }
-
-  updateProgressBar = async () => {
-    const submissionID = this.props.submissionID
-    const subData = await api.get(
-      `submissions/${this.props.examID}/${submissionID}?${[
-        `problem_id=${this.state.problem.id}`,
-        ...this.getFilterArguments()
-      ].join('&')}`
-    )
-    this.setState(prevState => ({
-      problem: update(prevState.problem, {
-        n_graded: {
-          $set: subData.n_graded
-        }
-      })
-    }))
-  }
 
   /**
    * Toggles full page view.

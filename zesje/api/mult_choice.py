@@ -43,7 +43,6 @@ class MultipleChoice(Resource):
         feedback option also refers to same problem as the MultipleChoiceOption
         """
         args = self.put_parser.parse_args()
-
         # Get request arguments
         label = args['label']
         problem_id = args['problem_id']
@@ -55,7 +54,12 @@ class MultipleChoice(Resource):
             return dict(status=405, message='Cannot create multiple choice option and corresponding feedback option'
                                             + ' in a finalized exam.'), 405
 
-        root = next(fb for fb in problem.feedback_options if fb.parent is None)
+        root = None
+        if len(problem.feedback_options) == 0:
+            root = FeedbackOption(problem_id=problem_id, text='root')
+            db.session.add(root)
+        else:
+            root = next(fb for fb in problem.feedback_options if fb.parent is None)
         # Insert new empty feedback option that links to the same problem
         new_feedback_option = FeedbackOption(problem_id=problem_id, text=label,
                                              description='', score=0, parent_id=root.id)

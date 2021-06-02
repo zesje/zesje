@@ -562,7 +562,7 @@ class Grade extends React.Component {
                     height: 'max-content',
                     alignItems: 'center'
                   }}>
-                    {this.state.matchingResults} matching solutions
+                    {this.state.matchingResults} {this.state.hasFilters ? 'matching ' : ''}{this.state.matchingResults === 1 ? 'solution' : 'solutions'}
                     <button
                       className='button is-danger'
                       style={{width: 'max-content'}}

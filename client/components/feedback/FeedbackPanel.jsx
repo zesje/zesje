@@ -133,6 +133,27 @@ class FeedbackPanel extends React.Component {
     }
   }
 
+  makeTreeStructure = (feedback) => {
+    for (var i = 0; i < feedback.children.length; i++) {
+      let id = feedback.children[i]
+      let child = this.props.problem.feedback.find(fb => fb.id === id)
+      feedback.children[i] = child
+      this.makeTreeStructure(child)
+    }
+  }
+
+  makeNewTreeStructure = (feedback) => {
+    let children = []
+    for (var i = 0; i < feedback.children.length; i++) {
+      let id = feedback.children[i]
+      let child = this.props.problem.feedback.find(fb => fb.id === id)
+      children.push(this.makeNewTreeStructure(child))
+    }
+    return {
+      ...feedback, children
+    }
+  }
+
   render () {
     const blockURI = this.props.examID + '/' + this.props.submissionID + '/' + this.props.problem.id
     let totalScore = 0
@@ -147,10 +168,10 @@ class FeedbackPanel extends React.Component {
     if (root === null) {
       console.log('For some reason there is no root') // TODO
     }
-    let fbs = this.sort(root, 0, []) // gets all feedbackoptions in correct structure
+    // let fbs = this.sort(root, 0, []) // gets all feedbackoptions in correct structure
+    let fbs = this.makeNewTreeStructure(root)
     console.log(fbs)
-    let selectedFeedbackId = this.state.selectedFeedbackIndex !== null &&
-      this.props.problem.feedback[this.state.selectedFeedbackIndex].id
+    console.log(this.props.problem.feedback)
     return (
       <React.Fragment>
         {this.props.grading &&
@@ -173,25 +194,25 @@ class FeedbackPanel extends React.Component {
         }
         <aside className='menu'>
           <ul className='menu-list'>
-            {this.props.problem.feedback.map((feedback, index) => this.getFeedbackElement(feedback, blockURI, selectedFeedbackId, index))}
+            {this.getFeedbackElement(fbs, 0, this)}
           </ul>
         </aside>
         {(this.state.feedbackToEditId === -1)
           ? <FeedbackBlockEdit feedback={null} problemID={this.state.problemID} goBack={this.backToFeedback}
             updateFeedback={this.props.updateFeedback} parentID={this.state.parentID} />
           : <div className='panel-block'>
-            <div class='dropdown is-hoverable is-fullwidth'>
-              <div class='dropdown-trigger' />
+            <div className='dropdown is-hoverable is-fullwidth'>
+              <div className='dropdown-trigger' />
               <button className='button is-link is-outlined is-fullwidth aria-controls="dropdown-menu3"' onClick={() => this.editFeedback(-1)}>
                 <span className='icon is-small'>
                   <i className='fa fa-plus' />
                 </span>
                 <span>option</span>
               </button>
-              <div class='dropdown-menu' id='dropdown-menu3' role='menu'>
-                <div class='dropdown-content is-fullwidth'>
+              <div className='dropdown-menu' id='dropdown-menu3' role='menu'>
+                <div className='dropdown-content is-fullwidth'>
                   {this.props.problem.feedback.map((feedback, index) =>
-                    <a class='dropdown-item' onClick={() => this.addParent(-1, feedback.id)}>
+                    <a key={index} className='dropdown-item' onClick={() => this.addParent(-1, feedback.id)}>
                       Add option under: {feedback.name}
                     </a>
                   )}
@@ -208,24 +229,28 @@ class FeedbackPanel extends React.Component {
       </React.Fragment>
     )
   }
-
-  getFeedbackElement (feedback, blockURI, selectedFeedbackId, index) {
-    return feedback.id !== this.state.feedbackToEditId
-      ? <FeedbackBlock key={feedback.id} uri={blockURI} graderID={this.props.graderID}
+  getFeedbackElement (feedback, index, feedbackPanel) {
+    const selectedFeedbackId = feedbackPanel.state.selectedFeedbackIndex !== null &&
+      feedbackPanel.props.problem.feedback[feedbackPanel.state.selectedFeedbackIndex].id
+    const blockURI = feedbackPanel.props.examID + '/' + feedbackPanel.props.submissionID + '/' + feedbackPanel.props.problem.id
+    return feedback.id !== feedbackPanel.state.feedbackToEditId
+      ? <FeedbackBlock key={feedback.id} uri={blockURI} graderID={feedbackPanel.props.graderID}
         feedback={feedback}
-        checked={this.props.grading && this.props.solution.feedback.includes(feedback.id)}
-        editFeedback={() => this.editFeedback(feedback.id)} toggleOption={this.props.toggleOption}
-        ref={(selectedFeedbackId === feedback.id) ? this.feedbackBlock : null}
-        grading={this.props.grading}
-        submissionID={this.props.submissionID}
+        checked={feedbackPanel.props.grading && feedbackPanel.props.solution.feedback.includes(feedback.id)}
+        editFeedback={() => this.editFeedback(feedback.id)} toggleOption={feedbackPanel.props.toggleOption}
+        ref={(selectedFeedbackId === feedback.id) ? feedbackPanel.feedbackBlock : null}
+        grading={feedbackPanel.props.grading}
+        submissionID={feedbackPanel.props.submissionID}
         selected={selectedFeedbackId === feedback.id || feedback.highlight}
-        showIndex={this.props.showTooltips}
+        showIndex={feedbackPanel.props.showTooltips}
         index={index + 1}
-        filterMode={this.props.feedbackFilters[feedback.id] || 'no_filter'}
-        applyFilter={(e, newFilterMode) => this.props.applyFilter(e, feedback.id, newFilterMode)}
+        filterMode={feedbackPanel.props.feedbackFilters[feedback.id] || 'no_filter'}
+        applyFilter={(e, newFilterMode) => feedbackPanel.props.applyFilter(e, feedback.id, newFilterMode)}
+        children={feedback.children}
+        feedbackPanel={feedbackPanel}
       />
-      : <FeedbackBlockEdit key={feedback.id} feedback={feedback} problemID={this.state.problemID}
-        goBack={this.backToFeedback} updateFeedback={this.props.updateFeedback} />
+      : <FeedbackBlockEdit key={feedback.id} feedback={feedback} problemID={feedbackPanel.state.problemID}
+        goBack={feedbackPanel.backToFeedback} updateFeedback={feedbackPanel.props.updateFeedback} />
   }
 
   sort (feedback, depth, treeStructure) {

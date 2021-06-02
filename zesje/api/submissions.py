@@ -181,7 +181,6 @@ class Submissions(Resource):
     get_parser.add_argument('required_feedback', type=int, required=False, action='append')
     get_parser.add_argument('excluded_feedback', type=int, required=False, action='append')
     get_parser.add_argument('graded_by', type=int, required=False)
-    get_parser.add_argument('only_metadata', type=boolean, required=False, default=False)
 
     def get(self, exam_id, submission_id=None):
         """get submissions for the given exam

@@ -162,7 +162,7 @@ def _find_submission(old_submission, problem, shuffle_seed, direction, ungraded,
         sol.submission for sol in problem.solutions
         if (all_filters(sol, required_feedback, excluded_feedback, graded_by, ungraded)
             and follows(key(sol.submission), old_key)
-        )
+            )
       ),
       key=key,
       default=old_submission

@@ -110,8 +110,8 @@ def find_number_of_matches(problem, ungraded, required_feedback, excluded_feedba
         [
             sol for sol in problem.solutions
             if (all_filters(sol, set(required_feedback), set(excluded_feedback), graded_by, ungraded))
-            ]
-        )
+        ]
+    )
 
 
 def _find_submission(old_submission, problem, shuffle_seed, direction, ungraded,
@@ -162,7 +162,7 @@ def _find_submission(old_submission, problem, shuffle_seed, direction, ungraded,
         sol.submission for sol in problem.solutions
         if (all_filters(sol, required_feedback, excluded_feedback, graded_by, ungraded)
             and follows(key(sol.submission), old_key)
-            )
+        )
       ),
       key=key,
       default=old_submission
@@ -175,8 +175,8 @@ class Submissions(Resource):
 
     get_parser = reqparse.RequestParser()
     get_parser.add_argument('problem_id', type=int, required=False)
-    get_parser.add_argument('shuffle_seed', type=int, required=False)
-    get_parser.add_argument('ungraded', type=boolean, required=False)
+    get_parser.add_argument('shuffle_seed', type=int, required=False, default=0)
+    get_parser.add_argument('ungraded', type=boolean, required=False, default=False)
     get_parser.add_argument('direction', type=str, required=False, choices=["next", "prev", "first", "last"])
     get_parser.add_argument('required_feedback', type=int, required=False, action='append')
     get_parser.add_argument('excluded_feedback', type=int, required=False, action='append')
@@ -216,8 +216,6 @@ class Submissions(Resource):
         if sub.exam != exam:
             return dict(status=400, message='Submission does not belong to this exam.'), 400
 
-        matched = len(exam.submissions)
-
         problem = None
         n_graded = None
         if args.problem_id:
@@ -225,17 +223,13 @@ class Submissions(Resource):
                 return dict(status=404, message='Problem does not exist.'), 404
             n_graded = len([sol for sol in problem.solutions if sol.graded_by is not None])
 
-        matched = find_number_of_matches(
-            problem, args.ungraded, args.required_feedback or [],
-            args.excluded_feedback or [], args.graded_by)
+        matched = len(exam.submissions)
+        if problem is not None:
+            matched = find_number_of_matches(
+                problem, args.ungraded, args.required_feedback or [],
+                args.excluded_feedback or [], args.graded_by)
 
         if args.direction:
-            if any(arg is None for arg in (args.problem_id, args.shuffle_seed, args.ungraded)):
-                return dict(
-                    status=400,
-                    message='One of problem_id, grader_id, ungraded, direction not provided'
-                )
-
             sub = _find_submission(
                 sub, problem, args.shuffle_seed, args.direction, args.ungraded,
                 args.required_feedback or [], args.excluded_feedback or [], args.graded_by

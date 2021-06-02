@@ -536,22 +536,26 @@ class Grade extends React.Component {
                     anonymous={gradeAnonymous}
                     showTooltips={this.state.showTooltips}
                   />
-
-                  <div className='select is-link is-normal'>
-                    <select
-                      id='filter_graded_by'
-                      style={{width: '100%'}}
-                      value={this.state.gradedBy}
-                      onChange={(e) => this.applyGraderFilter(parseInt(e.target.value))}
-                    >
-                      <option value='-1' key='-1'>Ungraded</option>
-                      <option value='0' key='0'>All</option>
-                      {this.state.graders.map((grader) =>
-                        <option value={grader.id} key={grader.id}>
-                          {grader.oauth_id}
-                        </option>
-                      )}
-                    </select>
+                  <div class='control has-icons-left'>
+                    <div className='select is-link is-normal'>
+                      <select
+                        id='filter_graded_by'
+                        style={{width: '100%'}}
+                        value={this.state.gradedBy}
+                        onChange={(e) => this.applyGraderFilter(parseInt(e.target.value))}
+                      >
+                        <option value='-1' key='-1'>Ungraded</option>
+                        <option value='0' key='0'>All</option>
+                        {this.state.graders.map((grader) =>
+                          <option value={grader.id} key={grader.id}>
+                            {grader.oauth_id}
+                          </option>
+                        )}
+                      </select>
+                    </div>
+                    <div class='icon is-small is-left'>
+                      <i class='fa fa-filter' />
+                    </div>
                   </div>
 
                   <div style={{

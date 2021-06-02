@@ -1,7 +1,6 @@
 import React from 'react'
 
 import Tooltip from '../Tooltip.jsx'
-import FeedbackPanel from './FeedbackPanel.jsx'
 
 class FeedbackBlock extends React.Component {
   state = {

@@ -155,7 +155,6 @@ class FeedbackPanel extends React.Component {
   }
 
   render () {
-    const blockURI = this.props.examID + '/' + this.props.submissionID + '/' + this.props.problem.id
     let totalScore = 0
     if (this.props.grading) {
       for (let i = 0; i < this.props.solution.feedback.length; i++) {

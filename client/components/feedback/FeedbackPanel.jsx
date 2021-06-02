@@ -143,16 +143,28 @@ class FeedbackPanel extends React.Component {
   }
 
   makeNewTreeStructure = (feedback) => {
-    let children = []
-    for (var i = 0; i < feedback.children.length; i++) {
-      let id = feedback.children[i]
-      let child = this.props.problem.feedback.find(fb => fb.id === id)
-      children.push(this.makeNewTreeStructure(child))
+    const createTree = (feedback) => {
+      let children = []
+      for (var i = 0; i < feedback.children.length; i++) {
+        let id = feedback.children[i]
+        let child = this.props.problem.feedback.find(fb => fb.id === id)
+        children.push(createTree(child))
+      }
+      return {
+        ...feedback, children
+      }
     }
-    return {
-      ...feedback, children
+    const treeStructure = createTree(feedback)
+    let index = 0
+    const stack = [treeStructure]
+    while (stack.length > 0) {
+      const current = stack.shift()
+      current.index = index++
+      stack.unshift(...current.children)
     }
+    return treeStructure
   }
+
 
   render () {
     let totalScore = 0
@@ -258,7 +270,7 @@ class FeedbackPanel extends React.Component {
       'depth': depth
     }
 
-    treeStructure.push(fbdepth)
+    treeStructure.unshift(fbdepth)
 
     for (var id of feedback.children) { // TODO
       const child = this.props.problem.feedback.filter(fb => fb.id === id)[0]

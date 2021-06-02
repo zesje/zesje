@@ -193,8 +193,8 @@ class FeedbackPanel extends React.Component {
               <div class='dropdown-menu' id='dropdown-menu3' role='menu'>
                 <div class='dropdown-content is-fullwidth'>
                   {this.props.problem.feedback.map((feedback, index) =>
-                    <a href='#' class='dropdown-item'>
-                      Add as a child of {feedback.name}
+                    <a class='dropdown-item' onClick={() => this.editFeedback(-1)}>
+                      Add option under: {feedback.name}
                     </a>
                   )}
                 </div>

@@ -20,7 +20,8 @@ class FeedbackPanel extends React.Component {
     // Have to keep submissionID and problemID in state,
     // to be able to decide when to derive remark from properties.
     submissionID: null,
-    problemID: null
+    problemID: null,
+    parentID: null
   }
 
   /**
@@ -38,7 +39,15 @@ class FeedbackPanel extends React.Component {
    */
   backToFeedback = () => {
     this.setState({
-      feedbackToEditId: 0
+      feedbackToEditId: 0,
+      parentID: null
+    })
+  }
+
+  addParent = (feedbackId, parentId) => {
+    this.editFeedback(feedbackId)
+    this.setState({
+      parentID: parentId
     })
   }
 
@@ -126,7 +135,6 @@ class FeedbackPanel extends React.Component {
 
   render () {
     const blockURI = this.props.examID + '/' + this.props.submissionID + '/' + this.props.problem.id
-
     let totalScore = 0
     if (this.props.grading) {
       for (let i = 0; i < this.props.solution.feedback.length; i++) {
@@ -174,13 +182,13 @@ class FeedbackPanel extends React.Component {
                   applyFilter={(e, newFilterMode) => this.props.applyFilter(e, feedback.id, newFilterMode)}
                 />
                 : <FeedbackBlockEdit key={feedback.id} feedback={feedback} problemID={this.state.problemID}
-                  goBack={this.backToFeedback} updateFeedback={this.props.updateFeedback} />
+                  goBack={this.backToFeedback} updateFeedback={this.props.updateFeedback} parentID={this.state.parentID} />
             ))}
           </ul>
         </aside>
         {(this.state.feedbackToEditId === -1)
           ? <FeedbackBlockEdit feedback={null} problemID={this.state.problemID} goBack={this.backToFeedback}
-            updateFeedback={this.props.updateFeedback} />
+            updateFeedback={this.props.updateFeedback} parentID={this.state.parentID} />
           : <div className='panel-block'>
             <div class='dropdown is-hoverable is-fullwidth'>
               <div class='dropdown-trigger' />
@@ -193,7 +201,7 @@ class FeedbackPanel extends React.Component {
               <div class='dropdown-menu' id='dropdown-menu3' role='menu'>
                 <div class='dropdown-content is-fullwidth'>
                   {this.props.problem.feedback.map((feedback, index) =>
-                    <a class='dropdown-item' onClick={() => this.editFeedback(-1)}>
+                    <a class='dropdown-item' onClick={() => this.addParent(-1, feedback.id)}>
                       Add option under: {feedback.name}
                     </a>
                   )}

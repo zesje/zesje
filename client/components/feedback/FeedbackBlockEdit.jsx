@@ -50,6 +50,7 @@ class EditPanel extends React.Component {
         name: fb.name,
         description: fb.description === null ? '' : fb.description,
         score: fb.score,
+        parent: fb.parent,
         updateCallback: updateCallback
       }
     }
@@ -82,7 +83,8 @@ class EditPanel extends React.Component {
     const fb = {
       name: this.state.name,
       description: this.state.description,
-      score: this.state.score
+      score: this.state.score,
+      parent: this.props.parentID
     }
 
     if (this.state.id) {

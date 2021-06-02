@@ -46,7 +46,7 @@ class FeedbackBlock extends React.Component {
   }
 
   render () {
-    const children = this.props.children.map((child, index) => this.props.feedbackPanel.getFeedbackElement(child, this.props.index + index, this.props.feedbackPanel))
+    const children = this.props.children.map((child, index) => this.props.feedbackPanel.getFeedbackElement(child, child.index, this.props.feedbackPanel))
 
     const shortcut = (this.props.index < 11 ? '' : 'shift + ') + this.props.index % 10
     return (

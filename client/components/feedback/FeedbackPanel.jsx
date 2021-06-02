@@ -142,9 +142,13 @@ class FeedbackPanel extends React.Component {
         if (probIndex >= 0) totalScore += this.props.problem.feedback[probIndex].score
       }
     }
-    let fbs = this.props.problem.feedback.filter(fb => fb.parent === null)
+    const root = this.props.problem.feedback.filter(fb => fb.parent === null)[0]
+    console.log(root)
+    if (root === null) {
+      console.log('For some reason there is no root') // TODO
+    }
+    let fbs = this.sort(root, 0, []) // gets all feedbackoptions in correct structure
     console.log(fbs)
-    // const fbs = this.props.root.children // All top level fb options (children of the root fb)
     let selectedFeedbackId = this.state.selectedFeedbackIndex !== null &&
       this.props.problem.feedback[this.state.selectedFeedbackIndex].id
     return (
@@ -169,21 +173,7 @@ class FeedbackPanel extends React.Component {
         }
         <aside className='menu'>
           <ul className='menu-list'>
-            {this.props.problem.feedback.map((feedback, index) => (
-              feedback.id !== this.state.feedbackToEditId
-                ? <FeedbackBlock key={feedback.id} uri={blockURI} graderID={this.props.graderID}
-                  feedback={feedback} checked={this.props.grading && this.props.solution.feedback.includes(feedback.id)}
-                  editFeedback={() => this.editFeedback(feedback.id)} toggleOption={this.props.toggleOption}
-                  ref={(selectedFeedbackId === feedback.id) ? this.feedbackBlock : null} grading={this.props.grading}
-                  submissionID={this.props.submissionID} selected={selectedFeedbackId === feedback.id || feedback.highlight}
-                  showIndex={this.props.showTooltips}
-                  index={index + 1}
-                  filterMode={this.props.feedbackFilters[feedback.id] || 'no_filter'}
-                  applyFilter={(e, newFilterMode) => this.props.applyFilter(e, feedback.id, newFilterMode)}
-                />
-                : <FeedbackBlockEdit key={feedback.id} feedback={feedback} problemID={this.state.problemID}
-                  goBack={this.backToFeedback} updateFeedback={this.props.updateFeedback} parentID={this.state.parentID} />
-            ))}
+            {this.props.problem.feedback.map((feedback, index) => this.getFeedbackElement(feedback, blockURI, selectedFeedbackId, index))}
           </ul>
         </aside>
         {(this.state.feedbackToEditId === -1)
@@ -217,6 +207,40 @@ class FeedbackPanel extends React.Component {
         }
       </React.Fragment>
     )
+  }
+
+  getFeedbackElement (feedback, blockURI, selectedFeedbackId, index) {
+    return feedback.id !== this.state.feedbackToEditId
+      ? <FeedbackBlock key={feedback.id} uri={blockURI} graderID={this.props.graderID}
+        feedback={feedback}
+        checked={this.props.grading && this.props.solution.feedback.includes(feedback.id)}
+        editFeedback={() => this.editFeedback(feedback.id)} toggleOption={this.props.toggleOption}
+        ref={(selectedFeedbackId === feedback.id) ? this.feedbackBlock : null}
+        grading={this.props.grading}
+        submissionID={this.props.submissionID}
+        selected={selectedFeedbackId === feedback.id || feedback.highlight}
+        showIndex={this.props.showTooltips}
+        index={index + 1}
+        filterMode={this.props.feedbackFilters[feedback.id] || 'no_filter'}
+        applyFilter={(e, newFilterMode) => this.props.applyFilter(e, feedback.id, newFilterMode)}
+      />
+      : <FeedbackBlockEdit key={feedback.id} feedback={feedback} problemID={this.state.problemID}
+        goBack={this.backToFeedback} updateFeedback={this.props.updateFeedback} />
+  }
+
+  sort (feedback, depth, treeStructure) {
+    let fbdepth = {
+      'feedback': feedback,
+      'depth': depth
+    }
+
+    treeStructure.push(fbdepth)
+
+    for (var id of feedback.children) { // TODO
+      const child = this.props.problem.feedback.filter(fb => fb.id === id)[0]
+      this.sort(child, depth + 1, treeStructure)
+    }
+    return treeStructure
   }
 }
 export default withShortcuts(FeedbackPanel)

@@ -6,6 +6,21 @@ class GradeNavigation extends React.Component {
     this.props.setSubmission(submission.id)
   }
 
+  createNavButton = (style, faIcon, onClick, tooltip) => {
+    return (
+      <button type='submit'
+        className={`button ${style} fa ${faIcon}`}
+        style={{width: '4em'}}
+        onClick={onClick}>
+        <div
+          style={{position: 'absolute', width: '100%', height: '100%', top: 0, left: 0}}
+          className={this.props.showTooltips ? ' tooltip is-tooltip-active' : ''}
+          data-tooltip={tooltip}
+        />
+      </button>
+    )
+  }
+
   render () {
     const submission = this.props.submission
     const submissions = this.props.submissions
@@ -15,18 +30,18 @@ class GradeNavigation extends React.Component {
         <div className='level-item make-wider'>
           <div className='field has-addons is-mobile'>
             <div className='control'>
-              <button type='submit'
-                className={'button is-info is-rounded fa fa-angle-double-left' +
-                      (this.props.showTooltips ? ' tooltip is-tooltip-active' : '')}
-                style={{width: '4em'}}
-                data-tooltip='shift + ←'
-                onClick={this.props.first} />
-              <button type='submit'
-                className={'button is-link fa fa-angle-left' +
-                      (this.props.showTooltips ? ' tooltip is-tooltip-active' : '')}
-                style={{width: '4em'}}
-                data-tooltip='←'
-                onClick={this.props.prev} />
+              {this.createNavButton(
+                'is-info is-rounded',
+                'fa-angle-double-left',
+                this.props.first,
+                'shift + ←'
+              )}
+              {this.createNavButton(
+                'is-link',
+                'fa-angle-left',
+                this.props.prev,
+                '←'
+              )}
             </div>
             <div id='search' className={'control is-wider ' + (this.props.showTooltips ? 'tooltip is-tooltip-active tooltip-no-arrow' : '')}
               data-tooltip='Press ctrl to hide shortcuts'>
@@ -73,18 +88,18 @@ class GradeNavigation extends React.Component {
               />
             </div>
             <div className='control'>
-              <button type='submit'
-                className={'button is-link fa fa-angle-right' +
-                    (this.props.showTooltips ? ' tooltip is-tooltip-active' : '')}
-                style={{width: '4em'}}
-                data-tooltip='→'
-                onClick={this.props.next} />
-              <button type='submit'
-                className={'button is-info is-rounded fa fa-angle-double-right' +
-                    (this.props.showTooltips ? ' tooltip is-tooltip-active' : '')}
-                style={{width: '4em'}}
-                data-tooltip='shift + →'
-                onClick={this.props.last} />
+              {this.createNavButton(
+                'is-link',
+                'fa-angle-right',
+                this.props.next,
+                '→'
+              )}
+              {this.createNavButton(
+                'is-info is-rounded',
+                'fa-angle-double-right',
+                this.props.last,
+                'shift + →'
+              )}
             </div>
           </div>
         </div>

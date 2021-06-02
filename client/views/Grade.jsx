@@ -24,9 +24,19 @@ class Grade extends React.Component {
    */
   constructor (props) {
     super(props)
-    this.state = {feedbackFilters: {}, gradedBy: '-1'}
-    api.get(`exams/${this.props.examID}?only_metadata=true` +
-        `&shuffle_seed=${this.props.graderID}`).then(metadata => {
+    this.state = {}
+  }
+
+  setStateAsync = (state) => new Promise((resolve, reject) => {
+    this.setState(state, resolve)
+  })
+
+  init = async () => {
+    await this.setStateAsync({feedbackFilters: {}, gradedBy: -1})
+    await this.setStateAsync({hasFilters: this.hasFilters()})
+
+    try {
+      const metadata = await api.get(`exams/${this.props.examID}?only_metadata=true&shuffle_seed=${this.props.graderID}`)
       const partialState = {
         submissions: metadata.submissions,
         problems: metadata.problems,
@@ -38,38 +48,38 @@ class Grade extends React.Component {
       const examID = metadata.exam_id
       const submissionID = this.props.submissionID || metadata.submissions[0].id
       const problemID = this.props.problemID || metadata.problems[0].id
-      Promise.all([
-        api.get(`submissions/${examID}/${submissionID}?${[
-          `problem_id=${problemID}`,
-          ...this.getFilterArguments()
-        ].join('&')}`),
-        api.get(`problems/${problemID}`),
-        api.get(`graders`)
-      ]).then(values => {
+      try {
+        const values = await Promise.all([
+          api.get(`submissions/${examID}/${submissionID}?${[
+            `problem_id=${problemID}`,
+            ...this.getFilterArguments()
+          ].join('&')}`),
+          api.get(`problems/${problemID}`),
+          api.get(`graders`)
+        ])
+
         const submission = values[0]
         const problem = values[1]
         const graders = values[2]
-        this.setState({
+        await this.setStateAsync({
           submission: submission.submission,
           problem: problem,
           graders: graders,
           matchingResults: submission.filter_matches,
           ...partialState
         }, () => this.props.history.replace(this.getURL(submissionID, problemID)))
-      // eslint-disable-next-line handle-callback-err
-      }).catch(err => {
-        this.setState({
+      } catch (err) {
+        await this.setStateAsync({
           submission: null,
           problem: null,
           ...partialState
         })
-      })
-    // eslint-disable-next-line handle-callback-err
-    }).catch(err => {
-      this.setState({
+      }
+    } catch (err) {
+      await this.setStateAsync({
         submission: null
       })
-    })
+    }
   }
 
   /**
@@ -116,7 +126,8 @@ class Grade extends React.Component {
   /**
    * React lifecycle method. Binds all shortcuts.
    */
-  componentDidMount = () => {
+  componentDidMount = async () => {
+    await this.init()
     // If we change the keybindings here we should also remember to
     // update the tooltips for the associated widgets (in render()).
     // Also add the shortcut to ./client/components/help/ShortcutsHelp.md
@@ -182,7 +193,7 @@ class Grade extends React.Component {
    * @param direction either 'prev', 'next', 'first' or 'last'
    */
   navigate = async (direction) => {
-    const fb = (await api.get(`feedback/${this.props.problemID}`)).map(fb => fb.id)
+    const fb = (await api.get(`feedback/${this.state.problem.id}`)).map(fb => fb.id)
 
     this.setState({
       feedbackFilters: Object.entries(this.state.feedbackFilters).filter(
@@ -225,12 +236,12 @@ class Grade extends React.Component {
 
   getFilterArguments = () => {
     const filterArguments = [
-      `ungraded=${(this.state.gradedBy < 0).toString()}`,
+      `ungraded=${(this.state.gradedBy === -1).toString()}`,
       ...Object.entries(this.state.feedbackFilters)
         .filter(entry => entry[1] !== 'no_filter')
         .map(entry => `${entry[1]}_feedback=${entry[0]}`)
     ]
-    if (this.state.gradedBy > 0) {
+    if (this.state.gradedBy >= 1) {
       filterArguments.push(`graded_by=${this.state.gradedBy}`)
     }
     return filterArguments
@@ -252,8 +263,13 @@ class Grade extends React.Component {
         n_graded: {
           $set: data.n_graded
         }
-      })
+      }),
+      hasFilters: this.hasFilters()
     }))
+  }
+
+  hasFilters = () => {
+    return Object.keys(this.state.feedbackFilters).length > 0 || this.state.gradedBy !== -1
   }
 
   /**
@@ -307,7 +323,7 @@ class Grade extends React.Component {
    * @param problemID - the id of the problem that we want to navigate to
    */
   navigateProblem = (problemID) => {
-    this.props.history.push(this.getURL(this.props.submissionID, problemID))
+    this.props.history.push(this.getURL(this.state.submission.id, problemID))
   }
 
   /**
@@ -414,10 +430,23 @@ class Grade extends React.Component {
 
   applyFilter = (e, id, newFilterMode) => {
     e.stopPropagation()
-    this.setState({
-      feedbackFilters: {
-        ...this.state.feedbackFilters,
-        [id]: this.state.feedbackFilters[id] === newFilterMode ? 'no_filter' : newFilterMode
+    this.setState(oldState => {
+      newFilterMode = oldState.feedbackFilters[id] === newFilterMode ? 'no_filter' : newFilterMode
+      if (newFilterMode === 'no_filter') {
+        const clone = {
+          feedbackFilters: {
+            ...oldState.feedbackFilters
+          }
+        }
+        delete clone.feedbackFilters[id]
+        return clone
+      } else {
+        return {
+          feedbackFilters: {
+            ...oldState.feedbackFilters,
+            [id]: newFilterMode
+          }
+        }
       }
     }, () => {
       this.updateSubmission()
@@ -427,7 +456,7 @@ class Grade extends React.Component {
   clearFilters = () => {
     const selectFilterBy = document.getElementById('filter_graded_by')
     selectFilterBy.selectedIndex = 0
-    this.applyGraderFilter(selectFilterBy.value)
+    this.applyGraderFilter(parseInt(selectFilterBy.value))
     this.setState({ feedbackFilters: {} }, () => {
       this.updateSubmission()
     })
@@ -513,7 +542,7 @@ class Grade extends React.Component {
                       id='filter_graded_by'
                       style={{width: '100%'}}
                       value={this.state.gradedBy}
-                      onChange={(e) => this.applyGraderFilter(e.target.value)}
+                      onChange={(e) => this.applyGraderFilter(parseInt(e.target.value))}
                     >
                       <option value='-1' key='-1'>Ungraded</option>
                       <option value='0' key='0'>All</option>
@@ -538,7 +567,7 @@ class Grade extends React.Component {
                       className='button is-danger'
                       style={{width: 'max-content'}}
                       onClick={this.clearFilters}
-                      // disabled={Object.keys(this.props.feedbackFilters).length === 0 || false}
+                      disabled={!this.state.hasFilters}
                     >
                       <span className='icon is-medium'>
                         <i

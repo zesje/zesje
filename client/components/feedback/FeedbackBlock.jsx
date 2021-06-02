@@ -1,6 +1,7 @@
 import React from 'react'
 
 import Tooltip from '../Tooltip.jsx'
+import FeedbackPanel from './FeedbackPanel.jsx'
 
 class FeedbackBlock extends React.Component {
   state = {
@@ -46,6 +47,8 @@ class FeedbackBlock extends React.Component {
   }
 
   render () {
+    const children = this.props.children.map((child, index) => this.props.feedbackPanel.getFeedbackElement(child, this.props.index + index, this.props.feedbackPanel))
+
     const shortcut = (this.props.index < 11 ? '' : 'shift + ') + this.props.index % 10
     return (
       <li>
@@ -99,6 +102,7 @@ class FeedbackBlock extends React.Component {
             </div>
           </div>
         </a>
+        {children.length > 0 ? <ul className='menu-list'> {children} </ul> : null}
       </li>
     )
   }

@@ -106,13 +106,10 @@ def find_number_of_matches(problem, ungraded, required_feedback, excluded_feedba
     --------
     The number of submissions that match all the filtering criteria.
     """
-    return len(
-        [
-            sol for sol in problem.solutions
-            if (all_filters(sol, set(required_feedback), set(excluded_feedback), graded_by, ungraded))
-        ]
+    return sum(
+        all_filters(sol, set(required_feedback), set(excluded_feedback), graded_by, ungraded)
+        for sol in problem.solutions
     )
-
 
 def _find_submission(old_submission, problem, shuffle_seed, direction, ungraded,
                      required_feedback, excluded_feedback, graded_by):

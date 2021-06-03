@@ -111,6 +111,7 @@ def find_number_of_matches(problem, ungraded, required_feedback, excluded_feedba
         for sol in problem.solutions
     )
 
+
 def _find_submission(old_submission, problem, shuffle_seed, direction, ungraded,
                      required_feedback, excluded_feedback, graded_by):
     """

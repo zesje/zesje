@@ -7,42 +7,54 @@ from flask_restful import Resource, reqparse, current_app
 from .widgets import widget_to_data, normalise_pages
 from ..database import db, Exam, Problem, ProblemWidget, Solution, GradingPolicy, ExamLayout, FeedbackOption
 from zesje.pdf_reader import guess_problem_title, get_problem_page
+from zesje.api.feedback import feedback_to_data
+
+
+def get_root(problem):
+    root = [feedback for feedback in problem.feedback_options if feedback.parent_id is None]
+    if len(root) == 0:
+        return None
+    else:
+        return root[0]
 
 
 def problem_to_data(problem):
     return {
         'id': problem.id,
         'name': problem.name,
-        'feedback': [
-            {
-                'id': fb.id,
-                'name': fb.text,
-                'description': fb.description,
-                'score': fb.score,
-                'parent': fb.parent_id,
-                'used': len(fb.solutions),
-                'children': [feedback.id for feedback in fb.children]
-            }
-            for fb
-            in problem.feedback_options  # Sorted by fb.id
-        ],
+        'feedback':
+            [
+                {
+                    'id': fb.id,
+                    'name': fb.text,
+                    'description': fb.description,
+                    'score': fb.score,
+                    'parent': fb.parent_id,
+                    'used': len(fb.solutions),
+                    'children': [feedback.id for feedback in fb.children]
+                }
+                for fb
+                in problem.feedback_options  # Sorted by fb.id
+            ],
+        'root': feedback_to_data(get_root(problem)),
         'page': problem.widget.page,
         'widget': widget_to_data(problem.widget),
         'n_graded': len([sol for sol in problem.solutions if sol.graded_by is not None]),
         'grading_policy': problem.grading_policy.name,
-        'mc_options': [
-            {
-                'id': mc_option.id,
-                'label': mc_option.label,
-                'feedback_id': mc_option.feedback_id,
-                'widget': {
-                    'name': mc_option.name,
-                    'x': mc_option.x,
-                    'y': mc_option.y,
-                    'type': mc_option.type
-                }
-            } for mc_option in problem.mc_options
-        ]
+        'mc_options':
+            [
+                {
+                    'id': mc_option.id,
+                    'label': mc_option.label,
+                    'feedback_id': mc_option.feedback_id,
+                    'widget': {
+                        'name': mc_option.name,
+                        'x': mc_option.x,
+                        'y': mc_option.y,
+                        'type': mc_option.type
+                    }
+                } for mc_option in problem.mc_options
+            ]
     }
 
 

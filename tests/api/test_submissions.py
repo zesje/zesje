@@ -162,6 +162,6 @@ def test_submission_from_different_exam(test_client, add_test_data, add_test_sub
 def test_get_submission(test_client, add_test_data, add_test_submissions):
     res = test_client.get('/api/submissions/42/25?problem_id=20&shuffle_seed=1&direction=next')
     data = res.get_json()
-    assert data['filter_matches'] == 3
-    assert data['n_graded'] == 3
-    assert data['submission']['id'] == 27
+    assert data['meta']['filter_matches'] == 3
+    assert data['meta']['n_graded'] == 3
+    assert data['id'] == 27

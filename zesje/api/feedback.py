@@ -5,6 +5,18 @@ from flask_restful import Resource, reqparse
 from ..database import db, Problem, FeedbackOption, Solution
 
 
+def feedback_to_data(feedback):
+    return {
+        'id': feedback.id,
+        'name': feedback.text,
+        'description': feedback.description,
+        'score': feedback.score,
+        'parent': feedback.parent_id,
+        'used': len(feedback.solutions),
+        'children': [feedback_to_data(child) for child in feedback.children]
+    }
+
+
 class Feedback(Resource):
     """ List of feedback options of a problem """
 
@@ -28,18 +40,9 @@ class Feedback(Resource):
         if (problem := Problem.query.get(problem_id)) is None:
             return dict(status=404, message=f"Problem with id #{problem_id} does not exist"), 404
 
-        return [
-            {
-                'id': fb.id,
-                'name': fb.text,
-                'description': fb.description,
-                'score': fb.score,
-                'parent': fb.parent_id,
-                'used': len(fb.solutions),
-                'children': [feedback.id for feedback in fb.children]
-            }
-            for fb in FeedbackOption.query.filter(FeedbackOption.problem == problem)
-        ]
+        fbs = FeedbackOption.query.filter(FeedbackOption.problem == problem)
+        root = [feedback for feedback in fbs if feedback.parent_id is None][0]
+        return feedback_to_data(root)
 
     post_parser = reqparse.RequestParser()
     post_parser.add_argument('name', type=str, required=True)

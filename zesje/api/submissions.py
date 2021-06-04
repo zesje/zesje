@@ -6,9 +6,10 @@ from flask_restful.inputs import boolean
 from ..database import Exam, Submission, Problem
 
 
-def sub_to_data(sub):
+def sub_to_data(sub, meta=None):
     """Transform a submission into a data structure frontend expects."""
     return {
+        'meta': meta,
         'id': sub.id,
         'student': {
             'id': sub.student.id,
@@ -233,6 +234,9 @@ class Submissions(Resource):
                 args.required_feedback or [], args.excluded_feedback or [], args.graded_by
             )
 
-        return {'filter_matches': matched,
-                'n_graded': n_graded,
-                'submission': sub_to_data(sub)}
+        meta = {
+            'filter_matches': matched,
+            'n_graded': n_graded
+        }
+
+        return sub_to_data(sub, meta)

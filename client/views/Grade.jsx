@@ -62,10 +62,10 @@ class Grade extends React.Component {
         const problem = values[1]
         const graders = values[2]
         await this.setStateAsync({
-          submission: submission.submission,
+          submission: submission,
           problem: problem,
           graders: graders,
-          matchingResults: submission.filter_matches,
+          matchingResults: submission.meta.filter_matches,
           ...partialState
         }, () => this.props.history.replace(this.getURL(submissionID, problemID)))
       } catch (err) {
@@ -106,11 +106,11 @@ class Grade extends React.Component {
         const submission = values[0]
         const problem = values[1]
         this.setState({
-          submission: submission.submission,
+          submission: submission,
           problem: problem,
-          matchingResults: submission.filter_matches
+          matchingResults: submission.meta.filter_matches
         }, () => {
-          this.props.history.replace(this.getURL(submission.submission.id, problem.id))
+          this.props.history.replace(this.getURL(submission.id, problem.id))
         })
       }).catch(err => {
         if (err.status === 404) {
@@ -203,7 +203,7 @@ class Grade extends React.Component {
           (previous, current) => ({...previous, [parseInt(current[0])]: current[1]}), {})
     })
 
-    const {submission, filter_matches: matchingResults} = await api.get(
+    const submission = await api.get(
       `submissions/${this.props.examID}/${this.state.submission.id}?${[
         `problem_id=${this.state.problem.id}`,
         `shuffle_seed=${this.props.graderID}`,
@@ -213,7 +213,7 @@ class Grade extends React.Component {
     )
     this.setState({
       submission,
-      matchingResults
+      matchingResults: submission.meta.filter_matches
     }, () => {
       this.props.history.push(this.getURL(this.state.submission.id, this.state.problem.id))
     })
@@ -251,17 +251,17 @@ class Grade extends React.Component {
    * Updates the submission from the server, and sets it as the current submission.
   */
   updateSubmission = async () => {
-    const data = await api.get(`submissions/${this.props.examID}/${this.state.submission.id}?${[
+    const submission = await api.get(`submissions/${this.props.examID}/${this.state.submission.id}?${[
       `problem_id=${this.state.problem.id}`,
       ...this.getFilterArguments()
     ].join('&')}`)
 
     this.setState(prevState => ({
-      submission: data.submission,
-      matchingResults: data.filter_matches,
+      submission,
+      matchingResults: submission.meta.filter_matches,
       problem: update(prevState.problem, {
         n_graded: {
-          $set: data.n_graded
+          $set: submission.meta.n_graded
         }
       }),
       hasFilters: this.hasFilters()
@@ -536,7 +536,7 @@ class Grade extends React.Component {
                     anonymous={gradeAnonymous}
                     showTooltips={this.state.showTooltips}
                   />
-                  <div class='control has-icons-left'>
+                  <div className='control has-icons-left'>
                     <div className='select is-link is-normal'>
                       <select
                         id='filter_graded_by'
@@ -553,8 +553,8 @@ class Grade extends React.Component {
                         )}
                       </select>
                     </div>
-                    <div class='icon is-small is-left'>
-                      <i class='fa fa-filter' />
+                    <div className='icon is-small is-left'>
+                      <i className='fa fa-filter' />
                     </div>
                   </div>
 

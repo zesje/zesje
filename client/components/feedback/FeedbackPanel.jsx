@@ -40,14 +40,14 @@ class FeedbackPanel extends React.Component {
   backToFeedback = () => {
     this.setState({
       feedbackToEditId: 0,
-      parentID: null
+      parent: null
     })
   }
 
-  addParent = (feedbackId, parentId) => {
+  addParent = (feedbackId, parent) => {
     this.editFeedback(feedbackId)
     this.setState({
-      parentID: parentId
+      parent: parent
     })
   }
 
@@ -165,7 +165,6 @@ class FeedbackPanel extends React.Component {
     return treeStructure
   }
 
-
   render () {
     let totalScore = 0
     if (this.props.grading) {
@@ -210,21 +209,30 @@ class FeedbackPanel extends React.Component {
         </aside>
         {(this.state.feedbackToEditId === -1)
           ? <FeedbackBlockEdit feedback={null} problemID={this.state.problemID} goBack={this.backToFeedback}
-            updateFeedback={this.props.updateFeedback} parentID={this.state.parentID} />
+            updateFeedback={this.props.updateFeedback} parent={this.state.parent} />
           : <div className='panel-block'>
+            <button className='button is-link is-outlined is-fullwidth' onClick={() => this.editFeedback(-1)}>
+              <span className='icon is-small'>
+                <i className='fa fa-plus' />
+              </span>
+              <span>option</span>
+            </button>
             <div className='dropdown is-hoverable is-fullwidth'>
               <div className='dropdown-trigger' />
-              <button className='button is-link is-outlined is-fullwidth aria-controls="dropdown-menu3"' onClick={() => this.editFeedback(-1)}>
+              <button className='button is-link is-outlined is-fullwidth aria-controls="dropdown-menu3" onClick={() => this.editFeedback(-1)}'>
                 <span className='icon is-small'>
                   <i className='fa fa-plus' />
                 </span>
-                <span>option</span>
+                <span>option under:</span>
+                <span className='icon is-small'>
+                  <i className='fa fa-chevron-down' />
+                </span>
               </button>
               <div className='dropdown-menu' id='dropdown-menu3' role='menu'>
                 <div className='dropdown-content is-fullwidth'>
                   {this.props.problem.feedback.map((feedback, index) =>
-                    <a key={index} className='dropdown-item' onClick={() => this.addParent(-1, feedback.id)}>
-                      Add option under: {feedback.name}
+                    <a key={index} className='dropdown-item' onClick={() => this.addParent(-1, feedback)}>
+                      {feedback.name}
                     </a>
                   )}
                 </div>

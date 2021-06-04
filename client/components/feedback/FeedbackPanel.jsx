@@ -173,14 +173,16 @@ class FeedbackPanel extends React.Component {
         if (probIndex >= 0) totalScore += this.props.problem.feedback[probIndex].score
       }
     }
-    const root = this.props.problem.feedback.filter(fb => fb.parent === null)[0]
+    const root = this.props.problem.root
+    console.log('root')
     console.log(root)
     if (root === null) {
       console.log('For some reason there is no root') // TODO
     }
     // let fbs = this.sort(root, 0, []) // gets all feedbackoptions in correct structure
-    let fbs = this.makeNewTreeStructure(root)
-    console.log(fbs)
+    // let fbs = this.makeNewTreeStructure(root)
+    let fbs = root
+    console.log('All feedback of problem')
     console.log(this.props.problem.feedback)
     return (
       <React.Fragment>

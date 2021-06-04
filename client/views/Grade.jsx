@@ -182,11 +182,13 @@ class Grade extends React.Component {
       event.preventDefault()
       this.setState({showTooltips: !this.state.showTooltips})
     })
+    // let indexed = FeedbackPanel.addIndex(this.state.problem.root)
     let key = 0
     let prefix = ''
     for (let i = 1; i < 21; i++) {
       key = i % 10
       prefix = i > 10 ? 'shift+' : ''
+      console.log(key + 'key')
       this.props.bindShortcut(prefix + key, () => this.toggleFeedbackOptionIndex(i - 1))
     }
   }
@@ -361,12 +363,31 @@ class Grade extends React.Component {
     this.props.history.push(this.getURL(submissionID, this.props.problemID))
   }
 
+  findIndex = (feedback, index) => {
+    if (feedback.index === index) {
+      return feedback
+    } else {
+      for (let i = 0; i < feedback.children.length; i++) {
+        let fb = this.findIndex(feedback.children[i], index)
+        if (fb !== null) {
+          return fb
+        }
+      }
+    }
+    return null
+  }
+
   /**
    * Toggles a feedback option by it's index in the problems list of feedback.
    * @param index the index of the feedback option.
    */
   toggleFeedbackOptionIndex = (index) => {
-    this.toggleFeedbackOption(this.state.problem.feedback[index].id)
+    let root = this.addIndex(this.state.problem.root)
+    console.log('with added index')
+    console.log(root)
+    let fb = this.findIndex(root, index)
+    console.log(fb + 'fb that is supposed to match')
+    this.toggleFeedbackOption(fb.id)
   }
 
   /**
@@ -418,6 +439,17 @@ class Grade extends React.Component {
     this.setState({
       fullPage: !this.state.fullPage
     })
+  }
+
+  addIndex = (root) => {
+    let index = 0
+    const stack = [root]
+    while (stack.length > 0) {
+      const current = stack.shift()
+      current.index = index++
+      stack.unshift(...current.children)
+    }
+    return root
   }
 
   /**

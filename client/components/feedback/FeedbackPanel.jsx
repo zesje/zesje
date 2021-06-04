@@ -142,36 +142,29 @@ class FeedbackPanel extends React.Component {
     }
   }
 
-  makeNewTreeStructure = (feedback) => {
-    const createTree = (feedback) => {
-      let children = []
-      for (var i = 0; i < feedback.children.length; i++) {
-        let id = feedback.children[i]
-        let child = this.props.problem.feedback.find(fb => fb.id === id)
-        children.push(createTree(child))
-      }
-      return {
-        ...feedback, children
-      }
-    }
-    const treeStructure = createTree(feedback)
+  addIndex = (root) => {
     let index = 0
-    const stack = [treeStructure]
+    const stack = [root]
     while (stack.length > 0) {
       const current = stack.shift()
       current.index = index++
       stack.unshift(...current.children)
     }
-    return treeStructure
+    return root
   }
 
-  render () {
-    let totalScore = 0
-    if (this.props.grading) {
-      for (let i = 0; i < this.props.solution.feedback.length; i++) {
-        const probIndex = this.props.problem.feedback.findIndex(fb => fb.id === this.props.solution.feedback[i])
-        if (probIndex >= 0) totalScore += this.props.problem.feedback[probIndex].score
+    findIndex = (feedback, index) => {
+      if (feedback.index === index) {
+        return feedback
+      } else {
+        for (let i = 0; i < feedback.children.length; i++) {
+          let fb = this.findIndex(feedback.children[i], index)
+          if (fb !== null) {
+            return fb
+          }
+        }
       }
+      return null
     }
     const root = this.props.problem.root
     console.log('root')
@@ -203,90 +196,91 @@ class FeedbackPanel extends React.Component {
               </div>
             </div>
           </div>
-        }
-        <aside className='menu'>
-          <ul className='menu-list'>
-            {this.getFeedbackElement(fbs, 0, this)}
-          </ul>
-        </aside>
-        {(this.state.feedbackToEditId === -1)
-          ? <FeedbackBlockEdit feedback={null} problemID={this.state.problemID} goBack={this.backToFeedback}
-            updateFeedback={this.props.updateFeedback} parent={this.state.parent} />
-          : <div className='panel-block'>
-            <button className='button is-link is-outlined is-fullwidth' onClick={() => this.editFeedback(-1)}>
-              <span className='icon is-small'>
-                <i className='fa fa-plus' />
-              </span>
-              <span>option</span>
-            </button>
-            <div className='dropdown is-hoverable is-fullwidth'>
-              <div className='dropdown-trigger' />
-              <button className='button is-link is-outlined is-fullwidth aria-controls="dropdown-menu3" onClick={() => this.editFeedback(-1)}'>
+          }
+          <aside className='menu'>
+            <ul className='menu-list'>
+              {this.getFeedbackElement(fbs, 0, this)}
+            </ul>
+          </aside>
+          {(this.state.feedbackToEditId === -1)
+            ? <FeedbackBlockEdit feedback={null} problemID={this.state.problemID} goBack={this.backToFeedback}
+              updateFeedback={this.props.updateFeedback} parent={this.state.parent} />
+            : <div className='panel-block'>
+              <button className='button is-link is-outlined is-fullwidth' onClick={() => this.editFeedback(-1)}>
                 <span className='icon is-small'>
                   <i className='fa fa-plus' />
                 </span>
-                <span>option under:</span>
-                <span className='icon is-small'>
-                  <i className='fa fa-chevron-down' />
-                </span>
+                <span>option</span>
               </button>
-              <div className='dropdown-menu' id='dropdown-menu3' role='menu'>
-                <div className='dropdown-content is-fullwidth'>
-                  {this.props.problem.feedback.map((feedback, index) =>
-                    <a key={index} className='dropdown-item' onClick={() => this.addParent(-1, feedback)}>
-                      {feedback.name}
-                    </a>
-                  )}
+              <div className='dropdown is-hoverable is-fullwidth'>
+                <div className='dropdown-trigger' />
+                <button className='button is-link is-outlined is-fullwidth aria-controls="dropdown-menu3" onClick={() => this.editFeedback(-1)}'>
+                  <span className='icon is-small'>
+                    <i className='fa fa-plus' />
+                  </span>
+                  <span>option under:</span>
+                  <span className='icon is-small'>
+                    <i className='fa fa-chevron-down' />
+                  </span>
+                </button>
+                <div className='dropdown-menu' id='dropdown-menu3' role='menu'>
+                  <div className='dropdown-content is-fullwidth'>
+                    {this.props.problem.feedback.map((feedback, index) =>
+                      <a key={index} className='dropdown-item' onClick={() => this.addParent(-1, feedback)}>
+                        {feedback.name}
+                      </a>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        }
-        {this.props.grading &&
+          }
+          {this.props.grading &&
           <div className='panel-block'>
             <textarea className='textarea' rows='2' placeholder='Remark' value={this.state.remark} onBlur={this.saveRemark} onChange={this.changeRemark} onKeyDown={this.keyMap} />
           </div>
-        }
-      </React.Fragment>
-    )
-  }
-  getFeedbackElement (feedback, index, feedbackPanel) {
-    const selectedFeedbackId = feedbackPanel.state.selectedFeedbackIndex !== null &&
-      feedbackPanel.props.problem.feedback[feedbackPanel.state.selectedFeedbackIndex].id
-    const blockURI = feedbackPanel.props.examID + '/' + feedbackPanel.props.submissionID + '/' + feedbackPanel.props.problem.id
-    return feedback.id !== feedbackPanel.state.feedbackToEditId
-      ? <FeedbackBlock key={feedback.id} uri={blockURI} graderID={feedbackPanel.props.graderID}
-        feedback={feedback}
-        checked={feedbackPanel.props.grading && feedbackPanel.props.solution.feedback.includes(feedback.id)}
-        editFeedback={() => this.editFeedback(feedback.id)} toggleOption={feedbackPanel.props.toggleOption}
-        ref={(selectedFeedbackId === feedback.id) ? feedbackPanel.feedbackBlock : null}
-        grading={feedbackPanel.props.grading}
-        submissionID={feedbackPanel.props.submissionID}
-        selected={selectedFeedbackId === feedback.id || feedback.highlight}
-        showIndex={feedbackPanel.props.showTooltips}
-        index={index + 1}
-        filterMode={feedbackPanel.props.feedbackFilters[feedback.id] || 'no_filter'}
-        applyFilter={(e, newFilterMode) => feedbackPanel.props.applyFilter(e, feedback.id, newFilterMode)}
-        children={feedback.children}
-        feedbackPanel={feedbackPanel}
-      />
-      : <FeedbackBlockEdit key={feedback.id} feedback={feedback} problemID={feedbackPanel.state.problemID}
-        goBack={feedbackPanel.backToFeedback} updateFeedback={feedbackPanel.props.updateFeedback} />
-  }
-
-  sort (feedback, depth, treeStructure) {
-    let fbdepth = {
-      'feedback': feedback,
-      'depth': depth
+          }
+        </React.Fragment>
+      )
+    }
+    getFeedbackElement (feedback, index, feedbackPanel) {
+      let indexed = this.addIndex(this.props.problem.root)
+      const selectedFeedbackId = feedbackPanel.state.selectedFeedbackIndex !== null &&
+      this.findIndex(indexed, this.state.selectedFeedbackIndex).id
+      const blockURI = feedbackPanel.props.examID + '/' + feedbackPanel.props.submissionID + '/' + feedbackPanel.props.problem.id
+      return feedback.id !== feedbackPanel.state.feedbackToEditId
+        ? <FeedbackBlock key={feedback.id} uri={blockURI} graderID={feedbackPanel.props.graderID}
+          feedback={feedback}
+          checked={feedbackPanel.props.grading && feedbackPanel.props.solution.feedback.includes(feedback.id)}
+          editFeedback={() => this.editFeedback(feedback.id)} toggleOption={feedbackPanel.props.toggleOption}
+          ref={(selectedFeedbackId === feedback.id) ? feedbackPanel.feedbackBlock : null}
+          grading={feedbackPanel.props.grading}
+          submissionID={feedbackPanel.props.submissionID}
+          selected={selectedFeedbackId === feedback.id || feedback.highlight}
+          showIndex={feedbackPanel.props.showTooltips}
+          index={index + 1}
+          filterMode={feedbackPanel.props.feedbackFilters[feedback.id] || 'no_filter'}
+          applyFilter={(e, newFilterMode) => feedbackPanel.props.applyFilter(e, feedback.id, newFilterMode)}
+          children={feedback.children}
+          feedbackPanel={feedbackPanel}
+        />
+        : <FeedbackBlockEdit key={feedback.id} feedback={feedback} problemID={feedbackPanel.state.problemID}
+          goBack={feedbackPanel.backToFeedback} updateFeedback={feedbackPanel.props.updateFeedback} />
     }
 
-    treeStructure.unshift(fbdepth)
+    sort (feedback, depth, treeStructure) {
+      let fbdepth = {
+        'feedback': feedback,
+        'depth': depth
+      }
 
-    for (var id of feedback.children) { // TODO
-      const child = this.props.problem.feedback.filter(fb => fb.id === id)[0]
-      this.sort(child, depth + 1, treeStructure)
+      treeStructure.unshift(fbdepth)
+
+      for (var id of feedback.children) { // TODO
+        const child = this.props.problem.feedback.filter(fb => fb.id === id)[0]
+        this.sort(child, depth + 1, treeStructure)
+      }
+      return treeStructure
     }
-    return treeStructure
-  }
 }
 export default withShortcuts(FeedbackPanel)

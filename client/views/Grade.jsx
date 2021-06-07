@@ -16,6 +16,8 @@ import 'bulma-tooltip/dist/css/bulma-tooltip.min.css'
 import './grade/Grade.css'
 import '../components/SubmissionNavigation.css'
 
+const defaultGraderFilter = -1
+
 class Grade extends React.Component {
   /**
    * Constructor sets empty state, and requests metadata for the exam.
@@ -117,8 +119,7 @@ class Grade extends React.Component {
   /**
    * React lifecycle method. Binds all shortcuts.
    */
-  componentDidMount = async () => {
-    await this.init()
+  componentDidMount = () => {
     // If we change the keybindings here we should also remember to
     // update the tooltips for the associated widgets (in render()).
     // Also add the shortcut to ./client/components/help/ShortcutsHelp.md

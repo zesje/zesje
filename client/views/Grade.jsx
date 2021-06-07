@@ -27,23 +27,23 @@ class Grade extends React.Component {
   constructor (props) {
     super(props)
     this.state = {feedbackFilters: {}, gradedBy: defaultGraderFilter}
-		this.state = {...this.state, hasFilters: this.hasFilters()}
+    this.state = {...this.state, hasFilters: this.hasFilters()}
 
-		api.get(`exams/${this.props.examID}?only_metadata=true&shuffle_seed=${this.props.graderID}`)
-			.then(metadata => {
-				const partialState = {
-					submissions: metadata.submissions,
-					problems: metadata.problems,
-					isUnstructured: metadata.layout === 'unstructured',
-					examID: this.props.examID,
-					gradeAnonymous: metadata.gradeAnonymous
-				}
+    api.get(`exams/${this.props.examID}?only_metadata=true&shuffle_seed=${this.props.graderID}`)
+      .then(metadata => {
+        const partialState = {
+          submissions: metadata.submissions,
+          problems: metadata.problems,
+          isUnstructured: metadata.layout === 'unstructured',
+          examID: this.props.examID,
+          gradeAnonymous: metadata.gradeAnonymous
+        }
 
-				const examID = metadata.exam_id
-				const submissionID = this.props.submissionID || metadata.submissions[0].id
-				const problemID = this.props.problemID || metadata.problems[0].id
+        const examID = metadata.exam_id
+        const submissionID = this.props.submissionID || metadata.submissions[0].id
+        const problemID = this.props.problemID || metadata.problems[0].id
 
-				Promise.all([
+        Promise.all([
           api.get(`submissions/${examID}/${submissionID}?${[
             `problem_id=${problemID}`,
             ...this.getFilterArguments()
@@ -51,28 +51,28 @@ class Grade extends React.Component {
           api.get(`problems/${problemID}`),
           api.get(`graders`)
         ])
-					.then(([submission, problem, graders]) => {
-						this.setState({
-							submission: submission,
-							problem: problem,
-							graders: graders,
-							matchingResults: submission.meta.filter_matches,
-							...partialState
-						}, () => this.props.history.replace(this.getURL(submissionID, problemID)))
-					})
-					.catch(err => {
-						this.setState({
-							submission: null,
-							problem: null,
-							...partialState
-						})
-					})
-			})
-			.catch(err => {
-				this.setState({
-					submission: null
-				})
-			})
+          .then(([submission, problem, graders]) => {
+            this.setState({
+              submission: submission,
+              problem: problem,
+              graders: graders,
+              matchingResults: submission.meta.filter_matches,
+              ...partialState
+            }, () => this.props.history.replace(this.getURL(submissionID, problemID)))
+          })
+          .catch(err => {
+            this.setState({
+              submission: null,
+              problem: null,
+              ...partialState
+            })
+          })
+      })
+      .catch(err => {
+        this.setState({
+          submission: null
+        })
+      })
   }
 
   /**

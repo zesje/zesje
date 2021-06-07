@@ -26,7 +26,7 @@ class GradeNavigation extends React.Component {
     const submissions = this.props.submissions
 
     return (
-      <div className='level'>
+      <div className='column is-half level' style={{width: 'max-content', margin: 0}}>
         <div className='level-item make-wider'>
           <div className='field has-addons is-mobile'>
             <div className='control'>

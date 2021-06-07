@@ -515,7 +515,7 @@ class Grade extends React.Component {
               </div>
 
               <div className='column'>
-                <div style={{display: 'grid', gridTemplateColumns: '5fr 1.8fr 2fr', gap: '1em'}}>
+                <div className='columns'>
                   <GradeNavigation
                     submission={submission}
                     submissions={submissions}
@@ -527,28 +527,30 @@ class Grade extends React.Component {
                     anonymous={gradeAnonymous}
                     showTooltips={this.state.showTooltips}
                   />
-                  <div className='control has-icons-left'>
-                    <div className='select is-link is-normal'>
-                      <select
-                        style={{width: '100%'}}
-                        value={this.state.gradedBy}
-                        onChange={(e) => this.applyGraderFilter(parseInt(e.target.value))}
-                      >
-                        <option value='-1' key='-1'>Ungraded</option>
-                        <option value='0' key='0'>All</option>
-                        {this.state.graders.map((grader) =>
-                          <option value={grader.id} key={grader.id}>
-                            {grader.oauth_id}
-                          </option>
-                        )}
-                      </select>
-                    </div>
-                    <div className='icon is-small is-left'>
-                      <i className='fa fa-filter' />
+                  <div className='column'>
+                    <div className='control has-icons-left'>
+                      <div className='select is-link is-normal'>
+                        <select
+                          style={{width: '100%'}}
+                          value={this.state.gradedBy}
+                          onChange={(e) => this.applyGraderFilter(parseInt(e.target.value))}
+                        >
+                          <option value='-1' key='-1'>Ungraded</option>
+                          <option value='0' key='0'>All</option>
+                          {this.state.graders.map((grader) =>
+                            <option value={grader.id} key={grader.id}>
+                              {grader.oauth_id}
+                            </option>
+                          )}
+                        </select>
+                      </div>
+                      <div className='icon is-small is-left'>
+                        <i className='fa fa-filter' />
+                      </div>
                     </div>
                   </div>
 
-                  <div style={{
+                  <div className='column' style={{
                     display: 'grid',
                     gridTemplateColumns: '1fr max-content',
                     gap: '0.5em',

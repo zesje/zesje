@@ -24,32 +24,24 @@ class Grade extends React.Component {
    */
   constructor (props) {
     super(props)
-    this.state = {}
-  }
+    this.state = {feedbackFilters: {}, gradedBy: defaultGraderFilter}
+		this.state = {...this.state, hasFilters: this.hasFilters()}
 
-  setStateAsync = (state) => new Promise((resolve, reject) => {
-    this.setState(state, resolve)
-  })
+		api.get(`exams/${this.props.examID}?only_metadata=true&shuffle_seed=${this.props.graderID}`)
+			.then(metadata => {
+				const partialState = {
+					submissions: metadata.submissions,
+					problems: metadata.problems,
+					isUnstructured: metadata.layout === 'unstructured',
+					examID: this.props.examID,
+					gradeAnonymous: metadata.gradeAnonymous
+				}
 
-  init = async () => {
-    await this.setStateAsync({feedbackFilters: {}, gradedBy: -1})
-    await this.setStateAsync({hasFilters: this.hasFilters()})
+				const examID = metadata.exam_id
+				const submissionID = this.props.submissionID || metadata.submissions[0].id
+				const problemID = this.props.problemID || metadata.problems[0].id
 
-    try {
-      const metadata = await api.get(`exams/${this.props.examID}?only_metadata=true&shuffle_seed=${this.props.graderID}`)
-      const partialState = {
-        submissions: metadata.submissions,
-        problems: metadata.problems,
-        isUnstructured: metadata.layout === 'unstructured',
-        examID: this.props.examID,
-        gradeAnonymous: metadata.gradeAnonymous
-      }
-
-      const examID = metadata.exam_id
-      const submissionID = this.props.submissionID || metadata.submissions[0].id
-      const problemID = this.props.problemID || metadata.problems[0].id
-      try {
-        const values = await Promise.all([
+				Promise.all([
           api.get(`submissions/${examID}/${submissionID}?${[
             `problem_id=${problemID}`,
             ...this.getFilterArguments()
@@ -57,29 +49,28 @@ class Grade extends React.Component {
           api.get(`problems/${problemID}`),
           api.get(`graders`)
         ])
-
-        const submission = values[0]
-        const problem = values[1]
-        const graders = values[2]
-        await this.setStateAsync({
-          submission: submission,
-          problem: problem,
-          graders: graders,
-          matchingResults: submission.meta.filter_matches,
-          ...partialState
-        }, () => this.props.history.replace(this.getURL(submissionID, problemID)))
-      } catch (err) {
-        await this.setStateAsync({
-          submission: null,
-          problem: null,
-          ...partialState
-        })
-      }
-    } catch (err) {
-      await this.setStateAsync({
-        submission: null
-      })
-    }
+					.then(([submission, problem, graders]) => {
+						this.setState({
+							submission: submission,
+							problem: problem,
+							graders: graders,
+							matchingResults: submission.meta.filter_matches,
+							...partialState
+						}, () => this.props.history.replace(this.getURL(submissionID, problemID)))
+					})
+					.catch(err => {
+						this.setState({
+							submission: null,
+							problem: null,
+							...partialState
+						})
+					})
+			})
+			.catch(err => {
+				this.setState({
+					submission: null
+				})
+			})
   }
 
   /**
@@ -454,10 +445,7 @@ class Grade extends React.Component {
   }
 
   clearFilters = () => {
-    const selectFilterBy = document.getElementById('filter_graded_by')
-    selectFilterBy.selectedIndex = 0
-    this.applyGraderFilter(parseInt(selectFilterBy.value))
-    this.setState({ feedbackFilters: {} }, () => {
+    this.setState({ feedbackFilters: {}, gradedBy: defaultGraderFilter }, () => {
       this.updateSubmission()
     })
   }
@@ -539,7 +527,6 @@ class Grade extends React.Component {
                   <div className='control has-icons-left'>
                     <div className='select is-link is-normal'>
                       <select
-                        id='filter_graded_by'
                         style={{width: '100%'}}
                         value={this.state.gradedBy}
                         onChange={(e) => this.applyGraderFilter(parseInt(e.target.value))}

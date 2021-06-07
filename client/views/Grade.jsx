@@ -60,6 +60,7 @@ class Grade extends React.Component {
               ...partialState
             }, () => this.props.history.replace(this.getURL(submissionID, problemID)))
           })
+          // eslint-disable-next-line handle-callback-err
           .catch(err => {
             this.setState({
               submission: null,
@@ -68,6 +69,7 @@ class Grade extends React.Component {
             })
           })
       })
+      // eslint-disable-next-line handle-callback-err
       .catch(err => {
         this.setState({
           submission: null

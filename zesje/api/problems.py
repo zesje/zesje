@@ -136,7 +136,8 @@ class Problems(Resource):
         # Create root FO
         root_fo = FeedbackOption(
             problem=problem,
-            text="root"
+            text="root",
+            score=0
         )
         db.session.add(root_fo)
         # Add solutions for each already existing submission

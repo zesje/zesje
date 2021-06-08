@@ -56,7 +56,7 @@ class MultipleChoice(Resource):
 
         root = None
         if len(problem.feedback_options) == 0:
-            root = FeedbackOption(problem_id=problem_id, text='root')
+            root = FeedbackOption(problem_id=problem_id, text='root', score=0)
             db.session.add(root)
         else:
             root = next(fb for fb in problem.feedback_options if fb.parent is None)

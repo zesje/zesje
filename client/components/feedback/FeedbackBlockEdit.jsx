@@ -129,6 +129,10 @@ class EditPanel extends React.Component {
   }
 
   render () {
+    var children = null
+    if (this.props.feedback !== null) {
+      children = this.props.children.map((child, index) => this.props.feedbackPanel.getFeedbackElement(child, child.index, this.props.feedbackPanel))
+    }
     return (
       <React.Fragment>
         {this.props.parent != null &&
@@ -199,6 +203,7 @@ class EditPanel extends React.Component {
             onCancel={() => { this.setState({deleting: false}) }}
           />
         </div>
+        {this.props.feedback !== null && children.length > 0 ? <ul className='menu-list'> {children} </ul> : null}
       </React.Fragment>
     )
   }

@@ -16,6 +16,8 @@ import 'bulma-tooltip/dist/css/bulma-tooltip.min.css'
 import './grade/Grade.css'
 import '../components/SubmissionNavigation.css'
 
+const defaultGraderFilter = -1
+
 class Grade extends React.Component {
   /**
    * Constructor sets empty state, and requests metadata for the exam.
@@ -24,45 +26,55 @@ class Grade extends React.Component {
    */
   constructor (props) {
     super(props)
-    this.state = {feedbackFilters: {}}
-    api.get(`exams/${this.props.examID}?only_metadata=true` +
-        `&shuffle_seed=${this.props.graderID}`).then(metadata => {
-      const partialState = {
-        submissions: metadata.submissions,
-        problems: metadata.problems,
-        isUnstructured: metadata.layout === 'unstructured',
-        examID: this.props.examID,
-        gradeAnonymous: metadata.gradeAnonymous
-      }
+    this.state = {feedbackFilters: {}, gradedBy: defaultGraderFilter}
+    this.state = {...this.state, hasFilters: this.hasFilters()}
 
-      const examID = metadata.exam_id
-      const submissionID = this.props.submissionID || metadata.submissions[0].id
-      const problemID = this.props.problemID || metadata.problems[0].id
-      Promise.all([
-        api.get(`submissions/${examID}/${submissionID}`),
-        api.get(`problems/${problemID}`)
-      ]).then(values => {
-        const submission = values[0]
-        const problem = values[1]
-        this.setState({
-          submission: submission,
-          problem: problem,
-          ...partialState
-        }, () => this.props.history.replace(this.getURL(submissionID, problemID)))
+    api.get(`exams/${this.props.examID}?only_metadata=true&shuffle_seed=${this.props.graderID}`)
+      .then(metadata => {
+        const partialState = {
+          submissions: metadata.submissions,
+          problems: metadata.problems,
+          isUnstructured: metadata.layout === 'unstructured',
+          examID: this.props.examID,
+          gradeAnonymous: metadata.gradeAnonymous
+        }
+
+        const examID = metadata.exam_id
+        const submissionID = this.props.submissionID || metadata.submissions[0].id
+        const problemID = this.props.problemID || metadata.problems[0].id
+
+        Promise.all([
+          api.get(`submissions/${examID}/${submissionID}?${[
+            `problem_id=${problemID}`,
+            ...this.getFilterArguments()
+          ].join('&')}`),
+          api.get(`problems/${problemID}`),
+          api.get(`graders`)
+        ])
+          .then(([submission, problem, graders]) => {
+            this.setState({
+              submission: submission,
+              problem: problem,
+              graders: graders,
+              matchingResults: submission.meta.filter_matches,
+              ...partialState
+            }, () => this.props.history.replace(this.getURL(submissionID, problemID)))
+          })
+          // eslint-disable-next-line handle-callback-err
+          .catch(err => {
+            this.setState({
+              submission: null,
+              problem: null,
+              ...partialState
+            })
+          })
+      })
       // eslint-disable-next-line handle-callback-err
-      }).catch(err => {
+      .catch(err => {
         this.setState({
-          submission: null,
-          problem: null,
-          ...partialState
+          submission: null
         })
       })
-    // eslint-disable-next-line handle-callback-err
-    }).catch(err => {
-      this.setState({
-        submission: null
-      })
-    })
   }
 
   /**
@@ -78,15 +90,23 @@ class Grade extends React.Component {
       const submissionID = this.props.submissionID || this.state.submissions[0].id
       const problemID = this.props.problemID || this.state.problems[0].id
       Promise.all([
-        api.get(`submissions/${this.props.examID}/${submissionID}`),
+        api.get(`submissions/${this.props.examID}/${submissionID}?${
+          [
+            `problem_id=${problemID}`,
+            ...this.getFilterArguments()
+          ].join('&')
+        }`),
         api.get(`problems/${problemID}`)
       ]).then(values => {
         const submission = values[0]
         const problem = values[1]
         this.setState({
           submission: submission,
-          problem: problem
-        }, () => this.props.history.replace(this.getURL(submission.id, problem.id)))
+          problem: problem,
+          matchingResults: submission.meta.filter_matches
+        }, () => {
+          this.props.history.replace(this.getURL(submission.id, problem.id))
+        })
       }).catch(err => {
         if (err.status === 404) {
           this.setState({
@@ -105,16 +125,16 @@ class Grade extends React.Component {
     // If we change the keybindings here we should also remember to
     // update the tooltips for the associated widgets (in render()).
     // Also add the shortcut to ./client/components/help/ShortcutsHelp.md
-    this.props.bindShortcut(['shift+left', 'shift+h'], this.prev)
-    this.props.bindShortcut(['shift+right', 'shift+l'], this.next)
+    this.props.bindShortcut(['shift+left', 'shift+h'], this.first)
+    this.props.bindShortcut(['shift+right', 'shift+l'], this.last)
     this.props.bindShortcut(['a'], this.toggleApprove)
     this.props.bindShortcut(['left', 'h'], (event) => {
       event.preventDefault()
-      this.prevUngraded()
+      this.prev()
     })
     this.props.bindShortcut(['right', 'l'], (event) => {
       event.preventDefault()
-      this.nextUngraded()
+      this.next()
     })
     this.props.bindShortcut(['shift+up', 'shift+k'], (event) => {
       event.preventDefault()
@@ -164,11 +184,10 @@ class Grade extends React.Component {
    * It then pushes the URL of the updated submission to history.
    * Also updates the metadata, and the current problem, to make sure that the
    * progress bar and feedback options are both up to date.
-   * @param direction either 'prev' or 'next'
-   * @param ungraded either 'true' or 'false'
+   * @param direction either 'prev', 'next', 'first' or 'last'
    */
-  navigate =async (direction, ungraded) => {
-    const fb = (await api.get(`feedback/${this.props.problemID}`)).map(fb => fb.id)
+  navigate = async (direction) => {
+    const fb = (await api.get(`feedback/${this.state.problem.id}`)).map(fb => fb.id)
 
     this.setState({
       feedbackFilters: Object.entries(this.state.feedbackFilters).filter(
@@ -178,43 +197,73 @@ class Grade extends React.Component {
           (previous, current) => ({...previous, [parseInt(current[0])]: current[1]}), {})
     })
 
-    const sub = await api.get(`submissions/${this.props.examID}/${this.state.submission.id}` +
-      '?problem_id=' + this.state.problem.id +
-      '&shuffle_seed=' + this.props.graderID +
-      '&direction=' + direction +
-      '&ungraded=' + ungraded +
-      Object.entries(this.state.feedbackFilters).filter(entry => entry[1] !== 'no_filter').map(entry => `&${entry[1]}_feedback=${entry[0]}`).join('')
+    const submission = await api.get(
+      `submissions/${this.props.examID}/${this.state.submission.id}?${[
+        `problem_id=${this.state.problem.id}`,
+        `shuffle_seed=${this.props.graderID}`,
+        `direction=${direction}`,
+        ...this.getFilterArguments()
+      ].join('&')}`
     )
     this.setState({
-      submission: sub
-    }, () => this.props.history.push(this.getURL(this.state.submission.id, this.state.problem.id)))
+      submission,
+      matchingResults: submission.meta.filter_matches
+    }, () => {
+      this.props.history.push(this.getURL(this.state.submission.id, this.state.problem.id))
+    })
   }
   /**
    * Sugar methods for navigate.
    */
   prev = () => {
-    this.navigate('prev', 'false')
+    this.navigate('prev')
   }
   next = () => {
-    this.navigate('next', 'false')
+    this.navigate('next')
   }
-  prevUngraded = () => {
-    this.navigate('prev', 'true')
+  first = () => {
+    this.navigate('first')
+  }
+  last = () => {
+    this.navigate('last')
   }
 
-  nextUngraded = () => {
-    this.navigate('next', 'true')
+  getFilterArguments = () => {
+    const filterArguments = [
+      `ungraded=${(this.state.gradedBy === -1).toString()}`,
+      ...Object.entries(this.state.feedbackFilters)
+        .filter(entry => entry[1] !== 'no_filter')
+        .map(entry => `${entry[1]}_feedback=${entry[0]}`)
+    ]
+    if (this.state.gradedBy >= 1) {
+      filterArguments.push(`graded_by=${this.state.gradedBy}`)
+    }
+    return filterArguments
   }
 
   /**
    * Updates the submission from the server, and sets it as the current submission.
   */
-  updateSubmission = () => {
-    api.get(`submissions/${this.props.examID}/${this.state.submission.id}`).then(sub => {
-      this.setState({
-        submission: sub
-      })
-    })
+  updateSubmission = async () => {
+    const submission = await api.get(`submissions/${this.props.examID}/${this.state.submission.id}?${[
+      `problem_id=${this.state.problem.id}`,
+      ...this.getFilterArguments()
+    ].join('&')}`)
+
+    this.setState(prevState => ({
+      submission,
+      matchingResults: submission.meta.filter_matches,
+      problem: update(prevState.problem, {
+        n_graded: {
+          $set: submission.meta.n_graded
+        }
+      }),
+      hasFilters: this.hasFilters()
+    }))
+  }
+
+  hasFilters = () => {
+    return Object.keys(this.state.feedbackFilters).length > 0 || this.state.gradedBy !== defaultGraderFilter
   }
 
   /**
@@ -268,7 +317,7 @@ class Grade extends React.Component {
    * @param problemID - the id of the problem that we want to navigate to
    */
   navigateProblem = (problemID) => {
-    this.props.history.push(this.getURL(this.props.submissionID, problemID))
+    this.props.history.push(this.getURL(this.state.submission.id, problemID))
   }
 
   /**
@@ -301,7 +350,6 @@ class Grade extends React.Component {
       graderID: this.props.graderID
     }).then(result => {
       this.updateSubmission()
-      this.updateProgressBar(result.state)
     })
   }
 
@@ -327,17 +375,8 @@ class Grade extends React.Component {
        })
      }).then(result => {
        this.updateSubmission()
-       this.updateProgressBar(result.state)
      })
    }
-
-   updateProgressBar = (graded) => this.setState(prevState => ({
-     problem: update(prevState.problem, {
-       n_graded: {
-         $set: prevState.problem.n_graded + (graded ? 1 : -1)
-       }
-     })
-   }))
 
   /**
    * Toggles full page view.
@@ -377,15 +416,41 @@ class Grade extends React.Component {
     return Math.abs(hash)
   }
 
+  applyGraderFilter = (graderId) => {
+    this.setState({gradedBy: graderId}, () => {
+      this.updateSubmission()
+    })
+  }
+
   applyFilter = (e, id, newFilterMode) => {
     e.stopPropagation()
-    this.setState({
-      feedbackFilters: {
-        ...this.state.feedbackFilters,
-        [id]: this.state.feedbackFilters[id] === newFilterMode ? 'no_filter' : newFilterMode
+    this.setState(oldState => {
+      newFilterMode = oldState.feedbackFilters[id] === newFilterMode ? 'no_filter' : newFilterMode
+      if (newFilterMode === 'no_filter') {
+        const clone = {
+          feedbackFilters: {
+            ...oldState.feedbackFilters
+          }
+        }
+        delete clone.feedbackFilters[id]
+        return clone
+      } else {
+        return {
+          feedbackFilters: {
+            ...oldState.feedbackFilters,
+            [id]: newFilterMode
+          }
+        }
       }
+    }, () => {
+      this.updateSubmission()
     })
-    console.log(this.state.feedbackFilters)
+  }
+
+  clearFilters = () => {
+    this.setState({ feedbackFilters: {}, gradedBy: defaultGraderFilter }, () => {
+      this.updateSubmission()
+    })
   }
 
   render () {
@@ -444,23 +509,75 @@ class Grade extends React.Component {
                     toggleApprove={this.toggleApprove}
                     feedbackFilters={this.state.feedbackFilters}
                     applyFilter={this.applyFilter}
-                    updateFeedback={this.updateFromUrl} />
+                    updateFeedback={this.updateFromUrl}
+                  />
                 </nav>
               </div>
 
               <div className='column'>
-                <GradeNavigation
-                  submission={submission}
-                  submissions={submissions}
-                  setSubmission={this.navigateSubmission}
-                  prevUngraded={this.prevUngraded}
-                  prev={this.prev}
-                  next={this.next}
-                  nextUngraded={this.nextUngraded}
-                  anonymous={gradeAnonymous}
-                  showTooltips={this.state.showTooltips}
-                />
+                <div className='columns is-multiline is-mobile'>
+                  <GradeNavigation
+                    submission={submission}
+                    submissions={submissions}
+                    setSubmission={this.navigateSubmission}
+                    first={this.first}
+                    prev={this.prev}
+                    next={this.next}
+                    last={this.last}
+                    anonymous={gradeAnonymous}
+                    showTooltips={this.state.showTooltips}
+                  />
+                  <div className='column is-one-quarter-desktop is-half-mobile'>
+                    <div className='control has-icons-left'>
+                      <div className='select is-link is-fullwidth'>
+                        <select
+                          value={this.state.gradedBy}
+                          onChange={(e) => this.applyGraderFilter(parseInt(e.target.value))}
+                        >
+                          <option value='-1' key='-1'>Ungraded</option>
+                          <option value='0' key='0'>All</option>
+                          {this.state.graders.map((grader) =>
+                            <option value={grader.id} key={grader.id}>
+                              {grader.oauth_id}
+                            </option>
+                          )}
+                        </select>
+                      </div>
+                      <span className='icon is-small is-left'>
+                        <i className='fa fa-filter' />
+                      </span>
+                    </div>
+                  </div>
 
+                  <div className='column' style={{
+                    display: 'grid',
+                    gridTemplateColumns: '1fr max-content',
+                    gap: '0.5em',
+                    justifyItems: 'end',
+                    height: 'max-content',
+                    alignItems: 'center'
+                  }}>
+                    {this.state.matchingResults} {this.state.hasFilters ? 'matching ' : ''}{this.state.matchingResults === 1 ? 'solution' : 'solutions'}
+                    <button
+                      className='button is-danger'
+                      onClick={this.clearFilters}
+                      disabled={!this.state.hasFilters}
+                    >
+                      <span className='icon is-medium'>
+                        <i
+                          className='fa fa-lg fa-filter'
+                          style={{transform: 'translateX(-17%)'}}
+                        />
+                        <span
+                          className='icon is-small'
+                          style={{position: 'absolute', right: '12%', bottom: 0}}
+                        >
+                          <i className='fa fa-times' />
+                        </span>
+                      </span>
+                    </button>
+                  </div>
+                </div>
                 <ProgressBar done={problem.n_graded} total={submissions.length} />
 
                 {multiple
@@ -477,13 +594,15 @@ class Grade extends React.Component {
 
                 <div className='level'>
                   <div className='level-left'>
+
                     <div className='level-item'>
-                      {solution.graded_by
-                        ? <div>Graded by: {solution.graded_by.name} <i>({gradedTime.toLocaleString()})</i></div>
+                      {solution.graded_by ? <div>Graded by: {(solution.graded_by.name ? solution.graded_by.name + ' - ' : '') + solution.graded_by.oauth_id} <i>({gradedTime.toLocaleString()})</i></div>
                         : <div>Ungraded</div>
                       }
                     </div>
+
                   </div>
+
                   <div className='level-right'>
                     <div className='level-item'>
                       {!this.state.isUnstructured &&

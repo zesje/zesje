@@ -204,7 +204,7 @@ class FeedbackPanel extends React.Component {
           </aside>
           {(this.state.feedbackToEditId === -1)
             ? <FeedbackBlockEdit feedback={null} problemID={this.state.problemID} goBack={this.backToFeedback}
-              updateFeedback={this.props.updateFeedback} parent={this.state.parent} />
+              updateFeedback={this.props.updateFeedback} parent={this.state.parent} children={null} feedbackPanel={null} />
             : <div className='panel-block'>
               <button className='button is-link is-outlined is-fullwidth' onClick={() => this.editFeedback(-1)}>
                 <span className='icon is-small'>
@@ -265,7 +265,7 @@ class FeedbackPanel extends React.Component {
           feedbackPanel={feedbackPanel}
         />
         : <FeedbackBlockEdit key={feedback.id} feedback={feedback} problemID={feedbackPanel.state.problemID}
-          goBack={feedbackPanel.backToFeedback} updateFeedback={feedbackPanel.props.updateFeedback} />
+          goBack={feedbackPanel.backToFeedback} updateFeedback={feedbackPanel.props.updateFeedback} children={feedback.children} feedbackPanel={feedbackPanel} />
     }
 
     sort (feedback, depth, treeStructure) {

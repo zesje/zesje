@@ -263,7 +263,7 @@ class Grade extends React.Component {
   }
 
   hasFilters = () => {
-    return Object.keys(this.state.feedbackFilters).length > 0 || this.state.gradedBy !== -1
+    return Object.keys(this.state.feedbackFilters).length > 0 || this.state.gradedBy !== defaultGraderFilter
   }
 
   /**
@@ -515,7 +515,7 @@ class Grade extends React.Component {
               </div>
 
               <div className='column'>
-                <div className='columns'>
+                <div className='columns is-multiline is-mobile'>
                   <GradeNavigation
                     submission={submission}
                     submissions={submissions}
@@ -527,11 +527,10 @@ class Grade extends React.Component {
                     anonymous={gradeAnonymous}
                     showTooltips={this.state.showTooltips}
                   />
-                  <div className='column'>
+                  <div className='column is-one-quarter-desktop is-half-mobile'>
                     <div className='control has-icons-left'>
-                      <div className='select is-link is-normal'>
+                      <div className='select is-link is-fullwidth'>
                         <select
-                          style={{width: '100%'}}
                           value={this.state.gradedBy}
                           onChange={(e) => this.applyGraderFilter(parseInt(e.target.value))}
                         >
@@ -544,9 +543,9 @@ class Grade extends React.Component {
                           )}
                         </select>
                       </div>
-                      <div className='icon is-small is-left'>
+                      <span className='icon is-small is-left'>
                         <i className='fa fa-filter' />
-                      </div>
+                      </span>
                     </div>
                   </div>
 
@@ -561,7 +560,6 @@ class Grade extends React.Component {
                     {this.state.matchingResults} {this.state.hasFilters ? 'matching ' : ''}{this.state.matchingResults === 1 ? 'solution' : 'solutions'}
                     <button
                       className='button is-danger'
-                      style={{width: 'max-content'}}
                       onClick={this.clearFilters}
                       disabled={!this.state.hasFilters}
                     >

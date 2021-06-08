@@ -13,7 +13,6 @@ class GradeNavigation extends React.Component {
         style={{width: '4em'}}
         onClick={onClick}>
         <div
-          style={{position: 'absolute', width: '100%', height: '100%', top: 0, left: 0}}
           className={this.props.showTooltips ? ' tooltip is-tooltip-active' : ''}
           data-tooltip={tooltip}
         />
@@ -26,7 +25,7 @@ class GradeNavigation extends React.Component {
     const submissions = this.props.submissions
 
     return (
-      <div className='column is-half level' style={{width: 'max-content', margin: 0}}>
+      <div className='column is-half-desktop is-full-mobile level'>
         <div className='level-item make-wider'>
           <div className='field has-addons is-mobile'>
             <div className='control'>
@@ -36,6 +35,8 @@ class GradeNavigation extends React.Component {
                 this.props.first,
                 'shift + ←'
               )}
+            </div>
+            <div className='control'>
               {this.createNavButton(
                 'is-link',
                 'fa-angle-left',
@@ -94,6 +95,8 @@ class GradeNavigation extends React.Component {
                 this.props.next,
                 '→'
               )}
+            </div>
+            <div className='control'>
               {this.createNavButton(
                 'is-info is-rounded',
                 'fa-angle-double-right',

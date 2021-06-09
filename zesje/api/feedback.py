@@ -43,7 +43,7 @@ class Feedback(Resource):
             return dict(status=404, message=f"Problem with id #{problem_id} does not exist"), 404
 
         fbs = FeedbackOption.query.filter(FeedbackOption.problem == problem)
-        root = [feedback for feedback in fbs if feedback.parent_id is None][0]
+        root = next(fb for fb in fbs if fb.parent_id is None)
         return feedback_to_data(root)
 
     post_parser = reqparse.RequestParser()

@@ -84,38 +84,34 @@ class Grade extends React.Component {
    * It also sets the submission to null to display error component when unwanted behaviour is observed.
    */
   syncSubmissionWithUrl = () => {
-    const UrlIsDifferent = (!this.state.problem || !this.state.submission ||
-      this.props.problemID !== this.state.problem.id || this.props.submissionID !== this.state.submission.id)
-    if (UrlIsDifferent) {
-      const submissionID = this.props.submissionID || this.state.submissions[0].id
-      const problemID = this.props.problemID || this.state.problems[0].id
-      Promise.all([
-        api.get(`submissions/${this.props.examID}/${submissionID}?${
-          [
-            `problem_id=${problemID}`,
-            ...this.getFilterArguments()
-          ].join('&')
-        }`),
-        api.get(`problems/${problemID}`)
-      ]).then(values => {
-        const submission = values[0]
-        const problem = values[1]
-        this.setState({
-          submission: submission,
-          problem: problem,
-          matchingResults: submission.meta.filter_matches
-        }, () => {
-          this.props.history.replace(this.getURL(submission.id, problem.id))
-        })
-      }).catch(err => {
-        if (err.status === 404) {
-          this.setState({
-            submission: null,
-            problem: null
-          })
-        }
+    const submissionID = this.props.submissionID || this.state.submissions[0].id
+    const problemID = this.props.problemID || this.state.problems[0].id
+    Promise.all([
+      api.get(`submissions/${this.props.examID}/${submissionID}?${
+        [
+          `problem_id=${problemID}`,
+          ...this.getFilterArguments()
+        ].join('&')
+      }`),
+      api.get(`problems/${problemID}`)
+    ]).then(values => {
+      const submission = values[0]
+      const problem = values[1]
+      this.setState({
+        submission: submission,
+        problem: problem,
+        matchingResults: submission.meta.filter_matches
+      }, () => {
+        this.props.history.replace(this.getURL(submission.id, problem.id))
       })
-    }
+    }).catch(err => {
+      if (err.status === 404) {
+        this.setState({
+          submission: null,
+          problem: null
+        })
+      }
+    })
   }
 
   /**

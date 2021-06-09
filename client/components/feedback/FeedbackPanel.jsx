@@ -197,11 +197,13 @@ class FeedbackPanel extends React.Component {
             </div>
           </div>
           }
-          <aside className='menu'>
-            <ul className='menu-list'>
-              {this.getFeedbackElement(fbs, 0, this)}
-            </ul>
-          </aside>
+          <div className='panel-block'>
+            <aside className='menu'>
+              <ul className='menu-list'>
+                {this.getFeedbackElement(fbs, 0, this)}
+              </ul>
+            </aside>
+          </div>
           {(this.state.feedbackToEditId === -1)
             ? <FeedbackBlockEdit feedback={null} problemID={this.state.problemID} goBack={this.backToFeedback}
               updateFeedback={this.props.updateFeedback} parent={this.state.parent} children={null} feedbackPanel={null} />

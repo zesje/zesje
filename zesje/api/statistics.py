@@ -126,9 +126,7 @@ class Statistics(Resource):
                     'name': fb.text,
                     'description': fb.description,
                     'score': fb.score,
-                    'parent': fb.parent_id,
-                    'used': len(fb.solutions),
-                    'children': [feedback.id for feedback in fb.children]
+                    'used': len(fb.solutions)
                 } for fb in p.feedback_options]  # Sorted by fb.id
             }
 

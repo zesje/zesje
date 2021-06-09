@@ -136,7 +136,7 @@ class EditPanel extends React.Component {
     return (
       <React.Fragment>
         {this.props.parent != null &&
-        <div>Adds to Parent: {this.props.parent.name}</div>}
+        this.props.parent.parent === null ? <div> Add on top-level </div> : <div>Adds to parent: {this.props.parent.name}</div>}
         <div>
           <div className='field-body'>
             <div className='field no-grow'>

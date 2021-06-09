@@ -208,7 +208,7 @@ class FeedbackPanel extends React.Component {
             ? <FeedbackBlockEdit feedback={null} problemID={this.state.problemID} goBack={this.backToFeedback}
               updateFeedback={this.props.updateFeedback} parent={this.state.parent} children={null} feedbackPanel={null} />
             : <div className='panel-block'>
-              <button className='button is-link is-outlined is-fullwidth' onClick={() => this.editFeedback(-1)}>
+              <button className='button is-link is-outlined is-fullwidth' onClick={() => this.addParent(-1, this.props.problem.root)}>
                 <span className='icon is-small'>
                   <i className='fa fa-plus' />
                 </span>

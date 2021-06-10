@@ -199,9 +199,11 @@ class FeedbackPanel extends React.Component {
           }
           <div className='panel-block'>
             <aside className='menu'>
-              <ul className='menu-list'>
-                {this.getFeedbackElement(fbs, 0, this)}
-              </ul>
+              {fbs.children.map((fbs, index) =>
+                <ul key='index' className='menu-list'>
+                  {this.getFeedbackElement(fbs, 0, this)}
+                </ul>
+              )}
             </aside>
           </div>
           {(this.state.feedbackToEditId === -1)

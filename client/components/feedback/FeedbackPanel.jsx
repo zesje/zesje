@@ -229,7 +229,7 @@ class FeedbackPanel extends React.Component {
                 </button>
                 <div className='dropdown-menu' id='dropdown-menu3' role='menu'>
                   <div className='dropdown-content is-fullwidth'>
-                    {this.props.problem.feedback.map((feedback, index) =>
+                    {this.props.problem.feedback.filter(feedback => feedback.parent != null).map((feedback, index) =>
                       <a key={index} className='dropdown-item' onClick={() => this.addParent(-1, feedback)}>
                         {feedback.name}
                       </a>

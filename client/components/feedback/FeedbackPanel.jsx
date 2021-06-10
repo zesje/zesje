@@ -199,9 +199,9 @@ class FeedbackPanel extends React.Component {
           }
           <div className='panel-block'>
             <aside className='menu'>
-              {fbs.children.map((fbs, index) =>
-                <ul key='index' className='menu-list'>
-                  {this.getFeedbackElement(fbs, 0, this)}
+              {fbs.children.map((fbs) =>
+                <ul key={fbs.index} className='menu-list'>
+                  {this.getFeedbackElement(fbs, fbs.index, this)}
                 </ul>
               )}
             </aside>
@@ -262,7 +262,7 @@ class FeedbackPanel extends React.Component {
           submissionID={feedbackPanel.props.submissionID}
           selected={selectedFeedbackId === feedback.id || feedback.highlight}
           showIndex={feedbackPanel.props.showTooltips}
-          index={index + 1}
+          index={index}
           filterMode={feedbackPanel.props.feedbackFilters[feedback.id] || 'no_filter'}
           applyFilter={(e, newFilterMode) => feedbackPanel.props.applyFilter(e, feedback.id, newFilterMode)}
           children={feedback.children}

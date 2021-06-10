@@ -22,39 +22,37 @@ def problem_to_data(problem):
     return {
         'id': problem.id,
         'name': problem.name,
-        'feedback':
-            [
-                {
-                    'id': fb.id,
-                    'name': fb.text,
-                    'description': fb.description,
-                    'score': fb.score,
-                    'parent': fb.parent_id,
-                    'used': len(fb.solutions),
-                    'children': [feedback.id for feedback in fb.children]
-                }
-                for fb
-                in problem.feedback_options  # Sorted by fb.id
-            ],
+        'feedback': [
+            {
+                'id': fb.id,
+                'name': fb.text,
+                'description': fb.description,
+                'score': fb.score,
+                'parent': fb.parent_id,
+                'used': len(fb.solutions),
+                'children': [feedback.id for feedback in fb.children]
+            }
+            for fb
+            in problem.feedback_options  # Sorted by fb.id
+        ],
         'root': feedback_to_data(get_root(problem)),
         'page': problem.widget.page,
         'widget': widget_to_data(problem.widget),
         'n_graded': len([sol for sol in problem.solutions if sol.graded_by is not None]),
         'grading_policy': problem.grading_policy.name,
-        'mc_options':
-            [
-                {
-                    'id': mc_option.id,
-                    'label': mc_option.label,
-                    'feedback_id': mc_option.feedback_id,
-                    'widget': {
-                        'name': mc_option.name,
-                        'x': mc_option.x,
-                        'y': mc_option.y,
-                        'type': mc_option.type
-                    }
-                } for mc_option in problem.mc_options
-            ]
+        'mc_options': [
+            {
+                'id': mc_option.id,
+                'label': mc_option.label,
+                'feedback_id': mc_option.feedback_id,
+                'widget': {
+                    'name': mc_option.name,
+                    'x': mc_option.x,
+                    'y': mc_option.y,
+                    'type': mc_option.type
+                }
+            } for mc_option in problem.mc_options
+        ]
     }
 
 
@@ -130,6 +128,7 @@ class Problems(Resource):
             name=args['name'],
             widget=widget,
         )
+
         # Widget is also added because it is used in problem
         db.session.add(problem)
 
@@ -146,7 +145,6 @@ class Problems(Resource):
 
         # Commit so problem gets an id
         db.session.commit()
-
         widget.name = f'problem_{problem.id}'
 
         if exam.layout == ExamLayout.templated:

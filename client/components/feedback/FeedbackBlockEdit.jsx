@@ -84,7 +84,7 @@ class EditPanel extends React.Component {
       name: this.state.name,
       description: this.state.description,
       score: this.state.score,
-      parent: this.props.parent.id
+      parent: this.props.parent != null ? this.props.parent.id : ''
     }
 
     if (this.state.id) {
@@ -135,9 +135,10 @@ class EditPanel extends React.Component {
     }
     return (
       <React.Fragment>
-        {this.props.parent != null &&
-        this.props.parent.parent === null ? <div> Add on top-level </div> : <div>Adds to parent: {this.props.parent.name}</div>}
         <div>
+          {this.props.parent != null
+            ? this.props.parent.parent === null ? <div> Add on top-level </div> : <div>Adds to parent: {this.props.parent.name}</div>
+            : null}
           <div className='field-body'>
             <div className='field no-grow'>
               <p className='label'>Score</p>

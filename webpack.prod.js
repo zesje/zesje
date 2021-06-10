@@ -1,8 +1,8 @@
 const webpack = require('webpack')
-const merge = require('webpack-merge')
+const { merge } = require('webpack-merge')
 const MiniCssExtractPlugin = require('mini-css-extract-plugin')
 const OptimizeCssAssetsPlugin = require('optimize-css-assets-webpack-plugin')
-const UglifyJsPlugin = require('uglifyjs-webpack-plugin')
+const TerserPlugin = require('terser-webpack-plugin')
 const common = require('./webpack.common.js')
 
 module.exports = merge(common, {
@@ -15,11 +15,10 @@ module.exports = merge(common, {
   },
   devtool: 'source-map',
   optimization: {
+    minimize: true,
     minimizer: [
-      new UglifyJsPlugin({
-        cache: true,
-        parallel: true,
-        sourceMap: true
+      new TerserPlugin({
+        parallel: true
       }),
       new OptimizeCssAssetsPlugin({
         assetNameRegExp: /\.css$/g,

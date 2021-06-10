@@ -53,8 +53,10 @@ from zesje.scans import _process_scan
 from zesje.factory import create_app
 import zesje.mysql as mysql
 
+
 if 'ZESJE_SETTINGS' not in os.environ:
     os.environ['ZESJE_SETTINGS'] = '../zesje_dev_cfg.py'
+
 
 lorem_name = TextLorem(srange=(1, 3))
 lorem_prob = TextLorem(srange=(2, 5))
@@ -184,6 +186,7 @@ def handle_pdf_processing(app, exam_id, pdf, pages, student_ids, copies_per_stud
 
 
 def generate_solution(pdf, pages, student_id, problems):
+
     pdf.setFillColorRGB(0, 0.1, 0.4)
 
     sID = str(student_id)
@@ -281,7 +284,7 @@ def add_templated_exam(client, pages):
             'name': chr(65 + k),
             'x': 75 + 20 * (k + 1),
             'y': int(A4[1]) - 200
-        } for k in range(random.randint(2, 5))]
+            } for k in range(random.randint(2, 5))]
     } for i in range(1, pages)]
 
     with NamedTemporaryFile() as pdf_file:
@@ -409,7 +412,7 @@ def design_exam(app, client, layout, pages, students, grade, solve, multiple_cop
             solve_problems(submission_pdf, pages, student_ids, problems, solve, copies_per_student)
             submission_pdf.seek(0)
 
-            print('\tProcessing scans (this may take a while).', )
+            print('\tProcessing scans (this may take a while).',)
             handle_pdf_processing(app, exam_id, submission_pdf, pages, student_ids, copies_per_student, skip_processing)
     elif layout == ExamLayout.unstructured.name:
         handle_pdf_processing(app, exam_id, None, pages, student_ids, copies_per_student, True)

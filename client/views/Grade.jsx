@@ -185,11 +185,11 @@ class Grade extends React.Component {
     // let indexed = FeedbackPanel.addIndex(this.state.problem.root)
     let key = 0
     let prefix = ''
-    for (let i = 1; i < 21; i++) {
+    for (let i = 0; i < 21; i++) {
       key = i % 10
       prefix = i > 10 ? 'shift+' : ''
-      console.log(key + 'key')
-      this.props.bindShortcut(prefix + key, () => this.toggleFeedbackOptionIndex(i - 1))
+      // console.log(key + ' key')
+      this.props.bindShortcut(prefix + key, () => this.toggleFeedbackOptionIndex(i))
     }
   }
 
@@ -383,10 +383,13 @@ class Grade extends React.Component {
    */
   toggleFeedbackOptionIndex = (index) => {
     let root = this.addIndex(this.state.problem.root)
-    console.log('with added index')
-    console.log(root)
+    // console.log('with added index')
+    // console.log(root)
     let fb = this.findIndex(root, index)
-    console.log(fb + 'fb that is supposed to match')
+    // console.log(fb.index + 'fb that is supposed to match')
+    if (fb.parent === null) {
+      return null
+    }
     this.toggleFeedbackOption(fb.id)
   }
 

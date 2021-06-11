@@ -193,6 +193,10 @@ class Problem(db.Model):
     def mc_options(self):
         return [feedback_option.mc_option for feedback_option in self.feedback_options if feedback_option.mc_option]
 
+    @property
+    def root_feedback(self):
+        return next(fb for fb in self.feedback_options if fb.parent_id is None)
+
 
 class FeedbackOption(db.Model):
     """feedback option"""
@@ -213,6 +217,13 @@ class FeedbackOption(db.Model):
         for child in self.children:
             yield child
             yield from child.all_descendants
+
+    @property
+    def all_ancestors(self):
+        next = self.parent
+        while next.parent is not None:
+            yield next
+            next = next.parent
 
 
 # Table for many to many relationship of FeedbackOption and Solution

@@ -7,18 +7,6 @@ from flask_restful import Resource, reqparse
 from ..database import db, Exam, Submission, Problem, Solution, FeedbackOption, Grader
 
 
-def all_ancestors(fb):
-    ancestors = []
-    current = fb
-    while current.parent_id is not None:
-        current = FeedbackOption.query.get(current.parent_id)
-        # Makes sure the root doesn't get auto-selected
-        if current.parent_id is None:
-            break
-        ancestors.append(current)
-    return ancestors
-
-
 class Solutions(Resource):
     """ Solution provided on a specific problem and exam """
 
@@ -144,7 +132,7 @@ class Solutions(Resource):
             state = False
         else:
             solution.feedback.append(fb)
-            for ancestor in all_ancestors(fb):
+            for ancestor in fb.all_ancestors:
                 if ancestor not in solution.feedback:
                     solution.feedback.append(ancestor)
             state = True

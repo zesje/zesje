@@ -1,18 +1,19 @@
-import 'bulma-switch/dist/css/bulma-switch.min.css'
 import React from 'react'
 
 const Switch = (props) => {
   const id = `switch-${Math.random()}`
   return (
     <div className='field'>
-      <input
-        id={id}
-        type='checkbox'
-        className={'switch' + (props.color ? ` is-${props.color}` : '')}
-        checked={props.value}
-        value={props.value}
-        {...props} />
-      <label for={id} className='label' />
+      <label className={'switch' + (props.color ? ` is-${props.color}` : '')}>
+        <input
+          id={id}
+          type='checkbox'
+          checked={props.value}
+          value='false'
+          {...props}
+        />
+        <span className='check' />
+      </label>
     </div>
   )
 }

@@ -61,7 +61,7 @@ class MultipleChoice(Resource):
             root = FeedbackOption(problem_id=problem_id, text='root', score=0)
             db.session.add(root)
         else:
-            root = next(fb for fb in problem.feedback_options if fb.parent is None)
+            root = problem.root_feedback
         # Insert new empty feedback option that links to the same problem
         new_feedback_option = FeedbackOption(problem_id=problem_id, text=label,
                                              description='', score=0, parent_id=root.id)

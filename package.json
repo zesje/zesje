@@ -32,7 +32,7 @@
     "dev:mysql-migrate": "yarn dev:mysql is-running && (yarn dev:migrate || true) || ((yarn dev:mysql start && sleep 2 && yarn dev:migrate); yarn dev:mysql stop)"
   },
   "standard": {
-    "parser": "babel-eslint",
+    "parser": "@babel/eslint-parser",
     "globals": [
       "__ZESJE_VERSION__",
       "alert",

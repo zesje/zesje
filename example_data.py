@@ -258,6 +258,7 @@ def grade_problems(client, exam_id, graders, problems, submissions, grade):
             # randomly select the problem if it is not blanck
             if random.random() <= grade and len(prob['feedback']) == 0:
                 fo = next(filter(lambda p: p['id'] == prob['id'], problems))['feedback']
+                fo = [fb for fb in fo if fb['parent'] is not None]
                 opt = fo[random.randint(0, len(fo) - 1)]
                 client.put(f"/api/solution/{exam_id}/{submission_id}/{prob['id']}",
                            json={

@@ -133,15 +133,11 @@ class FeedbackPanel extends React.Component {
     }
   }
 
-  makeTreeStructure = (feedback) => {
-    for (var i = 0; i < feedback.children.length; i++) {
-      let id = feedback.children[i]
-      let child = this.props.problem.feedback.find(fb => fb.id === id)
-      feedback.children[i] = child
-      this.makeTreeStructure(child)
-    }
-  }
-
+  /**
+   * Adds indexes based on pre-order sorting.
+   * @param root the root FO of the problem
+   * @returns {*} the root FO now with index
+   */
   addIndex = (root) => {
     let index = 0
     const stack = [root]
@@ -153,6 +149,12 @@ class FeedbackPanel extends React.Component {
     return root
   }
 
+  /**
+   * Finds the FO that matches the given index (used for shortcuts)
+   * @param feedback the feedback to check if it matches.
+   * @param index the index to match
+   * @returns {null|*} return null if no match, or else the matching FO
+   */
     findIndex = (feedback, index) => {
       if (feedback.index === index) {
         return feedback
@@ -166,21 +168,20 @@ class FeedbackPanel extends React.Component {
       }
       return null
     }
-    const root = this.props.problem.root
-    console.log('root')
-    console.log(root)
-    if (root === null) {
-      console.log('For some reason there is no root') // TODO
-    }
-    // let fbs = this.sort(root, 0, []) // gets all feedbackoptions in correct structure
-    // let fbs = this.makeNewTreeStructure(root)
-    let fbs = root
-    console.log('All feedback of problem')
-    console.log(this.props.problem.feedback)
-    return (
-      <React.Fragment>
-        {this.props.grading &&
-          <div className='panel-heading level' style={{marginBottom: '0px'}}>
+
+    render () {
+      let totalScore = 0
+      if (this.props.grading) {
+        for (let i = 0; i < this.props.solution.feedback.length; i++) {
+          const probIndex = this.props.problem.feedback.findIndex(fb => fb.id === this.props.solution.feedback[i])
+          if (probIndex >= 0) totalScore += this.props.problem.feedback[probIndex].score
+        }
+      }
+      let root = this.addIndex(this.props.problem.root)
+      return (
+        <React.Fragment>
+          {this.props.grading &&
+          <div className='panel-heading level' style={{marginBottom: 0 + 'px'}}>
             <div className='level-left'>
               {this.props.solution.feedback.length !== 0 && <p>Total:&nbsp;<b>{totalScore}</b></p>}
             </div>
@@ -199,7 +200,7 @@ class FeedbackPanel extends React.Component {
           }
           <div className='panel-block' style={{display: 'block'}}>
             <div className='menu'>
-              {fbs.children.map((fbs) =>
+              {root.children.map((fbs) =>
                 <ul key={fbs.index} className='menu-list'>
                   {this.getFeedbackElement(fbs, fbs.index, this)}
                 </ul>

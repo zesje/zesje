@@ -56,6 +56,7 @@ class MultipleChoice(Resource):
             return dict(status=405, message='Cannot create multiple choice option and corresponding feedback option'
                         + ' in a finalized exam.'), 405
 
+        # If MCQ has no root, create one.
         root = None
         if len(problem.feedback_options) == 0:
             root = FeedbackOption(problem_id=problem_id, text='root', score=0)

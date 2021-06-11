@@ -119,7 +119,7 @@ def test_create_and_get_fo_with_parent(test_client, add_test_data):
 
 
 def test_delete_fo(test_client, add_test_data):
-    """Delete a FeedbackOption without a parent"""
+    """Delete a FeedbackOption"""
     fo = fo_json()
 
     result_get = test_client.get('/api/feedback/1')
@@ -149,35 +149,6 @@ def test_delete_fo(test_client, add_test_data):
     data_get = json.loads(result_get.data)
 
     assert len(data_get['children']) == 1
-
-
-def test_delete_fo_with_parent(test_client, add_test_data):  # Redundant test (serves no purpose)
-    """Delete a FeedbackOption with a parent"""
-    fo_child = fo_child_json()
-
-    result = test_client.post('/api/feedback/1', data=fo_child)
-    data = json.loads(result.data)
-
-    assert data['id']
-
-    fb_id = data['id']
-    problem_id = 1  # Was inserted in add_test_data()
-
-    result_get = test_client.get('/api/feedback/1')
-    data_get = json.loads(result_get.data)
-
-    assert len(data_get['children']) == 1
-    assert len(data_get['children'][0]['children']) == 1
-
-    result = test_client.delete(f'/api/feedback/{problem_id}/{fb_id}')
-    data = json.loads(result.data)
-
-    assert data['status'] == 200
-
-    result_get = test_client.get('/api/feedback/1')
-    data_get = json.loads(result_get.data)
-    assert len(data_get['children']) == 1
-    assert len(data_get['children'][0]['children']) == 0
 
 
 def test_delete_parent_of_fo(test_client, add_test_data):

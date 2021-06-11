@@ -26,8 +26,8 @@ def add_blank_feedback(problems):
     BLANK_FEEDBACK_NAME = current_app.config['BLANK_FEEDBACK_NAME']
 
     for p in problems:
-        root = p.root_feedback
-        parent_id = root.id
+        # Make blank FO child of the root FO
+        parent_id = p.root_feedback.id
         db.session.add(FeedbackOption(problem_id=p.id, text=BLANK_FEEDBACK_NAME, score=0, parent_id=parent_id))
 
     db.session.commit()

@@ -370,6 +370,7 @@ def design_exam(app, client, layout, pages, students, grade, solve, multiple_cop
             root = json.loads(result.data)['feedback'][0]
             parent = root['id']
             fb_ids = []
+            # Add random top-level FOs
             for _ in range(random.randint(2, 10)):
                 result = client.post(f'api/feedback/{problem_id}', data={
                     'name': lorem_name.sentence(),
@@ -380,6 +381,7 @@ def design_exam(app, client, layout, pages, students, grade, solve, multiple_cop
                 # use return from post to get ids
                 data = json.loads(result.data)
                 fb_ids.append(data['id'])
+            # Add random children to top-level FOs
             for _ in range(random.randint(2, 5)):
                 # get random id from list
                 parent_id = fb_ids[random.randint(0, len(fb_ids) - 1)]

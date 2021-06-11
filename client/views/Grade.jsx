@@ -182,13 +182,11 @@ class Grade extends React.Component {
       event.preventDefault()
       this.setState({showTooltips: !this.state.showTooltips})
     })
-    // let indexed = FeedbackPanel.addIndex(this.state.problem.root)
     let key = 0
     let prefix = ''
     for (let i = 0; i < 21; i++) {
       key = i % 10
       prefix = i > 10 ? 'shift+' : ''
-      // console.log(key + ' key')
       this.props.bindShortcut(prefix + key, () => this.toggleFeedbackOptionIndex(i))
     }
   }
@@ -363,6 +361,12 @@ class Grade extends React.Component {
     this.props.history.push(this.getURL(submissionID, this.props.problemID))
   }
 
+  /**
+   * Finds the FO that matches the given index (used for shortcuts)
+   * @param feedback the feedback to check if it matches.
+   * @param index the index to match
+   * @returns {null|*} return null if no match, or else the matching FO
+   */
   findIndex = (feedback, index) => {
     if (feedback.index === index) {
       return feedback
@@ -383,10 +387,7 @@ class Grade extends React.Component {
    */
   toggleFeedbackOptionIndex = (index) => {
     let root = this.addIndex(this.state.problem.root)
-    // console.log('with added index')
-    // console.log(root)
     let fb = this.findIndex(root, index)
-    // console.log(fb.index + 'fb that is supposed to match')
     if (fb.parent === null) {
       return null
     }
@@ -444,6 +445,11 @@ class Grade extends React.Component {
     })
   }
 
+  /**
+   * Adds indexes based on pre-order sorting.
+   * @param root the root FO of the problem
+   * @returns {*} the root FO now with index
+   */
   addIndex = (root) => {
     let index = 0
     const stack = [root]

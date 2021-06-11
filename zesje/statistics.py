@@ -10,18 +10,6 @@ from sqlalchemy import between, desc, func
 from .database import db, Exam, Student, Grader, Solution, Submission
 
 
-def sort_feedback(root):
-    sorted_feedback = []
-    queue = [root]
-    while len(queue) > 0:
-        fb = queue.pop()
-        sorted_feedback.append(fb)
-        children = sorted(fb.children, key=lambda child: child.id, reverse=True)
-        for child in children:
-            queue.append(child)
-    return sorted_feedback
-
-
 def solution_data(exam_id, student_id):
     """Return Python datastructures corresponding to the student submission."""
     exam = Exam.query.get(exam_id)
@@ -51,12 +39,8 @@ def solution_data(exam_id, student_id):
         }
 
         root = next(fb for fb in problem.feedback_options if fb.parent_id is None)
-        feedback = sort_feedback(root)
-        sorted_feedback = []
-        for fb in feedback:
-            if fb in solution.feedback:
-                sorted_feedback.append(fb)
-        feedback = [fo for fo in sorted_feedback if fo.parent_id is not None]
+        feedback = [fo for fo in root.all_descendants if fo in solution.feedback and fo.parent_id is not None]
+
         problem_data['feedback'] = [
             {'id': fo.id,
              'short': fo.text,

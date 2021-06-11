@@ -7,7 +7,7 @@ from flask_restful import Resource, reqparse
 from ..database import db, Exam, Submission, Problem, Solution, FeedbackOption, Grader
 
 
-def get_ancestors(fb):
+def all_ancestors(fb):
     ancestors = []
     current = fb
     while current.parent_id is not None:
@@ -17,17 +17,6 @@ def get_ancestors(fb):
             break
         ancestors.append(current)
     return ancestors
-
-
-def get_descendants(fb):
-    descendants = []
-    child_list = [fb]
-    while len(child_list) > 0:
-        current = child_list.pop()
-        for child in current.children:
-            descendants.append(child)
-            child_list.append(child)
-    return descendants
 
 
 class Solutions(Resource):
@@ -149,15 +138,15 @@ class Solutions(Resource):
 
         if fb in solution.feedback:
             solution.feedback.remove(fb)
-            for descendant in get_descendants(fb):
+            for descendant in fb.all_descendants:
                 if descendant in solution.feedback:
                     solution.feedback.remove(descendant)
             state = False
         else:
             solution.feedback.append(fb)
-            for parent in get_ancestors(fb):
-                if parent not in solution.feedback:
-                    solution.feedback.append(parent)
+            for ancestor in all_ancestors(fb):
+                if ancestor not in solution.feedback:
+                    solution.feedback.append(ancestor)
             state = True
 
         graded = len(solution.feedback)

@@ -208,6 +208,12 @@ class FeedbackOption(db.Model):
     # possible future extension: mut_excl_children = Column(Boolean, nullable=True)
     children = db.relationship("FeedbackOption", backref=backref('parent', remote_side=[id]), cascade='all, delete')
 
+    @property
+    def all_descendants(self):
+        for child in self.children:
+            yield child
+            yield from child.all_descendants
+
 
 # Table for many to many relationship of FeedbackOption and Solution
 solution_feedback = db.Table('solution_feedback',

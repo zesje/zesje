@@ -83,7 +83,7 @@ class Grade extends React.Component {
    * If it is missing, it loads the first submission from the metadata and then replaces the URL to reflect the state.
    * It also sets the submission to null to display error component when unwanted behaviour is observed.
    */
-  syncSubmissionWithUrl = () => {
+  syncSubmission = () => {
     const submissionID = this.props.submissionID || this.state.submissions[0].id
     const problemID = this.props.problemID || this.state.problems[0].id
     Promise.all([
@@ -160,11 +160,11 @@ class Grade extends React.Component {
    * @param prevState - previous state
    */
   componentDidUpdate = (prevProps, prevState) => {
-    const problemID = this.state.problem && String(this.state.problem.id)
-    const submissionID = this.state.submission && String(this.state.submission.id)
+    const hasProblem = this.state.problem && this.state.problem.id > 0
+    const hasSubmission = this.state.submission && this.state.submission.id > 0
     if ((prevProps.examID !== this.props.examID && this.props.examID !== this.state.examID) ||
-      (prevProps.problemID !== this.props.problemID && (!problemID || this.props.problemID !== problemID)) ||
-      (prevProps.submissionID !== this.props.submissionID && (!submissionID || this.props.submissionID !== submissionID))) {
+      (prevProps.problemID !== this.props.problemID && (!hasProblem || this.props.problemID !== this.state.problem.id)) ||
+      (prevProps.submissionID !== this.props.submissionID && (!hasSubmission || this.props.submissionID !== this.state.submission.id))) {
       // The URL has changed and at least one of exam metadata, problem or submission does not match the URL
       // or the URL has changed and submission or problem is not defined
       this.updateFromUrl()
@@ -263,7 +263,7 @@ class Grade extends React.Component {
   }
 
   /**
-   * Updates the metadata for the current exam. It then calls syncSubmissionWithUrl to update the submission and problem in the state according to the URL.
+   * Updates the metadata for the current exam. It then calls syncSubmission to update the submission and problem in the state according to the URL.
    * In case of unwanted behaviour, sets the submission to null for displaying error component.
    */
   updateFromUrl = () => {
@@ -274,7 +274,7 @@ class Grade extends React.Component {
         problems: metadata.problems,
         examID: this.props.examID,
         gradeAnonymous: metadata.gradeAnonymous
-      }, () => this.syncSubmissionWithUrl())
+      }, this.syncSubmission)
       // eslint-disable-next-line handle-callback-err
     }).catch(err => {
       this.setState({
@@ -505,7 +505,7 @@ class Grade extends React.Component {
                     toggleApprove={this.toggleApprove}
                     feedbackFilters={this.state.feedbackFilters}
                     applyFilter={this.applyFilter}
-                    updateFeedback={this.updateFromUrl}
+                    updateFeedback={this.syncSubmission}
                   />
                 </nav>
               </div>

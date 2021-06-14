@@ -34,5 +34,6 @@ module.exports = merge(common, {
     new webpack.EvalSourceMapDevToolPlugin({
       sourceURLTemplate: module => `/${module.identifier}`
     })
-  ]
+  ],
+  resolve: { alias: { 'react-dom': '@hot-loader/react-dom' } }
 })

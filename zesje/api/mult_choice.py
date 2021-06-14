@@ -57,9 +57,12 @@ class MultipleChoice(Resource):
                         + ' in a finalized exam.'), 405
 
         # If MCQ has no root, create one.
-        if not (root := problem.root_feedback):
+        root = None
+        if len(problem.feedback_options) == 0:
             root = FeedbackOption(problem_id=problem_id, text='root', score=0)
             db.session.add(root)
+        else:
+            root = problem.root_feedback
         # Insert new empty feedback option that links to the same problem
         new_feedback_option = FeedbackOption(problem_id=problem_id, text=label,
                                              description='', score=0, parent_id=root.id)

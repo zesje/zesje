@@ -9,7 +9,8 @@ class StudentControls extends React.Component {
     students: []
   }
 
-  componentWillMount () {
+  constructor (props) {
+    super(props)
     this.updateStudents()
   }
 

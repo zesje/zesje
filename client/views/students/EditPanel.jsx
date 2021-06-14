@@ -47,7 +47,7 @@ class EditPanel extends React.Component {
     email: ''
   }
 
-  componentWillMount = () => {
+  componentDidMount = () => {
     if (this.props.editStud) {
       const stud = this.props.editStud
       this.setState({

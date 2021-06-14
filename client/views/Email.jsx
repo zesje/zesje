@@ -16,7 +16,8 @@ class Email extends React.Component {
     error: null
   }
 
-  componentWillMount () {
+  constructor (props) {
+    super(props)
     this.loadTemplate()
   }
 

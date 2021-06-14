@@ -1,7 +1,7 @@
 import React from 'react'
 import Dropzone from 'react-dropzone'
 import { toast } from 'bulma-toast'
-import { Document, Page } from 'react-pdf'
+import { Document, Page } from 'react-pdf/dist/esm/entry.webpack'
 
 import * as api from '../api.jsx'
 import Hero from '../components/Hero.jsx'
@@ -89,12 +89,31 @@ class Exams extends React.Component {
 
   render () {
     const previewPages = Array.from({ length: this.state.previewPageCount }, (v, k) => k + 1).map(pageNum => {
-      return <div key={'preview_col_' + pageNum} className='column'>
-        <Page width={150} height={200}
-          renderAnnotations={false} renderTextLayer={false}
-          pageNumber={pageNum} />
-      </div>
+      return (
+        <div key={'preview_col_' + pageNum} className='column'>
+          <Page width={150} height={200}
+            renderAnnotations={false} renderTextLayer={false}
+            pageNumber={pageNum} />
+        </div>
+      )
     })
+
+    const baseStyle = {
+      flex: 1,
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      padding: '20px',
+      borderWidth: 2,
+      borderRadius: 2,
+      borderColor: '#eeeeee',
+      borderStyle: 'dashed',
+      backgroundcolor: '#fafafa',
+      color: '#bdbdbd',
+      outline: 'none',
+      transition: 'border .24s ease-in-out'
+    }
+
     return (
       <React.Fragment>
 
@@ -160,18 +179,18 @@ class Exams extends React.Component {
                 </div>
                 <div className='field-body'>
                   <div className='field'>
-                    <Dropzone accept='.pdf, application/pdf'
+                    <Dropzone
+                      accept='.pdf, application/pdf'
                       onDrop={this.onDropPDF}
-                      maxFiles={1}
                       multiple={false}>
-                       { ({getRootProps, getInputProps}) => (
-                         <section>
-                         <div {...getRootProps()}>
-                           <input {...getInputProps()} />
-                           <p>Drag 'n' drop some files here, or click to select files</p>
-                         </div>
-                         </section>
-                       ) }
+                      {({getRootProps, getInputProps}) => (
+                        <section>
+                          <div {...getRootProps({className: 'dropzone'})}>
+                            <input {...getInputProps()} />
+                            <p>Drag 'n' drop some files here, or click to select files</p>
+                          </div>
+                        </section>
+                      )}
                     </Dropzone>
                     <p className='help'>{this.state.pdf !== null ? this.state.pdf.name : ''}</p>
                   </div>

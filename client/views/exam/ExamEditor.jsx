@@ -15,7 +15,7 @@ import PDFOverlay from '../../components/PDFOverlay.jsx'
 
 import { Rnd } from 'react-rnd'
 
-import { Document, Page } from 'react-pdf'
+import { Document, Page } from 'react-pdf/dist/esm/entry.webpack'
 
 import * as api from '../../api.jsx'
 

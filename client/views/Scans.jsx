@@ -4,7 +4,6 @@ import { toast } from 'bulma-toast'
 import Dropzone from 'react-dropzone'
 
 import Hero from '../components/Hero.jsx'
-import DropzoneContent from '../components/DropzoneContent.jsx'
 
 import * as api from '../api.jsx'
 
@@ -136,6 +135,21 @@ class Scans extends React.Component {
     )
 
     const acceptedTypes = 'application/pdf,application/zip,application/octet-stream,application/x-zip-compressed,multipart/x-zip,image/*'
+    const baseStyle = {
+      flex: 1,
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      padding: '20px',
+      borderWidth: 2,
+      borderRadius: 2,
+      borderColor: '#eeeeee',
+      borderStyle: 'dashed',
+      backgroundcolor: '#fafafa',
+      color: '#bdbdbd',
+      outline: 'none',
+      transition: 'border .24s ease-in-out'
+    }
 
     return <div>
 
@@ -146,12 +160,18 @@ class Scans extends React.Component {
         <div className='container'>
           <div className='columns is-multiline is-centered'>
             <div className='column is-full has-text-centered'>
-              <Dropzone accept={acceptedTypes} style={{}}
-                activeStyle={{ borderStyle: 'dashed', width: 'fit-content', margin: 'auto' }}
+              <Dropzone
+                accept={acceptedTypes}
                 onDrop={(accepted, rejected) => this.onDropFile(accepted, rejected)}
-                disablePreview
                 multiple>
-                <DropzoneContent text='Choose a scan file…' center />
+                {({getRootProps, getInputProps}) => (
+                  <section className="container">
+                    <div {...getRootProps({style: baseStyle})}>
+                      <input {...getInputProps()} />
+                      <p>Drag 'n' drop some files here, or click to select files</p>
+                    </div>
+                  </section>
+                )}
               </Dropzone>
             </div>
             <div className='column is-full has-text-centered'>

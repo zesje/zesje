@@ -10,14 +10,6 @@ from zesje.pdf_reader import guess_problem_title, get_problem_page
 from zesje.api.feedback import feedback_to_data
 
 
-def get_root(problem):
-    root = [feedback for feedback in problem.feedback_options if feedback.parent_id is None]
-    if len(root) == 0:
-        return None
-    else:
-        return root[0]
-
-
 def problem_to_data(problem):
     return {
         'id': problem.id,
@@ -35,7 +27,7 @@ def problem_to_data(problem):
             for fb
             in problem.feedback_options  # Sorted by fb.id
         ],
-        'root': feedback_to_data(get_root(problem)),
+        'root': feedback_to_data(problem.root_feedback),
         'page': problem.widget.page,
         'widget': widget_to_data(problem.widget),
         'n_graded': len([sol for sol in problem.solutions if sol.graded_by is not None]),

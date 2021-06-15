@@ -7,6 +7,20 @@ import * as api from '../../api.jsx'
 
 import StudentPanelBlock from './StudentPanelBlock.jsx'
 
+const fuseOptions = {
+  shouldSort: true,
+  threshold: 0.6,
+  location: 0,
+  distance: 100,
+  maxPatternLength: 32,
+  minMatchCharLength: 1,
+  keys: [
+    'id',
+    'firstName',
+    'lastName'
+  ]
+}
+
 class SearchPanel extends React.Component {
   students = [
     {
@@ -29,7 +43,7 @@ class SearchPanel extends React.Component {
   componentDidMount = () => {
     api.get('students')
       .then(students => {
-        this.students = students
+        this.fuse = new Fuse(students, fuseOptions)
       })
       .catch(err => {
         toast({ message: 'failed to get students (see javascript console for details)', type: 'is-danger' })
@@ -62,26 +76,12 @@ class SearchPanel extends React.Component {
   }
 
   search = (event) => {
-    const options = {
-      shouldSort: true,
-      threshold: 0.6,
-      location: 0,
-      distance: 100,
-      maxPatternLength: 32,
-      minMatchCharLength: 1,
-      keys: [
-        'id',
-        'firstName',
-        'lastName'
-      ]
-    }
-    const fuse = new Fuse(this.students, options)
-    const result = fuse.search(event.target.value).slice(0, 10)
+    const result = this.fuse.search(event.target.value).slice(0, 10)
 
     this.setState({
       input: event.target.value,
       selected: 0,
-      result: result
+      result: result.map(({ item }) => item)
     })
   }
 
@@ -112,7 +112,7 @@ class SearchPanel extends React.Component {
       this.props.matchStudent(this.state.result[this.state.selected])
     } else {
       const clickedId = parseInt(event.target.id)
-      const newIndex = this.state.result.findIndex(result => result.id === clickedId)
+      const newIndex = this.state.result.findIndex((stud) => stud.id === clickedId)
       this.setState({
         selected: newIndex
       })
@@ -146,10 +146,10 @@ class SearchPanel extends React.Component {
             </span>
           </p>
         </div>
-        {this.state.result.map((student, index) =>
-          <StudentPanelBlock key={student.id} student={student}
+        {this.state.result.map((stud, index) =>
+          <StudentPanelBlock key={stud.id} student={stud}
             selected={index === this.state.selected}
-            matched={this.props.student && student.id === this.props.student.id && this.props.validated}
+            matched={this.props.student && stud.id === this.props.student.id && this.props.validated}
             selectStudent={this.selectStudent} editStudent={this.props.toggleEdit} />
         )}
         <div className='panel-block is-hidden-mobile'>

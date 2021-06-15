@@ -83,7 +83,7 @@ class SearchBox extends React.Component {
       keys: this.props.suggestionKeys
     }
     const fuse = new Fuse(this.props.options, options)
-    const result = fuse.search(value)
+    const result = fuse.search(value).map(({ item }) => item)
 
     this.setState({
       suggestions: result

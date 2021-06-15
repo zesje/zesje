@@ -62,8 +62,6 @@ class TemplateEditor extends React.Component {
     const isInitialized = prevProps.student !== null && prevProps.template !== null
     const willBeInitialized = this.props.student !== null && this.props.template !== null
 
-    console.log('editooooor')
-
     if (!isInitialized && willBeInitialized) {
       this.updateRenderedTemplate(this.props)
     } else if (isInitialized && this.props.student.id !== prevProps.student.id) {

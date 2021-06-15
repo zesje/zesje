@@ -135,21 +135,6 @@ class Scans extends React.Component {
     )
 
     const acceptedTypes = 'application/pdf,application/zip,application/octet-stream,application/x-zip-compressed,multipart/x-zip,image/*'
-    const baseStyle = {
-      flex: 1,
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      padding: '20px',
-      borderWidth: 2,
-      borderRadius: 2,
-      borderColor: '#eeeeee',
-      borderStyle: 'dashed',
-      backgroundcolor: '#fafafa',
-      color: '#bdbdbd',
-      outline: 'none',
-      transition: 'border .24s ease-in-out'
-    }
 
     return <div>
 
@@ -166,9 +151,9 @@ class Scans extends React.Component {
                 multiple>
                 {({getRootProps, getInputProps}) => (
                   <section className="container">
-                    <div {...getRootProps({style: baseStyle})}>
+                    <div {...getRootProps({className: 'dropzone'})}>
                       <input {...getInputProps()} />
-                      <p>Drag 'n' drop some files here, or click to select files</p>
+                      <p>Drag 'n' drop or click to select scan files...</p>
                     </div>
                   </section>
                 )}

@@ -18,7 +18,7 @@ def add_test_data(app):
                                      width=100, height=150, x=40, y=200, type='problem_widget')
     db.session.add(problem_widget_1)
 
-    root = FeedbackOption(id=12, problem_id=1, text='root')
+    root = FeedbackOption(id=12, problem_id=1, text='root', score=0)
     db.session.add(root)
     db.session.commit()
     fo1 = FeedbackOption(id=5, problem_id=1, text='fully incorrect', score=2, parent_id=12)

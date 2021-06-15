@@ -46,11 +46,11 @@ class TemplateEditor extends React.Component {
 
   updateRenderedTemplate = async (props) => {
     try {
-      let renderedTemplate = await renderTemplate(props)
+      const renderedTemplate = await renderTemplate(props)
       this.setState({ renderedTemplate })
     } catch (response) {
       if (response.status === 400) {
-        let error = await response.json()
+        const error = await response.json()
         templateRenderError(error.message)
       } else {
         templateRenderError()
@@ -58,23 +58,18 @@ class TemplateEditor extends React.Component {
     }
   }
 
-  componentWillReceiveProps (nextProps) {
-    const isInitialized = (
-      this.props.student !== null &&
-      this.props.template !== null
-    )
-    const willBeInitialized = (
-      nextProps.student !== null &&
-      nextProps.template !== null
-    )
+  componentDidUpdate = (prevProps, prevState) => {
+    const isInitialized = prevProps.student !== null && prevProps.template !== null
+    const willBeInitialized = this.props.student !== null && this.props.template !== null
+
+    console.log('editooooor')
 
     if (!isInitialized && willBeInitialized) {
-      this.updateRenderedTemplate(nextProps)
-    } else if (isInitialized &&
-               nextProps.student.id !== this.props.student.id) {
+      this.updateRenderedTemplate(this.props)
+    } else if (isInitialized && this.props.student.id !== prevProps.student.id) {
       // Note that we only re-render here whenever the *student* changes.
       // Updates to the template itself only trigger a re-render for 'onblur'
-      this.updateRenderedTemplate(nextProps)
+      this.updateRenderedTemplate(this.props)
     }
   }
 

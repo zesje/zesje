@@ -75,7 +75,7 @@ class FeedbackBlock extends React.Component {
         >
           <i className='fa fa-pencil' />
         </button>
-        {this.props.grading && 
+        {this.props.grading &&
           <div
             className={`popover is-popover-right button is-pulled-right is-small is-light
             ${(this.props.filterMode !== 'no_filter' ? 'is-inverted' : (this.state.hover['block'] ? '' : 'is-invisible'))}

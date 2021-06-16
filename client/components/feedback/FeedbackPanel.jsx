@@ -166,7 +166,7 @@ class FeedbackPanel extends React.Component {
               submissionID={this.props.submissionID} selected={selectedFeedbackId === feedback.id || feedback.highlight}
               showIndex={this.props.showTooltips}
               index={index + 1}
-              filterMode={this.props.feedbackFilters[feedback.id] || 'no_filter'}
+              filterMode={this.props.grading ? this.props.feedbackFilters[feedback.id] || 'no_filter' : 'no_filter'}
               applyFilter={(e, newFilterMode) => this.props.applyFilter(e, feedback.id, newFilterMode)}
             />
             : <FeedbackBlockEdit key={feedback.id} feedback={feedback} problemID={this.state.problemID}

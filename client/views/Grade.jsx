@@ -183,7 +183,7 @@ class Grade extends React.Component {
    * @param direction either 'prev', 'next', 'first' or 'last'
    */
   navigate = async (direction) => {
-    const fb = (await api.get(`feedback/${this.state.problem.id}`)).map(fb => fb.id)
+    const fb = this.state.problem.feedback.map(fb => fb.id)
 
     this.setState({
       feedbackFilters: Object.entries(this.state.feedbackFilters).filter(

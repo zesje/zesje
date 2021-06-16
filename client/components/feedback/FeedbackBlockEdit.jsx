@@ -192,11 +192,14 @@ class EditPanel extends React.Component {
           </div>
           <ConfirmationModal
             headerText={`Do you want to irreversibly delete feedback option "${this.state.name}"?`}
-            contentText={this.props.feedback && this.props.feedback.used
-              ? 'This feedback option was assigned to ' +
-                (this.props.feedback.used > 1 ? `${this.props.feedback.used} solutions` : ' 1 solution') +
-                ' and it will be removed. This will affect the final grade assigned to each submission.'
-              : 'This feedback option is not used, you can safely delete it.'
+            contentText={this.props.feedback && (this.props.feedback.used || this.props.feedback.children != null)
+              ? (this.props.feedback.children.length > 0 ? 'This feedback has ' + (this.props.feedback.children.length > 1 ? `${this.props.feedback.children.length} children` : ' 1 child') +
+              ', that would also be deleted in the process. ' : '') +
+              (this.props.feedback.used ? 'This feedback option was assigned to ' +
+              (this.props.feedback.used > 1 ? `${this.props.feedback.used} solutions` : ' 1 solution') +
+              ' and it will be removed. This will affect the final grade assigned to each submission.'
+                : '')
+              : 'This feedback option is not used and has no children, you can safely delete it.'
             }
             color='is-danger' confirmText='Delete feedback'
             active={this.state.deleting}

@@ -140,7 +140,7 @@ class FeedbackPanel extends React.Component {
     return (
       <React.Fragment>
         {this.props.grading &&
-          <div className='panel-heading level' style={{marginBottom: 0 + 'px'}}>
+          <div className='panel-heading level' style={{marginBottom: '0px'}}>
             <div className='level-left'>
               {this.props.solution.feedback.length !== 0 && <p>Total:&nbsp;<b>{totalScore}</b></p>}
             </div>

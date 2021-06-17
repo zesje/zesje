@@ -18,6 +18,43 @@ import '../components/SubmissionNavigation.css'
 
 const defaultGraderFilter = -1
 
+const FiltersInfo = ({hasFilters, matchingResults, clearFilters}) => {
+  const text = matchingResults +
+    (hasFilters ? ' matching ' : ' ') +
+    (matchingResults === 1 ? 'solution' : 'solutions')
+
+  return (
+    <div className='column' style={{
+      display: 'grid',
+      gridTemplateColumns: '1fr max-content',
+      gap: '0.5em',
+      justifyItems: 'end',
+      height: 'max-content',
+      alignItems: 'center'
+    }}>
+      {text}
+      <button
+        className='button is-danger'
+        onClick={clearFilters}
+        disabled={!hasFilters}
+      >
+        <span className='icon is-medium'>
+          <i
+            className='fa fa-lg fa-filter'
+            style={{transform: 'translateX(-17%)'}}
+          />
+          <span
+            className='icon is-small'
+            style={{position: 'absolute', right: '12%', bottom: 0}}
+          >
+            <i className='fa fa-times' />
+          </span>
+        </span>
+      </button>
+    </div>
+  )
+}
+
 class Grade extends React.Component {
   /**
    * Constructor sets empty state, and requests metadata for the exam.
@@ -544,36 +581,13 @@ class Grade extends React.Component {
                       </span>
                     </div>
                   </div>
-
-                  <div className='column' style={{
-                    display: 'grid',
-                    gridTemplateColumns: '1fr max-content',
-                    gap: '0.5em',
-                    justifyItems: 'end',
-                    height: 'max-content',
-                    alignItems: 'center'
-                  }}>
-                    {this.state.matchingResults} {this.state.hasFilters ? 'matching ' : ''}{this.state.matchingResults === 1 ? 'solution' : 'solutions'}
-                    <button
-                      className='button is-danger'
-                      onClick={this.clearFilters}
-                      disabled={!this.state.hasFilters}
-                    >
-                      <span className='icon is-medium'>
-                        <i
-                          className='fa fa-lg fa-filter'
-                          style={{transform: 'translateX(-17%)'}}
-                        />
-                        <span
-                          className='icon is-small'
-                          style={{position: 'absolute', right: '12%', bottom: 0}}
-                        >
-                          <i className='fa fa-times' />
-                        </span>
-                      </span>
-                    </button>
-                  </div>
+                  <FiltersInfo
+                    hasFilters={this.state.hasFilters}
+                    matchingResults={this.state.matchingResults}
+                    clearFilters={this.clearFilters}
+                  />
                 </div>
+
                 <ProgressBar done={problem.n_graded} total={submissions.length} />
 
                 {multiple

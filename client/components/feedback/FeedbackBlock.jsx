@@ -62,7 +62,7 @@ class FeedbackBlock extends React.Component {
           data-tooltip={shortcut}>
           {this.props.feedback.score}
         </span>
-        <span className={'grow'} style={{ paddingLeft: '0.5em' }}>
+        <span className='grow' style={{ paddingLeft: '0.5em' }}>
           {this.props.feedback.name}
           <Tooltip text={this.props.feedback.description} />
         </span>

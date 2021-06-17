@@ -18,6 +18,43 @@ import '../components/SubmissionNavigation.css'
 
 const defaultGraderFilter = -1
 
+const FiltersInfo = ({hasFilters, matchingResults, clearFilters}) => {
+  const text = matchingResults +
+    (hasFilters ? ' matching ' : ' ') +
+    (matchingResults === 1 ? 'solution' : 'solutions')
+
+  return (
+    <div className='column' style={{
+      display: 'grid',
+      gridTemplateColumns: '1fr max-content',
+      gap: '0.5em',
+      justifyItems: 'end',
+      height: 'max-content',
+      alignItems: 'center'
+    }}>
+      {text}
+      <button
+        className='button is-danger'
+        onClick={clearFilters}
+        disabled={!hasFilters}
+      >
+        <span className='icon is-medium'>
+          <i
+            className='fa fa-lg fa-filter'
+            style={{transform: 'translateX(-17%)'}}
+          />
+          <span
+            className='icon is-small'
+            style={{position: 'absolute', right: '12%', bottom: 0}}
+          >
+            <i className='fa fa-times' />
+          </span>
+        </span>
+      </button>
+    </div>
+  )
+}
+
 class Grade extends React.Component {
   /**
    * Constructor sets empty state, and requests metadata for the exam.
@@ -83,39 +120,35 @@ class Grade extends React.Component {
    * If it is missing, it loads the first submission from the metadata and then replaces the URL to reflect the state.
    * It also sets the submission to null to display error component when unwanted behaviour is observed.
    */
-  syncSubmissionWithUrl = () => {
-    const UrlIsDifferent = (!this.state.problem || !this.state.submission ||
-      this.props.problemID !== this.state.problem.id || this.props.submissionID !== this.state.submission.id)
-    if (UrlIsDifferent) {
-      const submissionID = this.props.submissionID || this.state.submissions[0].id
-      const problemID = this.props.problemID || this.state.problems[0].id
-      Promise.all([
-        api.get(`submissions/${this.props.examID}/${submissionID}?${
-          [
-            `problem_id=${problemID}`,
-            ...this.getFilterArguments()
-          ].join('&')
-        }`),
-        api.get(`problems/${problemID}`)
-      ]).then(values => {
-        const submission = values[0]
-        const problem = values[1]
-        this.setState({
-          submission: submission,
-          problem: problem,
-          matchingResults: submission.meta.filter_matches
-        }, () => {
-          this.props.history.replace(this.getURL(submission.id, problem.id))
-        })
-      }).catch(err => {
-        if (err.status === 404) {
-          this.setState({
-            submission: null,
-            problem: null
-          })
-        }
+  syncSubmission = () => {
+    const submissionID = this.props.submissionID || this.state.submissions[0].id
+    const problemID = this.props.problemID || this.state.problems[0].id
+    Promise.all([
+      api.get(`submissions/${this.props.examID}/${submissionID}?${
+        [
+          `problem_id=${problemID}`,
+          ...this.getFilterArguments()
+        ].join('&')
+      }`),
+      api.get(`problems/${problemID}`)
+    ]).then(values => {
+      const submission = values[0]
+      const problem = values[1]
+      this.setState({
+        submission: submission,
+        problem: problem,
+        matchingResults: submission.meta.filter_matches
+      }, () => {
+        this.props.history.replace(this.getURL(submission.id, problem.id))
       })
-    }
+    }).catch(err => {
+      if (err.status === 404) {
+        this.setState({
+          submission: null,
+          problem: null
+        })
+      }
+    })
   }
 
   /**
@@ -164,11 +197,11 @@ class Grade extends React.Component {
    * @param prevState - previous state
    */
   componentDidUpdate = (prevProps, prevState) => {
-    const problemID = this.state.problem && String(this.state.problem.id)
-    const submissionID = this.state.submission && String(this.state.submission.id)
+    const hasProblem = this.state.problem && this.state.problem.id > 0
+    const hasSubmission = this.state.submission && this.state.submission.id > 0
     if ((prevProps.examID !== this.props.examID && this.props.examID !== this.state.examID) ||
-      (prevProps.problemID !== this.props.problemID && (!problemID || this.props.problemID !== problemID)) ||
-      (prevProps.submissionID !== this.props.submissionID && (!submissionID || this.props.submissionID !== submissionID))) {
+      (prevProps.problemID !== this.props.problemID && (!hasProblem || this.props.problemID !== this.state.problem.id)) ||
+      (prevProps.submissionID !== this.props.submissionID && (!hasSubmission || this.props.submissionID !== this.state.submission.id))) {
       // The URL has changed and at least one of exam metadata, problem or submission does not match the URL
       // or the URL has changed and submission or problem is not defined
       this.updateFromUrl()
@@ -187,7 +220,7 @@ class Grade extends React.Component {
    * @param direction either 'prev', 'next', 'first' or 'last'
    */
   navigate = async (direction) => {
-    const fb = (await api.get(`feedback/${this.state.problem.id}`)).map(fb => fb.id)
+    const fb = this.state.problem.feedback.map(fb => fb.id)
 
     this.setState({
       feedbackFilters: Object.entries(this.state.feedbackFilters).filter(
@@ -267,7 +300,7 @@ class Grade extends React.Component {
   }
 
   /**
-   * Updates the metadata for the current exam. It then calls syncSubmissionWithUrl to update the submission and problem in the state according to the URL.
+   * Updates the metadata for the current exam. It then calls syncSubmission to update the submission and problem in the state according to the URL.
    * In case of unwanted behaviour, sets the submission to null for displaying error component.
    */
   updateFromUrl = () => {
@@ -278,7 +311,7 @@ class Grade extends React.Component {
         problems: metadata.problems,
         examID: this.props.examID,
         gradeAnonymous: metadata.gradeAnonymous
-      }, () => this.syncSubmissionWithUrl())
+      }, this.syncSubmission)
       // eslint-disable-next-line handle-callback-err
     }).catch(err => {
       this.setState({
@@ -509,7 +542,7 @@ class Grade extends React.Component {
                     toggleApprove={this.toggleApprove}
                     feedbackFilters={this.state.feedbackFilters}
                     applyFilter={this.applyFilter}
-                    updateFeedback={this.updateFromUrl}
+                    updateFeedback={this.syncSubmission}
                   />
                 </nav>
               </div>
@@ -548,36 +581,13 @@ class Grade extends React.Component {
                       </span>
                     </div>
                   </div>
-
-                  <div className='column' style={{
-                    display: 'grid',
-                    gridTemplateColumns: '1fr max-content',
-                    gap: '0.5em',
-                    justifyItems: 'end',
-                    height: 'max-content',
-                    alignItems: 'center'
-                  }}>
-                    {this.state.matchingResults} {this.state.hasFilters ? 'matching ' : ''}{this.state.matchingResults === 1 ? 'solution' : 'solutions'}
-                    <button
-                      className='button is-danger'
-                      onClick={this.clearFilters}
-                      disabled={!this.state.hasFilters}
-                    >
-                      <span className='icon is-medium'>
-                        <i
-                          className='fa fa-lg fa-filter'
-                          style={{transform: 'translateX(-17%)'}}
-                        />
-                        <span
-                          className='icon is-small'
-                          style={{position: 'absolute', right: '12%', bottom: 0}}
-                        >
-                          <i className='fa fa-times' />
-                        </span>
-                      </span>
-                    </button>
-                  </div>
+                  <FiltersInfo
+                    hasFilters={this.state.hasFilters}
+                    matchingResults={this.state.matchingResults}
+                    clearFilters={this.clearFilters}
+                  />
                 </div>
+
                 <ProgressBar done={problem.n_graded} total={submissions.length} />
 
                 {multiple

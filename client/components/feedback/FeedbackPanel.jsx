@@ -140,7 +140,7 @@ class FeedbackPanel extends React.Component {
     return (
       <React.Fragment>
         {this.props.grading &&
-          <div className='panel-heading level' style={{marginBottom: 0 + 'px'}}>
+          <div className='panel-heading level' style={{marginBottom: '0px'}}>
             <div className='level-left'>
               {this.props.solution.feedback.length !== 0 && <p>Total:&nbsp;<b>{totalScore}</b></p>}
             </div>
@@ -166,7 +166,7 @@ class FeedbackPanel extends React.Component {
               submissionID={this.props.submissionID} selected={selectedFeedbackId === feedback.id || feedback.highlight}
               showIndex={this.props.showTooltips}
               index={index + 1}
-              filterMode={this.props.feedbackFilters[feedback.id] || 'no_filter'}
+              filterMode={this.props.grading ? this.props.feedbackFilters[feedback.id] || 'no_filter' : 'no_filter'}
               applyFilter={(e, newFilterMode) => this.props.applyFilter(e, feedback.id, newFilterMode)}
             />
             : <FeedbackBlockEdit key={feedback.id} feedback={feedback} problemID={this.state.problemID}

@@ -405,7 +405,6 @@ def design_exam(app, client, layout, pages, students, grade, solve, multiple_cop
         # Download PDFs
         generated = client.get(
             f'api/exams/{exam_id}/generated_pdfs?copies_start=1&copies_end={sum(copies_per_student)}&type=pdf')
-        print(generated, generated.data)
         # Upload submissions
         with NamedTemporaryFile(mode='w+b') as submission_pdf:
             submission_pdf.write(generated.data)

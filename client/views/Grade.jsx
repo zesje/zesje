@@ -583,6 +583,8 @@ class Grade extends React.Component {
                     feedbackFilters={this.state.feedbackFilters}
                     applyFilter={this.applyFilter}
                     updateFeedback={this.syncSubmission}
+                    addIndex={this.addIndex}
+                    findIndex={this.findIndex}
                   />
                 </nav>
               </div>

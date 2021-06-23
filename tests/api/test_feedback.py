@@ -11,7 +11,6 @@ def add_test_data(app):
     db.session.add(exam1)
 
     problem1 = Problem(id=1, name='Problem 1', exam_id=1)
-
     db.session.add(problem1)
 
     problem_widget_1 = ProblemWidget(id=1, name='problem widget', problem_id=1, page=2,

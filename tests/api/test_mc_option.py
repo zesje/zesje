@@ -62,7 +62,6 @@ def monkeypatch_write_finalized_exam(monkeypatch):
     monkeypatch.setattr(zesje.api.exams, '_exam_generate_data', mock_exam_generate_data)
     monkeypatch.setattr(zesje.api.exams, 'write_finalized_exam', mock_write_finalized_exam)
 
-
 # Actual tests
 
 

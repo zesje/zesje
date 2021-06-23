@@ -158,15 +158,39 @@ class FeedbackPanel extends React.Component {
     findIndex = (feedback, index) => {
       if (feedback.index === index) {
         return feedback
-      } else {
-        for (let i = 0; i < feedback.children.length; i++) {
-          let fb = this.findIndex(feedback.children[i], index)
-          if (fb !== null) {
-            return fb
-          }
+      }
+      for (let i = 0; i < feedback.children.length; i++) {
+        let fb = this.findIndex(feedback.children[i], index)
+        if (fb !== null) {
+          return fb
         }
       }
       return null
+    }
+
+    getFeedbackElement = (feedback, index, feedbackPanel) => {
+      let indexed = this.addIndex(this.props.problem.root)
+      const selectedFeedbackId = feedbackPanel.state.selectedFeedbackIndex !== null &&
+      this.findIndex(indexed, this.state.selectedFeedbackIndex).id
+      const blockURI = feedbackPanel.props.examID + '/' + feedbackPanel.props.submissionID + '/' + feedbackPanel.props.problem.id
+      return feedback.id !== feedbackPanel.state.feedbackToEditId
+        ? <FeedbackBlock key={feedback.id} uri={blockURI} graderID={feedbackPanel.props.graderID}
+          feedback={feedback}
+          checked={feedbackPanel.props.grading && feedbackPanel.props.solution.feedback.includes(feedback.id)}
+          editFeedback={() => this.editFeedback(feedback.id)} toggleOption={feedbackPanel.props.toggleOption}
+          ref={(selectedFeedbackId === feedback.id) ? feedbackPanel.feedbackBlock : null}
+          grading={feedbackPanel.props.grading}
+          submissionID={feedbackPanel.props.submissionID}
+          selected={selectedFeedbackId === feedback.id || feedback.highlight}
+          showIndex={feedbackPanel.props.showTooltips}
+          index={index}
+          filterMode={feedbackPanel.props.feedbackFilters[feedback.id] || 'no_filter'}
+          applyFilter={(e, newFilterMode) => feedbackPanel.props.applyFilter(e, feedback.id, newFilterMode)}
+          children={feedback.children}
+          feedbackPanel={feedbackPanel}
+        />
+        : <FeedbackBlockEdit key={feedback.id} feedback={feedback} problemID={feedbackPanel.state.problemID}
+          goBack={feedbackPanel.backToFeedback} updateFeedback={feedbackPanel.props.updateFeedback} children={feedback.children} feedbackPanel={feedbackPanel} />
     }
 
     render () {
@@ -181,7 +205,7 @@ class FeedbackPanel extends React.Component {
       return (
         <React.Fragment>
           {this.props.grading &&
-          <div className='panel-heading level' style={{marginBottom: 0 + 'px'}}>
+          <div className='panel-heading level' style={{marginBottom: 0}}>
             <div className='level-left'>
               {this.props.solution.feedback.length !== 0 && <p>Total:&nbsp;<b>{totalScore}</b></p>}
             </div>
@@ -247,45 +271,6 @@ class FeedbackPanel extends React.Component {
           }
         </React.Fragment>
       )
-    }
-    getFeedbackElement (feedback, index, feedbackPanel) {
-      let indexed = this.addIndex(this.props.problem.root)
-      const selectedFeedbackId = feedbackPanel.state.selectedFeedbackIndex !== null &&
-      this.findIndex(indexed, this.state.selectedFeedbackIndex).id
-      const blockURI = feedbackPanel.props.examID + '/' + feedbackPanel.props.submissionID + '/' + feedbackPanel.props.problem.id
-      return feedback.id !== feedbackPanel.state.feedbackToEditId
-        ? <FeedbackBlock key={feedback.id} uri={blockURI} graderID={feedbackPanel.props.graderID}
-          feedback={feedback}
-          checked={feedbackPanel.props.grading && feedbackPanel.props.solution.feedback.includes(feedback.id)}
-          editFeedback={() => this.editFeedback(feedback.id)} toggleOption={feedbackPanel.props.toggleOption}
-          ref={(selectedFeedbackId === feedback.id) ? feedbackPanel.feedbackBlock : null}
-          grading={feedbackPanel.props.grading}
-          submissionID={feedbackPanel.props.submissionID}
-          selected={selectedFeedbackId === feedback.id || feedback.highlight}
-          showIndex={feedbackPanel.props.showTooltips}
-          index={index}
-          filterMode={feedbackPanel.props.feedbackFilters[feedback.id] || 'no_filter'}
-          applyFilter={(e, newFilterMode) => feedbackPanel.props.applyFilter(e, feedback.id, newFilterMode)}
-          children={feedback.children}
-          feedbackPanel={feedbackPanel}
-        />
-        : <FeedbackBlockEdit key={feedback.id} feedback={feedback} problemID={feedbackPanel.state.problemID}
-          goBack={feedbackPanel.backToFeedback} updateFeedback={feedbackPanel.props.updateFeedback} children={feedback.children} feedbackPanel={feedbackPanel} />
-    }
-
-    sort (feedback, depth, treeStructure) {
-      let fbdepth = {
-        'feedback': feedback,
-        'depth': depth
-      }
-
-      treeStructure.unshift(fbdepth)
-
-      for (var id of feedback.children) { // TODO
-        const child = this.props.problem.feedback.filter(fb => fb.id === id)[0]
-        this.sort(child, depth + 1, treeStructure)
-      }
-      return treeStructure
     }
 }
 export default withShortcuts(FeedbackPanel)

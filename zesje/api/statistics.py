@@ -127,7 +127,7 @@ class Statistics(Resource):
                     'description': fb.description,
                     'score': fb.score,
                     'used': len(fb.solutions)
-                } for fb in p.feedback_options]  # Sorted by fb.id
+                } for fb in p.feedback_options if fb.parent_id is not None]  # Sorted by fb.id
             }
 
             # add the problem score to the total

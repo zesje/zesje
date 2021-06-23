@@ -370,12 +370,11 @@ class Grade extends React.Component {
   findIndex = (feedback, index) => {
     if (feedback.index === index) {
       return feedback
-    } else {
-      for (let i = 0; i < feedback.children.length; i++) {
-        let fb = this.findIndex(feedback.children[i], index)
-        if (fb !== null) {
-          return fb
-        }
+    }
+    for (let i = 0; i < feedback.children.length; i++) {
+      let fb = this.findIndex(feedback.children[i], index)
+      if (fb !== null) {
+        return fb
       }
     }
     return null
@@ -386,8 +385,8 @@ class Grade extends React.Component {
    * @param index the index of the feedback option.
    */
   toggleFeedbackOptionIndex = (index) => {
-    let root = this.addIndex(this.state.problem.root)
-    let fb = this.findIndex(root, index)
+    const root = this.addIndex(this.state.problem.root)
+    const fb = this.findIndex(root, index)
     if (fb.parent === null) {
       return null
     }

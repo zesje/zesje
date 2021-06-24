@@ -135,10 +135,12 @@ class EditPanel extends React.Component {
     }
     return (
       <React.Fragment>
-        <div>
+        <div className={this.props.parent != null ? 'panel-block attach-bottom' : ''}>
           {this.props.parent != null
-            ? this.props.parent.parent === null ? <div> Add on top-level </div> : <div>Adds to parent: {this.props.parent.name}</div>
+            ? this.props.parent.parent === null ? <div>Add on top-level</div> : <div>Adds to parent: {this.props.parent.name}</div>
             : null}
+        </div>
+        <div className={this.props.parent != null ? 'panel-block attach-bottom' : ''}>
           <div className='field-body'>
             <div className='field no-grow'>
               <p className='label'>Score</p>
@@ -163,7 +165,7 @@ class EditPanel extends React.Component {
             </div>
           </div>
         </div>
-        <div>
+        <div className={this.props.parent != null ? 'panel-block attach-bottom' : ''}>
           <div className='field is-fullwidth'>
             <label className='label'>Description</label>
             <div className='control has-icons-left'>
@@ -180,8 +182,7 @@ class EditPanel extends React.Component {
             </div>
           </div>
         </div>
-
-        <div>
+        <div className={this.props.parent != null ? 'panel-block' : ''}>
           <div className={'flex-space-between is-fullwidth'}>
             <div className={'buttons is-marginless'}>
               <SaveButton onClick={this.saveFeedback} exists={this.props.feedback}

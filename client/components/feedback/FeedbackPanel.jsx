@@ -208,7 +208,7 @@ class FeedbackPanel extends React.Component {
               </button>
               <div className='dropdown is-hoverable is-fullwidth'>
                 <div className='dropdown-trigger' />
-                <button className='button is-link is-outlined is-fullwidth aria-controls="dropdown-menu3" onClick={() => this.editFeedback(-1)}'>
+                <button className='button is-link is-outlined is-fullwidth aria-controls="dropdown-menu3"'>
                   <span className='icon is-small'>
                     <i className='fa fa-plus' />
                   </span>

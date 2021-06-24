@@ -350,7 +350,7 @@ def design_exam(app, client, layout, pages, students, grade, solve, multiple_cop
 
         if is_mcq:
             result = client.get(f'api/problems/{problem_id}')
-            root = json.loads(result.data)['feedback'][0]
+            root = json.loads(result.data)['root']
             parent = root['id']
             fops = []
             for option in problem['mc_options']:
@@ -367,7 +367,7 @@ def design_exam(app, client, layout, pages, students, grade, solve, multiple_cop
                        data={'id': correct[0], 'name': correct[1], 'score': 1, 'parent': parent})
         else:
             result = client.get(f'api/problems/{problem_id}')
-            root = json.loads(result.data)['feedback'][0]
+            root = json.loads(result.data)['root']
             parent = root['id']
             fb_ids = []
             # Add random top-level FOs

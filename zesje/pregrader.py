@@ -6,7 +6,7 @@ from flask import current_app
 from reportlab.lib.units import inch, mm
 
 from .blanks import reference_image
-from .database import db, Grader, FeedbackOption, GradingPolicy
+from .database import db, Grader, FeedbackOption, GradingPolicy, Problem
 from .images import guess_dpi, get_box, widget_area, covers, is_misaligned
 
 mm_per_inch = inch / mm
@@ -118,7 +118,9 @@ def grade_as_blank(sol):
                                            FeedbackOption.text == BLANK_FEEDBACK_NAME).first()
 
     if not feedback:
-        feedback = FeedbackOption(problem_id=sol.problem.id, text=BLANK_FEEDBACK_NAME, score=0)
+        problem = Problem.query.filter(Problem.id == FeedbackOption.problem_id).first()
+        feedback = FeedbackOption(problem_id=sol.problem.id,
+                                  text=BLANK_FEEDBACK_NAME, score=0, parent_id=problem.root_feedback.id)
         db.session.add(feedback)
 
     sol.feedback.append(feedback)

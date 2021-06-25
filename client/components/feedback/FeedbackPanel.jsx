@@ -123,6 +123,41 @@ class FeedbackPanel extends React.Component {
   }
 
   /**
+  * Adds indexes based on pre-order sorting.
+  * @param root the root FO of the problem
+  * @returns {*} the root FO now with index
+  */
+  addIndex = (root) => {
+    let index = 0
+    const stack = [root]
+    while (stack.length > 0) {
+      const current = stack.shift()
+      current.index = index++
+      stack.unshift(...current.children)
+    }
+    return root
+  }
+
+  /**
+  * Finds the FO that matches the given index (used for shortcuts)
+  * @param feedback the feedback to check if it matches.
+  * @param index the index to match
+  * @returns {null|*} return null if no match, or else the matching FO
+  */
+  findIndex = (feedback, index) => {
+    if (feedback.index === index) {
+      return feedback
+    }
+    for (let i = 0; i < feedback.children.length; i++) {
+      let fb = this.findIndex(feedback.children[i], index)
+      if (fb !== null) {
+        return fb
+      }
+    }
+    return null
+  }
+
+  /**
    * Blurs the remark box when pressing escape or enter (shift+enter preserves newlines)
    * @param event the event
    */
@@ -134,9 +169,9 @@ class FeedbackPanel extends React.Component {
   }
 
     getFeedbackElement = (feedback, index, feedbackPanel) => {
-      let indexed = this.props.addIndex(this.props.problem.root)
+      let indexed = this.addIndex(this.props.problem.root)
       const selectedFeedbackId = feedbackPanel.state.selectedFeedbackIndex !== null &&
-      this.props.findIndex(indexed, this.state.selectedFeedbackIndex).id
+      this.findIndex(indexed, this.state.selectedFeedbackIndex).id
       const blockURI = feedbackPanel.props.examID + '/' + feedbackPanel.props.submissionID + '/' + feedbackPanel.props.problem.id
       return feedback.id !== feedbackPanel.state.feedbackToEditId
         ? <FeedbackBlock key={feedback.id} uri={blockURI} graderID={feedbackPanel.props.graderID}
@@ -149,7 +184,7 @@ class FeedbackPanel extends React.Component {
           selected={selectedFeedbackId === feedback.id || feedback.highlight}
           showIndex={feedbackPanel.props.showTooltips}
           index={index}
-          filterMode={feedbackPanel.props.feedbackFilters[feedback.id] || 'no_filter'}
+          filterMode={this.props.grading ? this.props.feedbackFilters[feedback.id] || 'no_filter' : 'no_filter'}
           applyFilter={(e, newFilterMode) => feedbackPanel.props.applyFilter(e, feedback.id, newFilterMode)}
           children={feedback.children}
           feedbackPanel={feedbackPanel}
@@ -166,7 +201,7 @@ class FeedbackPanel extends React.Component {
           if (probIndex >= 0) totalScore += this.props.problem.feedback[probIndex].score
         }
       }
-      let root = this.props.addIndex(this.props.problem.root)
+      let root = this.addIndex(this.props.problem.root)
       return (
         <React.Fragment>
           {this.props.grading &&

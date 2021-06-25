@@ -86,6 +86,7 @@ class ExamTemplated extends React.Component {
             name: problem.name,
             n_graded: problem.n_graded,
             grading_policy: problem.grading_policy,
+            root: problem.root,
             feedback: problem.feedback || [],
             mc_options: problem.mc_options.map((option) => {
               // the database stores the positions of the checkboxes but the front end uses the top-left position
@@ -155,7 +156,8 @@ class ExamTemplated extends React.Component {
             ...prevState.widgets[problemWidgetId],
             problem: {
               ...prevState.widgets[problemWidgetId].problem,
-              feedback: problem.feedback
+              feedback: problem.feedback,
+              root: problem.root
             }
           }
         }

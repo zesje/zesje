@@ -198,9 +198,9 @@ If you use Atom, install the [linter-flake8](https://atom.io/packages/linter-fla
 #### Javascript
 Adhere to [StandardJS](https://standardjs.com/).
 
-If you use Visual Studio Code, install the [vscode-standardjs](https://marketplace.visualstudio.com/items?itemName=chenxsan.vscode-standardjs) plugin.
+If you use Visual Studio Code, install the [ESLint](https://marketplace.visualstudio.com/items?itemName=dbaeumer.vscode-eslint) plugin.
 
-If you use Atom, install the [linter-js-standard-engine](https://atom.io/packages/linter-js-standard-engine) plugin.
+If you use Atom, install the [linter-eslint](https://atom.io/packages/linter-eslint) plugin.
 
 ### Adding dependencies
 

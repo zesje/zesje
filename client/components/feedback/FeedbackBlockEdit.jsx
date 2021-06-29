@@ -137,7 +137,7 @@ class EditPanel extends React.Component {
       <React.Fragment>
         <div className={this.props.parent != null ? 'panel-block attach-bottom' : ''}>
           {this.props.parent != null
-            ? this.props.parent.parent === null ? <div>Add on top-level</div> : <div>Adds to parent: {this.props.parent.name}</div>
+            ? this.props.parent.parent === null ? <div>Add on top-level</div> : <div><b>Parent feedback:</b> {this.props.parent.name}</div>
             : null}
         </div>
         <div className={this.props.parent != null ? 'panel-block attach-bottom' : ''}>

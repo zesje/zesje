@@ -149,6 +149,10 @@ def test_delete_fo(test_client, add_test_data):
 
     assert len(data_get['children']) == 1
 
+    parent_id = data_get['id']
+    result = test_client.delete(f'/api/feedback/{problem_id}/{parent_id}')
+    assert result.status_code == 403
+
 
 def test_delete_parent_of_fo(test_client, add_test_data):
     """Delete a FeedbackOption with 1 level of children, check if children also get deleted"""

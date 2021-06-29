@@ -205,22 +205,22 @@ class FeedbackPanel extends React.Component {
       return (
         <React.Fragment>
           {this.props.grading &&
-          <div className='panel-heading level' style={{marginBottom: 0}}>
-            <div className='level-left'>
-              {this.props.solution.feedback.length !== 0 && <p>Total:&nbsp;<b>{totalScore}</b></p>}
-            </div>
-            <div className='level-right'>
-              <div className={this.props.showTooltips ? ' tooltip is-tooltip-active is-tooltip-top' : ''}
+            <div className='panel-heading level' style={{marginBottom: 0}}>
+              <div className='level-left'>
+                {this.props.solution.feedback.length !== 0 && <p>Total:&nbsp;<b>{totalScore}</b></p>}
+              </div>
+              <div className='level-right'>
+                <div className={this.props.showTooltips ? ' tooltip is-tooltip-active is-tooltip-top' : ''}
                 data-tooltip='approve/set aside feedback: a'>
-                <button title={this.props.solution.feedback.length === 0 ? 'At least one feedback option must be selected' : ''}
-                  className='button is-info'
-                  disabled={this.props.solution.feedback.length === 0}
-                  onClick={this.props.toggleApprove}>
-                  {this.props.solution.graded_by === null ? 'Approve' : 'Set aside'}
-                </button>
+                  <button title={this.props.solution.feedback.length === 0 ? 'At least one feedback option must be selected' : ''}
+                    className='button is-info'
+                    disabled={this.props.solution.feedback.length === 0}
+                    onClick={this.props.toggleApprove}>
+                    {this.props.solution.graded_by === null ? 'Approve' : 'Set aside'}
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
           }
           <div className='panel-block' style={{display: 'block'}}>
             <div className='menu'>
@@ -241,19 +241,18 @@ class FeedbackPanel extends React.Component {
                 </span>
                 <span>option</span>
               </button>
-              <div className='dropdown is-hoverable is-fullwidth'>
+              <div className='dropdown is-hoverable is-right is-up'>
                 <div className='dropdown-trigger' />
-                <button className='button is-link is-outlined is-fullwidth aria-controls="dropdown-menu3"'>
-                  <span className='icon is-small'>
-                    <i className='fa fa-plus' />
-                  </span>
-                  <span>option under:</span>
+                <button className='button is-link is-outlined' aria-controls="dropdown-menu-FO-parent">
                   <span className='icon is-small'>
                     <i className='fa fa-chevron-down' />
                   </span>
                 </button>
-                <div className='dropdown-menu' id='dropdown-menu3' role='menu'>
-                  <div className='dropdown-content is-fullwidth'>
+                <div className='dropdown-menu' id='dropdown-menu-FO-parent' role='menu'>
+                  <div className='dropdown-content'>
+                    <div className='dropdown-item'>
+                      <p><b>Parent feedback:</b></p>
+                    </div>
                     {this.props.problem.feedback.filter(feedback => feedback.parent != null).map((feedback, index) =>
                       <a key={index} className='dropdown-item' onClick={() => this.addParent(-1, feedback)}>
                         {feedback.name}
@@ -265,9 +264,9 @@ class FeedbackPanel extends React.Component {
             </div>
           }
           {this.props.grading &&
-          <div className='panel-block'>
-            <textarea className='textarea' rows='2' placeholder='Remark' value={this.state.remark} onBlur={this.saveRemark} onChange={this.changeRemark} onKeyDown={this.keyMap} />
-          </div>
+            <div className='panel-block'>
+              <textarea className='textarea' rows='2' placeholder='Remark' value={this.state.remark} onBlur={this.saveRemark} onChange={this.changeRemark} onKeyDown={this.keyMap} />
+            </div>
           }
         </React.Fragment>
       )

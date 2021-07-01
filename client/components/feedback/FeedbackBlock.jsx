@@ -1,6 +1,7 @@
 import React from 'react'
 
 import Tooltip from '../Tooltip.jsx'
+import {FILTER_COLORS, FILTER_ICONS, FeedbackItem} from './FeedbackUtils.jsx'
 
 class FeedbackBlock extends React.Component {
   state = {
@@ -9,18 +10,6 @@ class FeedbackBlock extends React.Component {
       edit: false,
       filter: false
     }
-  }
-
-  filterIcons = {
-    'no_filter': 'fa-filter',
-    'required': 'fa-plus',
-    'excluded': 'fa-minus'
-  }
-
-  filterColors = {
-    'no_filter': '',
-    'required': 'is-success',
-    'excluded': 'is-danger'
   }
 
   leave = (component) => {
@@ -47,12 +36,11 @@ class FeedbackBlock extends React.Component {
   }
 
   render () {
-    const children = this.props.children.map(
-      (child) => this.props.feedbackPanel.getFeedbackElement(child, child.index, this.props.feedbackPanel)
-    )
-    const shortcut = (this.props.index < 11 ? '' : 'shift + ') + this.props.index % 10
+    const children = this.props.children.map((child) => <FeedbackItem {...this.props.parentProps} feedback={child} />)
+    const shortcut = (this.props.feedback.index < 11 ? '' : 'shift + ') + this.props.feedback.index % 10
+
     return (
-      <li>
+      <li key={this.props.feedback.id}>
         <a
           className='panel-block feedback-item'
           onClick={this.props.grading ? this.toggle : this.props.editFeedback}
@@ -63,7 +51,7 @@ class FeedbackBlock extends React.Component {
             style={{ width: '1.5rem' }}
             className={'tag' +
               (this.props.checked ? ' is-link' : '') +
-              ((this.props.showIndex && this.props.index <= 20) ? ' tooltip is-tooltip-active is-tooltip-left' : '')}
+              ((this.props.showIndex && this.props.feedback.index <= 20) ? ' tooltip is-tooltip-active is-tooltip-left' : '')}
             data-tooltip={shortcut}>
             {this.props.feedback.score}
           </span>
@@ -81,31 +69,31 @@ class FeedbackBlock extends React.Component {
             <i className='fa fa-pencil' />
           </button>
           {this.props.grading &&
-          <div
-            className={`popover is-popover-right button is-pulled-right is-small is-light
-            ${(this.props.filterMode !== 'no_filter' ? 'is-inverted' : (this.state.hover['block'] ? '' : 'is-invisible'))}
-            ${this.filterColors[this.props.filterMode]}`}
-            onMouseEnter={() => this.enter('filter')} onMouseLeave={() => this.leave('filter')}
-          >
-            <i className={`fa ${this.filterIcons[this.props.filterMode]}`} />
             <div
-              style={{display: this.state.hover['filter'] ? '' : 'none', position: 'absolute', left: 0, top: 0, width: '4em', height: '4em', transform: 'translateY(-25%)'}}
-              onClick={e => this.props.applyFilter(e, 'no_filter')}
-            />
-            <div className='popover-content' style={{display: 'grid', gridAutoFlow: 'row', gap: '1em'}}>
-              <button
-                className={`button popover-trigger is-inverted fa ${this.filterIcons.required} ${this.filterColors.required}`}
-                onClick={e => this.props.applyFilter(e, 'required')}
+              className={`popover is-popover-right button is-pulled-right is-small is-light
+            ${(this.props.filterMode !== 'no_filter' ? 'is-inverted' : (this.state.hover['block'] ? '' : 'is-invisible'))}
+            ${FILTER_COLORS[this.props.filterMode]}`}
+              onMouseEnter={() => this.enter('filter')} onMouseLeave={() => this.leave('filter')}
+            >
+              <i className={`fa ${FILTER_ICONS[this.props.filterMode]}`} />
+              <div
+                style={{display: this.state.hover['filter'] ? '' : 'none', position: 'absolute', left: 0, top: 0, width: '4em', height: '4em', transform: 'translateY(-25%)'}}
+                onClick={e => this.props.applyFilter(e, 'no_filter')}
               />
-              <button
-                className={`button popover-trigger is-inverted fa ${this.filterIcons.excluded} ${this.filterColors.excluded}`}
-                onClick={(e) => this.props.applyFilter(e, 'excluded')}
-              />
+              <div className='popover-content' style={{display: 'grid', gridAutoFlow: 'row', gap: '1em'}}>
+                <button
+                  className={`button popover-trigger is-inverted fa ${FILTER_ICONS.required} ${FILTER_COLORS.required}`}
+                  onClick={e => this.props.applyFilter(e, 'required')}
+                />
+                <button
+                  className={`button popover-trigger is-inverted fa ${FILTER_ICONS.excluded} ${FILTER_COLORS.excluded}`}
+                  onClick={(e) => this.props.applyFilter(e, 'excluded')}
+                />
+              </div>
             </div>
-          </div>
           }
         </a>
-        {children.length > 0 ? <ul className='menu-list'> {children} </ul> : null}
+        {children.length > 0 ? <ul className='menu-list' key={'children-' + this.props.feedback.id}> {children} </ul> : null}
       </li>
     )
   }

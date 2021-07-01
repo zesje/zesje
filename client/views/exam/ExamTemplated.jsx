@@ -7,7 +7,7 @@ import GeneratedExamPreview from '../../components/GeneratedExamPreview.jsx'
 import PanelGenerate from '../../components/PanelGenerate.jsx'
 import PanelMCQ from '../../components/PanelMCQ.jsx'
 import ConfirmationModal from '../../components/ConfirmationModal.jsx'
-import FeedbackPanel from '../../components/feedback/FeedbackPanel.jsx'
+import FeedbackMenu from '../../components/feedback/FeedbackMenu.jsx'
 import Tooltip from '../../components/Tooltip.jsx'
 
 import ExamEditor from './ExamEditor.jsx'
@@ -59,9 +59,6 @@ class ExamTemplated extends React.Component {
   state = {
     examID: null,
     page: 0,
-    editActive: false,
-    feedbackToEdit: null,
-    problemIdToEditFeedbackOf: null,
     numPages: null,
     selectedWidgetId: null,
     changedWidgetId: null,
@@ -125,24 +122,12 @@ class ExamTemplated extends React.Component {
     // The onBlur event is not fired when the input field is being disabled
     if (prevState.selectedWidgetId !== this.state.selectedWidgetId) {
       this.saveProblemName()
-      this.setState({
-        editActive: false,
-        problemIdToEditFeedbackOf: false
-      })
     }
   }
 
   componentWillUnmount = () => {
     // This might try to save the name unnecessary, but better twice than never.
     this.saveProblemName()
-  }
-
-  editFeedback = (feedback) => {
-    this.setState({
-      editActive: true,
-      feedbackToEdit: feedback,
-      problemIdToEditFeedbackOf: this.state.selectedWidgetId
-    })
   }
 
   updateFeedback = (problemId) => {
@@ -303,8 +288,6 @@ class ExamTemplated extends React.Component {
               selectedWidgetId: null,
               changedWidgetId: null,
               deletingWidget: false,
-              editActive: false,
-              problemIdToEditFeedbackOf: null,
               widgets: update(prevState.widgets, {
                 $unset: [widgetId]
               })
@@ -697,45 +680,45 @@ class ExamTemplated extends React.Component {
                     formData.append('problem_id', props.problem.id)
                     formData.append('label', labels[index])
                     api.patch('mult-choice/' + option.id, formData)
-                      .then(() => {
-                        this.setState((prevState) => {
-                          return {
-                            widgets: update(prevState.widgets, {
-                              [selectedWidgetId]: {
-                                'problem': {
-                                  'mc_options': {
-                                    [index]: {
-                                      label: {
+                    .then(() => {
+                      this.setState((prevState) => {
+                        return {
+                          widgets: update(prevState.widgets, {
+                            [selectedWidgetId]: {
+                              'problem': {
+                                'mc_options': {
+                                  [index]: {
+                                    label: {
                                         $set: labels[index]
-                                      }
                                     }
                                   }
                                 }
                               }
-                            })
-                          }
-                        })
+                            }
+                          })
+                        }
                       })
-                      .catch(err => {
-                        console.log(err)
-                        err.json().then(res => {
-                          Notification.error('Could not update feedback' +
-                            (res.message ? ': ' + res.message : ''))
+                    })
+                    .catch(err => {
+                      console.log(err)
+                      err.json().then(res => {
+                        Notification.error('Could not update feedback' +
+                          (res.message ? ': ' + res.message : ''))
                           // update to try and get a consistent state
-                          this.props.updateExam()
-                        })
+                        this.props.updateExam()
                       })
+                    })
                   })
                 }}
               />) : null}
             {props.problem &&
               <React.Fragment>
                 <div className='panel-block'>
-                  {!this.state.editActive && <label className='label'>Feedback options</label>}
+                  <label className='label'>Feedback options</label>
                 </div>
-                <FeedbackPanel examID={this.props.examID} problem={props.problem}
-                  editFeedback={this.editFeedback} showTooltips={this.state.showTooltips}
-                  grading={false} updateFeedback={this.updateFeedback} />
+                <FeedbackMenu
+                  problem={props.problem}
+                  updateFeedback={this.updateFeedback} />
               </React.Fragment>
             }
           </React.Fragment>

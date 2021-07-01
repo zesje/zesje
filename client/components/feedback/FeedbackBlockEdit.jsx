@@ -5,6 +5,8 @@ import ColorInput from '../ColorInput.jsx'
 import * as api from '../../api.jsx'
 import Notification from 'react-bulma-notification'
 
+import {FeedbackItem} from './FeedbackUtils.jsx'
+
 const CancelButton = (props) => (
   <button className='button is-light' onClick={props.onClick}>
     <span className='icon is-small'>
@@ -84,7 +86,7 @@ class EditPanel extends React.Component {
       name: this.state.name,
       description: this.state.description,
       score: this.state.score,
-      parent: this.props.parent != null ? this.props.parent.id : null
+      parent: this.props.parent !== null ? this.props.parent.id : null
     }
 
     if (this.state.id) {
@@ -103,7 +105,8 @@ class EditPanel extends React.Component {
             id: null,
             name: '',
             description: '',
-            score: ''
+            score: '',
+            parent: null
           })
         })
     }
@@ -129,18 +132,18 @@ class EditPanel extends React.Component {
   }
 
   render () {
-    let children = null
-    if (this.props.feedback !== null) {
-      children = this.props.children.map((child, index) => this.props.feedbackPanel.getFeedbackElement(child, child.index, this.props.feedbackPanel))
-    }
+    const children = this.props.feedback !== null
+      ? this.props.children.map((child) => <FeedbackItem {...this.props.parentProps} feedback={child} /> )
+      : null
+
     return (
       <React.Fragment>
-        <div className={this.props.parent != null ? 'panel-block attach-bottom' : ''}>
-          {this.props.parent != null
-            ? this.props.parent.parent === null ? <div>Add on top-level</div> : <div><b>Parent feedback:</b> {this.props.parent.name}</div>
-            : null}
-        </div>
-        <div className={this.props.parent != null ? 'panel-block attach-bottom' : ''}>
+        {this.props.parent && <div className='panel-block attach-bottom'>
+          {this.props.parent.parent === null
+            ? <div>Add on top-level</div>
+            : <div><b>Parent feedback:</b> {this.props.parent.name}</div>}
+        </div>}
+        <div className={this.props.parent !== null ? 'panel-block attach-bottom' : ''}>
           <div className='field-body'>
             <div className='field no-grow'>
               <p className='label'>Score</p>
@@ -165,7 +168,7 @@ class EditPanel extends React.Component {
             </div>
           </div>
         </div>
-        <div className={this.props.parent != null ? 'panel-block attach-bottom' : ''}>
+        <div className={this.props.parent !== null ? 'panel-block attach-bottom' : ''}>
           <div className='field is-fullwidth'>
             <label className='label'>Description</label>
             <div className='control has-icons-left'>
@@ -182,7 +185,7 @@ class EditPanel extends React.Component {
             </div>
           </div>
         </div>
-        <div className={this.props.parent != null ? 'panel-block' : ''}>
+        <div className={this.props.parent !== null ? 'panel-block' : ''}>
           <div className={'flex-space-between is-fullwidth'}>
             <div className={'buttons is-marginless'}>
               <SaveButton onClick={this.saveFeedback} exists={this.props.feedback}
@@ -196,19 +199,20 @@ class EditPanel extends React.Component {
             contentText={this.props.feedback && (this.props.feedback.used || this.props.feedback.children != null)
               ? (this.props.feedback.children.length > 0 ? 'This feedback has ' + (this.props.feedback.children.length > 1 ? `${this.props.feedback.children.length} children` : ' 1 child') +
               ', that would also be deleted in the process. ' : '') +
-              (this.props.feedback.used ? 'This feedback option was assigned to ' +
-              (this.props.feedback.used > 1 ? `${this.props.feedback.used} solutions` : ' 1 solution') +
-              ' and it will be removed. This will affect the final grade assigned to each submission.'
+                (this.props.feedback.used ? 'This feedback option was assigned to ' +
+                  (this.props.feedback.used > 1 ? `${this.props.feedback.used} solutions` : ' 1 solution') +
+                  ' and it will be removed. This will affect the final grade assigned to each submission.'
                 : '')
               : 'This feedback option is not used and has no children, you can safely delete it.'
             }
-            color='is-danger' confirmText='Delete feedback'
+            color='is-danger'
+            confirmText='Delete feedback'
             active={this.state.deleting}
             onConfirm={this.deleteFeedback}
             onCancel={() => { this.setState({deleting: false}) }}
           />
         </div>
-        {this.props.feedback !== null && children.length > 0 ? <ul className='menu-list'> {children} </ul> : null}
+        {children && children.length > 0 ? <ul className='menu-list'> {children} </ul> : null}
       </React.Fragment>
     )
   }

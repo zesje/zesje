@@ -362,25 +362,6 @@ class Grade extends React.Component {
   }
 
   /**
-   * Finds the FO that matches the given index (used for shortcuts)
-   * @param feedback the feedback to check if it matches.
-   * @param index the index to match
-   * @returns {null|*} return null if no match, or else the matching FO
-   */
-  findIndex = (feedback, index) => {
-    if (feedback.index === index) {
-      return feedback
-    }
-    for (let i = 0; i < feedback.children.length; i++) {
-      let fb = this.findIndex(feedback.children[i], index)
-      if (fb !== null) {
-        return fb
-      }
-    }
-    return null
-  }
-
-  /**
    * Toggles a feedback option by it's index in the problems list of feedback.
    * @param index the index of the feedback option.
    */
@@ -445,22 +426,6 @@ class Grade extends React.Component {
   }
 
   /**
-   * Adds indexes based on pre-order sorting.
-   * @param root the root FO of the problem
-   * @returns {*} the root FO now with index
-   */
-  addIndex = (root) => {
-    let index = 0
-    const stack = [root]
-    while (stack.length > 0) {
-      const current = stack.shift()
-      current.index = index++
-      stack.unshift(...current.children)
-    }
-    return root
-  }
-
-  /**
    * Hashes the location of the current problems widget.
    * @param problem the problem to hash the widget location for.
    * @returns the hashed string value
@@ -495,7 +460,7 @@ class Grade extends React.Component {
     })
   }
 
-  applyFilter = (e, id, newFilterMode) => {
+  applyFeedbackFilter = (e, id, newFilterMode) => {
     e.stopPropagation()
     this.setState(oldState => {
       newFilterMode = oldState.feedbackFilters[id] === newFilterMode ? 'no_filter' : newFilterMode
@@ -581,10 +546,8 @@ class Grade extends React.Component {
                     toggleOption={this.toggleFeedbackOption}
                     toggleApprove={this.toggleApprove}
                     feedbackFilters={this.state.feedbackFilters}
-                    applyFilter={this.applyFilter}
+                    applyFilter={this.applyFeedbackFilter}
                     updateFeedback={this.syncSubmission}
-                    addIndex={this.addIndex}
-                    findIndex={this.findIndex}
                   />
                 </nav>
               </div>

@@ -264,7 +264,7 @@ class PanelEditUnstructured extends React.Component {
               </div>
               <FeedbackMenu
                 problem={props.problem}
-                updateFeedback={this.updateExam} />
+                updateFeedback={this.props.updateExam} />
 
               <div className='panel-block'>
                 <button

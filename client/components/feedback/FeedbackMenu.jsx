@@ -49,7 +49,9 @@ class FeedbackMenu extends React.Component {
       }
     }
 
-    return null
+    return {
+      indexed_root: indexFeedbackOptions(nextProps.problem.root)
+    }
   }
 
   /**

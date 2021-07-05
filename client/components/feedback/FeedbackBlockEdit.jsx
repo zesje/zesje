@@ -133,7 +133,9 @@ class EditPanel extends React.Component {
 
   render () {
     const children = this.props.feedback !== null
-      ? this.props.children.map((child) => <FeedbackItem {...this.props.parentProps} feedback={child} /> )
+      ? this.props.children.map(
+        (child) => <FeedbackItem {...this.props.parentProps} feedback={child} key={'child-edit-' + child.id} />
+      )
       : null
 
     return (

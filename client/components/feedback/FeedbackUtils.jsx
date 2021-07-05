@@ -53,6 +53,7 @@ const FeedbackItem = (props) => {
 
   return feedbackID !== props.feedbackToEditId
     ? <FeedbackBlock
+      key={'item-' + feedbackID}
       feedback={props.feedback}
       checked={props.grading && props.checkedFeedback.includes(feedbackID)}
       editFeedback={() => props.editFeedback(feedbackID, null)}
@@ -66,6 +67,7 @@ const FeedbackItem = (props) => {
       children={props.feedback.children}
       parentProps={props} />
     : <FeedbackBlockEdit
+      key={'item-' + feedbackID}
       feedback={props.feedback}
       problemID={props.problemID}
       goBack={() => props.editFeedback(0, null)}

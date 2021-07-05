@@ -92,7 +92,7 @@ class FeedbackMenu extends React.Component {
         <div className='panel-block' style={{display: 'block'}}>
           <div className='menu'>
             {this.state.indexed_root.children.map((fb) =>
-              <ul className='menu-list'>
+              <ul className='menu-list' key={'ul-' + fb.id}>
                 <FeedbackItem
                   feedback={fb}
                   selectedFeedbackId={this.state.selectedFeedback && this.state.selectedFeedback.id}
@@ -142,7 +142,9 @@ class FeedbackMenu extends React.Component {
                     <p><b>Parent feedback:</b></p>
                   </div>
                   {this.props.problem.feedback.filter(feedback => feedback.parent != null).map((feedback, index) =>
-                    <a key={index} className='dropdown-item' onClick={() => this.editFeedback(-1, feedback)}>
+                    <a key={'dropdown-parent-' + index}
+                      className='dropdown-item'
+                      onClick={() => this.editFeedback(-1, feedback)}>
                       {feedback.name}
                     </a>
                   )}

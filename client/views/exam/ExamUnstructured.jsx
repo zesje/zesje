@@ -1,7 +1,7 @@
 import React from 'react'
 import Notification from 'react-bulma-notification'
 
-import FeedbackPanel from '../../components/feedback/FeedbackPanel.jsx'
+import FeedbackMenu from '../../components/feedback/FeedbackMenu.jsx'
 import ConfirmationModal from '../../components/ConfirmationModal.jsx'
 import ExamUnstructuredMarkdown from './ExamUnstructuredRules.md'
 import PanelGradeAnonymous from './PanelGradeAnonymous.jsx'

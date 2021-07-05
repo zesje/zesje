@@ -204,7 +204,7 @@ class EditPanel extends React.Component {
                 (this.props.feedback.used ? 'This feedback option was assigned to ' +
                   (this.props.feedback.used > 1 ? `${this.props.feedback.used} solutions` : ' 1 solution') +
                   ' and it will be removed. This will affect the final grade assigned to each submission.'
-                : '')
+                  : '')
               : 'This feedback option is not used and has no children, you can safely delete it.'
             }
             color='is-danger'

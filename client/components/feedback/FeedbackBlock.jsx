@@ -36,11 +36,13 @@ class FeedbackBlock extends React.Component {
   }
 
   render () {
-    const children = this.props.children.map((child) => <FeedbackItem {...this.props.parentProps} feedback={child} />)
+    const children = this.props.children.map(
+      (child) => <FeedbackItem {...this.props.parentProps} feedback={child} key={'child-' + child.id} />
+    )
     const shortcut = (this.props.feedback.index < 11 ? '' : 'shift + ') + this.props.feedback.index % 10
 
     return (
-      <li key={this.props.feedback.id}>
+      <li>
         <a
           className='panel-block feedback-item'
           onClick={this.props.grading ? this.toggle : this.props.editFeedback}
@@ -93,7 +95,7 @@ class FeedbackBlock extends React.Component {
             </div>
           }
         </a>
-        {children.length > 0 ? <ul className='menu-list' key={'children-' + this.props.feedback.id}> {children} </ul> : null}
+        {children.length > 0 ? <ul className='menu-list'> {children} </ul> : null}
       </li>
     )
   }

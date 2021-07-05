@@ -1,9 +1,5 @@
 import React from 'react'
 
-import Notification from 'react-bulma-notification'
-
-import * as api from '../../api.jsx'
-
 import withShortcuts from '../ShortcutBinder.jsx'
 import FeedbackBlockEdit from './FeedbackBlockEdit.jsx'
 import { indexFeedbackOptions, findFeedbackByIndex, FeedbackItem } from './FeedbackUtils.jsx'
@@ -133,7 +129,7 @@ class FeedbackMenu extends React.Component {
             </button>
             <div className='dropdown is-hoverable is-right is-up'>
               <div className='dropdown-trigger' />
-              <button className='button is-link is-outlined' aria-controls="dropdown-menu-FO-parent">
+              <button className='button is-link is-outlined' aria-controls='dropdown-menu-FO-parent'>
                 <span className='icon is-small'>
                   <i className='fa fa-chevron-down' />
                 </span>

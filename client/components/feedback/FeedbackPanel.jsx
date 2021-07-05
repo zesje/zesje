@@ -16,7 +16,7 @@ class FeedbackPanel extends React.Component {
     // Have to keep submissionID and problemID in state,
     // to be able to decide when to derive remark from properties.
     submissionID: null,
-    problemID: null,
+    problemID: null
   }
 
   static getDerivedStateFromProps (nextProps, prevState) {
@@ -77,7 +77,7 @@ class FeedbackPanel extends React.Component {
             </div>
             <div className='level-right'>
               <div className={this.props.showTooltips ? ' tooltip is-tooltip-active is-tooltip-top' : ''}
-              data-tooltip='approve/set aside feedback: a'>
+                data-tooltip='approve/set aside feedback: a'>
                 <button title={this.props.solution.feedback.length === 0 ? 'At least one feedback option must be selected' : ''}
                   className='button is-info'
                   disabled={this.props.solution.feedback.length === 0}

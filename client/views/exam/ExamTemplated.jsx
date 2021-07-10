@@ -680,34 +680,34 @@ class ExamTemplated extends React.Component {
                     formData.append('problem_id', props.problem.id)
                     formData.append('label', labels[index])
                     api.patch('mult-choice/' + option.id, formData)
-                      .then(() => {
-                        this.setState((prevState) => {
-                          return {
-                            widgets: update(prevState.widgets, {
-                              [selectedWidgetId]: {
-                                'problem': {
-                                  'mc_options': {
-                                    [index]: {
-                                      label: {
+                    .then(() => {
+                      this.setState((prevState) => {
+                        return {
+                          widgets: update(prevState.widgets, {
+                            [selectedWidgetId]: {
+                              'problem': {
+                                'mc_options': {
+                                  [index]: {
+                                    label: {
                                         $set: labels[index]
-                                      }
                                     }
                                   }
                                 }
                               }
-                            })
-                          }
-                        })
+                            }
+                          })
+                        }
                       })
-                      .catch(err => {
-                        console.log(err)
-                        err.json().then(res => {
-                          Notification.error('Could not update feedback' +
+                    })
+                    .catch(err => {
+                      console.log(err)
+                      err.json().then(res => {
+                        Notification.error('Could not update feedback' +
                           (res.message ? ': ' + res.message : ''))
                           // update to try and get a consistent state
-                          this.props.updateExam()
-                        })
+                        this.props.updateExam()
                       })
+                    })
                   })
                 }}
               />) : null}
@@ -718,7 +718,7 @@ class ExamTemplated extends React.Component {
                 </div>
                 <FeedbackMenu
                   problem={props.problem}
-                  updateFeedback={this.updateFeedback} />
+                  updateFeedback={() => this.updateFeedback(props.problem.id)} />
               </React.Fragment>
             }
           </React.Fragment>

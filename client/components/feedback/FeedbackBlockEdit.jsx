@@ -8,25 +8,25 @@ import Notification from 'react-bulma-notification'
 import {FeedbackItem} from './FeedbackUtils.jsx'
 
 const CancelButton = (props) => (
-  <button className='button is-light' onClick={props.onClick}>
+  <button className='button is-light tooltip' onClick={props.onClick} data-tooltip='Cancel'>
     <span className='icon is-small'>
       <i className='fa fa-times' />
     </span>
-    <span>Cancel</span>
   </button>
 )
 
 const SaveButton = (props) => (
-  <button className='button is-link' disabled={props.disabled} onClick={props.onClick}>
+  <button className='button is-link tooltip' disabled={props.disabled} onClick={props.onClick}
+    data-tooltip={props.exists ? 'Save' : 'Add'}>
     <span className='icon is-small'>
       <i className='fa fa-floppy-o' />
     </span>
-    <span>{props.exists ? 'Save' : 'Add'}</span>
   </button>
 )
 
 const DeleteButton = (props) => (
-  <button className='button is-danger' style={{marginLeft: 'auto'}} disabled={!props.exists} onClick={props.onClick}>
+  <button className='button is-danger tooltip'
+    style={{marginLeft: 'auto'}} disabled={!props.exists} onClick={props.onClick} data-tooltip='Delete'>
     <span className='icon is-small'>
       <i className='fa fa-trash' />
     </span>

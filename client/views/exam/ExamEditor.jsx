@@ -2,14 +2,9 @@ import React from 'react'
 import { toast } from 'bulma-toast'
 
 import barcodeExampleImage from '../../components/barcode_example.png'
-// FIXME!
-// eslint-disable-next-line import/no-webpack-loader-syntax
-import barcodeExampleImageSize from '!image-dimensions-loader!../../components/barcode_example.png'
 import studentIdExampleImage from '../../components/student_id_example.png'
-// FIXME!
-// eslint-disable-next-line import/no-webpack-loader-syntax
-import studentIdExampleImageSize from '!image-dimensions-loader!../../components/student_id_example.png'
 import answerBoxImage from '../../components/answer_box.png'
+
 import EmptyPDF from '../../components/EmptyPDF.jsx'
 import PDFOverlay from '../../components/PDFOverlay.jsx'
 
@@ -350,7 +345,7 @@ class ExamEditor extends React.Component {
                 <div className='mcq-option-label'>
                   {option.label === ' ' ? <span>&nbsp;</span> : option.label}
                 </div>
-                <img className='mcq-box' src={answerBoxImage} />
+                <img className='mcq-box' src={answerBoxImage.src} />
               </div>
             )
           })}
@@ -483,13 +478,13 @@ class ExamEditor extends React.Component {
     const isSelected = widget.id === this.props.selectedWidgetId
     let image
     if (widget.name === 'barcode_widget') {
-      minWidth = barcodeExampleImageSize.width
-      minHeight = barcodeExampleImageSize.height
-      image = barcodeExampleImage
+      minWidth = barcodeExampleImage.width
+      minHeight = barcodeExampleImage.height
+      image = barcodeExampleImage.src
     } else if (this.props.page === 0 && widget.name === 'student_id_widget') {
-      minWidth = studentIdExampleImageSize.width
-      minHeight = studentIdExampleImageSize.height
-      image = studentIdExampleImage
+      minWidth = studentIdExampleImage.width
+      minHeight = studentIdExampleImage.height
+      image = studentIdExampleImage.src
     } else {
       return []
     }

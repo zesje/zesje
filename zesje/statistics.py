@@ -38,8 +38,7 @@ def solution_data(exam_id, student_id):
             'max_score': max(fb.score for fb in problem.feedback_options) or 0
         }
 
-        root = problem.root_feedback
-        feedback = [fo for fo in root.all_descendants if fo in solution.feedback and fo.parent_id is not None]
+        feedback = [fo for fo in problem.root_feedback.all_descendants if fo in solution.feedback]
 
         problem_data['feedback'] = [
             {'id': fo.id,

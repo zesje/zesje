@@ -1,6 +1,4 @@
 import pytest
-from zesje.api.submissions import has_all_required_feedback, _find_submission, find_number_of_matches
-from datetime import datetime
 from zesje.database import db, Exam, Problem, FeedbackOption,\
                            Student, Submission, Solution, Grader
 

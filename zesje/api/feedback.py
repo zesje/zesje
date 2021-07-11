@@ -148,7 +148,7 @@ class Feedback(Resource):
         if fb.mc_option:
             return dict(status=403, message='Cannot delete feedback option'
                                             + ' attached to a multiple choice option.'), 403
-        if not fb.parent_id:  # root feedback has no parent
+        if fb.parent_id is None:
             return dict(status=403, message='Cannot delete root feedback option.'), 403
 
         # All feedback options, that are the child of the original feedback option will be deleted

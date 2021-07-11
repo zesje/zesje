@@ -6,8 +6,6 @@ from ..database import db, Problem, FeedbackOption, Solution
 
 
 def feedback_to_data(feedback):
-    if feedback is None:
-        return None
     return {
         'id': feedback.id,
         'name': feedback.text,

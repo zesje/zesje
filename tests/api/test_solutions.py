@@ -22,10 +22,9 @@ def add_test_data(app):
 
     sol = Solution(id=1, submission=sub, problem=problem)
     db.session.add(sol)
-
-    root = FeedbackOption(id=42, problem=problem, text='root', parent=None)
-    db.session.add(root)
     db.session.commit()
+
+    root = problem.root_feedback
 
     for i in range(2):
         fo_parent = FeedbackOption(id=3 * i + 1,
@@ -33,7 +32,7 @@ def add_test_data(app):
                                    text=chr(i + 65),
                                    description='',
                                    score=i,
-                                   parent_id=42)
+                                   parent=root)
         db.session.add(fo_parent)
         db.session.commit()
         for j in range(1, 3):

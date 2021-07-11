@@ -16,13 +16,13 @@ def add_test_data(app):
     problem_widget_1 = ProblemWidget(id=1, name='problem widget', problem_id=1, page=2,
                                      width=100, height=150, x=40, y=200, type='problem_widget')
     db.session.add(problem_widget_1)
-
-    root = FeedbackOption(id=12, problem_id=1, text='root', score=0)
-    db.session.add(root)
     db.session.commit()
-    fo1 = FeedbackOption(id=5, problem_id=1, text='fully incorrect', score=2, parent_id=12)
+
+    fo1 = FeedbackOption(id=5, problem_id=1, text='fully incorrect', score=2, parent=problem1.root_feedback)
     db.session.add(fo1)
     db.session.commit()
+
+    yield problem1.root_feedback.id
 
 
 def mco_json():
@@ -36,12 +36,12 @@ def mco_json():
     }
 
 
-def fo_json():
+def fo_json(root_id):
     return {
         'name': "fully correct",
         'description': "",
         'score': 4,
-        'parent': 12
+        'parent': root_id
     }
 
 
@@ -85,7 +85,7 @@ def test_delete_with_mc_option(test_client, add_test_data):
 
 def test_create_and_get_fo(test_client, add_test_data):
     """Create a new FeedbackOption without a parent"""
-    fo = fo_json()
+    fo = fo_json(add_test_data)
 
     result = test_client.post('/api/feedback/1', data=fo)
     data = json.loads(result.data)
@@ -119,7 +119,7 @@ def test_create_and_get_fo_with_parent(test_client, add_test_data):
 
 def test_delete_fo(test_client, add_test_data):
     """Delete a FeedbackOption"""
-    fo = fo_json()
+    fo = fo_json(add_test_data)
 
     result_get = test_client.get('/api/feedback/1')
     data_get = json.loads(result_get.data)

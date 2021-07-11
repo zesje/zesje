@@ -2,7 +2,7 @@ import pytest
 import os
 
 from flask import json
-from zesje.database import db, Exam, Problem, ProblemWidget, Submission, ExamLayout, FeedbackOption
+from zesje.database import db, Exam, Problem, ProblemWidget, Submission, ExamLayout
 from zesje.api.exams import generate_exam_token
 
 
@@ -14,9 +14,6 @@ def add_test_data(app):
 
     problem1 = Problem(id=1, name='Problem 1', exam_id=1)
     db.session.add(problem1)
-
-    root = FeedbackOption(id=1, problem_id=1, text='root', score=0)
-    db.session.add(root)
     db.session.commit()
 
     problem_widget_1 = ProblemWidget(id=1, name='problem widget', problem_id=1, page=2,

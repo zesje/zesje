@@ -5,7 +5,7 @@ import os
 from flask_restful import Resource, reqparse, current_app
 
 from .widgets import widget_to_data, normalise_pages
-from ..database import db, Exam, Problem, ProblemWidget, Solution, GradingPolicy, ExamLayout, FeedbackOption
+from ..database import db, Exam, Problem, ProblemWidget, Solution, GradingPolicy, ExamLayout
 from zesje.pdf_reader import guess_problem_title, get_problem_page
 from zesje.api.feedback import feedback_to_data
 
@@ -124,13 +124,6 @@ class Problems(Resource):
         # Widget is also added because it is used in problem
         db.session.add(problem)
 
-        # Create root FO
-        root_fo = FeedbackOption(
-            problem=problem,
-            text="root",
-            score=0
-        )
-        db.session.add(root_fo)
         # Add solutions for each already existing submission
         for sub in exam.submissions:
             db.session.add(Solution(problem=problem, submission=sub))

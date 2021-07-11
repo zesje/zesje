@@ -16,10 +16,15 @@ depends_on = ${repr(depends_on)}
 
 
 def upgrade():
-    # If you make any changes to the Exam table, please use
-    # a batch operation and supply the sqlite_autoincrement
-    # argument to preserve the AUTOINCREMENT keyword.
-    # See ./6b926be35894_exam_autoincrement.py for a reference.
+    # Move and copy data to match the new database structure.
+    #
+    # Operations like addition/removal of columns or constraints in a table
+    # must be done with a batch operation in SQLite. Other SQL backends
+    # like MySql or Postgresql support direct alter statements but
+    # it is recommended to wrap them also as a batch operation.
+    # https://alembic.sqlalchemy.org/en/latest/batch.html
+    #
+    # It is important to give a name to all constraints to easily remove them.
     ${upgrades if upgrades else "pass"}
 
 

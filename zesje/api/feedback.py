@@ -63,19 +63,16 @@ class Feedback(Resource):
             return dict(status=404, message=f"Problem with id #{problem_id} does not exist"), 404
 
         args = self.post_parser.parse_args()
-        parent_id = args.parent
-        fb = FeedbackOption(problem=problem, text=args.name, description=args.description, score=args.score)
+        parent = FeedbackOption.query.get(args.parent)
+        if parent is None:
+            return dict(status=404, message=f"FeedbackOption with id #{args.parent} does not exist"), 404
 
-        if parent_id is None:  # Will only be the case when the initial "null" root has to be created
-            # All feedback options must have a parent
-            db.session.add(fb)
-
-        else:
-            parent = FeedbackOption.query.get(parent_id)
-            if parent is None:
-                return dict(status=404, message=f"FeedbackOption with id #{parent_id} does not exist"), 404
-
-            parent.children.append(fb)
+        fb = FeedbackOption(problem=problem,
+                            text=args.name,
+                            description=args.description,
+                            score=args.score,
+                            parent=parent)
+        db.session.add(fb)
 
         db.session.commit()
 

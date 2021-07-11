@@ -13,6 +13,7 @@ from sqlalchemy.orm import backref
 from sqlalchemy.orm.session import object_session
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.ext.associationproxy import association_proxy
+from sqlalchemy import event
 
 from flask_login import UserMixin, LoginManager
 from pathlib import Path
@@ -224,6 +225,12 @@ class FeedbackOption(db.Model):
         while next.parent is not None:
             yield next
             next = next.parent
+
+
+@event.listens_for(Problem, 'after_insert')
+def add_root(mapper, connection, problem):
+    """Add the root FO to the problem."""
+    connection.execute(FeedbackOption.__table__.insert(), text='__root__', score=0, problem_id=problem.id)
 
 
 # Table for many to many relationship of FeedbackOption and Solution

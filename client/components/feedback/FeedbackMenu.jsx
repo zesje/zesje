@@ -127,7 +127,7 @@ class FeedbackMenu extends React.Component {
               </span>
               <span>option</span>
             </button>
-            <div className='dropdown is-hoverable is-right is-up'>
+            {this.props.problem.feedback.length > 1 && <div className='dropdown is-hoverable is-right is-up'>
               <div className='dropdown-trigger' />
               <button className='button is-link is-outlined' aria-controls='dropdown-menu-FO-parent'>
                 <span className='icon is-small'>
@@ -148,7 +148,7 @@ class FeedbackMenu extends React.Component {
                   )}
                 </div>
               </div>
-            </div>
+            </div>}
           </div>
         }
       </React.Fragment>

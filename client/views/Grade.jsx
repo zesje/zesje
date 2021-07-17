@@ -66,52 +66,59 @@ class Grade extends React.Component {
     this.state = {feedbackFilters: {}, gradedBy: defaultGraderFilter}
     this.state = {...this.state, hasFilters: this.hasFilters()}
 
-    api.get(`exams/${this.props.examID}?only_metadata=true&shuffle_seed=${this.props.graderID}`)
-      .then(metadata => {
-        const partialState = {
-          submissions: metadata.submissions,
-          problems: metadata.problems,
-          isUnstructured: metadata.layout === 'unstructured',
-          examID: this.props.examID,
-          gradeAnonymous: metadata.gradeAnonymous
-        }
+    Promise.all([
+      api.get(`exams/${this.props.examID}?only_metadata=true&shuffle_seed=${this.props.graderID}`),
+      api.get('graders')
+    ]).then(([metadata, graders]) => {
+      const partialState = {
+        submissions: metadata.submissions,
+        problems: metadata.problems,
+        isUnstructured: metadata.layout === 'unstructured',
+        examID: props.examID,
+        gradeAnonymous: metadata.gradeAnonymous,
+        graders: graders
+      }
 
-        const examID = metadata.exam_id
+      const examID = metadata.exam_id
+      if (!(metadata.submissions.length & metadata.problems.length)) {
+        this.setState({
+          submission: null,
+          problem: null,
+          ...partialState
+        })
+      } else {
         const submissionID = this.props.submissionID || metadata.submissions[0].id
         const problemID = this.props.problemID || metadata.problems[0].id
 
         Promise.all([
           api.get(`submissions/${examID}/${submissionID}?${[
-            `problem_id=${problemID}`,
-            ...this.getFilterArguments()
-          ].join('&')}`),
-          api.get(`problems/${problemID}`),
-          api.get(`graders`)
-        ])
-          .then(([submission, problem, graders]) => {
-            this.setState({
-              submission: submission,
-              problem: problem,
-              graders: graders,
-              matchingResults: submission.meta.filter_matches,
-              ...partialState
-            }, () => this.props.history.replace(this.getURL(submissionID, problemID)))
+            `problem_id=${problemID}`, ...this.getFilterArguments()].join('&')}`),
+          api.get(`problems/${problemID}`)
+        ]).then(([submission, problem]) => {
+          this.setState({
+            submission: submission,
+            problem: problem,
+            matchingResults: submission.meta.filter_matches,
+            ...partialState
+          }, () => this.props.history.replace(this.getURL(submissionID, problemID)))
+        }).catch(err => {
+          console.log(err)
+          this.setState({
+            submission: null,
+            problem: null,
+            ...partialState
           })
-          // eslint-disable-next-line handle-callback-err
-          .catch(err => {
-            this.setState({
-              submission: null,
-              problem: null,
-              ...partialState
-            })
-          })
-      })
-      // eslint-disable-next-line handle-callback-err
-      .catch(err => {
-        this.setState({
-          submission: null
         })
+      }
+    }).catch(err => {
+      console.log(err)
+      this.setState({
+        submissions: null,
+        problems: null,
+        graders: null,
+        examID: props.examID
       })
+    })
   }
 
   /**
@@ -121,15 +128,13 @@ class Grade extends React.Component {
    * It also sets the submission to null to display error component when unwanted behaviour is observed.
    */
   syncSubmission = () => {
+    if (!(this.state.submissions.length & this.state.problems.length)) return
+
     const submissionID = this.props.submissionID || this.state.submissions[0].id
     const problemID = this.props.problemID || this.state.problems[0].id
     Promise.all([
       api.get(`submissions/${this.props.examID}/${submissionID}?${
-        [
-          `problem_id=${problemID}`,
-          ...this.getFilterArguments()
-        ].join('&')
-      }`),
+        [`problem_id=${problemID}`, ...this.getFilterArguments()].join('&')}`),
       api.get(`problems/${problemID}`)
     ]).then(values => {
       const submission = values[0]
@@ -494,6 +499,10 @@ class Grade extends React.Component {
     if (this.state.submission === undefined) {
       // submission is being loaded, we just want to show a loading screen
       return hero
+    }
+
+    if (!this.state.problems || this.state.problems.length === 0) {
+      return <Fail message='No problems defined in the exam' />
     }
 
     if (this.state.submission === null) {

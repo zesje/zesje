@@ -34,17 +34,20 @@ import shutil
 import sys
 import argparse
 import time
+from io import BytesIO
 
 import lorem
 import names
 import flask_migrate
 from flask import json
+from PIL import Image as PILImage, ImageDraw, ImageFont
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfbase import pdfmetrics
 from pdfrw import PdfReader, PdfWriter, PageMerge
 from tempfile import NamedTemporaryFile
 from pathlib import Path
+from zipfile import ZipFile
 
 from lorem.text import TextLorem
 
@@ -60,6 +63,8 @@ if 'ZESJE_SETTINGS' not in os.environ:
 
 lorem_name = TextLorem(srange=(1, 3))
 lorem_prob = TextLorem(srange=(2, 5))
+
+pil_font = ImageFont.truetype('tests/data/fonts/Hugohandwriting-Regular.ttf', size=28)
 
 
 def init_app(delete):
@@ -131,16 +136,38 @@ def generate_students(students):
     } for i in range(students)]
 
 
-def _fake_process_pdf(scan, pages, student_ids, copies_per_student, validate=False):
+def generate_random_page_image(file_path_or_buffer, size):
+    img = PILImage.new('RGB', (int(size[0]), int(size[1])), (255, 255, 255))
+    draw = ImageDraw.Draw(img)
+
+    margin = 40
+    line_height = 24
+    groups = random.randint(2, 5)  # groups of sentences in a page
+    x = margin + 10
+
+    for group in range(groups):
+        y = int((size[1] - 2 * margin) * group / groups) + margin
+        for line in range(random.randint(1, 7 - groups)):
+            draw.text((x, y + line * line_height), lorem.sentence(), (0, 25, 102), font=pil_font)
+
+    img.save(file_path_or_buffer, format='JPEG')
+
+
+def _fake_process_pdf(app, exam, scan, pages, student_ids, copies_per_student):
+    validate = exam.layout == ExamLayout.unstructured
     copy_number = 0
     for student_id, number_of_copies in zip(student_ids, copies_per_student):
         for _ in range(number_of_copies):
             copy_number += 1
             copy = Copy(number=copy_number)
 
-            base_copy_path = os.path.join(f'{scan.exam.id}_data', 'submissions', f'{copy_number}')
+            base_copy_path = os.path.join(app.config['DATA_DIRECTORY'],
+                                          f'{exam.id}_data', 'submissions', f'{copy_number}')
+            os.makedirs(base_copy_path)
             for page in range(pages + 1):
-                db.session.add(Page(path=os.path.join(base_copy_path, f'page{page:02d}.jpg'), copy=copy, number=page))
+                path = os.path.join(base_copy_path, f'page{page:02d}.jpeg')
+                generate_random_page_image(path, A4)
+                db.session.add(Page(path=path, copy=copy, number=page))
 
             sub = Submission(copies=[copy], exam=scan.exam, student_id=student_id, validated=validate)
             db.session.add(sub)
@@ -153,27 +180,27 @@ def _fake_process_pdf(scan, pages, student_ids, copies_per_student, validate=Fal
     db.session.commit()
 
 
-def handle_pdf_processing(app, exam_id, pdf, pages, student_ids, copies_per_student, skip_processing=False):
+def handle_pdf_processing(app, exam_id, scan_file, pages, student_ids, copies_per_student, skip_processing=False):
     exam = Exam.query.get(exam_id)
-    scan = Scan(exam=exam, name=pdf.name if pdf else exam.name,
-                status='processing', message='Waiting...')
+    ext = 'pdf' if exam.layout == ExamLayout.templated else 'zip'
+    scan = Scan(exam=exam,
+                name=f'{exam_id}.{ext}',
+                status='processing',
+                message='Waiting...')
 
     db.session.add(scan)
     db.session.commit()
 
-    # update the name so that `extract_images_from_pdf` can process the pdf
-    scan.name = f'{scan.id}.pdf'
+    scan.name = f'{scan.id}.{ext}'
     db.session.commit()
 
-    if pdf:
-        path = os.path.join(app.config['SCAN_DIRECTORY'], f'{scan.id}.pdf')
-        with open(path, 'wb') as outfile:
-            outfile.write(pdf.read())
-            pdf.seek(0)
+    path = os.path.join(app.config['SCAN_DIRECTORY'], scan.name)
+    with open(path, 'wb') as outfile:
+        outfile.write(scan_file.read())
+        scan_file.seek(0)
 
     if skip_processing:
-        _fake_process_pdf(scan, pages, student_ids, copies_per_student,
-                          validate=exam.layout == ExamLayout.unstructured)
+        _fake_process_pdf(app, exam, scan, pages, student_ids, copies_per_student)
     else:
         _process_scan(scan_id=scan.id, exam_layout=exam.layout)
 
@@ -394,7 +421,7 @@ def design_exam(app, client, layout, pages, students, grade, solve, multiple_cop
         # Download PDFs
         generated = client.get(
             f'api/exams/{exam_id}/generated_pdfs?copies_start=1&copies_end={sum(copies_per_student)}&type=pdf')
-        print(generated, generated.data)
+
         # Upload submissions
         with NamedTemporaryFile(mode='w+b') as submission_pdf:
             submission_pdf.write(generated.data)
@@ -407,7 +434,17 @@ def design_exam(app, client, layout, pages, students, grade, solve, multiple_cop
             print('\tProcessing scans (this may take a while).',)
             handle_pdf_processing(app, exam_id, submission_pdf, pages, student_ids, copies_per_student, skip_processing)
     elif layout == ExamLayout.unstructured.name:
-        handle_pdf_processing(app, exam_id, None, pages, student_ids, copies_per_student, True)
+        with NamedTemporaryFile(mode='w+b') as submission_zip:
+            with ZipFile(submission_zip, 'w') as zip:
+                for id in student_ids:
+                    for page in range(pages):
+                        # for now, igonre multiple copies per student
+                        buf = BytesIO()
+                        generate_random_page_image(buf, A4)
+                        zip.writestr(f'{id}-{page}.jpeg', buf.getvalue())
+                zip.close()
+            submission_zip.seek(0)
+            handle_pdf_processing(app, exam_id, submission_zip, pages, student_ids, copies_per_student, skip_processing)
 
     # Validate signatures
     copies = client.get(f'api/copies/{exam_id}').get_json()

@@ -64,7 +64,7 @@ if 'ZESJE_SETTINGS' not in os.environ:
 lorem_name = TextLorem(srange=(1, 3))
 lorem_prob = TextLorem(srange=(2, 5))
 
-pil_font = ImageFont.truetype(str(Path.cwd() / 'tests' / 'data' / 'fonts' / 'Hugohandwriting-Regular.ttf'), size=28)
+pil_font = ImageFont.truetype('tests/data/fonts/Hugohandwriting-Regular.ttf'), size=28)
 
 
 def init_app(delete):

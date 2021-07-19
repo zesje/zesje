@@ -86,7 +86,7 @@ class EditPanel extends React.Component {
       name: this.state.name,
       description: this.state.description,
       score: this.state.score,
-      parent: this.props.parent !== null ? this.props.parent.id : null
+      parent: this.props.parent ? this.props.parent.id : null
     }
 
     if (this.state.id) {

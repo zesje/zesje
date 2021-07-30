@@ -130,7 +130,6 @@ class Problems(Resource):
 
         # Commit so problem gets an id
         db.session.commit()
-
         widget.name = f'problem_{problem.id}'
 
         if exam.layout == ExamLayout.templated:

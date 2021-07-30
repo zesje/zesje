@@ -53,12 +53,12 @@ const FeedbackItem = (props) => {
 
   return feedbackID !== props.feedbackToEditId
     ? <FeedbackBlock
+      ref={props.selectedFeedbackId === feedbackID ? props.blockRef : null}
       key={'item-' + feedbackID}
       feedback={props.feedback}
       checked={props.grading && props.checkedFeedback.includes(feedbackID)}
       editFeedback={() => props.editFeedback(feedbackID, null)}
       toggleOption={props.toggleOption}
-      ref={props.selectedFeedbackId === feedbackID ? props.feedbackBlock : null}
       grading={props.grading}
       selected={props.selectedFeedbackId === feedbackID || props.feedback.highlight}
       showIndex={props.showTooltips}

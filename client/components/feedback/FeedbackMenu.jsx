@@ -38,7 +38,7 @@ class FeedbackMenu extends React.Component {
     if (prevState.problemID !== nextProps.problem.id) {
       return {
         indexed_root: indexFeedbackOptions(nextProps.problem.root),
-        selectedFeedbackId: null,
+        selectedFeedback: null,
         feedbackToEditId: 0,
         parent: null,
         problemID: nextProps.problem.id
@@ -105,6 +105,7 @@ class FeedbackMenu extends React.Component {
                   showTooltips={this.props.showTooltips}
                   feedbackFilters={this.props.feedbackFilters}
                   applyFilter={this.props.applyFilter}
+                  blockRef={this.feedbackBlock}
                 />
               </ul>
             )}

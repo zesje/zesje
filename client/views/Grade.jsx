@@ -9,6 +9,7 @@ import ProblemSelector from './grade/ProblemSelector.jsx'
 import ProgressBar from '../components/ProgressBar.jsx'
 import withShortcuts from '../components/ShortcutBinder.jsx'
 import GradeNavigation from './grade/GradeNavigation.jsx'
+import { indexFeedbackOptions, findFeedbackByIndex } from '../components/feedback/FeedbackUtils.jsx'
 
 import * as api from '../api.jsx'
 
@@ -189,7 +190,7 @@ class Grade extends React.Component {
     })
     let key = 0
     let prefix = ''
-    for (let i = 0; i < 21; i++) {
+    for (let i = 1; i < 21; i++) {
       key = i % 10
       prefix = i > 10 ? 'shift+' : ''
       this.props.bindShortcut(prefix + key, () => this.toggleFeedbackOptionIndex(i))
@@ -371,8 +372,8 @@ class Grade extends React.Component {
    * @param index the index of the feedback option.
    */
   toggleFeedbackOptionIndex = (index) => {
-    const root = this.addIndex(this.state.problem.root)
-    const fb = this.findIndex(root, index)
+    const root = indexFeedbackOptions(this.state.problem.root)
+    const fb = findFeedbackByIndex(root, index)
     if (fb.parent === null) {
       return null
     }

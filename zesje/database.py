@@ -215,12 +215,14 @@ class FeedbackOption(db.Model):
 
     @property
     def all_descendants(self):
+        """Returns all the children recursively"""
         for child in self.children:
             yield child
             yield from child.all_descendants
 
     @property
     def all_ancestors(self):
+        """Returns all the parents recursively except for the `root` option to avoid being graded"""
         next = self.parent
         while next.parent is not None:
             yield next

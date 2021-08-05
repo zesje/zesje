@@ -80,7 +80,7 @@ def test_delete_with_mc_option(test_client, add_test_data):
     result = test_client.delete(f'/api/feedback/{problem_id}/{fb_id}')
     data = json.loads(result.data)
 
-    assert data['status'] == 403
+    assert data['status'] == 405
 
 
 def test_create_and_get_fo(test_client, add_test_data):
@@ -151,7 +151,7 @@ def test_delete_fo(test_client, add_test_data):
 
     parent_id = data_get['id']
     result = test_client.delete(f'/api/feedback/{problem_id}/{parent_id}')
-    assert result.status_code == 403
+    assert result.status_code == 405
 
 
 def test_delete_parent_of_fo(test_client, add_test_data):

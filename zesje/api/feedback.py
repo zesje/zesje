@@ -38,7 +38,7 @@ class Feedback(Resource):
         """
 
         if (problem := Problem.query.get(problem_id)) is None:
-            return dict(status=404, message=f"Problem with id #{problem_id} does not exist"), 404
+            return dict(status=422, message=f"Problem with id #{problem_id} does not exist"), 422
 
         return feedback_to_data(problem.root_feedback)
 
@@ -60,12 +60,12 @@ class Feedback(Resource):
         """
 
         if (problem := Problem.query.get(problem_id)) is None:
-            return dict(status=404, message=f"Problem with id #{problem_id} does not exist"), 404
+            return dict(status=422, message=f"Problem with id #{problem_id} does not exist"), 422
 
         args = self.post_parser.parse_args()
         parent = FeedbackOption.query.get(args.parent)
         if parent is None:
-            return dict(status=404, message=f"FeedbackOption with id #{args.parent} does not exist"), 404
+            return dict(status=422, message=f"FeedbackOption with id #{args.parent} does not exist"), 422
 
         fb = FeedbackOption(problem=problem,
                             text=args.name,
@@ -141,10 +141,10 @@ class Feedback(Resource):
         if problem.id != problem_id:
             return dict(status=400, message="Feedback option does not belong to this problem."), 400
         if fb.mc_option:
-            return dict(status=403, message='Cannot delete feedback option'
-                                            + ' attached to a multiple choice option.'), 403
+            return dict(status=405, message='Cannot delete feedback option'
+                                            + ' attached to a multiple choice option.'), 405
         if fb.parent_id is None:
-            return dict(status=403, message='Cannot delete root feedback option.'), 403
+            return dict(status=405, message='Cannot delete root feedback option.'), 405
 
         # All feedback options, that are the child of the original feedback option will be deleted
 

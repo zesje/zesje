@@ -131,7 +131,8 @@ class FeedbackMenu extends React.Component {
               </span>
               <span>option</span>
             </button>
-            {Object.keys(this.state.indexedFeedback).length > 1 && <div className='dropdown is-hoverable is-right is-up'>
+            {this.props.problem.mc_options.length === 0 && Object.keys(this.state.indexedFeedback).length > 1 &&
+              <div className='dropdown is-hoverable is-right is-up'>
               <div className='dropdown-trigger' />
               <button className='button is-link is-outlined' aria-controls='dropdown-menu-FO-parent'>
                 <span className='icon is-small'>
@@ -144,7 +145,7 @@ class FeedbackMenu extends React.Component {
                     <p><b>Parent feedback:</b></p>
                   </div>
                   {Object.keys(this.state.indexedFeedback)
-                    .filter(id => id !== this.props.problem.root_feedback_id)
+                    .filter(id => id != this.props.problem.root_feedback_id)
                     .map((id, index) =>
                       <a key={'dropdown-parent-' + index}
                         className='dropdown-item'

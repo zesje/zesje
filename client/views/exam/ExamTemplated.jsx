@@ -168,7 +168,7 @@ class ExamTemplated extends React.Component {
                   [problemWidget.problem.root_feedback_id]: { // remove the FO from the children list
                     'children': {
                       $set: problemWidget.problem.feedback[problemWidget.problem.root_feedback_id].children
-                        .filter(id => id != feedback.id)
+                        .filter(id => id !== feedback.id)
                     }
                   }
                 }

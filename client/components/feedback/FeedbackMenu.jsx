@@ -66,9 +66,9 @@ class FeedbackMenu extends React.Component {
   }
 
   setOptionIndex = (newIndex) => {
-    if (this.props.problem.feedback.length === 0) return
+    const length = Object.keys(this.props.problem.feedback).length
+    if (length === 0) return
 
-    const length = this.props.problem.feedback.length
     newIndex = ((newIndex % length) + length) % length
     this.setState({
       selectedFeedback: findFeedbackByIndex(this.state.indexedFeedback, newIndex)
@@ -144,14 +144,14 @@ class FeedbackMenu extends React.Component {
                     <p><b>Parent feedback:</b></p>
                   </div>
                   {Object.keys(this.state.indexedFeedback)
-                    .filter(id => id != this.props.problem.root_feedback_id)
+                    .filter(id => id !== this.props.problem.root_feedback_id)
                     .map((id, index) =>
-                    <a key={'dropdown-parent-' + index}
-                      className='dropdown-item'
-                      onClick={() => this.editFeedback(-1, this.state.indexedFeedback[id])}>
-                      {this.state.indexedFeedback[id].name}
-                    </a>
-                  )}
+                      <a key={'dropdown-parent-' + index}
+                        className='dropdown-item'
+                        onClick={() => this.editFeedback(-1, this.state.indexedFeedback[id])}>
+                        {this.state.indexedFeedback[id].name}
+                      </a>
+                    )}
                 </div>
               </div>
             </div>}

@@ -38,7 +38,7 @@ export const indexFeedbackOptions = (feedback, rootId) => {
  * @returns {null|*} return null if no match, or else the matching FO
  */
 export const findFeedbackByIndex = (feedback, index) => {
-  return Object.values(feedback).findIndex(fb => fb.index === index)
+  return Object.values(feedback).find(fb => fb.index === index)
 }
 
 const FeedbackItem = (props) => {

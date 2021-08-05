@@ -83,7 +83,7 @@ class ExamTemplated extends React.Component {
             name: problem.name,
             n_graded: problem.n_graded,
             grading_policy: problem.grading_policy,
-            root: problem.root,
+            root_feedback_id: problem.root_feedback_id,
             feedback: problem.feedback || [],
             mc_options: problem.mc_options.map((option) => {
               // the database stores the positions of the checkboxes but the front end uses the top-left position
@@ -142,7 +142,7 @@ class ExamTemplated extends React.Component {
             problem: {
               ...prevState.widgets[problemWidgetId].problem,
               feedback: problem.feedback,
-              root: problem.root
+              root_feedback_id: problem.root_feedback_id
             }
           }
         }
@@ -154,25 +154,9 @@ class ExamTemplated extends React.Component {
    * Update feedback corresponding to a problem
    * @param feedback the feedback to be created/deleted/updated
    * @param problemWidget the problem that contains the feedback
-   * @param idx the location of the feedback in the feedback field of the problem
    */
-  updateFeedbackAtIndex = (feedback, problemWidget, idx) => {
-    if (idx === -1) {
-      // in case the feedback doesn't exist, create a new feedback object
-      this.setState((prevState) => {
-        return {
-          widgets: update(prevState.widgets, {
-            [problemWidget.id]: {
-              'problem': {
-                'feedback': {
-                  $push: [feedback]
-                }
-              }
-            }
-          })
-        }
-      })
-    } else if (feedback.deleted) {
+  updateFeedbackAtIndex = (feedback, problemWidget) => {
+    if (feedback.deleted) {
       // delete the feedback if the deleted field is set
       this.setState((prevState) => {
         return {
@@ -180,7 +164,13 @@ class ExamTemplated extends React.Component {
             [problemWidget.id]: {
               'problem': {
                 'feedback': {
-                  $splice: [[idx, 1]]
+                  $unset: [feedback.id],
+                  [problemWidget.problem.root_feedback_id]: { // remove the FO from the children list
+                    'children': {
+                      $set: problemWidget.problem.feedback[problemWidget.problem.root_feedback_id].children
+                        .filter(id => id != feedback.id)
+                    }
+                  }
                 }
               }
             }
@@ -195,7 +185,7 @@ class ExamTemplated extends React.Component {
             [problemWidget.id]: {
               'problem': {
                 'feedback': {
-                  [idx]: {
+                  [feedback.id]: {
                     $set: feedback
                   }
                 }
@@ -339,21 +329,20 @@ class ExamTemplated extends React.Component {
           updateMCOsInState={this.updateMCOsInState}
           selectedWidgetId={this.state.selectedWidgetId}
           highlightFeedback={(widget, feedbackId) => {
-            let index = widget.problem.feedback.findIndex(e => { return e.id === feedbackId })
-            let feedback = widget.problem.feedback[index]
+            let feedback = widget.problem.feedback[feedbackId]
             feedback.highlight = true
-            this.updateFeedbackAtIndex(feedback, widget, index)
+            this.updateFeedbackAtIndex(feedback, widget)
           }}
           removeHighlight={(widget, feedbackId) => {
-            let index = widget.problem.feedback.findIndex(e => { return e.id === feedbackId })
-            let feedback = widget.problem.feedback[index]
+            let feedback = widget.problem.feedback[feedbackId]
             feedback.highlight = false
-            this.updateFeedbackAtIndex(feedback, widget, index)
+            this.updateFeedbackAtIndex(feedback, widget)
           }}
           removeAllHighlight={(widget) => {
-            widget.problem.feedback.forEach((feedback, index) => {
+            Object.keys(widget.problem.feedback).forEach((id) => {
+              let feedback = widget.problem.feedback[id]
               feedback.highlight = false
-              this.updateFeedbackAtIndex(feedback, widget, index)
+              this.updateFeedbackAtIndex(feedback, widget)
             })
           }}
           selectWidget={(widgetId) => {
@@ -483,12 +472,13 @@ class ExamTemplated extends React.Component {
     let option = widget.problem.mc_options[index]
     if (!option) return Promise.resolve(false)
 
+    console.log(option)
+    console.log(widget.problem)
     return api.del('mult-choice/' + option.id)
       .then(res => {
-        let indexFb = widget.problem.feedback.findIndex(e => { return e.id === option.feedback_id })
-        let feedback = widget.problem.feedback[indexFb]
+        let feedback = widget.problem.feedback[option.feedback_id]
         feedback.deleted = true
-        this.updateFeedbackAtIndex(feedback, widget, indexFb)
+        this.updateFeedbackAtIndex(feedback, widget)
         return new Promise((resolve) => {
           this.setState((prevState) => {
             return {

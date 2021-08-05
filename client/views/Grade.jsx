@@ -226,7 +226,7 @@ class Grade extends React.Component {
    * @param direction either 'prev', 'next', 'first' or 'last'
    */
   navigate = async (direction) => {
-    const fb = this.state.problem.feedback.map(fb => fb.id)
+    const fb = Object.keys(this.state.problem.feedback)
 
     this.setState({
       feedbackFilters: Object.entries(this.state.feedbackFilters).filter(
@@ -372,8 +372,8 @@ class Grade extends React.Component {
    * @param index the index of the feedback option.
    */
   toggleFeedbackOptionIndex = (index) => {
-    const root = indexFeedbackOptions(this.state.problem.root)
-    const fb = findFeedbackByIndex(root, index)
+    const feedback = indexFeedbackOptions(this.state.problem.feedback, this.state.problem.root_feedback_id)
+    const fb = findFeedbackByIndex(feedback, index)
     if (fb.parent === null) {
       return null
     }

@@ -5,7 +5,7 @@ from flask_restful import Resource, reqparse
 from ..database import db, Problem, FeedbackOption, Solution
 
 
-def feedback_to_data(feedback):
+def feedback_to_data(feedback, full_children=True):
     return {
         'id': feedback.id,
         'name': feedback.text,
@@ -13,7 +13,7 @@ def feedback_to_data(feedback):
         'score': feedback.score,
         'parent': feedback.parent_id,
         'used': len(feedback.solutions),
-        'children': [feedback_to_data(child) for child in feedback.children]
+        'children': [feedback_to_data(child) if full_children else child.id for child in feedback.children]
     }
 
 

@@ -13,7 +13,7 @@ class FeedbackMenu extends React.Component {
     selectedFeedback: null,
     feedbackToEditId: -1,
     parent: null,
-    indexed_root: null,
+    indexedFeedback: null,
     problemID: -1
   }
 
@@ -35,9 +35,11 @@ class FeedbackMenu extends React.Component {
   }
 
   static getDerivedStateFromProps (nextProps, prevState) {
+    const indexedFeedback = indexFeedbackOptions(nextProps.problem.feedback, nextProps.problem.root_feedback_id)
+
     if (prevState.problemID !== nextProps.problem.id) {
       return {
-        indexed_root: indexFeedbackOptions(nextProps.problem.root),
+        indexedFeedback,
         selectedFeedback: null,
         feedbackToEditId: 0,
         parent: null,
@@ -46,7 +48,7 @@ class FeedbackMenu extends React.Component {
     }
 
     return {
-      indexed_root: indexFeedbackOptions(nextProps.problem.root)
+      indexedFeedback
     }
   }
 
@@ -69,7 +71,7 @@ class FeedbackMenu extends React.Component {
     const length = this.props.problem.feedback.length
     newIndex = ((newIndex % length) + length) % length
     this.setState({
-      selectedFeedback: findFeedbackByIndex(this.state.indexed_root, newIndex)
+      selectedFeedback: findFeedbackByIndex(this.state.indexedFeedback, newIndex)
     })
   }
 
@@ -89,10 +91,11 @@ class FeedbackMenu extends React.Component {
       <React.Fragment>
         <div className='panel-block' style={{display: 'block'}}>
           <div className='menu'>
-            {this.state.indexed_root.children.map((fb) =>
-              <ul className='menu-list' key={'ul-' + fb.id}>
+            {this.state.indexedFeedback[this.props.problem.root_feedback_id].children.map((id) =>
+              <ul className='menu-list' key={'ul-' + id}>
                 <FeedbackItem
-                  feedback={fb}
+                  feedbackID={id}
+                  indexedFeedback={this.state.indexedFeedback}
                   selectedFeedbackId={this.state.selectedFeedback && this.state.selectedFeedback.id}
                   editFeedback={this.editFeedback}
                   problemID={this.props.problem.id}
@@ -122,13 +125,13 @@ class FeedbackMenu extends React.Component {
           : <div className='panel-block'>
             <button
               className='button is-link is-outlined is-fullwidth'
-              onClick={() => this.editFeedback(-1, this.props.problem.root)}>
+              onClick={() => this.editFeedback(-1, this.state.indexedFeedback[this.props.problem.root_feedback_id])}>
               <span className='icon is-small'>
                 <i className='fa fa-plus' />
               </span>
               <span>option</span>
             </button>
-            {this.props.problem.feedback.length > 1 && <div className='dropdown is-hoverable is-right is-up'>
+            {Object.keys(this.state.indexedFeedback).length > 1 && <div className='dropdown is-hoverable is-right is-up'>
               <div className='dropdown-trigger' />
               <button className='button is-link is-outlined' aria-controls='dropdown-menu-FO-parent'>
                 <span className='icon is-small'>
@@ -140,11 +143,13 @@ class FeedbackMenu extends React.Component {
                   <div className='dropdown-item'>
                     <p><b>Parent feedback:</b></p>
                   </div>
-                  {this.props.problem.feedback.filter(feedback => feedback.parent != null).map((feedback, index) =>
+                  {Object.keys(this.state.indexedFeedback)
+                    .filter(id => id != this.props.problem.root_feedback_id)
+                    .map((id, index) =>
                     <a key={'dropdown-parent-' + index}
                       className='dropdown-item'
-                      onClick={() => this.editFeedback(-1, feedback)}>
-                      {feedback.name}
+                      onClick={() => this.editFeedback(-1, this.state.indexedFeedback[id])}>
+                      {this.state.indexedFeedback[id].name}
                     </a>
                   )}
                 </div>

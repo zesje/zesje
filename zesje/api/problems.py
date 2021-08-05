@@ -14,20 +14,11 @@ def problem_to_data(problem):
     return {
         'id': problem.id,
         'name': problem.name,
-        'feedback': [
-            {
-                'id': fb.id,
-                'name': fb.text,
-                'description': fb.description,
-                'score': fb.score,
-                'parent': fb.parent_id,
-                'used': len(fb.solutions),
-                'children': [feedback.id for feedback in fb.children]
-            }
-            for fb
-            in problem.feedback_options  # Sorted by fb.id
-        ],
-        'root': feedback_to_data(problem.root_feedback),
+        'feedback': {
+            fb.id: feedback_to_data(fb, full_children=False)
+            for fb in problem.feedback_options  # Sorted by fb.id
+        },
+        'root_feedback_id': problem.root_feedback.id,
         'page': problem.widget.page,
         'widget': widget_to_data(problem.widget),
         'n_graded': len([sol for sol in problem.solutions if sol.graded_by is not None]),
@@ -147,7 +138,11 @@ class Problems(Resource):
             'id': problem.id,
             'widget_id': widget.id,
             'problem_name': problem.name,
-            'grading_policy': problem.grading_policy.name
+            'grading_policy': problem.grading_policy.name,
+            'feedback': {
+                problem.root_feedback.id: feedback_to_data(problem.root_feedback, full_children=False)
+            },
+            'root_feedback_id': problem.root_feedback.id,
         }
 
     put_parser = reqparse.RequestParser()

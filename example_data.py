@@ -284,12 +284,13 @@ def grade_problems(client, exam_id, graders, problems, submissions, grade):
         for prob in sub['problems']:
             # randomly select the problem if it is not blanck
             if random.random() <= grade and len(prob['feedback']) == 0:
-                fo = next(filter(lambda p: p['id'] == prob['id'], problems))['feedback']
-                fo = [fb for fb in fo if fb['parent'] is not None]
+                fb_data = next(filter(lambda p: p['id'] == prob['id'], problems))
+                fo, root_id = fb_data['feedback'], fb_data['root_feedback_id']
+                fo = [id for id in fo if int(id) != root_id]
                 opt = fo[random.randint(0, len(fo) - 1)]
                 client.put(f"/api/solution/{exam_id}/{submission_id}/{prob['id']}",
                            json={
-                               'id': opt['id'],
+                               'id': opt,
                                'graderID': random.choice(graders)['id']
                            })
 
@@ -377,8 +378,7 @@ def design_exam(app, client, layout, pages, students, grade, solve, multiple_cop
 
         if is_mcq:
             result = client.get(f'api/problems/{problem_id}')
-            root = json.loads(result.data)['root']
-            parent = root['id']
+            parent = json.loads(result.data)['root_feedback_id']
             fops = []
             for option in problem['mc_options']:
                 resp = client.put('api/mult-choice/', data={
@@ -394,8 +394,7 @@ def design_exam(app, client, layout, pages, students, grade, solve, multiple_cop
                        data={'id': correct[0], 'name': correct[1], 'score': 1, 'parent': parent})
         else:
             result = client.get(f'api/problems/{problem_id}')
-            root = json.loads(result.data)['root']
-            parent = root['id']
+            parent = json.loads(result.data)['root_feedback_id']
             fb_ids = []
             # Add random top-level FOs
             for _ in range(random.randint(2, 10)):

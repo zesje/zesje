@@ -36,8 +36,8 @@ class FeedbackBlock extends React.Component {
   }
 
   render () {
-    const children = this.props.children.map(
-      (child) => <FeedbackItem {...this.props.parentProps} feedback={child} key={'child-' + child.id} />
+    const children = this.props.feedback.children.map(
+      (id) => <FeedbackItem {...this.props.parentProps} feedbackID={id} key={'child-' + id} />
     )
     const shortcut = (this.props.feedback.index < 11 ? '' : 'shift + ') + this.props.feedback.index % 10
 

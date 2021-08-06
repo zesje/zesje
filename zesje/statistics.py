@@ -38,12 +38,14 @@ def solution_data(exam_id, student_id):
             'max_score': max(fb.score for fb in problem.feedback_options) or 0
         }
 
+        feedback = [fo for fo in problem.root_feedback.all_descendants if fo in solution.feedback]
+
         problem_data['feedback'] = [
             {'id': fo.id,
              'short': fo.text,
              'score': fo.score,
              'description': fo.description}
-            for fo in solution.feedback if solution.graded_by
+            for fo in feedback if solution.graded_by
         ]
         problem_data['score'] = (
             sum(i['score'] or 0 for i in problem_data['feedback'])

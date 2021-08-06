@@ -118,7 +118,8 @@ def grade_as_blank(sol):
                                            FeedbackOption.text == BLANK_FEEDBACK_NAME).first()
 
     if not feedback:
-        feedback = FeedbackOption(problem_id=sol.problem.id, text=BLANK_FEEDBACK_NAME, score=0)
+        feedback = FeedbackOption(problem_id=sol.problem.id, text=BLANK_FEEDBACK_NAME, score=0,
+                                  parent=sol.problem.root_feedback)
         db.session.add(feedback)
 
     sol.feedback.append(feedback)

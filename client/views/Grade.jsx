@@ -9,6 +9,7 @@ import ProblemSelector from './grade/ProblemSelector.jsx'
 import ProgressBar from '../components/ProgressBar.jsx'
 import withShortcuts from '../components/ShortcutBinder.jsx'
 import GradeNavigation from './grade/GradeNavigation.jsx'
+import { indexFeedbackOptions, findFeedbackByIndex } from '../components/feedback/FeedbackUtils.jsx'
 
 import * as api from '../api.jsx'
 
@@ -192,7 +193,7 @@ class Grade extends React.Component {
     for (let i = 1; i < 21; i++) {
       key = i % 10
       prefix = i > 10 ? 'shift+' : ''
-      this.props.bindShortcut(prefix + key, () => this.toggleFeedbackOptionIndex(i - 1))
+      this.props.bindShortcut(prefix + key, () => this.toggleFeedbackOptionIndex(i))
     }
   }
 
@@ -225,7 +226,7 @@ class Grade extends React.Component {
    * @param direction either 'prev', 'next', 'first' or 'last'
    */
   navigate = async (direction) => {
-    const fb = this.state.problem.feedback.map(fb => fb.id)
+    const fb = Object.keys(this.state.problem.feedback)
 
     this.setState({
       feedbackFilters: Object.entries(this.state.feedbackFilters).filter(
@@ -371,7 +372,12 @@ class Grade extends React.Component {
    * @param index the index of the feedback option.
    */
   toggleFeedbackOptionIndex = (index) => {
-    this.toggleFeedbackOption(this.state.problem.feedback[index].id)
+    const feedback = indexFeedbackOptions(this.state.problem.feedback, this.state.problem.root_feedback_id)
+    const fb = findFeedbackByIndex(feedback, index)
+    if (fb.parent === null) {
+      return null
+    }
+    this.toggleFeedbackOption(fb.id)
   }
 
   /**
@@ -460,7 +466,7 @@ class Grade extends React.Component {
     })
   }
 
-  applyFilter = (e, id, newFilterMode) => {
+  applyFeedbackFilter = (e, id, newFilterMode) => {
     e.stopPropagation()
     this.setState(oldState => {
       newFilterMode = oldState.feedbackFilters[id] === newFilterMode ? 'no_filter' : newFilterMode
@@ -550,7 +556,7 @@ class Grade extends React.Component {
                     toggleOption={this.toggleFeedbackOption}
                     toggleApprove={this.toggleApprove}
                     feedbackFilters={this.state.feedbackFilters}
-                    applyFilter={this.applyFilter}
+                    applyFilter={this.applyFeedbackFilter}
                     updateFeedback={this.syncSubmission}
                   />
                 </nav>

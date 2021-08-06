@@ -7,23 +7,18 @@ from flask_restful import Resource, reqparse, current_app
 from .widgets import widget_to_data, normalise_pages
 from ..database import db, Exam, Problem, ProblemWidget, Solution, GradingPolicy, ExamLayout
 from zesje.pdf_reader import guess_problem_title, get_problem_page
+from zesje.api.feedback import feedback_to_data
 
 
 def problem_to_data(problem):
     return {
         'id': problem.id,
         'name': problem.name,
-        'feedback': [
-            {
-                'id': fb.id,
-                'name': fb.text,
-                'description': fb.description,
-                'score': fb.score,
-                'used': len(fb.solutions)
-            }
-            for fb
-            in problem.feedback_options  # Sorted by fb.id
-        ],
+        'feedback': {
+            fb.id: feedback_to_data(fb, full_children=False)
+            for fb in problem.feedback_options  # Sorted by fb.id
+        },
+        'root_feedback_id': problem.root_feedback.id,
         'page': problem.widget.page,
         'widget': widget_to_data(problem.widget),
         'n_graded': len([sol for sol in problem.solutions if sol.graded_by is not None]),
@@ -143,7 +138,11 @@ class Problems(Resource):
             'id': problem.id,
             'widget_id': widget.id,
             'problem_name': problem.name,
-            'grading_policy': problem.grading_policy.name
+            'grading_policy': problem.grading_policy.name,
+            'feedback': {
+                problem.root_feedback.id: feedback_to_data(problem.root_feedback, full_children=False)
+            },
+            'root_feedback_id': problem.root_feedback.id,
         }
 
     put_parser = reqparse.RequestParser()

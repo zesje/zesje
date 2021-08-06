@@ -13,6 +13,7 @@ from sqlalchemy.orm import backref
 from sqlalchemy.orm.session import object_session
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.ext.associationproxy import association_proxy
+from sqlalchemy import event
 
 from flask_login import UserMixin, LoginManager
 from pathlib import Path
@@ -193,6 +194,10 @@ class Problem(db.Model):
     def mc_options(self):
         return [feedback_option.mc_option for feedback_option in self.feedback_options if feedback_option.mc_option]
 
+    @property
+    def root_feedback(self):
+        return next(fb for fb in self.feedback_options if fb.parent_id is None)
+
 
 class FeedbackOption(db.Model):
     """feedback option"""
@@ -207,6 +212,27 @@ class FeedbackOption(db.Model):
     parent_id = Column(Integer, ForeignKey('feedback_option.id'), nullable=True)
     # possible future extension: mut_excl_children = Column(Boolean, nullable=True)
     children = db.relationship("FeedbackOption", backref=backref('parent', remote_side=[id]), cascade='all, delete')
+
+    @property
+    def all_descendants(self):
+        """Returns all the children recursively"""
+        for child in self.children:
+            yield child
+            yield from child.all_descendants
+
+    @property
+    def all_ancestors(self):
+        """Returns all the parents recursively except for the `root` option to avoid being graded"""
+        next = self.parent
+        while next.parent is not None:
+            yield next
+            next = next.parent
+
+
+@event.listens_for(Problem, 'after_insert')
+def add_root(mapper, connection, problem):
+    """Add the root FO to the problem."""
+    connection.execute(FeedbackOption.__table__.insert(), text='__root__', score=0, problem_id=problem.id)
 
 
 # Table for many to many relationship of FeedbackOption and Solution

@@ -284,11 +284,13 @@ def grade_problems(client, exam_id, graders, problems, submissions, grade):
         for prob in sub['problems']:
             # randomly select the problem if it is not blanck
             if random.random() <= grade and len(prob['feedback']) == 0:
-                fo = next(filter(lambda p: p['id'] == prob['id'], problems))['feedback']
+                fb_data = next(filter(lambda p: p['id'] == prob['id'], problems))
+                fo, root_id = fb_data['feedback'], fb_data['root_feedback_id']
+                fo = [id for id in fo if int(id) != root_id]
                 opt = fo[random.randint(0, len(fo) - 1)]
                 client.put(f"/api/solution/{exam_id}/{submission_id}/{prob['id']}",
                            json={
-                               'id': opt['id'],
+                               'id': opt,
                                'graderID': random.choice(graders)['id']
                            })
 
@@ -375,6 +377,8 @@ def design_exam(app, client, layout, pages, students, grade, solve, multiple_cop
                    data={'name': problem['question'], 'grading_policy': 'set_single' if is_mcq else 'set_blank'})
 
         if is_mcq:
+            result = client.get(f'api/problems/{problem_id}')
+            parent = json.loads(result.data)['root_feedback_id']
             fops = []
             for option in problem['mc_options']:
                 resp = client.put('api/mult-choice/', data={
@@ -386,18 +390,24 @@ def design_exam(app, client, layout, pages, students, grade, solve, multiple_cop
                 fops.append((resp.get_json()['feedback_id'], option['name']))
 
             correct = random.choice(fops)
-            client.put(f'api/feedback/{problem_id}', data={'id': correct[0], 'name': correct[1], 'score': 1})
+            client.put(f'api/feedback/{problem_id}',
+                       data={'id': correct[0], 'name': correct[1], 'score': 1, 'parent': parent})
         else:
+            result = client.get(f'api/problems/{problem_id}')
+            parent = json.loads(result.data)['root_feedback_id']
             fb_ids = []
+            # Add random top-level FOs
             for _ in range(random.randint(2, 10)):
                 result = client.post(f'api/feedback/{problem_id}', data={
                     'name': lorem_name.sentence(),
                     'description': (lorem.sentence() if random.choice([True, False]) else ''),
-                    'score': random.randint(0, 10)
+                    'score': random.randint(0, 10),
+                    'parent': parent
                 })
                 # use return from post to get ids
                 data = json.loads(result.data)
                 fb_ids.append(data['id'])
+            # Add random children to top-level FOs
             for _ in range(random.randint(2, 5)):
                 # get random id from list
                 parent_id = fb_ids[random.randint(0, len(fb_ids) - 1)]

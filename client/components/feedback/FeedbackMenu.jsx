@@ -133,29 +133,30 @@ class FeedbackMenu extends React.Component {
             </button>
             {this.props.problem.mc_options.length === 0 && Object.keys(this.state.indexedFeedback).length > 1 &&
               <div className='dropdown is-hoverable is-right is-up'>
-              <div className='dropdown-trigger' />
-              <button className='button is-link is-outlined' aria-controls='dropdown-menu-FO-parent'>
-                <span className='icon is-small'>
-                  <i className='fa fa-chevron-down' />
-                </span>
-              </button>
-              <div className='dropdown-menu' id='dropdown-menu-FO-parent' role='menu'>
-                <div className='dropdown-content'>
-                  <div className='dropdown-item'>
-                    <p><b>Parent feedback:</b></p>
+                <div className='dropdown-trigger' />
+                <button className='button is-link is-outlined' aria-controls='dropdown-menu-FO-parent'>
+                  <span className='icon is-small'>
+                    <i className='fa fa-chevron-down' />
+                  </span>
+                </button>
+                <div className='dropdown-menu' id='dropdown-menu-FO-parent' role='menu'>
+                  <div className='dropdown-content'>
+                    <div className='dropdown-item'>
+                      <p><b>Parent feedback:</b></p>
+                    </div>
+                    {Object.keys(this.state.indexedFeedback)
+                      // id and root_feedback_id have different types so type check comparison (!==) does not work
+                      .filter(id => id != this.props.problem.root_feedback_id) // eslint-disable-line eqeqeq
+                      .map((id, index) =>
+                        <a key={'dropdown-parent-' + index}
+                          className='dropdown-item'
+                          onClick={() => this.editFeedback(-1, this.state.indexedFeedback[id])}>
+                          {this.state.indexedFeedback[id].name}
+                        </a>
+                      )}
                   </div>
-                  {Object.keys(this.state.indexedFeedback)
-                    .filter(id => id != this.props.problem.root_feedback_id)
-                    .map((id, index) =>
-                      <a key={'dropdown-parent-' + index}
-                        className='dropdown-item'
-                        onClick={() => this.editFeedback(-1, this.state.indexedFeedback[id])}>
-                        {this.state.indexedFeedback[id].name}
-                      </a>
-                    )}
                 </div>
-              </div>
-            </div>}
+              </div>}
           </div>
         }
       </React.Fragment>

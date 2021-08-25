@@ -26,7 +26,7 @@ const TooltipLink = (props) => {
 
   return (
     <div
-      className={'navbar-item no-padding' + (pred[0] ? ' tooltip is-tooltip-bottom' : '')}
+      className={'navbar-item no-padding' + (pred[0] ? ' tooltip has-tooltip-bottom' : '')}
       data-tooltip={pred[1]}
     >
       <Link className='navbar-item' disabled={pred[0]} to={props.to}> {props.text} </Link>

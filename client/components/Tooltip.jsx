@@ -9,9 +9,9 @@ const Tooltip = (props) => {
 
   const tooltipLocation = props.location || 'right'
 
-  let tooltipClass = 'icon tooltip is-tooltip-' + tooltipLocation
+  let tooltipClass = 'icon tooltip has-tooltip-' + tooltipLocation
   if (props.text.length > 60) {
-    tooltipClass += ' is-tooltip-multiline'
+    tooltipClass += ' has-tooltip-multiline'
   }
 
   return (

@@ -8,17 +8,14 @@ class GradeNavigation extends React.Component {
 
   createNavButton = (style, faIcon, onClick, tooltip) => {
     return (
-      <button
-        type='submit'
-        className={`button ${style} fa ${faIcon}`}
-        style={{ width: '4em' }}
-        onClick={onClick}
-      >
-        <div
-          className={this.props.showTooltips ? ' tooltip is-tooltip-active' : ''}
-          data-tooltip={tooltip}
-        />
-      </button>
+      <div className={'control' + (this.props.showTooltips ? ' tooltip has-tooltip-active' : '')}
+        data-tooltip={tooltip}>
+        <button
+          type='submit'
+          className={`button ${style} fa ${faIcon}`}
+          style={{ width: '4em' }}
+          onClick={onClick} />
+      </div>
     )
   }
 
@@ -30,26 +27,22 @@ class GradeNavigation extends React.Component {
       <div className='column is-half-desktop is-full-mobile level'>
         <div className='level-item make-wider'>
           <div className='field has-addons is-mobile'>
-            <div className='control'>
-              {this.createNavButton(
-                'is-info is-rounded',
-                'fa-angle-double-left',
-                this.props.first,
-                'shift + ←'
-              )}
-            </div>
-            <div className='control'>
-              {this.createNavButton(
-                'is-link',
-                'fa-angle-left',
-                this.props.prev,
-                '←'
-              )}
-            </div>
+            {this.createNavButton(
+              'is-info is-rounded',
+              'fa-angle-double-left',
+              this.props.first,
+              'shift + ←'
+            )}
+            {this.createNavButton(
+              'is-link',
+              'fa-angle-left',
+              this.props.prev,
+              '←'
+            )}
             <div
               id='search'
               className={
-                'control is-wider ' + (this.props.showTooltips ? 'tooltip is-tooltip-active tooltip-no-arrow' : '')
+                'control is-wider ' + (this.props.showTooltips ? 'tooltip has-tooltip-active tooltip-no-arrow' : '')
               }
               data-tooltip='Press ctrl to hide shortcuts'
             >
@@ -61,11 +54,11 @@ class GradeNavigation extends React.Component {
                 suggestionKeys={(this.props.anonymous
                   ? ['id']
                   : [
-                      'student.id',
-                      'student.firstName',
-                      'student.lastName',
-                      'id'
-                    ])}
+                  'student.id',
+                  'student.firstName',
+                  'student.lastName',
+                  'id'
+                ])}
                 renderSelected={({ id, student }) => {
                   if (student && !this.props.anonymous) {
                     return `${student.firstName} ${student.lastName} (${student.id})`
@@ -97,22 +90,18 @@ class GradeNavigation extends React.Component {
                 }}
               />
             </div>
-            <div className='control'>
-              {this.createNavButton(
-                'is-link',
-                'fa-angle-right',
-                this.props.next,
-                '→'
-              )}
-            </div>
-            <div className='control'>
-              {this.createNavButton(
-                'is-info is-rounded',
-                'fa-angle-double-right',
-                this.props.last,
-                'shift + →'
-              )}
-            </div>
+            {this.createNavButton(
+              'is-link',
+              'fa-angle-right',
+              this.props.next,
+              '→'
+            )}
+            {this.createNavButton(
+              'is-info is-rounded',
+              'fa-angle-double-right',
+              this.props.last,
+              'shift + →'
+            )}
           </div>
         </div>
       </div>

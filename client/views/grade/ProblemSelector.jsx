@@ -11,7 +11,7 @@ class ProblemSelector extends React.Component {
       <div className='field'>
         <label className='label'>Problem</label>
         <div
-          className={'control has-icons-left' + (this.props.showTooltips ? ' tooltip is-tooltip-active' : '')}
+          className={'control has-icons-left' + (this.props.showTooltips ? ' tooltip has-tooltip-active' : '')}
           data-tooltip='previous problem: shift + ↑ next problem: shift + ↓'
         >
           <div className='select is-fullwidth'>

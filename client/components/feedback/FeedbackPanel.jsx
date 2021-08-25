@@ -76,7 +76,7 @@ class FeedbackPanel extends React.Component {
             </div>
             <div className='level-right'>
               <div
-                className={this.props.showTooltips ? ' tooltip is-tooltip-active is-tooltip-top' : ''}
+                className={this.props.showTooltips ? ' tooltip has-tooltip-active has-tooltip-top' : ''}
                 data-tooltip='approve/set aside feedback: a'
               >
                 <button

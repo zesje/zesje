@@ -1,6 +1,6 @@
 import React from 'react'
 
-import Plotly from 'plotly.js-cartesian-dist'
+import Plotly from 'plotly.js-cartesian-dist-min'
 import createPlotlyComponent from 'react-plotly.js/factory'
 
 import { range, exp, sqrt, pow, pi, zeros, min, max } from 'mathjs'
@@ -17,9 +17,9 @@ const Tooltip = (props) => {
     return null
   }
 
-  let tooltipClass = 'icon tooltip is-tooltip-right '
+  let tooltipClass = 'icon tooltip has-tooltip-right '
   if (props.text.length > 100) {
-    tooltipClass += 'is-tooltip-multiline '
+    tooltipClass += 'has-tooltip-multiline '
   }
 
   return (

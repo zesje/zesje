@@ -646,7 +646,7 @@ class Grade extends React.Component {
                       {!this.state.isUnstructured &&
                         <button
                           className={
-                            'button is-info is-outlined' + (this.state.showTooltips ? ' tooltip is-tooltip-active' : '')
+                            'button is-info is-outlined' + (this.state.showTooltips ? ' tooltip has-tooltip-active' : '')
                           }
                           data-tooltip='f' onClick={this.toggleFullPage}
                         >

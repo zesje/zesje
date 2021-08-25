@@ -1,5 +1,5 @@
 import React from 'react'
-import Switch from 'react-bulma-switch/full'
+import Switch from './Switch.jsx'
 import './PanelMCQ.css'
 
 const LABEL_TYPES = {

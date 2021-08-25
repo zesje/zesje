@@ -26,7 +26,7 @@ const ExamContent = (props) => {
   const addPageButtonText = pageCount === 1 ? 'Specify pages' : 'Add page'
 
   return (
-    <div>
+    <React.Fragment>
       {Object.keys(pages).map(page => (
         <div className='card page-card' key={page}>
           <header className='card-header'>
@@ -63,7 +63,7 @@ const ExamContent = (props) => {
         onClick={props.addPage}>
         <span>{addPageButtonText}</span>
       </button> : null}
-    </div>
+    </React.Fragment>
   )
 }
 

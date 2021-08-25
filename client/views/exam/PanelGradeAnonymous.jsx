@@ -1,6 +1,6 @@
 import React from 'react'
 import Notification from 'react-bulma-notification'
-import Switch from 'react-bulma-switch/full'
+import Switch from '../../components/Switch.jsx'
 
 import * as api from '../../api.jsx'
 

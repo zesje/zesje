@@ -27,9 +27,9 @@ div.mcq-option img.mcq-box {
 
 
 .editor-content {
-  background-color: #ddd;
-  border-radius: 4px;
-  padding: .75rem;
+  background-color: $panel-heading-background-color;
+  border-radius: $panel-heading-radius;
+  padding: 0.75rem;
 }
 
 .selection-area {

@@ -10,7 +10,8 @@ module.exports = merge(common, {
   mode: 'production',
   module: {
     rules: [
-      { test: /\.css$/, use: [ MiniCssExtractPlugin.loader, 'css-loader' ] }
+      { test: /\.css$/, use: [ MiniCssExtractPlugin.loader, 'css-loader' ] },
+      { test: /\.s(c|a)ss$/, use: [ MiniCssExtractPlugin.loader, 'css-loader', 'sass-loader' ] }
     ]
   },
   devtool: 'source-map',

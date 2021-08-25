@@ -5,16 +5,20 @@ class ProblemSelector extends React.Component {
     this.props.navigateProblem(event.target.value)
     event.target.blur()
   }
+
   render () {
     return (
       <div className='field'>
         <label className='label'>Problem</label>
-        <div className={'control has-icons-left' + (this.props.showTooltips ? ' tooltip is-tooltip-active' : '')}
-          data-tooltip='previous problem: shift + ↑ next problem: shift + ↓'>
+        <div
+          className={'control has-icons-left' + (this.props.showTooltips ? ' tooltip is-tooltip-active' : '')}
+          data-tooltip='previous problem: shift + ↑ next problem: shift + ↓'
+        >
           <div className='select is-fullwidth'>
             <select
               value={this.props.current.id}
-              onChange={this.changeProblem}>
+              onChange={this.changeProblem}
+            >
               {this.props.problems.map((problem) =>
                 <option key={problem.id} value={problem.id}>{problem.name}</option>
               )}

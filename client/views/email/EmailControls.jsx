@@ -34,7 +34,7 @@ const ToField = (props) => (
         type='email'
         value={props.email}
         readOnly
-        style={{paddingLeft: 'calc(0.625em - 1px)'}}
+        style={{ paddingLeft: 'calc(0.625em - 1px)' }}
       />
     </div>
   </div>
@@ -77,8 +77,8 @@ const SendWithConfirmationButton = (props) => (
       'button is-primary is-fullwidth ' +
       (props.sending ? 'is-loading' : null)
     }
-    confirmationText={'Email all students who took this exam?'}
-    contentText={'This may take some time.'}
+    confirmationText='Email all students who took this exam?'
+    contentText='This may take some time.'
     onConfirm={props.onSend}
     disabled={props.disabled}
   >
@@ -120,7 +120,7 @@ class EmailIndividualControls extends React.Component {
   }
 
   render () {
-    let p = this.props
+    const p = this.props
     let email = ''
     let disabled = true
     if (p.student !== null) {
@@ -129,7 +129,7 @@ class EmailIndividualControls extends React.Component {
     }
     return (
       <div
-        style={{width: '100%'}}
+        style={{ width: '100%' }}
       >
         <ToField email={email} />
         <CCField
@@ -159,18 +159,20 @@ class EmailEveryoneControls extends React.Component {
   }
 
   disableAnonymousMode = () => {
-    api.put(`exams/${this.props.examID}`, {grade_anonymous: false}).then(resp => {
+    api.put(`exams/${this.props.examID}`, { grade_anonymous: false }).then(resp => {
       if (resp.changed) {
-        Notification.info(
+        const msg = (
           <div>
-            <p>
-              'Turned off anonymous grading for this exam'
-            </p>
-            <a onClick={() => api.put(`exams/${this.props.examID}`, {grade_anonymous: true})}>
+            <p>Turned off anonymous grading for this exam</p>
+            <a onClick={() => api.put(`exams/${this.props.examID}`, { grade_anonymous: true })}>
               (undo)
             </a>
           </div>
         )
+        toast({
+          message: msg,
+          type: 'is-info'
+        })
       }
     })
   }
@@ -210,7 +212,7 @@ class EmailEveryoneControls extends React.Component {
       }
     } catch (error) {
       try {
-        let response = await error.json()
+        const response = await error.json()
         if (response.status === 400 ||
             response.status === 409) {
           toast({ message: 'No emails sent: ' + response.message, duration: 60000, type: 'is-danger' })
@@ -228,9 +230,9 @@ class EmailEveryoneControls extends React.Component {
   }
 
   render () {
-    let disabled = this.props.template === null
+    const disabled = this.props.template === null
     return (
-      <div style={{width: '100%'}}>
+      <div style={{ width: '100%' }}>
         <AttachPDF
           attachPDF={this.state.attachPDF}
           onChecked={attachPDF => this.setState({ attachPDF })}

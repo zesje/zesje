@@ -20,6 +20,7 @@ class IDBlock extends React.Component {
       })
     }
   }
+
   clear = () => {
     this.setState({
       input: '',
@@ -72,7 +73,7 @@ class IDBlock extends React.Component {
   }
 
   changeID = (event) => {
-    const patt = new RegExp(/^[1-9]\d*$|^()$/)
+    const patt = /^[1-9]\d*$|^()$/
 
     if (patt.test(event.target.value)) {
       this.setState({
@@ -110,6 +111,7 @@ class IDBlock extends React.Component {
       })
     }
   }
+
   focus = () => {
     this.setState({
       editing: true
@@ -122,9 +124,11 @@ class IDBlock extends React.Component {
         <div className='field'>
           <label className='label'>Student number</label>
           <div className='control has-icons-left has-icons-right'>
-            <input className={'input' + this.color()} type='text' maxLength='7' placeholder='Student number'
+            <input
+              className={'input' + this.color()} type='text' maxLength='7' placeholder='Student number'
               value={this.state.input} onChange={this.changeID}
-              onBlur={this.blur} onFocus={this.focus} />
+              onBlur={this.blur} onFocus={this.focus}
+            />
             <span className='icon is-small is-left'>
               <i className='fa fa-user' />
             </span>

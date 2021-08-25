@@ -12,9 +12,12 @@ const HelpModal = (props) => (
         </p>
       </header>
       <section className='modal-card-body'>
-        <div className='content'
+        <div
+          className='content'
           dangerouslySetInnerHTML={
-            {__html: (props.page.content)}} />
+            { __html: (props.page.content) }
+}
+        />
       </section>
       <footer className='modal-card-footer'>
         <div className='field is-grouped'>

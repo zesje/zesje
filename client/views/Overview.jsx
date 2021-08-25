@@ -3,7 +3,7 @@ import React from 'react'
 import Plotly from 'plotly.js-cartesian-dist'
 import createPlotlyComponent from 'react-plotly.js/factory'
 
-import {range, exp, sqrt, pow, pi, zeros, min, max} from 'mathjs'
+import { range, exp, sqrt, pow, pi, zeros, min, max } from 'mathjs'
 
 import humanizeDuration from 'humanize-duration'
 import Hero from '../components/Hero.jsx'
@@ -63,7 +63,7 @@ const GraderDetails = (props) => {
   }
 
   return (
-    <React.Fragment>
+    <>
       <h3 className='is-size-5'> Grader details </h3>
       {props.graders.length > 0 &&
         <table className='table is-striped is-fullwidth'>
@@ -78,27 +78,28 @@ const GraderDetails = (props) => {
           <tbody>
             {
               props.graders.map((g, i) => {
-                return <tr key={i}>
-                  <td> {g.name} </td>
-                  <td> {g.graded} </td>
-                  <td> {formatTime(g.averageTime)} </td>
-                  <td> {formatTime(g.totalTime)} </td>
-                </tr>
+                return (
+                  <tr key={i}>
+                    <td> {g.name} </td>
+                    <td> {g.graded} </td>
+                    <td> {formatTime(g.averageTime)} </td>
+                    <td> {formatTime(g.totalTime)} </td>
+                  </tr>
+                )
               })
             }
           </tbody>
-        </table>
-      }
+        </table>}
 
       {props.autograded > 0 &&
         <article className='message is-info'>
           <div className='message-body'>
-            In this problem Zesje helped you grade {props.autograded === 1 ? '1 solution' : `${props.autograded} solutions`},
+            In this problem Zesje helped you grade
+            {props.autograded === 1 ? ' 1 solution' : ` ${props.autograded} solutions`},
             saving you {formatTime(estimateGradingTime(props.graders) * props.autograded)} of grading time.
           </div>
-        </article>
-      }
-    </React.Fragment>
+        </article>}
+    </>
   )
 }
 
@@ -185,8 +186,12 @@ class Overview extends React.Component {
       if (solToGrade || solInRevision) {
         const gradingTimeLeft = solToGrade * avgTime
 
-        text += (solToGrade > 0 ? (`<br>${solToGrade === 1 ? '1 solution' : `${solToGrade} solutions`}`) + ' to grade' : '')
-        text += (solInRevision > 0 ? (`<br>${solInRevision === 1 ? '1 solution' : `${solInRevision} solutions`}`) + ' to revise' : '')
+        text += (solToGrade > 0
+          ? (`<br>${solToGrade === 1 ? '1 solution' : `${solToGrade} solutions`}`) + ' to grade'
+          : '')
+        text += (solInRevision > 0
+          ? (`<br>${solInRevision === 1 ? '1 solution' : `${solInRevision} solutions`}`) + ' to revise'
+          : '')
         text += `<br>Time left: ${formatTime(gradingTimeLeft)}`
       }
 
@@ -202,9 +207,15 @@ class Overview extends React.Component {
     })
 
     hoverText.push(
-      (total.alpha !== null ? `<br><b>Cronbach's α</b>: ${total.alpha.toPrecision(3)}` : '') +
-      (totalUngraded > 0 ? `<br>${totalUngraded === 1 ? '1 solution' : `${totalUngraded} solutions`} to grade` : '') +
-      (totalInRevision > 0 ? `<br>${totalInRevision === 1 ? '1 solution' : `${totalInRevision} solutions`} to revise` : '') +
+      (total.alpha !== null
+        ? `<br><b>Cronbach's α</b>: ${total.alpha.toPrecision(3)}`
+        : '') +
+      (totalUngraded > 0
+        ? `<br>${totalUngraded === 1 ? '1 solution' : `${totalUngraded} solutions`} to grade`
+        : '') +
+      (totalInRevision > 0
+        ? `<br>${totalInRevision === 1 ? '1 solution' : `${totalInRevision} solutions`} to revise`
+        : '') +
       (totalTimeLeft > 0 ? `<br>Time left: ${formatTime(totalTimeLeft)}` : '')
     )
 
@@ -353,8 +364,6 @@ class Overview extends React.Component {
       marker: {
         color: 'hsla(204, 86, 53, 0.5)'
       },
-      xcalendar: 'gregorian',
-      ycalendar: 'gregorian',
       xaxis: 'x3',
       yaxis: 'y3'
     }]
@@ -490,7 +499,7 @@ class Overview extends React.Component {
     }
 
     return (
-      <React.Fragment>
+      <>
         <div className='container'>
 
           <Plot
@@ -501,11 +510,12 @@ class Overview extends React.Component {
               const selProblem = problems[data.points[0].y]
               const selStudent = selProblem.results[data.points[0].x].studentId
 
-              this.setState({selectedStudentId: selStudent})
+              this.setState({ selectedStudentId: selStudent })
             }}
-            onDoubleClick={() => this.setState({selectedStudentId: null})}
+            onDoubleClick={() => this.setState({ selectedStudentId: null })}
             useResizeHandler
-            style={{width: '100%', position: 'relative', display: 'inline-block'}} />
+            style={{ width: '100%', position: 'relative', display: 'inline-block' }}
+          />
 
           {this.state.stats.copies / this.state.stats.students > 1.05 &&
             <article className='message is-warning'>
@@ -514,10 +524,9 @@ class Overview extends React.Component {
                 were needed to solve this exam by some students,
                 consider adding more space the next time.
               </div>
-            </article>
-          }
+            </article>}
         </div>
-      </React.Fragment>
+      </>
     )
   }
 
@@ -535,9 +544,7 @@ class Overview extends React.Component {
       hoverinfo: 'none',
       marker: {
         color: 'hsl(204, 86, 53)'
-      },
-      xcalendar: 'gregorian',
-      ycalendar: 'gregorian'
+      }
     }, {
       x: problem.results.reduce((acc, v) => !v.graded ? acc.concat(v.score) : acc, []),
       type: 'histogram',
@@ -551,9 +558,7 @@ class Overview extends React.Component {
       hoverinfo: 'none',
       marker: {
         color: 'hsla(204, 86, 53, 0.5)'
-      },
-      xcalendar: 'gregorian',
-      ycalendar: 'gregorian'
+      }
     }]
 
     const layout = {
@@ -569,7 +574,8 @@ class Overview extends React.Component {
         fixedrange: true
       },
       title: {
-        text: `Histogram of Scores<br>(score = ${problem.mean.value.toPrecision(2)} ± ${problem.mean.error.toPrecision(2)})`
+        text: 'Histogram of Scores<br>(score = ' +
+          `${problem.mean.value.toPrecision(2)} ± ${problem.mean.error.toPrecision(2)})`
       },
       autosize: true,
       showlegend: true,
@@ -583,12 +589,15 @@ class Overview extends React.Component {
         'hoverClosestCartesian', 'hoverCompareCartesian']
     }
 
-    return (<Plot
-      data={traces}
-      config={config}
-      layout={layout}
-      useResizeHandler
-      style={{width: '100%', position: 'relative', display: 'inline-block'}} />)
+    return (
+      <Plot
+        data={traces}
+        config={config}
+        layout={layout}
+        useResizeHandler
+        style={{ width: '100%', position: 'relative', display: 'inline-block' }}
+      />
+    )
   }
 
   renderProblemSummary = (id) => {
@@ -597,7 +606,7 @@ class Overview extends React.Component {
     if (!problem) return null
 
     return (
-      <React.Fragment>
+      <>
         <div className='columns is-multiline'>
           <div className='column is-half-desktop is-full-mobile'>
             <h3 className='is-size-5'> Feedback details </h3>
@@ -612,14 +621,16 @@ class Overview extends React.Component {
               <tbody>
                 {
                   problem.feedback.map((option, i) => {
-                    return <tr key={i}>
-                      <td>
-                        {option.name}
-                        <Tooltip text={option.description} />
-                      </td>
-                      <td> {option.score} </td>
-                      <td> {option.used} </td>
-                    </tr>
+                    return (
+                      <tr key={i}>
+                        <td>
+                          {option.name}
+                          <Tooltip text={option.description} />
+                        </td>
+                        <td> {option.score} </td>
+                        <td> {option.used} </td>
+                      </tr>
+                    )
                   })
                 }
               </tbody>
@@ -631,10 +642,11 @@ class Overview extends React.Component {
           <div className='column is-full'>
             <GraderDetails
               graders={problem.graders}
-              autograded={problem.autograded} />
+              autograded={problem.autograded}
+            />
           </div>
         </div>
-      </React.Fragment>
+      </>
     )
   }
 
@@ -674,15 +686,14 @@ class Overview extends React.Component {
           </span>
           <section className='section'>
             <div className='container'>
-              { this.state.selectedProblemId === 0
+              {this.state.selectedProblemId === 0
                 ? this.renderAtGlance()
-                : this.renderProblemSummary(this.state.selectedProblemId)
-              }
+                : this.renderProblemSummary(this.state.selectedProblemId)}
             </div>
           </section>
         </div>
 
-      </div >
+      </div>
     )
   }
 }

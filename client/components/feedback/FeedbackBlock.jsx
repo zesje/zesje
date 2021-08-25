@@ -20,6 +20,7 @@ class FeedbackBlock extends React.Component {
       }
     }))
   }
+
   enter = (component) => {
     this.setState(prevState => ({
       hover: {
@@ -30,7 +31,7 @@ class FeedbackBlock extends React.Component {
   }
 
   toggle = () => {
-    if (!this.state.hover['edit']) {
+    if (!this.state.hover.edit) {
       this.props.toggleOption(this.props.feedback.id)
     }
   }

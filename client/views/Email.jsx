@@ -35,7 +35,7 @@ class Email extends React.Component {
         console.log(err)
         err.json().then(e => {
           if (e.status === 404) {
-            this.setState({error: e.message})
+            this.setState({ error: e.message })
           }
         })
       })
@@ -48,7 +48,7 @@ class Email extends React.Component {
     }
 
     return (
-      <React.Fragment>
+      <>
         <Hero title='Email' subtitle='So the students get their feedback' />
         <section className='section'>
           <div className='container'>
@@ -87,7 +87,7 @@ class Email extends React.Component {
             </div>
           </div>
         </section>
-      </React.Fragment>
+      </>
     )
   }
 }

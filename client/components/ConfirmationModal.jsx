@@ -5,10 +5,11 @@ import './Modal.css'
 const ConfirmationModal = (props) => {
   let body = null
   if (props.contentText) {
-    body =
+    body = (
       <section className='modal-card-body'>
-        { props.contentText}
+        {props.contentText}
       </section>
+    )
   }
 
   return (
@@ -21,8 +22,10 @@ const ConfirmationModal = (props) => {
         {body}
         <footer className='modal-card-footer'>
           <div className='field is-grouped'>
-            <button className={'button is-fullwidth is-footer is-left ' +
-              (props.color || 'is-success')} onClick={props.onConfirm}>
+            <button
+              className={'button is-fullwidth is-footer is-left ' +
+              (props.color || 'is-success')} onClick={props.onConfirm}
+            >
               {props.confirmText || 'Save changes'}
             </button>
             <button className='button is-fullwidth is-footer is-right' onClick={props.onCancel}>

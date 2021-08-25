@@ -78,7 +78,7 @@ class TemplateEditor extends React.Component {
     return (
       <textarea
         className='textarea'
-        style={{height: '100%'}}
+        style={{ height: '100%' }}
         value={this.props.template || ''}
         onChange={evt => this.props.onTemplateChange(evt.target.value)}
         onBlur={() => this.updateRenderedTemplate(this.props)}
@@ -90,7 +90,7 @@ class TemplateEditor extends React.Component {
     return (
       <textarea
         className='textarea is-unselectable has-background-light'
-        style={{height: '100%', borderColor: '#fff'}}
+        style={{ height: '100%', borderColor: '#fff' }}
         value={this.state.renderedTemplate || ''}
         readOnly
       />
@@ -99,7 +99,7 @@ class TemplateEditor extends React.Component {
 
   render () {
     return (
-      <React.Fragment>
+      <>
         <div className='column'>
           {
             this.props.template === null
@@ -114,7 +114,7 @@ class TemplateEditor extends React.Component {
               : <this.RenderedTemplate />
           }
         </div>
-      </React.Fragment>
+      </>
     )
   }
 }

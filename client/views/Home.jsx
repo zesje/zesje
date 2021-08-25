@@ -13,7 +13,7 @@ const Home = () => {
       <section className='section'>
 
         <div className='container'>
-          <div className='content' dangerouslySetInnerHTML={{__html: homeMarkdown}} />
+          <div className='content' dangerouslySetInnerHTML={{ __html: homeMarkdown }} />
         </div>
 
       </section>

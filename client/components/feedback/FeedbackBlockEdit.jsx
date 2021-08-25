@@ -56,7 +56,7 @@ class EditPanel extends React.Component {
         updateCallback: updateCallback
       }
     }
-    return {updateCallback: updateCallback}
+    return { updateCallback: updateCallback }
   }
 
   changeText = (event) => {
@@ -64,8 +64,9 @@ class EditPanel extends React.Component {
       [event.target.name]: event.target.value
     })
   }
+
   changeScore = (event) => {
-    const patt = new RegExp(/^(-|(-?[1-9]\d*)|0)?$/)
+    const patt = /^(-|(-?[1-9]\d*)|0)?$/
 
     if (patt.test(event.target.value)) {
       this.setState({
@@ -156,7 +157,8 @@ class EditPanel extends React.Component {
                   placeholder='7'
                   value={this.state.score}
                   onChange={this.changeScore}
-                  onKeyDown={this.key} />
+                  onKeyDown={this.key}
+                />
               </div>
             </div>
             <div className='field grow'>
@@ -167,7 +169,8 @@ class EditPanel extends React.Component {
                   name='name'
                   value={this.state.name}
                   onChange={this.changeText}
-                  onKeyDown={this.key} />
+                  onKeyDown={this.key}
+                />
               </div>
             </div>
           </div>
@@ -176,13 +179,15 @@ class EditPanel extends React.Component {
           <div className='field is-fullwidth'>
             <label className='label'>Description</label>
             <div className='control has-icons-left'>
-              <textarea className='input'
-                style={{height: '4rem'}}
+              <textarea
+                className='input'
+                style={{ height: '4rem' }}
                 placeholder='Description'
                 name='description'
                 value={this.state.description}
                 onChange={this.changeText}
-                onKeyDown={this.key} />
+                onKeyDown={this.key}
+              />
               <span className='icon is-small is-left'>
                 <i className='fa fa-comment-o' />
               </span>
@@ -196,7 +201,7 @@ class EditPanel extends React.Component {
                 disabled={!this.state.name || (!this.state.score && this.state.score !== 0) || isNaN(parseInt(this.state.score))} />
               <CancelButton onClick={this.props.goBack} />
             </div>
-            <DeleteButton onClick={() => { this.setState({deleting: true}) }} exists={this.props.feedback} />
+            <DeleteButton onClick={() => { this.setState({ deleting: true }) }} exists={this.props.feedback} />
           </div>
           <ConfirmationModal
             headerText={`Do you want to irreversibly delete feedback option "${this.state.name}"?`}
@@ -213,7 +218,7 @@ class EditPanel extends React.Component {
             confirmText='Delete feedback'
             active={this.state.deleting}
             onConfirm={this.deleteFeedback}
-            onCancel={() => { this.setState({deleting: false}) }}
+            onCancel={() => { this.setState({ deleting: false }) }}
           />
         </div>
         {children && children.length > 0 ? <ul className='menu-list'> {children} </ul> : null}

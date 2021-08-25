@@ -15,7 +15,8 @@ class GeneratedExamPreview extends React.Component {
         <Page
           renderAnnotations={false}
           renderTextLayer={false}
-          pageIndex={this.props.page} />
+          pageIndex={this.props.page}
+        />
       </Document>
     )
   }

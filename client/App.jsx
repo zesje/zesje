@@ -33,17 +33,18 @@ const PrivateRoute = ({ isAuthenticated, render, ...rest }) => {
     <Route
       {...rest}
       render={({ location, history, match }) =>
-        isAuthenticated ? (
-          render({ location, history, match })
-        ) : (
+        isAuthenticated
+          ? (
+              render({ location, history, match })
+            )
+          : (
           <Redirect
             to={{
               pathname: '/',
               state: { from: location }
             }}
           />
-        )
-      }
+            )}
     />
   )
 }
@@ -83,20 +84,27 @@ class App extends React.Component {
               exact path='/exams'
               render={({ history }) => <AddExam updateExamList={updateExamList} changeURL={history.push} />}
             />
-            <PrivateRoute isAuthenticated={isAuthenticated} path='/exams/:examID/' render={({ match }) =>
-              <ExamRouter
-                parentMatch={match}
-                graderID={this.state.graderID}
-                selectExam={this.selectExam}
-                updateExamList={updateExamList}
-                setHelpPage={setHelpPage} />
-            } />
-            <PrivateRoute isAuthenticated={isAuthenticated} exact path='/graders' render={() =>
-              <Graders updateGraderList={updateGraderList} />} />
-            <Route exact path='/unauthorized' render={() =>
-              <Fail message='Your account is not authorized to access this instance of Zesje.' />} />
+            <PrivateRoute
+              isAuthenticated={isAuthenticated} path='/exams/:examID/' render={({ match }) =>
+                <ExamRouter
+                  parentMatch={match}
+                  graderID={this.state.graderID}
+                  selectExam={this.selectExam}
+                  updateExamList={updateExamList}
+                  setHelpPage={setHelpPage}
+                />}
+            />
+            <PrivateRoute
+              isAuthenticated={isAuthenticated} exact path='/graders' render={() =>
+                <Graders updateGraderList={updateGraderList} />}
+            />
+            <Route
+              exact path='/unauthorized' render={() =>
+                <Fail message='Your account is not authorized to access this instance of Zesje.' />}
+            />
             <Route render={() =>
-              <Fail message="404. Could not find that page :'(" />} />
+              <Fail message="404. Could not find that page :'(" />}
+            />
           </Switch>
           <Footer />
         </div>

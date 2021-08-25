@@ -9,7 +9,7 @@ class ConfirmationButton extends React.Component {
 
   render () {
     return (
-      <React.Fragment>
+      <>
         <button
           className={this.props.className}
           disabled={this.props.disabled}
@@ -30,7 +30,7 @@ class ConfirmationButton extends React.Component {
             }, () => this.props.onConfirm())
           }}
         />
-      </React.Fragment>
+      </>
     )
   }
 }

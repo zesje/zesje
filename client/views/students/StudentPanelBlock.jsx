@@ -11,16 +11,20 @@ const StudentPanelBlock = (props) => {
 
   return (
     <div key={props.student.id}>
-      <a className={panelClass}
-        key={props.student.id} id={props.student.id} selected={props.selected} onClick={props.selectStudent}>
+      <a
+        className={panelClass}
+        key={props.student.id} id={props.student.id} selected={props.selected} onClick={props.selectStudent}
+      >
         <span className={'panel-icon' + (button ? ' has-text-white' : '')}>
           <i className='fa fa-user' />
         </span>
         {props.student.firstName + ' ' + props.student.lastName}
       </a>
 
-      <div className={'panel-block' + (props.selected ? ' is-info' : ' is-hidden')}
-        key='info' style={{ backgroundColor: '#dbdbdb' }}>
+      <div
+        className={'panel-block' + (props.selected ? ' is-info' : ' is-hidden')}
+        key='info' style={{ backgroundColor: '#dbdbdb' }}
+      >
 
         <a className='panel-icon' onClick={() => props.editStudent(props.student)}>
           <i className='fa fa-pencil' />

@@ -36,8 +36,7 @@ const ScanStatus = (props) => {
             </li>
           )}
         </details>
-        : null
-      }
+        : null}
     </div>
   )
 }
@@ -66,8 +65,8 @@ class Scans extends React.Component {
       .then(copies => {
         this.setState({
           copies: copies.map(copy => ({
-            number: copy['number'],
-            missing: copy['missing_pages']
+            number: copy.number,
+            missing: copy.missing_pages
           }))
         })
       })
@@ -78,7 +77,7 @@ class Scans extends React.Component {
       toast({ message: 'Please upload a PDF, ZIP or image.', type: 'is-danger' })
       return
     }
-    accepted.map(file => {
+    accepted.forEach(file => {
       const data = new window.FormData()
       data.append('file', file)
       api.post('scans/' + this.props.examID, data)
@@ -119,70 +118,76 @@ class Scans extends React.Component {
 
     const missingPagesStatus = (
       missingPages.length > 0
-        ? <div>
-          <p className='menu-label'>
-            Missing Pages
-          </p>
-          <ul className='menu-list'>
-            {missingPages.map(copy =>
-              <li key={copy.number}>
-                Copy {copy.number} is missing pages {copy.missing.join(', ')}
-              </li>
-            )}
-          </ul>
-        </div>
+        ? (
+          <div>
+            <p className='menu-label'>
+              Missing Pages
+            </p>
+            <ul className='menu-list'>
+              {missingPages.map(copy =>
+                <li key={copy.number}>
+                  Copy {copy.number} is missing pages {copy.missing.join(', ')}
+                </li>
+              )}
+            </ul>
+          </div>
+          )
         : null
     )
 
-    const acceptedTypes = 'application/pdf,application/zip,application/octet-stream,application/x-zip-compressed,multipart/x-zip,image/*'
+    const acceptedTypes = 'application/pdf,image/*,' +
+      'application/zip,application/octet-stream,application/x-zip-compressed,multipart/x-zip'
 
-    return <div>
+    return (
+      <div>
 
-      <Hero title='Scans' subtitle='Upload scans and check missing pages' />
+        <Hero title='Scans' subtitle='Upload scans and check missing pages' />
 
-      <section className='section'>
+        <section className='section'>
 
-        <div className='container'>
-          <div className='columns is-multiline is-centered'>
-            <div className='column is-full has-text-centered'>
-              <Dropzone
-                accept={acceptedTypes}
-                onDrop={(accepted, rejected) => this.onDropFile(accepted, rejected)}
-                multiple>
-                {({getRootProps, getInputProps}) => (
-                  <section className="container">
-                    <div {...getRootProps({className: 'dropzone'})}>
-                      <input {...getInputProps()} />
-                      <p>Drag 'n' drop or click to select scan files...</p>
-                    </div>
-                  </section>
-                )}
-              </Dropzone>
-            </div>
-            <div className='column is-full has-text-centered'>
-              <aside className='menu'>
-                <p className='menu-label'>
-                  Uploaded copies: {this.state.copies.length}
-                </p>
-
-                {missingPagesStatus}
-
-                <p className='menu-label'>
-                  Upload History
-                </p>
-                <ul className='menu-list'>
-                  {this.state.scans.map(scan =>
-                    <li key={scan.id}>
-                      <ScanStatus scan={scan} />
-                    </li>
+          <div className='container'>
+            <div className='columns is-multiline is-centered'>
+              <div className='column is-full has-text-centered'>
+                <Dropzone
+                  accept={acceptedTypes}
+                  onDrop={(accepted, rejected) => this.onDropFile(accepted, rejected)}
+                  multiple
+                >
+                  {({ getRootProps, getInputProps }) => (
+                    <section className='container'>
+                      <div {...getRootProps({ className: 'dropzone' })}>
+                        <input {...getInputProps()} />
+                        <p>Drag &apos;n&apos; drop or click to select scan files...</p>
+                      </div>
+                    </section>
                   )}
-                </ul>
-              </aside>
+                </Dropzone>
+              </div>
+              <div className='column is-full has-text-centered'>
+                <aside className='menu'>
+                  <p className='menu-label'>
+                    Uploaded copies: {this.state.copies.length}
+                  </p>
+
+                  {missingPagesStatus}
+
+                  <p className='menu-label'>
+                    Upload History
+                  </p>
+                  <ul className='menu-list'>
+                    {this.state.scans.map(scan =>
+                      <li key={scan.id}>
+                  <ScanStatus scan={scan} />
+                </li>
+                    )}
+                  </ul>
+                </aside>
+              </div>
             </div>
           </div>
-        </div>
-      </section>
-    </div>
+        </section>
+      </div>
+    )
   }
 }
 

@@ -29,7 +29,7 @@ class ExamEditor extends React.Component {
   }
 
   getPDFUrl = () => {
-    let whichPDF = this.props.finalized ? 'preview' : 'source_pdf'
+    const whichPDF = this.props.finalized ? 'preview' : 'source_pdf'
     return this.props.examID >= 0 ? `/api/exams/${this.props.examID}/${whichPDF}` : null
   }
 
@@ -227,7 +227,7 @@ class ExamEditor extends React.Component {
     // update DB
     widget.problem.mc_options.forEach(
       (option, i) => {
-        let newData = {
+        const newData = {
           x: Math.round(data.x) + i * widget.problem.widthMCO + option.cbOffsetX,
           y: Math.round(data.y) + option.cbOffsetY
         }
@@ -244,14 +244,14 @@ class ExamEditor extends React.Component {
    */
   repositionMCO = (widget, data) => {
     if (widget.problem.mc_options.length > 0) {
-      let oldX = widget.problem.mc_options[0].widget.x
-      let oldY = widget.problem.mc_options[0].widget.y
+      const oldX = widget.problem.mc_options[0].widget.x
+      const oldY = widget.problem.mc_options[0].widget.y
       let newX = oldX
       let newY = oldY
-      let widthOption = widget.problem.widthMCO * widget.problem.mc_options.length
-      let heightOption = widget.problem.heightMCO
-      let widthProblem = data.width ? data.width : widget.width
-      let heightProblem = data.height ? data.height : widget.height
+      const widthOption = widget.problem.widthMCO * widget.problem.mc_options.length
+      const heightOption = widget.problem.heightMCO
+      const widthProblem = data.width ? data.width : widget.width
+      const heightProblem = data.height ? data.height : widget.height
 
       if (newX < data.x || widthOption >= widthProblem) {
         newX = data.x
@@ -265,7 +265,7 @@ class ExamEditor extends React.Component {
         newY = data.y + widget.height - heightOption
       }
 
-      let changed = (oldX !== newX) || (oldY !== newY) // update the state only if the mc options were moved
+      const changed = (oldX !== newX) || (oldY !== newY) // update the state only if the mc options were moved
       if (changed) {
         this.props.updateMCOsInState(widget, {
           x: Math.round(newX),
@@ -281,12 +281,12 @@ class ExamEditor extends React.Component {
    * @return a react component representing the multiple choice widget
    */
   renderMCWidget = (widget) => {
-    let width = widget.problem.widthMCO * widget.problem.mc_options.length
-    let height = widget.problem.heightMCO
-    let enableResizing = false
+    const width = widget.problem.widthMCO * widget.problem.mc_options.length
+    const height = widget.problem.heightMCO
+    const enableResizing = false
     const isSelected = widget.id === this.props.selectedWidgetId
-    let xPos = widget.problem.mc_options[0].widget.x
-    let yPos = widget.problem.mc_options[0].widget.y
+    const xPos = widget.problem.mc_options[0].widget.x
+    const yPos = widget.problem.mc_options[0].widget.y
 
     return (
       <Rnd
@@ -330,7 +330,8 @@ class ExamEditor extends React.Component {
         <div className={isSelected ? 'mcq-widget widget selected' : 'mcq-widget widget '}>
           {widget.problem.mc_options.map((option) => {
             return (
-              <div key={'widget_mco_' + option.id} className='mcq-option'
+              <div
+                key={'widget_mco_' + option.id} className='mcq-option'
                 onMouseEnter={() => {
                   if (!this.state.draggingWidget) {
                     this.props.highlightFeedback(widget, option.feedback_id)
@@ -341,7 +342,10 @@ class ExamEditor extends React.Component {
                     this.props.removeHighlight(widget, option.feedback_id)
                   }
                 }}
-                style={{'--width-mco': widget.problem.widthMCO + 'px', '--height-mco': widget.problem.heightMCO + 'px'}}
+                style={{
+                  '--width-mco': widget.problem.widthMCO + 'px',
+                  '--height-mco': widget.problem.heightMCO + 'px'
+                }}
               >
                 <div className='mcq-option-label'>
                   {option.label === ' ' ? <span>&nbsp;</span> : option.label}
@@ -364,11 +368,11 @@ class ExamEditor extends React.Component {
     // Only render when numPage is set
     if (widget.problem.page !== this.props.page) return []
 
-    let enableResizing = true
+    const enableResizing = true
     const isSelected = widget.id === this.props.selectedWidgetId
-    let minWidth = this.props.problemMinWidth
-    let minHeight = this.props.problemMinHeight
-    let elementList = [(
+    const minWidth = this.props.problemMinWidth
+    const minHeight = this.props.problemMinHeight
+    const elementList = [(
       <Rnd
         key={'widget_' + widget.id}
         data-key={'widget_' + widget.id}
@@ -475,7 +479,7 @@ class ExamEditor extends React.Component {
     if (this.props.finalized) return []
 
     let minWidth, minHeight
-    let enableResizing = false
+    const enableResizing = false
     const isSelected = widget.id === this.props.selectedWidgetId
     let image
     if (widget.name === 'barcode_widget') {
@@ -547,7 +551,7 @@ class ExamEditor extends React.Component {
   renderWidgets = () => {
     // Only render when numPage is set
     if (this.props.numPages !== null && this.props.widgets) {
-      let widgets = this.props.widgets
+      const widgets = this.props.widgets
       let elementList = []
 
       Object.values(widgets).forEach((widget) => {
@@ -578,7 +582,8 @@ class ExamEditor extends React.Component {
             renderAnnotations={false}
             renderTextLayer={false}
             pageIndex={this.props.page}
-            onMouseDown={this.handleMouseDown} />
+            onMouseDown={this.handleMouseDown}
+          />
         </Document>
         <PDFOverlay />
         {this.renderWidgets()}

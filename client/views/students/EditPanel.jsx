@@ -31,7 +31,8 @@ const UploadButton = (props) => (
     className='button is-link is-fullwidth'
     accept='text/csv,application/vnd.ms-excel'
     onDrop={props.onDrop}
-    disablePreview>
+    disablePreview
+  >
     <span className='icon is-small'>
       <i className='fa fa-upload' />
     </span>
@@ -64,11 +65,13 @@ class EditPanel extends React.Component {
       firstName: event.target.value
     })
   }
+
   changeLastName = (event) => {
     this.setState({
       lastName: event.target.value
     })
   }
+
   changeMail = (event) => {
     this.setState({
       email: event.target.value
@@ -122,46 +125,50 @@ class EditPanel extends React.Component {
       toast({ message: 'Please upload a CSV file', type: 'is-danger' })
       return
     }
-    accepted.map(file => {
+    accepted.forEach(file => {
       const data = new window.FormData()
       data.append('csv', file)
       api.post('students', data)
         .then(resp => {
-          let totalSuccess = resp.added + resp.updated + resp.identical
-          let total = totalSuccess + resp.failed
-          let sentences = []
-          if (resp.added) sentences.push(<React.Fragment><b>{resp.added}</b> new students were added </React.Fragment>)
-          if (resp.updated) sentences.push(<React.Fragment><b>{resp.updated}</b> students were updated</React.Fragment>)
-          if (resp.identical) sentences.push(<React.Fragment><b>{resp.identical}</b> were already up to date</React.Fragment>)
+          const totalSuccess = resp.added + resp.updated + resp.identical
+          const total = totalSuccess + resp.failed
+          const sentences = []
+          if (resp.added) sentences.push(<><b>{resp.added}</b> new students were added </>)
+          if (resp.updated) sentences.push(<><b>{resp.updated}</b> students were updated</>)
+          if (resp.identical) sentences.push(<><b>{resp.identical}</b> were already up to date</>)
 
-          let sentence = sentences.map((sent, index) => (
-            <React.Fragment>
+          const sentence = sentences.map((sent, index) => (
+            <>
               {sent}{index <= sentences.length - 3 ? ', ' : ''}{index === sentences.length - 2 ? ' and ' : ''}
-            </React.Fragment>
+            </>
           ))
-          let message = <p>
-            Succesfully processed <b>{totalSuccess} / {total}</b> students. A total of {sentence}.
-          </p>
+          let message = (
+            <p>
+              Succesfully processed <b>{totalSuccess} / {total}</b> students. A total of {sentence}.
+            </p>
+          )
           if (resp.failed === 0) {
-            toast({ message: message, 'duration': 10000, type: 'is-success' })
+            toast({ message: message, duration: 10000, type: 'is-success' })
           } else {
-            message = <div className='content'>
-              {message}
-              <p>However, we were not able to process <b>{resp.failed}</b> students:</p>
-              <ul>
-                {
+            message = (
+              <div className='content'>
+                {message}
+                <p>However, we were not able to process <b>{resp.failed}</b> students:</p>
+                <ul>
+                  {
                   resp.errors.map((error, index) => (
                     <li key={index}>{error}</li>
                   ))
                 }
-              </ul>
-            </div>
-            toast({ message: message, 'duration': 60000, type: 'is-warning' })
+                </ul>
+              </div>
+            )
+            toast({ message: message, duration: 60000, type: 'is-warning' })
           }
         })
         .catch(resp => {
           console.error('failed to upload student CSV file')
-          resp.json().then(r => toast({ message: r.message, 'duration': 60000, type: 'is-danger' }))
+          resp.json().then(r => toast({ message: r.message, duration: 60000, type: 'is-danger' }))
         })
     })
   }
@@ -181,16 +188,20 @@ class EditPanel extends React.Component {
           <div className='field'>
             <label className='label'>Name</label>
             <div className='control has-icons-left'>
-              <input className='input' placeholder='First name'
-                value={this.state.firstName} onChange={this.changeFirstName} />
+              <input
+                className='input' placeholder='First name'
+                value={this.state.firstName} onChange={this.changeFirstName}
+              />
               <span className='icon is-small is-left'>
                 <i className='fa fa-quote-left' />
               </span>
             </div>
 
             <div className='control has-icons-left'>
-              <input className='input' placeholder='Second name'
-                value={this.state.lastName} onChange={this.changeLastName} />
+              <input
+                className='input' placeholder='Second name'
+                value={this.state.lastName} onChange={this.changeLastName}
+              />
               <span className='icon is-small is-left'>
                 <i className='fa fa-quote-right' />
               </span>
@@ -203,8 +214,10 @@ class EditPanel extends React.Component {
           <div className='field'>
             <label className='label'>Email</label>
             <div className='control has-icons-left has-icons-right'>
-              <input className='input' placeholder='Email input'
-                value={this.state.email} onChange={this.changeMail} />
+              <input
+                className='input' placeholder='Email input'
+                value={this.state.email} onChange={this.changeMail}
+              />
               <span className='icon is-small is-left'>
                 <i className='fa fa-envelope' />
               </span>
@@ -216,8 +229,7 @@ class EditPanel extends React.Component {
           <BackButton onClick={this.props.toggleEdit} />
           {empty
             ? <UploadButton onDrop={this.uploadStudent} />
-            : <SaveButton disabled={!full} onClick={this.saveStudent} />
-          }
+            : <SaveButton disabled={!full} onClick={this.saveStudent} />}
         </div>
       </nav>
     )

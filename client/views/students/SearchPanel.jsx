@@ -138,8 +138,10 @@ class SearchPanel extends React.Component {
         </p>
         <div className='panel-block'>
           <p className='control has-icons-left'>
-            <input ref={this.searchInput} className='input' type='text' autoFocus
-              value={this.state.input} onChange={this.search} onKeyDown={this.specialKey} />
+            <input
+              ref={this.searchInput} className='input' type='text' autoFocus
+              value={this.state.input} onChange={this.search} onKeyDown={this.specialKey}
+            />
 
             <span className='icon is-left'>
               <i className='fa fa-search' />
@@ -147,10 +149,12 @@ class SearchPanel extends React.Component {
           </p>
         </div>
         {this.state.result.map((stud, index) =>
-          <StudentPanelBlock key={stud.id} student={stud}
+          <StudentPanelBlock
+            key={stud.id} student={stud}
             selected={index === this.state.selected}
             matched={this.props.student && stud.id === this.props.student.id && this.props.validated}
-            selectStudent={this.selectStudent} editStudent={this.props.toggleEdit} />
+            selectStudent={this.selectStudent} editStudent={this.props.toggleEdit}
+          />
         )}
         <div className='panel-block is-hidden-mobile'>
           <button className='button is-link is-outlined is-fullwidth' onClick={this.props.toggleEdit}>

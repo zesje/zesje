@@ -31,14 +31,15 @@ class StudentControls extends React.Component {
         this.props.setStudent(students[0] || null) // in case 'students' is empty
         if (students.length !== submissions.length) {
           toast({
-            message: 'There are students with unvalidated submissions, go to the Students tab before sending emails to them.',
+            message: 'There are students with unvalidated submissions, ' +
+              'go to the Students tab before sending emails to them.',
             type: 'is-warning'
           })
         }
       })
       .catch(err => {
         console.log(err)
-        this.setState({students: []})
+        this.setState({ students: [] })
         this.props.setStudent(null)
         toast({ message: 'Failed to load students.', type: 'is-danger' })
       })
@@ -49,38 +50,42 @@ class StudentControls extends React.Component {
       <div className='panel'>
         <div className='panel-heading has-text-centered'> Student </div>
         <div className='panel-block'>
-          {this.state.students.length > 0 ? (
-            <div className='field' style={{width: '100%'}}>
-              <div className='control'>
-                <SearchBox
-                  placeholder='Search for a student'
-                  selected={this.props.selectedStudent}
-                  options={this.state.students}
-                  suggestionKeys={[
-                    'id',
-                    'firstName',
-                    'lastName'
-                  ]}
-                  setSelected={student => {
-                    this.props.setStudent(student)
-                  }}
-                  renderSelected={(student) => (
-                    student !== null
-                      ? `${student.firstName} ${student.lastName} (${student.id})`
-                      : ''
-                  )}
-                  renderSuggestion={(student) => {
-                    return <div>
-                      <b>{`${student.firstName} ${student.lastName}`}</b>
-                      <i style={{float: 'right'}}>({student.id})</i>
-                    </div>
-                  }}
+          {this.state.students.length > 0
+            ? (
+              <div className='field' style={{ width: '100%' }}>
+                <div className='control'>
+                  <SearchBox
+                    placeholder='Search for a student'
+                    selected={this.props.selectedStudent}
+                    options={this.state.students}
+                    suggestionKeys={[
+                      'id',
+                      'firstName',
+                      'lastName'
+                    ]}
+                    setSelected={student => {
+                      this.props.setStudent(student)
+                    }}
+                    renderSelected={(student) => (
+                      student !== null
+                        ? `${student.firstName} ${student.lastName} (${student.id})`
+                        : ''
+                    )}
+                    renderSuggestion={(student) => {
+                      return (
+                        <div>
+                          <b>{`${student.firstName} ${student.lastName}`}</b>
+                          <i style={{ float: 'right' }}>({student.id})</i>
+                      </div>
+                      )
+                    }}
                 />
               </div>
             </div>
-          ) : (
+              )
+            : (
             <p className='has-text-danger'>No submissions found for this exam.</p>
-          )}
+              )}
         </div>
       </div>
     )

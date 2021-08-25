@@ -58,14 +58,17 @@ class SearchBox extends React.Component {
       value: newValue
     })
   }
+
   onBlur = () => {
     this.setState({
       value: this.props.renderSelected(this.props.selected)
     })
   }
+
   onFocus = (event) => {
     event.target.select()
   }
+
   onSuggestionSelected = (event, { suggestion }) => {
     this.props.setSelected(suggestion)
   }

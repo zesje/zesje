@@ -25,12 +25,12 @@ class PanelGradeAnonymous extends React.Component {
       }
     }
 
-    return {onChange: onChange}
+    return { onChange: onChange }
   }
 
   toogleGradeAnonymous = () => {
-    this.setState({isLoading: true}, () =>
-      api.put(`exams/${this.state.examID}`, {grade_anonymous: !this.state.gradeAnonymous})
+    this.setState({ isLoading: true }, () =>
+      api.put(`exams/${this.state.examID}`, { grade_anonymous: !this.state.gradeAnonymous })
         .then(() => {
           this.setState({
             gradeAnonymous: !this.state.gradeAnonymous,
@@ -43,7 +43,7 @@ class PanelGradeAnonymous extends React.Component {
             if (e.status === 409) toast({ message: e.message, type: 'is-warning' })
             else toast({ message: 'Could not change Grade Anonymous setting: ' + e.message, type: 'is-danger' })
           })
-          this.setState({isLoading: false})
+          this.setState({ isLoading: false })
         })
     )
   }
@@ -60,7 +60,8 @@ class PanelGradeAnonymous extends React.Component {
             color='link'
             disabled={this.state.isLoading}
             value={this.state.gradeAnonymous}
-            onChange={(e) => this.toogleGradeAnonymous()} />
+            onChange={(e) => this.toogleGradeAnonymous()}
+          />
         </div>
       </div>
       {this.state.text && <div className='panel-block'>

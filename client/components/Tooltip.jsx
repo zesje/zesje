@@ -5,9 +5,9 @@ const Tooltip = (props) => {
     return null
   }
 
-  let tooltipIcon = props.icon || 'comment'
+  const tooltipIcon = props.icon || 'comment'
 
-  let tooltipLocation = props.location || 'right'
+  const tooltipLocation = props.location || 'right'
 
   let tooltipClass = 'icon tooltip is-tooltip-' + tooltipLocation
   if (props.text.length > 60) {

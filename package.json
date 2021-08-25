@@ -13,7 +13,7 @@
     "ci": "yarn lint; yarn test",
     "lint": "yarn lint:js; yarn lint:py",
     "test": "yarn test:js; yarn test:py",
-    "lint:js": "standard --verbose | snazzy",
+    "lint:js": "eslint . --ext jsx --fix | snazzy",
     "test:js": "jest",
     "lint:py": "flake8",
     "command:test:py": "ZESJE_SETTINGS=$(pwd)/zesje_test_cfg.py python3 -m pytest -v -W error::RuntimeWarning",
@@ -31,13 +31,28 @@
     "dev:mysql-init": "yarn dev:mysql create && sleep 2 && yarn dev:mysql-migrate",
     "dev:mysql-migrate": "yarn dev:mysql is-running && (yarn dev:migrate || true) || ((yarn dev:mysql start && sleep 2 && yarn dev:migrate); yarn dev:mysql stop)"
   },
-  "standard": {
+  "eslintConfig": {
     "parser": "@babel/eslint-parser",
-    "globals": [
-      "__ZESJE_VERSION__",
-      "alert",
-      "confirm"
-    ]
+    "extends": [
+      "standard", "standard-react", "eslint:recommended", "plugin:react/recommended"
+    ],
+    "globals": {
+      "__ZESJE_VERSION__": false,
+      "alert": false,
+      "confirm": false
+    },
+    "plugins": [
+      "react",
+      "import",
+      "promise",
+      "node"
+    ],
+    "rules": {
+       "react/jsx-handler-names": "off",
+       "react/prop-types": "off",
+       "react/no-did-update-set-state": "warn",
+       "max-len": ["error", { "code": 120 }]
+    }
   },
   "dependencies": {
     "@babel/plugin-syntax-dynamic-import": "^7.8.3",
@@ -87,6 +102,7 @@
   "devDependencies": {
     "@babel/core": "^7.14.5",
     "@babel/eslint-parser": "^7.14.5",
+    "@babel/eslint-plugin": "^7.14.5",
     "@babel/preset-env": "^7.14.5",
     "@babel/preset-flow": "^7.14.5",
     "@babel/preset-react": "^7.14.5",
@@ -95,6 +111,13 @@
     "babel-jest": "^27.0.2",
     "babel-loader": "^8.2.2",
     "enzyme": "^3.11.0",
+    "eslint": "^7.28.0",
+    "eslint-config-standard": "^16.0.3",
+    "eslint-config-standard-react": "^11.0.1",
+    "eslint-plugin-promise": "^5.1.0",
+    "eslint-plugin-import": "^2.23.4",
+    "eslint-plugin-react": "^7.21.5",
+    "eslint-plugin-node": "^11.1.0",
     "identity-obj-proxy": "^3.0.0",
     "jest": "^27.0.4",
     "jest-junit": "^12.2.0",

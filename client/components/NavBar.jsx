@@ -10,8 +10,10 @@ import gradingPolicyMarkdown from './help/GradingPolicyHelp.md'
 import Login from './Login.jsx'
 
 const BurgerButton = (props) => (
-  <button className={'button navbar-burger' + (props.foldOut ? ' is-active' : '')}
-    onClick={props.burgerClick}>
+  <button
+    className={'button navbar-burger' + (props.foldOut ? ' is-active' : '')}
+    onClick={props.burgerClick}
+  >
     <span />
     <span />
     <span />
@@ -22,30 +24,38 @@ const TooltipLink = (props) => {
   let pred = props.predicate.find(pred => pred[0])
   if (!pred) pred = [false, null]
 
-  return <div className={'navbar-item no-padding' + (pred[0] ? ' tooltip is-tooltip-bottom' : '')}
-    data-tooltip={pred[1]}>
-    <Link className='navbar-item' disabled={pred[0]} to={props.to}> { props.text } </Link>
-  </div>
+  return (
+    <div
+      className={'navbar-item no-padding' + (pred[0] ? ' tooltip is-tooltip-bottom' : '')}
+      data-tooltip={pred[1]}
+    >
+      <Link className='navbar-item' disabled={pred[0]} to={props.to}> {props.text} </Link>
+    </div>
+  )
 }
 
 const ExamDropdown = (props) => {
-  return (<div className='navbar-item has-dropdown is-hoverable'>
-    <Link className='navbar-link' to={'/exams/' + (props.selectedExam ? props.selectedExam.id : '')}>
-      {props.selectedExam ? <i>{props.selectedExam.name}</i> : 'Add exam'}
-    </Link>
-    <div className='navbar-dropdown'>
-      {props.list.map((exam) => (
-        <Link className={'navbar-item' + (props.selectedExam && props.selectedExam.id === exam.id ? ' is-active' : '')}
-          to={'/exams/' + exam.id} key={exam.id} >
-          <i>{exam.name}</i>
-        </Link>
-      ))}
-      <hr className='navbar-divider' />
-      <Link className='navbar-item' to={'/exams'} >
-        Add new
+  return (
+    <div className='navbar-item has-dropdown is-hoverable'>
+      <Link className='navbar-link' to={'/exams/' + (props.selectedExam ? props.selectedExam.id : '')}>
+        {props.selectedExam ? <i>{props.selectedExam.name}</i> : 'Add exam'}
       </Link>
+      <div className='navbar-dropdown'>
+        {props.list.map((exam) => (
+          <Link
+            className={'navbar-item' + (props.selectedExam && props.selectedExam.id === exam.id ? ' is-active' : '')}
+            to={'/exams/' + exam.id} key={exam.id}
+          >
+            <i>{exam.name}</i>
+          </Link>
+        ))}
+        <hr className='navbar-divider' />
+        <Link className='navbar-item' to='/exams'>
+          Add new
+        </Link>
+      </div>
     </div>
-  </div>)
+  )
 }
 
 const GraderDropdown = (props) => {
@@ -69,7 +79,7 @@ const GraderDropdown = (props) => {
       </div>
 
       <div className='navbar-dropdown'>
-        <Link className='navbar-item' to={'/graders'} >
+        <Link className='navbar-item' to='/graders'>
           Add grader
         </Link>
         <hr className='navbar-divider' />
@@ -96,23 +106,29 @@ const ExportDropdown = (props) => {
       </div>
       <div className='navbar-dropdown'>
         {exportFormats.map((exportFormat, i) =>
-          <a className='navbar-item'
+          <a
+            className='navbar-item'
             href={exportUrl(exportFormat.format)}
             disabled={props.disabled}
-            key={i}>
+            key={i}
+          >
             {exportFormat.label}
           </a>
         )}
         <hr className='navbar-divider' />
-        <a className='navbar-item'
+        <a
+          className='navbar-item'
           href={'/api/export/graders/' + props.examID}
-          disabled={props.disabled}>
+          disabled={props.disabled}
+        >
           Export grader statistics
         </a>
         <hr className='navbar-divider' />
-        <a className='navbar-item'
+        <a
+          className='navbar-item'
           href='/api/export/full'
-          disabled={props.fullDisabled}>
+          disabled={props.fullDisabled}
+        >
           Export full database
         </a>
       </div>
@@ -136,7 +152,7 @@ class NavBar extends React.Component {
 
   componentDidUpdate = (prevProps, prevState) => {
     if (prevProps.examID !== this.props.examID && !isNaN(this.props.examID)) {
-      this.setState({examID: this.props.examID})
+      this.setState({ examID: this.props.examID })
     }
   }
 
@@ -217,35 +233,40 @@ class NavBar extends React.Component {
 
             {this.state.examList.length && this.state.grader
               ? <ExamDropdown selectedExam={selectedExam} list={this.state.examList} />
-              : <TooltipLink to='/exams' text='Add exam' predicate={[predicateNoGrader]} />
-            }
+              : <TooltipLink to='/exams' text='Add exam' predicate={[predicateNoGrader]} />}
 
             <TooltipLink
               to={`/exams/${this.state.examID}/scans`}
               text='Scans'
-              predicate={[predicateNoGrader, predicateExamNotFinalized]} />
+              predicate={[predicateNoGrader, predicateExamNotFinalized]}
+            />
             <TooltipLink
               to={`/exams/${this.state.examID}/students`}
               text='Students'
-              predicate={[predicateNoGrader, predicateNoExam]} />
+              predicate={[predicateNoGrader, predicateNoExam]}
+            />
             <TooltipLink
               to={`/exams/${this.state.examID}/grade`}
               text={<strong><i>Grade</i></strong>}
-              predicate={[predicateNoGrader, predicateNoExam, predicateExamNotFinalized, predicateSubmissionsEmpty]} />
+              predicate={[predicateNoGrader, predicateNoExam, predicateExamNotFinalized, predicateSubmissionsEmpty]}
+            />
             <TooltipLink
               to={`/exams/${this.state.examID}/overview`}
               text='Overview'
-              predicate={[predicateNoGrader, predicateNoExam, predicateExamNotFinalized, predicateSubmissionsEmpty]} />
+              predicate={[predicateNoGrader, predicateNoExam, predicateExamNotFinalized, predicateSubmissionsEmpty]}
+            />
             <TooltipLink
               to={`/exams/${this.state.examID}/email`}
               text='Email'
-              predicate={[predicateNoGrader, predicateExamNotFinalized, predicateSubmissionsEmpty]} />
+              predicate={[predicateNoGrader, predicateExamNotFinalized, predicateSubmissionsEmpty]}
+            />
             <ExportDropdown
               disabled={predicateNoExam[0] || predicateSubmissionsEmpty[0]}
               fullDisabled={predicateNoGrader[0]}
-              examID={this.state.examID} />
+              examID={this.state.examID}
+            />
             <a className='navbar-item' onClick={() => this.setHelpPage('shortcuts')}>
-              {this.pages['shortcuts'].title}
+              {this.pages.shortcuts.title}
             </a>
           </div>
 
@@ -254,8 +275,10 @@ class NavBar extends React.Component {
           </div>
 
         </div>
-        <HelpModal page={this.pages[this.state.helpPage] || {content: null, title: null}}
-          closeHelp={() => this.setState({ helpPage: null })} />
+        <HelpModal
+          page={this.pages[this.state.helpPage] || { content: null, title: null }}
+          closeHelp={() => this.setState({ helpPage: null })}
+        />
       </nav>
     )
   }

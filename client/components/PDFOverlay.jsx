@@ -11,14 +11,14 @@ const PDFOverlay = (props) => {
       height = 841
   }
 
-  let mmPerInch = 25.4
-  let ptPerInch = 72
+  const mmPerInch = 25.4
+  const ptPerInch = 72
 
-  let marginMm = 10
-  let marginPt = marginMm / mmPerInch * ptPerInch
-  let lengthMm = 8
-  let lengthPt = lengthMm / mmPerInch * ptPerInch
-  let widthPt = 1
+  const marginMm = 10
+  const marginPt = marginMm / mmPerInch * ptPerInch
+  const lengthMm = 8
+  const lengthPt = lengthMm / mmPerInch * ptPerInch
+  const widthPt = 1
 
   const style = {
     position: 'absolute',
@@ -31,7 +31,7 @@ const PDFOverlay = (props) => {
   }
 
   return (
-    <svg width={width} height={height} style={style} >
+    <svg width={width} height={height} style={style}>
       {/* top left */}
       <line x1={marginPt} y1={marginPt} x2={marginPt + lengthPt} y2={marginPt} style={lineStyle} />
       <line x1={marginPt} y1={marginPt} x2={marginPt} y2={marginPt + lengthPt} style={lineStyle} />
@@ -42,8 +42,10 @@ const PDFOverlay = (props) => {
       <line x1={marginPt} y1={height - marginPt} x2={marginPt + lengthPt} y2={height - marginPt} style={lineStyle} />
       <line x1={marginPt} y1={height - marginPt} x2={marginPt} y2={height - marginPt - lengthPt} style={lineStyle} />
       {/* bottom right */}
-      <line x1={width - marginPt} y1={height - marginPt} x2={width - marginPt - lengthPt} y2={height - marginPt} style={lineStyle} />
-      <line x1={width - marginPt} y1={height - marginPt} x2={width - marginPt} y2={height - marginPt - lengthPt} style={lineStyle} />
+      <line x1={width - marginPt} y1={height - marginPt} x2={width - marginPt - lengthPt} y2={height - marginPt}
+        style={lineStyle} />
+      <line x1={width - marginPt} y1={height - marginPt} x2={width - marginPt} y2={height - marginPt - lengthPt}
+        style={lineStyle} />
     </svg>
   )
 }

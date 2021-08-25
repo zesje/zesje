@@ -70,8 +70,8 @@ class CheckStudents extends React.Component {
   fetchCopy = (index) => {
     const copyNumber = this.state.copies[index].number
     api.get(`copies/${this.props.examID}/${copyNumber}`).then(copy => {
-      let copies = [...this.state.copies]
-      let oldIndex = copies.findIndex((copy) => copy.number === copyNumber)
+      const copies = [...this.state.copies]
+      const oldIndex = copies.findIndex((copy) => copy.number === copyNumber)
       copies[oldIndex] = copy
       this.setState({ copies: copies })
     })
@@ -93,6 +93,7 @@ class CheckStudents extends React.Component {
   prev = () => {
     this.setCopyIndex(this.state.index - 1)
   }
+
   next = () => {
     this.setCopyIndex(this.state.index + 1)
   }
@@ -105,6 +106,7 @@ class CheckStudents extends React.Component {
       }
     }
   }
+
   nextUnchecked = () => {
     for (let i = this.state.index + 1; i < this.state.copies.length; i++) {
       if (this.state.copies[i].validated === false) {
@@ -157,7 +159,7 @@ class CheckStudents extends React.Component {
     if (this.state.examID === undefined && this) return hero
 
     if (!this.state.examID) {
-      return <Fail message={'No copies where found for this exam'} />
+      return <Fail message='No copies where found for this exam' />
     }
 
     return (
@@ -173,9 +175,10 @@ class CheckStudents extends React.Component {
               <div className='column is-one-quarter-desktop is-one-third-tablet'>
                 {this.state.editActive
                   ? <EditPanel toggleEdit={this.toggleEdit} editStud={this.state.editStud} />
-                  : <SearchPanel matchStudent={this.matchStudent} toggleEdit={this.toggleEdit} copy={copy}
-                    student={copy && copy.student} validated={validated} copyIndex={this.state.index} />
-                }
+                  : <SearchPanel
+                    matchStudent={this.matchStudent} toggleEdit={this.toggleEdit} copy={copy}
+                    student={copy && copy.student} validated={validated} copyIndex={this.state.index}
+                    />}
               </div>
 
               {this.state.copies.length
@@ -184,10 +187,17 @@ class CheckStudents extends React.Component {
                     <div className='level-item make-wider'>
                       <div className='field has-addons is-mobile'>
                         <div className='control'>
-                          <button type='submit' className='button is-info is-rounded is-hidden-mobile'
-                            onClick={this.prevUnchecked}>unchecked</button>
-                          <button type='submit' className={'button is-radiusless' + (copy.validated ? ' is-success' : ' is-link')}
-                            onClick={this.prev}>Previous</button>
+                          <button
+                            type='submit' className='button is-info is-rounded is-hidden-mobile'
+                            onClick={this.prevUnchecked}
+                          >unchecked
+                          </button>
+                          <button
+                            type='submit'
+                            className={'button is-radiusless' + (copy.validated ? ' is-success' : ' is-link')}
+                            onClick={this.prev}
+                          >Previous
+                          </button>
                         </div>
                         <div className='control is-wider'>
                           <SearchBox
@@ -201,7 +211,7 @@ class CheckStudents extends React.Component {
                               'student.id'
                             ]}
                             setSelected={this.selectCopy}
-                            renderSelected={({number, student}) => {
+                            renderSelected={({ number, student }) => {
                               if (student) {
                                 return `#${number}: ${student.firstName} ${student.lastName} (${student.id})`
                               } else {
@@ -229,10 +239,16 @@ class CheckStudents extends React.Component {
                           />
                         </div>
                         <div className='control'>
-                          <button type='submit' className={'button is-radiusless' + (validated ? ' is-success' : ' is-link')}
-                            onClick={this.next}>Next</button>
-                          <button type='submit' className='button is-info is-rounded is-hidden-mobile'
-                            onClick={this.nextUnchecked}>unchecked</button>
+                          <button
+                            type='submit' className={'button is-radiusless' + (validated ? ' is-success' : ' is-link')}
+                            onClick={this.next}
+                          >Next
+                          </button>
+                          <button
+                            type='submit' className='button is-info is-rounded is-hidden-mobile'
+                            onClick={this.nextUnchecked}
+                          >unchecked
+                          </button>
                         </div>
                       </div>
                     </div>

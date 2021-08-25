@@ -131,7 +131,8 @@ class ExamTemplated extends React.Component {
   }
 
   updateFeedback = (problemId) => {
-    const problemWidget = Object.values(this.state.widgets).find(widget => widget.problem && widget.problem.id === problemId)
+    const problemWidget = Object.values(this.state.widgets)
+      .find(widget => widget.problem && widget.problem.id === problemId)
     const problemWidgetId = problemWidget.id
     api.get(`problems/${problemId}`).then(problem => {
       this.setState((prevState) => ({
@@ -388,23 +389,23 @@ class ExamTemplated extends React.Component {
       return true
     }
 
-    let feedback = {
-      'name': labels[index],
-      'description': '',
-      'score': 0
+    const feedback = {
+      name: labels[index],
+      description: '',
+      score: 0
     }
 
-    let data = {
-      'label': labels[index],
-      'problem_id': problemWidget.problem.id,
-      'feedback_id': null,
-      'cbOffsetX': 7, // checkbox offset relative to option position on x axis
-      'cbOffsetY': 21, // checkbox offset relative to option position on y axis
-      'widget': {
-        'name': 'mc_option_' + labels[index],
-        'x': xPos,
-        'y': yPos,
-        'type': 'mcq_widget'
+    const data = {
+      label: labels[index],
+      problem_id: problemWidget.problem.id,
+      feedback_id: null,
+      cbOffsetX: 7, // checkbox offset relative to option position on x axis
+      cbOffsetY: 21, // checkbox offset relative to option position on y axis
+      widget: {
+        name: 'mc_option_' + labels[index],
+        x: xPos,
+        y: yPos,
+        type: 'mcq_widget'
       }
     }
 
@@ -464,10 +465,10 @@ class ExamTemplated extends React.Component {
    * @returns {Promise<boolean>} a promise that contains true if the operation was successful and false otherwise
    */
   deleteMCOs = (widgetId, index, nrMCOs) => {
-    let widget = this.state.widgets[widgetId]
+    const widget = this.state.widgets[widgetId]
     if (nrMCOs <= 0 || !widget.problem.mc_options.length) return Promise.resolve(true)
 
-    let option = widget.problem.mc_options[index]
+    const option = widget.problem.mc_options[index]
     if (!option) return Promise.resolve(false)
 
     console.log(option)
@@ -519,13 +520,13 @@ class ExamTemplated extends React.Component {
    * @param data the new location of the mcq widget (the location of the top-left corner)
    */
   updateMCOsInState = (widget, data) => {
-    let newMCO = widget.problem.mc_options.map((option, i) => {
+    const newMCO = widget.problem.mc_options.map((option, i) => {
       return {
-        'widget': {
-          'x': {
+        widget: {
+          x: {
             $set: data.x + i * widget.problem.widthMCO
           },
-          'y': {
+          y: {
             // each mc option needs to be positioned next to the previous option and should not overlap it
             $set: data.y
           }
@@ -537,8 +538,8 @@ class ExamTemplated extends React.Component {
     this.setState(prevState => ({
       widgets: update(prevState.widgets, {
         [widget.id]: {
-          'problem': {
-            'mc_options': newMCO
+          problem: {
+            mc_options: newMCO
           }
         }
       })
@@ -547,14 +548,14 @@ class ExamTemplated extends React.Component {
 
   SidePanel = (props) => {
     const selectedWidgetId = this.state.selectedWidgetId
-    let selectedWidget = selectedWidgetId && this.state.widgets[selectedWidgetId]
-    let problem = selectedWidget && selectedWidget.problem
-    let widgetEditDisabled = (this.state.previewing || !problem)
-    let isGraded = problem && problem.n_graded > 0
-    let widgetDeleteDisabled = widgetEditDisabled || isGraded
+    const selectedWidget = selectedWidgetId && this.state.widgets[selectedWidgetId]
+    const problem = selectedWidget && selectedWidget.problem
+    const widgetEditDisabled = (this.state.previewing || !problem)
+    const isGraded = problem && problem.n_graded > 0
+    const widgetDeleteDisabled = widgetEditDisabled || isGraded
 
     return (
-      <React.Fragment>
+      <>
         <Pager
           page={this.state.page}
           numPages={this.state.numPages}
@@ -564,7 +565,7 @@ class ExamTemplated extends React.Component {
           disabledEdit={widgetEditDisabled}
           disabledDelete={widgetDeleteDisabled}
           onDeleteClick={() => {
-            this.setState({deletingWidget: true})
+            this.setState({ deletingWidget: true })
           }}
           problem={problem}
           changeProblemName={newName => {
@@ -588,32 +589,32 @@ class ExamTemplated extends React.Component {
         {this.props.exam.finalized && <PanelGradeAnonymous
           examID={this.props.exam.id}
           gradeAnonymous={this.props.exam.gradeAnonymous}
-          onChange={(anonymous) => this.props.updateExam()} />}
-      </React.Fragment>
+          onChange={(anonymous) => this.props.updateExam()}
+                                      />}
+      </>
     )
   }
 
   PanelEdit = (props) => {
     const selectedWidgetId = this.state.selectedWidgetId
-    let totalNrAnswers = 9 // the upper limit for the nr of possible answer boxes
+    const totalNrAnswers = 9 // the upper limit for the nr of possible answer boxes
 
     return (
       <nav className='panel'>
         <p className='panel-heading'>
           Problem details
         </p>
-        {selectedWidgetId === null || !props.problem ? (
-          <div className='panel-block'>
+        {selectedWidgetId === null || !props.problem
+          ? <div className='panel-block'>
             <div className='field'>
               <p>
                 To create a problem, draw a rectangle on the exam.
               </p>
             </div>
           </div>
-        ) : (
-          <React.Fragment>
+          : <>
             <div className='panel-block'>
-              <div className='field' style={{flexGrow: 1}}>
+              <div className='field' style={{ flexGrow: 1 }}>
                 <label className='label'>Name</label>
                 <div className='control'>
                   <input
@@ -631,16 +632,16 @@ class ExamTemplated extends React.Component {
                 </div>
               </div>
             </div>
-            {props.problem && !this.props.exam.finalized ? (
-              <PanelMCQ
+            {props.problem && !this.props.exam.finalized
+              ? <PanelMCQ
                 totalNrAnswers={totalNrAnswers}
                 problem={props.problem}
                 generateMCOs={(labels) => {
-                  let problemWidget = this.state.widgets[this.state.selectedWidgetId]
+                  const problemWidget = this.state.widgets[this.state.selectedWidgetId]
                   let xPos, yPos
                   if (props.problem.mc_options.length > 0) {
                     // position the new mc options widget next to the last mc options
-                    let last = props.problem.mc_options[props.problem.mc_options.length - 1].widget
+                    const last = props.problem.mc_options[props.problem.mc_options.length - 1].widget
                     xPos = last.x + problemWidget.problem.widthMCO
                     yPos = last.y
                   } else {
@@ -651,60 +652,59 @@ class ExamTemplated extends React.Component {
                   return this.generateMCOs(problemWidget, labels, 0, xPos, yPos)
                 }}
                 deleteMCOs={(nrMCOs) => {
-                  let len = props.problem.mc_options.length
+                  const len = props.problem.mc_options.length
                   if (nrMCOs >= len) {
                     return new Promise((resolve, reject) => {
-                      this.setState({deletingMCWidget: true}, () => { resolve(false) })
+                      this.setState({ deletingMCWidget: true }, () => { resolve(false) })
                     })
                   } else if (nrMCOs > 0) {
                     return this.deleteMCOs(selectedWidgetId, len - nrMCOs, nrMCOs)
                   }
                 }}
                 updateLabels={(labels) => {
-                  labels.map((label, index) => {
-                    let option = props.problem.mc_options[index]
+                  labels.forEach((label, index) => {
+                    const option = props.problem.mc_options[index]
                     const formData = new window.FormData()
                     formData.append('name', option.widget.name)
                     formData.append('x', option.widget.x + option.cbOffsetX)
                     formData.append('y', option.widget.y + option.cbOffsetY)
                     formData.append('problem_id', props.problem.id)
                     formData.append('label', labels[index])
-                    api.patch('mult-choice/' + option.id, formData)
-                      .then(() => {
-                        this.setState((prevState) => {
-                          return {
-                            widgets: update(prevState.widgets, {
-                              [selectedWidgetId]: {
-                                'problem': {
-                                  'mc_options': {
-                                    [index]: {
-                                      label: {
-                                        $set: labels[index]
-                                      }
+                    api.patch('mult-choice/' + option.id, formData).then(() => {
+                      this.setState((prevState) => {
+                        return {
+                          widgets: update(prevState.widgets, {
+                            [selectedWidgetId]: {
+                              problem: {
+                                mc_options: {
+                                  [index]: {
+                                    label: {
+                                      $set: labels[index]
                                     }
                                   }
                                 }
                               }
-                            })
-                          }
-                        })
-                      })
-                      .catch(err => {
-                        console.log(err)
-                        err.json().then(res => {
-                          toast({
-                            message: 'Could not update feedback' + (res.message ? ': ' + res.message : ''),
-                            type: 'is-danger'
+                            }
                           })
-                          // update to try and get a consistent state
-                          this.props.updateExam()
-                        })
+                        }
                       })
+                    }).catch(err => {
+                      console.log(err)
+                      err.json().then(res => {
+                        toast({
+                          message: 'Could not update feedback' + (res.message ? ': ' + res.message : ''),
+                          type: 'is-danger'
+                        })
+                        // update to try and get a consistent state
+                        this.props.updateExam()
+                      })
+                    })
                   })
                 }}
-              />) : null}
+                />
+              : null}
             {props.problem &&
-              <React.Fragment>
+              <>
                 <div className='panel-block'>
                   <label className='label'>Feedback options</label>
                 </div>
@@ -716,7 +716,7 @@ class ExamTemplated extends React.Component {
           </React.Fragment>
         )}
         {props.problem &&
-          <React.Fragment>
+          <>
             <div className='panel-block mcq-block'>
               <b>Auto-approve</b>
               <Tooltip
@@ -726,7 +726,7 @@ class ExamTemplated extends React.Component {
                 clickAction={() => this.props.setHelpPage('gradingPolicy')}
               />
               <div className='select is-hovered is-fullwidth'>
-                <select value={props.problem.grading_policy} onChange={this.onChangeAutoApproveType.bind(this)}>
+                <select value={props.problem.grading_policy} onChange={this.onChangeAutoApproveType}>
                   <option value='set_nothing'>Nothing</option>
                   <option value='set_blank'>Blanks</option>
                   {props.problem.mc_options.length !== 0 && <option value='set_single'>One answer</option>}
@@ -742,8 +742,7 @@ class ExamTemplated extends React.Component {
                 Delete problem
               </button>
             </div>
-          </React.Fragment>
-        }
+          </>}
       </nav>
     )
   }
@@ -763,61 +762,66 @@ class ExamTemplated extends React.Component {
       <PanelFinalize
         examID={this.props.examID}
         onFinalize={this.onFinalize}
-        deleteExam={this.props.deleteExam}>
-        <p className='content' dangerouslySetInnerHTML={{__html: ExamFinalizeMarkdown}} />
+        deleteExam={this.props.deleteExam}
+      >
+        <p className='content' dangerouslySetInnerHTML={{ __html: ExamFinalizeMarkdown }} />
       </PanelFinalize>
     )
   }
 
   render () {
-    return <React.Fragment>
-      <div className='columns is-centered' >
-        <div className='column is-one-quarter-fullhd is-one-third-desktop' >
-          <PanelExamName
-            name={this.props.examName}
-            examID={this.state.examID}
-            updateExam={this.props.updateExam}
-            updateExamList={this.props.updateExamList} />
-          <this.SidePanel
-            examID={this.state.examID}
-            setHelpPage={this.props.setHelpPage} />
-        </div>
-        <div className='column is-narrow' >
-          <div className='editor-content'>
-            {this.renderContent()}
+    return (
+      <>
+        <div className='columns is-centered'>
+          <div className='column is-one-quarter-fullhd is-one-third-desktop'>
+            <PanelExamName
+              name={this.props.examName}
+              examID={this.state.examID}
+              updateExam={this.props.updateExam}
+              updateExamList={this.props.updateExamList}
+            />
+            <this.SidePanel
+              examID={this.state.examID}
+              setHelpPage={this.props.setHelpPage}
+            />
+          </div>
+          <div className='column is-narrow'>
+            <div className='editor-content'>
+              {this.renderContent()}
+            </div>
           </div>
         </div>
-      </div>
-      <ConfirmationModal
-        active={this.state.deletingWidget && this.state.selectedWidgetId != null}
-        color='is-danger'
-        headerText={`Are you sure you want to delete problem "${
+        <ConfirmationModal
+          active={this.state.deletingWidget && this.state.selectedWidgetId != null}
+          color='is-danger'
+          headerText={`Are you sure you want to delete problem "${
           this.state.selectedWidgetId &&
           this.state.widgets[this.state.selectedWidgetId] &&
           this.state.widgets[this.state.selectedWidgetId].problem &&
           this.state.widgets[this.state.selectedWidgetId].problem.name}"`}
-        confirmText='Delete problem'
-        onCancel={() => this.setState({deletingWidget: false})}
-        onConfirm={() => this.deleteWidget(this.state.selectedWidgetId)}
-      />
-      <ConfirmationModal
-        active={this.state.deletingMCWidget && this.state.selectedWidgetId != null}
-        color='is-danger'
-        headerText={`Are you sure you want to delete the multiple choice options for problem "${
+          confirmText='Delete problem'
+          onCancel={() => this.setState({ deletingWidget: false })}
+          onConfirm={() => this.deleteWidget(this.state.selectedWidgetId)}
+        />
+        <ConfirmationModal
+          active={this.state.deletingMCWidget && this.state.selectedWidgetId != null}
+          color='is-danger'
+          headerText={`Are you sure you want to delete the multiple choice options for problem "${
           this.state.selectedWidgetId &&
           this.state.widgets[this.state.selectedWidgetId] &&
           this.state.widgets[this.state.selectedWidgetId].problem &&
           this.state.widgets[this.state.selectedWidgetId].problem.name}"`}
-        confirmText='Delete multiple choice options'
-        onCancel={() => this.setState({deletingMCWidget: false})}
-        onConfirm={() => {
-          this.setState({
-            deletingMCWidget: false
-          })
-          this.deleteMCOs(this.state.selectedWidgetId, 0)
-        }}
-      />
-    </React.Fragment>
+          confirmText='Delete multiple choice options'
+          onCancel={() => this.setState({ deletingMCWidget: false })}
+          onConfirm={() => {
+            this.setState({
+              deletingMCWidget: false
+            })
+            this.deleteMCOs(this.state.selectedWidgetId, 0)
+          }}
+        />
+      </>
+    )
   }
 }
 

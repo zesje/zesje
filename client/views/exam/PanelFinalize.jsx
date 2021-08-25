@@ -62,7 +62,8 @@ class PanelFinalize extends React.Component {
         <p className='panel-heading'>
           Actions
         </p>
-        {this.state.previewing ? (
+        {this.state.previewing
+          ? (
           <div>
             <div className='panel-block'>
               <label className='label'>Finalize exam?</label>
@@ -85,12 +86,13 @@ class PanelFinalize extends React.Component {
               </button>
             </div>
           </div>
-        ) : (
+            )
+          : (
           <div className='panel-block field is-grouped'>
             <this.Finalize />
             <this.Delete />
           </div>
-        )}
+            )}
       </nav>
     )
   }

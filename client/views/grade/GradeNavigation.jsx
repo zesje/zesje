@@ -8,10 +8,12 @@ class GradeNavigation extends React.Component {
 
   createNavButton = (style, faIcon, onClick, tooltip) => {
     return (
-      <button type='submit'
+      <button
+        type='submit'
         className={`button ${style} fa ${faIcon}`}
-        style={{width: '4em'}}
-        onClick={onClick}>
+        style={{ width: '4em' }}
+        onClick={onClick}
+      >
         <div
           className={this.props.showTooltips ? ' tooltip is-tooltip-active' : ''}
           data-tooltip={tooltip}
@@ -44,27 +46,34 @@ class GradeNavigation extends React.Component {
                 '←'
               )}
             </div>
-            <div id='search' className={'control is-wider ' + (this.props.showTooltips ? 'tooltip is-tooltip-active tooltip-no-arrow' : '')}
-              data-tooltip='Press ctrl to hide shortcuts'>
+            <div
+              id='search'
+              className={
+                'control is-wider ' + (this.props.showTooltips ? 'tooltip is-tooltip-active tooltip-no-arrow' : '')
+              }
+              data-tooltip='Press ctrl to hide shortcuts'
+            >
               <SearchBox
                 placeholder='Search for a submission'
                 setSelected={this.setSubmission}
                 selected={submission}
                 options={submissions}
-                suggestionKeys={(this.props.anonymous ? ['id'] : [
-                  'student.id',
-                  'student.firstName',
-                  'student.lastName',
-                  'id'
-                ])}
-                renderSelected={({id, student}) => {
+                suggestionKeys={(this.props.anonymous
+                  ? ['id']
+                  : [
+                      'student.id',
+                      'student.firstName',
+                      'student.lastName',
+                      'id'
+                    ])}
+                renderSelected={({ id, student }) => {
                   if (student && !this.props.anonymous) {
                     return `${student.firstName} ${student.lastName} (${student.id})`
                   } else {
                     return `#${id}`
                   }
                 }}
-                renderSuggestion={({id, student}) => {
+                renderSuggestion={({ id, student }) => {
                   if (student && !this.props.anonymous) {
                     return (
                       <div className='flex-parent'>
@@ -72,7 +81,7 @@ class GradeNavigation extends React.Component {
                           {`${student.firstName} ${student.lastName}`}
                         </b>
                         <i className='flex-child fixed'>
-                        ({student.id}, #{id})
+                          ({student.id}, #{id})
                         </i>
                       </div>
                     )
@@ -80,7 +89,7 @@ class GradeNavigation extends React.Component {
                     return (
                       <div className='flex-parent'>
                         <b className='flex-child fixed'>
-                        #{id}
+                          #{id}
                         </b>
                       </div>
                     )

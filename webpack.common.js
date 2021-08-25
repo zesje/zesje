@@ -27,7 +27,7 @@ module.exports = {
   },
   module: {
     rules: [
-      { test: /\.(jsx|js)$/, loader: 'babel-loader', options: {cacheDirectory: true}, exclude: /node_modules/ },
+      { test: /\.(jsx|js)$/, loader: 'babel-loader', options: { cacheDirectory: true }, exclude: /node_modules/ },
       { test: /\.(png|jpg|gif)$/, loader: 'file-loader' },
       { test: /\.(woff(2)?|ttf|eot|svg|otf)(\?v=\d+\.\d+\.\d+)?$/, loader: 'file-loader' },
       { test: /\.md$/, use: [{ loader: 'html-loader' }, { loader: 'markdown-loader' }] }

@@ -58,13 +58,14 @@ const FiltersInfo = ({hasFilters, matchingResults, clearFilters}) => {
 class Grade extends React.Component {
   /**
    * Constructor sets empty state, and requests metadata for the exam.
-   * After getting this metadata, if the submissionID is provided in the URL, loads the submission according to the submissionID,
+   * After getting this metadata, if the submissionID is provided in the URL,
+   * loads the submission according to the submissionID,
    * else loads the first submission from the metadata and then replaces the URL to match the submission.
    */
   constructor (props) {
     super(props)
-    this.state = {feedbackFilters: {}, gradedBy: defaultGraderFilter}
-    this.state = {...this.state, hasFilters: this.hasFilters()}
+    this.state = { feedbackFilters: {}, gradedBy: defaultGraderFilter }
+    this.state = { ...this.state, hasFilters: this.hasFilters() }
 
     Promise.all([
       api.get(`exams/${this.props.examID}?only_metadata=true&shuffle_seed=${this.props.graderID}`),
@@ -122,7 +123,8 @@ class Grade extends React.Component {
   }
 
   /**
-   * This method changes the state of the submission and the problem according to the URL. This method is called once the latest metadata is fetched from the backend.
+   * This method changes the state of the submission and the problem according to the URL.
+   * This method is called once the latest metadata is fetched from the backend.
    * If the submission ID is specified in the URL, then it loads the submission corresponding to the URL.
    * If it is missing, it loads the first submission from the metadata and then replaces the URL to reflect the state.
    * It also sets the submission to null to display error component when unwanted behaviour is observed.
@@ -185,7 +187,7 @@ class Grade extends React.Component {
     this.props.bindShortcut('f', this.toggleFullPage)
     this.props.bindShortcut('ctrl', (event) => {
       event.preventDefault()
-      this.setState({showTooltips: !this.state.showTooltips})
+      this.setState({ showTooltips: !this.state.showTooltips })
     })
     let key = 0
     let prefix = ''
@@ -232,7 +234,7 @@ class Grade extends React.Component {
         option => fb.includes(parseInt(option[0]))
       )
         .reduce(
-          (previous, current) => ({...previous, [parseInt(current[0])]: current[1]}), {})
+          (previous, current) => ({ ...previous, [parseInt(current[0])]: current[1] }), {})
     })
 
     const submission = await api.get(
@@ -250,18 +252,22 @@ class Grade extends React.Component {
       this.props.history.push(this.getURL(this.state.submission.id, this.state.problem.id))
     })
   }
+
   /**
    * Sugar methods for navigate.
    */
   prev = () => {
     this.navigate('prev')
   }
+
   next = () => {
     this.navigate('next')
   }
+
   first = () => {
     this.navigate('first')
   }
+
   last = () => {
     this.navigate('last')
   }
@@ -319,6 +325,7 @@ class Grade extends React.Component {
       }, this.syncSubmission)
       // eslint-disable-next-line handle-callback-err
     }).catch(err => {
+      console.log(err)
       this.setState({
         submission: null,
         problem: null
@@ -463,7 +470,7 @@ class Grade extends React.Component {
   }
 
   applyGraderFilter = (graderId) => {
-    this.setState({gradedBy: graderId}, () => {
+    this.setState({ gradedBy: graderId }, () => {
       this.updateSubmission()
     })
   }
@@ -516,7 +523,8 @@ class Grade extends React.Component {
     if (this.state.submission === null) {
       // no stats, show the error message
       const message = ((this.state.submissions && this.state.submissions.length > 0)
-        ? 'Submission does not exist' : 'There are no submissions yet')
+        ? 'Submission does not exist'
+        : 'There are no submissions yet')
       return <Fail message={message} />
     }
 
@@ -548,7 +556,8 @@ class Grade extends React.Component {
                   problems={problems}
                   navigateProblem={this.navigateProblem}
                   current={problem}
-                  showTooltips={this.state.showTooltips} />
+                  showTooltips={this.state.showTooltips}
+                />
                 <nav className='panel'>
                   <FeedbackPanel
                     examID={examID} submissionID={submission.id} graderID={graderID}
@@ -616,16 +625,18 @@ class Grade extends React.Component {
                       </p>
                     </div>
                   </article>
-                  : null
-                }
+                  : null}
 
                 <div className='level'>
                   <div className='level-left'>
 
                     <div className='level-item'>
-                      {solution.graded_by ? <div>Graded by: {(solution.graded_by.name ? solution.graded_by.name + ' - ' : '') + solution.graded_by.oauth_id} <i>({gradedTime.toLocaleString()})</i></div>
-                        : <div>Ungraded</div>
-                      }
+                      {solution.graded_by
+                        ? <div>
+                          Graded by: {(solution.graded_by.name ? solution.graded_by.name + ' - ' : '') +
+                          solution.graded_by.oauth_id} <i>({gradedTime.toLocaleString()})</i>
+                        </div>
+                        : <div>Ungraded</div>}
                     </div>
 
                   </div>
@@ -633,22 +644,29 @@ class Grade extends React.Component {
                   <div className='level-right'>
                     <div className='level-item'>
                       {!this.state.isUnstructured &&
-                        <button className={'button is-info is-outlined' + (this.state.showTooltips ? ' tooltip is-tooltip-active' : '')}
-                          data-tooltip='f' onClick={this.toggleFullPage}>
+                        <button
+                          className={
+                            'button is-info is-outlined' + (this.state.showTooltips ? ' tooltip is-tooltip-active' : '')
+                          }
+                          data-tooltip='f' onClick={this.toggleFullPage}
+                        >
                           {this.state.fullPage ? 'Focus problem' : 'View full page'}
-                        </button>
-                      }
+                        </button>}
                     </div>
                   </div>
                 </div>
 
                 <p className={'box is-scrollable-desktop is-scrollable-tablet' +
-                  (solution.graded_at ? ' is-graded' : '')}>
+                  (solution.graded_at ? ' is-graded' : '')}
+                >
                   <img
-                    src={examID ? ('api/images/solutions/' + examID + '/' +
-                      problem.id + '/' + submission.id + '/' + (this.state.fullPage ? '1' : '0')) + '?' +
-                      Grade.getLocationHash(problem) : ''}
-                    alt='' />
+                    src={examID
+                      ? ('api/images/solutions/' + examID + '/' +
+                        problem.id + '/' + submission.id + '/' + (this.state.fullPage ? '1' : '0')) + '?' +
+                        Grade.getLocationHash(problem)
+                      : ''}
+                    alt=''
+                  />
                 </p>
               </div>
             </div>

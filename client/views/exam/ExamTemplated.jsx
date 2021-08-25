@@ -163,11 +163,11 @@ class ExamTemplated extends React.Component {
         return {
           widgets: update(prevState.widgets, {
             [problemWidget.id]: {
-              'problem': {
-                'feedback': {
+              problem: {
+                feedback: {
                   $unset: [feedback.id],
                   [problemWidget.problem.root_feedback_id]: { // remove the FO from the children list
-                    'children': {
+                    children: {
                       $set: problemWidget.problem.feedback[problemWidget.problem.root_feedback_id].children
                         .filter(id => id !== feedback.id)
                     }
@@ -184,8 +184,8 @@ class ExamTemplated extends React.Component {
         return {
           widgets: update(prevState.widgets, {
             [problemWidget.id]: {
-              'problem': {
-                'feedback': {
+              problem: {
+                feedback: {
                   [feedback.id]: {
                     $set: feedback
                   }
@@ -329,18 +329,18 @@ class ExamTemplated extends React.Component {
           updateMCOsInState={this.updateMCOsInState}
           selectedWidgetId={this.state.selectedWidgetId}
           highlightFeedback={(widget, feedbackId) => {
-            let feedback = widget.problem.feedback[feedbackId]
+            const feedback = widget.problem.feedback[feedbackId]
             feedback.highlight = true
             this.updateFeedbackAtIndex(feedback, widget)
           }}
           removeHighlight={(widget, feedbackId) => {
-            let feedback = widget.problem.feedback[feedbackId]
+            const feedback = widget.problem.feedback[feedbackId]
             feedback.highlight = false
             this.updateFeedbackAtIndex(feedback, widget)
           }}
           removeAllHighlight={(widget) => {
             Object.keys(widget.problem.feedback).forEach((id) => {
-              let feedback = widget.problem.feedback[id]
+              const feedback = widget.problem.feedback[id]
               feedback.highlight = false
               this.updateFeedbackAtIndex(feedback, widget)
             })
@@ -475,7 +475,7 @@ class ExamTemplated extends React.Component {
     console.log(widget.problem)
     return api.del('mult-choice/' + option.id)
       .then(res => {
-        let feedback = widget.problem.feedback[option.feedback_id]
+        const feedback = widget.problem.feedback[option.feedback_id]
         feedback.deleted = true
         this.updateFeedbackAtIndex(feedback, widget)
         return new Promise((resolve) => {
@@ -711,10 +711,10 @@ class ExamTemplated extends React.Component {
                 <FeedbackMenu
                   problem={props.problem}
                   updateFeedback={() => this.updateFeedback(props.problem.id)} />
-              </React.Fragment>
+              </>
             }
-          </React.Fragment>
-        )}
+          </>
+        }
         {props.problem &&
           <>
             <div className='panel-block mcq-block'>

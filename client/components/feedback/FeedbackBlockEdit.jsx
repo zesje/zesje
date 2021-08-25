@@ -5,7 +5,7 @@ import ColorInput from '../ColorInput.jsx'
 import * as api from '../../api.jsx'
 import { toast } from 'bulma-toast'
 
-import {FeedbackItem} from './FeedbackUtils.jsx'
+import { FeedbackItem } from './FeedbackUtils.jsx'
 
 const CancelButton = (props) => (
   <button className='button is-light tooltip' onClick={props.onClick} data-tooltip='Cancel'>
@@ -26,7 +26,7 @@ const SaveButton = (props) => (
 
 const DeleteButton = (props) => (
   <button className='button is-danger tooltip'
-    style={{marginLeft: 'auto'}} disabled={!props.exists} onClick={props.onClick} data-tooltip='Delete'>
+    style={{ marginLeft: 'auto' }} disabled={!props.exists} onClick={props.onClick} data-tooltip='Delete'>
     <span className='icon is-small'>
       <i className='fa fa-trash' />
     </span>
@@ -198,7 +198,9 @@ class EditPanel extends React.Component {
           <div className={'flex-space-between is-fullwidth'}>
             <div className={'buttons is-marginless'}>
               <SaveButton onClick={this.saveFeedback} exists={this.props.feedback}
-                disabled={!this.state.name || (!this.state.score && this.state.score !== 0) || isNaN(parseInt(this.state.score))} />
+                disabled={!this.state.name ||
+                  (!this.state.score && this.state.score !== 0) ||
+                  isNaN(parseInt(this.state.score))} />
               <CancelButton onClick={this.props.goBack} />
             </div>
             <DeleteButton onClick={() => { this.setState({ deleting: true }) }} exists={this.props.feedback} />
@@ -206,9 +208,14 @@ class EditPanel extends React.Component {
           <ConfirmationModal
             headerText={`Do you want to irreversibly delete feedback option "${this.state.name}"?`}
             contentText={this.props.feedback && (this.props.feedback.used || this.props.feedback.children != null)
-              ? (this.props.feedback.children.length > 0 ? 'This feedback has ' + (this.props.feedback.children.length > 1 ? `${this.props.feedback.children.length} children` : ' 1 child') +
-              ', that would also be deleted in the process. ' : '') +
-                (this.props.feedback.used ? 'This feedback option was assigned to ' +
+              ? (this.props.feedback.children.length > 0
+                  ? 'This feedback has ' + (this.props.feedback.children.length > 1
+                    ? `${this.props.feedback.children.length} children`
+                    : ' 1 child') +
+              ', that would also be deleted in the process. '
+                  : '') +
+                (this.props.feedback.used
+                  ? 'This feedback option was assigned to ' +
                   (this.props.feedback.used > 1 ? `${this.props.feedback.used} solutions` : ' 1 solution') +
                   ' and it will be removed. This will affect the final grade assigned to each submission.'
                   : '')

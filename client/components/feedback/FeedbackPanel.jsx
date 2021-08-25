@@ -70,7 +70,7 @@ class FeedbackPanel extends React.Component {
     return (
       <>
         {this.props.grading &&
-          <div className='panel-heading level' style={{marginBottom: 0}}>
+          <div className='panel-heading level' style={{ marginBottom: 0 }}>
             <div className='level-left'>
               {this.props.solution.feedback.length !== 0 && <p>Total:&nbsp;<b>{totalScore}</b></p>}
             </div>
@@ -106,7 +106,7 @@ class FeedbackPanel extends React.Component {
               onKeyDown={this.keyMap} />
           </div>
         }
-      </React.Fragment>
+      </>
     )
   }
 }

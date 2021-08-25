@@ -54,11 +54,11 @@ class GradeNavigation extends React.Component {
                 suggestionKeys={(this.props.anonymous
                   ? ['id']
                   : [
-                  'student.id',
-                  'student.firstName',
-                  'student.lastName',
-                  'id'
-                ])}
+                      'student.id',
+                      'student.firstName',
+                      'student.lastName',
+                      'id'
+                    ])}
                 renderSelected={({ id, student }) => {
                   if (student && !this.props.anonymous) {
                     return `${student.firstName} ${student.lastName} (${student.id})`

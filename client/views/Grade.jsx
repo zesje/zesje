@@ -18,7 +18,7 @@ import '../components/SubmissionNavigation.css'
 
 const defaultGraderFilter = -1
 
-const FiltersInfo = ({hasFilters, matchingResults, clearFilters}) => {
+const FiltersInfo = ({ hasFilters, matchingResults, clearFilters }) => {
   const text = matchingResults +
     (hasFilters ? ' matching ' : ' ') +
     (matchingResults === 1 ? 'solution' : 'solutions')
@@ -41,11 +41,11 @@ const FiltersInfo = ({hasFilters, matchingResults, clearFilters}) => {
         <span className='icon is-medium'>
           <i
             className='fa fa-lg fa-filter'
-            style={{transform: 'translateX(-17%)'}}
+            style={{ transform: 'translateX(-17%)' }}
           />
           <span
             className='icon is-small'
-            style={{position: 'absolute', right: '12%', bottom: 0}}
+            style={{ position: 'absolute', right: '12%', bottom: 0 }}
           >
             <i className='fa fa-times' />
           </span>
@@ -207,8 +207,10 @@ class Grade extends React.Component {
     const hasProblem = this.state.problem && this.state.problem.id > 0
     const hasSubmission = this.state.submission && this.state.submission.id > 0
     if ((prevProps.examID !== this.props.examID && this.props.examID !== this.state.examID) ||
-      (prevProps.problemID !== this.props.problemID && (!hasProblem || this.props.problemID !== this.state.problem.id)) ||
-      (prevProps.submissionID !== this.props.submissionID && (!hasSubmission || this.props.submissionID !== this.state.submission.id))) {
+      (prevProps.problemID !== this.props.problemID &&
+        (!hasProblem || this.props.problemID !== this.state.problem.id)) ||
+      (prevProps.submissionID !== this.props.submissionID &&
+        (!hasSubmission || this.props.submissionID !== this.state.submission.id))) {
       // The URL has changed and at least one of exam metadata, problem or submission does not match the URL
       // or the URL has changed and submission or problem is not defined
       this.updateFromUrl()
@@ -311,7 +313,8 @@ class Grade extends React.Component {
   }
 
   /**
-   * Updates the metadata for the current exam. It then calls syncSubmission to update the submission and problem in the state according to the URL.
+   * Updates the metadata for the current exam.
+   * It then calls syncSubmission to update the submission and problem in the state according to the URL.
    * In case of unwanted behaviour, sets the submission to null for displaying error component.
    */
   updateFromUrl = () => {
@@ -645,9 +648,8 @@ class Grade extends React.Component {
                     <div className='level-item'>
                       {!this.state.isUnstructured &&
                         <button
-                          className={
-                            'button is-info is-outlined' + (this.state.showTooltips ? ' tooltip has-tooltip-active' : '')
-                          }
+                          className={'button is-info is-outlined' +
+                            (this.state.showTooltips ? ' tooltip has-tooltip-active' : '')}
                           data-tooltip='f' onClick={this.toggleFullPage}
                         >
                           {this.state.fullPage ? 'Focus problem' : 'View full page'}

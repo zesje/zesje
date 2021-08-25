@@ -89,7 +89,7 @@ class FeedbackMenu extends React.Component {
   render () {
     return (
       <React.Fragment>
-        <div className='panel-block' style={{display: 'block'}}>
+        <div className='panel-block' style={{ display: 'block' }}>
           <div className='menu'>
             {this.state.indexedFeedback[this.props.problem.root_feedback_id].children.map((id) =>
               <ul className='menu-list' key={'ul-' + id}>
@@ -120,8 +120,7 @@ class FeedbackMenu extends React.Component {
             parent={this.state.parent}
             problemID={this.props.problem.id}
             goBack={() => this.editFeedback(0, null)}
-            updateFeedback={this.props.updateFeedback}
-            children={null} />
+            updateFeedback={this.props.updateFeedback} />
           : <div className='panel-block'>
             <button
               className='button is-link is-outlined is-fullwidth'

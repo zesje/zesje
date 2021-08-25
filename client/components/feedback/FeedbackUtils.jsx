@@ -4,15 +4,15 @@ import FeedbackBlock from './FeedbackBlock.jsx'
 import FeedbackBlockEdit from './FeedbackBlockEdit.jsx'
 
 const FILTER_ICONS = {
-  'no_filter': 'fa-filter',
-  'required': 'fa-plus',
-  'excluded': 'fa-minus'
+  no_filter: 'fa-filter',
+  required: 'fa-plus',
+  excluded: 'fa-minus'
 }
 
 const FILTER_COLORS = {
-  'no_filter': '',
-  'required': 'is-success',
-  'excluded': 'is-danger'
+  no_filter: '',
+  required: 'is-success',
+  excluded: 'is-danger'
 }
 
 /**
@@ -21,7 +21,7 @@ const FILTER_COLORS = {
  * @returns {*} the root FO now with index
  */
 export const indexFeedbackOptions = (feedback, rootId) => {
-  var index = 0
+  let index = 0
   const idStack = [rootId]
   while (idStack.length > 0) {
     const id = idStack.shift()

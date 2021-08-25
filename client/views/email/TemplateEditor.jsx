@@ -1,6 +1,6 @@
 import React from 'react'
 
-import Notification from 'react-bulma-notification'
+import { toast } from 'bulma-toast'
 
 import * as api from '../../api.jsx'
 
@@ -16,12 +16,11 @@ const renderTemplate = async (props) => {
 }
 
 const templateRenderError = message => (
-  Notification.error(
-    message || 'Unable to render template',
-    {
-      duration: 3
-    }
-  )
+  toast({
+    message: message || 'Unable to render template',
+    duration: 3000,
+    type: 'is-danger'
+  })
 )
 
 const LoadingView = () => (

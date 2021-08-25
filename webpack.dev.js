@@ -27,6 +27,9 @@ module.exports = merge(common, {
       errors: true
     }
   },
+  watchOptions: {
+    ignored: '**/node_modules/'
+  },
   plugins: [
     new webpack.EvalSourceMapDevToolPlugin({
       sourceURLTemplate: module => `/${module.identifier}`

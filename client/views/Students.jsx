@@ -1,5 +1,5 @@
 import React from 'react'
-import Notification from 'react-bulma-notification'
+import { toast } from 'bulma-toast'
 
 import * as api from '../api.jsx'
 
@@ -125,7 +125,7 @@ class CheckStudents extends React.Component {
       })
       .catch(err => {
         err.json().then(res => {
-          Notification.error(`Failed to validate copy: ${res.message}`)
+          toast({ message: `Failed to validate copy: ${res.message}`, type: 'is-danger' })
         })
       })
   }

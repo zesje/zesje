@@ -1,5 +1,5 @@
 import React from 'react'
-import Notification from 'react-bulma-notification'
+import { toast } from 'bulma-toast'
 
 import Tooltip from '../../components/Tooltip.jsx'
 import * as api from '../../api.jsx'
@@ -51,9 +51,7 @@ class PanelExamName extends React.Component {
           editing: false
         })
         console.log(err)
-        err.json().then(e => {
-          Notification.error('Could not save exam name: ' + e.message)
-        })
+        err.json().then(e => toast({ message: 'Could not save exam name: ' + e.message, type: 'is-danger' }))
       })
   }
 

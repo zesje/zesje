@@ -3,7 +3,7 @@ import React from 'react'
 import ConfirmationModal from '../ConfirmationModal.jsx'
 import ColorInput from '../ColorInput.jsx'
 import * as api from '../../api.jsx'
-import Notification from 'react-bulma-notification'
+import { toast } from 'bulma-toast'
 
 import {FeedbackItem} from './FeedbackUtils.jsx'
 
@@ -121,8 +121,10 @@ class EditPanel extends React.Component {
         })
         .catch(err => {
           err.json().then(res => {
-            Notification.error('Could not delete feedback' +
-              (res.message ? ': ' + res.message : ''))
+            toast({
+              message: 'Could not delete feedback' + (res.message ? ': ' + res.message : ''),
+              type: 'is-danger'
+            })
             // update to try and get a consistent state
             this.state.updateCallback()
             this.props.goBack()

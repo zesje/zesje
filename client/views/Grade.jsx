@@ -1,5 +1,5 @@
 import React from 'react'
-import Notification from 'react-bulma-notification'
+import { toast } from 'bulma-toast'
 import Hero from '../components/Hero.jsx'
 import Fail from './Fail.jsx'
 import update from 'immutability-helper'
@@ -13,7 +13,6 @@ import { indexFeedbackOptions, findFeedbackByIndex } from '../components/feedbac
 
 import * as api from '../api.jsx'
 
-import 'bulma-tooltip/dist/css/bulma-tooltip.min.css'
 import './grade/Grade.css'
 import '../components/SubmissionNavigation.css'
 
@@ -415,7 +414,10 @@ class Grade extends React.Component {
        graderID: graderid
      }).catch(resp => {
        resp.json().then(body => {
-         Notification.error('Could not ' + (graderid === null ? 'set aside' : 'approve') + ' feedback: ' + body.message)
+         toast({
+           message: 'Could not ' + (graderid === null ? 'set aside' : 'approve') + ' feedback: ' + body.message,
+           type: 'is-danger'
+         })
        })
      }).then(result => {
        this.updateSubmission()

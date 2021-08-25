@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom'
 
 import './NavBar.css'
 import * as api from '../api.jsx'
-import 'bulma-tooltip/dist/css/bulma-tooltip.min.css'
 
 import HelpModal from './help/HelpModal.jsx'
 import shortcutsMarkdown from './help/ShortcutsHelp.md'

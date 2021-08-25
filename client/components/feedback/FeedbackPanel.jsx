@@ -1,6 +1,6 @@
 import React from 'react'
 
-import Notification from 'react-bulma-notification'
+import { toast } from 'bulma-toast'
 
 import * as api from '../../api.jsx'
 
@@ -38,7 +38,7 @@ class FeedbackPanel extends React.Component {
       graderID: this.props.graderID
     }).then(success => {
       this.props.setSubmission(this.props.submissionID)
-      if (!success) Notification.error('Remark not saved!')
+      if (!success) toast({ message: 'Remark not saved!', type: 'is-danger' })
     })
   }
 

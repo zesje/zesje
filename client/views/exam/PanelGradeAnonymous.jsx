@@ -1,5 +1,5 @@
 import React from 'react'
-import Notification from 'react-bulma-notification'
+import { toast } from 'bulma-toast'
 import Switch from '../../components/Switch.jsx'
 
 import * as api from '../../api.jsx'
@@ -40,8 +40,8 @@ class PanelGradeAnonymous extends React.Component {
         .catch(err => {
           console.log(err)
           err.json().then(e => {
-            if (e.status === 409) Notification.warn(e.message)
-            else Notification.danger('Could not change Grade Anonymous setting: ' + e.message)
+            if (e.status === 409) toast({ message: e.message, type: 'is-warning' })
+            else toast({ message: 'Could not change Grade Anonymous setting: ' + e.message, type: 'is-danger' })
           })
           this.setState({isLoading: false})
         })

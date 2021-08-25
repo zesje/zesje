@@ -1,7 +1,5 @@
 import React from 'react'
 
-import 'bulma-tooltip/dist/css/bulma-tooltip.min.css'
-
 const Tooltip = (props) => {
   if (!props.text) {
     return null

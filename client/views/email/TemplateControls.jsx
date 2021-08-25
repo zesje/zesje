@@ -1,16 +1,15 @@
 import React from 'react'
 
-import Notification from 'react-bulma-notification'
+import { toast } from 'bulma-toast'
 
 import * as api from '../../api.jsx'
 
 const templateSaveError = message => (
-  Notification.error(
-    message || 'Unable to save template',
-    {
-      duration: 3
-    }
-  )
+  toast({
+    message: message || 'Unable to save template',
+    duration: 3000,
+    type: 'is-danger'
+  })
 )
 
 class TemplateControls extends React.Component {
@@ -33,7 +32,7 @@ class TemplateControls extends React.Component {
         `templates/${this.props.examID}`,
         { template: this.props.template }
       )
-      Notification.success('Template saved')
+      toast({ message: 'Template saved', type: 'is-success' })
       this.setState({ templateWasModified: false })
     } catch (response) {
       if (response.status === 400) {

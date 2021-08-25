@@ -1,6 +1,6 @@
 import React from 'react'
 
-import Notification from 'react-bulma-notification'
+import { toast } from 'bulma-toast'
 import Dropzone from 'react-dropzone'
 
 import * as api from '../../api.jsx'
@@ -109,16 +109,17 @@ class EditPanel extends React.Component {
           this.idblock.clear()
         }
       }).catch(resp => {
-        resp.json().then(r => Notification.error(r.message, {
-          duration: 0,
-          closable: true
+        resp.json().then(r => toast({
+          message: r.message,
+          duration: 60000,
+          type: 'is-danger'
         }))
       })
   }
 
   uploadStudent = (accepted, rejected) => {
     if (rejected.length > 0) {
-      Notification.error('Please upload a CSV file')
+      toast({ message: 'Please upload a CSV file', type: 'is-danger' })
       return
     }
     accepted.map(file => {
@@ -142,7 +143,7 @@ class EditPanel extends React.Component {
             Succesfully processed <b>{totalSuccess} / {total}</b> students. A total of {sentence}.
           </p>
           if (resp.failed === 0) {
-            Notification.success(message, { 'duration': 10, 'closeable': true })
+            toast({ message: message, 'duration': 10000, type: 'is-success' })
           } else {
             message = <div className='content'>
               {message}
@@ -155,12 +156,12 @@ class EditPanel extends React.Component {
                 }
               </ul>
             </div>
-            Notification.warn(message, { 'duration': 0, 'closeable': true })
+            toast({ message: message, 'duration': 60000, type: 'is-warning' })
           }
         })
         .catch(resp => {
           console.error('failed to upload student CSV file')
-          resp.json().then(r => Notification.error(r.message), { 'duration': 0, 'closeable': true })
+          resp.json().then(r => toast({ message: r.message, 'duration': 60000, type: 'is-danger' }))
         })
     })
   }

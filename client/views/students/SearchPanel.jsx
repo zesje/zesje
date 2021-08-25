@@ -1,6 +1,6 @@
 import React from 'react'
 
-import Notification from 'react-bulma-notification'
+import { toast } from 'bulma-toast'
 import Fuse from 'fuse.js'
 
 import * as api from '../../api.jsx'
@@ -32,7 +32,7 @@ class SearchPanel extends React.Component {
         this.students = students
       })
       .catch(err => {
-        Notification.error('failed to get students (see javascript console for details)')
+        toast({ message: 'failed to get students (see javascript console for details)', type: 'is-danger' })
         console.error('failed to get students:', err)
         throw err
       })

@@ -1,6 +1,6 @@
 import React from 'react'
 
-import Notification from 'react-bulma-notification'
+import { toast } from 'bulma-toast'
 import Dropzone from 'react-dropzone'
 
 import Hero from '../components/Hero.jsx'
@@ -76,7 +76,7 @@ class Scans extends React.Component {
 
   onDropFile = (accepted, rejected) => {
     if (rejected.length > 0) {
-      Notification.error('Please upload a PDF, ZIP or image.')
+      toast({ message: 'Please upload a PDF, ZIP or image.', type: 'is-danger' })
       return
     }
     accepted.map(file => {
@@ -87,7 +87,7 @@ class Scans extends React.Component {
           this.updateScans()
         })
         .catch(resp => {
-          Notification.error('Failed to upload file (see javascript console for details)')
+          toast({ message: 'Failed to upload file (see javascript console for details)', type: 'is-danger' })
           console.error('Failed to upload file:', resp)
         })
     })
@@ -101,13 +101,12 @@ class Scans extends React.Component {
     api.get('students')
       .then(students => {
         if (students.length === 0) {
-          Notification.info(
-            'You have not yet uploaded any students. ' +
-            "If you don't upload students before the scans " +
-            "then we can't automatically assign students " +
-            'to their copies',
-            { 'duration': 5 }
-          )
+          toast({
+            message: 'You have not yet uploaded any students. If you don\'t upload students before the scans ' +
+            'then we can\'t automatically assign students to their copies',
+            duration: 5000,
+            type: 'is-info'
+          })
         }
       })
   }

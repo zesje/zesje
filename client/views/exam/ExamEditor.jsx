@@ -1,5 +1,5 @@
 import React from 'react'
-import Notification from 'react-bulma-notification'
+import { toast } from 'bulma-toast'
 
 import barcodeExampleImage from '../../components/barcode_example.png'
 // FIXME!
@@ -13,9 +13,9 @@ import answerBoxImage from '../../components/answer_box.png'
 import EmptyPDF from '../../components/EmptyPDF.jsx'
 import PDFOverlay from '../../components/PDFOverlay.jsx'
 
-import ResizeAndDrag from 'react-rnd'
+import { Rnd } from 'react-rnd'
 
-import { Document, Page } from 'react-pdf/dist/entry.webpack'
+import { Document, Page } from 'react-pdf'
 
 import * as api from '../../api.jsx'
 
@@ -123,7 +123,7 @@ class ExamEditor extends React.Component {
           this.props.createNewWidget(widgetData)
         }).catch(err => {
           console.log(err)
-          err.json().then(e => Notification.error(e.message))
+          err.json().then(e => toast({ message: e.message, type: 'is-danger' }))
         })
       }
     }
@@ -198,7 +198,7 @@ class ExamEditor extends React.Component {
       err.json().then(res => {
         if (res.status === 409) {
           // exam widget position is not valid, notify and update it
-          Notification.warn(res.message)
+          toast({ message: res.message, type: 'is-warning' })
           this.props.updateWidget(res.data.id, {
             x: { $set: res.data.x },
             y: { $set: res.data.y }
@@ -289,7 +289,7 @@ class ExamEditor extends React.Component {
     let yPos = widget.problem.mc_options[0].widget.y
 
     return (
-      <ResizeAndDrag
+      <Rnd
         key={'widget_mc_' + widget.id}
         bounds={'[data-key="widget_' + widget.id + '"]'}
         minWidth={width}
@@ -351,7 +351,7 @@ class ExamEditor extends React.Component {
             )
           })}
         </div>
-      </ResizeAndDrag>
+      </Rnd>
     )
   }
 
@@ -369,7 +369,7 @@ class ExamEditor extends React.Component {
     let minWidth = this.props.problemMinWidth
     let minHeight = this.props.problemMinHeight
     let elementList = [(
-      <ResizeAndDrag
+      <Rnd
         key={'widget_' + widget.id}
         data-key={'widget_' + widget.id}
         bounds='parent'
@@ -455,7 +455,7 @@ class ExamEditor extends React.Component {
         <div
           className={isSelected ? 'widget selected' : 'widget'}
         />
-      </ResizeAndDrag>
+      </Rnd>
     )]
 
     // depending on the rendering option, render the mc_options separately or in a single widget
@@ -491,7 +491,7 @@ class ExamEditor extends React.Component {
     }
 
     return [(
-      <ResizeAndDrag
+      <Rnd
         key={'widget_' + widget.id}
         bounds='parent'
         minWidth={minWidth}
@@ -536,7 +536,7 @@ class ExamEditor extends React.Component {
             backgroundRepeat: 'no-repeat'
           }}
         />
-      </ResizeAndDrag>
+      </Rnd>
     )]
   }
 

@@ -1,7 +1,7 @@
 import React from 'react'
 import Dropzone from 'react-dropzone'
-import Notification from 'react-bulma-notification'
-import { Document, Page } from 'react-pdf/dist/entry.webpack'
+import { toast } from 'bulma-toast'
+import { Document, Page } from 'react-pdf'
 
 import * as api from '../api.jsx'
 import Hero from '../components/Hero.jsx'
@@ -48,7 +48,7 @@ class Exams extends React.Component {
 
   onDropPDF = (accepted, rejected) => {
     if (rejected.length > 0) {
-      Notification.error('Please upload a PDF.')
+      toast({ message: 'Please upload a PDF.', type: 'is-danger' })
       return
     }
 
@@ -63,11 +63,11 @@ class Exams extends React.Component {
 
   addExam = (event) => {
     if (!this.state.examName) {
-      Notification.error('Please enter exam name.')
+      toast({ message: 'Please upload a PDF.', type: 'is-danger' })
       return
     }
     if (this.state.selectedLayout.acceptsPDF && !this.state.pdf) {
-      Notification.error('Please upload a PDF.')
+      toast({ message: 'Please upload a PDF.', type: 'is-danger' })
       return
     }
 
@@ -83,7 +83,7 @@ class Exams extends React.Component {
         this.props.changeURL('/exams/' + exam.id)
       })
       .catch(resp => {
-        resp.json().then(body => Notification.error(body.message))
+        resp.json().then(body => toast({ message: 'Please upload a PDF.', type: 'is-danger' }))
       })
   }
 
@@ -161,11 +161,17 @@ class Exams extends React.Component {
                 <div className='field-body'>
                   <div className='field'>
                     <Dropzone accept='.pdf, application/pdf'
-                      activeStyle={{ borderStyle: 'dashed' }}
                       onDrop={this.onDropPDF}
-                      disablePreview
+                      maxFiles={1}
                       multiple={false}>
-                      <DropzoneContent />
+                       { ({getRootProps, getInputProps}) => (
+                         <section>
+                         <div {...getRootProps()}>
+                           <input {...getInputProps()} />
+                           <p>Drag 'n' drop some files here, or click to select files</p>
+                         </div>
+                         </section>
+                       ) }
                     </Dropzone>
                     <p className='help'>{this.state.pdf !== null ? this.state.pdf.name : ''}</p>
                   </div>

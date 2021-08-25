@@ -1,5 +1,5 @@
 import React from 'react'
-import Notification from 'react-bulma-notification'
+import { toast } from 'bulma-toast'
 
 import FeedbackMenu from '../../components/feedback/FeedbackMenu.jsx'
 import ConfirmationModal from '../../components/ConfirmationModal.jsx'
@@ -152,7 +152,7 @@ class PanelEditUnstructured extends React.Component {
       .catch(e => {
         this.selectProblem(id) // takes care of updating the problem name to previous state
         console.log(e)
-        e.json().then(err => Notification.error('Could not save new problem name: ' + err.message))
+        e.json().then(err => toast({ message: 'Could not save new problem name: ' + err.message, type: 'is-danger' }))
       })
   }
 
@@ -168,7 +168,7 @@ class PanelEditUnstructured extends React.Component {
         console.log(e)
         this.props.updateExam()
         e.json().then(res => {
-          Notification.warn('Could not save new problem page: ' + res.message)
+          toast({ message: 'Could not save new problem page: ' + res.message, type: 'is-warning' })
         })
       })
   }
@@ -184,8 +184,7 @@ class PanelEditUnstructured extends React.Component {
           this.setState({
             deletingProblem: false
           })
-          Notification.error('Could not delete problem' +
-            (res.message ? ': ' + res.message : ''))
+          toast({ message: 'Could not delete problem' + (res.message ? ': ' + res.message : ''), type: 'is-danger' })
         })
       })
   }

@@ -1,6 +1,6 @@
 import React from 'react'
 
-import Notification from 'react-bulma-notification'
+import { toast } from 'bulma-toast'
 import update from 'immutability-helper'
 
 import GeneratedExamPreview from '../../components/GeneratedExamPreview.jsx'
@@ -215,7 +215,7 @@ class ExamTemplated extends React.Component {
     if (!problem) return
 
     api.put('problems/' + problem.id, { name: problem.name })
-      .catch(e => Notification.error('Could not save new problem name: ' + e))
+      .catch(e => toast({ message: 'Could not save new problem name: ' + e, type: 'is-danger' }))
       .then(this.setState({
         changedWidgetId: null
       }))
@@ -250,7 +250,7 @@ class ExamTemplated extends React.Component {
           if (typeof message === 'object') {
             message = Object.values(message)[0]
           }
-          Notification.error('Could not change grading policy: ' + message)
+          toast({ message: 'Could not change grading policy: ' + message, type: 'is-danger' })
         })
       })
   }
@@ -290,8 +290,7 @@ class ExamTemplated extends React.Component {
             this.setState({
               deletingWidget: false
             })
-            Notification.error('Could not delete problem' +
-              (res.message ? ': ' + res.message : ''))
+            toast({ message: 'Could not delete problem' + (res.message ? ': ' + res.message : ''), type: 'is-danger' })
             // update to try and get a consistent state
             this.props.updateExam()
           })
@@ -425,8 +424,7 @@ class ExamTemplated extends React.Component {
     }).catch(err => {
       console.log(err)
       err.json().then(res => {
-        Notification.error('Could not create multiple choice option' +
-          (res.message ? ': ' + res.message : ''))
+        toast({ message: 'Could not delete problem' + (res.message ? ': ' + res.message : ''), type: 'is-danger' })
         // update to try and get a consistent state
         this.props.updateExam()
         this.setState({
@@ -500,8 +498,10 @@ class ExamTemplated extends React.Component {
       .catch(err => {
         console.log(err)
         err.json().then(res => {
-          Notification.error('Could not delete multiple choice option' +
-            (res.message ? ': ' + res.message : ''))
+          toast({
+            message: 'Could not delete multiple choice option' + (res.message ? ': ' + res.message : ''),
+            type: 'is-danger'
+          })
           // update to try and get a consistent state
           this.props.updateExam()
           this.setState({
@@ -692,8 +692,10 @@ class ExamTemplated extends React.Component {
                       .catch(err => {
                         console.log(err)
                         err.json().then(res => {
-                          Notification.error('Could not update feedback' +
-                          (res.message ? ': ' + res.message : ''))
+                          toast({
+                            message: 'Could not update feedback' + (res.message ? ': ' + res.message : ''),
+                            type: 'is-danger'
+                          })
                           // update to try and get a consistent state
                           this.props.updateExam()
                         })

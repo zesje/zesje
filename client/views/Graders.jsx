@@ -1,6 +1,6 @@
 import React from 'react'
 
-import Notification from 'react-bulma-notification'
+import { toast } from 'bulma-toast'
 
 import Hero from '../components/Hero.jsx'
 
@@ -27,7 +27,7 @@ class Graders extends React.Component {
         this.setState({ graders: graders })
       })
       .catch(resp => {
-        Notification.error('Could not fetch graders (see Javascript console for details)')
+        toast({ message: 'Could not fetch graders (see Javascript console for details)', type: 'is-danger' })
         console.error('Error fetching graders:', resp)
       })
   }
@@ -45,9 +45,7 @@ class Graders extends React.Component {
         })
       })
       .catch(resp => {
-        resp.json().then(e => {
-          Notification.error(e.message)
-        })
+        resp.json().then(e => toast({ message: e.message, type: 'is-danger' }))
         console.error('Error saving grader:', resp)
       })
 

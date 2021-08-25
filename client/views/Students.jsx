@@ -186,7 +186,7 @@ class CheckStudents extends React.Component {
                         <div className='control'>
                           <button type='submit' className='button is-info is-rounded is-hidden-mobile'
                             onClick={this.prevUnchecked}>unchecked</button>
-                          <button type='submit' className={'button' + (copy.validated ? ' is-success' : ' is-link')}
+                          <button type='submit' className={'button is-radiusless' + (copy.validated ? ' is-success' : ' is-link')}
                             onClick={this.prev}>Previous</button>
                         </div>
                         <div className='control is-wider'>
@@ -229,7 +229,7 @@ class CheckStudents extends React.Component {
                           />
                         </div>
                         <div className='control'>
-                          <button type='submit' className={'button' + (validated ? ' is-success' : ' is-link')}
+                          <button type='submit' className={'button is-radiusless' + (validated ? ' is-success' : ' is-link')}
                             onClick={this.next}>Next</button>
                           <button type='submit' className='button is-info is-rounded is-hidden-mobile'
                             onClick={this.nextUnchecked}>unchecked</button>

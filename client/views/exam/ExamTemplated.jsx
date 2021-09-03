@@ -16,7 +16,7 @@ import ExamFinalizeMarkdown from './ExamFinalize.md'
 import PanelExamName from './PanelExamName.jsx'
 import PanelFinalize from './PanelFinalize.jsx'
 
-import './Exam.css'
+import './Exam.scss'
 
 import * as api from '../../api.jsx'
 

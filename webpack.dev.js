@@ -12,7 +12,6 @@ module.exports = merge(common, {
   },
   devServer: {
     hot: true,
-    inline: true,
     proxy: {
       '/api': {
         target: 'http://localhost:5000'
@@ -20,11 +19,15 @@ module.exports = merge(common, {
     },
     historyApiFallback: true,
     port: 8881,
-    publicPath: '/',
+    static: {
+      publicPath: '/'
+    },
     host: 'localhost',
-    overlay: {
-      warnings: true,
-      errors: true
+    client: {
+      overlay: {
+        warnings: true,
+        errors: true
+      }
     }
   },
   watchOptions: {

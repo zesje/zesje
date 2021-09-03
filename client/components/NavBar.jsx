@@ -71,7 +71,7 @@ const GraderDropdown = (props) => {
     <div className='navbar-item has-dropdown is-hoverable'>
       <div className='navbar-link'>
         <span className='icon'>
-          <i className='fa fa-user-circle-o' aria-hidden='true' />
+          <i className='fa fa-user-circle' aria-hidden='true' />
         </span>
         <span>
           {props.grader.name} ({props.grader.oauth_id})

@@ -6,7 +6,10 @@
 
 @import "bulma/bulma";
 
-@import 'font-awesome/css/font-awesome.css';
+$fa-font-path: "~@fortawesome/fontawesome-free/webfonts";
+@import "@fortawesome/fontawesome-free/scss/fontawesome";
+@import "@fortawesome/fontawesome-free/scss/solid";
+
 @import '@creativebulma/bulma-tooltip/dist/bulma-tooltip.min.css';
 
 .dropzone {

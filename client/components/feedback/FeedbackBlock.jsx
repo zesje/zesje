@@ -71,7 +71,7 @@ class FeedbackBlock extends React.Component {
             onMouseEnter={() => this.enter('edit')} onMouseLeave={() => this.leave('edit')}
             onClick={this.props.editFeedback}
           >
-            <i className='fa fa-pencil' />
+            <i className='fa fa-pen' />
           </button>
           {this.props.grading &&
             <div
@@ -95,11 +95,13 @@ class FeedbackBlock extends React.Component {
               />
               <div className='popover-content' style={{ display: 'grid', gridAutoFlow: 'row', gap: '1em' }}>
                 <button
-                  className={`button popover-trigger is-inverted fa ${FILTER_ICONS.required} ${FILTER_COLORS.required}`}
+                  className={
+                    `button popover-trigger is-inverted is-small fa ${FILTER_ICONS.required} ${FILTER_COLORS.required}`}
                   onClick={e => this.props.applyFilter(e, 'required')}
                 />
                 <button
-                  className={`button popover-trigger is-inverted fa ${FILTER_ICONS.excluded} ${FILTER_COLORS.excluded}`}
+                  className={
+                    `button popover-trigger is-inverted is-small fa ${FILTER_ICONS.excluded} ${FILTER_COLORS.excluded}`}
                   onClick={(e) => this.props.applyFilter(e, 'excluded')}
                 />
               </div>

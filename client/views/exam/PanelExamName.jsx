@@ -113,7 +113,7 @@ class PanelExamName extends React.Component {
             {this.state.examName}
           </p>
           <Tooltip
-            icon='pencil'
+            icon='pen'
             location='top'
             text='Click to edit the exam name.'
             clickAction={() => this.setState({ editing: true })}

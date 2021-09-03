@@ -27,7 +27,7 @@ const StudentPanelBlock = (props) => {
       >
 
         <a className='panel-icon' onClick={() => props.editStudent(props.student)}>
-          <i className='fa fa-pencil' />
+          <i className='fa fa-pen' />
         </a>
         {props.student.id}&emsp;
         <span className='panel-icon'>

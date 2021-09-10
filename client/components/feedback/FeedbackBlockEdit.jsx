@@ -19,7 +19,7 @@ const SaveButton = (props) => (
   <button className='button is-link tooltip' disabled={props.disabled} onClick={props.onClick}
     data-tooltip={props.exists ? 'Save' : 'Add'}>
     <span className='icon is-small'>
-      <i className='fa fa-floppy-o' />
+      <i className='fa fa-save' />
     </span>
   </button>
 )
@@ -189,7 +189,7 @@ class EditPanel extends React.Component {
                 onKeyDown={this.key}
               />
               <span className='icon is-small is-left'>
-                <i className='fa fa-comment-o' />
+                <i className='fa fa-comment' />
               </span>
             </div>
           </div>

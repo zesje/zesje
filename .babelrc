@@ -1,7 +1,8 @@
 {
     "presets":[
         "@babel/react",
-        "@babel/flow"
+        "@babel/flow",
+        "@babel/preset-env"
     ],
     "plugins": [
         "@babel/syntax-dynamic-import",
@@ -12,14 +13,14 @@
     "env": {
         "test": {
             "presets":[
-                [   "env",
+                [   "@babel/preset-env",
                     {
                         "modules": "commonjs"
                     }
                 ]
             ],
             "plugins": [
-                "transform-class-properties"
+                "@babel/plugin-proposal-class-properties"
             ]
         }
     }

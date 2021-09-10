@@ -46,14 +46,14 @@ build:
       - zesje/static
     expire_in: 1 week
 
-test_js:
-  <<: *conda-env
-  stage: test
-  script:
-    - yarn test:js
-  artifacts:
-    reports:
-      junit: junit.xml
+# test_js:
+#   <<: *conda-env
+#   stage: test
+#   script:
+#     - yarn test:js
+#   artifacts:
+#     reports:
+#       junit: junit.xml
 
 lint_js:
   <<: *conda-env

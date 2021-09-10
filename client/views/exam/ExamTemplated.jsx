@@ -546,7 +546,7 @@ class ExamTemplated extends React.Component {
     }))
   }
 
-  SidePanel = (props) => {
+  sidePanel = () => {
     const selectedWidgetId = this.state.selectedWidgetId
     const selectedWidget = selectedWidgetId && this.state.widgets[selectedWidgetId]
     const problem = selectedWidget && selectedWidget.problem
@@ -561,41 +561,18 @@ class ExamTemplated extends React.Component {
           numPages={this.state.numPages}
           setPage={this.setPage}
         />
-        <this.PanelEdit
-          disabledEdit={widgetEditDisabled}
-          disabledDelete={widgetDeleteDisabled}
-          onDeleteClick={() => {
-            this.setState({ deletingWidget: true })
-          }}
-          problem={problem}
-          changeProblemName={newName => {
-            this.setState(prevState => ({
-              changedWidgetId: selectedWidgetId,
-              widgets: update(prevState.widgets, {
-                [selectedWidgetId]: {
-                  problem: {
-                    name: {
-                      $set: newName
-                    }
-                  }
-                }
-              })
-            }))
-          }}
-          saveProblemName={this.saveProblemName}
-          setHelpPage={this.props.setHelpPage}
-        />
-        <this.PanelExamActions />
+        {this.panelEdit(problem, widgetEditDisabled, widgetDeleteDisabled)}
+        {this.panelExamActions()}
         {this.props.exam.finalized && <PanelGradeAnonymous
           examID={this.props.exam.id}
           gradeAnonymous={this.props.exam.gradeAnonymous}
           onChange={(anonymous) => this.props.updateExam()}
-                                      />}
+          />}
       </>
     )
   }
 
-  PanelEdit = (props) => {
+  panelEdit = (problem, widgetEditDisabled, widgetDeleteDisabled) => {
     const selectedWidgetId = this.state.selectedWidgetId
     const totalNrAnswers = 9 // the upper limit for the nr of possible answer boxes
 
@@ -604,7 +581,7 @@ class ExamTemplated extends React.Component {
         <p className='panel-heading'>
           Problem details
         </p>
-        {selectedWidgetId === null || !props.problem
+        {selectedWidgetId === null || !problem
           ? <div className='panel-block'>
             <div className='field'>
               <p>
@@ -618,30 +595,41 @@ class ExamTemplated extends React.Component {
                 <label className='label'>Name</label>
                 <div className='control'>
                   <input
-                    disabled={props.disabledEdit}
+                    disabled={widgetEditDisabled}
                     className='input'
                     placeholder='Problem name'
-                    value={props.problem ? props.problem.name : ''}
+                    value={problem ? problem.name : ''}
                     onChange={(e) => {
-                      props.changeProblemName(e.target.value)
+                      this.setState(prevState => ({
+                        changedWidgetId: selectedWidgetId,
+                        widgets: update(prevState.widgets, {
+                          [selectedWidgetId]: {
+                            problem: {
+                              name: {
+                                $set: e.target.value
+                              }
+                            }
+                          }
+                        })
+                      }))
                     }}
                     onBlur={(e) => {
-                      props.saveProblemName(e.target.value)
+                      this.saveProblemName(e.target.value)
                     }}
                   />
                 </div>
               </div>
             </div>
-            {props.problem && !this.props.exam.finalized
+            {problem && !this.props.exam.finalized
               ? <PanelMCQ
                 totalNrAnswers={totalNrAnswers}
-                problem={props.problem}
+                problem={problem}
                 generateMCOs={(labels) => {
                   const problemWidget = this.state.widgets[this.state.selectedWidgetId]
                   let xPos, yPos
-                  if (props.problem.mc_options.length > 0) {
+                  if (problem.mc_options.length > 0) {
                     // position the new mc options widget next to the last mc options
-                    const last = props.problem.mc_options[props.problem.mc_options.length - 1].widget
+                    const last = problem.mc_options[problem.mc_options.length - 1].widget
                     xPos = last.x + problemWidget.problem.widthMCO
                     yPos = last.y
                   } else {
@@ -652,7 +640,7 @@ class ExamTemplated extends React.Component {
                   return this.generateMCOs(problemWidget, labels, 0, xPos, yPos)
                 }}
                 deleteMCOs={(nrMCOs) => {
-                  const len = props.problem.mc_options.length
+                  const len = problem.mc_options.length
                   if (nrMCOs >= len) {
                     return new Promise((resolve, reject) => {
                       this.setState({ deletingMCWidget: true }, () => { resolve(false) })
@@ -663,12 +651,12 @@ class ExamTemplated extends React.Component {
                 }}
                 updateLabels={(labels) => {
                   labels.forEach((label, index) => {
-                    const option = props.problem.mc_options[index]
+                    const option = problem.mc_options[index]
                     const formData = new window.FormData()
                     formData.append('name', option.widget.name)
                     formData.append('x', option.widget.x + option.cbOffsetX)
                     formData.append('y', option.widget.y + option.cbOffsetY)
-                    formData.append('problem_id', props.problem.id)
+                    formData.append('problem_id', problem.id)
                     formData.append('label', labels[index])
                     api.patch('mult-choice/' + option.id, formData).then(() => {
                       this.setState((prevState) => {
@@ -703,19 +691,19 @@ class ExamTemplated extends React.Component {
                 }}
                 />
               : null}
-            {props.problem &&
+            {problem &&
               <>
                 <div className='panel-block'>
                   <label className='label'>Feedback options</label>
                 </div>
                 <FeedbackMenu
-                  problem={props.problem}
-                  updateFeedback={() => this.updateFeedback(props.problem.id)} />
+                  problem={problem}
+                  updateFeedback={() => this.updateFeedback(problem.id)} />
               </>
             }
           </>
         }
-        {props.problem &&
+        {problem &&
           <>
             <div className='panel-block mcq-block'>
               <b>Auto-approve</b>
@@ -726,18 +714,18 @@ class ExamTemplated extends React.Component {
                 clickAction={() => this.props.setHelpPage('gradingPolicy')}
               />
               <div className='select is-hovered is-fullwidth'>
-                <select value={props.problem.grading_policy} onChange={this.onChangeAutoApproveType}>
+                <select value={problem.grading_policy} onChange={this.onChangeAutoApproveType}>
                   <option value='set_nothing'>Nothing</option>
                   <option value='set_blank'>Blanks</option>
-                  {props.problem.mc_options.length !== 0 && <option value='set_single'>One answer</option>}
+                  {problem.mc_options.length !== 0 && <option value='set_single'>One answer</option>}
                 </select>
               </div>
             </div>
             <div className='panel-block'>
               <button
-                disabled={props.disabledDelete}
+                disabled={widgetDeleteDisabled}
                 className='button is-danger is-fullwidth'
-                onClick={() => props.onDeleteClick()}
+                onClick={() => this.setState({ deletingWidget: true })}
               >
                 Delete problem
               </button>
@@ -753,7 +741,7 @@ class ExamTemplated extends React.Component {
     this.props.updateExamList()
   }
 
-  PanelExamActions = () => {
+  panelExamActions = () => {
     if (this.props.exam.finalized) {
       return <PanelGenerate examID={this.state.examID} />
     }
@@ -780,10 +768,7 @@ class ExamTemplated extends React.Component {
               updateExam={this.props.updateExam}
               updateExamList={this.props.updateExamList}
             />
-            <this.SidePanel
-              examID={this.state.examID}
-              setHelpPage={this.props.setHelpPage}
-            />
+            {this.sidePanel()}
           </div>
           <div className='column is-narrow'>
             <div className='editor-content'>

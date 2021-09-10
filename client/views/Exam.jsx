@@ -8,7 +8,7 @@ import ExamUnstructured from './exam/ExamUnstructured.jsx'
 
 import * as api from '../api.jsx'
 
-class Exams extends React.Component {
+class Exam extends React.Component {
   state = {
     exam: null,
     deletingExam: false,
@@ -110,4 +110,4 @@ class Exams extends React.Component {
   }
 }
 
-export default Exams
+export default Exam

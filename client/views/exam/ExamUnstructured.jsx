@@ -3,7 +3,7 @@ import { toast } from 'bulma-toast'
 
 import FeedbackMenu from '../../components/feedback/FeedbackMenu.jsx'
 import ConfirmationModal from '../../components/ConfirmationModal.jsx'
-import ExamUnstructuredMarkdown from './ExamUnstructuredRules.md'
+import ExamUnstructuredRules from './ExamUnstructuredRules.md'
 import PanelGradeAnonymous from './PanelGradeAnonymous.jsx'
 import PanelExamName from './PanelExamName.jsx'
 import PanelFinalize from './PanelFinalize.jsx'
@@ -73,7 +73,7 @@ const ExamContent = (props) => {
   )
 }
 
-class PanelEditUnstructured extends React.Component {
+class ExamUnstructured extends React.Component {
   state = {
     exam: null,
     problems: [],
@@ -219,27 +219,26 @@ class PanelEditUnstructured extends React.Component {
     this.props.updateExamList()
   }
 
-  PanelProblem = (props) => {
+  panelProblem = (problem) => {
     return (
-      (
         <nav className='panel'>
           <p className='panel-heading'>
             Problem details
           </p>
 
-          {props.problem
+          {problem
             ? <>
               <div className='panel-block'>
                 <div className='field' style={{ flexGrow: 1 }}>
                   <label className='label'>Name</label>
                   <div className='control'>
                     <input
-                      className={'input ' + this.inputColor(this.state.problemName, props.problem.name)}
+                      className={'input ' + this.inputColor(this.state.problemName, problem.name)}
                       placeholder='Problem name'
                       value={this.state.problemName}
                       onChange={(e) => this.setState({ problemName: e.target.value })}
                       onBlur={(e) => {
-                        this.saveProblemName(props.problem.id, this.state.problemName)
+                        this.saveProblemName(problem.id, this.state.problemName)
                       }}
                     />
                   </div>
@@ -251,13 +250,13 @@ class PanelEditUnstructured extends React.Component {
                   <label className='label'>Page</label>
                   <div className='control'>
                     <input
-                      className={'input ' + this.inputColor(this.state.problemPage, props.problem.page + 1)}
+                      className={'input ' + this.inputColor(this.state.problemPage, problem.page + 1)}
                       placeholder='#'
                       maxLength={2}
                       value={this.state.problemPage}
                       onChange={(e) => this.updatePage(e.target.value)}
                       onBlur={(e) => {
-                        this.saveProblemPage(props.problem.id, props.problem.widget.id, this.state.problemPage)
+                        this.saveProblemPage(problem.id, problem.widget.id, this.state.problemPage)
                       }}
                     />
                   </div>
@@ -268,12 +267,12 @@ class PanelEditUnstructured extends React.Component {
                 {!this.state.editActive && <label className='label'>Feedback options</label>}
               </div>
               <FeedbackMenu
-                problem={props.problem}
+                problem={problem}
                 updateFeedback={this.props.updateExam} />
 
               <div className='panel-block'>
                 <button
-                  disabled={props.problem.n_graded > 0}
+                  disabled={problem.n_graded > 0}
                   className='button is-danger is-fullwidth'
                   onClick={() => this.setState({ deletingProblem: true })}
                 >
@@ -287,7 +286,6 @@ class PanelEditUnstructured extends React.Component {
                 </div>
               )}
         </nav>
-      )
     )
   }
 
@@ -327,7 +325,7 @@ class PanelEditUnstructured extends React.Component {
               </p>
 
               <div className='panel-block'>
-                <p className='content' dangerouslySetInnerHTML={{ __html: ExamUnstructuredMarkdown }} />
+                <p className='content' dangerouslySetInnerHTML={{ __html: ExamUnstructuredRules }} />
               </div>
             </nav>
           </div>
@@ -344,9 +342,7 @@ class PanelEditUnstructured extends React.Component {
             </div>
           </div>
           <div className='column is-one-third-fullhd is-half-tablet'>
-            <this.PanelProblem
-              problem={problem}
-            />
+            {this.panelProblem(problem)}
           </div>
         </div>
         {problem && <ConfirmationModal
@@ -362,4 +358,4 @@ class PanelEditUnstructured extends React.Component {
   }
 }
 
-export default PanelEditUnstructured
+export default ExamUnstructured

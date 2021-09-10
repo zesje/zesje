@@ -71,32 +71,6 @@ class TemplateEditor extends React.Component {
     }
   }
 
-  TemplateEditor = () => {
-    // We call 'onTemplateChange' on every keystroke, as the container
-    // needs to detect whenever anything changes, however we only re-render
-    // due to template changes when we click away (blur) the template editor.
-    return (
-      <textarea
-        className='textarea'
-        style={{ height: '100%' }}
-        value={this.props.template || ''}
-        onChange={evt => this.props.onTemplateChange(evt.target.value)}
-        onBlur={() => this.updateRenderedTemplate(this.props)}
-      />
-    )
-  }
-
-  RenderedTemplate = () => {
-    return (
-      <textarea
-        className='textarea is-unselectable has-background-light'
-        style={{ height: '100%', borderColor: '#fff' }}
-        value={this.state.renderedTemplate || ''}
-        readOnly
-      />
-    )
-  }
-
   render () {
     return (
       <>
@@ -104,14 +78,32 @@ class TemplateEditor extends React.Component {
           {
             this.props.template === null
               ? <LoadingView />
-              : <this.TemplateEditor />
+              : (
+                // We call 'onTemplateChange' on every keystroke, as the container
+                // needs to detect whenever anything changes, however we only re-render
+                // due to template changes when we click away (blur) the template editor.
+                <textarea
+                  className='textarea'
+                  style={{ height: '100%' }}
+                  value={this.props.template || ''}
+                  onChange={evt => this.props.onTemplateChange(evt.target.value)}
+                  onBlur={() => this.updateRenderedTemplate(this.props)}
+                />
+                )
           }
         </div>
         <div className='column'>
           {
             this.props.student === null || this.props.template === null
               ? <LoadingView />
-              : <this.RenderedTemplate />
+              : (
+                <textarea
+                  className='textarea is-unselectable has-background-light'
+                  style={{ height: '100%', borderColor: '#fff' }}
+                  value={this.state.renderedTemplate || ''}
+                  readOnly
+                />
+                )
           }
         </div>
       </>

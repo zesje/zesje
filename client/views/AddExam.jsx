@@ -47,7 +47,7 @@ class Exams extends React.Component {
 
   onDropPDF = (accepted, rejected) => {
     if (rejected.length > 0) {
-      toast({ message: 'Please upload a PDF.', type: 'is-danger' })
+      toast({ message: 'Please upload a valid PDF.', type: 'is-danger' })
       return
     }
 
@@ -62,7 +62,7 @@ class Exams extends React.Component {
 
   addExam = (event) => {
     if (!this.state.examName) {
-      toast({ message: 'Please upload a PDF.', type: 'is-danger' })
+      toast({ message: 'Please give a name to the exam.', type: 'is-danger' })
       return
     }
     if (this.state.selectedLayout.acceptsPDF && !this.state.pdf) {
@@ -82,7 +82,7 @@ class Exams extends React.Component {
         this.props.changeURL('/exams/' + exam.id)
       })
       .catch(resp => {
-        resp.json().then(body => toast({ message: 'Please upload a PDF.', type: 'is-danger' }))
+        resp.json().then(body => toast({ message: body.message, type: 'is-danger' }))
       })
   }
 

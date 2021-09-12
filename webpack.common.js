@@ -30,7 +30,8 @@ module.exports = {
       { test: /\.(jsx|js)$/, loader: 'babel-loader', options: { cacheDirectory: true }, exclude: /node_modules/ },
       { test: /\.(woff(2)?|ttf|eot|svg|otf)(\?v=\d+\.\d+\.\d+)?$/, type: 'asset/resource' },
       { test: /\.md$/, use: [{ loader: 'html-loader' }, { loader: 'markdown-loader' }] },
-      { test: /\.(gif|jpeg|jpg|png)$/, loader: 'sizeof-loader' }
+      { test: /\.png$/, loader: 'sizeof-loader', dependency: { not: ['url'] } },
+      { test: /\.(gif|jpeg|jpg)$/, type: 'asset/resource' }
     ]
   },
   plugins: [

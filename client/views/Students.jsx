@@ -143,7 +143,6 @@ class CheckStudents extends React.Component {
         editActive: !this.state.editActive,
         editStud: null
       })
-      this.props.updateSubmission(this.state.copies[this.state.index].id)
     }
   }
 

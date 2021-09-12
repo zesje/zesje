@@ -55,7 +55,7 @@ class FeedbackBlock extends React.Component {
             className={'tag' +
               (this.props.checked ? ' is-link' : '') +
               ((this.props.showIndex && this.props.feedback.index <= 20)
-                ? ' tooltip is-tooltip-active is-tooltip-left'
+                ? ' tooltip has-tooltip-active has-tooltip-left has-tooltip-arrow'
                 : '')}
             data-tooltip={shortcut}>
             {this.props.feedback.score}

@@ -28,15 +28,19 @@ const SaveButton = (props) => (
 // Windows uses vnd.ms-excel mimetype for CSV files
 const UploadButton = (props) => (
   <Dropzone
-    className='button is-link is-fullwidth'
     accept='text/csv,application/vnd.ms-excel'
     onDrop={props.onDrop}
-    disablePreview
+    multiple={false}
   >
-    <span className='icon is-small'>
-      <i className='fa fa-upload' />
-    </span>
-    <span>upload</span>
+    {({ getRootProps, getInputProps }) => (
+        <div {...getRootProps({ className: 'dropzone' })}>
+          <input {...getInputProps()} />
+          <span className='icon is-small'>
+            <i className='fa fa-upload' />
+          </span>
+          <span>upload</span>
+        </div>
+    )}
   </Dropzone>
 )
 

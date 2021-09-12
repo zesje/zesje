@@ -20,10 +20,10 @@ $fa-font-path: "~@fortawesome/fontawesome-free/webfonts";
   padding: 20px;
   border-width: 2px;
   border-radius: 2px;
-  border-color: #eeeeee;
+  border-color: $info;
   border-style: dashed;
   background-color: #fafafa;
-  color: #bdbdbd;
+  color: $info;
   outline: none;
   transition: border .24s ease-in-out;
 }
@@ -33,5 +33,7 @@ $fa-font-path: "~@fortawesome/fontawesome-free/webfonts";
 }
 
 .dropzone.disabled {
+  border-color: #eeeeee;
+  color: #bdbdbd;
   opacity: 0.6;
 }

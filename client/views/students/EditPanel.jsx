@@ -26,22 +26,28 @@ const SaveButton = (props) => (
 )
 
 // Windows uses vnd.ms-excel mimetype for CSV files
-const UploadButton = (props) => (
-  <Dropzone
-    accept='text/csv,application/vnd.ms-excel'
-    onDrop={props.onDrop}
-    multiple={false}
-  >
-    {({ getRootProps, getInputProps }) => (
-        <div {...getRootProps({ className: 'dropzone' })}>
-          <input {...getInputProps()} />
-          <span className='icon is-small'>
-            <i className='fa fa-upload' />
-          </span>
-          <span>upload</span>
-        </div>
-    )}
-  </Dropzone>
+const UploadBlock = (props) => (
+  <div className='panel-block'>
+    <div className='field' style={{ width: '100%' }}>
+      <Dropzone
+        accept='text/csv,application/vnd.ms-excel'
+        onDrop={props.onDrop}
+        multiple={false}
+      >
+        {({ getRootProps, getInputProps }) => (
+          <section className='container'>
+            <div {...getRootProps({ className: 'dropzone' })}>
+              <input {...getInputProps()} />
+              <span className='icon is-small'>
+                <i className='fa fa-upload' />
+              </span>
+              <span>upload from brightspace</span>
+            </div>
+          </section>
+        )}
+      </Dropzone>
+    </div>
+  </div>
 )
 
 class EditPanel extends React.Component {
@@ -186,6 +192,8 @@ class EditPanel extends React.Component {
         <p className='panel-heading'>
           Manage students
         </p>
+        {empty && <UploadBlock onDrop={this.uploadStudent} />}
+
         <IDBlock setID={this.setID} editStud={this.state.id} ref={(id) => { this.idblock = id }} />
 
         <div className='panel-block'>
@@ -231,9 +239,7 @@ class EditPanel extends React.Component {
 
         <div className='panel-block'>
           <BackButton onClick={this.props.toggleEdit} />
-          {empty
-            ? <UploadButton onDrop={this.uploadStudent} />
-            : <SaveButton disabled={!full} onClick={this.saveStudent} />}
+          {!empty && <SaveButton disabled={!full} onClick={this.saveStudent} />}
         </div>
       </nav>
     )

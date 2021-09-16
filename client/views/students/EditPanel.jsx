@@ -19,7 +19,7 @@ const BackButton = (props) => (
 const SaveButton = (props) => (
   <button className='button is-primary is-fullwidth' disabled={props.disabled} onClick={props.onClick}>
     <span className='icon is-small'>
-      <i className='fa fa-floppy-o' />
+      <i className='fa fa-save' />
     </span>
     <span>save</span>
   </button>
@@ -41,7 +41,7 @@ const UploadBlock = (props) => (
               <span className='icon is-small'>
                 <i className='fa fa-upload' />
               </span>
-              <span>upload from brightspace</span>
+              <span>upload CSV</span>
             </div>
           </section>
         )}

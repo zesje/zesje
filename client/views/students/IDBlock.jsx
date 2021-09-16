@@ -20,7 +20,12 @@ class IDBlock extends React.Component {
       }
     }
 
-    return null
+    return {
+      input: '',
+      editing: false,
+      short: false,
+      new: true
+    }
   }
 
   clear = () => {

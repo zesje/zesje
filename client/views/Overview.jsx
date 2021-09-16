@@ -334,39 +334,49 @@ class Overview extends React.Component {
         align: 'left'
       },
       showlegend: false
-    }, {
-      x: total.results.reduce((acc, v) => v.ungraded === 0 ? acc.concat(v.score) : acc, []),
-      type: 'histogram',
-      name: 'Graded',
-      autobinx: false,
-      xbins: {
-        start: -0.5,
-        end: total.max_score + 0.5,
-        size: 1
-      },
-      hoverinfo: 'none',
-      marker: {
-        color: 'hsl(204, 86, 53)' // info
-      },
-      xaxis: 'x3',
-      yaxis: 'y3'
-    }, {
-      x: total.results.reduce((acc, v) => v.ungraded > 0 ? acc.concat(v.score) : acc, []),
-      type: 'histogram',
-      name: 'Partially graded',
-      autobinx: false,
-      xbins: {
-        start: -0.5,
-        end: total.max_score + 0.5,
-        size: 1
-      },
-      hoverinfo: 'none',
-      marker: {
-        color: 'hsla(204, 86, 53, 0.5)'
-      },
-      xaxis: 'x3',
-      yaxis: 'y3'
     }]
+
+    const histGraded = total.results.reduce((acc, v) => v.ungraded === 0 ? acc.concat(v.score) : acc, [])
+    if (histGraded.length > 0) {
+      data.push({
+        x: histGraded,
+        type: 'histogram',
+        name: 'Graded',
+        autobinx: false,
+        xbins: {
+          start: -0.5,
+          end: total.max_score + 0.5,
+          size: 1
+        },
+        hoverinfo: 'none',
+        marker: {
+          color: 'hsl(204, 86, 53)' // info
+        },
+        xaxis: 'x3',
+        yaxis: 'y3'
+      })
+    }
+
+    const histPartiallyGraded = total.results.reduce((acc, v) => v.ungraded > 0 ? acc.concat(v.score) : acc, [])
+    if (histPartiallyGraded.length > 0) {
+      data.push({
+        x: histPartiallyGraded,
+        type: 'histogram',
+        name: 'Partially graded',
+        autobinx: false,
+        xbins: {
+          start: -0.5,
+          end: total.max_score + 0.5,
+          size: 1
+        },
+        hoverinfo: 'none',
+        marker: {
+          color: 'hsla(204, 86, 53, 0.5)'
+        },
+        xaxis: 'x3',
+        yaxis: 'y3'
+      })
+    }
 
     if (total.results.length > 1) {
       const norm = (sqrt(2 * pi) * total.mean.error)
@@ -531,35 +541,47 @@ class Overview extends React.Component {
   }
 
   renderHistogramScores = (problem) => {
-    const traces = [{
-      x: problem.results.reduce((acc, v) => v.graded ? acc.concat(v.score) : acc, []),
-      type: 'histogram',
-      name: 'Graded',
-      autobinx: false,
-      xbins: {
-        start: -0.5,
-        end: problem.max_score + 0.5,
-        size: 1
-      },
-      hoverinfo: 'none',
-      marker: {
-        color: 'hsl(204, 86, 53)'
-      }
-    }, {
-      x: problem.results.reduce((acc, v) => !v.graded ? acc.concat(v.score) : acc, []),
-      type: 'histogram',
-      name: 'To revise',
-      autobinx: false,
-      xbins: {
-        start: -0.5,
-        end: problem.max_score + 0.5,
-        size: 1
-      },
-      hoverinfo: 'none',
-      marker: {
-        color: 'hsla(204, 86, 53, 0.5)'
-      }
-    }]
+    const traces = []
+
+    const histGraded = problem.results.reduce((acc, v) => v.graded ? acc.concat(v.score) : acc, [])
+    if (histGraded.length > 0) {
+      traces.push({
+        x: histGraded,
+        type: 'histogram',
+        name: 'Graded',
+        autobinx: false,
+        xbins: {
+          start: -0.5,
+          end: problem.max_score + 0.5,
+          size: 1
+        },
+        hoverinfo: 'none',
+        marker: {
+          color: 'hsl(204, 86, 53)'
+        }
+      })
+    }
+
+    const histRevise = problem.results.reduce((acc, v) => !v.graded ? acc.concat(v.score) : acc, [])
+    if (histRevise.length > 0) {
+      traces.push({
+        x: histRevise,
+        type: 'histogram',
+        name: 'To revise',
+        autobinx: false,
+        xbins: {
+          start: -0.5,
+          end: problem.max_score + 0.5,
+          size: 1
+        },
+        hoverinfo: 'none',
+        marker: {
+          color: 'hsla(204, 86, 53, 0.5)'
+        }
+      })
+    }
+
+    if (traces.length === 0) return null
 
     const layout = {
       xaxis: {

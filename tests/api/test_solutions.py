@@ -1,6 +1,15 @@
 import pytest
 from zesje.database import db, Exam, Problem, FeedbackOption,\
                            Student, Submission, Solution, Grader
+import flask_login
+
+
+@pytest.fixture
+def monkeypatch_current_user(monkeypatch):
+    def mock_current_user():
+        return Grader.query.get(1)
+
+    monkeypatch.setattr(flask_login.utils, '_get_user', mock_current_user)
 
 
 @pytest.fixture
@@ -27,7 +36,7 @@ def add_test_data(app):
     root = problem.root_feedback
 
     for i in range(2):
-        fo_parent = FeedbackOption(id=3 * i + 1,
+        fo_parent = FeedbackOption(id=i + 1,
                                    problem=problem,
                                    text=chr(i + 65),
                                    description='',
@@ -36,12 +45,12 @@ def add_test_data(app):
         db.session.add(fo_parent)
         db.session.commit()
         for j in range(1, 3):
-            fo = FeedbackOption(id=3 * i + j + 1,
+            fo = FeedbackOption(id=(i + 1) * 10 + j,
                                 problem=problem,
                                 text=chr(i + 65) + chr(j + 65),
                                 description='',
                                 score=-1 * i * j,
-                                parent_id=3 * i + 1)
+                                parent_id=i + 1)
             db.session.add(fo)
 
     db.session.commit()
@@ -71,20 +80,18 @@ def test_get_solution(test_client, add_test_data):
     assert res.status_code == 400
 
 
-def test_add_remark(test_client, add_test_data):
+def test_add_remark(test_client, add_test_data, monkeypatch_current_user):
     res = test_client.post('/api/solution/1/1/1', data={
-        'graderID': 1,
         'remark': 'this is a remark'
     })
 
     assert res.status_code == 200
 
 
-def test_toggle_feedback(test_client, add_test_data):
+def test_toggle_feedback(test_client, add_test_data, monkeypatch_current_user):
     # toogle parent
     for j in range(2):
         res = test_client.put('/api/solution/1/1/1', data={
-            'graderID': 1,
             'id': 1
         })
 
@@ -94,8 +101,7 @@ def test_toggle_feedback(test_client, add_test_data):
     # toogle child
     for j in range(2):
         res = test_client.put('/api/solution/1/1/1', data={
-            'graderID': 1,
-            'id': 4 + 2
+            'id': 2 * 10 + 2
         })
         assert res.status_code == 200
         checked = res.get_json()['state']
@@ -104,15 +110,14 @@ def test_toggle_feedback(test_client, add_test_data):
         res = test_client.get('/api/solution/1/1/1')
         checked_feedback = res.get_json()['feedback']
         if checked:
-            assert 4 in checked_feedback
-            assert (4 + 2) in checked_feedback
+            assert 2 in checked_feedback
+            assert (2 * 10 + 2) in checked_feedback
         else:
-            assert 4 in checked_feedback
+            assert 2 in checked_feedback
 
     # toogle other child of same parent
     res = test_client.put('/api/solution/1/1/1', data={
-        'graderID': 1,
-        'id': 4 + 1
+        'id': 2 * 10 + 1
     })
     assert res.status_code == 200
     checked = res.get_json()['state']
@@ -120,13 +125,12 @@ def test_toggle_feedback(test_client, add_test_data):
 
     res = test_client.get('/api/solution/1/1/1')
     checked_feedback = res.get_json()['feedback']
-    assert 4 in checked_feedback
-    assert (4 + 1) in checked_feedback
+    assert 2 in checked_feedback
+    assert (2 * 10 + 1) in checked_feedback
 
     # uncheck parent
     res = test_client.put('/api/solution/1/1/1', data={
-        'graderID': 1,
-        'id': 4
+        'id': 2
     })
     assert res.status_code == 200
     checked = res.get_json()['state']
@@ -137,28 +141,27 @@ def test_toggle_feedback(test_client, add_test_data):
     assert not checked_feedback
 
 
-def test_approve(test_client, add_test_data):
+def test_approve(test_client, add_test_data, monkeypatch_current_user):
     res = test_client.put('/api/solution/approve/1/1/1', data={
-        'graderID': 1
+        'approve': 1
     })
 
     # no feedback selected
     assert res.status_code == 409
 
     res = test_client.put('/api/solution/1/1/1', data={
-        'graderID': 1,
         'id': 1
     })
 
     # toogle approve
     for j in range(2):
         res = test_client.put('/api/solution/approve/1/1/1', data={
-            'graderID': 1 if j == 1 else None
+            'approve': j
         })
 
         assert res.status_code == 200
         approved = res.get_json()['state']
-        assert approved == (j % 2 == 1)
+        assert approved == (j == 1)
 
         res = test_client.get('/api/solution/1/1/1')
         graded_by = res.get_json()['gradedBy']

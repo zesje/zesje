@@ -399,8 +399,7 @@ class Grade extends React.Component {
     const problem = this.state.problem
 
     api.put(`solution/${this.props.examID}/${submission.id}/${problem.id}`, {
-      id: id,
-      graderID: this.props.graderID
+      id: id
     }).then(result => {
       this.updateSubmission()
     })
@@ -415,17 +414,14 @@ class Grade extends React.Component {
      const problem = this.state.problem
      const solution = submission.problems.find(p => p.id === problem.id)
 
-     let graderid = null
-     if (solution.graded_by === null) {
-       graderid = this.props.graderID
-     }
+     const approve = solution.graded_by === null
 
      api.put(`solution/approve/${this.props.examID}/${submission.id}/${problem.id}`, {
-       graderID: graderid
+       approve: approve
      }).catch(resp => {
        resp.json().then(body => {
          toast({
-           message: 'Could not ' + (graderid === null ? 'set aside' : 'approve') + ' feedback: ' + body.message,
+           message: 'Could not ' + (approve ? 'set aside' : 'approve') + ' feedback: ' + body.message,
            type: 'is-danger'
          })
        })
@@ -532,7 +528,6 @@ class Grade extends React.Component {
     }
 
     const examID = this.props.examID
-    const graderID = this.props.graderID
     const submission = this.state.submission
     const problem = this.state.problem
     const submissions = this.state.submissions
@@ -563,7 +558,7 @@ class Grade extends React.Component {
                 />
                 <nav className='panel'>
                   <FeedbackPanel
-                    examID={examID} submissionID={submission.id} graderID={graderID}
+                    examID={examID} submissionID={submission.id}
                     problem={problem} solution={solution}
                     showTooltips={this.state.showTooltips} grading
                     setSubmission={this.updateSubmission}

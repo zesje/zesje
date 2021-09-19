@@ -48,6 +48,7 @@ class Exams(Resource):
     get_parser = reqparse.RequestParser()
     get_parser.add_argument('only_metadata', type=boolean, required=False)
     get_parser.add_argument('shuffle_seed', type=int, required=False)
+    # TODO: remove also shuffle seed???
 
     def get(self, exam_id=None):
         args = self.get_parser.parse_args()

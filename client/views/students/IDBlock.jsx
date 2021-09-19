@@ -5,18 +5,26 @@ import * as api from '../../api.jsx'
 class IDBlock extends React.Component {
   state = {
     input: '',
-    editing: false,
-    short: false,
-    new: false
+    editing: true,
+    short: true,
+    new: true
   }
 
-  static getDerivedStateFromProps (props, state) {
-    if (props.editStud && !state.editing) {
-      return {
-        input: props.editStud,
+  componentDidMount = () => {
+    if (this.props.editStud) {
+      this.setState({
+        input: this.props.editStud,
         editing: false,
         short: false,
         new: false
+      })
+    }
+  }
+
+  static getDerivedStateFromProps (props, state) {
+    if (props.editStud && !state.input) {
+      return {
+        input: props.editStud
       }
     }
 

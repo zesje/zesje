@@ -3,6 +3,8 @@ import Mousetrap from 'mousetrap'
 
 function withShortcuts (WrappedComponent) {
   return class extends React.Component {
+    displayName: 'ShortcutBinder'
+
     boundShortcuts = []
 
     componentWillUnmount = () => {

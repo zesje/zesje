@@ -1,9 +1,9 @@
 import React from 'react'
-import Notification from 'react-bulma-notification'
+import { toast } from 'bulma-toast'
 
 import FeedbackMenu from '../../components/feedback/FeedbackMenu.jsx'
 import ConfirmationModal from '../../components/ConfirmationModal.jsx'
-import ExamUnstructuredMarkdown from './ExamUnstructuredRules.md'
+import ExamUnstructuredRules from './ExamUnstructuredRules.md'
 import PanelGradeAnonymous from './PanelGradeAnonymous.jsx'
 import PanelExamName from './PanelExamName.jsx'
 import PanelFinalize from './PanelFinalize.jsx'
@@ -19,14 +19,14 @@ const groupBy = (array, key) =>
 
 const ExamContent = (props) => {
   const problemCount = props.problems.length
-  const pages = problemCount > 0 ? groupBy(props.problems, 'page') : {0: []}
+  const pages = problemCount > 0 ? groupBy(props.problems, 'page') : { 0: [] }
 
   const pageCount = Object.keys(pages).length
   const pageTitle = pageCount === 1 && 'Problem list'
   const addPageButtonText = pageCount === 1 ? 'Specify pages' : 'Add page'
 
   return (
-    <div>
+    <>
       {Object.keys(pages).map(page => (
         <div className='card page-card' key={page}>
           <header className='card-header'>
@@ -35,7 +35,8 @@ const ExamContent = (props) => {
             </p>
             <a
               className='card-header-icon'
-              onClick={() => props.createProblem(parseInt(page))}>
+              onClick={() => props.createProblem(parseInt(page))}
+            >
               <span className='icon is-medium'>
                 <i className='fa fa-plus ' />
               </span>
@@ -44,7 +45,8 @@ const ExamContent = (props) => {
           </header>
           <div className='card-content'>
             <div className='content'>
-              {problemCount ? pages[page].map(p => (
+              {problemCount
+                ? pages[page].map(p => (
                 <button
                   className={'button problem is-fullwidth ' +
                                     (props.selectedProblemId === p.id ? 'is-primary' : '')}
@@ -53,21 +55,25 @@ const ExamContent = (props) => {
                 >
                   {p.name}
                 </button>
-              )) : <p>No problems</p>}
+                ))
+                : <p>No problems</p>}
             </div>
           </div>
         </div>
       ))}
-      {problemCount && !props.finalized ? <button
+      {problemCount && !props.finalized
+        ? <button
         className='button problem is-link is-fullwidth'
-        onClick={props.addPage}>
+        onClick={props.addPage}
+                                          >
         <span>{addPageButtonText}</span>
-      </button> : null}
-    </div>
+                                          </button>
+        : null}
+    </>
   )
 }
 
-class PanelEditUnstructured extends React.Component {
+class ExamUnstructured extends React.Component {
   state = {
     exam: null,
     problems: [],
@@ -152,7 +158,7 @@ class PanelEditUnstructured extends React.Component {
       .catch(e => {
         this.selectProblem(id) // takes care of updating the problem name to previous state
         console.log(e)
-        e.json().then(err => Notification.error('Could not save new problem name: ' + err.message))
+        e.json().then(err => toast({ message: 'Could not save new problem name: ' + err.message, type: 'is-danger' }))
       })
   }
 
@@ -162,13 +168,13 @@ class PanelEditUnstructured extends React.Component {
       return
     }
 
-    api.patch(`widgets/${widgetId}`, {page: parseInt(page) - 1})
+    api.patch(`widgets/${widgetId}`, { page: parseInt(page) - 1 })
       .then(resp => this.props.updateExam())
       .catch(e => {
         console.log(e)
         this.props.updateExam()
         e.json().then(res => {
-          Notification.warn('Could not save new problem page: ' + res.message)
+          toast({ message: 'Could not save new problem page: ' + res.message, type: 'is-warning' })
         })
       })
   }
@@ -184,8 +190,7 @@ class PanelEditUnstructured extends React.Component {
           this.setState({
             deletingProblem: false
           })
-          Notification.error('Could not delete problem' +
-            (res.message ? ': ' + res.message : ''))
+          toast({ message: 'Could not delete problem' + (res.message ? ': ' + res.message : ''), type: 'is-danger' })
         })
       })
   }
@@ -199,7 +204,7 @@ class PanelEditUnstructured extends React.Component {
   }
 
   updatePage = (newPage) => {
-    const patt = new RegExp(/^(-|(-?[1-9]\d*))?$/)
+    const patt = /^(-|(-?[1-9]\d*))?$/
 
     if (patt.test(newPage)) {
       this.setState({
@@ -214,27 +219,26 @@ class PanelEditUnstructured extends React.Component {
     this.props.updateExamList()
   }
 
-  PanelProblem = (props) => {
+  panelProblem = (problem) => {
     return (
-      (
         <nav className='panel'>
           <p className='panel-heading'>
             Problem details
           </p>
 
-          {props.problem
-            ? <React.Fragment>
+          {problem
+            ? <>
               <div className='panel-block'>
-                <div className='field' style={{flexGrow: 1}}>
+                <div className='field' style={{ flexGrow: 1 }}>
                   <label className='label'>Name</label>
                   <div className='control'>
                     <input
-                      className={'input ' + this.inputColor(this.state.problemName, props.problem.name)}
+                      className={'input ' + this.inputColor(this.state.problemName, problem.name)}
                       placeholder='Problem name'
                       value={this.state.problemName}
-                      onChange={(e) => this.setState({problemName: e.target.value})}
+                      onChange={(e) => this.setState({ problemName: e.target.value })}
                       onBlur={(e) => {
-                        this.saveProblemName(props.problem.id, this.state.problemName)
+                        this.saveProblemName(problem.id, this.state.problemName)
                       }}
                     />
                   </div>
@@ -242,17 +246,17 @@ class PanelEditUnstructured extends React.Component {
               </div>
 
               <div className='panel-block'>
-                <div className='field' style={{flexGrow: 1}}>
+                <div className='field' style={{ flexGrow: 1 }}>
                   <label className='label'>Page</label>
                   <div className='control'>
                     <input
-                      className={'input ' + this.inputColor(this.state.problemPage, props.problem.page + 1)}
+                      className={'input ' + this.inputColor(this.state.problemPage, problem.page + 1)}
                       placeholder='#'
                       maxLength={2}
                       value={this.state.problemPage}
                       onChange={(e) => this.updatePage(e.target.value)}
                       onBlur={(e) => {
-                        this.saveProblemPage(props.problem.id, props.problem.widget.id, this.state.problemPage)
+                        this.saveProblemPage(problem.id, problem.widget.id, this.state.problemPage)
                       }}
                     />
                   </div>
@@ -263,26 +267,25 @@ class PanelEditUnstructured extends React.Component {
                 {!this.state.editActive && <label className='label'>Feedback options</label>}
               </div>
               <FeedbackMenu
-                problem={props.problem}
+                problem={problem}
                 updateFeedback={this.props.updateExam} />
 
               <div className='panel-block'>
                 <button
-                  disabled={props.problem.n_graded > 0}
+                  disabled={problem.n_graded > 0}
                   className='button is-danger is-fullwidth'
-                  onClick={() => this.setState({deletingProblem: true})}
+                  onClick={() => this.setState({ deletingProblem: true })}
                 >
                   Delete problem
                 </button>
               </div>
-            </React.Fragment> : (
+              </>
+            : (
               <div className='panel-block'>
-                <p>Select a problem on the right panel or add a new one.</p>
-              </div>
-            )
-          }
+                  <p>Select a problem on the right panel or add a new one.</p>
+                </div>
+              )}
         </nav>
-      )
     )
   }
 
@@ -290,29 +293,31 @@ class PanelEditUnstructured extends React.Component {
     const problem = this.state.problems.find(p => p.id === this.state.selectedProblemId)
 
     return (
-      <React.Fragment>
-        <div className='columns is-centered is-multiline' >
-          <div className='column is-one-third-fullhd is-two-thirds-tablet' >
+      <>
+        <div className='columns is-centered is-multiline'>
+          <div className='column is-one-third-fullhd is-two-thirds-tablet'>
             <PanelExamName
               name={this.state.exam.name}
               examID={this.props.examID}
               updateExam={this.props.updateExam}
-              updateExamList={this.props.updateExamList} />
+              updateExamList={this.props.updateExamList}
+            />
 
             <PanelGradeAnonymous
               examID={this.props.examID}
               gradeAnonymous={this.state.exam.gradeAnonymous}
-              text='Student name or number may still be visible on the pages themselves.' />
+              text='Student name or number may still be visible on the pages themselves.'
+            />
 
             {!this.state.exam.finalized &&
               <PanelFinalize
                 examID={this.props.examID}
                 onFinalize={this.onFinalize}
-                deleteExam={this.props.deleteExam}>
+                deleteExam={this.props.deleteExam}
+              >
                 Finalized exams cannot be deleted.
                 Take care to not delete or add pages after finalization.
-              </PanelFinalize>
-            }
+              </PanelFinalize>}
 
             <nav className='panel'>
               <p className='panel-heading'>
@@ -320,7 +325,7 @@ class PanelEditUnstructured extends React.Component {
               </p>
 
               <div className='panel-block'>
-                <p className='content' dangerouslySetInnerHTML={{__html: ExamUnstructuredMarkdown}} />
+                <p className='content' dangerouslySetInnerHTML={{ __html: ExamUnstructuredRules }} />
               </div>
             </nav>
           </div>
@@ -332,12 +337,12 @@ class PanelEditUnstructured extends React.Component {
                 selectProblem={this.selectProblem}
                 createProblem={this.createProblem}
                 addPage={this.addPage}
-                finalized={this.state.finalized} />
+                finalized={this.state.finalized}
+              />
             </div>
           </div>
           <div className='column is-one-third-fullhd is-half-tablet'>
-            <this.PanelProblem
-              problem={problem} />
+            {this.panelProblem(problem)}
           </div>
         </div>
         {problem && <ConfirmationModal
@@ -345,12 +350,12 @@ class PanelEditUnstructured extends React.Component {
           color='is-danger'
           headerText={`Are you sure you want to delete problem "${problem.name}?"`}
           confirmText='Delete problem'
-          onCancel={() => this.setState({deletingProblem: false})}
+          onCancel={() => this.setState({ deletingProblem: false })}
           onConfirm={() => this.deleteProblem(this.state.selectedProblemId)}
-        />}
-      </React.Fragment>
+                    />}
+      </>
     )
   }
 }
 
-export default PanelEditUnstructured
+export default ExamUnstructured

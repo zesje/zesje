@@ -3,9 +3,9 @@ import React from 'react'
 import ConfirmationModal from '../ConfirmationModal.jsx'
 import ColorInput from '../ColorInput.jsx'
 import * as api from '../../api.jsx'
-import Notification from 'react-bulma-notification'
+import { toast } from 'bulma-toast'
 
-import {FeedbackItem} from './FeedbackUtils.jsx'
+import { FeedbackItem } from './FeedbackUtils.jsx'
 
 const CancelButton = (props) => (
   <button className='button is-light tooltip' onClick={props.onClick} data-tooltip='Cancel'>
@@ -19,14 +19,14 @@ const SaveButton = (props) => (
   <button className='button is-link tooltip' disabled={props.disabled} onClick={props.onClick}
     data-tooltip={props.exists ? 'Save' : 'Add'}>
     <span className='icon is-small'>
-      <i className='fa fa-floppy-o' />
+      <i className='fa fa-save' />
     </span>
   </button>
 )
 
 const DeleteButton = (props) => (
   <button className='button is-danger tooltip'
-    style={{marginLeft: 'auto'}} disabled={!props.exists} onClick={props.onClick} data-tooltip='Delete'>
+    style={{ marginLeft: 'auto' }} disabled={!props.exists} onClick={props.onClick} data-tooltip='Delete'>
     <span className='icon is-small'>
       <i className='fa fa-trash' />
     </span>
@@ -56,7 +56,7 @@ class EditPanel extends React.Component {
         updateCallback: updateCallback
       }
     }
-    return {updateCallback: updateCallback}
+    return { updateCallback: updateCallback }
   }
 
   changeText = (event) => {
@@ -64,8 +64,9 @@ class EditPanel extends React.Component {
       [event.target.name]: event.target.value
     })
   }
+
   changeScore = (event) => {
-    const patt = new RegExp(/^(-|(-?[1-9]\d*)|0)?$/)
+    const patt = /^(-|(-?[1-9]\d*)|0)?$/
 
     if (patt.test(event.target.value)) {
       this.setState({
@@ -121,8 +122,10 @@ class EditPanel extends React.Component {
         })
         .catch(err => {
           err.json().then(res => {
-            Notification.error('Could not delete feedback' +
-              (res.message ? ': ' + res.message : ''))
+            toast({
+              message: 'Could not delete feedback' + (res.message ? ': ' + res.message : ''),
+              type: 'is-danger'
+            })
             // update to try and get a consistent state
             this.state.updateCallback()
             this.props.goBack()
@@ -154,7 +157,8 @@ class EditPanel extends React.Component {
                   placeholder='7'
                   value={this.state.score}
                   onChange={this.changeScore}
-                  onKeyDown={this.key} />
+                  onKeyDown={this.key}
+                />
               </div>
             </div>
             <div className='field grow'>
@@ -165,7 +169,8 @@ class EditPanel extends React.Component {
                   name='name'
                   value={this.state.name}
                   onChange={this.changeText}
-                  onKeyDown={this.key} />
+                  onKeyDown={this.key}
+                />
               </div>
             </div>
           </div>
@@ -174,15 +179,17 @@ class EditPanel extends React.Component {
           <div className='field is-fullwidth'>
             <label className='label'>Description</label>
             <div className='control has-icons-left'>
-              <textarea className='input'
-                style={{height: '4rem'}}
+              <textarea
+                className='input'
+                style={{ height: '4rem' }}
                 placeholder='Description'
                 name='description'
                 value={this.state.description}
                 onChange={this.changeText}
-                onKeyDown={this.key} />
+                onKeyDown={this.key}
+              />
               <span className='icon is-small is-left'>
-                <i className='fa fa-comment-o' />
+                <i className='fa fa-comment' />
               </span>
             </div>
           </div>
@@ -191,17 +198,24 @@ class EditPanel extends React.Component {
           <div className={'flex-space-between is-fullwidth'}>
             <div className={'buttons is-marginless'}>
               <SaveButton onClick={this.saveFeedback} exists={this.props.feedback}
-                disabled={!this.state.name || (!this.state.score && this.state.score !== 0) || isNaN(parseInt(this.state.score))} />
+                disabled={!this.state.name ||
+                  (!this.state.score && this.state.score !== 0) ||
+                  isNaN(parseInt(this.state.score))} />
               <CancelButton onClick={this.props.goBack} />
             </div>
-            <DeleteButton onClick={() => { this.setState({deleting: true}) }} exists={this.props.feedback} />
+            <DeleteButton onClick={() => { this.setState({ deleting: true }) }} exists={this.props.feedback} />
           </div>
           <ConfirmationModal
             headerText={`Do you want to irreversibly delete feedback option "${this.state.name}"?`}
             contentText={this.props.feedback && (this.props.feedback.used || this.props.feedback.children != null)
-              ? (this.props.feedback.children.length > 0 ? 'This feedback has ' + (this.props.feedback.children.length > 1 ? `${this.props.feedback.children.length} children` : ' 1 child') +
-              ', that would also be deleted in the process. ' : '') +
-                (this.props.feedback.used ? 'This feedback option was assigned to ' +
+              ? (this.props.feedback.children.length > 0
+                  ? 'This feedback has ' + (this.props.feedback.children.length > 1
+                    ? `${this.props.feedback.children.length} children`
+                    : ' 1 child') +
+              ', that would also be deleted in the process. '
+                  : '') +
+                (this.props.feedback.used
+                  ? 'This feedback option was assigned to ' +
                   (this.props.feedback.used > 1 ? `${this.props.feedback.used} solutions` : ' 1 solution') +
                   ' and it will be removed. This will affect the final grade assigned to each submission.'
                   : '')
@@ -211,7 +225,7 @@ class EditPanel extends React.Component {
             confirmText='Delete feedback'
             active={this.state.deleting}
             onConfirm={this.deleteFeedback}
-            onCancel={() => { this.setState({deleting: false}) }}
+            onCancel={() => { this.setState({ deleting: false }) }}
           />
         </div>
         {children && children.length > 0 ? <ul className='menu-list'> {children} </ul> : null}

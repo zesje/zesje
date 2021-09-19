@@ -19,9 +19,9 @@ const EmptyPDF = (props) => {
         minHeight: (height) + 'px',
         backgroundColor: 'white'
       }}
-      className={'has-text-centered'}
+      className='has-text-centered'
     >
-      <i className={'fa fa-refresh fa-spin'} />
+      <i className='fa fa-refresh fa-spin' />
     </div>
   )
 }

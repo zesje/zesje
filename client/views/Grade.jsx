@@ -1,5 +1,5 @@
 import React from 'react'
-import Notification from 'react-bulma-notification'
+import { toast } from 'bulma-toast'
 import Hero from '../components/Hero.jsx'
 import Fail from './Fail.jsx'
 import update from 'immutability-helper'
@@ -13,13 +13,12 @@ import { indexFeedbackOptions, findFeedbackByIndex } from '../components/feedbac
 
 import * as api from '../api.jsx'
 
-import 'bulma-tooltip/dist/css/bulma-tooltip.min.css'
 import './grade/Grade.css'
 import '../components/SubmissionNavigation.css'
 
 const defaultGraderFilter = -1
 
-const FiltersInfo = ({hasFilters, matchingResults, clearFilters}) => {
+const FiltersInfo = ({ hasFilters, matchingResults, clearFilters }) => {
   const text = matchingResults +
     (hasFilters ? ' matching ' : ' ') +
     (matchingResults === 1 ? 'solution' : 'solutions')
@@ -42,11 +41,11 @@ const FiltersInfo = ({hasFilters, matchingResults, clearFilters}) => {
         <span className='icon is-medium'>
           <i
             className='fa fa-lg fa-filter'
-            style={{transform: 'translateX(-17%)'}}
+            style={{ transform: 'translateX(-17%)' }}
           />
           <span
             className='icon is-small'
-            style={{position: 'absolute', right: '12%', bottom: 0}}
+            style={{ position: 'absolute', right: '12%', bottom: 0 }}
           >
             <i className='fa fa-times' />
           </span>
@@ -59,13 +58,14 @@ const FiltersInfo = ({hasFilters, matchingResults, clearFilters}) => {
 class Grade extends React.Component {
   /**
    * Constructor sets empty state, and requests metadata for the exam.
-   * After getting this metadata, if the submissionID is provided in the URL, loads the submission according to the submissionID,
+   * After getting this metadata, if the submissionID is provided in the URL,
+   * loads the submission according to the submissionID,
    * else loads the first submission from the metadata and then replaces the URL to match the submission.
    */
   constructor (props) {
     super(props)
-    this.state = {feedbackFilters: {}, gradedBy: defaultGraderFilter}
-    this.state = {...this.state, hasFilters: this.hasFilters()}
+    this.state = { feedbackFilters: {}, gradedBy: defaultGraderFilter }
+    this.state = { ...this.state, hasFilters: this.hasFilters() }
 
     Promise.all([
       api.get(`exams/${this.props.examID}?only_metadata=true&shuffle_seed=${this.props.graderID}`),
@@ -123,7 +123,8 @@ class Grade extends React.Component {
   }
 
   /**
-   * This method changes the state of the submission and the problem according to the URL. This method is called once the latest metadata is fetched from the backend.
+   * This method changes the state of the submission and the problem according to the URL.
+   * This method is called once the latest metadata is fetched from the backend.
    * If the submission ID is specified in the URL, then it loads the submission corresponding to the URL.
    * If it is missing, it loads the first submission from the metadata and then replaces the URL to reflect the state.
    * It also sets the submission to null to display error component when unwanted behaviour is observed.
@@ -186,7 +187,7 @@ class Grade extends React.Component {
     this.props.bindShortcut('f', this.toggleFullPage)
     this.props.bindShortcut('ctrl', (event) => {
       event.preventDefault()
-      this.setState({showTooltips: !this.state.showTooltips})
+      this.setState({ showTooltips: !this.state.showTooltips })
     })
     let key = 0
     let prefix = ''
@@ -206,8 +207,10 @@ class Grade extends React.Component {
     const hasProblem = this.state.problem && this.state.problem.id > 0
     const hasSubmission = this.state.submission && this.state.submission.id > 0
     if ((prevProps.examID !== this.props.examID && this.props.examID !== this.state.examID) ||
-      (prevProps.problemID !== this.props.problemID && (!hasProblem || this.props.problemID !== this.state.problem.id)) ||
-      (prevProps.submissionID !== this.props.submissionID && (!hasSubmission || this.props.submissionID !== this.state.submission.id))) {
+      (prevProps.problemID !== this.props.problemID &&
+        (!hasProblem || this.props.problemID !== this.state.problem.id)) ||
+      (prevProps.submissionID !== this.props.submissionID &&
+        (!hasSubmission || this.props.submissionID !== this.state.submission.id))) {
       // The URL has changed and at least one of exam metadata, problem or submission does not match the URL
       // or the URL has changed and submission or problem is not defined
       this.updateFromUrl()
@@ -233,7 +236,7 @@ class Grade extends React.Component {
         option => fb.includes(parseInt(option[0]))
       )
         .reduce(
-          (previous, current) => ({...previous, [parseInt(current[0])]: current[1]}), {})
+          (previous, current) => ({ ...previous, [parseInt(current[0])]: current[1] }), {})
     })
 
     const submission = await api.get(
@@ -251,18 +254,22 @@ class Grade extends React.Component {
       this.props.history.push(this.getURL(this.state.submission.id, this.state.problem.id))
     })
   }
+
   /**
    * Sugar methods for navigate.
    */
   prev = () => {
     this.navigate('prev')
   }
+
   next = () => {
     this.navigate('next')
   }
+
   first = () => {
     this.navigate('first')
   }
+
   last = () => {
     this.navigate('last')
   }
@@ -306,7 +313,8 @@ class Grade extends React.Component {
   }
 
   /**
-   * Updates the metadata for the current exam. It then calls syncSubmission to update the submission and problem in the state according to the URL.
+   * Updates the metadata for the current exam.
+   * It then calls syncSubmission to update the submission and problem in the state according to the URL.
    * In case of unwanted behaviour, sets the submission to null for displaying error component.
    */
   updateFromUrl = () => {
@@ -320,6 +328,7 @@ class Grade extends React.Component {
       }, this.syncSubmission)
       // eslint-disable-next-line handle-callback-err
     }).catch(err => {
+      console.log(err)
       this.setState({
         submission: null,
         problem: null
@@ -415,7 +424,10 @@ class Grade extends React.Component {
        graderID: graderid
      }).catch(resp => {
        resp.json().then(body => {
-         Notification.error('Could not ' + (graderid === null ? 'set aside' : 'approve') + ' feedback: ' + body.message)
+         toast({
+           message: 'Could not ' + (graderid === null ? 'set aside' : 'approve') + ' feedback: ' + body.message,
+           type: 'is-danger'
+         })
        })
      }).then(result => {
        this.updateSubmission()
@@ -461,7 +473,7 @@ class Grade extends React.Component {
   }
 
   applyGraderFilter = (graderId) => {
-    this.setState({gradedBy: graderId}, () => {
+    this.setState({ gradedBy: graderId }, () => {
       this.updateSubmission()
     })
   }
@@ -514,7 +526,8 @@ class Grade extends React.Component {
     if (this.state.submission === null) {
       // no stats, show the error message
       const message = ((this.state.submissions && this.state.submissions.length > 0)
-        ? 'Submission does not exist' : 'There are no submissions yet')
+        ? 'Submission does not exist'
+        : 'There are no submissions yet')
       return <Fail message={message} />
     }
 
@@ -546,7 +559,8 @@ class Grade extends React.Component {
                   problems={problems}
                   navigateProblem={this.navigateProblem}
                   current={problem}
-                  showTooltips={this.state.showTooltips} />
+                  showTooltips={this.state.showTooltips}
+                />
                 <nav className='panel'>
                   <FeedbackPanel
                     examID={examID} submissionID={submission.id} graderID={graderID}
@@ -614,16 +628,18 @@ class Grade extends React.Component {
                       </p>
                     </div>
                   </article>
-                  : null
-                }
+                  : null}
 
                 <div className='level'>
                   <div className='level-left'>
 
                     <div className='level-item'>
-                      {solution.graded_by ? <div>Graded by: {(solution.graded_by.name ? solution.graded_by.name + ' - ' : '') + solution.graded_by.oauth_id} <i>({gradedTime.toLocaleString()})</i></div>
-                        : <div>Ungraded</div>
-                      }
+                      {solution.graded_by
+                        ? <div>
+                          Graded by: {(solution.graded_by.name ? solution.graded_by.name + ' - ' : '') +
+                          solution.graded_by.oauth_id} <i>({gradedTime.toLocaleString()})</i>
+                        </div>
+                        : <div>Ungraded</div>}
                     </div>
 
                   </div>
@@ -631,22 +647,28 @@ class Grade extends React.Component {
                   <div className='level-right'>
                     <div className='level-item'>
                       {!this.state.isUnstructured &&
-                        <button className={'button is-info is-outlined' + (this.state.showTooltips ? ' tooltip is-tooltip-active' : '')}
-                          data-tooltip='f' onClick={this.toggleFullPage}>
+                        <button
+                          className={'button is-info is-outlined' +
+                            (this.state.showTooltips ? ' tooltip has-tooltip-active' : '')}
+                          data-tooltip='f' onClick={this.toggleFullPage}
+                        >
                           {this.state.fullPage ? 'Focus problem' : 'View full page'}
-                        </button>
-                      }
+                        </button>}
                     </div>
                   </div>
                 </div>
 
                 <p className={'box is-scrollable-desktop is-scrollable-tablet' +
-                  (solution.graded_at ? ' is-graded' : '')}>
+                  (solution.graded_at ? ' is-graded' : '')}
+                >
                   <img
-                    src={examID ? ('api/images/solutions/' + examID + '/' +
-                      problem.id + '/' + submission.id + '/' + (this.state.fullPage ? '1' : '0')) + '?' +
-                      Grade.getLocationHash(problem) : ''}
-                    alt='' />
+                    src={examID
+                      ? ('api/images/solutions/' + examID + '/' +
+                        problem.id + '/' + submission.id + '/' + (this.state.fullPage ? '1' : '0')) + '?' +
+                        Grade.getLocationHash(problem)
+                      : ''}
+                    alt=''
+                  />
                 </p>
               </div>
             </div>

@@ -7,7 +7,7 @@ function _typeof (a) {
 
 function _fetch (method) {
   return (endpoint, data) => {
-    var headers = new window.Headers()
+    const headers = new window.Headers()
     if (_typeof(data) === 'Object') {
       headers.append('Content-Type', 'application/json')
       data = JSON.stringify(data)

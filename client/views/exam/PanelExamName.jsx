@@ -1,5 +1,5 @@
 import React from 'react'
-import Notification from 'react-bulma-notification'
+import { toast } from 'bulma-toast'
 
 import Tooltip from '../../components/Tooltip.jsx'
 import * as api from '../../api.jsx'
@@ -36,7 +36,7 @@ class PanelExamName extends React.Component {
   }
 
   saveName = (name) => {
-    api.patch(`exams/${this.props.examID}`, {name: name})
+    api.patch(`exams/${this.props.examID}`, { name: name })
       .then(() => {
         this.setState({
           examName: name,
@@ -51,9 +51,7 @@ class PanelExamName extends React.Component {
           editing: false
         })
         console.log(err)
-        err.json().then(e => {
-          Notification.error('Could not save exam name: ' + e.message)
-        })
+        err.json().then(e => toast({ message: 'Could not save exam name: ' + e.message, type: 'is-danger' }))
       })
   }
 
@@ -69,10 +67,12 @@ class PanelExamName extends React.Component {
       <p className='panel-heading'>
         Exam details
       </p>
-      {this.state.editing ? (
-        <React.Fragment>
+      {this.state.editing
+        ? (
+        <>
           <div className='panel-block'>
-            <input className={'input ' + this.inputColor()}
+            <input
+              className={'input ' + this.inputColor()}
               type='text'
               placeholder='Exam name'
               value={this.state.examName}
@@ -80,12 +80,13 @@ class PanelExamName extends React.Component {
                 this.setState({
                   examName: e.target.value
                 })
-              }} />
+              }}
+            />
           </div>
           <div className='panel-block buttons is-right'>
             <button
               className='button is-danger'
-              style={{marginBottom: '0'}}
+              style={{ marginBottom: '0' }}
               onClick={() => {
                 this.setState({
                   examName: this.props.name,
@@ -97,27 +98,28 @@ class PanelExamName extends React.Component {
             </button>
             <button
               className='button is-link'
-              style={{marginBottom: '0'}}
+              style={{ marginBottom: '0' }}
               disabled={this.state.examName === this.props.name || this.state.examName === ''}
               onClick={() => { this.saveName(this.state.examName) }}
             >
               Save
             </button>
           </div>
-        </React.Fragment>
-      ) : (
+        </>
+          )
+        : (
         <div className='panel-block'>
           <p className='is-size-3'>
             {this.state.examName}
           </p>
           <Tooltip
-            icon='pencil'
+            icon='pen'
             location='top'
             text='Click to edit the exam name.'
-            clickAction={() => this.setState({editing: true})}
+            clickAction={() => this.setState({ editing: true })}
           />
         </div>
-      )}
+          )}
     </nav>
   )
 }

@@ -1,25 +1,26 @@
 {
     "presets":[
-        "react",
-        "flow"
+        "@babel/react",
+        "@babel/flow",
+        "@babel/preset-env"
     ],
     "plugins": [
-        "syntax-dynamic-import",
-        "transform-class-properties",
-        "transform-object-rest-spread",
-        "react-hot-loader/babel"
+        "@babel/syntax-dynamic-import",
+        "react-hot-loader/babel",
+        "@babel/plugin-proposal-class-properties",
+        "@babel/plugin-proposal-object-rest-spread"
     ],
     "env": {
         "test": {
             "presets":[
-                [   "env",
+                [   "@babel/preset-env",
                     {
                         "modules": "commonjs"
                     }
                 ]
             ],
             "plugins": [
-                "transform-class-properties"
+                "@babel/plugin-proposal-class-properties"
             ]
         }
     }

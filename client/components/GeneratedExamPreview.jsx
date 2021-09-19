@@ -1,7 +1,7 @@
 import React from 'react'
 import EmptyPDF from '../components/EmptyPDF.jsx'
 
-import { Document, Page } from 'react-pdf/dist/entry.webpack'
+import { Document, Page } from 'react-pdf'
 
 class GeneratedExamPreview extends React.Component {
   render = () => {
@@ -15,7 +15,8 @@ class GeneratedExamPreview extends React.Component {
         <Page
           renderAnnotations={false}
           renderTextLayer={false}
-          pageIndex={this.props.page} />
+          pageIndex={this.props.page}
+        />
       </Document>
     )
   }

@@ -1,6 +1,6 @@
 import React from 'react'
 
-import Notification from 'react-bulma-notification'
+import { toast } from 'bulma-toast'
 
 import Hero from '../components/Hero.jsx'
 
@@ -27,7 +27,7 @@ class Graders extends React.Component {
         this.setState({ graders: graders })
       })
       .catch(resp => {
-        Notification.error('Could not fetch graders (see Javascript console for details)')
+        toast({ message: 'Could not fetch graders (see Javascript console for details)', type: 'is-danger' })
         console.error('Error fetching graders:', resp)
       })
   }
@@ -45,9 +45,7 @@ class Graders extends React.Component {
         })
       })
       .catch(resp => {
-        resp.json().then(e => {
-          Notification.error(e.message)
-        })
+        resp.json().then(e => toast({ message: e.message, type: 'is-danger' }))
         console.error('Error saving grader:', resp)
       })
 
@@ -69,10 +67,12 @@ class Graders extends React.Component {
             <form onSubmit={this.submitName}>
               <div className='field has-addons'>
                 <div className='control'>
-                  <input className='input'
+                  <input
+                    className='input'
                     name='first_name' value={this.state.oauth_id}
                     onChange={this.changeIdField} type='text'
-                    maxLength={100} placeholder={provider + ' ' + idField} />
+                    maxLength={100} placeholder={provider + ' ' + idField}
+                  />
                 </div>
                 <div className='control'>
                   <button type='submit' className='button is-info'>
@@ -84,7 +84,8 @@ class Graders extends React.Component {
                 </div>
               </div>
               <p>This instance of Zesje is configured to use {idField} for authentication.
-                To allow a grader to log in using {provider}, please add their {idField}.</p>
+                To allow a grader to log in using {provider}, please add their {idField}.
+              </p>
             </form>
             <br />
 

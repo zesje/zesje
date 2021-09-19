@@ -8,7 +8,7 @@ import ExamUnstructured from './exam/ExamUnstructured.jsx'
 
 import * as api from '../api.jsx'
 
-class Exams extends React.Component {
+class Exam extends React.Component {
   state = {
     exam: null,
     deletingExam: false,
@@ -48,18 +48,24 @@ class Exams extends React.Component {
       examName: this.state.exam.name,
       updateExamList: this.props.updateExamList,
       updateExam: this.loadExam,
-      deleteExam: () => { this.setState({deletingExam: true}) }
+      deleteExam: () => { this.setState({ deletingExam: true }) }
     }
 
     if (layout === 'templated') {
       // templated exam
-      return <ExamTemplated
-        setHelpPage={this.props.setHelpPage}
-        {...commonProps} />
+      return (
+        <ExamTemplated
+          setHelpPage={this.props.setHelpPage}
+          {...commonProps}
+        />
+      )
     } else if (layout === 'unstructured') {
       // unstructured
-      return <ExamUnstructured
-        {...commonProps} />
+      return (
+        <ExamUnstructured
+          {...commonProps}
+        />
+      )
     }
   }
 
@@ -70,36 +76,38 @@ class Exams extends React.Component {
       return <Fail message={this.state.status} />
     }
 
-    return <div>
-      <Hero />
-      <section className='section'>
-        <div className='container'>
-          {
+    return (
+      <div>
+        <Hero />
+        <section className='section'>
+          <div className='container'>
+            {
             exam
               ? (
-                <React.Fragment>
+                <>
 
-                  { this.renderExamContent() }
-                </React.Fragment>
-              )
+                  {this.renderExamContent()}
+                </>
+                )
               : (
                 <p className='issize-5'>{this.state.status}</p>
-              )
+                )
           }
-        </div>
-      </section>
-      {exam && <ConfirmationModal
-        active={this.state.deletingExam}
-        color='is-danger'
-        headerText={`Are you sure you want to delete exam "${exam.name}"?`}
-        confirmText='Delete exam'
-        onCancel={() => this.setState({deletingExam: false})}
-        onConfirm={() => {
-          this.props.deleteExam(exam.id)
-        }}
-      />}
-    </div>
+          </div>
+        </section>
+        {exam && <ConfirmationModal
+          active={this.state.deletingExam}
+          color='is-danger'
+          headerText={`Are you sure you want to delete exam "${exam.name}"?`}
+          confirmText='Delete exam'
+          onCancel={() => this.setState({ deletingExam: false })}
+          onConfirm={() => {
+            this.props.deleteExam(exam.id)
+          }}
+                 />}
+      </div>
+    )
   }
 }
 
-export default Exams
+export default Exam

@@ -9,7 +9,8 @@ const Home = (props) => {
       <Hero
         title='Oops!'
         subtitle={props.message ? props.message : "Something went wrong :'("}
-        colour='is-danger' />
+        colour='is-danger'
+      />
 
       <section className='section'>
 

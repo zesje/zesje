@@ -1,11 +1,10 @@
 import React from 'react'
 import Dropzone from 'react-dropzone'
-import Notification from 'react-bulma-notification'
-import { Document, Page } from 'react-pdf/dist/entry.webpack'
+import { toast } from 'bulma-toast'
+import { Document, Page } from 'react-pdf/dist/esm/entry.webpack'
 
 import * as api from '../api.jsx'
 import Hero from '../components/Hero.jsx'
-import DropzoneContent from '../components/DropzoneContent.jsx'
 
 const LAYOUTS = [
   {
@@ -48,7 +47,7 @@ class Exams extends React.Component {
 
   onDropPDF = (accepted, rejected) => {
     if (rejected.length > 0) {
-      Notification.error('Please upload a PDF.')
+      toast({ message: 'Please upload a valid PDF.', type: 'is-danger' })
       return
     }
 
@@ -63,11 +62,11 @@ class Exams extends React.Component {
 
   addExam = (event) => {
     if (!this.state.examName) {
-      Notification.error('Please enter exam name.')
+      toast({ message: 'Please give a name to the exam.', type: 'is-danger' })
       return
     }
     if (this.state.selectedLayout.acceptsPDF && !this.state.pdf) {
-      Notification.error('Please upload a PDF.')
+      toast({ message: 'Please upload a PDF.', type: 'is-danger' })
       return
     }
 
@@ -83,20 +82,25 @@ class Exams extends React.Component {
         this.props.changeURL('/exams/' + exam.id)
       })
       .catch(resp => {
-        resp.json().then(body => Notification.error(body.message))
+        resp.json().then(body => toast({ message: body.message, type: 'is-danger' }))
       })
   }
 
   render () {
     const previewPages = Array.from({ length: this.state.previewPageCount }, (v, k) => k + 1).map(pageNum => {
-      return <div key={'preview_col_' + pageNum} className='column'>
-        <Page width={150} height={200}
-          renderAnnotations={false} renderTextLayer={false}
-          pageNumber={pageNum} />
-      </div>
+      return (
+        <div key={'preview_col_' + pageNum} className='column'>
+          <Page
+            width={150} height={200}
+            renderAnnotations={false} renderTextLayer={false}
+            pageNumber={pageNum}
+          />
+        </div>
+      )
     })
+
     return (
-      <React.Fragment>
+      <>
 
         <Hero title='Add exam' subtitle='first step' />
 
@@ -114,7 +118,8 @@ class Exams extends React.Component {
                       placeholder='Exam name'
                       value={this.state.examName}
                       required
-                      onChange={(e) => this.setState({examName: e.target.value})} />
+                      onChange={(e) => this.setState({ examName: e.target.value })}
+                    />
                   </div>
                 </div>
               </div>
@@ -150,8 +155,7 @@ class Exams extends React.Component {
                     </div>
                   </div>
                 </div>
-              </div>
-            }
+              </div>}
 
             {this.state.selectedLayout && this.state.selectedLayout.acceptsPDF &&
               <div className='field is-horizontal'>
@@ -160,18 +164,24 @@ class Exams extends React.Component {
                 </div>
                 <div className='field-body'>
                   <div className='field'>
-                    <Dropzone accept='.pdf, application/pdf'
-                      activeStyle={{ borderStyle: 'dashed' }}
+                    <Dropzone
+                      accept='.pdf, application/pdf'
                       onDrop={this.onDropPDF}
-                      disablePreview
-                      multiple={false}>
-                      <DropzoneContent />
+                      multiple={false}
+                    >
+                      {({ getRootProps, getInputProps }) => (
+                        <section className='container'>
+                          <div {...getRootProps({ className: 'dropzone' })}>
+                            <input {...getInputProps()} />
+                            <p>Drag &apos;n&apos; drop or click to select the exam file...</p>
+                          </div>
+                        </section>
+                      )}
                     </Dropzone>
                     <p className='help'>{this.state.pdf !== null ? this.state.pdf.name : ''}</p>
                   </div>
                 </div>
-              </div>
-            }
+              </div>}
 
             {this.state.pdf != null &&
               <div className='field is-horizontal'>
@@ -190,8 +200,7 @@ class Exams extends React.Component {
                     </Document>
                   </div>
                 </div>
-              </div>
-            }
+              </div>}
 
             <div className='field is-horizontal'>
               <div className='field-label' />
@@ -202,8 +211,11 @@ class Exams extends React.Component {
                     <button
                       className='button is-info'
                       onClick={this.addExam}
-                      disabled={!this.state.examName ||
-                        (this.state.selectedLayout !== null && this.state.selectedLayout.acceptsPDF && this.state.pdf === null)}
+                      disabled={!this.state.examName || (
+                        this.state.selectedLayout !== null &&
+                        this.state.selectedLayout.acceptsPDF &&
+                        this.state.pdf === null
+                      )}
                     >
                       Create Exam
                     </button>
@@ -216,7 +228,7 @@ class Exams extends React.Component {
 
         </section>
 
-      </React.Fragment>
+      </>
     )
   }
 }

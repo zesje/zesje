@@ -1,6 +1,6 @@
 import React from 'react'
 
-import Notification from 'react-bulma-notification'
+import { toast } from 'bulma-toast'
 import Dropzone from 'react-dropzone'
 
 import * as api from '../../api.jsx'
@@ -19,24 +19,35 @@ const BackButton = (props) => (
 const SaveButton = (props) => (
   <button className='button is-primary is-fullwidth' disabled={props.disabled} onClick={props.onClick}>
     <span className='icon is-small'>
-      <i className='fa fa-floppy-o' />
+      <i className='fa fa-save' />
     </span>
     <span>save</span>
   </button>
 )
 
 // Windows uses vnd.ms-excel mimetype for CSV files
-const UploadButton = (props) => (
-  <Dropzone
-    className='button is-link is-fullwidth'
-    accept='text/csv,application/vnd.ms-excel'
-    onDrop={props.onDrop}
-    disablePreview>
-    <span className='icon is-small'>
-      <i className='fa fa-upload' />
-    </span>
-    <span>upload</span>
-  </Dropzone>
+const UploadBlock = (props) => (
+  <div className='panel-block'>
+    <div className='field' style={{ width: '100%' }}>
+      <Dropzone
+        accept='text/csv,application/vnd.ms-excel'
+        onDrop={props.onDrop}
+        multiple={false}
+      >
+        {({ getRootProps, getInputProps }) => (
+          <section className='container'>
+            <div {...getRootProps({ className: 'dropzone' })}>
+              <input {...getInputProps()} />
+              <span className='icon is-small'>
+                <i className='fa fa-upload' />
+              </span>
+              <span>upload CSV</span>
+            </div>
+          </section>
+        )}
+      </Dropzone>
+    </div>
+  </div>
 )
 
 class EditPanel extends React.Component {
@@ -47,7 +58,7 @@ class EditPanel extends React.Component {
     email: ''
   }
 
-  componentWillMount = () => {
+  componentDidMount = () => {
     if (this.props.editStud) {
       const stud = this.props.editStud
       this.setState({
@@ -64,11 +75,13 @@ class EditPanel extends React.Component {
       firstName: event.target.value
     })
   }
+
   changeLastName = (event) => {
     this.setState({
       lastName: event.target.value
     })
   }
+
   changeMail = (event) => {
     this.setState({
       email: event.target.value
@@ -109,58 +122,63 @@ class EditPanel extends React.Component {
           this.idblock.clear()
         }
       }).catch(resp => {
-        resp.json().then(r => Notification.error(r.message, {
-          duration: 0,
-          closable: true
+        resp.json().then(r => toast({
+          message: r.message,
+          duration: 60000,
+          type: 'is-danger'
         }))
       })
   }
 
   uploadStudent = (accepted, rejected) => {
     if (rejected.length > 0) {
-      Notification.error('Please upload a CSV file')
+      toast({ message: 'Please upload a CSV file', type: 'is-danger' })
       return
     }
-    accepted.map(file => {
+    accepted.forEach(file => {
       const data = new window.FormData()
       data.append('csv', file)
       api.post('students', data)
         .then(resp => {
-          let totalSuccess = resp.added + resp.updated + resp.identical
-          let total = totalSuccess + resp.failed
-          let sentences = []
-          if (resp.added) sentences.push(<React.Fragment><b>{resp.added}</b> new students were added </React.Fragment>)
-          if (resp.updated) sentences.push(<React.Fragment><b>{resp.updated}</b> students were updated</React.Fragment>)
-          if (resp.identical) sentences.push(<React.Fragment><b>{resp.identical}</b> were already up to date</React.Fragment>)
+          const totalSuccess = resp.added + resp.updated + resp.identical
+          const total = totalSuccess + resp.failed
+          const sentences = []
+          if (resp.added) sentences.push(<><b>{resp.added}</b> new students were added </>)
+          if (resp.updated) sentences.push(<><b>{resp.updated}</b> students were updated</>)
+          if (resp.identical) sentences.push(<><b>{resp.identical}</b> were already up to date</>)
 
-          let sentence = sentences.map((sent, index) => (
-            <React.Fragment>
+          const sentence = sentences.map((sent, index) => (
+            <>
               {sent}{index <= sentences.length - 3 ? ', ' : ''}{index === sentences.length - 2 ? ' and ' : ''}
-            </React.Fragment>
+            </>
           ))
-          let message = <p>
-            Succesfully processed <b>{totalSuccess} / {total}</b> students. A total of {sentence}.
-          </p>
+          let message = (
+            <p>
+              Succesfully processed <b>{totalSuccess} / {total}</b> students. A total of {sentence}.
+            </p>
+          )
           if (resp.failed === 0) {
-            Notification.success(message, { 'duration': 10, 'closeable': true })
+            toast({ message: message, duration: 10000, type: 'is-success' })
           } else {
-            message = <div className='content'>
-              {message}
-              <p>However, we were not able to process <b>{resp.failed}</b> students:</p>
-              <ul>
-                {
+            message = (
+              <div className='content'>
+                {message}
+                <p>However, we were not able to process <b>{resp.failed}</b> students:</p>
+                <ul>
+                  {
                   resp.errors.map((error, index) => (
                     <li key={index}>{error}</li>
                   ))
                 }
-              </ul>
-            </div>
-            Notification.warn(message, { 'duration': 0, 'closeable': true })
+                </ul>
+              </div>
+            )
+            toast({ message: message, duration: 60000, type: 'is-warning' })
           }
         })
         .catch(resp => {
           console.error('failed to upload student CSV file')
-          resp.json().then(r => Notification.error(r.message), { 'duration': 0, 'closeable': true })
+          resp.json().then(r => toast({ message: r.message, duration: 60000, type: 'is-danger' }))
         })
     })
   }
@@ -174,22 +192,28 @@ class EditPanel extends React.Component {
         <p className='panel-heading'>
           Manage students
         </p>
+        {empty && <UploadBlock onDrop={this.uploadStudent} />}
+
         <IDBlock setID={this.setID} editStud={this.state.id} ref={(id) => { this.idblock = id }} />
 
         <div className='panel-block'>
           <div className='field'>
             <label className='label'>Name</label>
             <div className='control has-icons-left'>
-              <input className='input' placeholder='First name'
-                value={this.state.firstName} onChange={this.changeFirstName} />
+              <input
+                className='input' placeholder='First name'
+                value={this.state.firstName} onChange={this.changeFirstName}
+              />
               <span className='icon is-small is-left'>
                 <i className='fa fa-quote-left' />
               </span>
             </div>
 
             <div className='control has-icons-left'>
-              <input className='input' placeholder='Second name'
-                value={this.state.lastName} onChange={this.changeLastName} />
+              <input
+                className='input' placeholder='Second name'
+                value={this.state.lastName} onChange={this.changeLastName}
+              />
               <span className='icon is-small is-left'>
                 <i className='fa fa-quote-right' />
               </span>
@@ -202,8 +226,10 @@ class EditPanel extends React.Component {
           <div className='field'>
             <label className='label'>Email</label>
             <div className='control has-icons-left has-icons-right'>
-              <input className='input' placeholder='Email input'
-                value={this.state.email} onChange={this.changeMail} />
+              <input
+                className='input' placeholder='Email input'
+                value={this.state.email} onChange={this.changeMail}
+              />
               <span className='icon is-small is-left'>
                 <i className='fa fa-envelope' />
               </span>
@@ -213,10 +239,7 @@ class EditPanel extends React.Component {
 
         <div className='panel-block'>
           <BackButton onClick={this.props.toggleEdit} />
-          {empty
-            ? <UploadButton onDrop={this.uploadStudent} />
-            : <SaveButton disabled={!full} onClick={this.saveStudent} />
-          }
+          {!empty && <SaveButton disabled={!full} onClick={this.saveStudent} />}
         </div>
       </nav>
     )

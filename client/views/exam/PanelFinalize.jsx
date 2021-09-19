@@ -30,39 +30,14 @@ class PanelFinalize extends React.Component {
       })
   }
 
-  Finalize = (props) => {
-    return (
-      <button
-        className='button is-link is-fullwidth'
-        onClick={() => {
-          this.setState({
-            previewing: true
-          })
-        }}
-      >
-        Finalize
-      </button>
-    )
-  }
-
-  Delete = (props) => {
-    return (
-      <button
-        className='button is-danger is-fullwidth'
-        onClick={this.props.deleteExam}
-      >
-        Delete exam
-      </button>
-    )
-  }
-
   render = () => {
     return (
       <nav className='panel'>
         <p className='panel-heading'>
           Actions
         </p>
-        {this.state.previewing ? (
+        {this.state.previewing
+          ? (
           <div>
             <div className='panel-block'>
               <label className='label'>Finalize exam?</label>
@@ -85,12 +60,27 @@ class PanelFinalize extends React.Component {
               </button>
             </div>
           </div>
-        ) : (
+            )
+          : (
           <div className='panel-block field is-grouped'>
-            <this.Finalize />
-            <this.Delete />
+            <button
+              className='button is-link is-fullwidth'
+              onClick={() => {
+                this.setState({
+                  previewing: true
+                })
+              }}
+            >
+              Finalize
+            </button>
+            <button
+              className='button is-danger is-fullwidth'
+              onClick={this.props.deleteExam}
+            >
+              Delete exam
+            </button>
           </div>
-        )}
+            )}
       </nav>
     )
   }

@@ -1,19 +1,17 @@
 import React from 'react'
 
-import 'bulma-tooltip/dist/css/bulma-tooltip.min.css'
-
 const Tooltip = (props) => {
   if (!props.text) {
     return null
   }
 
-  let tooltipIcon = props.icon || 'comment'
+  const tooltipIcon = props.icon || 'comment'
 
-  let tooltipLocation = props.location || 'right'
+  const tooltipLocation = props.location || 'right'
 
-  let tooltipClass = 'icon tooltip is-tooltip-' + tooltipLocation
+  let tooltipClass = 'icon tooltip has-tooltip-' + tooltipLocation
   if (props.text.length > 60) {
-    tooltipClass += ' is-tooltip-multiline'
+    tooltipClass += ' has-tooltip-multiline'
   }
 
   return (

@@ -1,6 +1,6 @@
 import React from 'react'
 
-import Notification from 'react-bulma-notification'
+import { toast } from 'bulma-toast'
 
 import * as api from '../../api.jsx'
 
@@ -34,7 +34,7 @@ const ToField = (props) => (
         type='email'
         value={props.email}
         readOnly
-        style={{paddingLeft: 'calc(0.625em - 1px)'}}
+        style={{ paddingLeft: 'calc(0.625em - 1px)' }}
       />
     </div>
   </div>
@@ -77,8 +77,8 @@ const SendWithConfirmationButton = (props) => (
       'button is-primary is-fullwidth ' +
       (props.sending ? 'is-loading' : null)
     }
-    confirmationText={'Email all students who took this exam?'}
-    contentText={'This may take some time.'}
+    confirmationText='Email all students who took this exam?'
+    contentText='This may take some time.'
     onConfirm={props.onSend}
     disabled={props.disabled}
   >
@@ -104,17 +104,15 @@ class EmailIndividualControls extends React.Component {
           copy_to: this.state.copyTo
         }
       )
-      Notification.success(`Sent email to ${this.props.student.email}`)
+      toast({ message: `Sent email to ${this.props.student.email}`, type: 'is-success' })
       return
     } catch (error) {
       try {
         const resp = await error.json()
-        Notification.error(resp.message, { duration: 3 })
+        toast({ message: resp.message, duration: 3000, type: 'is-danger' })
       } catch (error) {
         // If we get here there is a bug in the backend
-        Notification.error(
-          `Failed to send email to ${this.props.student.email}`
-        )
+        toast({ message: `Failed to send email to ${this.props.student.email}`, type: 'is-danger' })
       }
     } finally {
       this.setState({ sending: false })
@@ -122,7 +120,7 @@ class EmailIndividualControls extends React.Component {
   }
 
   render () {
-    let p = this.props
+    const p = this.props
     let email = ''
     let disabled = true
     if (p.student !== null) {
@@ -131,7 +129,7 @@ class EmailIndividualControls extends React.Component {
     }
     return (
       <div
-        style={{width: '100%'}}
+        style={{ width: '100%' }}
       >
         <ToField email={email} />
         <CCField
@@ -161,18 +159,20 @@ class EmailEveryoneControls extends React.Component {
   }
 
   disableAnonymousMode = () => {
-    api.put(`exams/${this.props.examID}`, {grade_anonymous: false}).then(resp => {
+    api.put(`exams/${this.props.examID}`, { grade_anonymous: false }).then(resp => {
       if (resp.changed) {
-        Notification.info(
+        const msg = (
           <div>
-            <p>
-              'Turned off anonymous grading for this exam'
-            </p>
-            <a onClick={() => api.put(`exams/${this.props.examID}`, {grade_anonymous: true})}>
+            <p>Turned off anonymous grading for this exam</p>
+            <a onClick={() => api.put(`exams/${this.props.examID}`, { grade_anonymous: true })}>
               (undo)
             </a>
           </div>
         )
+        toast({
+          message: msg,
+          type: 'is-info'
+        })
       }
     })
   }
@@ -188,44 +188,40 @@ class EmailEveryoneControls extends React.Component {
         }
       )
       if (response.status === 200) {
-        Notification.success(
-          'Sent emails to all students',
-          { duration: 0 }
-        )
+        toast({
+          message: 'Sent emails to all students',
+          duration: 60000,
+          type: 'is-success'
+        })
       } else if (response.status === 206) {
-        Notification.success(
-          `Sent emails to ${response.sent.length} students`)
+        toast({ message: `Sent emails to ${response.sent.length} students`, type: 'is-success' })
         if (response.failed_to_send.length > 0) {
-          Notification.error(
-            'Failed to send to the following students: ' +
-            response.failed_to_send.join(', '),
-            { duration: 0 }
-          )
+          toast({
+            message: 'Failed to send to the following students: ' + response.failed_to_send.join(', '),
+            duration: 60000,
+            type: 'is-danger'
+          })
         }
         if (response.failed_to_build.length > 0) {
-          Notification.error(
-            'The following students have no email address specified: ' +
-            response.failed_to_build.join(', '),
-            { duration: 0 }
-          )
+          toast({
+            message: 'The following students have no email address specified: ' + response.failed_to_build.join(', '),
+            duration: 60000,
+            type: 'is-danger'
+          })
         }
       }
     } catch (error) {
       try {
-        let response = await error.json()
+        const response = await error.json()
         if (response.status === 400 ||
             response.status === 409) {
-          Notification.error(
-            'No emails sent: ' + response.message,
-            { duration: 0 })
+          toast({ message: 'No emails sent: ' + response.message, duration: 60000, type: 'is-danger' })
         } else if (response.status === 500) {
-          Notification.error(response.message, { duration: 0 })
+          toast({ message: `Sent email to ${this.props.student.email}`, type: 'is-success' })
         }
       } catch (error) {
         // If we get here there is a bug in the backend
-        Notification.error(
-          'Failed to send emails',
-          { duration: 0 })
+        toast({ message: 'Failed to send emails', duration: 60000, type: 'is-danger' })
       }
     } finally {
       this.setState({ sending: false })
@@ -234,9 +230,9 @@ class EmailEveryoneControls extends React.Component {
   }
 
   render () {
-    let disabled = this.props.template === null
+    const disabled = this.props.template === null
     return (
-      <div style={{width: '100%'}}>
+      <div style={{ width: '100%' }}>
         <AttachPDF
           attachPDF={this.state.attachPDF}
           onChecked={attachPDF => this.setState({ attachPDF })}

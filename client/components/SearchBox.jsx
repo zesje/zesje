@@ -58,14 +58,17 @@ class SearchBox extends React.Component {
       value: newValue
     })
   }
+
   onBlur = () => {
     this.setState({
       value: this.props.renderSelected(this.props.selected)
     })
   }
+
   onFocus = (event) => {
     event.target.select()
   }
+
   onSuggestionSelected = (event, { suggestion }) => {
     this.props.setSelected(suggestion)
   }
@@ -83,7 +86,7 @@ class SearchBox extends React.Component {
       keys: this.props.suggestionKeys
     }
     const fuse = new Fuse(this.props.options, options)
-    const result = fuse.search(value)
+    const result = fuse.search(value).map(({ item }) => item)
 
     this.setState({
       suggestions: result

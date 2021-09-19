@@ -1,5 +1,7 @@
 import React from 'react'
 
+const RE_PAGE_NUMBER = /^([1-9]+\d*)?$/
+
 class PanelGenerate extends React.Component {
   types = [
     'ZIP',
@@ -13,8 +15,6 @@ class PanelGenerate extends React.Component {
     valid: false,
     editing: true
   }
-
-  pageNumberOrEmpty = new RegExp(/^([1-9]+\d*)?$/)
 
   validate = () => {
     if (parseInt(this.state.copyRangeStart) <= parseInt(this.state.copyRangeEnd)) {
@@ -42,26 +42,28 @@ class PanelGenerate extends React.Component {
 
   renderInput = (props) => {
     // Hardcode the width since Bulma does not support the size attribute
-    props.style['minWidth'] = '3.5em'
-    return <input
-      className={'input ' + this.inputColor()}
-      type='text'
-      placeholder={props.placeholder}
-      maxLength={4}
-      style={props.style}
-      value={props.value}
-      onFocus={() => this.setState({ editing: true })}
-      onBlur={() => this.validate()}
-      onChange={(e) => {
-        if (this.pageNumberOrEmpty.test(e.target.value)) {
-          this.setState({
-            [props.valueKey]: e.target.value
-          }, () => {
-            this.validate()
-          })
-        }
-      }}
-    />
+    props.style.minWidth = '3.5em'
+    return (
+      <input
+        className={'input ' + this.inputColor()}
+        type='text'
+        placeholder={props.placeholder}
+        maxLength={4}
+        style={props.style}
+        value={props.value}
+        onFocus={() => this.setState({ editing: true })}
+        onBlur={() => this.validate()}
+        onChange={(e) => {
+          if (RE_PAGE_NUMBER.test(e.target.value)) {
+            this.setState({
+              [props.valueKey]: e.target.value
+            }, () => {
+              this.validate()
+            })
+          }
+        }}
+      />
+    )
   }
 
   render = () => {
@@ -117,7 +119,7 @@ class PanelGenerate extends React.Component {
                 </p>
                 <p className='control'>
                   <a
-                    className={'button is-expanded is-link'}
+                    className='button is-expanded is-link'
                     disabled={!this.state.valid}
                     href={'/api/exams/' + this.props.examID +
                       '/generated_pdfs' +

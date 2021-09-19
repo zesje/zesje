@@ -20,10 +20,12 @@ class ColorInput extends React.Component {
 
   render () {
     return (
-      <input className={'input ' + this.inputColor(this.props.value)}
+      <input
+        className={'input ' + this.inputColor(this.props.value)}
         onFocus={this.onStartEditing}
         onBlur={this.onFinishEditing}
-        {...this.props} />
+        {...this.props}
+      />
     )
   }
 }

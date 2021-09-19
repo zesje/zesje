@@ -1,3 +1,6 @@
+@import "~bulma/sass/utilities/_all";
+@import "~bulma/sass/components/panel";
+
 div.mcq-widget {
     display:inline-flex;
     box-sizing: content-box;
@@ -24,9 +27,9 @@ div.mcq-option img.mcq-box {
 
 
 .editor-content {
-  background-color: #ddd;
-  border-radius: 4px;
-  padding: .75rem;
+  background-color: $panel-heading-background-color;
+  border-radius: $panel-heading-radius;
+  padding: 0.75rem;
 }
 
 .selection-area {
@@ -35,9 +38,9 @@ div.mcq-option img.mcq-box {
 
 .widget {
   border: 1px solid;
-  border-color: hsl(217, 71%, 53%);
+  border-color: $link;
   border-radius: 3px;
-  background-color: hsla(217, 71%, 53%, 0.2);
+  background-color: rgba(darken($link, 10%), 0.2);
   margin: 0px;
   padding: 0px;
   top: 0px;
@@ -48,19 +51,20 @@ div.mcq-option img.mcq-box {
 }
 
 .widget.selected {
-  border-color: hsl(171, 100%, 41%);
-  background-color: hsla(171, 100%, 41%, 0.2)
+  border-color: $primary;
+  background-color: rgba(darken($primary, 10%), 0.2);
 }
 
 .widget.selected .mcq-option:hover {
-    background-color: rgb(25, 149, 216);
+    background-color: $info;
 }
 
 .field-text {
-  padding: calc(0.375em - 1px) 1em;
-  border-top: 1px solid hsl(217, 71%, 53%);
-  border-bottom: 1px solid hsl(217, 71%, 53%);
+  padding: calc(0.5em - 1px) 1em;
+  border-top: 1px solid $link;
+  border-bottom: 1px solid $link;
 }
+
 .field.flex-input {
   display: flex;
   width: 100%;

@@ -10,7 +10,7 @@ class TabbedPanel extends React.Component {
 
   render () {
     return (
-      <React.Fragment>
+      <>
         <div className='panel-tabs'>
           {
             this.props.panels.map((panel, i) => (
@@ -39,7 +39,7 @@ class TabbedPanel extends React.Component {
             </div>
           ))
         }
-      </React.Fragment>
+      </>
     )
   }
 }

@@ -8,15 +8,14 @@ class GradeNavigation extends React.Component {
 
   createNavButton = (style, faIcon, onClick, tooltip) => {
     return (
-      <button type='submit'
-        className={`button ${style} fa ${faIcon}`}
-        style={{width: '4em'}}
-        onClick={onClick}>
-        <div
-          className={this.props.showTooltips ? ' tooltip is-tooltip-active' : ''}
-          data-tooltip={tooltip}
-        />
-      </button>
+      <div className={'control' + (this.props.showTooltips ? ' tooltip has-tooltip-active has-tooltip-arrow' : '')}
+        data-tooltip={tooltip}>
+        <button
+          type='submit'
+          className={`button ${style} fa ${faIcon}`}
+          style={{ width: '4em' }}
+          onClick={onClick} />
+      </div>
     )
   }
 
@@ -28,43 +27,46 @@ class GradeNavigation extends React.Component {
       <div className='column is-half-desktop is-full-mobile level'>
         <div className='level-item make-wider'>
           <div className='field has-addons is-mobile'>
-            <div className='control'>
-              {this.createNavButton(
-                'is-info is-rounded',
-                'fa-angle-double-left',
-                this.props.first,
-                'shift + ←'
-              )}
-            </div>
-            <div className='control'>
-              {this.createNavButton(
-                'is-link',
-                'fa-angle-left',
-                this.props.prev,
-                '←'
-              )}
-            </div>
-            <div id='search' className={'control is-wider ' + (this.props.showTooltips ? 'tooltip is-tooltip-active tooltip-no-arrow' : '')}
-              data-tooltip='Press ctrl to hide shortcuts'>
+            {this.createNavButton(
+              'is-info is-rounded',
+              'fa-angle-double-left',
+              this.props.first,
+              'shift + ←'
+            )}
+            {this.createNavButton(
+              'is-link',
+              'fa-angle-left',
+              this.props.prev,
+              '←'
+            )}
+            <div
+              id='search'
+              className={
+                'control is-wider ' + (this.props.showTooltips ? 'tooltip has-tooltip-active has-tooltip-arrow' : '')
+              }
+              data-tooltip='Press ctrl to hide shortcuts'
+            >
               <SearchBox
                 placeholder='Search for a submission'
                 setSelected={this.setSubmission}
                 selected={submission}
                 options={submissions}
-                suggestionKeys={(this.props.anonymous ? ['id'] : [
-                  'student.id',
-                  'student.firstName',
-                  'student.lastName',
-                  'id'
-                ])}
-                renderSelected={({id, student}) => {
+                suggestionKeys={(this.props.anonymous
+                  ? ['id']
+                  : [
+                      'student.id',
+                      'student.firstName',
+                      'student.lastName',
+                      'id'
+                    ])}
+                renderSelected={({ id, student }) => {
                   if (student && !this.props.anonymous) {
                     return `${student.firstName} ${student.lastName} (${student.id})`
                   } else {
                     return `#${id}`
                   }
                 }}
-                renderSuggestion={({id, student}) => {
+                renderSuggestion={({ id, student }) => {
                   if (student && !this.props.anonymous) {
                     return (
                       <div className='flex-parent'>
@@ -72,7 +74,7 @@ class GradeNavigation extends React.Component {
                           {`${student.firstName} ${student.lastName}`}
                         </b>
                         <i className='flex-child fixed'>
-                        ({student.id}, #{id})
+                          ({student.id}, #{id})
                         </i>
                       </div>
                     )
@@ -80,7 +82,7 @@ class GradeNavigation extends React.Component {
                     return (
                       <div className='flex-parent'>
                         <b className='flex-child fixed'>
-                        #{id}
+                          #{id}
                         </b>
                       </div>
                     )
@@ -88,22 +90,18 @@ class GradeNavigation extends React.Component {
                 }}
               />
             </div>
-            <div className='control'>
-              {this.createNavButton(
-                'is-link',
-                'fa-angle-right',
-                this.props.next,
-                '→'
-              )}
-            </div>
-            <div className='control'>
-              {this.createNavButton(
-                'is-info is-rounded',
-                'fa-angle-double-right',
-                this.props.last,
-                'shift + →'
-              )}
-            </div>
+            {this.createNavButton(
+              'is-link',
+              'fa-angle-right',
+              this.props.next,
+              '→'
+            )}
+            {this.createNavButton(
+              'is-info is-rounded',
+              'fa-angle-double-right',
+              this.props.last,
+              'shift + →'
+            )}
           </div>
         </div>
       </div>

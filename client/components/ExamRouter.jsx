@@ -62,40 +62,54 @@ class ExamRouter extends React.PureComponent {
     const parentURL = this.props.parentMatch.url
 
     if (!examID || isNaN(examID)) {
-      return <Fail message={'Invalid exam'} />
+      return <Fail message='Invalid exam' />
     }
 
     return (
       <Switch>
-        <Route path={`${parentURL}/scans`} render={({ match }) =>
-          <Scans examID={examID} />}
+        <Route
+          path={`${parentURL}/scans`} render={({ match }) =>
+            <Scans examID={examID} />}
         />
-        <Route path={`${parentURL}/students`} render={({ match }) =>
-          <Students examID={examID} />}
+        <Route
+          path={`${parentURL}/students`} render={({ match }) =>
+            <Students examID={examID} />}
         />
-        <Route path={`${parentURL}/grade/:submissionID?/:problemID?`} render={({ match, history }) => (
-          this.props.graderID ? (
-            <Grade
-              examID={parseInt(examID)}
-              graderID={this.props.graderID}
-              history={history}
-              parentURL={parentURL}
-              submissionID={match.params.submissionID ? parseInt(match.params.submissionID) : undefined}
-              problemID={match.params.problemID ? parseInt(match.params.problemID) : undefined} />
-          ) : <Fail message='No grader selected. Please do not bookmark URLs' />
-        )} />
-        <Route path={`${parentURL}/overview`} render={({ match }) => (
-          <Overview examID={examID} />
-        )} />
-        <Route path={`${parentURL}/email`} render={({ match }) => (
-          <Email examID={examID} />
-        )} />
-        <Route path={`${parentURL}`} render={({ match, history }) =>
-          <Exam
-            examID={examID}
-            updateExamList={this.props.updateExamList}
-            deleteExam={(id) => this.deleteExam(history, id)}
-            setHelpPage={this.props.setHelpPage} />} />
+        <Route
+          path={`${parentURL}/grade/:submissionID?/:problemID?`} render={({ match, history }) => (
+            this.props.graderID
+              ? (
+              <Grade
+                examID={parseInt(examID)}
+                graderID={this.props.graderID}
+                history={history}
+                parentURL={parentURL}
+                submissionID={match.params.submissionID ? parseInt(match.params.submissionID) : undefined}
+                problemID={match.params.problemID ? parseInt(match.params.problemID) : undefined}
+              />
+                )
+              : <Fail message='No grader selected. Please do not bookmark URLs' />
+          )}
+        />
+        <Route
+          path={`${parentURL}/overview`} render={({ match }) => (
+            <Overview examID={examID} />
+          )}
+        />
+        <Route
+          path={`${parentURL}/email`} render={({ match }) => (
+            <Email examID={examID} />
+          )}
+        />
+        <Route
+          path={`${parentURL}`} render={({ match, history }) =>
+            <Exam
+              examID={examID}
+              updateExamList={this.props.updateExamList}
+              deleteExam={(id) => this.deleteExam(history, id)}
+              setHelpPage={this.props.setHelpPage}
+            />}
+        />
       </Switch>
     )
   }

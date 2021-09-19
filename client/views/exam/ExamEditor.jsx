@@ -1,21 +1,16 @@
 import React from 'react'
-import Notification from 'react-bulma-notification'
+import { toast } from 'bulma-toast'
 
 import barcodeExampleImage from '../../components/barcode_example.png'
-// FIXME!
-// eslint-disable-next-line import/no-webpack-loader-syntax
-import barcodeExampleImageSize from '!image-dimensions-loader!../../components/barcode_example.png'
 import studentIdExampleImage from '../../components/student_id_example.png'
-// FIXME!
-// eslint-disable-next-line import/no-webpack-loader-syntax
-import studentIdExampleImageSize from '!image-dimensions-loader!../../components/student_id_example.png'
 import answerBoxImage from '../../components/answer_box.png'
+
 import EmptyPDF from '../../components/EmptyPDF.jsx'
 import PDFOverlay from '../../components/PDFOverlay.jsx'
 
-import ResizeAndDrag from 'react-rnd'
+import { Rnd } from 'react-rnd'
 
-import { Document, Page } from 'react-pdf/dist/entry.webpack'
+import { Document, Page } from 'react-pdf/dist/esm/entry.webpack'
 
 import * as api from '../../api.jsx'
 
@@ -29,7 +24,7 @@ class ExamEditor extends React.Component {
   }
 
   getPDFUrl = () => {
-    let whichPDF = this.props.finalized ? 'preview' : 'source_pdf'
+    const whichPDF = this.props.finalized ? 'preview' : 'source_pdf'
     return this.props.examID >= 0 ? `/api/exams/${this.props.examID}/${whichPDF}` : null
   }
 
@@ -123,7 +118,7 @@ class ExamEditor extends React.Component {
           this.props.createNewWidget(widgetData)
         }).catch(err => {
           console.log(err)
-          err.json().then(e => Notification.error(e.message))
+          err.json().then(e => toast({ message: e.message, type: 'is-danger' }))
         })
       }
     }
@@ -198,7 +193,7 @@ class ExamEditor extends React.Component {
       err.json().then(res => {
         if (res.status === 409) {
           // exam widget position is not valid, notify and update it
-          Notification.warn(res.message)
+          toast({ message: res.message, type: 'is-warning' })
           this.props.updateWidget(res.data.id, {
             x: { $set: res.data.x },
             y: { $set: res.data.y }
@@ -227,7 +222,7 @@ class ExamEditor extends React.Component {
     // update DB
     widget.problem.mc_options.forEach(
       (option, i) => {
-        let newData = {
+        const newData = {
           x: Math.round(data.x) + i * widget.problem.widthMCO + option.cbOffsetX,
           y: Math.round(data.y) + option.cbOffsetY
         }
@@ -244,14 +239,14 @@ class ExamEditor extends React.Component {
    */
   repositionMCO = (widget, data) => {
     if (widget.problem.mc_options.length > 0) {
-      let oldX = widget.problem.mc_options[0].widget.x
-      let oldY = widget.problem.mc_options[0].widget.y
+      const oldX = widget.problem.mc_options[0].widget.x
+      const oldY = widget.problem.mc_options[0].widget.y
       let newX = oldX
       let newY = oldY
-      let widthOption = widget.problem.widthMCO * widget.problem.mc_options.length
-      let heightOption = widget.problem.heightMCO
-      let widthProblem = data.width ? data.width : widget.width
-      let heightProblem = data.height ? data.height : widget.height
+      const widthOption = widget.problem.widthMCO * widget.problem.mc_options.length
+      const heightOption = widget.problem.heightMCO
+      const widthProblem = data.width ? data.width : widget.width
+      const heightProblem = data.height ? data.height : widget.height
 
       if (newX < data.x || widthOption >= widthProblem) {
         newX = data.x
@@ -265,7 +260,7 @@ class ExamEditor extends React.Component {
         newY = data.y + widget.height - heightOption
       }
 
-      let changed = (oldX !== newX) || (oldY !== newY) // update the state only if the mc options were moved
+      const changed = (oldX !== newX) || (oldY !== newY) // update the state only if the mc options were moved
       if (changed) {
         this.props.updateMCOsInState(widget, {
           x: Math.round(newX),
@@ -281,15 +276,15 @@ class ExamEditor extends React.Component {
    * @return a react component representing the multiple choice widget
    */
   renderMCWidget = (widget) => {
-    let width = widget.problem.widthMCO * widget.problem.mc_options.length
-    let height = widget.problem.heightMCO
-    let enableResizing = false
+    const width = widget.problem.widthMCO * widget.problem.mc_options.length
+    const height = widget.problem.heightMCO
+    const enableResizing = false
     const isSelected = widget.id === this.props.selectedWidgetId
-    let xPos = widget.problem.mc_options[0].widget.x
-    let yPos = widget.problem.mc_options[0].widget.y
+    const xPos = widget.problem.mc_options[0].widget.x
+    const yPos = widget.problem.mc_options[0].widget.y
 
     return (
-      <ResizeAndDrag
+      <Rnd
         key={'widget_mc_' + widget.id}
         bounds={'[data-key="widget_' + widget.id + '"]'}
         minWidth={width}
@@ -330,7 +325,8 @@ class ExamEditor extends React.Component {
         <div className={isSelected ? 'mcq-widget widget selected' : 'mcq-widget widget '}>
           {widget.problem.mc_options.map((option) => {
             return (
-              <div key={'widget_mco_' + option.id} className='mcq-option'
+              <div
+                key={'widget_mco_' + option.id} className='mcq-option'
                 onMouseEnter={() => {
                   if (!this.state.draggingWidget) {
                     this.props.highlightFeedback(widget, option.feedback_id)
@@ -341,17 +337,20 @@ class ExamEditor extends React.Component {
                     this.props.removeHighlight(widget, option.feedback_id)
                   }
                 }}
-                style={{'--width-mco': widget.problem.widthMCO + 'px', '--height-mco': widget.problem.heightMCO + 'px'}}
+                style={{
+                  '--width-mco': widget.problem.widthMCO + 'px',
+                  '--height-mco': widget.problem.heightMCO + 'px'
+                }}
               >
                 <div className='mcq-option-label'>
                   {option.label === ' ' ? <span>&nbsp;</span> : option.label}
                 </div>
-                <img className='mcq-box' src={answerBoxImage} />
+                <img className='mcq-box' src={answerBoxImage.src} />
               </div>
             )
           })}
         </div>
-      </ResizeAndDrag>
+      </Rnd>
     )
   }
 
@@ -364,12 +363,12 @@ class ExamEditor extends React.Component {
     // Only render when numPage is set
     if (widget.problem.page !== this.props.page) return []
 
-    let enableResizing = true
+    const enableResizing = true
     const isSelected = widget.id === this.props.selectedWidgetId
-    let minWidth = this.props.problemMinWidth
-    let minHeight = this.props.problemMinHeight
-    let elementList = [(
-      <ResizeAndDrag
+    const minWidth = this.props.problemMinWidth
+    const minHeight = this.props.problemMinHeight
+    const elementList = [(
+      <Rnd
         key={'widget_' + widget.id}
         data-key={'widget_' + widget.id}
         bounds='parent'
@@ -455,7 +454,7 @@ class ExamEditor extends React.Component {
         <div
           className={isSelected ? 'widget selected' : 'widget'}
         />
-      </ResizeAndDrag>
+      </Rnd>
     )]
 
     // depending on the rendering option, render the mc_options separately or in a single widget
@@ -475,23 +474,23 @@ class ExamEditor extends React.Component {
     if (this.props.finalized) return []
 
     let minWidth, minHeight
-    let enableResizing = false
+    const enableResizing = false
     const isSelected = widget.id === this.props.selectedWidgetId
     let image
     if (widget.name === 'barcode_widget') {
-      minWidth = barcodeExampleImageSize.width
-      minHeight = barcodeExampleImageSize.height
-      image = barcodeExampleImage
+      minWidth = barcodeExampleImage.width
+      minHeight = barcodeExampleImage.height
+      image = barcodeExampleImage.src
     } else if (this.props.page === 0 && widget.name === 'student_id_widget') {
-      minWidth = studentIdExampleImageSize.width
-      minHeight = studentIdExampleImageSize.height
-      image = studentIdExampleImage
+      minWidth = studentIdExampleImage.width
+      minHeight = studentIdExampleImage.height
+      image = studentIdExampleImage.src
     } else {
       return []
     }
 
     return [(
-      <ResizeAndDrag
+      <Rnd
         key={'widget_' + widget.id}
         bounds='parent'
         minWidth={minWidth}
@@ -536,7 +535,7 @@ class ExamEditor extends React.Component {
             backgroundRepeat: 'no-repeat'
           }}
         />
-      </ResizeAndDrag>
+      </Rnd>
     )]
   }
 
@@ -547,7 +546,7 @@ class ExamEditor extends React.Component {
   renderWidgets = () => {
     // Only render when numPage is set
     if (this.props.numPages !== null && this.props.widgets) {
-      let widgets = this.props.widgets
+      const widgets = this.props.widgets
       let elementList = []
 
       Object.values(widgets).forEach((widget) => {
@@ -578,7 +577,8 @@ class ExamEditor extends React.Component {
             renderAnnotations={false}
             renderTextLayer={false}
             pageIndex={this.props.page}
-            onMouseDown={this.handleMouseDown} />
+            onMouseDown={this.handleMouseDown}
+          />
         </Document>
         <PDFOverlay />
         {this.renderWidgets()}

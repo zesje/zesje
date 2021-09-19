@@ -1,5 +1,5 @@
 import React from 'react'
-import Notification from 'react-bulma-notification'
+import { toast } from 'bulma-toast'
 
 import SearchBox from '../../components/SearchBox.jsx'
 import * as api from '../../api.jsx'
@@ -9,7 +9,8 @@ class StudentControls extends React.Component {
     students: []
   }
 
-  componentWillMount () {
+  constructor (props) {
+    super(props)
     this.updateStudents()
   }
 
@@ -29,14 +30,18 @@ class StudentControls extends React.Component {
         this.setState({ students })
         this.props.setStudent(students[0] || null) // in case 'students' is empty
         if (students.length !== submissions.length) {
-          Notification.warn('There are students with unvalidated submissions, go to the Students tab before sending emails to them.')
+          toast({
+            message: 'There are students with unvalidated submissions, ' +
+              'go to the Students tab before sending emails to them.',
+            type: 'is-warning'
+          })
         }
       })
       .catch(err => {
         console.log(err)
-        this.setState({students: []})
+        this.setState({ students: [] })
         this.props.setStudent(null)
-        Notification.error('Failed to load students.')
+        toast({ message: 'Failed to load students.', type: 'is-danger' })
       })
   }
 
@@ -45,38 +50,42 @@ class StudentControls extends React.Component {
       <div className='panel'>
         <div className='panel-heading has-text-centered'> Student </div>
         <div className='panel-block'>
-          {this.state.students.length > 0 ? (
-            <div className='field' style={{width: '100%'}}>
-              <div className='control'>
-                <SearchBox
-                  placeholder='Search for a student'
-                  selected={this.props.selectedStudent}
-                  options={this.state.students}
-                  suggestionKeys={[
-                    'id',
-                    'firstName',
-                    'lastName'
-                  ]}
-                  setSelected={student => {
-                    this.props.setStudent(student)
-                  }}
-                  renderSelected={(student) => (
-                    student !== null
-                      ? `${student.firstName} ${student.lastName} (${student.id})`
-                      : ''
-                  )}
-                  renderSuggestion={(student) => {
-                    return <div>
-                      <b>{`${student.firstName} ${student.lastName}`}</b>
-                      <i style={{float: 'right'}}>({student.id})</i>
-                    </div>
-                  }}
+          {this.state.students.length > 0
+            ? (
+              <div className='field' style={{ width: '100%' }}>
+                <div className='control'>
+                  <SearchBox
+                    placeholder='Search for a student'
+                    selected={this.props.selectedStudent}
+                    options={this.state.students}
+                    suggestionKeys={[
+                      'id',
+                      'firstName',
+                      'lastName'
+                    ]}
+                    setSelected={student => {
+                      this.props.setStudent(student)
+                    }}
+                    renderSelected={(student) => (
+                      student !== null
+                        ? `${student.firstName} ${student.lastName} (${student.id})`
+                        : ''
+                    )}
+                    renderSuggestion={(student) => {
+                      return (
+                        <div>
+                          <b>{`${student.firstName} ${student.lastName}`}</b>
+                          <i style={{ float: 'right' }}>({student.id})</i>
+                      </div>
+                      )
+                    }}
                 />
               </div>
             </div>
-          ) : (
+              )
+            : (
             <p className='has-text-danger'>No submissions found for this exam.</p>
-          )}
+              )}
         </div>
       </div>
     )

@@ -5,6 +5,7 @@ import os
 from flask import current_app, send_file, stream_with_context, Response
 from flask_restful import Resource, reqparse
 from flask_restful.inputs import boolean
+from flask_login import current_user
 from werkzeug.datastructures import FileStorage
 from sqlalchemy.orm import selectinload
 from sqlalchemy import func
@@ -47,14 +48,12 @@ class Exams(Resource):
 
     get_parser = reqparse.RequestParser()
     get_parser.add_argument('only_metadata', type=boolean, required=False)
-    get_parser.add_argument('shuffle_seed', type=int, required=False)
-    # TODO: remove also shuffle seed???
 
     def get(self, exam_id=None):
         args = self.get_parser.parse_args()
         if exam_id:
             if args.only_metadata:
-                return self._get_single_metadata(exam_id, args.shuffle_seed)
+                return self._get_single_metadata(exam_id)
             return self._get_single(exam_id)
         else:
             return self._get_all()
@@ -159,7 +158,7 @@ class Exams(Resource):
             'layout': exam.layout.name
         }
 
-    def _get_single_metadata(self, exam_id, shuffle_seed):
+    def _get_single_metadata(self, exam_id):
         """ Serves metadata for an exam.
         Shuffles submissions based on the grader ID.
 
@@ -167,8 +166,6 @@ class Exams(Resource):
         ----------
         exam_id : int
             id of exam to get metadata for.
-        shuffle_seed : int
-            id of the grader.
 
         Returns
         -------
@@ -191,7 +188,7 @@ class Exams(Resource):
                         'lastName': sub.student.last_name,
                         'email': sub.student.email
                     } if sub.student else None
-                } for sub in _shuffle(exam.submissions, shuffle_seed, key_extractor=lambda s: s.id)
+                } for sub in _shuffle(exam.submissions, current_user.id, key_extractor=lambda s: s.id)
             ],
             'problems': [
                 {

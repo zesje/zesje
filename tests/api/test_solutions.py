@@ -1,15 +1,6 @@
 import pytest
 from zesje.database import db, Exam, Problem, FeedbackOption,\
                            Student, Submission, Solution, Grader
-import flask_login
-
-
-@pytest.fixture
-def monkeypatch_current_user(monkeypatch):
-    def mock_current_user():
-        return Grader.query.get(1)
-
-    monkeypatch.setattr(flask_login.utils, '_get_user', mock_current_user)
 
 
 @pytest.fixture

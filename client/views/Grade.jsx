@@ -68,7 +68,7 @@ class Grade extends React.Component {
     this.state = { ...this.state, hasFilters: this.hasFilters() }
 
     Promise.all([
-      api.get(`exams/${this.props.examID}?only_metadata=true&shuffle_seed=${this.props.graderID}`),
+      api.get(`exams/${this.props.examID}?only_metadata=true`),
       api.get('graders')
     ]).then(([metadata, graders]) => {
       const partialState = {
@@ -242,7 +242,6 @@ class Grade extends React.Component {
     const submission = await api.get(
       `submissions/${this.props.examID}/${this.state.submission.id}?${[
         `problem_id=${this.state.problem.id}`,
-        `shuffle_seed=${this.props.graderID}`,
         `direction=${direction}`,
         ...this.getFilterArguments()
       ].join('&')}`
@@ -318,8 +317,7 @@ class Grade extends React.Component {
    * In case of unwanted behaviour, sets the submission to null for displaying error component.
    */
   updateFromUrl = () => {
-    api.get(`exams/${this.props.examID}?only_metadata=true` +
-    `&shuffle_seed=${this.props.graderID}`).then(metadata => {
+    api.get(`exams/${this.props.examID}?only_metadata=true`).then(metadata => {
       this.setState({
         submissions: metadata.submissions,
         problems: metadata.problems,

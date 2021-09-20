@@ -68,7 +68,7 @@ class Grade extends React.Component {
     this.state = { ...this.state, hasFilters: this.hasFilters() }
 
     Promise.all([
-      api.get(`exams/${this.props.examID}?only_metadata=true&shuffle_seed=${this.props.graderID}`),
+      api.get(`exams/${this.props.examID}?only_metadata=true`),
       api.get('graders')
     ]).then(([metadata, graders]) => {
       const partialState = {
@@ -242,7 +242,6 @@ class Grade extends React.Component {
     const submission = await api.get(
       `submissions/${this.props.examID}/${this.state.submission.id}?${[
         `problem_id=${this.state.problem.id}`,
-        `shuffle_seed=${this.props.graderID}`,
         `direction=${direction}`,
         ...this.getFilterArguments()
       ].join('&')}`
@@ -318,8 +317,7 @@ class Grade extends React.Component {
    * In case of unwanted behaviour, sets the submission to null for displaying error component.
    */
   updateFromUrl = () => {
-    api.get(`exams/${this.props.examID}?only_metadata=true` +
-    `&shuffle_seed=${this.props.graderID}`).then(metadata => {
+    api.get(`exams/${this.props.examID}?only_metadata=true`).then(metadata => {
       this.setState({
         submissions: metadata.submissions,
         problems: metadata.problems,
@@ -399,8 +397,7 @@ class Grade extends React.Component {
     const problem = this.state.problem
 
     api.put(`solution/${this.props.examID}/${submission.id}/${problem.id}`, {
-      id: id,
-      graderID: this.props.graderID
+      id: id
     }).then(result => {
       this.updateSubmission()
     })
@@ -415,17 +412,14 @@ class Grade extends React.Component {
      const problem = this.state.problem
      const solution = submission.problems.find(p => p.id === problem.id)
 
-     let graderid = null
-     if (solution.graded_by === null) {
-       graderid = this.props.graderID
-     }
+     const approve = solution.graded_by === null
 
      api.put(`solution/approve/${this.props.examID}/${submission.id}/${problem.id}`, {
-       graderID: graderid
+       approve: approve
      }).catch(resp => {
        resp.json().then(body => {
          toast({
-           message: 'Could not ' + (graderid === null ? 'set aside' : 'approve') + ' feedback: ' + body.message,
+           message: 'Could not ' + (approve ? 'set aside' : 'approve') + ' feedback: ' + body.message,
            type: 'is-danger'
          })
        })
@@ -532,7 +526,6 @@ class Grade extends React.Component {
     }
 
     const examID = this.props.examID
-    const graderID = this.props.graderID
     const submission = this.state.submission
     const problem = this.state.problem
     const submissions = this.state.submissions
@@ -563,7 +556,7 @@ class Grade extends React.Component {
                 />
                 <nav className='panel'>
                   <FeedbackPanel
-                    examID={examID} submissionID={submission.id} graderID={graderID}
+                    examID={examID} submissionID={submission.id}
                     problem={problem} solution={solution}
                     showTooltips={this.state.showTooltips} grading
                     setSubmission={this.updateSubmission}

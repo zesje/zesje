@@ -3,8 +3,10 @@
 from datetime import datetime
 
 from flask_restful import Resource, reqparse
+from flask_restful.inputs import boolean
+from flask_login import current_user
 
-from ..database import db, Exam, Submission, Problem, Solution, FeedbackOption, Grader
+from ..database import db, Exam, Submission, Problem, Solution, FeedbackOption
 
 
 class Solutions(Resource):
@@ -51,7 +53,6 @@ class Solutions(Resource):
 
     post_parser = reqparse.RequestParser()
     post_parser.add_argument('remark', type=str, required=True)
-    post_parser.add_argument('graderID', type=int, required=True)
 
     def post(self, exam_id, submission_id, problem_id):
         """Change the remark of a solution
@@ -59,7 +60,6 @@ class Solutions(Resource):
         Parameters
         ----------
             remark: string
-            graderID: int
 
         Returns
         -------
@@ -86,13 +86,14 @@ class Solutions(Resource):
             return dict(status=404, message='Solution does not exist.'), 404
 
         solution.remarks = args.remark
+        solution.graded_by = current_user
+        solution.graded_at = datetime.now()
 
         db.session.commit()
         return True
 
     put_parser = reqparse.RequestParser()
     put_parser.add_argument('id', type=int, required=True)
-    put_parser.add_argument('graderID', type=int, required=True)
 
     def put(self, exam_id, submission_id, problem_id):
         """Toggles an existing feedback option
@@ -100,16 +101,12 @@ class Solutions(Resource):
         Parameters
         ----------
             id: int
-            graderID: int
 
         Returns
         -------
             state: boolean
         """
         args = self.put_parser.parse_args()
-        if (grader := Grader.query.get(args.graderID)) is None:
-            return dict(status=404, message='Grader does not exist.'), 404
-
         if (sub := Submission.query.get(submission_id)) is None:
             return dict(status=404, message='Submission does not exist.'), 404
 
@@ -141,7 +138,7 @@ class Solutions(Resource):
 
         if graded:
             solution.graded_at = datetime.now()
-            solution.graded_by = grader
+            solution.graded_by = current_user
         else:
             solution.graded_at = None
             solution.graded_by = None
@@ -154,7 +151,7 @@ class Solutions(Resource):
 class Approve(Resource):
     """Mark a solution as graded."""
     put_parser = reqparse.RequestParser()
-    put_parser.add_argument('graderID', type=int, required=False)
+    put_parser.add_argument('approve', type=boolean, required=True)
 
     def put(self, exam_id, submission_id, problem_id):
         """Approve a solution or set it aside for later grading.
@@ -163,17 +160,11 @@ class Approve(Resource):
         otherwise it is marked as ungraded. This refuses to mark as graded if no feedback
         is assigned.
 
-        Parameters
-        ----------
-            graderID: int
-
         Returns
         -------
             state: boolean
         """
         args = self.put_parser.parse_args()
-
-        grader = Grader.query.get(args.graderID) if args.graderID is not None else None
 
         if (sub := Submission.query.get(submission_id)) is None:
             return dict(status=404, message='Submission does not exist.'), 404
@@ -189,10 +180,14 @@ class Approve(Resource):
         graded = len(solution.feedback)
 
         if graded:
-            solution.graded_at = datetime.now() if grader is not None else None
-            solution.graded_by = grader
+            if args.approve:
+                solution.graded_at = datetime.now()
+                solution.graded_by = current_user
+            else:
+                solution.graded_at = None
+                solution.graded_by = None
             db.session.commit()
         else:
             return dict(status=409, message='At least one feedback option must be selected.'), 409
 
-        return {'state': grader is not None}
+        return {'state': args.approve}

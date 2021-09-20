@@ -34,8 +34,7 @@ class FeedbackPanel extends React.Component {
   saveRemark = () => {
     if (!this.props.solution.graded_at && this.state.remark.replace(/\s/g, '').length === 0) return
     api.post('solution/' + this.props.examID + '/' + this.props.submissionID + '/' + this.props.problem.id, {
-      remark: this.state.remark,
-      graderID: this.props.graderID
+      remark: this.state.remark
     }).then(success => {
       this.props.setSubmission(this.props.submissionID)
       if (!success) toast({ message: 'Remark not saved!', type: 'is-danger' })

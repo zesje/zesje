@@ -4,6 +4,7 @@ import sys
 import pytest
 from _pytest.monkeypatch import MonkeyPatch
 from flask import Flask
+import flask_login
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from sqlalchemy.orm.session import close_all_sessions
@@ -12,7 +13,7 @@ from sqlalchemy import event, create_engine
 sys.path.insert(0, str(Path.cwd()))
 
 from zesje.api import api_bp  # noqa: E402
-from zesje.database import db, login_manager  # noqa: E402
+from zesje.database import db, login_manager, Grader  # noqa: E402
 from zesje.factory import create_config  # noqa: E402
 
 
@@ -123,3 +124,12 @@ def module_monkeypatch():
     monkeypatch = MonkeyPatch()
     yield monkeypatch
     monkeypatch.undo()
+
+
+@pytest.fixture
+def monkeypatch_current_user(monkeypatch):
+    """Patch to mock the logged in user in flask, returns the first grader ordered by the id."""
+    def mock_current_user():
+        return Grader.query.get(1)
+
+    monkeypatch.setattr(flask_login.utils, '_get_user', mock_current_user)

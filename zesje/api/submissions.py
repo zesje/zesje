@@ -2,6 +2,7 @@ from hashlib import md5
 from sqlalchemy.sql import operators
 from flask_restful import Resource, reqparse
 from flask_restful.inputs import boolean
+from flask_login import current_user
 
 from ..database import Exam, Submission, Problem
 
@@ -174,7 +175,6 @@ class Submissions(Resource):
 
     get_parser = reqparse.RequestParser()
     get_parser.add_argument('problem_id', type=int, required=False)
-    get_parser.add_argument('shuffle_seed', type=int, required=False, default=0)
     get_parser.add_argument('ungraded', type=boolean, required=False, default=False)
     get_parser.add_argument('direction', type=str, required=False, choices=["next", "prev", "first", "last"])
     get_parser.add_argument('required_feedback', type=int, required=False, action='append')
@@ -230,7 +230,7 @@ class Submissions(Resource):
 
         if args.direction:
             sub = _find_submission(
-                sub, problem, args.shuffle_seed, args.direction, args.ungraded,
+                sub, problem, current_user.id, args.direction, args.ungraded,
                 args.required_feedback or [], args.excluded_feedback or [], args.graded_by
             )
 

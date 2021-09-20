@@ -77,18 +77,13 @@ class ExamRouter extends React.PureComponent {
         />
         <Route
           path={`${parentURL}/grade/:submissionID?/:problemID?`} render={({ match, history }) => (
-            this.props.graderID
-              ? (
-              <Grade
-                examID={parseInt(examID)}
-                graderID={this.props.graderID}
-                history={history}
-                parentURL={parentURL}
-                submissionID={match.params.submissionID ? parseInt(match.params.submissionID) : undefined}
-                problemID={match.params.problemID ? parseInt(match.params.problemID) : undefined}
-              />
-                )
-              : <Fail message='No grader selected. Please do not bookmark URLs' />
+            <Grade
+              examID={parseInt(examID)}
+              history={history}
+              parentURL={parentURL}
+              submissionID={match.params.submissionID ? parseInt(match.params.submissionID) : undefined}
+              problemID={match.params.problemID ? parseInt(match.params.problemID) : undefined}
+            />
           )}
         />
         <Route

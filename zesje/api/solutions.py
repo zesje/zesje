@@ -3,6 +3,7 @@
 from datetime import datetime
 
 from flask_restful import Resource, reqparse
+from flask_restful.inputs import boolean
 from flask_login import current_user
 
 from ..database import db, Exam, Submission, Problem, Solution, FeedbackOption
@@ -150,7 +151,7 @@ class Solutions(Resource):
 class Approve(Resource):
     """Mark a solution as graded."""
     put_parser = reqparse.RequestParser()
-    put_parser.add_argument('approve', type=int, required=True)
+    put_parser.add_argument('approve', type=boolean, required=True)
 
     def put(self, exam_id, submission_id, problem_id):
         """Approve a solution or set it aside for later grading.

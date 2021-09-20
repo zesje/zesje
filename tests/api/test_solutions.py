@@ -156,12 +156,12 @@ def test_approve(test_client, add_test_data, monkeypatch_current_user):
     # toogle approve
     for j in range(2):
         res = test_client.put('/api/solution/approve/1/1/1', data={
-            'approve': j
+            'approve': j == 0
         })
 
         assert res.status_code == 200
         approved = res.get_json()['state']
-        assert approved == (j == 1)
+        assert approved == (j == 0)
 
         res = test_client.get('/api/solution/1/1/1')
         graded_by = res.get_json()['gradedBy']

@@ -489,7 +489,8 @@ class Grade extends React.Component {
           feedbackFilters: {
             ...oldState.feedbackFilters,
             [id]: newFilterMode
-          }
+          },
+          gradedBy: oldState.gradedBy === -1 ? 0 : oldState.gradedBy
         }
       }
     }, () => {

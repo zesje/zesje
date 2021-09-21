@@ -54,7 +54,12 @@ class App extends React.Component {
 
   state = {
     examID: null,
-    graderID: null
+    /*
+    * The id of the current user. An undefined user means that the App has not check the backend for the registrered
+    * user yet, hence wait for the response before going to the desired url by showing a Home/Welcome screen.
+    * Instead, a null user means that is not logged in, then go to the Home page through the router.
+    */
+    graderID: undefined
   }
 
   selectExam = (id) => this.setState({ examID: parseInt(id) })
@@ -77,35 +82,37 @@ class App extends React.Component {
       <Router>
         <div>
           <NavBar examID={this.state.examID} setGrader={this.setGrader} ref={this.menu} />
-          <Switch>
-            <Route exact path='/' component={Home} />
-            <PrivateRoute
-              isAuthenticated={isAuthenticated}
-              exact path='/exams'
-              render={({ history }) => <AddExam updateExamList={updateExamList} changeURL={history.push} />}
-            />
-            <PrivateRoute
-              isAuthenticated={isAuthenticated} path='/exams/:examID/' render={({ match }) =>
-                <ExamRouter
-                  parentMatch={match}
-                  graderID={this.state.graderID}
-                  selectExam={this.selectExam}
-                  updateExamList={updateExamList}
-                  setHelpPage={setHelpPage}
-                />}
-            />
-            <PrivateRoute
-              isAuthenticated={isAuthenticated} exact path='/graders' render={() =>
-                <Graders updateGraderList={updateGraderList} />}
-            />
-            <Route
-              exact path='/unauthorized' render={() =>
-                <Fail message='Your account is not authorized to access this instance of Zesje.' />}
-            />
-            <Route render={() =>
-              <Fail message="404. Could not find that page :'(" />}
-            />
-          </Switch>
+          {this.state.graderID === undefined
+            ? <Home />
+            : <Switch>
+              <Route exact path='/' component={Home} />
+              <PrivateRoute
+                isAuthenticated={isAuthenticated}
+                exact path='/exams'
+                render={({ history }) => <AddExam updateExamList={updateExamList} changeURL={history.push} />}
+              />
+              <PrivateRoute
+                isAuthenticated={isAuthenticated} path='/exams/:examID/' render={({ match }) =>
+                  <ExamRouter
+                    parentMatch={match}
+                    graderID={this.state.graderID}
+                    selectExam={this.selectExam}
+                    updateExamList={updateExamList}
+                    setHelpPage={setHelpPage}
+                  />}
+              />
+              <PrivateRoute
+                isAuthenticated={isAuthenticated} exact path='/graders' render={() =>
+                  <Graders updateGraderList={updateGraderList} />}
+              />
+              <Route
+                exact path='/unauthorized' render={() =>
+                  <Fail message='Your account is not authorized to access this instance of Zesje.' />}
+              />
+              <Route render={() =>
+                <Fail message="404. Could not find that page :'(" />}
+              />
+            </Switch>}
           <Footer />
         </div>
       </Router>

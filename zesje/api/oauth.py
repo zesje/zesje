@@ -11,7 +11,7 @@ from ..database import db, Grader
 class OAuthStart(Resource):
 
     get_parser = reqparse.RequestParser()
-    get_parser.add_argument('userurl', type=str, required=True)
+    get_parser.add_argument('userurl', type=str, required=False)
 
     def get(self):
         """Logs the user in by redirecting to the OAuth provider with the appropriate client ID
@@ -27,6 +27,9 @@ class OAuthStart(Resource):
         is_authenticated: boolean
         """
         args = self.get_parser.parse_args()
+        if not args.userurl:
+            args = {'userurl': url_for('index')}
+
         if current_app.config['LOGIN_DISABLED']:
             authorization_url, state = url_for('zesje.oauthcallback', **args), 'state'
         else:
@@ -61,7 +64,7 @@ class OAuthCallback(Resource):
         -------
         redirect to /
         """
-        userurl = self.get_parser.parse_args().userurl
+        userurl = self.get_parser.parse_args().userurl or url_for('index')
         if current_app.config['LOGIN_DISABLED']:
             login_user(Grader.query.first())
             return redirect(userurl)
@@ -94,7 +97,7 @@ class OAuthCallback(Resource):
 
         login_user(grader)
 
-        return redirect(url_for('index') + userurl)
+        return redirect(userurl)
 
 
 class OAuthGrader(Resource):

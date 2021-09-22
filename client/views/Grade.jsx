@@ -483,13 +483,17 @@ class Grade extends React.Component {
           }
         }
         delete clone.feedbackFilters[id]
+        if (Object.keys(clone.feedbackFilters).length === 0) {
+          clone.gradedBy = -1
+        }
         return clone
       } else {
         return {
           feedbackFilters: {
             ...oldState.feedbackFilters,
             [id]: newFilterMode
-          }
+          },
+          gradedBy: oldState.gradedBy === -1 ? 0 : oldState.gradedBy
         }
       }
     }, () => {

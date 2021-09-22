@@ -8,7 +8,7 @@ class Login extends React.Component {
     }
 
     componentDidMount = () => {
-      api.get('oauth/start').then(response => {
+      api.get('oauth/start?userurl=' + window.location.href).then(response => {
         if (!response.is_authenticated) {
           this.setState({
             redirectURL: response.redirect_oauth,

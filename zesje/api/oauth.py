@@ -1,6 +1,6 @@
 """REST API for OAuth callback"""
 
-from flask_restful import Resource
+from flask_restful import Resource, reqparse
 from flask import current_app, session, request, redirect, url_for
 from flask_login import login_user, current_user, logout_user
 from requests_oauthlib import OAuth2Session
@@ -9,6 +9,10 @@ from ..database import db, Grader
 
 
 class OAuthStart(Resource):
+
+    get_parser = reqparse.RequestParser()
+    get_parser.add_argument('userurl', type=str, required=False)
+
     def get(self):
         """Logs the user in by redirecting to the OAuth provider with the appropriate client ID
 
@@ -22,11 +26,15 @@ class OAuthStart(Resource):
          returns current state, used for testing
         is_authenticated: boolean
         """
+        args = self.get_parser.parse_args()
+        if not args.userurl:
+            args = {'userurl': url_for('index')}
+
         if current_app.config['LOGIN_DISABLED']:
-            authorization_url, state = url_for('zesje.oauthcallback'), 'state'
+            authorization_url, state = url_for('zesje.oauthcallback', **args), 'state'
         else:
             oauth2_session = OAuth2Session(current_app.config['OAUTH_CLIENT_ID'],
-                                           redirect_uri=url_for('zesje.oauthcallback', _external=True),
+                                           redirect_uri=url_for('zesje.oauthcallback', **args, _external=True),
                                            scope=current_app.config['OAUTH_SCOPES'])
             # add prompt='login' below to force surf conext to ask for login everytime disabling single sign-on, see:
             # https://wiki.surfnet.nl/display/surfconextdev/OpenID+Connect+features#OpenIDConnectfeatures-Prompt=login
@@ -45,6 +53,10 @@ class OAuthStart(Resource):
 
 
 class OAuthCallback(Resource):
+
+    get_parser = reqparse.RequestParser()
+    get_parser.add_argument('userurl', type=str, required=False)
+
     def get(self):
         """OAuth provider redirects to this route after authorization. Fetches token and redirects /
 
@@ -52,9 +64,10 @@ class OAuthCallback(Resource):
         -------
         redirect to /
         """
+        userurl = self.get_parser.parse_args().userurl or url_for('index')
         if current_app.config['LOGIN_DISABLED']:
             login_user(Grader.query.first())
-            return redirect(url_for('index'))
+            return redirect(userurl)
 
         oauth2_session = OAuth2Session(current_app.config['OAUTH_CLIENT_ID'],
                                        redirect_uri=url_for('zesje.oauthcallback', _external=True),
@@ -84,7 +97,7 @@ class OAuthCallback(Resource):
 
         login_user(grader)
 
-        return redirect(url_for('index'))
+        return redirect(userurl)
 
 
 class OAuthGrader(Resource):

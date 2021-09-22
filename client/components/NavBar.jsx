@@ -157,7 +157,14 @@ class NavBar extends React.Component {
   }
 
   componentDidMount = () => {
-    this.updateGrader()
+    api.get('oauth/grader').then(grader => {
+      console.log(grader)
+      this.setState({ grader })
+      this.props.setGrader(grader)
+      this.updateExamList()
+    }).catch(e => {
+      console.log('Not logged in.')
+    })
   }
 
   updateExamList = () => {
@@ -182,14 +189,6 @@ class NavBar extends React.Component {
   setHelpPage = (helpPage) => {
     this.setState({ helpPage: helpPage })
   }
-
-  updateGrader = () =>
-    api.get('oauth/grader').then(grader => {
-      console.log(grader)
-      this.setState({ grader })
-      this.props.setGrader(grader)
-      this.updateExamList()
-    })
 
   logout = () =>
     api.get('oauth/logout')

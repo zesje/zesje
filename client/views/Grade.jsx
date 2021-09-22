@@ -483,6 +483,9 @@ class Grade extends React.Component {
           }
         }
         delete clone.feedbackFilters[id]
+        if (Object.keys(clone.feedbackFilters).length === 0) {
+          clone.gradedBy = -1
+        }
         return clone
       } else {
         return {

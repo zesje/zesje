@@ -9,6 +9,7 @@ from flask import current_app
 from pdfrw import PdfReader, PdfWriter, PageMerge
 from pylibdmtx.pylibdmtx import encode
 from reportlab.pdfgen import canvas
+from reportlab.lib.utils import ImageReader
 import zipstream
 
 from .database import Exam
@@ -524,7 +525,7 @@ def _generate_copy_overlay(canv, pagesize, exam_token, copy_num, num_pages, data
         # transform y-cooridate to different origin location
         datamatrix_y_adjusted = pagesize[1] - datamatrix_y - datamatrix.height
 
-        canv.drawInlineImage(datamatrix, datamatrix_x, datamatrix_y_adjusted)
+        canv.drawImage(ImageReader(datamatrix), datamatrix_x, datamatrix_y_adjusted)
         canv.drawString(
             datamatrix_x, datamatrix_y_adjusted - (fontsize * 0.66),
             f" # {copy_num}"

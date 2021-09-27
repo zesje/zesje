@@ -289,10 +289,7 @@ def grade_problems(client, exam_id, graders, problems, submissions, grade):
                 fo = [id for id in fo if int(id) != root_id]
                 opt = fo[random.randint(0, len(fo) - 1)]
                 client.put(f"/api/solution/{exam_id}/{submission_id}/{prob['id']}",
-                           json={
-                               'id': opt,
-                               'graderID': random.choice(graders)['id']
-                           })
+                           json={'id': opt})
 
 
 def add_templated_exam(client, pages):
@@ -491,6 +488,8 @@ def create_exams(app,
         db.session.add(grader)
     db.session.commit()
 
+    client.get('/api/oauth/callback')
+
     # create students
     for student in generate_students(students):
         client.put('api/students', data=student)
@@ -499,6 +498,8 @@ def create_exams(app,
     for _ in range(exams):
         generated_exams.append(design_exam(app, client, layout, max(1, pages), students, grade,
                                            solve, multiple_copies, skip_processing))
+
+    client.get('/api/oauth/logout')
 
     return generated_exams
 

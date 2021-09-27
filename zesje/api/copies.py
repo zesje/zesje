@@ -124,7 +124,9 @@ class Copies(Resource):
                 unapprove_grading(old_submission)
 
         db.session.commit()
-        return dict(status=200, message=f'Student {student.id} matched to copy {copy.number}'), 200
+        return dict(status=200,
+                    message=f'Student {student.id} matched to copy {copy.number}',
+                    new_submission=new_submission.id), 200
 
 
 def is_exactly_blank(solution):

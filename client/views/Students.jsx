@@ -7,6 +7,7 @@ import Hero from '../components/Hero.jsx'
 import ProgressBar from '../components/ProgressBar.jsx'
 import SearchBox from '../components/SearchBox.jsx'
 import withShortcuts from '../components/ShortcutBinder.jsx'
+import ConfirmationModal from '../components/ConfirmationModal.jsx'
 import Fail from './Fail.jsx'
 
 import SearchPanel from './students/SearchPanel.jsx'
@@ -18,6 +19,7 @@ class CheckStudents extends React.Component {
   state = {
     editActive: false,
     editStud: null,
+    matchedStudent: null,
     index: 0,
     copies: [],
     examID: undefined // The exam ID the loaded copies belong to
@@ -116,20 +118,34 @@ class CheckStudents extends React.Component {
     }
   }
 
-  matchStudent = (stud) => {
+  matchStudent = (stud, force = false) => {
     if (!this.state.copies) return
 
-    api.put(`copies/${this.props.examID}/${this.state.copies[this.state.index].number}`, { studentID: stud.id })
-      .then(resp => {
-        // TODO When do we want to update the full list of copies?
-        this.fetchCopy(this.state.index)
-        this.nextUnchecked()
-      })
-      .catch(err => {
-        err.json().then(res => {
-          toast({ message: `Failed to validate copy: ${res.message}`, type: 'is-danger' })
+    const hasOtherCopies = this.state.copies.filter(c => c.student.id === stud.id).length > 0
+    if (hasOtherCopies && !force) {
+      this.setState({ matchedStudent: stud })
+    } else {
+      api.put(`copies/${this.props.examID}/${this.state.copies[this.state.index].number}`, { studentID: stud.id })
+        .then(resp => {
+          // TODO When do we want to update the full list of copies?
+          if (this.state.matchedStudent !== null) this.setState({ matchedStudent: null })
+          this.fetchCopy(this.state.index)
+          this.nextUnchecked()
+
+          toast({
+            message: `<p>Student matched with copy ${this.state.copies[this.state.index].number}, go to ` +
+              `<a href='/exams/${this.state.examID}/grade/${resp.new_submission}'>Grade</a> ` +
+              'to approve the merged submission.</p>',
+            type: 'is-warning'
+          })
+          console.log('toast should show up')
         })
-      })
+        .catch(err => {
+          err.json().then(res => {
+            toast({ message: `Failed to validate copy: ${res.message}`, type: 'is-danger' })
+          })
+        })
+    }
   }
 
   toggleEdit = (student) => {
@@ -262,6 +278,21 @@ class CheckStudents extends React.Component {
                 </div>
                 : null}
             </div>
+
+            <ConfirmationModal
+              headerText={'Are you sure you want to merge these copies?'}
+              contentText={`Student #${this.state.matchedStudent ? this.state.matchedStudent.id : -1} is already ` +
+                `matched with copies ${this.state.copies.filter(
+                  c => c.student.id === (this.state.matchedStudent ? this.state.matchedStudent.id : -1))
+                  .reduce((prev, c, index) => prev + `${c.number}, `, '')}` +
+                '. This action will merge them which might affect the total score of the problem. ' +
+                'Moreover, the score of the final solution will have to be approved again.'}
+              color='is-danger'
+              confirmText='Merge copies'
+              active={this.state.matchedStudent !== null}
+              onConfirm={() => this.matchStudent(this.state.matchedStudent, true)}
+              onCancel={() => { this.setState({ matchedStudent: null }) }}
+            />
           </div>
         </section>
 

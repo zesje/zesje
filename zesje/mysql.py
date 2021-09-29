@@ -117,7 +117,7 @@ def is_running(config):
         return False
 
 
-def dump(config, database=None):
+def dump(config, database=None, create_backup_file=False):
     user = config['MYSQL_USER']
     password = config['MYSQL_PASSWORD']
     host = config['MYSQL_HOST']
@@ -133,9 +133,10 @@ def dump(config, database=None):
     if p.returncode != 0:
         raise ValueError(f'mysqldump exited with error code {p.returncode}: {err}')
 
-    file_name = 'mysql_backup_{}.sql'.format(time.strftime("%Y-%m-%d--%H-%M-%S", time.localtime()))
-    with open(os.path.join(config['DATA_DIRECTORY'], file_name), 'wb') as f:
-        f.write(output)
+    if create_backup_file:
+        file_name = 'mysql_backup_{}.sql'.format(time.strftime("%Y-%m-%d--%H-%M-%S", time.localtime()))
+        with open(os.path.join(config['DATA_DIRECTORY'], file_name), 'wb') as f:
+            f.write(output)
 
     return output
 
@@ -216,7 +217,7 @@ def main(action, args):
     elif action == 'is-running':
         is_running(config)
     elif action == 'backup':
-        dump(config)
+        dump(config, create_backup_file=True)
 
 
 if __name__ == '__main__':

@@ -131,7 +131,7 @@ def dump(config, database=None):
     output, err = p.communicate()
 
     if p.returncode != 0:
-        raise ValueError(f'mysqldump exited with error code {p.returncode}')
+        raise ValueError(f'mysqldump exited with error code {p.returncode}: {err}')
 
     file_name = 'mysql_backup_{}.sql'.format(time.strftime("%Y-%m-%d--%H-%M-%S", time.localtime()))
     with open(os.path.join(config['DATA_DIRECTORY'], file_name), 'wb') as f:

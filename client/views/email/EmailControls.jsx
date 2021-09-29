@@ -1,4 +1,5 @@
 import React from 'react'
+import ReactDOMServer from 'react-dom/server'
 
 import { toast } from 'bulma-toast'
 
@@ -109,7 +110,7 @@ class EmailIndividualControls extends React.Component {
     } catch (error) {
       try {
         const resp = await error.json()
-        toast({ message: resp.message, duration: 3000, type: 'is-danger' })
+        toast({ message: resp.message, duration: 10000, type: 'is-danger' })
       } catch (error) {
         // If we get here there is a bug in the backend
         toast({ message: `Failed to send email to ${this.props.student.email}`, type: 'is-danger' })
@@ -170,7 +171,7 @@ class EmailEveryoneControls extends React.Component {
           </div>
         )
         toast({
-          message: msg,
+          message: ReactDOMServer.renderToString(msg),
           type: 'is-info'
         })
       }
@@ -190,7 +191,6 @@ class EmailEveryoneControls extends React.Component {
       if (response.status === 200) {
         toast({
           message: 'Sent emails to all students',
-          duration: 60000,
           type: 'is-success'
         })
       } else if (response.status === 206) {
@@ -215,13 +215,13 @@ class EmailEveryoneControls extends React.Component {
         const response = await error.json()
         if (response.status === 400 ||
             response.status === 409) {
-          toast({ message: 'No emails sent: ' + response.message, duration: 60000, type: 'is-danger' })
+          toast({ message: 'No emails sent: ' + response.message, duration: 10000, type: 'is-danger' })
         } else if (response.status === 500) {
           toast({ message: `Sent email to ${this.props.student.email}`, type: 'is-success' })
         }
       } catch (error) {
         // If we get here there is a bug in the backend
-        toast({ message: 'Failed to send emails', duration: 60000, type: 'is-danger' })
+        toast({ message: 'Failed to send emails', duration: 10000, type: 'is-danger' })
       }
     } finally {
       this.setState({ sending: false })

@@ -18,7 +18,7 @@ const renderTemplate = async (props) => {
 const templateRenderError = message => (
   toast({
     message: message || 'Unable to render template',
-    duration: 3000,
+    duration: 10000,
     type: 'is-danger'
   })
 )

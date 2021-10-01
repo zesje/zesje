@@ -9,7 +9,7 @@ dependencies:
     - redis
     - pip
     - imagemagick
-    - mysql=5.7.20
+    - mysql=8.0
     - pymysql
 
     - pip:
@@ -53,6 +53,9 @@ dependencies:
         # Exporting
         - pandas
         - openpyxl  # required for writing dataframes as Excel spreadsheets
+
+        # mysql
+        - cryptography
 
         #
         # Development dependencies

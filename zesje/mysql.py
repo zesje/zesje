@@ -117,7 +117,7 @@ def is_running(config):
         return False
 
 
-def dump(config, database=None):
+def dump(config, database=None, create_backup_file=False):
     user = config['MYSQL_USER']
     password = config['MYSQL_PASSWORD']
     host = config['MYSQL_HOST']
@@ -131,7 +131,12 @@ def dump(config, database=None):
     output, err = p.communicate()
 
     if p.returncode != 0:
-        raise ValueError(f'mysqldump exited with error code {p.returncode}')
+        raise ValueError(f'mysqldump exited with error code {p.returncode}: {err}')
+
+    if create_backup_file:
+        file_name = 'mysql_backup_{}.sql'.format(time.strftime("%Y-%m-%d--%H-%M-%S", time.localtime()))
+        with open(os.path.join(config['DATA_DIRECTORY'], file_name), 'wb') as f:
+            f.write(output)
 
     return output
 
@@ -211,6 +216,8 @@ def main(action, args):
         stop(config)
     elif action == 'is-running':
         is_running(config)
+    elif action == 'backup':
+        dump(config, create_backup_file=True)
 
 
 if __name__ == '__main__':
@@ -218,7 +225,9 @@ if __name__ == '__main__':
     from .factory import create_config
 
     parser = ArgumentParser(description='Control MySQL database')
-    parser.add_argument('action', choices=['create', 'start', 'stop', 'is-running'], help='Action to be performed')
+    parser.add_argument('action',
+                        choices=['create', 'start', 'stop', 'is-running', 'backup'],
+                        help='Action to be performed')
     parser.add_argument('-i',
                         action='store_true',
                         help='Run commant in interactive mode, attached to the console.')

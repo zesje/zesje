@@ -22,7 +22,6 @@ def full():
     try:
         output = dump(current_app.config)
     except Exception as e:
-        print(e)
         abort(500, 'Could not export database content: ' + str(e))
 
     return send_file(

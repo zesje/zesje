@@ -201,7 +201,8 @@ def _defaults_file_option(option):
 
 def _default_options(datadir):
     return f'--defaults-file={_defaults_file()} --datadir={datadir} --basedir=$CONDA_PREFIX/bin ' + \
-        '--lc-messages-dir=$CONDA_PREFIX/share/mysql'
+        '--lc-messages-dir=$CONDA_PREFIX/share/mysql ' + \
+        '--plugin-dir=$CONDA_PREFIX/lib/plugin'
 
 
 def main(action, args):

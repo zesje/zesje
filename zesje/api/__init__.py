@@ -17,7 +17,7 @@ from .widgets import Widgets
 from .emails import EmailTemplate, RenderedEmailTemplate, Email
 from .mult_choice import MultipleChoice
 from .statistics import Statistics
-from .oauth import OAuthStart, OAuthCallback, OAuthGrader, OAuthLogout
+from .oauth import OAuthStart, OAuthCallback, OAuthStatus, OAuthLogout
 
 from . import signature
 from . import images
@@ -92,7 +92,7 @@ api.add_resource(MultipleChoice,
                  '/mult-choice/')
 api.add_resource(Statistics,
                  '/stats/<int:exam_id>')
-api.add_resource(OAuthGrader, '/oauth/grader')
+api.add_resource(OAuthStatus, '/oauth/status')
 api.add_resource(OAuthStart, '/oauth/start')
 api.add_resource(OAuthCallback, '/oauth/callback')
 api.add_resource(OAuthLogout, '/oauth/logout')

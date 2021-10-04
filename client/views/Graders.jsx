@@ -15,7 +15,7 @@ class Graders extends React.Component {
   }
 
   componentDidMount = () => {
-    api.get('oauth/start').then(response => {
+    api.get('oauth/status').then(response => {
       this.setState({
         oauth_id_field: response.oauth_id_field,
         oauth_provider: response.provider

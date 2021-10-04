@@ -42,13 +42,7 @@ class OAuthStart(Resource):
 
         session['oauth_state'] = state
 
-        return {
-            'redirect_oauth': authorization_url,
-            'provider': current_app.config['OAUTH_PROVIDER'],
-            'state': state,
-            'is_authenticated': current_user.is_authenticated,
-            'oauth_id_field': current_app.config['OAUTH_ID_FIELD']
-        }
+        return redirect(authorization_url)
 
 
 class OAuthCallback(Resource):
@@ -101,23 +95,34 @@ class OAuthCallback(Resource):
         return redirect(userurl)
 
 
-class OAuthGrader(Resource):
+class OAuthStatus(Resource):
     def get(self):
-        """returns details of the current grader logged in
+        """returns the current oauth status
 
         Returns
         -------
-        id: str
-        name: str
-        oauth_id: str
+        grader: {
+            id: str
+            name: str
+            oauth_id: str
+        }
+        provider: str
+        oauth_id_field:
         """
         if not current_user.is_authenticated:
-            return dict(status=401, message="Not logged in"), 401
+            return dict(
+                status=401,
+                provider=current_app.config['OAUTH_PROVIDER'],
+            ), 401
 
         return dict(
-            id=current_user.id,
-            name=current_user.name,
-            oauth_id=current_user.oauth_id
+            grader=dict(
+                id=current_user.id,
+                name=current_user.name,
+                oauth_id=current_user.oauth_id
+            ),
+            provider=current_app.config['OAUTH_PROVIDER'],
+            oauth_id_field=current_app.config['OAUTH_ID_FIELD'],
         )
 
 

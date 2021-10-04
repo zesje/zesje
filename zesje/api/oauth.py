@@ -27,14 +27,13 @@ class OAuthStart(Resource):
         is_authenticated: boolean
         """
         args = self.get_parser.parse_args()
-        if not args.userurl:
-            args = {'userurl': url_for('index')}
+        session['oauth_userurl'] = args.userurl or url_for('index')
 
         if current_app.config['LOGIN_DISABLED']:
-            authorization_url, state = url_for('zesje.oauthcallback', **args), 'state'
+            authorization_url, state = url_for('zesje.oauthcallback'), 'state'
         else:
             oauth2_session = OAuth2Session(current_app.config['OAUTH_CLIENT_ID'],
-                                           redirect_uri=url_for('zesje.oauthcallback', **args, _external=True),
+                                           redirect_uri=url_for('zesje.oauthcallback', _external=True),
                                            scope=current_app.config['OAUTH_SCOPES'])
             # add prompt='login' below to force surf conext to ask for login everytime disabling single sign-on, see:
             # https://wiki.surfnet.nl/display/surfconextdev/OpenID+Connect+features#OpenIDConnectfeatures-Prompt=login
@@ -64,7 +63,9 @@ class OAuthCallback(Resource):
         -------
         redirect to /
         """
-        userurl = self.get_parser.parse_args().userurl or url_for('index')
+        userurl = session['oauth_userurl']
+        del session['oauth_userurl']
+
         if current_app.config['LOGIN_DISABLED']:
             login_user(Grader.query.first())
             return redirect(userurl)

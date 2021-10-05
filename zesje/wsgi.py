@@ -9,4 +9,3 @@ if app.config['PROXY_COUNT'] > 0:
         x_proto=app.config['PROXY_COUNT'],
         x_for=app.config['PROXY_COUNT'],
     )
-    print(app.config['PROXY_COUNT'])

@@ -61,7 +61,7 @@ const GraderDropdown = (props) => {
   if (!props.grader) {
     return (
       <div className='navbar-item'>
-        <a className='button is-link' href={'/api/oauth/start?userurl=' + window.location.href}>
+        <a className='button is-link' href={'/api/oauth/start?userurl=' + window.location.pathname}>
           <span className='icon'>
             <i className='fa fa-user' aria-hidden='true' />
           </span>

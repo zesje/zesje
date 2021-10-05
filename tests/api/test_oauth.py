@@ -50,6 +50,18 @@ def test_oauth_start(login_client, login_app):
     assert 'state' in query and len(query['state']) == 1
 
 
+@pytest.mark.parametrize('url, expected', [
+    ('', '/'),
+    ('/graders', '/graders'),
+    ('http://evil.com/page', '/page')],
+    ids=['Empty', 'Normal', 'Malicious'])
+def test_oauth_start_userurl(login_client, login_app, url, expected):
+    login_client.get('/api/oauth/start' + (f'?userurl={url}' if url else ''))
+
+    with login_client.session_transaction() as session:
+        assert session['oauth_userurl'] == expected
+
+
 def test_oauth_callback_unauthorized_grader(callback_request):
     assert callback_request.headers['Location'].rsplit('/', 1)[1] == 'unauthorized'
 

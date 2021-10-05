@@ -4,6 +4,7 @@ from flask_restful import Resource, reqparse
 from flask import current_app, session, request, redirect, url_for
 from flask_login import login_user, current_user, logout_user
 from requests_oauthlib import OAuth2Session
+from urllib.parse import urlparse
 
 from ..database import db, Grader
 
@@ -27,6 +28,8 @@ class OAuthStart(Resource):
         is_authenticated: boolean
         """
         args = self.get_parser.parse_args()
+        if args.userurl:
+            args.userurl = urlparse(args.userurl).path
         session['oauth_userurl'] = args.userurl or url_for('index')
 
         if current_app.config['LOGIN_DISABLED']:

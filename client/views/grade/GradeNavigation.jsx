@@ -8,7 +8,7 @@ class GradeNavigation extends React.Component {
 
   createNavButton = (style, faIcon, onClick, tooltip) => {
     return (
-      <div className={'control' + (this.props.showTooltips ? ' tooltip has-tooltip-active has-tooltip-arrow' : '')}
+      <div className={'control has-tooltip-arrow' + (this.props.showTooltips ? ' has-tooltip-active' : '')}
         data-tooltip={tooltip}>
         <button
           type='submit'
@@ -42,9 +42,9 @@ class GradeNavigation extends React.Component {
             <div
               id='search'
               className={
-                'control is-wider ' + (this.props.showTooltips ? 'tooltip has-tooltip-active has-tooltip-arrow' : '')
+                'control is-wider has-tooltip-arrow' + (this.props.showTooltips ? ' has-tooltip-active' : '')
               }
-              data-tooltip='Press ctrl to hide shortcuts'
+              data-tooltip={'Press ctrl to ' + (this.props.showTooltips ? 'hide' : 'show') + ' shortcuts'}
             >
               <SearchBox
                 placeholder='Search for a submission'

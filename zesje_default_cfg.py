@@ -22,6 +22,10 @@ MYSQL_CONNECTOR = 'mysql+pymysql'
 CELERY_BROKER_URL = 'redis://localhost:6479'
 CELERY_RESULT_BACKEND = 'redis://localhost:6479'
 
+# Number of proxies Zesje is behind, needed to handle headers correctly
+# Only affects the wsgi app in zesje/wsgi.py
+PROXY_COUNT = 1
+
 LOGIN_DISABLED = False
 
 # Secret key required for flask.session

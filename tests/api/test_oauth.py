@@ -55,7 +55,7 @@ def test_oauth_start(login_client, login_app):
     ('/graders', '/graders'),
     ('http://evil.com/page', '/page')],
     ids=['Empty', 'Normal', 'Malicious'])
-def test_oauth_start_userurl(login_client, login_app, url, expected):
+def test_oauth_start_userurl(login_client, url, expected):
     login_client.get('/api/oauth/start' + (f'?userurl={url}' if url else ''))
 
     with login_client.session_transaction() as session:

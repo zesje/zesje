@@ -117,7 +117,7 @@ def is_running(config):
         return False
 
 
-def dump(config, database=None):
+def dump(config, database=None, create_backup_file=False, file_name=None):
     user = config['MYSQL_USER']
     password = config['MYSQL_PASSWORD']
     host = config['MYSQL_HOST']
@@ -131,7 +131,18 @@ def dump(config, database=None):
     output, err = p.communicate()
 
     if p.returncode != 0:
-        raise ValueError(f'mysqldump exited with error code {p.returncode}')
+        raise ValueError(f'mysqldump exited with error code {p.returncode}: {err}')
+
+    if create_backup_file:
+        if not file_name:
+            file_name = Path(config['DATA_DIRECTORY']) / \
+                'mysql_backup_{}.sql'.format(time.strftime("%Y-%m-%d--%H-%M-%S", time.localtime()))
+        else:
+            file_name = Path(file_name)
+            if not file_name.is_absolute():
+                file_name = Path(config['DATA_DIRECTORY']) / file_name
+        with file_name.open('wb') as f:
+            f.write(output)
 
     return output
 
@@ -196,7 +207,8 @@ def _defaults_file_option(option):
 
 def _default_options(datadir):
     return f'--defaults-file={_defaults_file()} --datadir={datadir} --basedir=$CONDA_PREFIX/bin ' + \
-        '--lc-messages-dir=$CONDA_PREFIX/share/mysql'
+        '--lc-messages-dir=$CONDA_PREFIX/share/mysql ' + \
+        '--plugin-dir=$CONDA_PREFIX/lib/plugin'
 
 
 def main(action, args):
@@ -211,6 +223,8 @@ def main(action, args):
         stop(config)
     elif action == 'is-running':
         is_running(config)
+    elif action == 'backup':
+        dump(config, create_backup_file=True, file_name=args.output)
 
 
 if __name__ == '__main__':
@@ -218,7 +232,9 @@ if __name__ == '__main__':
     from .factory import create_config
 
     parser = ArgumentParser(description='Control MySQL database')
-    parser.add_argument('action', choices=['create', 'start', 'stop', 'is-running'], help='Action to be performed')
+    parser.add_argument('action',
+                        choices=['create', 'start', 'stop', 'is-running', 'backup'],
+                        help='Action to be performed')
     parser.add_argument('-i',
                         action='store_true',
                         help='Run commant in interactive mode, attached to the console.')
@@ -228,6 +244,10 @@ if __name__ == '__main__':
     parser.add_argument('--allow-exists',
                         action='store_true',
                         help='Allow MySQL to be initialized already.')
+
+    parser.add_argument('--output',
+                        type=str,
+                        help='Output file when running the backup action, optional')
 
     args = parser.parse_args(sys.argv[1:])
     main(args.action, args)

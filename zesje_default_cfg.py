@@ -22,13 +22,17 @@ MYSQL_CONNECTOR = 'mysql+pymysql'
 CELERY_BROKER_URL = 'redis://localhost:6479'
 CELERY_RESULT_BACKEND = 'redis://localhost:6479'
 
+# Number of proxies Zesje is behind, needed to handle headers correctly
+# Only affects the wsgi app in zesje/wsgi.py
+PROXY_COUNT = 1
+
 LOGIN_DISABLED = False
 
 # Secret key required for flask.session
 SECRET_KEY = None
 
 # Routes exempted from authentication
-EXEMPT_ROUTES = ['zesje.oauthstart', 'zesje.oauthcallback']
+EXEMPT_ROUTES = ['zesje.oauthstart', 'zesje.oauthcallback', 'zesje.oauthstatus']
 EXEMPT_METHODS = ['OPTIONS']
 
 # Instance owner details
@@ -43,11 +47,11 @@ OAUTH_CLIENT_ID = ''
 OAUTH_CLIENT_SECRET = ''
 OAUTH_AUTHORIZATION_URL = 'https://gitlab.kwant-project.org/oauth/authorize'
 OAUTH_TOKEN_URL = 'https://gitlab.kwant-project.org/oauth/token'
-OAUTH_INFO_URL = 'https://gitlab.kwant-project.org/api/v4/user'
+OAUTH_INFO_URL = 'https://gitlab.kwant-project.org/oauth/userinfo'
 OAUTH_ID_FIELD = 'email'
 OAUTH_NAME_FIELD = 'name'
 OAUTH_PROVIDER = 'GitLab'
-OAUTH_SCOPES = ['read_user']
+OAUTH_SCOPES = ['openid', 'email']
 
 # OAuth TU Delft provider
 # OAUTH_CLIENT_ID = ''

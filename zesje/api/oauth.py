@@ -4,6 +4,7 @@ from flask_restful import Resource, reqparse
 from flask import current_app, session, request, redirect, url_for
 from flask_login import login_user, current_user, logout_user
 from requests_oauthlib import OAuth2Session
+from urllib.parse import urlparse
 
 from ..database import db, Grader
 
@@ -27,14 +28,15 @@ class OAuthStart(Resource):
         is_authenticated: boolean
         """
         args = self.get_parser.parse_args()
-        if not args.userurl:
-            args = {'userurl': url_for('index')}
+        if args.userurl:
+            args.userurl = urlparse(args.userurl).path
+        session['oauth_userurl'] = args.userurl or url_for('index')
 
         if current_app.config['LOGIN_DISABLED']:
-            authorization_url, state = url_for('zesje.oauthcallback', **args), 'state'
+            authorization_url, state = url_for('zesje.oauthcallback'), 'state'
         else:
             oauth2_session = OAuth2Session(current_app.config['OAUTH_CLIENT_ID'],
-                                           redirect_uri=url_for('zesje.oauthcallback', **args, _external=True),
+                                           redirect_uri=url_for('zesje.oauthcallback', _external=True),
                                            scope=current_app.config['OAUTH_SCOPES'])
             # add prompt='login' below to force surf conext to ask for login everytime disabling single sign-on, see:
             # https://wiki.surfnet.nl/display/surfconextdev/OpenID+Connect+features#OpenIDConnectfeatures-Prompt=login
@@ -43,13 +45,7 @@ class OAuthStart(Resource):
 
         session['oauth_state'] = state
 
-        return {
-            'redirect_oauth': authorization_url,
-            'provider': current_app.config['OAUTH_PROVIDER'],
-            'state': state,
-            'is_authenticated': current_user.is_authenticated,
-            'oauth_id_field': current_app.config['OAUTH_ID_FIELD']
-        }
+        return redirect(authorization_url)
 
 
 class OAuthCallback(Resource):
@@ -64,7 +60,9 @@ class OAuthCallback(Resource):
         -------
         redirect to /
         """
-        userurl = self.get_parser.parse_args().userurl or url_for('index')
+        userurl = session['oauth_userurl']
+        del session['oauth_userurl']
+
         if current_app.config['LOGIN_DISABLED']:
             login_user(Grader.query.first())
             return redirect(userurl)
@@ -100,23 +98,34 @@ class OAuthCallback(Resource):
         return redirect(userurl)
 
 
-class OAuthGrader(Resource):
+class OAuthStatus(Resource):
     def get(self):
-        """returns details of the current grader logged in
+        """returns the current oauth status
 
         Returns
         -------
-        id: str
-        name: str
-        oauth_id: str
+        grader: {
+            id: str
+            name: str
+            oauth_id: str
+        }
+        provider: str
+        oauth_id_field:
         """
         if not current_user.is_authenticated:
-            return dict(status=401, message="Not logged in"), 401
+            return dict(
+                status=401,
+                provider=current_app.config['OAUTH_PROVIDER'],
+            ), 401
 
         return dict(
-            id=current_user.id,
-            name=current_user.name,
-            oauth_id=current_user.oauth_id
+            grader=dict(
+                id=current_user.id,
+                name=current_user.name,
+                oauth_id=current_user.oauth_id
+            ),
+            provider=current_app.config['OAUTH_PROVIDER'],
+            oauth_id_field=current_app.config['OAUTH_ID_FIELD'],
         )
 
 

@@ -7,7 +7,6 @@ import * as api from '../api.jsx'
 import HelpModal from './help/HelpModal.jsx'
 import shortcutsMarkdown from './help/ShortcutsHelp.md'
 import gradingPolicyMarkdown from './help/GradingPolicyHelp.md'
-import Login from './Login.jsx'
 
 const BurgerButton = (props) => (
   <button
@@ -62,7 +61,14 @@ const GraderDropdown = (props) => {
   if (!props.grader) {
     return (
       <div className='navbar-item'>
-        <Login />
+        <a className='button is-link' href={'/api/oauth/start?userurl=' + window.location.pathname}>
+          <span className='icon'>
+            <i className='fa fa-user' aria-hidden='true' />
+          </span>
+          <span>
+            Login with {props.loginProvider}
+          </span>
+        </a>
       </div>
     )
   }
@@ -147,7 +153,8 @@ class NavBar extends React.Component {
     examList: [],
     grader: null,
     helpPage: null,
-    examID: null
+    examID: null,
+    loginProvider: ''
   }
 
   componentDidUpdate = (prevProps, prevState) => {
@@ -157,13 +164,23 @@ class NavBar extends React.Component {
   }
 
   componentDidMount = () => {
-    api.get('oauth/grader').then(grader => {
-      console.log(grader)
-      this.setState({ grader })
-      this.props.setGrader(grader)
+    api.get('oauth/status').then(status => {
+      this.setState({
+        grader: status.grader,
+        loginProvider: status.provider
+      })
+      this.props.setGrader(status.grader)
       this.updateExamList()
-    }).catch(e => {
-      console.log('Not logged in.')
+    }).catch(err => {
+      if (err.status === 401) {
+        err.json().then(status => {
+          this.setState({
+            loginProvider: status.provider
+          })
+        })
+      } else {
+        console.log(err)
+      }
     })
   }
 
@@ -270,7 +287,7 @@ class NavBar extends React.Component {
           </div>
 
           <div className='navbar-end'>
-            <GraderDropdown grader={this.state.grader} logout={this.logout} />
+            <GraderDropdown grader={this.state.grader} logout={this.logout} loginProvider={this.state.loginProvider}/>
           </div>
 
         </div>

@@ -2,6 +2,8 @@ MYSQL_DATABASE = 'course_test'
 
 SECRET_KEY = 'test_secret_key'
 
+PROXY_COUNT = 0
+
 LOGIN_DISABLED = True
 
 OWNER_OAUTH_ID = 'test@test'

@@ -73,7 +73,7 @@ test_py:
   <<: *conda-env
   stage: test
   services:
-    - mysql:5.7
+    - mysql:8.0
   variables:
     MYSQL_DATABASE: "course_test"
     MYSQL_ALLOW_EMPTY_PASSWORD: "yes"

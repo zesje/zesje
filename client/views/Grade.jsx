@@ -81,7 +81,7 @@ class Grade extends React.Component {
       }
 
       const examID = metadata.exam_id
-      if (!(metadata.submissions.length & metadata.problems.length)) {
+      if (!(metadata.submissions.length && metadata.problems.length)) {
         this.setState({
           submission: null,
           problem: null,

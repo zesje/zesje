@@ -480,6 +480,8 @@ def create_exams(app,
                  grade,
                  multiple_copies,
                  skip_processing=False):
+
+    client.get('/api/oauth/start')
     # create graders
     for _ in range(max(1, graders)):
         name = names.get_full_name()

@@ -6,6 +6,9 @@ PROXY_COUNT = 0
 
 LOGIN_DISABLED = True
 
+# Allow cookies over http during testing
+SESSION_COOKIE_SECURE = False
+
 OWNER_OAUTH_ID = 'test@test'
 OWNER_NAME = 'test'
 

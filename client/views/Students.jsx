@@ -1,4 +1,5 @@
 import React from 'react'
+import ReactDOMServer from 'react-dom/server'
 import { toast } from 'bulma-toast'
 
 import * as api from '../api.jsx'
@@ -14,6 +15,30 @@ import SearchPanel from './students/SearchPanel.jsx'
 import EditPanel from './students/EditPanel.jsx'
 
 import '../components/SubmissionNavigation.css'
+
+const ConfirmMergeModal = (props) => {
+  let msg = ''
+  if (props.student) {
+    const other = props.copies.filter(c => c.student.id === props.student.id)
+
+    msg = <p>Student #{props.student.id} is already matched with {other.length > 1 ? 'copies' : 'copy'}&nbsp;
+      {other.reduce((prev, c, index) =>
+        prev + `${c.number}${index < other.length - 2 ? ', ' : (index === other.length - 1 ? '' : ' and ')}`, '')}.
+      &nbsp;This action will merge them which might affect the total score of the problem.&nbsp;
+      Moreover, the solution will have to be approved again.<br/>
+      Note that this action <b>cannot be undone</b>.</p>
+  }
+
+  return <ConfirmationModal
+    headerText={'Are you sure you want to merge these copies?'}
+    contentText={msg}
+    color='is-danger'
+    confirmText='Merge copies'
+    active={props.student !== null}
+    onConfirm={props.onConfirm}
+    onCancel={props.onCancel}
+  />
+}
 
 class CheckStudents extends React.Component {
   state = {
@@ -132,13 +157,14 @@ class CheckStudents extends React.Component {
           this.fetchCopy(this.state.index)
           this.nextUnchecked()
 
+          const msg = <p>Student matched with copy {this.state.copies[this.state.index].number}, go to&nbsp;
+            <a href={`/exams/${this.state.examID}/grade/${resp.new_submission}`}>Grade</a>&nbsp;
+            to approve the merged submission.</p>
+
           toast({
-            message: `<p>Student matched with copy ${this.state.copies[this.state.index].number}, go to ` +
-              `<a href='/exams/${this.state.examID}/grade/${resp.new_submission}'>Grade</a> ` +
-              'to approve the merged submission.</p>',
-            type: 'is-warning'
+            message: ReactDOMServer.renderToString(msg),
+            type: 'is-success'
           })
-          console.log('toast should show up')
         })
         .catch(err => {
           err.json().then(res => {
@@ -279,17 +305,9 @@ class CheckStudents extends React.Component {
                 : null}
             </div>
 
-            <ConfirmationModal
-              headerText={'Are you sure you want to merge these copies?'}
-              contentText={`Student #${this.state.matchedStudent ? this.state.matchedStudent.id : -1} is already ` +
-                `matched with copies ${this.state.copies.filter(
-                  c => c.student.id === (this.state.matchedStudent ? this.state.matchedStudent.id : -1))
-                  .reduce((prev, c, index) => prev + `${c.number}, `, '')}` +
-                '. This action will merge them which might affect the total score of the problem. ' +
-                'Moreover, the score of the final solution will have to be approved again.'}
-              color='is-danger'
-              confirmText='Merge copies'
-              active={this.state.matchedStudent !== null}
+            <ConfirmMergeModal
+              student={this.state.matchedStudent}
+              copies={this.state.copies}
               onConfirm={() => this.matchStudent(this.state.matchedStudent, true)}
               onCancel={() => { this.setState({ matchedStudent: null }) }}
             />

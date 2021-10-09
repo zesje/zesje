@@ -23,6 +23,9 @@ DEBUG = 1
 # Secret key required for flask.session
 SECRET_KEY = os.urandom(25)
 
+# Allow cookies over http on dev server
+SESSION_COOKIE_SECURE = False
+
 # Instance owner details
 OWNER_OAUTH_ID = 'admin@admin'
 OWNER_NAME = 'admin'

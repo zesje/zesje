@@ -35,6 +35,11 @@ SECRET_KEY = None
 EXEMPT_ROUTES = ['zesje.oauthstart', 'zesje.oauthcallback', 'zesje.oauthstatus']
 EXEMPT_METHODS = ['OPTIONS']
 
+# Prevent CSRF
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SECURE = True
+SESSION_COOKIE_SAMESITE = 'Lax'
+
 # Instance owner details
 OWNER_OAUTH_ID = None
 OWNER_NAME = None

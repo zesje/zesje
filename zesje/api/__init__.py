@@ -1,5 +1,3 @@
-from functools import wraps
-
 from flask import current_app, request, Blueprint
 from flask_restful import Api
 from flask_login import current_user
@@ -24,34 +22,32 @@ from . import images
 from . import export
 
 
-def authenticate(func):
-    """
-    Function decorator that checks if the user is logged in before executing the actual function.
-    If the user is not logged in it returns a 401 UNAUTHORIZED response.
-    If the endpoint belongs to the exempt routes, the method belongs to the exempt methods or
-    login is disabled (useful during development) the function is executed without checking for authentication.
+def authenticate():
+    """Checks if the user is logged in before proceding with the request.
+
+    A 401 UNAUTHORIZED response is returned when all the following conditions are true:
+    - The endpoint belongs to the exempt routes
+    - The method belongs to the exempt methods
+    - Login is not disabled (only during testing)
+    - There is no logged in user.
+
+    Note: returning `None` makes flask continue with the request.
 
     See Also
     --------
     `flask_login.login_required
     https://flask-login.readthedocs.io/en/latest/_modules/flask_login/utils.html#login_required`_
     """
-    @wraps(func)
-    def decorated_view(*args, **kwargs):
-        if request.endpoint in current_app.config['EXEMPT_ROUTES'] \
-                or request.method in current_app.config['EXEMPT_METHODS']:
-            return func(*args, **kwargs)
-        elif current_app.config.get('LOGIN_DISABLED'):
-            return func(*args, **kwargs)
-        elif not current_user.is_authenticated:
-            return current_app.login_manager.unauthorized()
-        return func(*args, **kwargs)
-    return decorated_view
+    if request.endpoint not in current_app.config['EXEMPT_ROUTES'] \
+            and request.method not in current_app.config['EXEMPT_METHODS'] \
+            and not current_app.config.get('LOGIN_DISABLED') and not current_user.is_authenticated:
+        return current_app.login_manager.unauthorized()
 
 
 api_bp = Blueprint('zesje', __name__)
+api_bp.before_request(authenticate)
 
-api = Api(api_bp, decorators=[authenticate])
+api = Api(api_bp)
 
 api.add_resource(Graders, '/graders')
 api.add_resource(Exams, '/exams', '/exams/<int:exam_id>', '/exams/<int:exam_id>/<string:attr>')

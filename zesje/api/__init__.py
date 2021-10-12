@@ -26,8 +26,8 @@ def authenticate():
     """Checks if the user is logged in before proceding with the request.
 
     A 401 UNAUTHORIZED response is returned when all the following conditions are true:
-    - The endpoint belongs to the exempt routes
-    - The method belongs to the exempt methods
+    - The endpoint does not belong to the exempt routes
+    - The method does not belong to the exempt methods
     - Login is not disabled (only during testing)
     - There is no logged in user.
 

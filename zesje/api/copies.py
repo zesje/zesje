@@ -126,7 +126,7 @@ class Copies(Resource):
         db.session.commit()
         return dict(status=200,
                     message=f'Student {student.id} matched to copy {copy.number}',
-                    new_submission=new_submission.id), 200
+                    new_submission_id=new_submission.id), 200
 
 
 def is_exactly_blank(solution):

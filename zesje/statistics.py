@@ -103,16 +103,16 @@ def full_exam_data(exam_id):
                 feedback_keys[fo.id] = (key, f'{fo.text} ({fo.id})')
             else:
                 feedback_keys[fo.id] = (key, fo.text)
-            columns[feedback_keys[fo.id]] = 'float16'
-        columns[(key, 'total')] = 'float16'
-    columns[('total', 'total')] = 'float16'
+            columns[feedback_keys[fo.id]] = 'int'
+        columns[(key, 'total')] = 'int'
+    columns[('total', 'total')] = 'int'
 
     if not student_ids:
         # No students were assigned.
         return pandas.DataFrame(columns=pandas.MultiIndex.from_tuples(columns.keys()))
 
     df = pandas.DataFrame(
-        index=pandas.Index([id for id, in student_ids], name='Student ID', dtype='int64'),
+        index=pandas.Index([id for id, in student_ids], name='Student ID', dtype='int'),
         columns=pandas.MultiIndex.from_tuples(columns.keys())
     )
 
@@ -134,7 +134,8 @@ def full_exam_data(exam_id):
 
         df.loc[student['id'], ('total', 'total')] = student['total']
 
-    df = df.astype(dtype=columns)  # set column types
+    # NaN cannot be converted to an integer directly
+    df = df.fillna(0).astype(dtype=columns)  # set column types
 
     return df
 

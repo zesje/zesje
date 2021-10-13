@@ -1,4 +1,5 @@
 import React from 'react'
+import ReactDOMServer from 'react-dom/server'
 import { toast } from 'bulma-toast'
 
 import * as api from '../api.jsx'
@@ -7,6 +8,7 @@ import Hero from '../components/Hero.jsx'
 import ProgressBar from '../components/ProgressBar.jsx'
 import SearchBox from '../components/SearchBox.jsx'
 import withShortcuts from '../components/ShortcutBinder.jsx'
+import ConfirmationModal from '../components/ConfirmationModal.jsx'
 import Fail from './Fail.jsx'
 
 import SearchPanel from './students/SearchPanel.jsx'
@@ -14,10 +16,39 @@ import EditPanel from './students/EditPanel.jsx'
 
 import '../components/SubmissionNavigation.css'
 
+const ConfirmMergeModal = (props) => {
+  if (!props.student) return null
+
+  let msg = ''
+  const other = props.copies.filter(c => c.student.id === props.student.id)
+
+  msg = <p>
+    Student #{props.student.id} is already matched with {other.length > 1 ? 'copies' : 'copy'}&nbsp;
+    {other.reduce((prev, c, index) =>
+      prev + `${c.number}${index < other.length - 2 ? ', ' : (index === other.length - 1 ? '' : ' and ')}`, '')}.
+    &nbsp;This action will merge {other.length > 1 ? 'them' : 'it'}
+    &nbsp;with this copy which might affect the total score of the problem.
+    &nbsp;Moreover, the solution will have to be approved again.
+    <br/>
+    Note that this action <b>cannot be undone</b>.
+  </p>
+
+  return <ConfirmationModal
+    headerText={'Are you sure you want to merge these copies?'}
+    contentText={msg}
+    color='is-danger'
+    confirmText='Merge copies'
+    active
+    onConfirm={props.onConfirm}
+    onCancel={props.onCancel}
+  />
+}
+
 class CheckStudents extends React.Component {
   state = {
     editActive: false,
     editStud: null,
+    confirmStudent: null,
     index: 0,
     copies: [],
     examID: undefined // The exam ID the loaded copies belong to
@@ -116,20 +147,37 @@ class CheckStudents extends React.Component {
     }
   }
 
-  matchStudent = (stud) => {
+  matchStudent = (stud, force = false) => {
     if (!this.state.copies) return
 
-    api.put(`copies/${this.props.examID}/${this.state.copies[this.state.index].number}`, { studentID: stud.id })
-      .then(resp => {
-        // TODO When do we want to update the full list of copies?
-        this.fetchCopy(this.state.index)
-        this.nextUnchecked()
-      })
-      .catch(err => {
-        err.json().then(res => {
-          toast({ message: `Failed to validate copy: ${res.message}`, type: 'is-danger' })
+    const hasOtherCopies = this.state.copies.filter(c => c.student.id === stud.id).length > 0
+    if (hasOtherCopies && !force) {
+      this.setState({ confirmStudent: stud })
+    } else {
+      api.put(`copies/${this.props.examID}/${this.state.copies[this.state.index].number}`, { studentID: stud.id })
+        .then(resp => {
+          // TODO When do we want to update the full list of copies?
+          if (this.state.confirmStudent !== null) this.setState({ confirmStudent: null })
+          this.fetchCopy(this.state.index)
+          this.nextUnchecked()
+
+          const msg = <p>Student matched with copy {this.state.copies[this.state.index].number}, go to&nbsp;
+            <a href={`/exams/${this.state.examID}/grade/${resp.new_submission_id}`}>Grade</a>&nbsp;
+            to approve the merged submission.</p>
+
+          toast({
+            message: ReactDOMServer.renderToString(msg),
+            type: 'is-success',
+            pauseOnHover: true,
+            duration: 5000
+          })
         })
-      })
+        .catch(err => {
+          err.json().then(res => {
+            toast({ message: `Failed to validate copy: ${res.message}`, type: 'is-danger' })
+          })
+        })
+    }
   }
 
   toggleEdit = (student) => {
@@ -262,6 +310,13 @@ class CheckStudents extends React.Component {
                 </div>
                 : null}
             </div>
+
+            <ConfirmMergeModal
+              student={this.state.confirmStudent}
+              copies={this.state.copies}
+              onConfirm={() => this.matchStudent(this.state.confirmStudent, true)}
+              onCancel={() => { this.setState({ confirmStudent: null }) }}
+            />
           </div>
         </section>
 

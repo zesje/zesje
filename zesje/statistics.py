@@ -84,8 +84,8 @@ def full_exam_data(exam_id):
     feedback_keys = {}
 
     columns = OrderedDict()
-    columns[('First name', '')] = 'object'
-    columns[('Last name', '')] = 'object'
+    columns[('First name', '')] = 'string'
+    columns[('Last name', '')] = 'string'
     for problem in exam.problems:  # Sorted by problem.id
         if problem.name in problem_keys.values():
             key = f'{problem.name} ({problem.id})'
@@ -97,7 +97,7 @@ def full_exam_data(exam_id):
             # There is no possible feedback for this problem.
             continue
 
-        columns[(key, 'remarks')] = 'object'
+        columns[(key, 'remarks')] = 'string'
         for fo in problem.feedback_options:
             if (key, fo.text) in feedback_keys.values():
                 feedback_keys[fo.id] = (key, f'{fo.text} ({fo.id})')

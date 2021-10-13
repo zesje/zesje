@@ -21,8 +21,10 @@ from . import signature
 from . import images
 from . import export
 
+from ..constants import EXEMPT_ROUTES, EXEMPT_METHODS
 
-def authenticate():
+
+def check_user_login():
     """Checks if the user is logged in before proceding with the request.
 
     A 401 UNAUTHORIZED response is returned when all the following conditions are true:
@@ -38,14 +40,16 @@ def authenticate():
     `flask_login.login_required
     https://flask-login.readthedocs.io/en/latest/_modules/flask_login/utils.html#login_required`_
     """
-    if request.endpoint not in current_app.config['EXEMPT_ROUTES'] \
-            and request.method not in current_app.config['EXEMPT_METHODS'] \
-            and not current_app.config.get('LOGIN_DISABLED') and not current_user.is_authenticated:
+    if current_app.config.get('LOGIN_DISABLED'):
+        return None
+    elif request.endpoint in EXEMPT_ROUTES or request.method in EXEMPT_METHODS:
+        return None
+    elif not current_user.is_authenticated:
         return current_app.login_manager.unauthorized()
 
 
 api_bp = Blueprint('zesje', __name__)
-api_bp.before_request(authenticate)
+api_bp.before_request(check_user_login)
 
 api = Api(api_bp)
 

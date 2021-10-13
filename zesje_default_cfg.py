@@ -31,10 +31,6 @@ LOGIN_DISABLED = False
 # Secret key required for flask.session
 SECRET_KEY = None
 
-# Routes exempted from authentication
-EXEMPT_ROUTES = ['zesje.oauthstart', 'zesje.oauthcallback', 'zesje.oauthstatus']
-EXEMPT_METHODS = ['OPTIONS']
-
 # Prevent CSRF
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SECURE = True

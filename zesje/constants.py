@@ -56,3 +56,7 @@ THRESHOLD_BLANK = 210
 THRESHOLD_CORNER_MARKER = 175
 THRESHOLD_MCQ = 175
 THRESHOLD_MISALIGMENT = 175
+
+# Routes exempted from authentication
+EXEMPT_ROUTES = ['zesje.oauthstart', 'zesje.oauthcallback', 'zesje.oauthstatus']
+EXEMPT_METHODS = ['OPTIONS']

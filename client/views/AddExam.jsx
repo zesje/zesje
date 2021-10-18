@@ -11,7 +11,7 @@ const LAYOUTS = [
     name: 'Templated',
     value: 'templated',
     acceptsPDF: true,
-    description: 'Upload a PDF, add student ID field and page markers, and distribute to students.' +
+    description: 'Upload a PDF, add student ID field and page markers, and distribute to students. ' +
                  'Supports automated student identification, blank detection, and multiple choice questions.'
   },
   {

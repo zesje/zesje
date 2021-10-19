@@ -1,7 +1,7 @@
 import React from 'react'
 import EmptyPDF from '../components/EmptyPDF.jsx'
 
-import { Document, Page } from 'react-pdf'
+import { Document, Page } from 'react-pdf/dist/esm/entry.webpack'
 
 class GeneratedExamPreview extends React.Component {
   render = () => {

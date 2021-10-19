@@ -1,4 +1,5 @@
 import React from 'react'
+import ReactDOMServer from 'react-dom/server'
 
 import { toast } from 'bulma-toast'
 import Dropzone from 'react-dropzone'
@@ -124,7 +125,7 @@ class EditPanel extends React.Component {
       }).catch(resp => {
         resp.json().then(r => toast({
           message: r.message,
-          duration: 60000,
+          duration: 10000,
           type: 'is-danger'
         }))
       })
@@ -154,11 +155,11 @@ class EditPanel extends React.Component {
           ))
           let message = (
             <p>
-              Succesfully processed <b>{totalSuccess} / {total}</b> students. A total of {sentence}.
+              Succesfully processed <b>{totalSuccess}/{total}</b> students. A total of {sentence}.
             </p>
           )
           if (resp.failed === 0) {
-            toast({ message: message, duration: 10000, type: 'is-success' })
+            toast({ message: ReactDOMServer.renderToString(message), duration: 10000, type: 'is-success' })
           } else {
             message = (
               <div className='content'>
@@ -173,12 +174,17 @@ class EditPanel extends React.Component {
                 </ul>
               </div>
             )
-            toast({ message: message, duration: 60000, type: 'is-warning' })
+            toast({
+              message: ReactDOMServer.renderToString(message),
+              duration: 60000,
+              type: 'is-warning',
+              position: 'center'
+            })
           }
         })
         .catch(resp => {
           console.error('failed to upload student CSV file')
-          resp.json().then(r => toast({ message: r.message, duration: 60000, type: 'is-danger' }))
+          resp.json().then(r => toast({ message: r.message, duration: 10000, type: 'is-danger' }))
         })
     })
   }

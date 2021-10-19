@@ -7,7 +7,7 @@ import * as api from '../../api.jsx'
 const templateSaveError = message => (
   toast({
     message: message || 'Unable to save template',
-    duration: 3000,
+    duration: 10000,
     type: 'is-danger'
   })
 )

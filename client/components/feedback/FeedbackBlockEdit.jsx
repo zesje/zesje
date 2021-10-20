@@ -228,7 +228,9 @@ class EditPanel extends React.Component {
             onCancel={() => { this.setState({ deleting: false }) }}
           />
         </div>
-        {children && children.length > 0 ? <ul className='menu-list'> {children} </ul> : null}
+        <li>
+          {children && children.length > 0 ? <ul className='menu-list'> {children} </ul> : null}
+        </li>
       </React.Fragment>
     )
   }

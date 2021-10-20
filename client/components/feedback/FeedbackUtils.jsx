@@ -58,6 +58,7 @@ const FeedbackItem = (props) => {
       showIndex={props.showTooltips}
       filterMode={(props.grading && props.feedbackFilters[feedbackID]) || 'no_filter'}
       applyFilter={(e, newFilterMode) => props.applyFilter(e, feedbackID, newFilterMode)}
+      exclusive={props.exclusive}
       parentProps={props} />
     : <FeedbackBlockEdit
       key={'item-' + feedbackID}

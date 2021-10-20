@@ -87,11 +87,13 @@ class FeedbackMenu extends React.Component {
   }
 
   render () {
+    const rootFO = this.state.indexedFeedback[this.props.problem.root_feedback_id]
+
     return (
       <React.Fragment>
         <div className='panel-block' style={{ display: 'block' }}>
           <div className='menu'>
-            {this.state.indexedFeedback[this.props.problem.root_feedback_id].children.map((id) =>
+            {rootFO.children.map((id) =>
               <ul className='menu-list' key={'ul-' + id}>
                 <FeedbackItem
                   feedbackID={id}
@@ -102,6 +104,7 @@ class FeedbackMenu extends React.Component {
                   updateFeedback={this.props.updateFeedback}
                   feedbackToEditId={this.state.feedbackToEditId}
                   grading={this.props.grading}
+                  exclusive={rootFO.exclusive}
                   // only necessary when grading
                   checkedFeedback={this.props.grading && this.props.solution.feedback}
                   toggleOption={this.props.toggleOption}

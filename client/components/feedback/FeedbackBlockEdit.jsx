@@ -2,6 +2,7 @@ import React from 'react'
 
 import ConfirmationModal from '../ConfirmationModal.jsx'
 import ColorInput from '../ColorInput.jsx'
+import Switch from '../Switch.jsx'
 import * as api from '../../api.jsx'
 import { toast } from 'bulma-toast'
 
@@ -39,6 +40,7 @@ class EditPanel extends React.Component {
     name: '',
     description: '',
     score: '',
+    exclusive: null,
     deleting: false
   }
 
@@ -53,6 +55,7 @@ class EditPanel extends React.Component {
         description: fb.description === null ? '' : fb.description,
         score: fb.score,
         parent: fb.parent,
+        exclusive: fb.children.length > 0 ? fb.exclusive : null,
         updateCallback: updateCallback
       }
     }
@@ -87,7 +90,8 @@ class EditPanel extends React.Component {
       name: this.state.name,
       description: this.state.description,
       score: this.state.score,
-      parent: this.props.parent ? this.props.parent.id : null
+      parent: this.props.parent ? this.props.parent.id : null,
+      exclusive: this.state.exclusive !== null ? this.state.exclusive : null
     }
 
     if (this.state.id) {
@@ -107,7 +111,8 @@ class EditPanel extends React.Component {
             name: '',
             description: '',
             score: '',
-            parent: null
+            parent: null,
+            exclusive: null
           })
         })
     }
@@ -137,7 +142,8 @@ class EditPanel extends React.Component {
   render () {
     const children = this.props.feedback !== null
       ? this.props.feedback.children.map(
-        (id) => <FeedbackItem {...this.props.parentProps} feedbackID={id} key={'child-' + id} />
+        (id) => <FeedbackItem {...this.props.parentProps}
+          feedbackID={id} key={'child-' + id} exclusive={this.state.exclusive} />
       )
       : null
 
@@ -194,6 +200,20 @@ class EditPanel extends React.Component {
             </div>
           </div>
         </div>
+        {this.state.exclusive !== null &&
+          <div className={this.props.parent !== null ? 'panel-block attach-bottom' : ''}>
+            <div className='field is-grouped is-fullwidth'>
+              <p className='control is-expanded'>
+                <label className='label'>Exclusive children</label>
+              </p>
+                <Switch
+                  color='link'
+                  value={this.state.exclusive}
+                  onChange={(e) => this.setState({ exclusive: !this.state.exclusive })}
+                />
+            </div>
+          </div>
+        }
         <div className={this.props.parent !== null ? 'panel-block' : ''}>
           <div className={'flex-space-between is-fullwidth'}>
             <div className={'buttons is-marginless'}>
@@ -228,7 +248,9 @@ class EditPanel extends React.Component {
             onCancel={() => { this.setState({ deleting: false }) }}
           />
         </div>
-        {children && children.length > 0 ? <ul className='menu-list'> {children} </ul> : null}
+        <li>
+          {children && children.length > 0 ? <ul className='menu-list'> {children} </ul> : null}
+        </li>
       </React.Fragment>
     )
   }

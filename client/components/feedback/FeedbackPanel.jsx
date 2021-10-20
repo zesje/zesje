@@ -22,7 +22,7 @@ class FeedbackPanel extends React.Component {
   static getDerivedStateFromProps (nextProps, prevState) {
     if (prevState.problemID !== nextProps.problem.id || prevState.submissionID !== nextProps.submissionID) {
       return {
-        remark: nextProps.grading && nextProps.solution.remark,
+        remark: nextProps.solution.remark,
         submissionID: nextProps.submissionID,
         problemID: nextProps.problem.id
       }
@@ -60,51 +60,45 @@ class FeedbackPanel extends React.Component {
 
   render () {
     let totalScore = 0
-    if (this.props.grading) {
-      for (let i = 0; i < this.props.solution.feedback.length; i++) {
-        totalScore += this.props.problem.feedback[this.props.solution.feedback[i]].score
-      }
+    for (let i = 0; i < this.props.solution.feedback.length; i++) {
+      totalScore += this.props.problem.feedback[this.props.solution.feedback[i]].score
     }
 
     return (
       <>
-        {this.props.grading &&
-          <div className='panel-heading level' style={{ marginBottom: 0 }}>
-            <div className='level-left'>
-              {this.props.solution.feedback.length !== 0 && <p>Total:&nbsp;<b>{totalScore}</b></p>}
-            </div>
-            <div className='level-right'>
-              <div
-                className={'has-tooltip-arrow' + (this.props.showTooltips ? ' has-tooltip-active' : '')}
-                data-tooltip='approve/set aside feedback: a'
+        <div className='panel-heading level' style={{ marginBottom: 0 }}>
+          <div className='level-left'>
+            {this.props.solution.feedback.length !== 0 && <p>Total:&nbsp;<b>{totalScore}</b></p>}
+          </div>
+          <div className='level-right'>
+            <div
+              className={'has-tooltip-arrow' + (this.props.showTooltips ? ' has-tooltip-active' : '')}
+              data-tooltip='approve/set aside feedback: a'
+            >
+              <button
+                title={
+                  this.props.solution.feedback.length === 0 ? 'At least one feedback option must be selected' : ''
+                }
+                className='button is-info'
+                disabled={this.props.solution.feedback.length === 0}
+                onClick={this.props.toggleApprove}
               >
-                <button
-                  title={
-                    this.props.solution.feedback.length === 0 ? 'At least one feedback option must be selected' : ''
-                  }
-                  className='button is-info'
-                  disabled={this.props.solution.feedback.length === 0}
-                  onClick={this.props.toggleApprove}
-                >
-                  {this.props.solution.graded_by === null ? 'Approve' : 'Set aside'}
-                </button>
-              </div>
+                {this.props.solution.graded_by === null ? 'Approve' : 'Set aside'}
+              </button>
             </div>
           </div>
-        }
-        <FeedbackMenu {...this.props} />
-        {this.props.grading &&
-          <div className='panel-block'>
-            <textarea
-              className='textarea'
-              rows='2'
-              placeholder='Remark'
-              value={this.state.remark}
-              onBlur={this.saveRemark}
-              onChange={this.changeRemark}
-              onKeyDown={this.keyMap} />
-          </div>
-        }
+        </div>
+        <FeedbackMenu {...this.props} grading />
+        <div className='panel-block'>
+          <textarea
+            className='textarea'
+            rows='2'
+            placeholder='Remark'
+            value={this.state.remark}
+            onBlur={this.saveRemark}
+            onChange={this.changeRemark}
+            onKeyDown={this.keyMap} />
+        </div>
       </>
     )
   }

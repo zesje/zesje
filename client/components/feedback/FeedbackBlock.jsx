@@ -38,7 +38,8 @@ class FeedbackBlock extends React.Component {
 
   render () {
     const children = this.props.feedback.children.map(
-      (id) => <FeedbackItem {...this.props.parentProps} feedbackID={id} key={'child-' + id} />
+      (id) => <FeedbackItem {...this.props.parentProps}
+        feedbackID={id} key={'child-' + id} exclusive={this.props.feedback.exclusive} />
     )
     const shortcut = (this.props.feedback.index < 11 ? '' : 'shift + ') + this.props.feedback.index % 10
 
@@ -53,6 +54,7 @@ class FeedbackBlock extends React.Component {
           <span
             style={{ width: '1.5rem' }}
             className={'tag has-tooltip-left has-tooltip-arrow' +
+              (this.props.exclusive ? ' is-circular' : '') +
               (this.props.checked ? ' is-link' : '') +
               ((this.props.showIndex && this.props.feedback.index <= 20)
                 ? ' has-tooltip-active'

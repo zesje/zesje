@@ -210,7 +210,7 @@ class FeedbackOption(db.Model):
     mc_option = db.relationship('MultipleChoiceOption', backref=backref('feedback', cascade='all'),
                                 cascade='all', uselist=False, lazy=True)
     parent_id = Column(Integer, ForeignKey('feedback_option.id'), nullable=True)
-    # possible future extension: mut_excl_children = Column(Boolean, nullable=True)
+    mut_excl_children = Column(Boolean, nullable=False, server_default='0')
     children = db.relationship("FeedbackOption", backref=backref('parent', remote_side=[id]), cascade='all, delete')
 
     @property
@@ -227,6 +227,7 @@ class FeedbackOption(db.Model):
         while next.parent is not None:
             yield next
             next = next.parent
+        yield next
 
 
 @event.listens_for(Problem, 'after_insert')

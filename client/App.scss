@@ -37,3 +37,8 @@ $fa-font-path: "~@fortawesome/fontawesome-free/webfonts";
   color: #bdbdbd;
   opacity: 0.6;
 }
+
+.tag.is-circular {
+  border-radius: 50%;
+  border-color: $info;
+}

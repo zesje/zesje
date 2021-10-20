@@ -563,7 +563,7 @@ class Grade extends React.Component {
                   <FeedbackPanel
                     examID={examID} submissionID={submission.id}
                     problem={problem} solution={solution}
-                    showTooltips={this.state.showTooltips} grading
+                    showTooltips={this.state.showTooltips}
                     setSubmission={this.updateSubmission}
                     toggleOption={this.toggleFeedbackOption}
                     toggleApprove={this.toggleApprove}

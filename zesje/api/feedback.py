@@ -2,8 +2,10 @@
 
 from flask_restful import Resource, reqparse
 from flask_restful.inputs import boolean
+from sqlalchemy import func
+import numpy as np
 
-from ..database import db, Problem, FeedbackOption, Solution
+from ..database import db, Problem, FeedbackOption, Solution, solution_feedback
 
 
 def feedback_to_data(feedback, full_children=True):
@@ -111,9 +113,25 @@ class Feedback(Resource):
 
         if args.exclusive is not None:
             if len(fb.children) == 0:
-                return dict(status=404,
+                return dict(status=409,
                             message="Tryed to modify the exclusive property on a feedback option with no children"), 404
-            # we might want to do this only when no solution has been graded
+            if not fb.mut_excl_children and args.exclusive:  # we go from non-exclusive to exclusive
+                # look at all solutions and ungrade those with inconsistencies
+                ids = [f.id for f in fb.children]
+                res = np.array(
+                    db.session.query(solution_feedback.c.solution_id,
+                                     func.count(solution_feedback.c.feedback_option_id))
+                    .filter(solution_feedback.c.feedback_option_id.in_(ids))
+                    .group_by(solution_feedback.c.solution_id).all())
+                invalid_solutions = list(res[res[:, 1] > 1][:, 0])
+                updated_rows = db.session.query(Solution)\
+                    .filter(Solution.id.in_(invalid_solutions))\
+                    .update({Solution.grader_id: None, Solution.graded_at: None}, synchronize_session="fetch")
+
+                if len(invalid_solutions) != updated_rows:
+                    return dict(status=404,
+                                message='Error changing the exclusive state.'), 404
+
             fb.mut_excl_children = args.exclusive
 
         fb.text = args.name

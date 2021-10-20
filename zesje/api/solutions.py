@@ -162,7 +162,7 @@ class Solutions(Resource):
 
         graded = len(solution.feedback)
 
-        if graded:
+        if graded and has_valid_feedback(solution.feedback):  # do not approve invalid feedback
             solution.graded_at = datetime.now()
             solution.graded_by = current_user
         else:

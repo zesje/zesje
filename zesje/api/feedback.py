@@ -1,6 +1,7 @@
 """ REST api for problems """
 
 from flask_restful import Resource, reqparse
+from flask_restful.inputs import boolean
 
 from ..database import db, Problem, FeedbackOption, Solution
 
@@ -13,7 +14,8 @@ def feedback_to_data(feedback, full_children=True):
         'score': feedback.score,
         'parent': feedback.parent_id,
         'used': len(feedback.solutions),
-        'children': [feedback_to_data(child) if full_children else child.id for child in feedback.children]
+        'children': [feedback_to_data(child) if full_children else child.id for child in feedback.children],
+        'exclusive': feedback.mut_excl_children
     }
 
 
@@ -89,6 +91,7 @@ class Feedback(Resource):
     put_parser.add_argument('name', type=str, required=True)
     put_parser.add_argument('description', type=str, required=False)
     put_parser.add_argument('score', type=int, required=False)
+    put_parser.add_argument('exclusive', type=boolean, required=False)
 
     def put(self, problem_id):
         """Modify an existing feedback option
@@ -105,6 +108,13 @@ class Feedback(Resource):
 
         if (fb := FeedbackOption.query.get(args.id)) is None:
             return dict(status=404, message=f"Feedback option with id #{args.id} does not exist"), 404
+
+        if args.exclusive is not None:
+            if len(fb.children) == 0:
+                return dict(status=404,
+                            message="Tryed to modify the exclusive property on a feedback option with no children"), 404
+            # we might want to do this only when no solution has been graded
+            fb.mut_excl_children = args.exclusive
 
         fb.text = args.name
         fb.description = args.description

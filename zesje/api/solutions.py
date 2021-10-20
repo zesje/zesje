@@ -9,6 +9,23 @@ from flask_login import current_user
 from ..database import db, Exam, Submission, Problem, Solution, FeedbackOption
 
 
+def has_valid_feedback(feedbacks):
+    """checks whether a list of FOs is valid according to the exclusivity of their corresponding parets."""
+    for fb in feedbacks:
+        # not very optimal as it might repeat the search of children multiple times for the same parent
+        if fb.parent.mut_excl_children and len([child for child in fb.parent.children if child in feedbacks]) > 1:
+            return False
+    return True
+
+
+def remove_feedback_from_solution(fb, solution):
+    """Removes a FO from a solution and all its selectec children"""
+    solution.feedback.remove(fb)
+    for descendant in fb.all_descendants:
+        if descendant in solution.feedback:
+            solution.feedback.remove(descendant)
+
+
 class Solutions(Resource):
     """ Solution provided on a specific problem and exam """
 
@@ -122,16 +139,25 @@ class Solutions(Resource):
             return dict(status=404, message='Feedback Option does not exist.'), 404
 
         if fb in solution.feedback:
-            solution.feedback.remove(fb)
-            for descendant in fb.all_descendants:
-                if descendant in solution.feedback:
-                    solution.feedback.remove(descendant)
+            remove_feedback_from_solution(fb, solution)
             state = False
         else:
-            solution.feedback.append(fb)
-            for ancestor in fb.all_ancestors:
-                if ancestor not in solution.feedback:
-                    solution.feedback.append(ancestor)
+            fb_child = fb
+            for parent in fb.all_ancestors:
+                # go up in the tree checking until we arrive at the top
+                if parent.mut_excl_children:
+                    # FOs are exclusive -> find other selected children with the same parent as the current `fb_child`
+                    other_checked_children = [child for child in parent.children if child in solution.feedback]
+                    if len(other_checked_children) > 0:  # if any, uncheck it
+                        # return dict(status=404, message='Another option is already checked.'), 404
+                        for other in other_checked_children:  # theoretically, there should be only one...
+                            remove_feedback_from_solution(other, solution)
+                if fb_child not in solution.feedback:  # and check the new one
+                    solution.feedback.append(fb_child)
+
+                # remember the current parent as it will be the child to add in the next iteration
+                fb_child = parent
+
             state = True
 
         graded = len(solution.feedback)
@@ -179,15 +205,19 @@ class Approve(Resource):
 
         graded = len(solution.feedback)
 
-        if graded:
-            if args.approve:
-                solution.graded_at = datetime.now()
-                solution.graded_by = current_user
-            else:
-                solution.graded_at = None
-                solution.graded_by = None
-            db.session.commit()
-        else:
+        if not graded:
             return dict(status=409, message='At least one feedback option must be selected.'), 409
+
+        if not has_valid_feedback(solution.feedback):
+            return dict(status=409, message='Multiple exclusive option are selected for the same parent.'), 409
+
+        if args.approve:
+            solution.graded_at = datetime.now()
+            solution.graded_by = current_user
+        else:
+            solution.graded_at = None
+            solution.graded_by = None
+
+        db.session.commit()
 
         return {'state': args.approve}

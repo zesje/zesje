@@ -51,7 +51,9 @@ class ExamRouter extends React.PureComponent {
         />
         <Route
           path='students' element={<Students examID={examID} />}
-        />
+        >
+          <Route path=':copyNumber' element={<Outlet />} />
+        </Route>
         <Route
           path='grade' element={<Grade examID={examID} />}
         >

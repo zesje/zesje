@@ -54,7 +54,7 @@ class FeedbackBlock extends React.Component {
           <span
             style={{ width: '1.5rem' }}
             className={'tag has-tooltip-left has-tooltip-arrow' +
-              (this.props.exclusive ? ' is-circular' : '') +
+              (this.props.exclusive ? ' is-circular' : ' is-squared') +
               (this.props.checked ? ' is-link' : '') +
               ((this.props.showIndex && this.props.feedback.index <= 20)
                 ? ' has-tooltip-active'

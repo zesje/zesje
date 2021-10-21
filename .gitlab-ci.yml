@@ -90,3 +90,6 @@ test_py:
       cobertura: cov.xml
       junit: tests.xml
     expire_in: 1 week
+
+include:
+  template: Jobs/SAST.gitlab-ci.yml

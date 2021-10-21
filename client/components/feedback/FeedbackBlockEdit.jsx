@@ -97,9 +97,19 @@ class EditPanel extends React.Component {
     if (this.state.id) {
       fb.id = this.state.id
       api.put(uri, fb)
-        .then(() => {
+        .then((response) => {
           this.state.updateCallback()
           this.props.goBack()
+
+          if (response.set_aside_solutions > 0) {
+            console.log('hola')
+            toast({
+              message: `${response.set_aside_solutions} solution${response.set_aside_solutions > 1 ? 's' : ''} have ` +
+                'been marked as ungraded due to incompatible feedback options.',
+              type: 'is-warning',
+              duration: 5000
+            })
+          }
         })
     } else {
       api.post(uri, fb)
@@ -248,9 +258,7 @@ class EditPanel extends React.Component {
             onCancel={() => { this.setState({ deleting: false }) }}
           />
         </div>
-        <li>
-          {children && children.length > 0 ? <ul className='menu-list'> {children} </ul> : null}
-        </li>
+        {children && children.length > 0 ? <li><ul className='menu-list'> {children} </ul></li> : null}
       </React.Fragment>
     )
   }

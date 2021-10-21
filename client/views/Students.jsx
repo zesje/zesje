@@ -20,7 +20,7 @@ const ConfirmMergeModal = (props) => {
   if (!props.student) return null
 
   let msg = ''
-  const other = props.copies.filter(c => c.student.id === props.student.id)
+  const other = props.copies.filter(c => c.student != null && c.student.id === props.student.id)
 
   msg = <p>
     Student #{props.student.id} is already matched with {other.length > 1 ? 'copies' : 'copy'}&nbsp;
@@ -150,7 +150,7 @@ class CheckStudents extends React.Component {
   matchStudent = (stud, force = false) => {
     if (!this.state.copies) return
 
-    const hasOtherCopies = this.state.copies.filter(c => c.student.id === stud.id).length > 0
+    const hasOtherCopies = this.state.copies.filter(c => c.student != null && c.student.id === stud.id).length > 0
     if (hasOtherCopies && !force) {
       this.setState({ confirmStudent: stud })
     } else {

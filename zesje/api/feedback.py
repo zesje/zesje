@@ -123,14 +123,15 @@ class Feedback(Resource):
                                      func.count(solution_feedback.c.feedback_option_id))
                     .filter(solution_feedback.c.feedback_option_id.in_(ids))
                     .group_by(solution_feedback.c.solution_id).all())
-                invalid_solutions = list(res[res[:, 1] > 1][:, 0])
-                updated_rows = db.session.query(Solution)\
-                    .filter(Solution.id.in_(invalid_solutions))\
-                    .update({Solution.grader_id: None, Solution.graded_at: None}, synchronize_session="fetch")
+                if len(res) > 0:
+                    invalid_solutions = list(res[res[:, 1] > 1][:, 0])
+                    updated_rows = db.session.query(Solution)\
+                        .filter(Solution.id.in_(invalid_solutions))\
+                        .update({Solution.grader_id: None, Solution.graded_at: None}, synchronize_session="fetch")
 
-                if len(invalid_solutions) != updated_rows:
-                    return dict(status=404,
-                                message='Error changing the exclusive state.'), 404
+                    if len(invalid_solutions) != updated_rows:
+                        return dict(status=404,
+                                    message='Error changing the exclusive state.'), 404
 
             fb.mut_excl_children = args.exclusive
 

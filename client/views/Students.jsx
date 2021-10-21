@@ -218,7 +218,6 @@ class CheckStudents extends React.Component {
         .then(resp => {
           // TODO When do we want to update the full list of copies?
           if (this.state.confirmStudent !== null) this.setState({ confirmStudent: null })
-          this.fetchCopy(this.state.index)
           if (!this.nextUnchecked()) this.updateFromUrl()
 
           const msg = <p>Student matched with copy {this.state.copies[this.state.index].number}, go to&nbsp;
@@ -270,8 +269,6 @@ class CheckStudents extends React.Component {
     const validated = copy && copy.validated
     const total = copies.length
     const done = copies.filter(c => c.validated).length
-
-    const hero = <Hero title='Match Students' subtitle='Check that all submissions are correctly identified' />
 
     if (this.state.examID === undefined && this) return hero
 

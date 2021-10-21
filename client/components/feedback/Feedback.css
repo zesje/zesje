@@ -45,3 +45,9 @@
 [data-tooltip].tag.has-tooltip-left.has-tooltip-arrow::after {
     left: -1px !important;
 }
+
+/* Remove the dashed bottom border introduced by span tags */
+span.tag {
+  border-style: solid;
+  border-width: 0.5px;
+}

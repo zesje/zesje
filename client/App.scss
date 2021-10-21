@@ -40,5 +40,10 @@ $fa-font-path: "~@fortawesome/fontawesome-free/webfonts";
 
 .tag.is-circular {
   border-radius: 50%;
-  border-color: $info;
+  border-color: $link;
+}
+
+.tag.is-squared {
+  border-radius: 2px;
+  border-color: $link;
 }

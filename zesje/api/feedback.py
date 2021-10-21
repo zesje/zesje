@@ -111,6 +111,8 @@ class Feedback(Resource):
         if (fb := FeedbackOption.query.get(args.id)) is None:
             return dict(status=404, message=f"Feedback option with id #{args.id} does not exist"), 404
 
+        set_aside_solutions = 0
+
         if args.exclusive is not None:
             if len(fb.children) == 0:
                 return dict(status=409,
@@ -125,13 +127,14 @@ class Feedback(Resource):
                     .group_by(solution_feedback.c.solution_id).all())
                 if len(res) > 0:
                     invalid_solutions = list(res[res[:, 1] > 1][:, 0])
-                    updated_rows = db.session.query(Solution)\
+                    set_aside_solutions = db.session.query(Solution)\
                         .filter(Solution.id.in_(invalid_solutions))\
                         .update({Solution.grader_id: None, Solution.graded_at: None}, synchronize_session="fetch")
 
-                    if len(invalid_solutions) != updated_rows:
+                    if len(invalid_solutions) != set_aside_solutions:
                         return dict(status=404,
-                                    message='Error changing the exclusive state.'), 404
+                                    message='Error changing the exclusive state of '
+                                            f'({len(invalid_solutions) - set_aside_solutions} solutions.'), 404
 
             fb.mut_excl_children = args.exclusive
 
@@ -141,13 +144,9 @@ class Feedback(Resource):
 
         db.session.commit()
 
-        return {
-            'id': fb.id,
-            'name': fb.text,
-            'description': fb.description,
-            'score': fb.score,
-            'parent': fb.parent_id
-        }
+        return dict(status=200,
+                    feedback=feedback_to_data(fb, full_children=False),
+                    set_aside_solutions=set_aside_solutions), 200
 
     def delete(self, problem_id, feedback_id):
         """Delete an existing feedback option

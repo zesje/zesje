@@ -165,12 +165,14 @@ class CheckStudents extends React.Component {
             <a href={`/exams/${this.state.examID}/grade/${resp.new_submission_id}`}>Grade</a>&nbsp;
             to approve the merged submission.</p>
 
-          toast({
-            message: ReactDOMServer.renderToString(msg),
-            type: 'is-success',
-            pauseOnHover: true,
-            duration: 5000
-          })
+          if (hasOtherCopies) {
+            toast({
+              message: ReactDOMServer.renderToString(msg),
+              type: 'is-success',
+              pauseOnHover: true,
+              duration: 5000
+            })
+          }
         })
         .catch(err => {
           err.json().then(res => {

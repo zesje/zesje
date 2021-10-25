@@ -52,7 +52,7 @@ class SearchPanel extends React.Component {
       })
   }
 
-  componentDidUpdate (prevProps, prevState) {
+  componentDidUpdate = (prevProps, prevState) => {
     this.searchInput.current.focus()
     // Check if the search input is empty
     if (!this.searchInput.current || !this.searchInput.current.value || this.searchInput.current.value.length === 0) {

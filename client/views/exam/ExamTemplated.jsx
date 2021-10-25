@@ -222,7 +222,7 @@ class ExamTemplated extends React.Component {
       }))
   }
 
-  onChangeAutoApproveType (e) {
+  onChangeAutoApproveType = (e) => {
     const selectedWidgetId = this.state.selectedWidgetId
     if (!selectedWidgetId) return
 

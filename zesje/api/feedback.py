@@ -165,8 +165,7 @@ class Feedback(Resource):
         """
         if (fb := FeedbackOption.query.get(feedback_id)) is None:
             return dict(status=404, message=f"Feedback option with id #{feedback_id} does not exist"), 404
-        problem = fb.problem
-        if problem.id != problem_id:
+        if fb.problem.id != problem_id:
             return dict(status=400, message="Feedback option does not belong to this problem."), 400
         if fb.mc_option:
             return dict(status=405, message='Cannot delete feedback option'
@@ -175,6 +174,9 @@ class Feedback(Resource):
             return dict(status=405, message='Cannot delete root feedback option.'), 405
 
         # All feedback options, that are the child of the original feedback option will be deleted
+        if len(fb.parent.children) == 1 and fb.parent.mut_excl_children:
+            # we are about to delete the only child of a parent option that has exclusive enabled
+            fb.parent.mut_excl_children = False
 
         db.session.delete(fb)
 

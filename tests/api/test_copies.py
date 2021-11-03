@@ -88,10 +88,22 @@ def assert_exactly(sub, copies, student, validated=True):
         assert copy in sub.copies
 
 
-def validate(copy, student, exam, test_client, returns_ok=True):
-    response = test_client.put(f'/api/copies/{exam.id}/{copy.number}', data={'studentID': student.id})
-    if returns_ok:
-        assert response.status_code == 200
+def validate_with_warn_check(copy, student, exam, test_client):
+    sub = Submission.query.filter(
+        Submission.exam == exam,
+        Submission.student == student,
+        Submission.validated
+    ).one_or_none()
+    should_warn = copy not in sub.copies if sub else False
+    if should_warn:
+        validate(copy, student, exam, test_client, return_code=409)
+    validate(copy, student, exam, test_client, allow_merge=should_warn)
+
+
+def validate(copy, student, exam, test_client, return_code=200, allow_merge=False):
+    response = test_client.put(f'/api/copies/{exam.id}/{copy.number}',
+                               data={'studentID': student.id, 'allowMerge': allow_merge})
+    assert response.status_code == return_code
 
     assert_valid_state()
 
@@ -101,7 +113,7 @@ def test_unvalidated(test_client, app_with_data, with_student):
     app, exam, students = app_with_data
     student = students[0]
     sub, copies = add_submissions(exam, student, 'unvalidated', with_student)[0]
-    validate(copies[0], student, exam, test_client)
+    validate_with_warn_check(copies[0], student, exam, test_client)
 
     assert_exactly(sub, copies, student)
 
@@ -110,7 +122,7 @@ def test_validated(test_client, app_with_data):
     app, exam, students = app_with_data
     student = students[0]
     sub, copies = add_submissions(exam, student, 'validated')[0]
-    validate(copies[0], student, exam, test_client)
+    validate_with_warn_check(copies[0], student, exam, test_client)
 
     assert_exactly(sub, copies, student)
 
@@ -121,7 +133,7 @@ def test_unvalidated_multiple(test_client, app_with_data, with_student):
     student = students[0]
     unvalidated1, unvalidated2 = add_submissions(exam, student, 'unvalidated_multiple', with_student)
     sub, copies = unvalidated1
-    validate(copies[0], student, exam, test_client)
+    validate_with_warn_check(copies[0], student, exam, test_client)
 
     assert_exactly(sub, copies, student)
     assert_exactly(*unvalidated2, student, validated=False)
@@ -133,7 +145,7 @@ def test_validated_multiple(test_client, app_with_data):
     sub_copies = add_submissions(exam, student, 'validated_multiple')
     sub, copies = sub_copies[0]
 
-    validate(copies[0], student, exam, test_client)
+    validate_with_warn_check(copies[0], student, exam, test_client)
 
     assert_exactly(sub, copies, student)
 
@@ -146,7 +158,7 @@ def test_mixed_unvalidated(test_client, app_with_data, with_student):
     sub, copies = to_validate
     sub2, copies2 = validated
 
-    validate(copies[0], student, exam, test_client)
+    validate_with_warn_check(copies[0], student, exam, test_client)
 
     if sub2 in db.session:
         sub, sub2 = sub2, sub
@@ -162,7 +174,7 @@ def test_mixed_validated(test_client, app_with_data):
     sub, copies = to_validate
     sub2, copies2 = unvalidated
 
-    validate(copies[0], student, exam, test_client)
+    validate_with_warn_check(copies[0], student, exam, test_client)
 
     assert_exactly(sub, copies, student)
     assert_exactly(sub2, copies2, student, validated=False)
@@ -176,7 +188,7 @@ def test_mixed_multiple_unvalidated(test_client, app_with_data, with_student):
     sub, copies = unvalidated1
     subv, copiesv = validated
 
-    validate(copies[0], student, exam, test_client)
+    validate_with_warn_check(copies[0], student, exam, test_client)
 
     if sub in db.session:
         sub, subv = subv, sub
@@ -192,7 +204,7 @@ def test_mixed_multiple_validated(test_client, app_with_data):
     unvalidated1, unvalidated2, validated = add_submissions(exam, student, 'mixed_multiple')
     sub, copies = validated
 
-    validate(copies[0], student, exam, test_client)
+    validate_with_warn_check(copies[0], student, exam, test_client)
 
     assert_exactly(sub, copies, student)
     assert_exactly(*unvalidated1, student, validated=False)
@@ -214,7 +226,7 @@ def test_switch_all(test_client, app_with_data, old_student_type, new_student_ty
     student_new = students[1]
     sub_copies_new = add_submissions(exam, student_new, new_student_type)
 
-    validate(copies_old[0], student_new, exam, test_client)
+    validate_with_warn_check(copies_old[0], student_new, exam, test_client)
 
     removed_subs = 0
     sub_copies_added = None

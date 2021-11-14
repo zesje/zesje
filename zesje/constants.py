@@ -46,6 +46,9 @@ MAX_HEIGHT = 65000
 # a ballpoint pen is regarded as not blank.
 MIN_ANSWER_SIZE_MM2 = 4
 
+# Ensure a line across the checkbox with a ballpoint pen is considered a marked checkbox.
+MIN_CHECKBOX_SIZE_MM2 = 0.5  # * MIN_ANSWER_SIZE_MM2 * (CHECKBOX_SIZE - 1) / 28.35
+
 SQLALCHEMY_TRACK_MODIFICATIONS = False  # Suppress future deprecation warning
 
 ZIP_MIME_TYPES = ['application/zip', 'application/octet-stream', 'application/x-zip-compressed', 'multipart/x-zip']
@@ -54,7 +57,7 @@ ZIP_MIME_TYPES = ['application/zip', 'application/octet-stream', 'application/x-
 THRESHOLD_STUDENT_ID = 210
 THRESHOLD_BLANK = 210
 THRESHOLD_CORNER_MARKER = 175
-THRESHOLD_MCQ = 175
+THRESHOLD_MCQ = 190
 THRESHOLD_MISALIGMENT = 175
 
 # Routes exempted from authentication

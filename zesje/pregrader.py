@@ -1,7 +1,6 @@
 import cv2
 import numpy as np
 from datetime import datetime
-from math import ceil
 
 from flask import current_app
 from reportlab.lib.units import inch, mm
@@ -313,14 +312,15 @@ def is_checkbox_filled(box_coords,
     res = cv2.matchTemplate(~student_bin, ~template_bin, cv2.TM_CCORR)
     *_, max_loc = cv2.minMaxLoc(res)
 
-    # Find the inner coordinates of the checkbox on the student image,
-    # adding 1pt (the thickness of the checkbox lines)
-    x, y = np.array(max_loc) + line_width
-    s = int((box_size - 1) / 72 * dpi)
-    inside_box = student_bin[y:(y + s), x:(x + s)]
-    cv2.rectangle(inside_box, (0, 0),
-                  (inside_box.shape[0] - 1, inside_box.shape[1] - 1),
-                  255, ceil(line_width * 1.5))
+    # Find the inside of the checkbox on the student image.
+    # Crop 1 line width for the line of the checkbox.
+    # Crop 1 line width + 1 pixel for small alignment errors.
+    x, y = max_loc
+    crop = 2 * line_width + 1
+    inside_box = student_bin[
+        (crop + y):(y + reference_size - crop),
+        (crop + x):(x + reference_size - crop)
+    ]
 
     non_covered_pixels = np.count_nonzero(inside_box == 0)
 

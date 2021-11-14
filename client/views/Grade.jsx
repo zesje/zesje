@@ -232,11 +232,10 @@ class Grade extends React.Component {
     const fb = Object.keys(this.state.problem.feedback)
 
     this.setState({
-      feedbackFilters: Object.entries(this.state.feedbackFilters).filter(
-        option => fb.includes(parseInt(option[0]))
+      feedbackFilters: Object.entries(this.state.feedbackFilters).reduce(
+        (previous, option) => fb.includes(option[0]) ? { ...previous, [parseInt(option[0])]: option[1] } : previous,
+        {}
       )
-        .reduce(
-          (previous, current) => ({ ...previous, [parseInt(current[0])]: current[1] }), {})
     })
 
     const submission = await api.get(
@@ -246,6 +245,7 @@ class Grade extends React.Component {
         ...this.getFilterArguments()
       ].join('&')}`
     )
+
     this.setState({
       submission,
       matchingResults: submission.meta.filter_matches

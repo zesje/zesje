@@ -104,7 +104,7 @@ def test_is_blank(config_app, coords, result, student_aligned, reference):
                                    width=coords[2], height=coords[3])
 
     assert not pregrader.is_problem_misaligned(problem, student_aligned, reference)
-    assert pregrader.is_blank(problem, student_aligned, reference) == result
+    assert pregrader.is_solution_blank(problem, student_aligned, reference) == result
 
 
 @pytest.mark.parametrize(
@@ -129,4 +129,4 @@ def test_threshold(config_app, datadir):
         data = np.array(img)
         reference = np.full_like(data, 255)
 
-        assert not pregrader.is_blank(problem, data, reference)
+        assert not pregrader.is_solution_blank(problem, data, reference)

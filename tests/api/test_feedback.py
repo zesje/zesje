@@ -246,3 +246,20 @@ def test_get_children(test_client, add_test_data):
     child = children[0]
 
     assert child['parent'] == 5
+
+
+@pytest.mark.parametrize('prop, status_code, new_value', [
+    ('name', 200, 'This is a new name.'),
+    ('name', 409, ' '),
+    ('score', 200, 42),
+    ('score', 400, ''),
+    ('description', 200, 'This is a valid description'),
+    ('description', 200, '')
+    ], ids=['Valid name', 'Invalid name', 'Valid name', 'Invalid name', 'Valid description', 'Valid empty description'])
+def test_change_name(test_client, add_test_data, prop, status_code, new_value):
+    result = test_client.patch('/api/feedback/1/5', data={prop: new_value})
+    assert result.status_code == status_code
+
+    data = json.loads(result.data)
+    if status_code == 200:
+        assert data['feedback'][prop] == new_value

@@ -88,14 +88,13 @@ class Feedback(Resource):
             'parent': fb.parent_id
         }
 
-    put_parser = reqparse.RequestParser()
-    put_parser.add_argument('id', type=int, required=True)
-    put_parser.add_argument('name', type=str, required=True)
-    put_parser.add_argument('description', type=str, required=False)
-    put_parser.add_argument('score', type=int, required=False)
-    put_parser.add_argument('exclusive', type=boolean, required=False)
+    patch_parser = reqparse.RequestParser()
+    patch_parser.add_argument('name', type=str, required=False)
+    patch_parser.add_argument('description', type=str, required=False)
+    patch_parser.add_argument('score', type=int, required=False)
+    patch_parser.add_argument('exclusive', type=boolean, required=False)
 
-    def put(self, problem_id):
+    def patch(self, problem_id, feedback_id):
         """Modify an existing feedback option
 
         Parameters
@@ -106,17 +105,17 @@ class Feedback(Resource):
             score: int
         """
 
-        args = self.put_parser.parse_args()
+        args = self.patch_parser.parse_args()
 
-        if (fb := FeedbackOption.query.get(args.id)) is None:
-            return dict(status=404, message=f"Feedback option with id #{args.id} does not exist"), 404
+        if (fb := FeedbackOption.query.get(feedback_id)) is None:
+            return dict(status=404, message=f"Feedback option with id #{feedback_id} does not exist"), 404
 
         set_aside_solutions = 0
 
         if args.exclusive is not None:
             if len(fb.children) == 0:
                 return dict(status=409,
-                            message="Tryed to modify the exclusive property on a feedback option with no children"), 404
+                            message="Tryed to modify the exclusive property on a feedback option with no children"), 409
             if not fb.mut_excl_children and args.exclusive:  # we go from non-exclusive to exclusive
                 # look at all solutions and ungrade those with inconsistencies
                 ids = [f.id for f in fb.children]
@@ -138,9 +137,17 @@ class Feedback(Resource):
 
             fb.mut_excl_children = args.exclusive
 
-        fb.text = args.name
-        fb.description = args.description
-        fb.score = args.score
+        if args.name is not None:
+            if (name := args.name.strip()):
+                fb.text = name
+            else:
+                return dict(status=409, message="Feedback Option name cannot be empty."), 409
+
+        if args.score is not None:
+            fb.score = args.score
+
+        if args.description is not None:
+            fb.description = args.description
 
         db.session.commit()
 

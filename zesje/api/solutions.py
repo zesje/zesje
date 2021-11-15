@@ -145,7 +145,12 @@ class Solutions(Resource):
                 # go up in the tree checking until we arrive at the top
                 if parent.mut_excl_children:
                     # FOs are exclusive -> find other selected children with the same parent as the current `fb_child`
-                    other_checked_children = [child for child in parent.children if child in solution.feedback]
+                    # but exclude the current fb (if it is already selected, we do not have to remove)
+                    other_checked_children = [
+                        child
+                        for child in parent.children
+                        if child in solution.feedback and child.id != fb_child.id
+                    ]
                     if len(other_checked_children) > 0:  # if any, uncheck it
                         # return dict(status=404, message='Another option is already checked.'), 404
                         for other in other_checked_children:  # theoretically, there should be only one...

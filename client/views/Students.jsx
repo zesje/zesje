@@ -150,14 +150,14 @@ class CheckStudents extends React.Component {
   matchStudent = (stud, force = false) => {
     if (!this.state.copies) return
 
-    const copy = this.state.copies[this.state.index].number
+    const copyNumber = this.state.copies[this.state.index].number
     const hasOtherCopies = this.state.copies.some(
-      c => c.student != null && c.student.id === stud.id && c.number !== copy
+      c => c.student != null && c.student.id === stud.id && c.number !== copyNumber
     )
     if (hasOtherCopies && !force) {
       this.setState({ confirmStudent: stud })
     } else {
-      api.put(`copies/${this.props.examID}/${copy}`, { studentID: stud.id })
+      api.put(`copies/${this.props.examID}/${copyNumber}`, { studentID: stud.id })
         .then(resp => {
           // TODO When do we want to update the full list of copies?
           if (this.state.confirmStudent !== null) this.setState({ confirmStudent: null })

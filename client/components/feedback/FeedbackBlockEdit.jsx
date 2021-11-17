@@ -27,7 +27,7 @@ const SaveButton = (props) => (
 
 const DeleteButton = (props) => (
   <button className='button is-danger tooltip'
-    style={{ marginLeft: 'auto' }} disabled={!props.exists} onClick={props.onClick} data-tooltip='Delete'>
+    style={{ marginLeft: 'auto' }} disabled={!props.disabled} onClick={props.onClick} data-tooltip='Delete'>
     <span className='icon is-small'>
       <i className='fa fa-trash' />
     </span>
@@ -40,7 +40,8 @@ class EditPanel extends React.Component {
     name: '',
     description: '',
     score: '',
-    exclusive: null,
+    exclusive: false,
+    parentId: null,
     deleting: false
   }
 
@@ -54,8 +55,8 @@ class EditPanel extends React.Component {
         name: fb.name,
         description: fb.description === null ? '' : fb.description,
         score: fb.score,
-        parent: fb.parent,
-        exclusive: fb.children.length > 0 ? fb.exclusive : null,
+        parentId: fb.parent,
+        exclusive: nextProps.indexedFeedback[fb.parent].exclusive,
         updateCallback: updateCallback
       }
     }
@@ -89,29 +90,34 @@ class EditPanel extends React.Component {
     const fb = {
       name: this.state.name,
       description: this.state.description,
-      score: this.state.score,
-      parent: this.props.parent ? this.props.parent.id : null,
-      exclusive: this.state.exclusive !== null ? this.state.exclusive : null
+      score: this.state.score
     }
 
     if (this.state.id) {
-      fb.id = this.state.id
-      api.put(uri, fb)
-        .then((response) => {
+      Promise.all([
+        api.patch(uri + `/${this.state.id}`, fb),
+        (this.state.exclusive !== this.props.parentExclusive
+          ? api.patch(uri + `/${this.state.parentId}`, { exclusive: this.state.exclusive })
+          : Promise.resolve({ set_aside_solutions: 0 }))
+      ])
+        .then(([r1, r2]) => {
           this.state.updateCallback()
           this.props.goBack()
 
-          if (response.set_aside_solutions > 0) {
-            console.log('hola')
+          if (r2.set_aside_solutions > 0) {
             toast({
-              message: `${response.set_aside_solutions} solution${response.set_aside_solutions > 1 ? 's' : ''} have ` +
+              message: `${r2.set_aside_solutions} solution${r2.set_aside_solutions > 1 ? 's have' : 'has'} ` +
                 'been marked as ungraded due to incompatible feedback options.',
               type: 'is-warning',
               duration: 5000
             })
           }
         })
+        .catch(err => {
+          console.log(err)
+        })
     } else {
+      fb.parentId = this.props.parent ? this.props.parent.id : null
       api.post(uri, fb)
         .then((response) => {
           // Response is the feedback option
@@ -122,8 +128,11 @@ class EditPanel extends React.Component {
             description: '',
             score: '',
             parent: null,
-            exclusive: null
+            exclusive: false
           })
+        })
+        .catch(err => {
+          console.log(err)
         })
     }
   }
@@ -153,7 +162,7 @@ class EditPanel extends React.Component {
     const children = this.props.feedback !== null
       ? this.props.feedback.children.map(
         (id) => <FeedbackItem {...this.props.parentProps}
-          feedbackID={id} key={'child-' + id} exclusive={this.state.exclusive} />
+          feedbackID={id} key={'child-' + id} exclusive={this.props.feedback.exclusive} />
       )
       : null
 
@@ -210,17 +219,17 @@ class EditPanel extends React.Component {
             </div>
           </div>
         </div>
-        {this.state.exclusive !== null &&
+        {this.state.id &&
           <div className={this.props.parent !== null ? 'panel-block attach-bottom' : ''}>
             <div className='field is-grouped is-fullwidth'>
               <p className='control is-expanded'>
-                <label className='label'>Exclusive children</label>
+                <label className='label'>Exclusive</label>
               </p>
-                <Switch
-                  color='link'
-                  value={this.state.exclusive}
-                  onChange={(e) => this.setState({ exclusive: !this.state.exclusive })}
-                />
+              <Switch
+                color='link'
+                value={this.state.exclusive}
+                onChange={() => this.setState({ exclusive: !this.state.exclusive })}
+              />
             </div>
           </div>
         }
@@ -233,7 +242,7 @@ class EditPanel extends React.Component {
                   isNaN(parseInt(this.state.score))} />
               <CancelButton onClick={this.props.goBack} />
             </div>
-            <DeleteButton onClick={() => { this.setState({ deleting: true }) }} exists={this.props.feedback} />
+            <DeleteButton onClick={() => { this.setState({ deleting: true }) }} disabled={this.props.feedback} />
           </div>
           <ConfirmationModal
             headerText={`Do you want to irreversibly delete feedback option "${this.state.name}"?`}

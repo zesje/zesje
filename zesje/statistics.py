@@ -103,8 +103,8 @@ def full_exam_data(exam_id):
                 feedback_keys[fo.id] = (key, f'{fo.text} ({fo.id})')
             else:
                 feedback_keys[fo.id] = (key, fo.text)
-            columns[feedback_keys[fo.id]] = 'int'
-        columns[(key, 'total')] = 'int'
+            columns[feedback_keys[fo.id]] = pandas.Int32Dtype()  # Contains nan
+        columns[(key, 'total')] = pandas.Int32Dtype()  # Contains nan
     columns[('total', 'total')] = 'int'
 
     if not student_ids:
@@ -134,8 +134,7 @@ def full_exam_data(exam_id):
 
         df.loc[student['id'], ('total', 'total')] = student['total']
 
-    # NaN cannot be converted to an integer directly
-    df = df.fillna(0).astype(dtype=columns)  # set column types
+    df = df.astype(dtype=columns)  # set column types
 
     return df
 

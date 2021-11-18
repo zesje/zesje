@@ -6,14 +6,14 @@ import os
 from flask import current_app
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean, ForeignKey, Enum
-from sqlalchemy import select, join
+from sqlalchemy import select, event
 from flask_sqlalchemy.model import BindMetaMixin, Model
 from sqlalchemy.ext.declarative import DeclarativeMeta, declarative_base
 from sqlalchemy.orm import backref
 from sqlalchemy.orm.session import object_session
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.ext.associationproxy import association_proxy
-from sqlalchemy import event
+from sqlalchemy.sql.schema import UniqueConstraint
 
 from flask_login import UserMixin, LoginManager
 from pathlib import Path
@@ -73,6 +73,7 @@ class Exam(db.Model):
     name = Column(Text, nullable=False)
     token = Column(String(token_length), unique=True)
     submissions = db.relationship('Submission', backref='exam', cascade='all', lazy=True)
+    copies = db.relationship('Copy', backref='_exam', cascade='all', lazy=True)
     problems = db.relationship('Problem', backref='exam', cascade='all', order_by='Problem.id', lazy=True)
     scans = db.relationship('Scan', backref='exam', cascade='all', lazy=True)
     widgets = db.relationship('ExamWidget', backref='exam', cascade='all',
@@ -81,31 +82,6 @@ class Exam(db.Model):
     grade_anonymous = Column(Boolean, default=False, server_default='0')
     layout = Column('layout', Enum(ExamLayout), server_default='templated', default=ExamLayout.templated,
                     nullable=False)
-
-    @hybrid_property
-    def copies(self):
-        # Ordered by copy number, ascending
-        return Copy.query.select_from(Exam).\
-               join(Exam.submissions).join(Submission.copies).\
-               filter(Exam.id == self.id).\
-               order_by(Copy.number.asc()).all()
-        # TODO For clarity, I rather want this to be something like:
-        # [copy for sub in self.submissions for copy in sub.copies]
-        # but only use this when all the objects are already loaded
-        # and use the query above otherwise.
-
-    # TODO Is this SQL expression really needed?
-    @copies.expression
-    def copies(cls):
-        return select([Copy.id, Copy.number, Copy.submission_id]).\
-               select_from(
-                   join(Copy, Submission)
-               ).\
-               where(Submission.exam_id == cls.id)
-
-    # Any migration that alters (and thus recreates) the exam table should explicitly
-    # specify this keyword to ensure it will be used for the new table
-    __table_args__ = {'sqlite_autoincrement': True}
 
 
 class Submission(db.Model):
@@ -129,8 +105,29 @@ class Copy(db.Model):
     submission_id = Column(Integer, ForeignKey('submission.id'), nullable=False)  # backref submission
     pages = db.relationship('Page', backref='copy', cascade='all', lazy=True)
 
-    exam = association_proxy('submission', 'exam')
-    exam_id = association_proxy('submission', 'exam_id')
+    # Executed at runtime such that Copy can be resolved, there might be a better way I do not know of
+    def default(context):
+        return select(Submission.exam_id).select_from([Copy, Submission]).where(Copy.submission_id == Submission.id)
+
+    _exam_id = Column(Integer, ForeignKey('exam.id'), nullable=False, default=default, onupdate=default)  # backref exam
+    UniqueConstraint(_exam_id, number)
+
+    @hybrid_property
+    def exam_id(self):
+        return self._exam_id
+
+    @exam_id.setter
+    def exam_id(self, exam_id):
+        raise RuntimeError("Cannot manually set Copy.exam_id")
+
+    @hybrid_property
+    def exam(self):
+        return self._exam
+
+    @exam.setter
+    def exam(self, exam):
+        raise RuntimeError("Cannot manually set Copy.exam")
+
     student = association_proxy('submission', 'student')
     student_id = association_proxy('submission', 'student_id')
     validated = association_proxy('submission', 'validated')

@@ -9,7 +9,7 @@ from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean, Foreign
 from sqlalchemy import event
 from flask_sqlalchemy.model import BindMetaMixin, Model
 from sqlalchemy.ext.declarative import DeclarativeMeta, declarative_base
-from sqlalchemy.orm import backref
+from sqlalchemy.orm import backref, validates
 from sqlalchemy.orm.session import object_session
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.ext.associationproxy import association_proxy
@@ -120,21 +120,13 @@ class Copy(db.Model):
     number = Column(Integer, nullable=False)
     submission_id = Column(Integer, ForeignKey('submission.id'), nullable=False)  # backref submission
     pages = db.relationship('Page', backref='copy', cascade='all', lazy=True)
-
-    def default(context):
-        params = context.get_current_parameters()
-        if 'submission_id' not in params:
-            return  # Not updating the associated submission
-
-        # Runs the query separately. MySQL support querying it as a subquery, but I have not
-        # found a way to insert a subquery with a parameter dynamically with SQLAlchemy.
-        # The commented subquery works (without the dynamic variable) when passed directly as the,
-        # default, but when returned by this context function it is not interpreted correctly.
-        # select([Submission.exam_id]).select_from(Submission).where(Submission.id == params['submission_id'])
-        return Submission.query.get(params['submission_id']).exam_id
-
-    _exam_id = Column(Integer, ForeignKey('exam.id'), nullable=False, default=default, onupdate=default)
+    _exam_id = Column(Integer, ForeignKey('exam.id'), nullable=False)
     UniqueConstraint(_exam_id, number)
+
+    @validates('submission_id', include_backrefs=True)
+    def update_exam_id(self, key, submission_id):
+        self._exam_id = Submission.query.get(submission_id).exam_id
+        return submission_id
 
     @hybrid_property
     def exam_id(self):

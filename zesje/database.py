@@ -6,7 +6,7 @@ import os
 from flask import current_app
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean, ForeignKey, Enum
-from sqlalchemy import select, event
+from sqlalchemy import event
 from flask_sqlalchemy.model import BindMetaMixin, Model
 from sqlalchemy.ext.declarative import DeclarativeMeta, declarative_base
 from sqlalchemy.orm import backref
@@ -105,11 +105,19 @@ class Copy(db.Model):
     submission_id = Column(Integer, ForeignKey('submission.id'), nullable=False)  # backref submission
     pages = db.relationship('Page', backref='copy', cascade='all', lazy=True)
 
-    # Executed at runtime such that Copy can be resolved, there might be a better way I do not know of
     def default(context):
-        return select(Submission.exam_id).select_from([Copy, Submission]).where(Copy.submission_id == Submission.id)
+        params = context.get_current_parameters()
+        if 'submission_id' not in params:
+            return  # Not updating the associated submission
 
-    _exam_id = Column(Integer, ForeignKey('exam.id'), nullable=False, default=default, onupdate=default)  # backref exam
+        # Runs the query separately. MySQL support querying it as a subquery, but I have not
+        # found a way to insert a subquery with a parameter dynamically with SQLAlchemy.
+        # The commented subquery works (without the dynamic variable) when passed directly as the,
+        # default, but when returned by this context function it is not interpreted correctly.
+        # select([Submission.exam_id]).select_from(Submission).where(Submission.id == params['submission_id'])
+        return Submission.query.get(params['submission_id']).exam_id
+
+    _exam_id = Column(Integer, ForeignKey('exam.id'), nullable=False, default=default, onupdate=default)
     UniqueConstraint(_exam_id, number)
 
     @hybrid_property
@@ -131,30 +139,6 @@ class Copy(db.Model):
     student = association_proxy('submission', 'student')
     student_id = association_proxy('submission', 'student_id')
     validated = association_proxy('submission', 'validated')
-
-
-# Does not work if the submission and copy are flushed at the same time.
-@event.listens_for(db.session, 'before_flush')
-def copy_add_exam_id(session, flush_context, instances):
-    for obj in session:
-        if not isinstance(obj, Copy):
-            continue
-        if obj._exam_id:
-            continue
-        if obj not in session.new and obj not in session.dirty:
-            continue
-        exam_id = None
-        if obj.submission:
-            exam_id = obj.submission.exam_id if obj.submission.exam_id else obj.submission.exam.id
-        elif obj.submission_id:
-            try:
-                sub = next(o for o in session if isinstance(o, Submission) and o.id == obj.submission_id)
-                exam_id = sub.exam_id
-            except StopIteration:
-                pass
-        if not exam_id:
-            raise RuntimeError("Not able to determine copy._exam_id")
-        obj._exam_id = exam_id
 
 
 class Page(db.Model):

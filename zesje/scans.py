@@ -12,7 +12,7 @@ from flask import current_app
 
 from PIL import Image
 from pylibdmtx import pylibdmtx
-from sqlalchemy.exc import InternalError
+from sqlalchemy.exc import InternalError, IntegrityError
 from reportlab.lib.units import inch
 
 from .database import db, Scan, Exam, Page, Student, Submission, Copy, Solution, ExamWidget, ExamLayout
@@ -322,25 +322,42 @@ def add_to_correct_copy(image_path, barcode):
     if exam is None:
         raise RuntimeError('Invalid exam token.')
 
-    copy = Copy.query.filter(Copy.number == barcode.copy, Copy.exam == exam).one_or_none()
-    if copy is None:
-        # Copy does not yet exist, so we create it together with a new submission
-        copy = Copy(number=barcode.copy)
-        sub = Submission(exam=exam, copies=[copy])
-        db.session.add(sub)
+    image_path = os.path.relpath(image_path, start=current_app.config['DATA_DIRECTORY'])
 
-        # Add a solution for each problem
-        for problem in exam.problems:
-            db.session.add(Solution(problem=problem, submission=sub))
+    copy = None
+    while copy is None:
+        copy = Copy.query.filter(Copy.number == barcode.copy, Copy.exam == exam).one_or_none()
 
-    # We may have added this page in previous uploads but we only want a single
-    # 'Page' entry regardless
-    page = Page.retrieve(copy, barcode.page)
-    if not page.path:
-        page.path = os.path.relpath(image_path, start=current_app.config['DATA_DIRECTORY'])
-        db.session.add(page)
+        if copy is None:
+            try:
+                # Copy does not yet exist, so we create it together with a new submission
+                copy = Copy(number=barcode.copy)
+                sub = Submission(exam=exam, copies=[copy])
+                db.session.add(sub)
 
-    db.session.commit()
+                # Add a solution for each problem
+                for problem in exam.problems:
+                    db.session.add(Solution(problem=problem, submission=sub))
+
+                db.session.commit()
+            except IntegrityError:
+                db.session.rollback()
+                copy = None
+
+    page = None
+    while page is None:
+        # We may have added this page in previous uploads but we only want a single
+        # 'Page' entry regardless
+        page = Page.retrieve(copy, barcode.page)
+
+        if not page.path:
+            try:
+                page.path = image_path
+                db.session.add(page)
+                db.session.commit()
+            except IntegrityError:
+                db.session.rollback()
+                page = None
 
     return copy
 

@@ -93,7 +93,7 @@ class Exam(db.Model):
 
     @hybrid_property
     def copies(self):
-        return self.copies
+        return self._copies
 
     @copies.setter
     def copies(self, copies):

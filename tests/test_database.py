@@ -142,6 +142,17 @@ def test_cascades_mco_fb(app, feedback_option, mc_option):
     assert feedback_option not in db.session
 
 
+def test_empty_session(app):
+    # Assert no objects in session
+    assert all(False for _ in db.session)
+
+
+def test_empty_db(app):
+    # Asesert all tables are empty
+    for table in db.metadata.sorted_tables:
+        assert db.session.query(table).count() == 0
+
+
 @pytest.fixture
 def mc_option():
     return MultipleChoiceOption(name='', x=0, y=0)

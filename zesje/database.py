@@ -13,7 +13,7 @@ from sqlalchemy.orm import backref
 from sqlalchemy.orm.session import object_session
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.ext.associationproxy import association_proxy
-from sqlalchemy.sql.schema import UniqueConstraint
+from sqlalchemy.sql.schema import MetaData, UniqueConstraint
 
 from flask_login import UserMixin, LoginManager
 from pathlib import Path
@@ -24,8 +24,16 @@ class NoNameMeta(BindMetaMixin, DeclarativeMeta):
     pass
 
 
+meta = MetaData(naming_convention={
+    "ix": "ix_%(column_0_label)s",
+    "uq": "uq_%(table_name)s_%(column_0_name)s",
+    "ck": "ck_%(table_name)s_%(constraint_name)s",
+    "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s",
+    "pk": "pk_%(table_name)s"
+})
+
 db = SQLAlchemy(model_class=declarative_base(
-    cls=Model, metaclass=NoNameMeta, name='Model'))
+    cls=Model, metaclass=NoNameMeta, name='Model', metadata=meta))
 
 token_length = 12
 
@@ -156,6 +164,7 @@ class Page(db.Model):
     path = Column(Text, nullable=False)
     copy_id = Column(Integer, ForeignKey('copy.id'), nullable=False)  # backref copy
     number = Column(Integer, nullable=False)
+    UniqueConstraint(copy_id, number)
 
     @hybrid_property
     def copy_number(self):

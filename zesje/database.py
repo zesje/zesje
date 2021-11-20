@@ -73,7 +73,7 @@ class Exam(db.Model):
     name = Column(Text, nullable=False)
     token = Column(String(token_length), unique=True)
     submissions = db.relationship('Submission', backref='exam', cascade='all', lazy=True)
-    copies = db.relationship('Copy', backref='_exam', cascade='all', lazy=True)
+    _copies = db.relationship('Copy', backref='_exam', cascade='all', lazy=True)
     problems = db.relationship('Problem', backref='exam', cascade='all', order_by='Problem.id', lazy=True)
     scans = db.relationship('Scan', backref='exam', cascade='all', lazy=True)
     widgets = db.relationship('ExamWidget', backref='exam', cascade='all',
@@ -82,6 +82,14 @@ class Exam(db.Model):
     grade_anonymous = Column(Boolean, default=False, server_default='0')
     layout = Column('layout', Enum(ExamLayout), server_default='templated', default=ExamLayout.templated,
                     nullable=False)
+
+    @hybrid_property
+    def copies(self):
+        return self.copies
+
+    @copies.setter
+    def copies(self, copies):
+        raise RuntimeError("Cannot manually set Exam.copies")
 
 
 class Submission(db.Model):

@@ -17,7 +17,7 @@
     "test:js": "jest",
     "lint:py": "flake8",
     "command:test:py": "ZESJE_SETTINGS=$(pwd)/zesje_test_cfg.py python3 -m pytest -v -W error::RuntimeWarning",
-    "test:py": "yarn dev:mysql is-running && (yarn command:test:py || true) || ((yarn dev:mysql start && yarn command:test:py); yarn dev:mysql stop)",
+    "test:py": "wrap () { yarn dev:mysql is-running && (yarn command:test:py \"$*\" || true) || ((yarn dev:mysql start && yarn command:test:py \"$*\"); yarn dev:mysql stop)}; wrap",
     "start": "ZESJE_SETTINGS=$(pwd)/zesje_dev_cfg.py python3 zesje",
     "analyze": "webpack --config webpack.prod.js --profile --json > stats.json; webpack-bundle-analyzer stats.json zesje/static",
     "migrate": "FLASK_APP=zesje.wsgi:app flask db upgrade",

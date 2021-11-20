@@ -133,6 +133,30 @@ class Copy(db.Model):
     validated = association_proxy('submission', 'validated')
 
 
+# Does not work if the submission and copy are flushed at the same time.
+@event.listens_for(db.session, 'before_flush')
+def copy_add_exam_id(session, flush_context, instances):
+    for obj in session:
+        if not isinstance(obj, Copy):
+            continue
+        if obj._exam_id:
+            continue
+        if obj not in session.new and obj not in session.dirty:
+            continue
+        exam_id = None
+        if obj.submission:
+            exam_id = obj.submission.exam_id if obj.submission.exam_id else obj.submission.exam.id
+        elif obj.submission_id:
+            try:
+                sub = next(o for o in session if isinstance(o, Submission) and o.id == obj.submission_id)
+                exam_id = sub.exam_id
+            except StopIteration:
+                pass
+        if not exam_id:
+            raise RuntimeError("Not able to determine copy._exam_id")
+        obj._exam_id = exam_id
+
+
 class Page(db.Model):
     """Page of a copy"""
     __tablename__ = 'page'

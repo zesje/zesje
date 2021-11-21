@@ -171,7 +171,7 @@ def test_copy_exam_relationship(app, copy, submission, exam):
 
     assert copy._exam_id == exam.id
     assert copy.exam_id == exam.id
-    assert copy.exam is exam
+    assert copy.exam == exam
 
     db.session.commit()
 
@@ -185,7 +185,7 @@ def test_copy_exam_relationship_list_no_flush(app, copy, submission, exam):
 
     assert copy._exam_id == exam.id
     assert copy.exam_id == exam.id
-    assert copy.exam is exam
+    assert copy.exam == exam
 
     db.session.commit()
 
@@ -200,7 +200,17 @@ def test_copy_exam_relationship_list_flush(app, copy, submission, exam):
 
     assert copy._exam_id == exam.id
     assert copy.exam_id == exam.id
-    assert copy.exam is exam
+    assert copy.exam == exam
+
+    db.session.commit()
+
+
+def test_copy_exam_relationship_list_single_flush(app, copy, submission, exam):
+    submission.exam = exam
+    submission.copies = [copy]
+
+    # We cannot check any ids, as nothing has been flushed yet
+    assert copy.exam == exam
 
     db.session.commit()
 

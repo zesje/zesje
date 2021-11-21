@@ -135,7 +135,11 @@ class Copy(db.Model):
     def update_exam_submissison(self, key, submission):
         if submission.exam is not None:
             self._exam = submission.exam
-            self._exam_id = submission.exam.id
+
+            # Do not flush anything to the database at this point, as we
+            # might flush in the wrong order, causing constraints to fail
+            with db.session.no_autoflush:
+                self._exam_id = submission.exam.id
         return submission
 
     @hybrid_property

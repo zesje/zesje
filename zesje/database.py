@@ -124,9 +124,19 @@ class Copy(db.Model):
     UniqueConstraint(_exam_id, number)
 
     @validates('submission_id', include_backrefs=True)
-    def update_exam_id(self, key, submission_id):
-        self._exam_id = Submission.query.get(submission_id).exam_id
+    def update_exam_submissison_id(self, key, submission_id):
+        if submission_id is not None:
+            self._exam_id = Submission.query.get(submission_id).exam_id
+        else:
+            self._exam_id = None
         return submission_id
+
+    @validates('submission', include_backrefs=True)
+    def update_exam_submissison(self, key, submission):
+        if submission.exam is not None:
+            self._exam = submission.exam
+            self._exam_id = submission.exam.id
+        return submission
 
     @hybrid_property
     def exam_id(self):

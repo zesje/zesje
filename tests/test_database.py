@@ -142,6 +142,69 @@ def test_cascades_mco_fb(app, feedback_option, mc_option):
     assert feedback_option not in db.session
 
 
+def test_copy_exam_relationship(app, copy, submission, exam):
+    db.session.add(exam)
+    db.session.flush()
+
+    submission.exam = exam
+
+    assert copy._exam_id is None
+    assert copy.exam_id is None
+    assert copy.exam is None
+
+    with pytest.raises(RuntimeError):
+        copy.exam_id = exam.id
+
+    assert copy._exam_id is None
+    assert copy.exam_id is None
+    assert copy.exam is None
+
+    with pytest.raises(RuntimeError):
+        copy.exam = exam
+
+    assert copy._exam_id is None
+    assert copy.exam_id is None
+    assert copy.exam is None
+
+    copy.submission = submission
+    db.session.flush()
+
+    assert copy._exam_id == exam.id
+    assert copy.exam_id == exam.id
+    assert copy.exam is exam
+
+    db.session.commit()
+
+
+def test_copy_exam_relationship_list_no_flush(app, copy, submission, exam):
+    db.session.add(exam)
+    submission.exam = exam
+    db.session.flush()
+
+    submission.copies = [copy]
+
+    assert copy._exam_id == exam.id
+    assert copy.exam_id == exam.id
+    assert copy.exam is exam
+
+    db.session.commit()
+
+
+def test_copy_exam_relationship_list_flush(app, copy, submission, exam):
+    db.session.add(exam)
+    db.session.flush()
+
+    submission.exam = exam
+    submission.copies = [copy]
+    db.session.flush()
+
+    assert copy._exam_id == exam.id
+    assert copy.exam_id == exam.id
+    assert copy.exam is exam
+
+    db.session.commit()
+
+
 def test_empty_session(app):
     # Assert no objects in session
     assert all(False for _ in db.session)

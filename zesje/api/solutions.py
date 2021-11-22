@@ -59,6 +59,7 @@ class Solutions(Resource):
 
         return {
             'feedback': [fb.id for fb in solution.feedback],
+            'valid': has_valid_feedback(solution.feedback),
             'gradedBy': {
                 'id': solution.graded_by.id,
                 'name': solution.graded_by.name

@@ -6,7 +6,7 @@ import Switch from '../Switch.jsx'
 import * as api from '../../api.jsx'
 import { toast } from 'bulma-toast'
 
-import { FeedbackItem } from './FeedbackUtils.jsx'
+import { FeedbackList } from './FeedbackUtils.jsx'
 
 const CancelButton = (props) => (
   <button className='button is-light tooltip' onClick={props.onClick} data-tooltip='Cancel'>
@@ -106,7 +106,7 @@ class EditPanel extends React.Component {
 
           if (r2.set_aside_solutions > 0) {
             toast({
-              message: `${r2.set_aside_solutions} solution${r2.set_aside_solutions > 1 ? 's have' : 'has'} ` +
+              message: `${r2.set_aside_solutions} solution${r2.set_aside_solutions > 1 ? 's have' : ' has'} ` +
                 'been marked as ungraded due to incompatible feedback options.',
               type: 'is-warning',
               duration: 5000
@@ -159,13 +159,6 @@ class EditPanel extends React.Component {
   }
 
   render () {
-    const children = this.props.feedback !== null
-      ? this.props.feedback.children.map(
-        (id) => <FeedbackItem {...this.props.parentProps}
-          feedbackID={id} key={'child-' + id} exclusive={this.props.feedback.exclusive} />
-      )
-      : null
-
     return (
       <React.Fragment>
         {this.props.parent && <div className='panel-block attach-bottom'>
@@ -267,7 +260,7 @@ class EditPanel extends React.Component {
             onCancel={() => { this.setState({ deleting: false }) }}
           />
         </div>
-        {children && children.length > 0 ? <li><ul className='menu-list'> {children} </ul></li> : null}
+        {this.props.feedback && <FeedbackList {...this.props.parentProps} feedback={this.props.feedback} />}
       </React.Fragment>
     )
   }

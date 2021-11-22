@@ -229,6 +229,12 @@ class FeedbackOption(db.Model):
             next = next.parent
         yield next
 
+    @property
+    def siblings(self):
+        for sibling in self.parent.children:
+            if sibling != self:
+                yield sibling
+
 
 @event.listens_for(Problem, 'after_insert')
 def add_root(mapper, connection, problem):

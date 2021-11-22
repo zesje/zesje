@@ -8,10 +8,11 @@ from tempfile import NamedTemporaryFile
 from pikepdf import Pdf
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
+from sqlalchemy import insert, event
 
-from zesje.scans import decode_barcode, ExamMetadata, ExtractedBarcode, exam_metadata, guess_dpi
+from zesje.scans import add_to_correct_copy, decode_barcode, ExamMetadata, ExtractedBarcode, exam_metadata, guess_dpi
 from zesje.image_extraction import extract_image_pikepdf, extract_images_from_pdf
-from zesje.database import db
+from zesje.database import db, Page, Copy, Submission, Problem
 from zesje.api.exams import generate_exam_token, _exam_generate_data
 from zesje.pdf_generation import exam_dir, exam_pdf_path, write_finalized_exam, generate_single_pdf
 from zesje.database import Exam, ExamWidget
@@ -247,7 +248,7 @@ def test_image_extraction(datadir, filename):
                                                 ("a4-rotated-2-bottom-markers.png", [(59, 1695), (1181, 1695)]),
                                                 ("a4-shifted-1-marker.png", [(59, 1695)])
                                                 ])
-def test_realign_image(config_app, datadir, file_name, markers):
+def test_realign_image(module_app, datadir, file_name, markers):
     dir_name = "cornermarkers"
     epsilon = 1
 
@@ -268,7 +269,7 @@ def test_realign_image(config_app, datadir, file_name, markers):
         assert diff[1] <= epsilon
 
 
-def test_incomplete_reference_realign_image(config_app, datadir):
+def test_incomplete_reference_realign_image(module_app, datadir):
     dir_name = "cornermarkers"
     epsilon = 1
     test_file = os.path.join(datadir, dir_name, "a4-rotated.png")
@@ -289,3 +290,93 @@ def test_incomplete_reference_realign_image(config_app, datadir):
         diff = np.absolute(np.subtract(correct_corner_markers[i], result_corner_markers[i]))
         assert diff[0] <= epsilon
         assert diff[1] <= epsilon
+
+
+@pytest.mark.parametrize('model', [(Copy), (Page)], ids=['Copy', 'Page'])
+def test_add_to_correct_copy_integrity(module_app, model):
+    app = module_app
+    exam = Exam(name='', token=generate_exam_token(model, 0, 0))
+    exam.problems = [Problem(name='')]
+    db.session.add(exam)
+    db.session.commit()
+
+    barcode = ExtractedBarcode(exam.token, 1, 1)
+    exam_id = exam.id
+
+    commit_count = {Copy: 1, Page: 2}
+
+    def insert_model(model):
+        if model == Copy:
+            query = insert(Submission.__table__).values(
+                exam_id=exam_id, validated=False
+            )
+            result = db.session.execute(query)
+            query = insert(Copy.__table__).values(
+                submission_id=result.lastrowid, _exam_id=exam_id, number=barcode.copy
+            )
+            db.session.execute(query)
+        elif model == Page:
+            with db.session.no_autoflush:
+                copy_id = exam.copies[0].id
+            query = insert(Page.__table__).values(
+                copy_id=copy_id, number=barcode.page, path='test'
+            )
+            db.session.execute(query)
+
+    def before_commit(session):
+        # Only trigger at the right commit when the entry is inserted
+        on_commit_count = app.config.get('ON_COMMIT_COUNT', 1)
+        app.config['ON_COMMIT_COUNT'] = on_commit_count + 1
+        if on_commit_count != commit_count[model]:
+            return
+
+        insert_model(model)
+
+    def after_rollback(session, previous_transaction):
+        if not session.is_active:
+            return
+
+        app.config['INTEGRITY_ERROR_COUNT'] = app.config.get('INTEGRITY_ERROR_COUNT', 0) + 1
+
+        insert_model(model)
+        db.session.commit()
+
+    listeners = [
+        ("before_commit", before_commit),
+        ("after_soft_rollback", after_rollback)
+    ]
+
+    for listener in listeners:
+        event.listen(db.session, *listener)
+
+    add_to_correct_copy("func", barcode)
+
+    for listener in listeners:
+        event.remove(db.session, *listener)
+
+    assert app.config['INTEGRITY_ERROR_COUNT'] == 1
+
+    del app.config['INTEGRITY_ERROR_COUNT']
+    del app.config['ON_COMMIT_COUNT']
+
+    copies = exam.copies
+    assert len(copies) == 1
+    assert copies[0].number == barcode.copy
+    assert copies[0].exam_id == exam_id
+
+    submissions = exam.submissions
+    assert len(submissions) == 1
+    assert submissions[0].id == copies[0].submission_id
+    assert submissions[0].exam_id == exam_id
+
+    pages = copies[0].pages
+    assert len(pages) == 1
+    assert pages[0].copy_id == copies[0].id
+    assert pages[0].number == barcode.page
+
+    # Make sure the page was added by the test in case of the Page test
+    assert pages[0].path == 'test' if model == Page else 'func'
+
+    # Make sure the submission + copy were added by the test in case of the Copy test
+    solutions = submissions[0].solutions
+    assert len(solutions) == 0 if model == Copy else 1

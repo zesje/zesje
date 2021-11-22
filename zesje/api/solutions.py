@@ -12,8 +12,7 @@ from ..database import db, Exam, Submission, Problem, Solution, FeedbackOption
 def has_valid_feedback(feedbacks):
     """checks whether a list of FOs is valid according to the exclusivity of their corresponding parets."""
     for fb in feedbacks:
-        # not very optimal as it might repeat the search of children multiple times for the same parent
-        if fb.parent.mut_excl_children and len([child for child in fb.parent.children if child in feedbacks]) > 1:
+        if fb.parent.mut_excl_children and any(True for child in fb.siblings if child in feedbacks):
             return False
     return True
 
@@ -142,23 +141,17 @@ class Solutions(Resource):
         else:
             fb_child = fb
             for parent in fb.all_ancestors:
-                # go up in the tree checking until we arrive at the top
                 if parent.mut_excl_children:
-                    # FOs are exclusive -> find other selected children with the same parent as the current `fb_child`
-                    # but exclude the current fb (if it is already selected, we do not have to remove)
-                    other_checked_children = [
-                        child
-                        for child in parent.children
-                        if child in solution.feedback and child.id != fb_child.id
-                    ]
-                    if len(other_checked_children) > 0:  # if any, uncheck it
-                        # return dict(status=404, message='Another option is already checked.'), 404
-                        for other in other_checked_children:  # theoretically, there should be only one...
-                            remove_feedback_from_solution(other, solution)
-                if fb_child not in solution.feedback:  # and check the new one
+                    # Should be exclusive, so we uncheck all siblings
+                    for sibling in fb.siblings:
+                        if sibling in solution.feedback:
+                            remove_feedback_from_solution(sibling, solution)
+
+                if fb_child not in solution.feedback:
+                    # check the current option
                     solution.feedback.append(fb_child)
 
-                # remember the current parent as it will be the child to add in the next iteration
+                # continue up in the tree
                 fb_child = parent
 
             state = True

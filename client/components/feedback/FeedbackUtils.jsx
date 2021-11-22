@@ -41,6 +41,37 @@ export const findFeedbackByIndex = (feedback, index) => {
   return Object.values(feedback).find(fb => fb.index === index)
 }
 
+const FeedbackList = (props) => {
+  if (!props.feedback.children.length) return null
+
+  const hasValidFeedback = !(props.grading && props.feedback.exclusive && props.feedback.children.reduce(
+    (prev, fb) => props.checkedFeedback.includes(fb) ? prev + 1 : prev, 0) > 1)
+
+  const children = props.feedback.children.map((id) =>
+    <FeedbackItem
+      feedbackID={id}
+      key={'item-' + id}
+      indexedFeedback={props.indexedFeedback}
+      selectedFeedbackId={props.selectedFeedbackId}
+      editFeedback={props.editFeedback}
+      problemID={props.problemID}
+      updateFeedback={props.updateFeedback}
+      feedbackToEditId={props.feedbackToEditId}
+      grading={props.grading}
+      exclusive={props.feedback.exclusive}
+      // only necessary when grading
+      checkedFeedback={props.checkedFeedback}
+      valid={hasValidFeedback}
+      toggleOption={props.toggleOption}
+      showTooltips={props.showTooltips}
+      feedbackFilters={props.feedbackFilters}
+      applyFilter={props.applyFilter}
+      blockRef={props.feedbackBlock} />
+  )
+
+  return <ul className='menu-list'>{children}</ul>
+}
+
 const FeedbackItem = (props) => {
   const feedbackID = props.feedbackID
 
@@ -59,6 +90,7 @@ const FeedbackItem = (props) => {
       filterMode={(props.grading && props.feedbackFilters[feedbackID]) || 'no_filter'}
       applyFilter={(e, newFilterMode) => props.applyFilter(e, feedbackID, newFilterMode)}
       exclusive={props.exclusive}
+      valid={props.valid}
       parentProps={props} />
     : <FeedbackBlockEdit
       key={'item-' + feedbackID}
@@ -70,4 +102,4 @@ const FeedbackItem = (props) => {
       parentProps={props} />
 }
 
-export { FILTER_COLORS, FILTER_ICONS, FeedbackItem }
+export { FILTER_COLORS, FILTER_ICONS, FeedbackItem, FeedbackList }

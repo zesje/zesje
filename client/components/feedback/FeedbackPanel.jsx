@@ -59,16 +59,17 @@ class FeedbackPanel extends React.Component {
   }
 
   render () {
+    const solution = this.props.solution
     let totalScore = 0
-    for (let i = 0; i < this.props.solution.feedback.length; i++) {
-      totalScore += this.props.problem.feedback[this.props.solution.feedback[i]].score
+    for (let i = 0; i < solution.feedback.length; i++) {
+      totalScore += this.props.problem.feedback[solution.feedback[i]].score
     }
 
     return (
       <>
         <div className='panel-heading level' style={{ marginBottom: 0 }}>
           <div className='level-left'>
-            {this.props.solution.feedback.length !== 0 && <p>Total:&nbsp;<b>{totalScore}</b></p>}
+            {solution.feedback.length !== 0 && <p>Total:&nbsp;<b>{totalScore}</b></p>}
           </div>
           <div className='level-right'>
             <div
@@ -77,13 +78,15 @@ class FeedbackPanel extends React.Component {
             >
               <button
                 title={
-                  this.props.solution.feedback.length === 0 ? 'At least one feedback option must be selected' : ''
+                  solution.feedback.length === 0
+                    ? 'At least one feedback option must be selected'
+                    : (solution.valid ? '' : 'Several exclusive options are checked at the same time.')
                 }
                 className='button is-info'
-                disabled={this.props.solution.feedback.length === 0}
+                disabled={solution.feedback.length === 0 || !solution.valid}
                 onClick={this.props.toggleApprove}
               >
-                {this.props.solution.graded_by === null ? 'Approve' : 'Set aside'}
+                {solution.graded_by === null ? 'Approve' : 'Set aside'}
               </button>
             </div>
           </div>

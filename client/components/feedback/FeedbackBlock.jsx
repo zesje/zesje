@@ -1,7 +1,7 @@
 import React from 'react'
 
 import Tooltip from '../Tooltip.jsx'
-import { FILTER_COLORS, FILTER_ICONS, FeedbackItem } from './FeedbackUtils.jsx'
+import { FILTER_COLORS, FILTER_ICONS, FeedbackList } from './FeedbackUtils.jsx'
 
 class FeedbackBlock extends React.Component {
   state = {
@@ -37,10 +37,6 @@ class FeedbackBlock extends React.Component {
   }
 
   render () {
-    const children = this.props.feedback.children.map(
-      (id) => <FeedbackItem {...this.props.parentProps}
-        feedbackID={id} key={'child-' + id} exclusive={this.props.feedback.exclusive} />
-    )
     const shortcut = (this.props.feedback.index < 11 ? '' : 'shift + ') + this.props.feedback.index % 10
 
     return (
@@ -48,14 +44,13 @@ class FeedbackBlock extends React.Component {
         <a
           className='panel-block feedback-item'
           onClick={this.props.grading ? this.toggle : this.props.editFeedback}
-          style={this.props.selected ? { backgroundColor: '#209cee' } : {}}
           onMouseEnter={() => this.enter('block')} onMouseLeave={() => this.leave('block')}
         >
           <span
             style={{ width: '1.5rem' }}
             className={'tag has-tooltip-left has-tooltip-arrow' +
               (this.props.exclusive ? ' is-circular' : ' is-squared') +
-              (this.props.checked ? ' is-link' : '') +
+              (this.props.checked ? (this.props.valid ? ' is-link' : ' is-danger') : '') +
               ((this.props.showIndex && this.props.feedback.index <= 20)
                 ? ' has-tooltip-active'
                 : '')}
@@ -110,7 +105,7 @@ class FeedbackBlock extends React.Component {
             </div>
           }
         </a>
-        {children.length > 0 ? <ul className='menu-list'> {children} </ul> : null}
+        <FeedbackList {...this.props.parentProps} feedback={this.props.feedback} />
       </li>
     )
   }

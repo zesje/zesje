@@ -2,7 +2,7 @@ import React from 'react'
 
 import withShortcuts from '../ShortcutBinder.jsx'
 import FeedbackBlockEdit from './FeedbackBlockEdit.jsx'
-import { indexFeedbackOptions, findFeedbackByIndex, FeedbackItem } from './FeedbackUtils.jsx'
+import { indexFeedbackOptions, findFeedbackByIndex, FeedbackList } from './FeedbackUtils.jsx'
 
 import './Feedback.css'
 
@@ -93,28 +93,24 @@ class FeedbackMenu extends React.Component {
       <React.Fragment>
         <div className='panel-block' style={{ display: 'block' }}>
           <div className='menu'>
-            {rootFO.children.map((id) =>
-              <ul className='menu-list' key={'ul-' + id}>
-                <FeedbackItem
-                  feedbackID={id}
-                  indexedFeedback={this.state.indexedFeedback}
-                  selectedFeedbackId={this.state.selectedFeedback && this.state.selectedFeedback.id}
-                  editFeedback={this.editFeedback}
-                  problemID={this.props.problem.id}
-                  updateFeedback={this.props.updateFeedback}
-                  feedbackToEditId={this.state.feedbackToEditId}
-                  grading={this.props.grading}
-                  exclusive={rootFO.exclusive}
-                  // only necessary when grading
-                  checkedFeedback={this.props.grading && this.props.solution.feedback}
-                  toggleOption={this.props.toggleOption}
-                  showTooltips={this.props.showTooltips}
-                  feedbackFilters={this.props.feedbackFilters}
-                  applyFilter={this.props.applyFilter}
-                  blockRef={this.feedbackBlock}
-                />
-              </ul>
-            )}
+            {<FeedbackList
+              feedback={rootFO}
+              indexedFeedback={this.state.indexedFeedback}
+              selectedFeedbackId={this.state.selectedFeedback && this.state.selectedFeedback.id}
+              editFeedback={this.editFeedback}
+              problemID={this.props.problem.id}
+              updateFeedback={this.props.updateFeedback}
+              feedbackToEditId={this.state.feedbackToEditId}
+              grading={this.props.grading}
+              // only necessary when grading
+              checkedFeedback={this.props.grading && this.props.solution.feedback}
+              toggleOption={this.props.toggleOption}
+              showTooltips={this.props.showTooltips}
+              feedbackFilters={this.props.feedbackFilters}
+              applyFilter={this.props.applyFilter}
+              blockRef={this.feedbackBlock}
+              />
+            }
           </div>
         </div>
         {this.state.feedbackToEditId === -1

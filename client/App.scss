@@ -43,6 +43,11 @@ $fa-font-path: "~@fortawesome/fontawesome-free/webfonts";
   border-color: $link;
 }
 
+.tag.is-circular.is-danger {
+  border-radius: 50%;
+  border-color: $danger;
+}
+
 .tag.is-squared {
   border-radius: 2px;
   border-color: $link;

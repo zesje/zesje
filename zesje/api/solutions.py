@@ -86,8 +86,9 @@ class Solutions(Resource):
             return dict(status=404, message='Solution does not exist.'), 404
 
         solution.remarks = args.remark
-        solution.graded_by = current_user
-        solution.graded_at = datetime.now()
+        if len(solution.feedback):
+            solution.graded_by = current_user
+            solution.graded_at = datetime.now()
 
         db.session.commit()
         return True

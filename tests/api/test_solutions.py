@@ -3,6 +3,7 @@ from zesje.database import db, Exam, Problem, FeedbackOption,\
                            Student, Submission, Solution, Grader
 import time
 
+
 @pytest.fixture
 def add_test_data(app):
     exam = Exam(id=1, name='exam', finalized=True, layout="unstructured")

@@ -130,7 +130,7 @@ class Grade extends React.Component {
    * It also sets the submission to null to display error component when unwanted behaviour is observed.
    */
   syncSubmission = () => {
-    if (!(this.state.submissions.length & this.state.problems.length)) return
+    if (!(this.state.submissions.length && this.state.problems.length)) return
 
     const submissionID = this.props.submissionID || this.state.submissions[0].id
     const problemID = this.props.problemID || this.state.problems[0].id
@@ -204,15 +204,23 @@ class Grade extends React.Component {
    * @param prevState - previous state
    */
   componentDidUpdate = (prevProps, prevState) => {
+    console.log("entering");
     const hasProblem = this.state.problem && this.state.problem.id > 0
     const hasSubmission = this.state.submission && this.state.submission.id > 0
-    if ((prevProps.examID !== this.props.examID && this.props.examID !== this.state.examID) ||
-      (prevProps.problemID !== this.props.problemID &&
-        (!hasProblem || this.props.problemID !== this.state.problem.id)) ||
-      (prevProps.submissionID !== this.props.submissionID &&
-        (!hasSubmission || this.props.submissionID !== this.state.submission.id))) {
+    if (
+        (
+            prevProps.examID !== this.props.examID && this.props.examID !== this.state.examID
+        )
+        || (
+            prevProps.problemID !== this.props.problemID && (!hasProblem || this.props.problemID !== this.state.problem.id)
+        )
+        || (
+            prevProps.submissionID !== this.props.submissionID 
+            && (!hasSubmission || this.props.submissionID !== this.state.submission.id))
+    ) {
       // The URL has changed and at least one of exam metadata, problem or submission does not match the URL
       // or the URL has changed and submission or problem is not defined
+      console.log("updating");
       this.updateFromUrl()
     }
   }

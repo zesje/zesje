@@ -391,7 +391,7 @@ def design_exam(app, client, layout, pages, students, grade, solve, multiple_cop
                        data={'id': correct[0], 'name': correct[1], 'score': 1, 'parent': parent})
         else:
             result = client.get(f'api/problems/{problem_id}')
-            parent = json.loads(result.data)['root_feedback_id']
+            root_id = json.loads(result.data)['root_feedback_id']
             fb_ids = []
             # Add random top-level FOs
             for _ in range(random.randint(2, 10)):
@@ -399,23 +399,29 @@ def design_exam(app, client, layout, pages, students, grade, solve, multiple_cop
                     'name': lorem_name.sentence(),
                     'description': (lorem.sentence() if random.choice([True, False]) else ''),
                     'score': random.randint(0, 10),
-                    'parent': parent
+                    'parent': root_id
                 })
                 # use return from post to get ids
                 data = json.loads(result.data)
                 fb_ids.append(data['id'])
+
+            parent_ids_with_children = random.sample(fb_ids, random.randint(2, len(fb_ids)))
             # Add random children to top-level FOs
-            for _ in range(random.randint(2, 5)):
-                # get random id from list
-                parent_id = fb_ids[random.randint(0, len(fb_ids) - 1)]
-                client.post(f'api/feedback/{problem_id}', data={
-                    'name': lorem_name.sentence(),
-                    'description': (lorem.sentence() if random.choice([True, False]) else ''),
-                    'score': random.randint(0, 10),
-                    'parent': parent_id
-                })
-                data = json.loads(result.data)
-                fb_ids.append(data['id'])
+            for parent_id in parent_ids_with_children:
+                for _ in range(random.randint(2, 5)):
+                    # get random id from list
+                    client.post(f'api/feedback/{problem_id}', data={
+                        'name': lorem_name.sentence(),
+                        'description': (lorem.sentence() if random.choice([True, False]) else ''),
+                        'score': random.randint(0, 10),
+                        'parent': parent_id
+                    })
+                    data = json.loads(result.data)
+                    fb_ids.append(data['id'])
+
+            exclusive_parent_ids = random.sample(parent_ids_with_children + [root_id], random.randint(0, 3))
+            for id in exclusive_parent_ids:
+                client.patch(f'api/feedback/{problem_id}/{id}', data={'exclusive': True})
 
     client.put(f'api/exams/{exam_id}', data={'finalized': True})
 

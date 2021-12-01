@@ -460,8 +460,9 @@ class Grade extends React.Component {
     let chr
     for (let i = 0; i < str.length; i++) {
       chr = str.charCodeAt(i)
-      hash = ((hash << 5) - hash) + chr
-      hash |= 0 // Convert to 32bit integer
+      hash = ((hash << 5) - hash) + chr // eslint-disable-line no-bitwise
+      // Convert to 32bit integer
+      hash |= 0 // eslint-disable-line no-bitwise
     }
     return Math.abs(hash)
   }

@@ -45,7 +45,8 @@ class Scans extends React.Component {
   state = {
     scans: [],
     copies: [],
-    examID: null
+    examID: null,
+    hasStudents: undefined
   };
 
   updateScans = () => {
@@ -98,14 +99,7 @@ class Scans extends React.Component {
     //       has been solved. This is a
     api.get('students')
       .then(students => {
-        if (students.length === 0) {
-          toast({
-            message: 'You have not yet uploaded any students. If you don\'t upload students before the scans ' +
-            'then we can\'t automatically assign students to their copies',
-            duration: 5000,
-            type: 'is-info'
-          })
-        }
+        this.setState({ hasStudents: students.length > 0 })
       })
   }
 
@@ -146,6 +140,14 @@ class Scans extends React.Component {
         <section className='section'>
 
           <div className='container'>
+            {this.state.hasStudents === false &&
+              <article className='message is-warning'>
+                <div className='message-body'>
+                  You have NOT yet uploaded any students. If you don&apos;t upload students before the scans
+                  then we can&apos;t automatically assign students to their copies.
+                </div>
+              </article>
+            }
             <div className='columns is-multiline is-centered'>
               <div className='column is-full has-text-centered'>
                 <Dropzone

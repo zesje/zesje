@@ -1,7 +1,6 @@
 import pytest
 from zesje.database import db, Exam, Problem, FeedbackOption,\
                            Student, Submission, Solution, Grader
-import time
 
 
 @pytest.fixture

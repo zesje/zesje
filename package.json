@@ -54,7 +54,7 @@
       "react/jsx-handler-names": "off",
       "react/prop-types": "off",
       "react/no-did-update-set-state": "warn",
-      "no-bitwise": ["error", {"allow": ["<<", "|="]}],
+      "no-bitwise": "error",
       "max-len": [
         "error",
         {

@@ -87,31 +87,6 @@ def test_add_remark(test_client, add_test_data, monkeypatch_current_user):
     assert solution['remarks'] == remark
 
 
-def test_add_remark_with_fb(test_client, add_test_data, monkeypatch_current_user):
-    res = test_client.put('/api/solution/1/1/1', data={
-        'id': 1
-    })
-
-    res = test_client.get('/api/solution/1/1/1')
-    old_gradedAt = res.get_json()['gradedAt']
-
-    # sleep for 1 second to check that the grading properties are modified
-    time.sleep(1)
-
-    remark = 'this is another remark'
-    res = test_client.post('/api/solution/1/1/1', data={
-        'remark': remark
-    })
-
-    assert res.status_code == 200
-
-    res = test_client.get('/api/solution/1/1/1')
-    solution = res.get_json()
-
-    assert solution['gradedBy'] is not None
-    assert solution['gradedAt'] > old_gradedAt
-
-
 def test_toggle_feedback(test_client, add_test_data, monkeypatch_current_user):
     # toogle parent
     for j in range(2):

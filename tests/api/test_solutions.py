@@ -6,6 +6,17 @@ from zesje.api.solutions import remove_feedback_from_solution
 
 @pytest.fixture
 def add_test_data(app):
+    """Adds test data to the db.
+
+    The feedback tree for problem 1 is (+: non-exlcusive; -: exclusive):
+    + root(id=0)
+        + A(id=1)
+            + A1(id=11)
+            + A2(id=12)
+        + B(id=2)
+            - B1(id=21)
+            - B2(id=22)
+    """
     exam = Exam(id=1, name='exam', finalized=True, layout="unstructured")
     db.session.add(exam)
 
@@ -190,6 +201,14 @@ def test_has_valid_feedback(test_client, add_test_data, monkeypatch_current_user
     assert len(solution.feedback) == 0
 
 
+@pytest.mark.parametrize('id, status_code', [
+    (1, 200), (11, 409)
+], ids=['Valid', 'No children'])
+def test_set_exclusive(test_client, add_test_data, id, status_code):
+    res = test_client.patch(f'/api/feedback/1/{id}', data={'exclusive': True})
+    assert res.status_code == status_code
+
+
 def test_add_exclusive_options(test_client, add_test_data):
     # add the first exclusive children
     res = test_client.put('/api/solution/1/1/1', data={
@@ -219,3 +238,21 @@ def test_add_exclusive_options(test_client, add_test_data):
     res = test_client.get('/api/solution/1/1/1')
     checked_feedback = res.get_json()['feedback']
     assert len(checked_feedback) == 4
+
+
+def test_invalid_feedback_cannot_approved(test_client, add_test_data, monkeypatch_current_user):
+    test_client.put('/api/solution/1/1/1', data={'id': 11})
+    test_client.put('/api/solution/1/1/1', data={'id': 12})
+    res = test_client.put('/api/solution/approve/1/1/1', data={'approve': True})
+    assert res.status_code == 200
+
+    res = test_client.patch('/api/feedback/1/1', data={'exclusive': True})
+    assert res.status_code == 200
+    assert res.get_json()['set_aside_solutions'] == 1
+
+    res = test_client.put('/api/solution/approve/1/1/1', data={'approve': True})
+    assert res.status_code == 409
+
+    test_client.put('/api/solution/1/1/1', data={'id': 12})
+    res = test_client.put('/api/solution/approve/1/1/1', data={'approve': True})
+    assert res.status_code == 200

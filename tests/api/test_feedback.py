@@ -256,7 +256,7 @@ def test_get_children(test_client, add_test_data):
     ('description', 200, 'This is a valid description'),
     ('description', 200, '')
     ], ids=['Valid name', 'Invalid name', 'Valid name', 'Invalid name', 'Valid description', 'Valid empty description'])
-def test_change_name(test_client, add_test_data, prop, status_code, new_value):
+def test_change_property(test_client, add_test_data, prop, status_code, new_value):
     result = test_client.patch('/api/feedback/1/5', data={prop: new_value})
     assert result.status_code == status_code
 

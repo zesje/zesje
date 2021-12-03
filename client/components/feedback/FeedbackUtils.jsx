@@ -102,4 +102,4 @@ const FeedbackItem = (props) => {
       parentProps={props} />
 }
 
-export { FILTER_COLORS, FILTER_ICONS, FeedbackItem, FeedbackList }
+export { FILTER_COLORS, FILTER_ICONS, FeedbackList }

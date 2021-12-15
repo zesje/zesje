@@ -574,7 +574,6 @@ class ExamTemplated extends React.Component {
 
   panelEdit = (problem, widgetEditDisabled, widgetDeleteDisabled) => {
     const selectedWidgetId = this.state.selectedWidgetId
-    const totalNrAnswers = 9 // the upper limit for the nr of possible answer boxes
 
     return (
       <nav className='panel'>
@@ -622,7 +621,6 @@ class ExamTemplated extends React.Component {
             </div>
             {problem && !this.props.exam.finalized
               ? <PanelMCQ
-                totalNrAnswers={totalNrAnswers}
                 problem={problem}
                 generateMCOs={(labels) => {
                   const problemWidget = this.state.widgets[this.state.selectedWidgetId]

@@ -11,6 +11,8 @@ const LABEL_TYPES = {
 
 const LABEL_TYPE_STRINGS = ['None', 'True/False', 'A, B, C ...', '1, 2, 3 ...']
 
+const MAX_ANSWERS = 26 // the upper limit for the nr of possible answer boxes
+
 /**
  * PanelMCQ is a component that allows the user to generate mc questions and options
  */
@@ -88,7 +90,7 @@ class PanelMCQ extends React.Component {
     if (this.operationInProgress()) return // finish the first operation first to ensure consistency
 
     let value = parseInt(e.target.value)
-    if (!isNaN(value) && value <= this.props.totalNrAnswers) {
+    if (!isNaN(value) && value <= MAX_ANSWERS) {
       if (this.state.chosenLabelType === LABEL_TYPES.TRUE_FALSE) {
         value = 2
       }
@@ -175,7 +177,7 @@ class PanelMCQ extends React.Component {
                 <label>#</label>
                 <input
                   type='number' value={this.state.nrPossibleAnswers} min='1'
-                  max={this.props.totalNrAnswers} className='input' onChange={this.onChangeNPA}
+                  max={MAX_ANSWERS} className='input' onChange={this.onChangeNPA}
                 />
               </div>
               <div className='inline-mcq-edit'>

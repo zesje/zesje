@@ -144,7 +144,7 @@ class Solutions(Resource):
             for parent in fb.all_ancestors:
                 if parent.mut_excl_children:
                     # Should be exclusive, so we uncheck all siblings
-                    for sibling in fb.siblings:
+                    for sibling in fb_child.siblings:
                         if sibling in solution.feedback:
                             remove_feedback_from_solution(sibling, solution)
 

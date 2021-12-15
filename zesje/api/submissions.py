@@ -4,6 +4,7 @@ from flask_restful import Resource, reqparse
 from flask_restful.inputs import boolean
 from flask_login import current_user
 
+from .solutions import solution_to_data
 from ..database import Exam, Submission, Problem
 
 
@@ -20,19 +21,7 @@ def sub_to_data(sub, meta=None):
         } if sub.student else None,
         'validated': sub.validated,
         'problems': [
-            {
-                'id': sol.problem.id,
-                'graded_by': {
-                    'id': sol.graded_by.id,
-                    'name': sol.graded_by.name,
-                    'oauth_id': sol.graded_by.oauth_id
-                } if sol.graded_by else None,
-                'graded_at': sol.graded_at.isoformat() if sol.graded_at else None,
-                'feedback': [
-                    fb.id for fb in sol.feedback
-                ],
-                'remark': sol.remarks if sol.remarks else ""
-            } for sol in sub.solutions  # Sorted by sol.problem_id
+            solution_to_data(sol) for sol in sub.solutions  # Sorted by sol.problem_id
         ]
     }
 

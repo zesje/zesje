@@ -25,6 +25,21 @@ def remove_feedback_from_solution(fb, solution):
             solution.feedback.remove(descendant)
 
 
+def solution_to_data(solution):
+    return {
+        'problemId': solution.problem.id,
+        'feedback': [fb.id for fb in solution.feedback],
+        'valid': has_valid_feedback(solution.feedback),
+        'gradedBy': {
+            'id': solution.graded_by.id,
+            'name': solution.graded_by.name,
+            'oauth_id': solution.graded_by.oauth_id
+        } if solution.graded_by else None,
+        'gradedAt': solution.graded_at.isoformat() if solution.graded_at else None,
+        'remark': solution.remarks or ''
+    }
+
+
 class Solutions(Resource):
     """ Solution provided on a specific problem and exam """
 
@@ -57,16 +72,7 @@ class Solutions(Resource):
         if solution is None:
             return dict(status=404, message='Solution does not exist.'), 404
 
-        return {
-            'feedback': [fb.id for fb in solution.feedback],
-            'valid': has_valid_feedback(solution.feedback),
-            'gradedBy': {
-                'id': solution.graded_by.id,
-                'name': solution.graded_by.name
-            } if solution.graded_by else None,
-            'gradedAt': solution.graded_at.isoformat() if solution.graded_at else None,
-            'remarks': solution.remarks
-        }
+        return solution_to_data(solution)
 
     post_parser = reqparse.RequestParser()
     post_parser.add_argument('remark', type=str, required=True)

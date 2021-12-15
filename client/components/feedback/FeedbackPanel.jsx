@@ -32,7 +32,7 @@ class FeedbackPanel extends React.Component {
   }
 
   saveRemark = () => {
-    if (!this.props.solution.graded_at && this.state.remark.replace(/\s/g, '').length === 0) return
+    if (!this.props.solution.gradedAt && this.state.remark.replace(/\s/g, '').length === 0) return
     api.post('solution/' + this.props.examID + '/' + this.props.submissionID + '/' + this.props.problem.id, {
       remark: this.state.remark
     }).then(success => {
@@ -82,11 +82,11 @@ class FeedbackPanel extends React.Component {
                     ? 'At least one feedback option must be selected'
                     : (solution.valid ? '' : 'Several exclusive options are checked at the same time.')
                 }
-                className='button is-info'
+                className={'button ' + (solution.valid ? 'is-info' : 'is-danger')}
                 disabled={solution.feedback.length === 0 || !solution.valid}
                 onClick={this.props.toggleApprove}
               >
-                {solution.graded_by === null ? 'Approve' : 'Set aside'}
+                {solution.gradedBy === null ? 'Approve' : 'Set aside'}
               </button>
             </div>
           </div>

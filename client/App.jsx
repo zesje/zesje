@@ -70,7 +70,9 @@ class App extends React.Component {
                       setHelpPage={setHelpPage}
                     />}
                 />
-                <Route exact path='graders' element={<Graders updateGraderList={updateGraderList} />} />
+              </Route>
+              <Route path='graders' elemment={<PrivateRoute isAuthenticated={isAuthenticated}/>}>
+                <Route path='' element={<Graders updateGraderList={updateGraderList} />} />
               </Route>
               <Route
                 exact path='/unauthorized' render={() =>

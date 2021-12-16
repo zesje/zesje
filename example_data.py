@@ -284,11 +284,11 @@ def grade_problems(client, exam_id, graders, problems, submissions, grade):
         for prob in sub['problems']:
             # randomly select the problem if it is not blanck
             if random.random() <= grade and len(prob['feedback']) == 0:
-                fb_data = next(filter(lambda p: p['id'] == prob['id'], problems))
+                fb_data = next(filter(lambda p: p['id'] == prob['problemId'], problems))
                 fo, root_id = fb_data['feedback'], fb_data['root_feedback_id']
                 fo = [id for id in fo if int(id) != root_id]
                 opt = fo[random.randint(0, len(fo) - 1)]
-                client.put(f"/api/solution/{exam_id}/{submission_id}/{prob['id']}",
+                client.put(f"/api/solution/{exam_id}/{submission_id}/{prob['problemId']}",
                            json={'id': opt})
 
 

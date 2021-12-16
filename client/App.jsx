@@ -1,5 +1,5 @@
 import React from 'react'
-import Loadable from 'react-loadable'
+import loadable from '@loadable/component'
 import { hot } from 'react-hot-loader'
 import { BrowserRouter as Router, Route, Switch, Redirect } from 'react-router-dom'
 
@@ -10,23 +10,10 @@ import ExamRouter from './components/ExamRouter.jsx'
 import Footer from './components/Footer.jsx'
 import Loading from './views/Loading.jsx'
 
-const Home = Loadable({
-  loader: () => import('./views/Home.jsx'),
-  loading: Loading
-})
-const AddExam = Loadable({
-  loader: () => import('./views/AddExam.jsx'),
-  loading: Loading
-})
-const Graders = Loadable({
-  loader: () => import('./views/Graders.jsx'),
-  loading: Loading
-})
-
-const Fail = Loadable({
-  loader: () => import('./views/Fail.jsx'),
-  loading: Loading
-})
+const Home = loadable(() => import('./views/Home.jsx'), { fallback: <Loading /> })
+const AddExam = loadable(() => import('./views/AddExam.jsx'), { fallback: <Loading /> })
+const Graders = loadable(() => import('./views/Graders.jsx'), { fallback: <Loading /> })
+const Fail = loadable(() => import('./views/Fail.jsx'), { fallback: <Loading /> })
 
 const PrivateRoute = ({ isAuthenticated, render, ...rest }) => {
   return (

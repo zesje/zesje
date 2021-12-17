@@ -72,11 +72,18 @@ def test_get_solution(test_client, add_test_data):
 
 
 def test_add_remark(test_client, add_test_data, monkeypatch_current_user):
+    remark = 'this is a remark'
     res = test_client.post('/api/solution/1/1/1', data={
-        'remark': 'this is a remark'
+        'remark': remark
     })
 
     assert res.status_code == 200
+
+    res = test_client.get('/api/solution/1/1/1')
+    solution = res.get_json()
+
+    assert not solution['gradedBy']
+    assert solution['remarks'] == remark
 
 
 def test_toggle_feedback(test_client, add_test_data, monkeypatch_current_user):

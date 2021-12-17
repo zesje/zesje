@@ -11,7 +11,7 @@ const LABEL_TYPES = {
 
 const LABEL_TYPE_STRINGS = ['None', 'True/False', 'A, B, C ...', '1, 2, 3 ...']
 
-const MAX_ANSWERS = 26 // the upper limit for the nr of possible answer boxes
+const MAX_ANSWERS = 20 // the upper limit for the nr of possible answer boxes
 
 /**
  * PanelMCQ is a component that allows the user to generate mc questions and options

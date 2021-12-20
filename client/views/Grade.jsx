@@ -8,6 +8,7 @@ import FeedbackPanel from '../components/feedback/FeedbackPanel.jsx'
 import ProblemSelector from './grade/ProblemSelector.jsx'
 import ProgressBar from '../components/ProgressBar.jsx'
 import withShortcuts from '../components/ShortcutBinder.jsx'
+import withRouter from '../components/RouterBinder.jsx'
 import GradeNavigation from './grade/GradeNavigation.jsx'
 import { indexFeedbackOptions, findFeedbackByIndex } from '../components/feedback/FeedbackUtils.jsx'
 
@@ -88,8 +89,8 @@ class Grade extends React.Component {
           ...partialState
         })
       } else {
-        const submissionID = this.props.submissionID || metadata.submissions[0].id
-        const problemID = this.props.problemID || metadata.problems[0].id
+        const submissionID = this.props.router.params.submissionID || metadata.submissions[0].id
+        const problemID = this.props.router.params.problemID || metadata.problems[0].id
 
         Promise.all([
           api.get(`submissions/${examID}/${submissionID}?${[
@@ -101,7 +102,7 @@ class Grade extends React.Component {
             problem: problem,
             matchingResults: submission.meta.filter_matches,
             ...partialState
-          }, () => this.props.history.replace(this.getURL(submissionID, problemID)))
+          }, () => this.props.router.navigate(this.getURL(submissionID, problemID)), { replace: true })
         }).catch(err => {
           console.log(err)
           this.setState({
@@ -132,8 +133,8 @@ class Grade extends React.Component {
   syncSubmission = () => {
     if (!(this.state.submissions.length && this.state.problems.length)) return
 
-    const submissionID = this.props.submissionID || this.state.submissions[0].id
-    const problemID = this.props.problemID || this.state.problems[0].id
+    const submissionID = this.props.router.params.submissionID || this.state.submissions[0].id
+    const problemID = this.props.router.params.problemID || this.state.problems[0].id
     Promise.all([
       api.get(`submissions/${this.props.examID}/${submissionID}?${
         [`problem_id=${problemID}`, ...this.getFilterArguments()].join('&')}`),
@@ -146,7 +147,7 @@ class Grade extends React.Component {
         problem: problem,
         matchingResults: submission.meta.filter_matches
       }, () => {
-        this.props.history.replace(this.getURL(submission.id, problem.id))
+        this.props.router.navigate(this.getURL(submission.id, problem.id), { replace: true })
       })
     }).catch(err => {
       if (err.status === 404) {
@@ -204,21 +205,25 @@ class Grade extends React.Component {
    * @param prevState - previous state
    */
   componentDidUpdate = (prevProps, prevState) => {
+    const { problemID, submissionID } = this.props.router.params
+
     const hasProblem = this.state.problem && this.state.problem.id > 0
     const hasSubmission = this.state.submission && this.state.submission.id > 0
     if ((prevProps.examID !== this.props.examID && this.props.examID !== this.state.examID) ||
-      (prevProps.problemID !== this.props.problemID &&
-        (!hasProblem || this.props.problemID !== this.state.problem.id)) ||
-      (prevProps.submissionID !== this.props.submissionID &&
-        (!hasSubmission || this.props.submissionID !== this.state.submission.id))) {
+      (prevProps.router.params.problemID !== problemID &&
+        (!hasProblem || problemID !== this.state.problem.id)) ||
+      (prevProps.router.params.submissionID !== submissionID &&
+        (!hasSubmission || submissionID !== this.state.submission.id))) {
       // The URL has changed and at least one of exam metadata, problem or submission does not match the URL
       // or the URL has changed and submission or problem is not defined
-      this.updateFromUrl()
+      this.setState({
+        problemID, submissionID
+      }, this.updateFromUrl)
     }
   }
 
   getURL = (submissionID, problemID) => {
-    return `${this.props.parentURL}/grade/${submissionID}/${problemID}`
+    return `/exams/${this.props.examID}/grade/${submissionID}/${problemID}`
   }
 
   /**
@@ -250,7 +255,7 @@ class Grade extends React.Component {
       submission,
       matchingResults: submission.meta.filter_matches
     }, () => {
-      this.props.history.push(this.getURL(this.state.submission.id, this.state.problem.id))
+      this.props.router.navigate(this.getURL(this.state.submission.id, this.state.problem.id))
     })
   }
 
@@ -363,7 +368,7 @@ class Grade extends React.Component {
    * @param problemID - the id of the problem that we want to navigate to
    */
   navigateProblem = (problemID) => {
-    this.props.history.push(this.getURL(this.state.submission.id, problemID))
+    this.props.router.navigate(this.getURL(this.state.submission.id, problemID))
   }
 
   /**
@@ -371,7 +376,7 @@ class Grade extends React.Component {
    * @param submissionID - the id of the submission that we want to navigate to
    */
   navigateSubmission = (submissionID) => {
-    this.props.history.push(this.getURL(submissionID, this.props.problemID))
+    this.props.router.navigate(this.getURL(submissionID, this.props.router.params.problemID))
   }
 
   /**
@@ -677,4 +682,4 @@ class Grade extends React.Component {
   }
 }
 
-export default withShortcuts(Grade)
+export default withRouter(withShortcuts(Grade))

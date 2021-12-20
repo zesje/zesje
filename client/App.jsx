@@ -1,7 +1,7 @@
 import React from 'react'
 import loadable from '@loadable/component'
 import { hot } from 'react-hot-loader'
-import { BrowserRouter as Router, Route, Switch, Redirect } from 'react-router-dom'
+import { BrowserRouter as Router, Route, Routes, Navigate, Outlet, useLocation } from 'react-router-dom'
 
 import './App.scss'
 
@@ -15,25 +15,9 @@ const AddExam = loadable(() => import('./views/AddExam.jsx'), { fallback: <Loadi
 const Graders = loadable(() => import('./views/Graders.jsx'), { fallback: <Loading /> })
 const Fail = loadable(() => import('./views/Fail.jsx'), { fallback: <Loading /> })
 
-const PrivateRoute = ({ isAuthenticated, render, ...rest }) => {
-  return (
-    <Route
-      {...rest}
-      render={({ location, history, match }) =>
-        isAuthenticated
-          ? (
-              render({ location, history, match })
-            )
-          : (
-          <Redirect
-            to={{
-              pathname: '/',
-              state: { from: location }
-            }}
-          />
-            )}
-    />
-  )
+const PrivateRoute = ({ isAuthenticated }) => {
+  const location = useLocation()
+  return isAuthenticated ? <Outlet /> : <Navigate to='/' state={{ from: location }} replace />
 }
 
 class App extends React.Component {
@@ -71,27 +55,23 @@ class App extends React.Component {
           <NavBar examID={this.state.examID} setGrader={this.setGrader} ref={this.menu} />
           {this.state.graderID === undefined
             ? <Home />
-            : <Switch>
-              <Route exact path='/' component={Home} />
-              <PrivateRoute
-                isAuthenticated={isAuthenticated}
-                exact path='/exams'
-                render={({ history }) => <AddExam updateExamList={updateExamList} changeURL={history.push} />}
-              />
-              <PrivateRoute
-                isAuthenticated={isAuthenticated} path='/exams/:examID/' render={({ match }) =>
-                  <ExamRouter
-                    parentMatch={match}
-                    graderID={this.state.graderID}
-                    selectExam={this.selectExam}
-                    updateExamList={updateExamList}
-                    setHelpPage={setHelpPage}
-                  />}
-              />
-              <PrivateRoute
-                isAuthenticated={isAuthenticated} exact path='/graders' render={() =>
-                  <Graders updateGraderList={updateGraderList} />}
-              />
+            : <Routes>
+              <Route path='/' element={<Home />} />
+              <Route path='exams' elemment={<PrivateRoute isAuthenticated={isAuthenticated}/>}>
+                <Route
+                  path='' element={<AddExam updateExamList={updateExamList}/>}
+                />
+                <Route
+                  path=':examID/*' element={
+                    <ExamRouter
+                      graderID={this.state.graderID}
+                      selectExam={this.selectExam}
+                      updateExamList={updateExamList}
+                      setHelpPage={setHelpPage}
+                    />}
+                />
+                <Route exact path='graders' element={<Graders updateGraderList={updateGraderList} />} />
+              </Route>
               <Route
                 exact path='/unauthorized' render={() =>
                   <Fail message='Your account is not authorized to access this instance of Zesje.' />}
@@ -99,7 +79,7 @@ class App extends React.Component {
               <Route render={() =>
                 <Fail message="404. Could not find that page :'(" />}
               />
-            </Switch>}
+            </Routes>}
           <Footer />
         </div>
       </Router>

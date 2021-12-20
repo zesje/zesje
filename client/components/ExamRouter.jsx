@@ -1,5 +1,5 @@
 import React from 'react'
-import { Route, Routes } from 'react-router-dom'
+import { Route, Routes, Outlet } from 'react-router-dom'
 import loadable from '@loadable/component'
 import withRouter from './RouterBinder.jsx'
 
@@ -53,8 +53,11 @@ class ExamRouter extends React.PureComponent {
           path='students' element={<Students examID={examID} />}
         />
         <Route
-          path='grade/:submissionID/:problemID' element={<Grade examID={examID} />}
-        />
+          path='grade' element={<Grade examID={examID} />}
+        >
+          <Route path=':submissionID' element={<Outlet />} />
+          <Route path=':submissionID/:problemID' element={<Outlet />} />
+        </Route>
         <Route
           path='overview' element={<Overview examID={examID} />}
         />

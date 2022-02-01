@@ -12,7 +12,7 @@ class FeedbackMenu extends React.Component {
   state = {
     selectedFeedback: null,
     feedbackToEditId: -1,
-    parent: null,
+    parentId: -1,
     indexedFeedback: null,
     problemID: -1
   }
@@ -42,7 +42,7 @@ class FeedbackMenu extends React.Component {
         indexedFeedback,
         selectedFeedback: null,
         feedbackToEditId: 0,
-        parent: null,
+        parentId: -1,
         problemID: nextProps.problem.id
       }
     }
@@ -58,10 +58,10 @@ class FeedbackMenu extends React.Component {
    * @param feedbackId the id of the feedback to edit.
    * @param parent the parent feedback option, if any
    */
-  editFeedback = (feedbackId, parent) => {
+  editFeedback = (feedbackId, parentId) => {
     this.setState({
       feedbackToEditId: feedbackId,
-      parent
+      parentId
     })
   }
 
@@ -116,14 +116,14 @@ class FeedbackMenu extends React.Component {
         {this.state.feedbackToEditId === -1
           ? <FeedbackBlockEdit
             feedback={null}
-            parent={this.state.parent}
+            parentId={this.state.parentId}
             problemID={this.props.problem.id}
-            goBack={() => this.editFeedback(0, null)}
+            goBack={() => this.editFeedback(0, -1)}
             updateFeedback={this.props.updateFeedback} />
           : <div className='panel-block'>
             <button
               className='button is-link is-outlined is-fullwidth'
-              onClick={() => this.editFeedback(-1, this.state.indexedFeedback[this.props.problem.root_feedback_id])}>
+              onClick={() => this.editFeedback(-1, this.props.problem.root_feedback_id)}>
               <span className='icon is-small'>
                 <i className='fa fa-plus' />
               </span>
@@ -148,7 +148,7 @@ class FeedbackMenu extends React.Component {
                       .map((id, index) =>
                         <a key={'dropdown-parent-' + index}
                           className='dropdown-item'
-                          onClick={() => this.editFeedback(-1, this.state.indexedFeedback[id])}>
+                          onClick={() => this.editFeedback(-1, id)}>
                           {this.state.indexedFeedback[id].name}
                         </a>
                       )}

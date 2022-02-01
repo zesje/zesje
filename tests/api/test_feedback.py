@@ -41,7 +41,7 @@ def fo_json(root_id):
         'name': "fully correct",
         'description': "",
         'score': 4,
-        'parent': root_id
+        'parentId': root_id
     }
 
 
@@ -50,7 +50,7 @@ def fo_child_json():
         'name': "minor math error",
         'description': "",
         'score': 4,
-        'parent': 5
+        'parentId': 5
     }
 
 
@@ -108,7 +108,7 @@ def test_create_and_get_fo_with_parent(test_client, add_test_data):
 
     result = test_client.post('api/feedback/1', data=fo_child)
     data = json.loads(result.data)
-    assert data['parent'] == fo_child['parent']
+    assert data['parent'] == fo_child['parentId']
 
     result_get = test_client.get('/api/feedback/1')
     data_get = json.loads(result_get.data)
@@ -200,7 +200,7 @@ def test_delete_parent_with_subchildren(test_client, add_test_data):
     assert len(data_get['children'][0]['children']) == 1
 
     fo_subchild = fo_subchild_json()
-    fo_subchild['parent'] = parent_id
+    fo_subchild['parentId'] = parent_id
 
     result = test_client.post('/api/feedback/1', data=fo_subchild)
     data = json.loads(result.data)

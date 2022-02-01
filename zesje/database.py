@@ -124,7 +124,8 @@ class Copy(db.Model):
     UniqueConstraint(_exam_id, number)
 
     @validates('submission_id', include_backrefs=True)
-    def update_exam_submissison_id(self, key, submission_id):
+    def sync_exam_submissison_id(self, key, submission_id):
+        """Syncs the assigned exam when the associated submission id changes."""
         if submission_id is not None:
             self._exam_id = Submission.query.get(submission_id).exam_id
         else:
@@ -132,7 +133,8 @@ class Copy(db.Model):
         return submission_id
 
     @validates('submission', include_backrefs=True)
-    def update_exam_submissison(self, key, submission):
+    def sync_exam_submissison(self, key, submission):
+        """Syncs the assigned exam when the associated submission changes."""
         if submission.exam is not None:
             self._exam = submission.exam
 

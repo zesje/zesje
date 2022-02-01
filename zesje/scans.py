@@ -351,6 +351,7 @@ def add_to_correct_copy(image_path, barcode):
         page = Page.retrieve(copy, barcode.page)
 
         if not page.path:
+            # The path is not set, so this is a new Page entry
             try:
                 page.path = image_path
                 db.session.add(page)

@@ -120,6 +120,9 @@ class Copy(db.Model):
     number = Column(Integer, nullable=False)
     submission_id = Column(Integer, ForeignKey('submission.id'), nullable=False)  # backref submission
     pages = db.relationship('Page', backref='copy', cascade='all', lazy=True)
+    # A copy holds a 'redundant' reference to the exam of its submission
+    # to be able to define a unique constraint on (_exam_id, number).
+    # This property is read-only and automatically synced on the SQLAlchemy level.
     _exam_id = Column(Integer, ForeignKey('exam.id'), nullable=False)
     UniqueConstraint(_exam_id, number)
 

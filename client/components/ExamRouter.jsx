@@ -1,39 +1,18 @@
 import React from 'react'
 import { Route, Switch } from 'react-router-dom'
-import Loadable from 'react-loadable'
+import loadable from '@loadable/component'
 
 import * as api from '../api.jsx'
 
 import Loading from '../views/Loading.jsx'
 
-const Exam = Loadable({
-  loader: () => import('../views/Exam.jsx'),
-  loading: Loading
-})
-const Scans = Loadable({
-  loader: () => import('../views/Scans.jsx'),
-  loading: Loading
-})
-const Students = Loadable({
-  loader: () => import('../views/Students.jsx'),
-  loading: Loading
-})
-const Grade = Loadable({
-  loader: () => import('../views/Grade.jsx'),
-  loading: Loading
-})
-const Overview = Loadable({
-  loader: () => import('../views/Overview.jsx'),
-  loading: Loading
-})
-const Email = Loadable({
-  loader: () => import('../views/Email.jsx'),
-  loading: Loading
-})
-const Fail = Loadable({
-  loader: () => import('../views/Fail.jsx'),
-  loading: Loading
-})
+const Exam = loadable(() => import('../views/Exam.jsx'), { fallback: <Loading /> })
+const Scans = loadable(() => import('../views/Scans.jsx'), { fallback: <Loading /> })
+const Students = loadable(() => import('../views/Students.jsx'), { fallback: <Loading /> })
+const Grade = loadable(() => import('../views/Grade.jsx'), { fallback: <Loading /> })
+const Overview = loadable(() => import('../views/Overview.jsx'), { fallback: <Loading /> })
+const Email = loadable(() => import('../views/Email.jsx'), { fallback: <Loading /> })
+const Fail = loadable(() => import('../views/Fail.jsx'), { fallback: <Loading /> })
 
 class ExamRouter extends React.PureComponent {
   componentDidMount = () => {

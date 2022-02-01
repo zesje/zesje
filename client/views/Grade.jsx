@@ -130,7 +130,7 @@ class Grade extends React.Component {
    * It also sets the submission to null to display error component when unwanted behaviour is observed.
    */
   syncSubmission = () => {
-    if (!(this.state.submissions.length & this.state.problems.length)) return
+    if (!(this.state.submissions.length && this.state.problems.length)) return
 
     const submissionID = this.props.submissionID || this.state.submissions[0].id
     const problemID = this.props.problemID || this.state.problems[0].id
@@ -460,8 +460,9 @@ class Grade extends React.Component {
     let chr
     for (let i = 0; i < str.length; i++) {
       chr = str.charCodeAt(i)
-      hash = ((hash << 5) - hash) + chr
-      hash |= 0 // Convert to 32bit integer
+      hash = ((hash << 5) - hash) + chr // eslint-disable-line no-bitwise
+      // Convert to 32bit integer
+      hash |= 0 // eslint-disable-line no-bitwise
     }
     return Math.abs(hash)
   }

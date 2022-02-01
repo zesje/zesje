@@ -41,7 +41,6 @@ class EditPanel extends React.Component {
     description: '',
     score: '',
     exclusive: false,
-    parentId: null,
     deleting: false
   }
 
@@ -55,7 +54,6 @@ class EditPanel extends React.Component {
         name: fb.name,
         description: fb.description === null ? '' : fb.description,
         score: fb.score,
-        parentId: fb.parent,
         exclusive: nextProps.indexedFeedback[fb.parent].exclusive,
         updateCallback: updateCallback
       }
@@ -97,7 +95,7 @@ class EditPanel extends React.Component {
       Promise.all([
         api.patch(uri + `/${this.state.id}`, fb),
         (this.state.exclusive !== this.props.parentExclusive
-          ? api.patch(uri + `/${this.state.parentId}`, { exclusive: this.state.exclusive })
+          ? api.patch(uri + `/${this.props.parentId}`, { exclusive: this.state.exclusive })
           : Promise.resolve({ set_aside_solutions: 0 }))
       ])
         .then(([r1, r2]) => {
@@ -117,7 +115,7 @@ class EditPanel extends React.Component {
           console.log(err)
         })
     } else {
-      fb.parentId = this.props.parent ? this.props.parent.id : null
+      fb.parentId = this.props.parentId
       api.post(uri, fb)
         .then((response) => {
           // Response is the feedback option

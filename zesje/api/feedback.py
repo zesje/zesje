@@ -50,7 +50,7 @@ class Feedback(Resource):
     post_parser.add_argument('name', type=str, required=True)
     post_parser.add_argument('description', type=str, required=False)
     post_parser.add_argument('score', type=int, required=False)
-    post_parser.add_argument('parent', type=int, required=False)
+    post_parser.add_argument('parentId', type=int, required=False)
 
     def post(self, problem_id):
         """Post a new feedback option
@@ -67,9 +67,9 @@ class Feedback(Resource):
             return dict(status=422, message=f"Problem with id #{problem_id} does not exist"), 422
 
         args = self.post_parser.parse_args()
-        parent = FeedbackOption.query.get(args.parent)
+        parent = FeedbackOption.query.get(args.parentId)
         if parent is None:
-            return dict(status=422, message=f"FeedbackOption with id #{args.parent} does not exist"), 422
+            return dict(status=422, message=f"FeedbackOption with id #{args.parentId} does not exist"), 422
 
         fb = FeedbackOption(problem=problem,
                             text=args.name,

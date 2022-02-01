@@ -82,7 +82,7 @@ const FeedbackItem = (props) => {
       feedback={props.indexedFeedback[feedbackID]}
       indexedFeedback={props.indexedFeedback}
       checked={props.grading && props.checkedFeedback.includes(feedbackID)}
-      editFeedback={() => props.editFeedback(feedbackID, null)}
+      editFeedback={() => props.editFeedback(feedbackID, -1)}
       toggleOption={props.toggleOption}
       grading={props.grading}
       selected={props.selectedFeedbackId === feedbackID || props.indexedFeedback[feedbackID].highlight}
@@ -95,9 +95,10 @@ const FeedbackItem = (props) => {
     : <FeedbackBlockEdit
       key={'item-' + feedbackID}
       feedback={props.indexedFeedback[feedbackID]}
+      parentId={props.indexedFeedback[feedbackID].parent}
       indexedFeedback={props.indexedFeedback}
       problemID={props.problemID}
-      goBack={() => props.editFeedback(0, null)}
+      goBack={() => props.editFeedback(0, -1)}
       updateFeedback={props.updateFeedback}
       parentProps={props} />
 }

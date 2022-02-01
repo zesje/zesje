@@ -399,7 +399,7 @@ def design_exam(app, client, layout, pages, students, grade, solve, multiple_cop
                     'name': lorem_name.sentence(),
                     'description': (lorem.sentence() if random.choice([True, False]) else ''),
                     'score': random.randint(0, 10),
-                    'parent': root_id
+                    'parentId': root_id
                 })
                 # use return from post to get ids
                 data = json.loads(result.data)
@@ -534,8 +534,8 @@ def register_fonts():
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Create example exam data in the database.')
     parser.add_argument('-d', '--delete', action='store_true', help='delete previous data')
-    parser.add_argument('--skip-processing', action='store_true', help='fakes the pdf processing to reduce time. \
-                        As a drawback, blanks will not be detected.')
+    parser.add_argument('-sp', '--skip-processing', action='store_true',
+                        help='fakes the pdf processing to reduce time. As a drawback, blanks will not be detected.')
     parser.add_argument('--exams', type=int, default=1, help='number of exams to add')
     parser.add_argument('--layout', type=str, default=ExamLayout.templated.name,
                         choices=[layout.name for layout in ExamLayout],

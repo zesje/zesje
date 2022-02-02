@@ -148,23 +148,28 @@ def test_copy_exam_relationship(app, copy, submission, exam):
 
     submission.exam = exam
 
-    assert copy._exam_id is None
-    assert copy.exam_id is None
-    assert copy.exam is None
+    def assert_no_relationships():
+        assert copy._exam_id is None
+        assert copy.exam_id is None
+        assert copy.exam is None
+        assert exam.copies == []
 
-    with pytest.raises(RuntimeError):
+    assert_no_relationships()
+
+    with pytest.raises(AttributeError):
         copy.exam_id = exam.id
 
-    assert copy._exam_id is None
-    assert copy.exam_id is None
-    assert copy.exam is None
+    assert_no_relationships()
 
-    with pytest.raises(RuntimeError):
+    with pytest.raises(AttributeError):
         copy.exam = exam
 
-    assert copy._exam_id is None
-    assert copy.exam_id is None
-    assert copy.exam is None
+    assert_no_relationships()
+
+    with pytest.raises(AttributeError):
+        exam.copies = copy
+
+    assert_no_relationships()
 
     copy.submission = submission
     db.session.flush()
@@ -172,6 +177,7 @@ def test_copy_exam_relationship(app, copy, submission, exam):
     assert copy._exam_id == exam.id
     assert copy.exam_id == exam.id
     assert copy.exam == exam
+    assert exam.copies == [copy]
 
     db.session.commit()
 

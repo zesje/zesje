@@ -95,10 +95,6 @@ class Exam(db.Model):
     def copies(self):
         return self._copies
 
-    @copies.setter
-    def copies(self, copies):
-        raise RuntimeError("Cannot manually set Exam.copies")
-
 
 class Submission(db.Model):
     """Typically created when adding a new exam."""
@@ -151,17 +147,9 @@ class Copy(db.Model):
     def exam_id(self):
         return self._exam_id
 
-    @exam_id.setter
-    def exam_id(self, exam_id):
-        raise RuntimeError("Cannot manually set Copy.exam_id")
-
     @hybrid_property
     def exam(self):
         return self._exam
-
-    @exam.setter
-    def exam(self, exam):
-        raise RuntimeError("Cannot manually set Copy.exam")
 
     student = association_proxy('submission', 'student')
     student_id = association_proxy('submission', 'student_id')

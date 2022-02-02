@@ -78,10 +78,15 @@ def run_migrations_online():
         os.makedirs(db_dir, exist_ok=True)
 
     connection = engine.connect()
+
+    # Only pass metadata when generating migrations, not when running them.
+    # This prevents unintended side effects of metadata changes in newer commits.
+    metadata_arg = dict(target_metadata=target_metadata) if getattr(config.cmd_opts, 'autogenerate', False) else {}
+
     context.configure(connection=connection,
-                      target_metadata=target_metadata,
                       process_revision_directives=process_revision_directives,
                       render_as_batch=True,
+                      **metadata_arg,
                       **current_app.extensions['migrate'].configure_args)
 
     to_revision = context.get_head_revision()

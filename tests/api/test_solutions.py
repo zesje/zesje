@@ -96,7 +96,7 @@ def test_add_remark(test_client, add_test_data, monkeypatch_current_user):
     solution = res.get_json()
 
     assert not solution['gradedBy']
-    assert solution['remarks'] == remark
+    assert solution['remark'] == remark
 
 
 @pytest.mark.parametrize('parent_id', [1, 2], ids=['Non-exclusive paret', 'Exclusive parent'])

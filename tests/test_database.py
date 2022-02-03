@@ -142,6 +142,96 @@ def test_cascades_mco_fb(app, feedback_option, mc_option):
     assert feedback_option not in db.session
 
 
+def test_copy_exam_relationship(app, copy, submission, exam):
+    db.session.add(exam)
+    db.session.flush()
+
+    submission.exam = exam
+
+    def assert_no_relationships():
+        assert copy._exam_id is None
+        assert copy.exam_id is None
+        assert copy.exam is None
+        assert exam.copies == []
+
+    assert_no_relationships()
+
+    with pytest.raises(AttributeError):
+        copy.exam_id = exam.id
+
+    assert_no_relationships()
+
+    with pytest.raises(AttributeError):
+        copy.exam = exam
+
+    assert_no_relationships()
+
+    with pytest.raises(AttributeError):
+        exam.copies = copy
+
+    assert_no_relationships()
+
+    copy.submission = submission
+    db.session.flush()
+
+    assert copy._exam_id == exam.id
+    assert copy.exam_id == exam.id
+    assert copy.exam == exam
+    assert exam.copies == [copy]
+
+    db.session.commit()
+
+
+def test_copy_exam_relationship_list_no_flush(app, copy, submission, exam):
+    db.session.add(exam)
+    submission.exam = exam
+    db.session.flush()
+
+    submission.copies = [copy]
+
+    assert copy._exam_id == exam.id
+    assert copy.exam_id == exam.id
+    assert copy.exam == exam
+
+    db.session.commit()
+
+
+def test_copy_exam_relationship_list_flush(app, copy, submission, exam):
+    db.session.add(exam)
+    db.session.flush()
+
+    submission.exam = exam
+    submission.copies = [copy]
+    db.session.flush()
+
+    assert copy._exam_id == exam.id
+    assert copy.exam_id == exam.id
+    assert copy.exam == exam
+
+    db.session.commit()
+
+
+def test_copy_exam_relationship_list_single_flush(app, copy, submission, exam):
+    submission.exam = exam
+    submission.copies = [copy]
+
+    # We cannot check any ids, as nothing has been flushed yet
+    assert copy.exam == exam
+
+    db.session.commit()
+
+
+def test_empty_session(app):
+    # Assert no objects in session
+    assert all(False for _ in db.session)
+
+
+def test_empty_db(app):
+    # Asesert all tables are empty
+    for table in db.metadata.sorted_tables:
+        assert db.session.query(table).count() == 0
+
+
 @pytest.fixture
 def mc_option():
     return MultipleChoiceOption(name='', x=0, y=0)

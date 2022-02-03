@@ -108,6 +108,9 @@ def app(base_app, monkeypatch):
     yield from app_fixture(base_app, monkeypatch)
 
 
+# Warning: Do not use the module_app in combination with the regular
+# app fixture in the same module. This will cause the database
+# savepoints to be overriden, causing a test failure on teardown.
 @pytest.fixture(scope='module')
 def module_app(base_app, module_monkeypatch):
     yield from app_fixture(base_app, module_monkeypatch)

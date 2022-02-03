@@ -74,7 +74,7 @@ def create_copy(sub):
     """Adds a new copy associated to the given submission whose number is equal to the id"""
     copy = Copy(submission=sub, number=0)
     db.session.add(copy)
-    db.session.commit()
+    db.session.flush()
     copy.number = copy.id
     db.session.commit()
 

@@ -6,14 +6,14 @@ import os
 from flask import current_app
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean, ForeignKey, Enum
-from sqlalchemy import select, join
+from sqlalchemy import event
 from flask_sqlalchemy.model import BindMetaMixin, Model
 from sqlalchemy.ext.declarative import DeclarativeMeta, declarative_base
-from sqlalchemy.orm import backref
+from sqlalchemy.orm import backref, validates
 from sqlalchemy.orm.session import object_session
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.ext.associationproxy import association_proxy
-from sqlalchemy import event
+from sqlalchemy.sql.schema import MetaData, UniqueConstraint
 
 from flask_login import UserMixin, LoginManager
 from pathlib import Path
@@ -24,8 +24,16 @@ class NoNameMeta(BindMetaMixin, DeclarativeMeta):
     pass
 
 
+meta = MetaData(naming_convention={
+    "ix": "ix_%(column_0_label)s",
+    "uq": "uq_%(table_name)s_%(column_0_name)s",
+    "ck": "ck_%(table_name)s_%(constraint_name)s",
+    "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s",
+    "pk": "pk_%(table_name)s"
+})
+
 db = SQLAlchemy(model_class=declarative_base(
-    cls=Model, metaclass=NoNameMeta, name='Model'))
+    cls=Model, metaclass=NoNameMeta, name='Model', metadata=meta))
 
 token_length = 12
 
@@ -73,6 +81,7 @@ class Exam(db.Model):
     name = Column(Text, nullable=False)
     token = Column(String(token_length), unique=True)
     submissions = db.relationship('Submission', backref='exam', cascade='all', lazy=True)
+    _copies = db.relationship('Copy', backref='_exam', cascade='all', lazy=True)
     problems = db.relationship('Problem', backref='exam', cascade='all', order_by='Problem.id', lazy=True)
     scans = db.relationship('Scan', backref='exam', cascade='all', lazy=True)
     widgets = db.relationship('ExamWidget', backref='exam', cascade='all',
@@ -84,28 +93,7 @@ class Exam(db.Model):
 
     @hybrid_property
     def copies(self):
-        # Ordered by copy number, ascending
-        return Copy.query.select_from(Exam).\
-               join(Exam.submissions).join(Submission.copies).\
-               filter(Exam.id == self.id).\
-               order_by(Copy.number.asc()).all()
-        # TODO For clarity, I rather want this to be something like:
-        # [copy for sub in self.submissions for copy in sub.copies]
-        # but only use this when all the objects are already loaded
-        # and use the query above otherwise.
-
-    # TODO Is this SQL expression really needed?
-    @copies.expression
-    def copies(cls):
-        return select([Copy.id, Copy.number, Copy.submission_id]).\
-               select_from(
-                   join(Copy, Submission)
-               ).\
-               where(Submission.exam_id == cls.id)
-
-    # Any migration that alters (and thus recreates) the exam table should explicitly
-    # specify this keyword to ensure it will be used for the new table
-    __table_args__ = {'sqlite_autoincrement': True}
+        return self._copies
 
 
 class Submission(db.Model):
@@ -128,9 +116,41 @@ class Copy(db.Model):
     number = Column(Integer, nullable=False)
     submission_id = Column(Integer, ForeignKey('submission.id'), nullable=False)  # backref submission
     pages = db.relationship('Page', backref='copy', cascade='all', lazy=True)
+    # A copy holds a 'redundant' reference to the exam of its submission
+    # to be able to define a unique constraint on (_exam_id, number).
+    # This property is read-only and automatically synced on the SQLAlchemy level.
+    _exam_id = Column(Integer, ForeignKey('exam.id'), nullable=False)
+    UniqueConstraint(_exam_id, number)
 
-    exam = association_proxy('submission', 'exam')
-    exam_id = association_proxy('submission', 'exam_id')
+    @validates('submission_id', include_backrefs=True)
+    def sync_exam_submissison_id(self, key, submission_id):
+        """Syncs the assigned exam when the associated submission id changes."""
+        if submission_id is not None:
+            self._exam_id = Submission.query.get(submission_id).exam_id
+        else:
+            self._exam_id = None
+        return submission_id
+
+    @validates('submission', include_backrefs=True)
+    def sync_exam_submissison(self, key, submission):
+        """Syncs the assigned exam when the associated submission changes."""
+        if submission.exam is not None:
+            self._exam = submission.exam
+
+            # Do not flush anything to the database at this point, as we
+            # might flush in the wrong order, causing constraints to fail
+            with db.session.no_autoflush:
+                self._exam_id = submission.exam.id
+        return submission
+
+    @hybrid_property
+    def exam_id(self):
+        return self._exam_id
+
+    @hybrid_property
+    def exam(self):
+        return self._exam
+
     student = association_proxy('submission', 'student')
     student_id = association_proxy('submission', 'student_id')
     validated = association_proxy('submission', 'validated')
@@ -143,6 +163,7 @@ class Page(db.Model):
     path = Column(Text, nullable=False)
     copy_id = Column(Integer, ForeignKey('copy.id'), nullable=False)  # backref copy
     number = Column(Integer, nullable=False)
+    UniqueConstraint(copy_id, number)
 
     @hybrid_property
     def copy_number(self):

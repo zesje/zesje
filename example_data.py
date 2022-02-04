@@ -414,7 +414,7 @@ def design_exam(app, client, layout, pages, students, grade, solve, multiple_cop
                         'name': lorem_name.sentence(),
                         'description': (lorem.sentence() if random.choice([True, False]) else ''),
                         'score': random.randint(0, 10),
-                        'parent': parent_id
+                        'parentId': parent_id
                     })
                     data = json.loads(result.data)
                     fb_ids.append(data['id'])

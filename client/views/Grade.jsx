@@ -410,9 +410,9 @@ class Grade extends React.Component {
    toggleApprove = () => {
      const submission = this.state.submission
      const problem = this.state.problem
-     const solution = submission.problems.find(p => p.id === problem.id)
+     const solution = submission.problems.find(p => p.problemId === problem.id)
 
-     const approve = solution.graded_by === null
+     const approve = solution.gradedBy === null
 
      api.put(`solution/approve/${this.props.examID}/${submission.id}/${problem.id}`, {
        approve: approve
@@ -535,12 +535,12 @@ class Grade extends React.Component {
     const problem = this.state.problem
     const submissions = this.state.submissions
     const problems = this.state.problems
-    const solution = submission.problems.find(p => p.id === problem.id)
+    const solution = submission.problems.find(p => p.problemId === problem.id)
     const otherSubmissions = this.state.submissions.filter((sub) => (
       sub.id !== submission.id && submission.student && sub.student && sub.student.id === submission.student.id)
     ).map((sub) => ' #' + sub.id)
     const multiple = otherSubmissions.length > 0
-    const gradedTime = new Date(solution.graded_at)
+    const gradedTime = new Date(solution.gradedAt)
     const gradeAnonymous = this.state.gradeAnonymous
 
     return (
@@ -563,7 +563,7 @@ class Grade extends React.Component {
                   <FeedbackPanel
                     examID={examID} submissionID={submission.id}
                     problem={problem} solution={solution}
-                    showTooltips={this.state.showTooltips} grading
+                    showTooltips={this.state.showTooltips}
                     setSubmission={this.updateSubmission}
                     toggleOption={this.toggleFeedbackOption}
                     toggleApprove={this.toggleApprove}
@@ -632,10 +632,10 @@ class Grade extends React.Component {
                   <div className='level-left'>
 
                     <div className='level-item'>
-                      {solution.graded_by
+                      {solution.gradedBy
                         ? <div>
-                          Graded by: {(solution.graded_by.name ? solution.graded_by.name + ' - ' : '') +
-                          solution.graded_by.oauth_id} <i>({gradedTime.toLocaleString()})</i>
+                          Graded by: {(solution.gradedBy.name ? solution.gradedBy.name + ' - ' : '') +
+                          solution.gradedBy.oauth_id} <i>({gradedTime.toLocaleString()})</i>
                         </div>
                         : <div>Ungraded</div>}
                     </div>
@@ -657,7 +657,7 @@ class Grade extends React.Component {
                 </div>
 
                 <p className={'box is-scrollable-desktop is-scrollable-tablet' +
-                  (solution.graded_at ? ' is-graded' : '')}
+                  (solution.gradedAt ? ' is-graded' : '')}
                 >
                   <img
                     src={examID

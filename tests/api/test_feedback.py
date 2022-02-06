@@ -41,7 +41,7 @@ def fo_json(root_id):
         'name': "fully correct",
         'description': "",
         'score': 4,
-        'parent': root_id
+        'parentId': root_id
     }
 
 
@@ -50,7 +50,7 @@ def fo_child_json():
         'name': "minor math error",
         'description': "",
         'score': 4,
-        'parent': 5
+        'parentId': 5
     }
 
 
@@ -108,7 +108,7 @@ def test_create_and_get_fo_with_parent(test_client, add_test_data):
 
     result = test_client.post('api/feedback/1', data=fo_child)
     data = json.loads(result.data)
-    assert data['parent'] == fo_child['parent']
+    assert data['parent'] == fo_child['parentId']
 
     result_get = test_client.get('/api/feedback/1')
     data_get = json.loads(result_get.data)
@@ -200,7 +200,7 @@ def test_delete_parent_with_subchildren(test_client, add_test_data):
     assert len(data_get['children'][0]['children']) == 1
 
     fo_subchild = fo_subchild_json()
-    fo_subchild['parent'] = parent_id
+    fo_subchild['parentId'] = parent_id
 
     result = test_client.post('/api/feedback/1', data=fo_subchild)
     data = json.loads(result.data)
@@ -246,3 +246,20 @@ def test_get_children(test_client, add_test_data):
     child = children[0]
 
     assert child['parent'] == 5
+
+
+@pytest.mark.parametrize('prop, status_code, new_value', [
+    ('name', 200, 'This is a new name.'),
+    ('name', 409, ' '),
+    ('score', 200, 42),
+    ('score', 400, ''),
+    ('description', 200, 'This is a valid description'),
+    ('description', 200, '')
+    ], ids=['Valid name', 'Invalid name', 'Valid name', 'Invalid name', 'Valid description', 'Valid empty description'])
+def test_change_property(test_client, add_test_data, prop, status_code, new_value):
+    result = test_client.patch('/api/feedback/1/5', data={prop: new_value})
+    assert result.status_code == status_code
+
+    data = json.loads(result.data)
+    if status_code == 200:
+        assert data['feedback'][prop] == new_value

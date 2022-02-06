@@ -1,10 +1,22 @@
 import pytest
 from zesje.database import db, Exam, Problem, FeedbackOption,\
                            Student, Submission, Solution, Grader
+from zesje.api.solutions import remove_feedback_from_solution
 
 
 @pytest.fixture
 def add_test_data(app):
+    """Adds test data to the db.
+
+    The feedback tree for problem 1 is (+: non-exlcusive; -: exclusive):
+    + root(id=0)
+        + A(id=1)
+            + A1(id=11)
+            + A2(id=12)
+        + B(id=2)
+            - B1(id=21)
+            - B2(id=22)
+    """
     exam = Exam(id=1, name='exam', finalized=True, layout="unstructured")
     db.session.add(exam)
 
@@ -32,7 +44,8 @@ def add_test_data(app):
                                    text=chr(i + 65),
                                    description='',
                                    score=i,
-                                   parent=root)
+                                   parent=root,
+                                   mut_excl_children=i == 1)
         db.session.add(fo_parent)
         db.session.commit()
         for j in range(1, 3):
@@ -83,14 +96,15 @@ def test_add_remark(test_client, add_test_data, monkeypatch_current_user):
     solution = res.get_json()
 
     assert not solution['gradedBy']
-    assert solution['remarks'] == remark
+    assert solution['remark'] == remark
 
 
-def test_toggle_feedback(test_client, add_test_data, monkeypatch_current_user):
+@pytest.mark.parametrize('parent_id', [1, 2], ids=['Non-exclusive paret', 'Exclusive parent'])
+def test_toggle_feedback(test_client, add_test_data, monkeypatch_current_user, parent_id):
     # toogle parent
     for j in range(2):
         res = test_client.put('/api/solution/1/1/1', data={
-            'id': 1
+            'id': parent_id
         })
 
         assert res.status_code == 200
@@ -99,7 +113,7 @@ def test_toggle_feedback(test_client, add_test_data, monkeypatch_current_user):
     # toogle child
     for j in range(2):
         res = test_client.put('/api/solution/1/1/1', data={
-            'id': 2 * 10 + 2
+            'id': parent_id * 10 + 2
         })
         assert res.status_code == 200
         checked = res.get_json()['state']
@@ -108,14 +122,14 @@ def test_toggle_feedback(test_client, add_test_data, monkeypatch_current_user):
         res = test_client.get('/api/solution/1/1/1')
         checked_feedback = res.get_json()['feedback']
         if checked:
-            assert 2 in checked_feedback
-            assert (2 * 10 + 2) in checked_feedback
+            assert parent_id in checked_feedback
+            assert (parent_id * 10 + 2) in checked_feedback
         else:
-            assert 2 in checked_feedback
+            assert parent_id in checked_feedback
 
     # toogle other child of same parent
     res = test_client.put('/api/solution/1/1/1', data={
-        'id': 2 * 10 + 1
+        'id': parent_id * 10 + 1
     })
     assert res.status_code == 200
     checked = res.get_json()['state']
@@ -123,12 +137,12 @@ def test_toggle_feedback(test_client, add_test_data, monkeypatch_current_user):
 
     res = test_client.get('/api/solution/1/1/1')
     checked_feedback = res.get_json()['feedback']
-    assert 2 in checked_feedback
-    assert (2 * 10 + 1) in checked_feedback
+    assert parent_id in checked_feedback
+    assert (parent_id * 10 + 1) in checked_feedback
 
     # uncheck parent
     res = test_client.put('/api/solution/1/1/1', data={
-        'id': 2
+        'id': parent_id
     })
     assert res.status_code == 200
     checked = res.get_json()['state']
@@ -141,7 +155,7 @@ def test_toggle_feedback(test_client, add_test_data, monkeypatch_current_user):
 
 def test_approve(test_client, add_test_data, monkeypatch_current_user):
     res = test_client.put('/api/solution/approve/1/1/1', data={
-        'approve': 1
+        'approve': True
     })
 
     # no feedback selected
@@ -167,3 +181,85 @@ def test_approve(test_client, add_test_data, monkeypatch_current_user):
             assert graded_by['id'] == 1
         else:
             assert graded_by is None
+
+
+def test_has_valid_feedback(test_client, add_test_data, monkeypatch_current_user):
+    solution = Solution.query.first()
+
+    excl_FO = FeedbackOption.query.get(2)
+    solution.feedback.append(excl_FO)
+    solution.feedback.append(excl_FO.children[0])
+    solution.feedback.append(excl_FO.children[1])
+
+    res = test_client.put('/api/solution/approve/1/1/1', data={
+        'approve': True
+    })
+    assert res.status_code == 409
+
+    remove_feedback_from_solution(excl_FO.children[0], solution)
+
+    res = test_client.put('/api/solution/approve/1/1/1', data={
+        'approve': True
+    })
+    assert res.status_code == 200
+    assert res.get_json()['state']
+
+    remove_feedback_from_solution(excl_FO, solution)
+    assert len(solution.feedback) == 0
+
+
+@pytest.mark.parametrize('id, status_code', [
+    (1, 200), (11, 409)
+], ids=['Valid', 'No children'])
+def test_set_exclusive(test_client, add_test_data, id, status_code):
+    res = test_client.patch(f'/api/feedback/1/{id}', data={'exclusive': True})
+    assert res.status_code == status_code
+
+
+def test_add_exclusive_options(test_client, add_test_data):
+    # add the first exclusive children
+    res = test_client.put('/api/solution/1/1/1', data={
+        'id': 2 * 10 + 1
+    })
+
+    res = test_client.get('/api/solution/1/1/1')
+    checked_feedback = res.get_json()['feedback']
+    assert 2 in checked_feedback
+    assert (2 * 10 + 1) in checked_feedback
+
+    # add the second exclusive children to ensure that the first one got removed
+    res = test_client.put('/api/solution/1/1/1', data={
+        'id': 2 * 10 + 2
+    })
+
+    res = test_client.get('/api/solution/1/1/1')
+    checked_feedback = res.get_json()['feedback']
+    assert 2 in checked_feedback
+    assert (2 * 10 + 2) in checked_feedback
+    assert (2 * 10 + 1) not in checked_feedback
+
+    # add a FO belonging to a different parent to ensure that it didn't touch the previous part
+    res = test_client.put('/api/solution/1/1/1', data={
+        'id': 1 * 10 + 2
+    })
+    res = test_client.get('/api/solution/1/1/1')
+    checked_feedback = res.get_json()['feedback']
+    assert len(checked_feedback) == 4
+
+
+def test_invalid_feedback_cannot_approved(test_client, add_test_data, monkeypatch_current_user):
+    test_client.put('/api/solution/1/1/1', data={'id': 11})
+    test_client.put('/api/solution/1/1/1', data={'id': 12})
+    res = test_client.put('/api/solution/approve/1/1/1', data={'approve': True})
+    assert res.status_code == 200
+
+    res = test_client.patch('/api/feedback/1/1', data={'exclusive': True})
+    assert res.status_code == 200
+    assert res.get_json()['set_aside_solutions'] == 1
+
+    res = test_client.put('/api/solution/approve/1/1/1', data={'approve': True})
+    assert res.status_code == 409
+
+    test_client.put('/api/solution/1/1/1', data={'id': 12})
+    res = test_client.put('/api/solution/approve/1/1/1', data={'approve': True})
+    assert res.status_code == 200

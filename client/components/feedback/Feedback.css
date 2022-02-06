@@ -38,10 +38,16 @@
     width: 100%;
 }
 
-/* 
-    Quick fix for removing 1px spacing between arrow and tooltip, should not be necessary. 
+/*
+    Quick fix for removing 1px spacing between arrow and tooltip, should not be necessary.
     TODO: Find out why this happens
 */
 [data-tooltip].tag.has-tooltip-left.has-tooltip-arrow::after {
     left: -1px !important;
+}
+
+/* Remove the dashed bottom border introduced by span tags */
+span.tag {
+  border-style: solid;
+  border-width: 0.5px;
 }

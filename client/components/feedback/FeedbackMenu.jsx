@@ -2,7 +2,7 @@ import React from 'react'
 
 import withShortcuts from '../ShortcutBinder.jsx'
 import FeedbackBlockEdit from './FeedbackBlockEdit.jsx'
-import { indexFeedbackOptions, findFeedbackByIndex, FeedbackItem } from './FeedbackUtils.jsx'
+import { indexFeedbackOptions, findFeedbackByIndex, FeedbackList } from './FeedbackUtils.jsx'
 
 import './Feedback.css'
 
@@ -12,7 +12,7 @@ class FeedbackMenu extends React.Component {
   state = {
     selectedFeedback: null,
     feedbackToEditId: -1,
-    parent: null,
+    parentId: -1,
     indexedFeedback: null,
     problemID: -1
   }
@@ -42,7 +42,7 @@ class FeedbackMenu extends React.Component {
         indexedFeedback,
         selectedFeedback: null,
         feedbackToEditId: 0,
-        parent: null,
+        parentId: -1,
         problemID: nextProps.problem.id
       }
     }
@@ -58,10 +58,10 @@ class FeedbackMenu extends React.Component {
    * @param feedbackId the id of the feedback to edit.
    * @param parent the parent feedback option, if any
    */
-  editFeedback = (feedbackId, parent) => {
+  editFeedback = (feedbackId, parentId) => {
     this.setState({
       feedbackToEditId: feedbackId,
-      parent
+      parentId
     })
   }
 
@@ -87,44 +87,43 @@ class FeedbackMenu extends React.Component {
   }
 
   render () {
+    const rootFO = this.state.indexedFeedback[this.props.problem.root_feedback_id]
+
     return (
       <React.Fragment>
         <div className='panel-block' style={{ display: 'block' }}>
           <div className='menu'>
-            {this.state.indexedFeedback[this.props.problem.root_feedback_id].children.map((id) =>
-              <ul className='menu-list' key={'ul-' + id}>
-                <FeedbackItem
-                  feedbackID={id}
-                  indexedFeedback={this.state.indexedFeedback}
-                  selectedFeedbackId={this.state.selectedFeedback && this.state.selectedFeedback.id}
-                  editFeedback={this.editFeedback}
-                  problemID={this.props.problem.id}
-                  updateFeedback={this.props.updateFeedback}
-                  feedbackToEditId={this.state.feedbackToEditId}
-                  grading={this.props.grading}
-                  // only necessary when grading
-                  checkedFeedback={this.props.grading && this.props.solution.feedback}
-                  toggleOption={this.props.toggleOption}
-                  showTooltips={this.props.showTooltips}
-                  feedbackFilters={this.props.feedbackFilters}
-                  applyFilter={this.props.applyFilter}
-                  blockRef={this.feedbackBlock}
-                />
-              </ul>
-            )}
+            {<FeedbackList
+              feedback={rootFO}
+              indexedFeedback={this.state.indexedFeedback}
+              selectedFeedbackId={this.state.selectedFeedback && this.state.selectedFeedback.id}
+              editFeedback={this.editFeedback}
+              problemID={this.props.problem.id}
+              updateFeedback={this.props.updateFeedback}
+              feedbackToEditId={this.state.feedbackToEditId}
+              grading={this.props.grading}
+              // only necessary when grading
+              checkedFeedback={this.props.grading && this.props.solution.feedback}
+              toggleOption={this.props.toggleOption}
+              showTooltips={this.props.showTooltips}
+              feedbackFilters={this.props.feedbackFilters}
+              applyFilter={this.props.applyFilter}
+              blockRef={this.feedbackBlock}
+              />
+            }
           </div>
         </div>
         {this.state.feedbackToEditId === -1
           ? <FeedbackBlockEdit
             feedback={null}
-            parent={this.state.parent}
+            parentId={this.state.parentId}
             problemID={this.props.problem.id}
-            goBack={() => this.editFeedback(0, null)}
+            goBack={() => this.editFeedback(0, -1)}
             updateFeedback={this.props.updateFeedback} />
           : <div className='panel-block'>
             <button
               className='button is-link is-outlined is-fullwidth'
-              onClick={() => this.editFeedback(-1, this.state.indexedFeedback[this.props.problem.root_feedback_id])}>
+              onClick={() => this.editFeedback(-1, this.props.problem.root_feedback_id)}>
               <span className='icon is-small'>
                 <i className='fa fa-plus' />
               </span>
@@ -149,7 +148,7 @@ class FeedbackMenu extends React.Component {
                       .map((id, index) =>
                         <a key={'dropdown-parent-' + index}
                           className='dropdown-item'
-                          onClick={() => this.editFeedback(-1, this.state.indexedFeedback[id])}>
+                          onClick={() => this.editFeedback(-1, id)}>
                           {this.state.indexedFeedback[id].name}
                         </a>
                       )}

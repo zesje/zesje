@@ -1,8 +1,11 @@
 """ REST api for problems """
 
 from flask_restful import Resource, reqparse
+from flask_restful.inputs import boolean
+from sqlalchemy import func
+import numpy as np
 
-from ..database import db, Problem, FeedbackOption, Solution
+from ..database import db, Problem, FeedbackOption, Solution, solution_feedback
 
 
 def feedback_to_data(feedback, full_children=True):
@@ -13,7 +16,8 @@ def feedback_to_data(feedback, full_children=True):
         'score': feedback.score,
         'parent': feedback.parent_id,
         'used': len(feedback.solutions),
-        'children': [feedback_to_data(child) if full_children else child.id for child in feedback.children]
+        'children': [feedback_to_data(child) if full_children else child.id for child in feedback.children],
+        'exclusive': feedback.mut_excl_children
     }
 
 
@@ -46,7 +50,7 @@ class Feedback(Resource):
     post_parser.add_argument('name', type=str, required=True)
     post_parser.add_argument('description', type=str, required=False)
     post_parser.add_argument('score', type=int, required=False)
-    post_parser.add_argument('parent', type=int, required=False)
+    post_parser.add_argument('parentId', type=int, required=False)
 
     def post(self, problem_id):
         """Post a new feedback option
@@ -63,9 +67,9 @@ class Feedback(Resource):
             return dict(status=422, message=f"Problem with id #{problem_id} does not exist"), 422
 
         args = self.post_parser.parse_args()
-        parent = FeedbackOption.query.get(args.parent)
+        parent = FeedbackOption.query.get(args.parentId)
         if parent is None:
-            return dict(status=422, message=f"FeedbackOption with id #{args.parent} does not exist"), 422
+            return dict(status=422, message=f"FeedbackOption with id #{args.parentId} does not exist"), 422
 
         fb = FeedbackOption(problem=problem,
                             text=args.name,
@@ -84,13 +88,13 @@ class Feedback(Resource):
             'parent': fb.parent_id
         }
 
-    put_parser = reqparse.RequestParser()
-    put_parser.add_argument('id', type=int, required=True)
-    put_parser.add_argument('name', type=str, required=True)
-    put_parser.add_argument('description', type=str, required=False)
-    put_parser.add_argument('score', type=int, required=False)
+    patch_parser = reqparse.RequestParser()
+    patch_parser.add_argument('name', type=str, required=False)
+    patch_parser.add_argument('description', type=str, required=False)
+    patch_parser.add_argument('score', type=int, required=False)
+    patch_parser.add_argument('exclusive', type=boolean, required=False)
 
-    def put(self, problem_id):
+    def patch(self, problem_id, feedback_id):
         """Modify an existing feedback option
 
         Parameters
@@ -101,24 +105,55 @@ class Feedback(Resource):
             score: int
         """
 
-        args = self.put_parser.parse_args()
+        args = self.patch_parser.parse_args()
 
-        if (fb := FeedbackOption.query.get(args.id)) is None:
-            return dict(status=404, message=f"Feedback option with id #{args.id} does not exist"), 404
+        if (fb := FeedbackOption.query.get(feedback_id)) is None:
+            return dict(status=404, message=f"Feedback option with id #{feedback_id} does not exist"), 404
 
-        fb.text = args.name
-        fb.description = args.description
-        fb.score = args.score
+        set_aside_solutions = 0
+
+        if args.exclusive is not None:
+            if len(fb.children) == 0:
+                return dict(status=409,
+                            message="Tryed to modify the exclusive property on a feedback option with no children"), 409
+            if not fb.mut_excl_children and args.exclusive:  # we go from non-exclusive to exclusive
+                # look at all solutions and ungrade those with inconsistencies
+                ids = [f.id for f in fb.children]
+                res = np.array(
+                    db.session.query(solution_feedback.c.solution_id,
+                                     func.count(solution_feedback.c.feedback_option_id))
+                    .filter(solution_feedback.c.feedback_option_id.in_(ids))
+                    .group_by(solution_feedback.c.solution_id).all())
+                if len(res) > 0:
+                    invalid_solutions = list(res[res[:, 1] > 1][:, 0])
+                    set_aside_solutions = db.session.query(Solution)\
+                        .filter(Solution.id.in_(invalid_solutions))\
+                        .update({Solution.grader_id: None, Solution.graded_at: None}, synchronize_session="fetch")
+
+                    if len(invalid_solutions) != set_aside_solutions:
+                        return dict(status=404,
+                                    message='Error changing the exclusive state of '
+                                            f'({len(invalid_solutions) - set_aside_solutions} solutions.'), 404
+
+            fb.mut_excl_children = args.exclusive
+
+        if args.name is not None:
+            if (name := args.name.strip()):
+                fb.text = name
+            else:
+                return dict(status=409, message="Feedback Option name cannot be empty."), 409
+
+        if args.score is not None:
+            fb.score = args.score
+
+        if args.description is not None:
+            fb.description = args.description
 
         db.session.commit()
 
-        return {
-            'id': fb.id,
-            'name': fb.text,
-            'description': fb.description,
-            'score': fb.score,
-            'parent': fb.parent_id
-        }
+        return dict(status=200,
+                    feedback=feedback_to_data(fb, full_children=False),
+                    set_aside_solutions=set_aside_solutions), 200
 
     def delete(self, problem_id, feedback_id):
         """Delete an existing feedback option
@@ -137,8 +172,7 @@ class Feedback(Resource):
         """
         if (fb := FeedbackOption.query.get(feedback_id)) is None:
             return dict(status=404, message=f"Feedback option with id #{feedback_id} does not exist"), 404
-        problem = fb.problem
-        if problem.id != problem_id:
+        if fb.problem.id != problem_id:
             return dict(status=400, message="Feedback option does not belong to this problem."), 400
         if fb.mc_option:
             return dict(status=405, message='Cannot delete feedback option'
@@ -147,6 +181,9 @@ class Feedback(Resource):
             return dict(status=405, message='Cannot delete root feedback option.'), 405
 
         # All feedback options, that are the child of the original feedback option will be deleted
+        if len(fb.parent.children) == 1 and fb.parent.mut_excl_children:
+            # we are about to delete the only child of a parent option that has exclusive enabled
+            fb.parent.mut_excl_children = False
 
         db.session.delete(fb)
 

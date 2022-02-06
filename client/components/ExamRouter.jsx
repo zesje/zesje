@@ -33,7 +33,7 @@ class ExamRouter extends React.PureComponent {
       .del('exams/' + examID)
       .then(() => {
         this.props.updateExamList()
-        this.props.router.navigate('/') // TODO: should this be a replace?
+        this.props.router.navigate('/', { replace: true })
       })
   }
 

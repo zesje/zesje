@@ -2,7 +2,7 @@ import pytest
 from datetime import datetime
 from flask import json
 from zesje.database import db, Exam, ExamLayout, Problem, FeedbackOption, \
-    ProblemWidget, Student, Submission, Solution, Grader
+    ProblemWidget, Student, Submission, Solution, Grader, GradingPolicy
 
 
 @pytest.fixture
@@ -61,18 +61,30 @@ def test_add_problem(test_client, add_test_data, exam_id, position, status):
     assert result.status_code == status
 
 
-@pytest.mark.parametrize('id, status', [
-    (1, 200),
-    (2, 200),
-    (42, 404),
-], ids=['Allowed templated', 'Allowed unstructured', 'Not exists'])
-def test_rename_problem(test_client, add_test_data, id, status):
-    new_name = 'New'
-    result = test_client.put(f'/api/problems/{id}', data={'name': new_name})
+@pytest.mark.parametrize('id, new_name, status', [
+    (1, 'New', 200),
+    (2, 'New', 200),
+    (42, 'New', 404),
+    (1, '   ', 400)
+], ids=['Allowed templated', 'Allowed unstructured', 'Not exists', 'Empty'])
+def test_rename_problem(test_client, add_test_data, id, new_name, status):
+    result = test_client.patch(f'/api/problems/{id}', data={'name': new_name})
 
     assert result.status_code == status
     if status == 200:
         assert Problem.query.get(id).name == new_name
+
+
+@pytest.mark.parametrize('id, policy, status', [
+    *[(1, policy.name, 200 if policy != GradingPolicy.set_single else 409) for policy in GradingPolicy],
+    *[(2, policy.name, 409) for policy in GradingPolicy],
+], ids=[f'{layout.name}_{policy.name}' for layout in ExamLayout for policy in GradingPolicy])
+def test_set_grading_policy(test_client, add_test_data, id, policy, status):
+    result = test_client.patch(f'/api/problems/{id}', data={'grading_policy': policy})
+
+    assert result.status_code == status
+    if status == 200:
+        assert Problem.query.get(id).grading_policy.name == policy
 
 
 @pytest.mark.parametrize('id, status', [

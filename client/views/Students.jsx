@@ -309,12 +309,19 @@ class CheckStudents extends React.Component {
                     <div className='level-item make-wider'>
                       <div className='field has-addons is-mobile'>
                         <div className='control'>
-                          <button type='submit' className='button is-info is-rounded is-hidden-mobile'
-                            onClick={this.prevUnchecked}>unchecked</button>
-                        </div>
-                        <div className='control'>
-                          <button type='submit' className={'button' + (validated ? ' is-success' : ' is-link')}
-                            onClick={this.prev}>Previous</button>
+                          <button
+                            type='submit' className='button is-info is-rounded is-hidden-mobile'
+                            onClick={this.prevUnchecked}
+                            disabled={done === total}
+                          >unchecked
+                          </button>
+                          <button
+                            type='submit'
+                            className={'button is-radiusless' + (validated ? ' is-success' : ' is-link')}
+                            onClick={this.prev}
+                            disabled={this.state.index === 0}
+                          >Previous
+                          </button>
                         </div>
                         <div className='control is-wider'>
                           <SearchBox
@@ -359,6 +366,7 @@ class CheckStudents extends React.Component {
                           <button
                             type='submit' className={'button is-radiusless' + (validated ? ' is-success' : ' is-link')}
                             onClick={this.next}
+                            disabled={this.state.index === total - 1}
                           >Next
                           </button>
                         </div>
@@ -366,6 +374,7 @@ class CheckStudents extends React.Component {
                           <button
                             type='submit' className='button is-info is-rounded is-hidden-mobile'
                             onClick={this.nextUnchecked}
+                            disabled={done === total}
                           >unchecked
                           </button>
                         </div>

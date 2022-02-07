@@ -225,7 +225,9 @@ class Submissions(Resource):
 
         meta = {
             'filter_matches': matched,
-            'n_graded': n_graded
+            'n_graded': n_graded,
+            'no_next_sub': args.direction == 'last' or (args.direction == 'next' and sub.id == submission_id),
+            'no_prev_sub': args.direction == 'first' or (args.direction == 'prev' and sub.id == submission_id)
         }
 
         return sub_to_data(sub, meta)

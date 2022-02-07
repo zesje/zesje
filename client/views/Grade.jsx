@@ -88,7 +88,6 @@ class Grade extends React.Component {
           this.setState({
             submission: submission,
             problem: problem,
-            matchingResults: submission.meta.filter_matches,
             ...partialState
           }, () => this.props.router.navigate(this.getURL(submissionID, problemID)), { replace: true })
         }).catch(err => {
@@ -127,13 +126,10 @@ class Grade extends React.Component {
       api.get(`submissions/${this.props.examID}/${submissionID}?${
         [`problem_id=${problemID}`, ...this.getFilterArguments()].join('&')}`),
       api.get(`problems/${problemID}`)
-    ]).then(values => {
-      const submission = values[0]
-      const problem = values[1]
+    ]).then((submission, problem) => {
       this.setState({
         submission: submission,
-        problem: problem,
-        matchingResults: submission.meta.filter_matches
+        problem: problem
       }, () => {
         this.props.router.navigate(this.getURL(submission.id, problem.id), { replace: true })
       })
@@ -240,8 +236,7 @@ class Grade extends React.Component {
     )
 
     this.setState({
-      submission,
-      matchingResults: submission.meta.filter_matches
+      submission
     }, () => {
       this.props.router.navigate(this.getURL(this.state.submission.id, this.state.problem.id))
     })
@@ -290,7 +285,6 @@ class Grade extends React.Component {
 
     this.setState(prevState => ({
       submission,
-      matchingResults: submission.meta.filter_matches,
       problem: update(prevState.problem, {
         n_graded: {
           $set: submission.meta.n_graded
@@ -609,7 +603,7 @@ class Grade extends React.Component {
                   <div className='column is-narrow'>
                     <FiltersInfo
                       hasFilters={this.state.hasFilters}
-                      matchingResults={this.state.matchingResults}
+                      matchingResults={submission.meta.filter_matches}
                       clearFilters={this.clearFilters}
                     />
                   </div>

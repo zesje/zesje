@@ -145,12 +145,12 @@ class Problems(Resource):
             'root_feedback_id': problem.root_feedback.id,
         }
 
-    put_parser = reqparse.RequestParser()
-    put_parser.add_argument('name', type=str)
-    put_parser.add_argument('grading_policy', type=str,
-                            choices=[policy.name for policy in GradingPolicy])
+    patch_parser = reqparse.RequestParser()
+    patch_parser.add_argument('name', type=str, required=False)
+    patch_parser.add_argument('grading_policy', type=str, required=False,
+                              choices=[policy.name for policy in GradingPolicy])
 
-    def put(self, problem_id):
+    def patch(self, problem_id):
         """PUT to a problem
 
         This method accepts both the problem name and the grading policy.
@@ -164,14 +164,24 @@ class Problems(Resource):
             HTTP 200 on success, 404 if the problem does not exist
         """
 
-        args = self.put_parser.parse_args()
+        args = self.patch_parser.parse_args()
 
         if (problem := Problem.query.get(problem_id)) is None:
             return dict(status=404, message=f"Problem with id {problem_id} doesn't exist"), 404
 
-        for attr, value in args.items():
-            if value is not None:
-                setattr(problem, attr, value)
+        if args.name is not None:
+            if (name := args.name.strip()):
+                problem.name = name
+            else:
+                return dict(status=400, message='Name cannot be empty.'), 400
+
+        if args.grading_policy is not None:
+            if problem.exam.layout is not ExamLayout.templated:
+                return dict(status=409, message='Cannot modify grading policy on an unstructured exam.'), 409
+            if args.grading_policy == GradingPolicy.set_single.name and len(problem.mc_options) == 0:
+                return dict(status=409, message='one_answer cannot be set for open answer questions.'), 409
+
+            problem.grading_policy = args.grading_policy
 
         db.session.commit()
 

@@ -153,7 +153,7 @@ class ExamUnstructured extends React.Component {
       return
     }
 
-    api.put('problems/' + id, { name: name })
+    api.patch('problems/' + id, { name: name })
       .then(resp => this.props.updateExam())
       .catch(e => {
         this.selectProblem(id) // takes care of updating the problem name to previous state

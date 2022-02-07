@@ -55,6 +55,12 @@ const Pager = (props) => {
   )
 }
 
+const GRADING_POLICY = [
+  { id: 'set_nothing', name: 'Nothing', onlyMCQ: false },
+  { id: 'set_blank', name: 'Blanks', onlyMCQ: false },
+  { id: 'set_single', name: 'One answer', onlyMCQ: true }
+]
+
 class ExamTemplated extends React.Component {
   state = {
     examID: null,
@@ -215,7 +221,7 @@ class ExamTemplated extends React.Component {
     const problem = changedWidget.problem
     if (!problem) return
 
-    api.put('problems/' + problem.id, { name: problem.name })
+    api.patch('problems/' + problem.id, { name: problem.name })
       .catch(e => toast({ message: 'Could not save new problem name: ' + e, type: 'is-danger' }))
       .then(this.setState({
         changedWidgetId: null
@@ -234,18 +240,36 @@ class ExamTemplated extends React.Component {
 
     const newPolicy = e.target.value
 
-    api.put('problems/' + problem.id, { grading_policy: newPolicy })
-      .then(success => this.setState(prevState => ({
-        widgets: update(prevState.widgets, {
-          [selectedWidgetId]: {
-            problem: {
-              grading_policy: {
-                $set: newPolicy
+    api.patch('problems/' + problem.id, { grading_policy: newPolicy })
+      .then(success => {
+        this.setState(prevState => ({
+          widgets: update(prevState.widgets, {
+            [selectedWidgetId]: {
+              problem: {
+                grading_policy: {
+                  $set: newPolicy
+                }
               }
             }
-          }
-        })
-      })), error => {
+          })
+        }))
+        if (newPolicy === 'set_single') {
+          api.patch(`feedback/${problem.id}/${problem.root_feedback_id}`, { exclusive: true })
+            .then(res => {
+              this.updateFeedback(problem.id)
+              if (res.set_aside_solutions > 0) {
+                toast({
+                  message: `${res.set_aside_solutions} solution${res.set_aside_solutions > 1 ? 's have' : ' has'} ` +
+                    'been marked as ungraded due to incompatible feedback options.',
+                  type: 'is-warning',
+                  duration: 5000
+                })
+              }
+            })
+            .catch(error => console.log(error))
+        }
+      })
+      .catch(error => {
         error.json().then(res => {
           let message = res.message
           if (typeof message === 'object') {
@@ -687,9 +711,8 @@ class ExamTemplated extends React.Component {
               />
               <div className='select is-hovered is-fullwidth'>
                 <select value={problem.grading_policy} onChange={this.onChangeAutoApproveType}>
-                  <option value='set_nothing'>Nothing</option>
-                  <option value='set_blank'>Blanks</option>
-                  {problem.mc_options.length !== 0 && <option value='set_single'>One answer</option>}
+                  {GRADING_POLICY.filter(policy => !policy.onlyMCQ || problem.mc_options.length !== 0)
+                    .map(policy => <option key={policy.id} value={policy.id}>{policy.name}</option>)}
                 </select>
               </div>
             </div>

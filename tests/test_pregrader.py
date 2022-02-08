@@ -4,6 +4,7 @@ from PIL import Image
 import numpy as np
 from zesje import pregrader
 from zesje.database import Problem, ProblemWidget
+from reportlab.lib.pagesizes import A4
 
 
 def load_image(datadir, *args):
@@ -13,8 +14,12 @@ def load_image(datadir, *args):
 
 
 @pytest.fixture
-def scanned_page(datadir):
-    return load_image(datadir, 'checkboxes', 'scanned_page.jpg')
+def checkbox_images(datadir):
+    return {
+        dpi: [load_image(datadir, 'checkboxes', f'{image}_{dpi}dpi.jpg')
+              for image in ('student', 'reference')]
+        for dpi in (100, 300)
+    }
 
 
 @pytest.fixture
@@ -32,30 +37,53 @@ def reference(datadir):
     return load_image(datadir, 'blanks', 'reference.jpg')
 
 
-@pytest.mark.parametrize('box_coords, result', [((346, 479), True), ((370, 479), False), ((393, 479), True),
-                                                ((416, 479), True), ((439, 479), True), ((155, 562), True)],
-                         ids=["1 filled", "2 empty", "3 marked with line", "4 completely filled",
-                              "5 marked with an x", "e marked with a cirle inside"])
-def test_ideal_crops(box_coords, result, scanned_page):
-    assert pregrader.box_is_filled(box_coords, scanned_page, cut_padding=0.1, box_size=9) == result
+@pytest.mark.parametrize('dpi', [100, 300],
+                         ids=["100 dpi", "300 dpi"])
+def test_is_checkbox_filled(dpi, checkbox_images, app):
+    student, reference = checkbox_images[dpi]
+    amounts = [2, 3, 4, 5]
 
+    unclears = [
+        0b00000000000000,
+        0b01000000000000,
+        0b00000001000000,
+        0b00000000000000,
+        0b00000000000000,
+        0b00000001000000,
+    ]
 
-@pytest.mark.parametrize('box_coords, result', [((341, 471), True), ((352, 482), True), ((448, 482), True),
-                                                ((423, 474), True), ((460, 475), False), ((477, 474), True),
-                                                ((87, 556), False)],
-                         ids=["1 filled bottom right", "1 filled top left", "5 filled with a bit of 6",
-                              "4 fully filled with the label", "6 empty with label",
-                              "7 partially  cropped, filled and a part of 6", "B empty with cb at the bottom"])
-def test_shifted_crops(box_coords, result, scanned_page):
-    assert pregrader.box_is_filled(box_coords, scanned_page, cut_padding=0.1, box_size=9) == result
+    expecteds = [
+        0b01100101001010,
+        0b10010110011010,
+        0b10101110010100,
+        0b11010101001011,
+        0b11100100101010,
+        0b10110101011100,
+    ]
 
+    spacing_y = 75
+    spacing_x = 110
 
-@pytest.mark.parametrize('box_coords, result', [((60, 562), True), ((107, 562), True),
-                                                ((131, 562), False)],
-                         ids=["A filled with trailing letter", "C filled with letters close",
-                              "D blank with trailing letter"])
-def test_trailing_text(box_coords, result, scanned_page):
-    assert pregrader.box_is_filled(box_coords, scanned_page, cut_padding=0.1, box_size=9) == result
+    xs = 50 + np.arange(len(amounts)) * spacing_x
+    ys = int(A4[1]) - (int(A4[1]) - 300 - np.arange(6) * spacing_y)
+    n = sum(amounts)
+
+    for y, expected, unclear in zip(ys, expecteds, unclears):
+        index = n - 1
+        for x, amount in zip(xs, amounts):
+            for i in range(amount):
+                # We should not be too strict, different algorithms can produce slightly
+                # different results, which causes the threshold to be just (not) reached.
+                if unclear & 1 << index:
+                    continue
+
+                xi = x + 20 * (i + 1)
+                yi = y + 20
+
+                expected_result = bool(expected & 1 << index)
+                assert pregrader.is_checkbox_filled((xi, yi), student, reference) == expected_result
+
+                index -= 1
 
 
 problems_with_result = [
@@ -76,7 +104,7 @@ def test_is_blank(config_app, coords, result, student_aligned, reference):
                                    width=coords[2], height=coords[3])
 
     assert not pregrader.is_problem_misaligned(problem, student_aligned, reference)
-    assert pregrader.is_blank(problem, student_aligned, reference) == result
+    assert pregrader.is_solution_blank(problem, student_aligned, reference) == result
 
 
 @pytest.mark.parametrize(
@@ -101,4 +129,4 @@ def test_threshold(config_app, datadir):
         data = np.array(img)
         reference = np.full_like(data, 255)
 
-        assert not pregrader.is_blank(problem, data, reference)
+        assert not pregrader.is_solution_blank(problem, data, reference)

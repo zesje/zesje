@@ -70,7 +70,7 @@
     "@loadable/component": "5.15.2",
     "bulma": "^0.9.3",
     "bulma-popover": "^1.1.0",
-    "bulma-switch-control": "^1.2.1",
+    "bulma-switch-control": "^1.2.2",
     "bulma-toast": "^2.4.1",
     "concurrently": "^6.5.1",
     "css-loader": "^6.6.0",

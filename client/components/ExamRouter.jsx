@@ -1,6 +1,7 @@
 import React from 'react'
-import { Route, Switch } from 'react-router-dom'
+import { Route, Routes, Outlet } from 'react-router-dom'
 import loadable from '@loadable/component'
+import withRouter from './RouterBinder.jsx'
 
 import * as api from '../api.jsx'
 
@@ -16,77 +17,65 @@ const Fail = loadable(() => import('../views/Fail.jsx'), { fallback: <Loading />
 
 class ExamRouter extends React.PureComponent {
   componentDidMount = () => {
-    this.props.selectExam(this.props.parentMatch.params.examID)
+    this.props.selectExam(this.props.router.params.examID)
   }
 
   componentDidUpdate = (prevProps, prevState) => {
-    const examID = this.props.parentMatch.params.examID
-    if (prevProps.parentMatch.params.examID !== examID) {
+    const { examID } = this.props.router.params
+    if (prevProps.router.params.examID !== examID) {
       // sends the selected exam to the navbar
       this.props.selectExam(examID)
     }
   }
 
-  deleteExam = (history, examID) => {
+  deleteExam = (examID) => {
     return api
       .del('exams/' + examID)
       .then(() => {
         this.props.updateExamList()
-        history.push('/')
+        this.props.router.navigate('/', { replace: true })
       })
   }
 
   render = () => {
-    const examID = this.props.parentMatch.params.examID
-    const parentURL = this.props.parentMatch.url
+    const { examID } = this.props.router.params
 
     if (!examID || isNaN(examID)) {
       return <Fail message='Invalid exam' />
     }
 
     return (
-      <Switch>
+      <Routes>
         <Route
-          path={`${parentURL}/scans`} render={({ match }) =>
-            <Scans examID={examID} />}
+          path='scans' element={<Scans examID={examID} />}
         />
         <Route
-          path={`${parentURL}/students`} render={({ match }) =>
-            <Students examID={examID} />}
+          path='students' element={<Students examID={examID} />}
         />
         <Route
-          path={`${parentURL}/grade/:submissionID?/:problemID?`} render={({ match, history }) => (
-            <Grade
-              examID={parseInt(examID)}
-              history={history}
-              parentURL={parentURL}
-              submissionID={match.params.submissionID ? parseInt(match.params.submissionID) : undefined}
-              problemID={match.params.problemID ? parseInt(match.params.problemID) : undefined}
-            />
-          )}
+          path='grade' element={<Grade examID={examID} />}
+        >
+          <Route path=':submissionID' element={<Outlet />} />
+          <Route path=':submissionID/:problemID' element={<Outlet />} />
+        </Route>
+        <Route
+          path='overview' element={<Overview examID={examID} />}
         />
         <Route
-          path={`${parentURL}/overview`} render={({ match }) => (
-            <Overview examID={examID} />
-          )}
+          path='email' element={<Email examID={examID} />}
         />
         <Route
-          path={`${parentURL}/email`} render={({ match }) => (
-            <Email examID={examID} />
-          )}
-        />
-        <Route
-          path={`${parentURL}`} render={({ match, history }) =>
+          path='/' element={
             <Exam
               examID={examID}
               updateExamList={this.props.updateExamList}
-              deleteExam={(id) => this.deleteExam(history, id)}
+              deleteExam={this.deleteExam}
               setHelpPage={this.props.setHelpPage}
             />}
         />
-      </Switch>
+      </Routes>
     )
   }
 }
 
-export default ExamRouter
+export default withRouter(ExamRouter)

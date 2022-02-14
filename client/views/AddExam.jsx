@@ -1,4 +1,5 @@
 import React from 'react'
+import withRouter from '../components/RouterBinder.jsx'
 import Dropzone from 'react-dropzone'
 import { toast } from 'bulma-toast'
 import { Document, Page } from 'react-pdf/dist/esm/entry.webpack'
@@ -79,7 +80,7 @@ class Exams extends React.Component {
     api.post('exams', data)
       .then(exam => {
         this.props.updateExamList()
-        this.props.changeURL('/exams/' + exam.id)
+        this.props.router.navigate('/exams/' + exam.id)
       })
       .catch(resp => {
         resp.json().then(body => toast({ message: body.message, type: 'is-danger' }))
@@ -233,4 +234,4 @@ class Exams extends React.Component {
   }
 }
 
-export default Exams
+export default withRouter(Exams)

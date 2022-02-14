@@ -68,7 +68,7 @@ class CheckStudents extends React.Component {
           copy: copy,
           index: copies.findIndex(c => c.number === copy.number),
           ...partialState
-        }, () => this.props.history.replace(this.getURL(copyNumber)))
+        }, () => this.props.router.navigate(this.getURL(copyNumber), { replace: true }))
       }).catch(_ => {
         this.setState({
           copies,

@@ -29,9 +29,10 @@ def solution_data(exam_id, student_id):
     results = []
     for solution in sub.solutions:  # Sorted by problem_id
         problem = solution.problem
-        if not len(problem.feedback_options):
-            # There is no possible feedback for this problem.
+        if len(problem.feedback_options) < 2:
+            # There is no possible feedback for this problem (take into account that root always exist)..
             continue
+
         problem_data = {
             'id': problem.id,
             'name': problem.name,
@@ -93,12 +94,12 @@ def full_exam_data(exam_id):
             key = problem.name
         problem_keys[problem.id] = key
 
-        if not len(problem.feedback_options):
-            # There is no possible feedback for this problem.
+        if len(problem.feedback_options) < 2:
+            # There is no possible feedback for this problem (take into account that root always exist).
             continue
 
         columns[(key, 'remarks')] = 'string'
-        for fo in problem.feedback_options:
+        for fo in problem.root_feedback.all_descendants:
             if (key, fo.text) in feedback_keys.values():
                 feedback_keys[fo.id] = (key, f'{fo.text} ({fo.id})')
             else:

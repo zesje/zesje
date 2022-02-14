@@ -57,7 +57,7 @@ def grade_problem(copy, page, page_img):
         if not is_problem_misaligned(problem, page_img, reference_img):
             if problem.mc_options:
                 grade_mcq(sol, page_img, reference_img)
-            elif is_blank(problem, page_img, reference_img):
+            elif is_solution_blank(problem, page_img, reference_img):
                 grade_as_blank(sol)
 
     if solutions_to_grade:
@@ -170,7 +170,7 @@ def is_problem_misaligned(problem, student_img, reference_img):
     return is_misaligned(widget_area_in, student_img, reference_img)
 
 
-def is_blank(area_inch, page_img, reference_img, padding_inch, binary_threshold, min_area_inch2):
+def _is_blank(area_inch, page_img, reference_img, padding_inch, binary_threshold, min_area_inch2):
     """Determines if an area of a page is blank
 
     Params
@@ -237,7 +237,7 @@ def is_solution_blank(problem, page_img, reference_img):
     min_area_inch2 = current_app.config['MIN_ANSWER_SIZE_MM2'] / (mm_per_inch)**2
     binary_threshold = current_app.config['THRESHOLD_BLANK']
 
-    return is_blank(
+    return _is_blank(
         area_inch=widget_area_in,
         page_img=page_img,
         reference_img=reference_img,

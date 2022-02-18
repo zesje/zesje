@@ -5,11 +5,14 @@ import { BrowserRouter as Router, Route, Routes, Navigate, Outlet, useLocation }
 
 import './App.scss'
 
+import * as api from './api.jsx'
+
 import NavBar from './components/NavBar.jsx'
 import ExamRouter from './components/ExamRouter.jsx'
 import Footer from './components/Footer.jsx'
 import Loading from './views/Loading.jsx'
 
+const Login = loadable(() => import('./views/Login.jsx'), { fallback: <Loading /> })
 const Home = loadable(() => import('./views/Home.jsx'), { fallback: <Loading /> })
 const AddExam = loadable(() => import('./views/AddExam.jsx'), { fallback: <Loading /> })
 const Graders = loadable(() => import('./views/Graders.jsx'), { fallback: <Loading /> })
@@ -30,18 +33,36 @@ class App extends React.Component {
     * user yet, hence wait for the response before going to the desired url by showing a Home/Welcome screen.
     * Instead, a null user means that is not logged in, then go to the Home page through the router.
     */
-    graderID: undefined
+    grader: null
+  }
+
+  componentDidMount = () => {
+    api.get('oauth/status').then(status => {
+      this.setState({
+        grader: status.grader,
+        loginProvider: status.provider
+      })
+    }).catch(err => {
+      if (err.status === 401) {
+        err.json().then(status => {
+          this.setState({
+            loginProvider: status.provider
+          })
+        })
+      } else {
+        console.log(err)
+      }
+    })
   }
 
   selectExam = (id) => this.setState({ examID: parseInt(id) })
+  logout = () => api.get('oauth/logout').then(() => this.setState({ grader: null }))
 
   updateExamList = () => {
     if (this.menu.current) {
       this.menu.current.updateExamList()
     }
   }
-
-  setGrader = (grader) => this.setState({ graderID: grader ? grader.id : null })
 
   render () {
     const updateExamList = this.menu.current ? this.menu.current.updateExamList : () => {}
@@ -51,11 +72,11 @@ class App extends React.Component {
 
     return (
       <Router>
-        <div>
-          <NavBar examID={this.state.examID} setGrader={this.setGrader} ref={this.menu} />
-          {this.state.graderID === undefined
-            ? <Home />
-            : <Routes>
+      {this.state.grader == null
+        ? <Login provider={this.state.loginProvider} />
+        : <div>
+          <NavBar logout={this.logout} ref={this.menu} grader={this.state.grader} examID={this.state.examID} />
+          <Routes>
               <Route path='/' element={<Home />} />
               <Route path='exams' elemment={<PrivateRoute isAuthenticated={isAuthenticated}/>}>
                 <Route
@@ -81,9 +102,9 @@ class App extends React.Component {
               <Route render={() =>
                 <Fail message="404. Could not find that page :'(" />}
               />
-            </Routes>}
+            </Routes>
           <Footer />
-        </div>
+        </div>}
       </Router>
     )
   }

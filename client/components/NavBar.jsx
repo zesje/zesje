@@ -58,21 +58,6 @@ const ExamDropdown = (props) => {
 }
 
 const GraderDropdown = (props) => {
-  if (!props.grader) {
-    return (
-      <div className='navbar-item'>
-        <a className='button is-link' href={'/api/oauth/start?userurl=' + window.location.pathname}>
-          <span className='icon'>
-            <i className='fa fa-user' aria-hidden='true' />
-          </span>
-          <span>
-            Login with {props.loginProvider}
-          </span>
-        </a>
-      </div>
-    )
-  }
-
   return (
     <div className='navbar-item has-dropdown is-hoverable'>
       <div className='navbar-link'>
@@ -133,7 +118,6 @@ const ExportDropdown = (props) => {
         <a
           className='navbar-item'
           href='/api/export/full'
-          disabled={props.fullDisabled}
         >
           Export full database
         </a>
@@ -151,37 +135,17 @@ class NavBar extends React.Component {
   state = {
     foldOut: false,
     examList: [],
-    grader: null,
     helpPage: null,
     examID: null,
     loginProvider: ''
   }
 
+  componentDidMount = () => this.updateExamList()
+
   componentDidUpdate = (prevProps, prevState) => {
     if (prevProps.examID !== this.props.examID && !isNaN(this.props.examID)) {
       this.setState({ examID: this.props.examID })
     }
-  }
-
-  componentDidMount = () => {
-    api.get('oauth/status').then(status => {
-      this.setState({
-        grader: status.grader,
-        loginProvider: status.provider
-      })
-      this.props.setGrader(status.grader)
-      this.updateExamList()
-    }).catch(err => {
-      if (err.status === 401) {
-        err.json().then(status => {
-          this.setState({
-            loginProvider: status.provider
-          })
-        })
-      } else {
-        console.log(err)
-      }
-    })
   }
 
   updateExamList = () => {
@@ -207,21 +171,11 @@ class NavBar extends React.Component {
     this.setState({ helpPage: helpPage })
   }
 
-  logout = () =>
-    api.get('oauth/logout')
-      .then(() => {
-        this.setState({
-          grader: null,
-          examList: [],
-          examID: null
-        })
-        this.props.setGrader(null)
-      })
-
   render () {
+    if (this.props.grader == null) console.log('NavBar loading without a grader.')
+
     const selectedExam = this.state.examList.find(exam => exam.id === this.state.examID)
 
-    const predicateNoGrader = [!this.state.grader, 'Log in before using the app.']
     const predicateNoExam = [!selectedExam, 'No exam selected.']
     const predicateExamNotFinalized = [predicateNoExam[0] || !selectedExam.finalized,
       'The exam is not finalized yet.']
@@ -247,38 +201,37 @@ class NavBar extends React.Component {
         <div className={'navbar-menu' + (this.state.foldOut ? ' is-active' : '')} onClick={this.burgerClick}>
           <div className='navbar-start'>
 
-            {this.state.examList.length && this.state.grader
+            {this.state.examList.length
               ? <ExamDropdown selectedExam={selectedExam} list={this.state.examList} />
-              : <TooltipLink to='/exams' text='Add exam' predicate={[predicateNoGrader]} />}
+              : <TooltipLink to='/exams' text='Add exam' predicate={[]} />}
 
             <TooltipLink
               to={`/exams/${this.state.examID}/scans`}
               text='Scans'
-              predicate={[predicateNoGrader, predicateExamNotFinalized]}
+              predicate={[predicateExamNotFinalized]}
             />
             <TooltipLink
               to={`/exams/${this.state.examID}/students`}
               text='Students'
-              predicate={[predicateNoGrader, predicateNoExam]}
+              predicate={[predicateNoExam]}
             />
             <TooltipLink
               to={`/exams/${this.state.examID}/grade`}
               text={<strong><i>Grade</i></strong>}
-              predicate={[predicateNoGrader, predicateNoExam, predicateExamNotFinalized, predicateSubmissionsEmpty]}
+              predicate={[predicateNoExam, predicateExamNotFinalized, predicateSubmissionsEmpty]}
             />
             <TooltipLink
               to={`/exams/${this.state.examID}/overview`}
               text='Overview'
-              predicate={[predicateNoGrader, predicateNoExam, predicateExamNotFinalized, predicateSubmissionsEmpty]}
+              predicate={[predicateNoExam, predicateExamNotFinalized, predicateSubmissionsEmpty]}
             />
             <TooltipLink
               to={`/exams/${this.state.examID}/email`}
               text='Email'
-              predicate={[predicateNoGrader, predicateExamNotFinalized, predicateSubmissionsEmpty]}
+              predicate={[predicateExamNotFinalized, predicateSubmissionsEmpty]}
             />
             <ExportDropdown
               disabled={predicateNoExam[0] || predicateSubmissionsEmpty[0]}
-              fullDisabled={predicateNoGrader[0]}
               examID={this.state.examID}
             />
             <a className='navbar-item' onClick={() => this.setHelpPage('shortcuts')}>
@@ -287,7 +240,9 @@ class NavBar extends React.Component {
           </div>
 
           <div className='navbar-end'>
-            <GraderDropdown grader={this.state.grader} logout={this.logout} loginProvider={this.state.loginProvider}/>
+            <GraderDropdown
+              grader={this.props.grader}
+              logout={this.props.logout} />
           </div>
 
         </div>

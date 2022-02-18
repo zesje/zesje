@@ -97,12 +97,12 @@ class CheckStudents extends React.Component {
   syncCopyWithUrl = () => {
     const urlIsDifferent = !this.state.copy || this.props.router.params.copyNumber !== this.state.copy.number
     if (urlIsDifferent) {
-      const copyNumber = this.props.router.params.copyNumber || this.state.copies[0].id
+      const copyNumber = this.props.router.params.copyNumber || this.state.copies[0].number
       api.get(`copies/${this.props.examID}/${copyNumber}`).then(copy => {
         this.setState({
           copy: copy,
           index: this.state.copies.findIndex(c => c.number === copy.number)
-        }, () => this.props.router.navigate(this.getURL(copyNumber)), {replace: true})
+        }, () => this.props.router.navigate(this.getURL(copyNumber)), { replace: true })
       }).catch(_ => {
         this.setState({
           copy: null,
@@ -157,7 +157,7 @@ class CheckStudents extends React.Component {
       .then(copies => {
         this.setState({
           copies
-        }, () => this.syncCopyWithUrl())
+        }, this.syncCopyWithUrl)
       }).catch(_ => {
         this.setState({
           copies: [],
@@ -173,9 +173,7 @@ class CheckStudents extends React.Component {
     }
   }
 
-  selectCopy = (copy) => {
-    this.loadCopy(this.state.copies.findIndex(c => c.number === copy.number))
-  }
+  selectCopy = (copy) => this.loadCopy(this.state.copies.findIndex(c => c.number === copy.number))
 
   prev = () => this.loadCopy(this.state.index - 1)
   next = () => this.loadCopy(this.state.index + 1)

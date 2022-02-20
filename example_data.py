@@ -265,13 +265,13 @@ def solve_problems(pdf_file, pages, student_ids, problems, solve, copies_per_stu
         PdfWriter(pdf_file.name, trailer=exam_pdf).write()
 
 
-def validate_signatures(client, exam_id, copies):
+def validate_signatures(client, exam_id, copies, validate):
     for copy in copies:
         number = copy['number']
         student = copy['student']
         if not student:
             print(f'\tNo student detected for copy {number} of exam {exam_id}')
-        else:
+        elif random.random() < validate:
             student_id = student['id']
             client.put(f'/api/copies/{exam_id}/{number}', data={'studentID': student_id})
 
@@ -344,7 +344,7 @@ def add_unstructured_exam(client, pages):
     return exam_id, problems
 
 
-def design_exam(app, client, layout, pages, students, grade, solve, multiple_copies, skip_processing):
+def design_exam(app, client, layout, pages, students, grade, solve, validate, multiple_copies, skip_processing):
     register_fonts()
 
     if layout == ExamLayout.templated.name:
@@ -461,7 +461,7 @@ def design_exam(app, client, layout, pages, students, grade, solve, multiple_cop
 
     # Validate signatures
     copies = client.get(f'api/copies/{exam_id}').get_json()
-    validate_signatures(client, exam_id, copies)
+    validate_signatures(client, exam_id, copies, validate)
 
     submissions = client.get(f'api/submissions/{exam_id}').get_json()
     problems = client.get('/api/exams/' + str(exam_id)).get_json()['problems']
@@ -484,6 +484,7 @@ def create_exams(app,
                  graders,
                  solve,
                  grade,
+                 validate,
                  multiple_copies,
                  skip_processing=False):
 
@@ -505,7 +506,7 @@ def create_exams(app,
     generated_exams = []
     for _ in range(exams):
         generated_exams.append(design_exam(app, client, layout, max(1, pages), students, grade,
-                                           solve, multiple_copies, skip_processing))
+                                           solve, validate, multiple_copies, skip_processing))
 
     client.get('/api/oauth/logout')
 
@@ -545,6 +546,8 @@ if __name__ == '__main__':
     parser.add_argument('--students', type=int, default=30, help='number of students per exam')
     parser.add_argument('--graders', type=int, default=4, help='number of graders (min is 1)')
     parser.add_argument('--solve', type=int, default=90, help='how much of the solutions to solve (between 0 and 100)')
+    parser.add_argument('--validate', type=int, default=90,
+                        help='how much of the solutions to validate (between 0 and 100)')
     parser.add_argument('--grade', type=int, default=60, help='how much of the exam to grade (between 0 and 100). \
                         Notice that only non-blank solutions will be considered for grading.')
     parser.add_argument('--multiple-copies', type=int, default=5,
@@ -563,6 +566,7 @@ if __name__ == '__main__':
                      args.graders,
                      args.solve / 100,
                      args.grade / 100,
+                     args.validate / 100,
                      args.multiple_copies / 100,
                      args.skip_processing)
     if not mysql_was_running:

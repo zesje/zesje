@@ -46,6 +46,7 @@ const ConfirmMergeModal = (props) => {
 }
 
 class CheckStudents extends React.Component {
+  searchInput = React.createRef();
   /**
    * Constructor sets empty state, and requests copies for the exam.
    * After getting the copies, if the copyNumber is provided in the URL, loads the corresponding copy,
@@ -170,6 +171,7 @@ class CheckStudents extends React.Component {
   loadCopy = (index) => {
     if (index >= 0 && index < this.state.copies.length) {
       this.props.router.navigate(this.getURL(this.state.copies[index].number))
+      this.searchInput.current.clear()
     }
   }
 
@@ -290,6 +292,7 @@ class CheckStudents extends React.Component {
                   : <SearchPanel
                     matchStudent={this.matchStudent} toggleEdit={this.toggleEdit} copy={copy}
                     student={copy && copy.student} validated={validated} copyIndex={this.state.index}
+                    ref={this.searchInput}
                     />}
               </div>
 

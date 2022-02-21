@@ -75,6 +75,8 @@ class SearchPanel extends React.Component {
     }
   }
 
+  clear = () => this.setState({ input: '' })
+
   search = (event) => {
     const result = this.fuse.search(event.target.value).slice(0, 10)
 

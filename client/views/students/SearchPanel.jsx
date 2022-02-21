@@ -35,7 +35,7 @@ class SearchPanel extends React.Component {
     input: '',
     selected: 0,
     result: [],
-    subIndex: null
+    copyIndex: null
   }
 
   searchInput = React.createRef();
@@ -122,12 +122,12 @@ class SearchPanel extends React.Component {
   }
 
   static getDerivedStateFromProps = (nextProps, prevState) => {
-    if (prevState.subIndex !== nextProps.subIndex) {
+    if (prevState.copyIndex !== nextProps.copyIndex) {
       return {
         input: '',
         selected: 0,
         result: nextProps.student ? [nextProps.student] : [],
-        subIndex: nextProps.subIndex
+        copyIndex: nextProps.copyIndex
       }
     } else return null
   }

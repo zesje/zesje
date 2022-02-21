@@ -31,7 +31,7 @@ const ConfirmMergeModal = (props) => {
     &nbsp;with this copy which might affect the total score of the problem.
     &nbsp;Moreover, the solution will have to be approved again.
     <br/>
-    Note that this action <b>cannot be undone</b>.
+    Note that this action cannot be undone automatically.
   </p>
 
   return <ConfirmationModal

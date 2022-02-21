@@ -44,6 +44,9 @@ class SearchPanel extends React.Component {
     api.get('students')
       .then(students => {
         this.fuse = new Fuse(students, fuseOptions)
+        if (this.props.prevSearch != null) {
+          this.search({ target: { value: this.props.prevSearch } })
+        }
       })
       .catch(err => {
         toast({ message: 'failed to get students (see javascript console for details)', type: 'is-danger' })

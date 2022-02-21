@@ -243,14 +243,19 @@ class CheckStudents extends React.Component {
 
   toggleEdit = (student) => {
     if (student && student.id) {
+      console.log(this.searchInput.current.state.input)
       this.setState({
         editActive: true,
-        editStud: student
+        editStud: student,
+        prevSearch: this.searchInput.current.state.input
       })
     } else {
       this.setState({
         editActive: !this.state.editActive,
-        editStud: null
+        editStud: null,
+
+        // save the previous search when the `add students` is pressed from the `SearchPanel`
+        prevSearch: !this.state.editActive ? this.searchInput.current.state.input : this.state.prevSearch
       })
     }
   }
@@ -292,7 +297,7 @@ class CheckStudents extends React.Component {
                   : <SearchPanel
                     matchStudent={this.matchStudent} toggleEdit={this.toggleEdit} copy={copy}
                     student={copy && copy.student} validated={validated} copyIndex={this.state.index}
-                    ref={this.searchInput}
+                    ref={this.searchInput} prevSearch={this.state.prevSearch}
                     />}
               </div>
 

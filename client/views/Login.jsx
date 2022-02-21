@@ -1,10 +1,13 @@
-
 import React from 'react'
+import { useLocation } from 'react-router-dom'
 
 import zesjeImage from '../components/zesje.png'
 
-const Login = (props) => (
-  <section className='hero is-fullheight is-vcentered is-info'>
+const Login = (props) => {
+  const loc = useLocation()
+  const from = loc.state ? loc.state.from.pathname : '/'
+
+  return <section className='hero is-fullheight is-vcentered is-info'>
   <div className="hero-body">
     <div className="container has-text-centered is-flex-grow-0">
     <p className="title">
@@ -18,7 +21,7 @@ const Login = (props) => (
         </div>
         {props.provider &&
         <div className="card-content">
-          <a className='button is-link' href={'/api/oauth/start?userurl=' + window.location.pathname}>
+          <a className='button is-link' href={'/api/oauth/start?userurl=' + from}>
             <span className='icon'>
               <i className='fa fa-user' aria-hidden='true' />
             </span>
@@ -31,6 +34,6 @@ const Login = (props) => (
     </div>
   </div>
   </section>
-)
+}
 
 export default Login

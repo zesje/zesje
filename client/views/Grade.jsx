@@ -126,7 +126,7 @@ class Grade extends React.Component {
       api.get(`submissions/${this.props.examID}/${submissionID}?${
         [`problem_id=${problemID}`, ...this.getFilterArguments()].join('&')}`),
       api.get(`problems/${problemID}`)
-    ]).then((submission, problem) => {
+    ]).then(([submission, problem]) => {
       this.setState({
         submission: submission,
         problem: problem

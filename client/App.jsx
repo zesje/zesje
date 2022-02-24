@@ -105,7 +105,7 @@ class App extends React.Component {
                   />}
               />
             </Route>
-            <Route path='graders' elemment={<Graders updateGraderList={updateGraderList} />} />
+            <Route path='graders' element={<Graders updateGraderList={updateGraderList} />} />
           </Route>
         </Routes>
       </Router>

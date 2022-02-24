@@ -18,18 +18,15 @@ const AddExam = loadable(() => import('./views/AddExam.jsx'), { fallback: <Loadi
 const Graders = loadable(() => import('./views/Graders.jsx'), { fallback: <Loading /> })
 const Fail = loadable(() => import('./views/Fail.jsx'), { fallback: <Loading /> })
 
-const PrivateRoute = ({ isAuthenticated }) => {
-  const location = useLocation()
-  return isAuthenticated ? <Outlet /> : <Navigate to='/login' state={{ from: location }} replace />
-}
-
 const NavBarView = (props) => {
   const location = useLocation()
 
   return props.grader == null
     ? <Navigate to={{ pathname: '/login', search: `from=${location.pathname}` }} state={{ from: location }} replace />
     : <div>
-      <NavBar logout={props.logout} ref={props.menu} grader={props.grader} examID={props.examID} /><Outlet /><Footer />
+      <NavBar logout={props.logout} ref={props.menu} grader={props.grader} examID={props.examID} />
+      <Outlet />
+      <Footer />
     </div>
 }
 
@@ -91,14 +88,14 @@ class App extends React.Component {
           }/>
           <Route path='*' element={<Fail message="404. Could not find that page :'(" />}/>
           <Route path='/' element={
-            <NavBarView logout={this.logout} navRef={this.menu} grader={this.state.grader} examID={this.state.examID} />
+            <NavBarView logout={this.logout} navRef={this.menu}
+              grader={this.state.grader} examID={this.state.examID} />
           }>
             <Route index element={<Home />} />
             <Route path='exams' element={<Outlet />}>
               <Route index element={<AddExam updateExamList={updateExamList}/>} />
               <Route path=':examID/*' element={
                   <ExamRouter
-                    graderID={this.state.graderID}
                     selectExam={this.selectExam}
                     updateExamList={updateExamList}
                     setHelpPage={setHelpPage}
@@ -110,37 +107,6 @@ class App extends React.Component {
         </Routes>
       </Router>
     )
-
-    // return (
-    //   <Router>
-    //   {this.state.grader == null
-    //     ? <Login provider={this.state.loginProvider} />
-    //     : <div>
-    //       <NavBar logout={this.logout} ref={this.menu} grader={this.state.grader} examID={this.state.examID} />
-    //       <Routes>
-    //           <Route path='/' element={<Home />} />
-    //           <Route path='exams' element={<PrivateRoute isAuthenticated={isAuthenticated}/>}>
-    //             <Route
-    //               path='' element={<AddExam updateExamList={updateExamList}/>}
-    //             />
-    //             <Route
-    //               path=':examID/*' element={
-    //                 <ExamRouter
-    //                   graderID={this.state.graderID}
-    //                   selectExam={this.selectExam}
-    //                   updateExamList={updateExamList}
-    //                   setHelpPage={setHelpPage}
-    //                 />}
-    //             />
-    //           </Route>
-    //           <Route path='graders' elemment={<PrivateRoute isAuthenticated={isAuthenticated}/>}>
-    //             <Route path='' element={<Graders updateGraderList={updateGraderList} />} />
-    //           </Route>
-    //         </Routes>
-    //       <Footer />
-    //     </div>}
-    //   </Router>
-    // )
   }
 }
 

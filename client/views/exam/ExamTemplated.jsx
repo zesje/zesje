@@ -20,6 +20,9 @@ import './Exam.scss'
 
 import * as api from '../../api.jsx'
 
+const MCO_WIDTH = 20
+const MCO_HEIGHT = 34
+
 const Pager = (props) => {
   const isDisabled = props.numPages == null
   const pageNum = isDisabled ? '_' : props.page + 1
@@ -99,9 +102,7 @@ class ExamTemplated extends React.Component {
               option.widget.x -= option.cbOffsetX
               option.widget.y -= option.cbOffsetY
               return option
-            }),
-            widthMCO: 20,
-            heightMCO: 34
+            })
           }
         }
       })
@@ -397,6 +398,8 @@ class ExamTemplated extends React.Component {
           }}
           createNewWidget={this.createNewWidget}
           updateExam={this.props.updateExam}
+          widthMCO={MCO_WIDTH}
+          heightMCO={MCO_HEIGHT}
         />
       )
     }
@@ -431,6 +434,13 @@ class ExamTemplated extends React.Component {
    */
   generateMCOs = (problemWidget, labels, index, xPos, yPos) => {
     if (labels.length === index) {
+      const minWidthMCOs = MCO_WIDTH * (problemWidget.problem.mc_options.length + 1)
+      const diff = problemWidget.problem.mc_options[0].widget.x - problemWidget.x
+      if (problemWidget.x + problemWidget.width < xPos + MCO_WIDTH) {
+        const width = Math.max(minWidthMCOs + diff, 75)
+        api.patch('widgets/' + problemWidget.id, { width: width })
+          .then(() => this.updateWidget(problemWidget.id, { width: { $set: width } }))
+      }
       return true
     }
 
@@ -466,7 +476,7 @@ class ExamTemplated extends React.Component {
       feedback.id = result.feedback_id
       this.addMCOtoState(problemWidget, data)
       this.updateFeedback(problemWidget.problem.id)
-      return this.generateMCOs(problemWidget, labels, index + 1, xPos + problemWidget.problem.widthMCO, yPos)
+      return this.generateMCOs(problemWidget, labels, index + 1, xPos + MCO_WIDTH, yPos)
     }).catch(err => {
       console.log(err)
       err.json().then(res => {
@@ -516,8 +526,6 @@ class ExamTemplated extends React.Component {
     const option = widget.problem.mc_options[index]
     if (!option) return Promise.resolve(false)
 
-    console.log(option)
-    console.log(widget.problem)
     return api.del('mult-choice/' + option.id)
       .then(res => {
         const feedback = widget.problem.feedback[option.feedback_id]
@@ -569,7 +577,7 @@ class ExamTemplated extends React.Component {
       return {
         widget: {
           x: {
-            $set: data.x + i * widget.problem.widthMCO
+            $set: data.x + i * MCO_WIDTH
           },
           y: {
             // each mc option needs to be positioned next to the previous option and should not overlap it
@@ -647,7 +655,7 @@ class ExamTemplated extends React.Component {
                   if (problem.mc_options.length > 0) {
                     // position the new mc options widget next to the last mc options
                     const last = problem.mc_options[problem.mc_options.length - 1].widget
-                    xPos = last.x + problemWidget.problem.widthMCO
+                    xPos = last.x + MCO_WIDTH
                     yPos = last.y
                   } else {
                     // position the new mc option widget inside the problem widget

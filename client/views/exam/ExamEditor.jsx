@@ -87,8 +87,6 @@ class ExamEditor extends React.Component {
           page: this.props.page,
           feedback: [],
           mc_options: [],
-          widthMCO: 20,
-          heightMCO: 34,
           isMCQ: false
         }
         const widgetData = {
@@ -223,7 +221,7 @@ class ExamEditor extends React.Component {
     widget.problem.mc_options.forEach(
       (option, i) => {
         const newData = {
-          x: Math.round(data.x) + i * widget.problem.widthMCO + option.cbOffsetX,
+          x: Math.round(data.x) + i * this.props.widthMCO + option.cbOffsetX,
           y: Math.round(data.y) + option.cbOffsetY
         }
         this.updateWidgetDB(option, newData)
@@ -243,8 +241,8 @@ class ExamEditor extends React.Component {
       const oldY = widget.problem.mc_options[0].widget.y
       let newX = oldX
       let newY = oldY
-      const widthOption = widget.problem.widthMCO * widget.problem.mc_options.length
-      const heightOption = widget.problem.heightMCO
+      const widthOption = this.props.widthMCO * widget.problem.mc_options.length
+      const heightOption = this.props.heightMCO
       const widthProblem = data.width ? data.width : widget.width
       const heightProblem = data.height ? data.height : widget.height
 
@@ -276,8 +274,8 @@ class ExamEditor extends React.Component {
    * @return a react component representing the multiple choice widget
    */
   renderMCWidget = (widget) => {
-    const width = widget.problem.widthMCO * widget.problem.mc_options.length
-    const height = widget.problem.heightMCO
+    const width = this.props.widthMCO * widget.problem.mc_options.length
+    const height = this.props.heightMCO
     const enableResizing = false
     const isSelected = widget.id === this.props.selectedWidgetId
     const xPos = widget.problem.mc_options[0].widget.x
@@ -338,8 +336,8 @@ class ExamEditor extends React.Component {
                   }
                 }}
                 style={{
-                  '--width-mco': widget.problem.widthMCO + 'px',
-                  '--height-mco': widget.problem.heightMCO + 'px'
+                  '--width-mco': this.props.widthMCO + 'px',
+                  '--height-mco': this.props.heightMCO + 'px'
                 }}
               >
                 <div className='mcq-option-label'>
@@ -365,8 +363,11 @@ class ExamEditor extends React.Component {
 
     const enableResizing = true
     const isSelected = widget.id === this.props.selectedWidgetId
-    const minWidth = this.props.problemMinWidth
+    const minWidth = widget.problem.mc_options.length > 0
+      ? this.props.widthMCO * widget.problem.mc_options.length
+      : this.props.problemMinWidth
     const minHeight = this.props.problemMinHeight
+
     const elementList = [(
       <Rnd
         key={'widget_' + widget.id}

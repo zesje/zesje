@@ -82,7 +82,9 @@ class App extends React.Component {
     return (
       <Router>
         <Routes>
-          <Route path='login' element={<Login provider={this.state.loginProvider} logout={this.logout} />} />
+          <Route path='login' element={
+            <Login provider={this.state.loginProvider} logout={this.logout} grader={this.state.grader} />
+          } />
           <Route path='unauthorized' element={
               <Fail message='Your account is not authorized to access this instance of Zesje.' />
           }/>

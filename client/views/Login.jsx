@@ -1,7 +1,34 @@
 import React from 'react'
-import { useLocation } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 
 import zesjeImage from '../components/zesje.png'
+
+const AlreadyLoggedIn = ({ logout, grader, from }) => {
+  const navigate = useNavigate()
+
+  return <>
+    <p>Already logged in as <b>{grader.name}</b></p>
+    <buttons className='buttons is-centered'>
+      <button className='button' onClick={logout}>Log out</button>
+      <button className='button is-link' onClick={() => navigate(from, { replace: true })}>
+        Continue
+      </button>
+    </buttons>
+  </>
+}
+
+const OAuthButton = ({ provider, from }) => (
+  provider != null
+    ? <a className='button is-link' href={'/api/oauth/start?userurl=' + from}>
+      <span className='icon'>
+        <i className='fa fa-user' aria-hidden='true' />
+      </span>
+      <span>
+        Login with {provider}
+      </span>
+    </a>
+    : <p>Could not retrive login provider. Please, try reloading the page.</p>
+)
 
 const Login = (props) => {
   const loc = useLocation()
@@ -19,17 +46,11 @@ const Login = (props) => {
             <img src={zesjeImage.src} alt="Zesje"/>
           </figure>
         </div>
-        {props.provider &&
         <div className="card-content">
-          <a className='button is-link' href={'/api/oauth/start?userurl=' + from}>
-            <span className='icon'>
-              <i className='fa fa-user' aria-hidden='true' />
-            </span>
-            <span>
-              Login with {props.provider}
-            </span>
-          </a>
-        </div>}
+        {props.grader != null
+          ? <AlreadyLoggedIn logout={props.logout} grader={props.grader} from={from} />
+          : <OAuthButton logout={props.logout} provider={props.provider} from={from} />}
+        </div>
     </div>
     </div>
   </div>

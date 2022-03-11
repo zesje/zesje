@@ -137,7 +137,7 @@ class FeedbackMenu extends React.Component {
                     <i className='fa fa-chevron-down' />
                   </span>
                 </button>
-                <div className='dropdown-menu' id='dropdown-menu-FO-parent' role='menu'>
+                <div className='dropdown-menu is-fullwidth' id='dropdown-menu-FO-parent' role='menu'>
                   <div className='dropdown-content'>
                     <div className='dropdown-item'>
                       <p><b>Parent feedback:</b></p>
@@ -147,7 +147,7 @@ class FeedbackMenu extends React.Component {
                       .filter(id => id != this.props.problem.root_feedback_id) // eslint-disable-line eqeqeq
                       .map((id, index) =>
                         <a key={'dropdown-parent-' + index}
-                          className='dropdown-item'
+                          className='dropdown-item has-text-overflow'
                           onClick={() => this.editFeedback(-1, id)}>
                           {this.state.indexedFeedback[id].name}
                         </a>

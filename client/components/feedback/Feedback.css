@@ -41,7 +41,7 @@
 
 .has-text-overflow {
     text-overflow: ellipsis;
-    overflow: scroll hidden;
+    overflow: auto hidden;
     white-space: normal;  /* use nowrap to force single-line text */
 }
 

@@ -59,8 +59,8 @@ class FeedbackBlock extends React.Component {
           </span>
           <span className={'grow has-text-overflow'} style={{ paddingLeft: '0.5em' }}>
             {this.props.feedback.name}
-            <Tooltip text={this.props.feedback.description} />
           </span>
+          <Tooltip text={this.props.feedback.description} />
           <button
             className={'button is-pulled-right is-small is-light' +
               (this.state.hover.block ? '' : ' is-invisible') +

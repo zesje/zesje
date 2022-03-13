@@ -276,6 +276,8 @@ class CheckStudents extends React.Component {
     const validated = copy && copy.validated
     const total = copies.length
     const done = copies.filter(c => c.validated).length
+    const hasUnmatchedRight = done === total ? false : copies.some((c, j) => (j > this.state.index) && !c.validated)
+    const hasUnmatchedLeft = done === total ? false : copies.some((c, j) => (j < this.state.index) && !c.validated)
 
     if (this.state.examID === undefined && this) return hero
 
@@ -312,7 +314,7 @@ class CheckStudents extends React.Component {
                           <button
                             type='submit' className='button is-info is-rounded is-hidden-mobile'
                             onClick={this.prevUnchecked}
-                            disabled={done === total}
+                            disabled={!hasUnmatchedLeft}
                           >unchecked
                           </button>
                           <button
@@ -374,7 +376,7 @@ class CheckStudents extends React.Component {
                           <button
                             type='submit' className='button is-info is-rounded is-hidden-mobile'
                             onClick={this.nextUnchecked}
-                            disabled={done === total}
+                            disabled={!hasUnmatchedRight}
                           >unchecked
                           </button>
                         </div>

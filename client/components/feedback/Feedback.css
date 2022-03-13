@@ -19,6 +19,7 @@
     border-top: hidden;
     border-left: hidden;
     border-right: hidden;
+    min-height: 48px;
 }
 
 .grow {
@@ -42,7 +43,7 @@
 .has-text-overflow {
     text-overflow: ellipsis;
     overflow: auto hidden;
-    white-space: normal;  /* use nowrap to force single-line text */
+    white-space: nowrap;  /* use nowrap to force single-line text */
 }
 
 /*

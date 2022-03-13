@@ -63,19 +63,21 @@ class FeedbackBlock extends React.Component {
           <Tooltip text={this.props.feedback.description} />
           <button
             className={'button is-pulled-right is-small is-light' +
-              (this.state.hover.block ? '' : ' is-invisible') +
               (this.state.hover.edit ? ' is-link' : '')}
             onMouseEnter={() => this.enter('edit')} onMouseLeave={() => this.leave('edit')}
+            style={{ display: this.state.hover.block ? '' : 'none' }}
             onClick={this.props.editFeedback}
           >
             <i className='fa fa-pen' />
           </button>
           {this.props.grading &&
             <div
-              className={`popover is-popover-right button is-pulled-right is-small is-light
-            ${(this.props.filterMode !== 'no_filter' ? 'is-inverted' : (this.state.hover.block ? '' : 'is-invisible'))}
-            ${FILTER_COLORS[this.props.filterMode]}`}
+              className={
+                `popover is-popover-right button is-pulled-right is-small is-light
+                ${(this.props.filterMode !== 'no_filter' ? ' is-inverted' : '')}
+                ${FILTER_COLORS[this.props.filterMode]}`}
               onMouseEnter={() => this.enter('filter')} onMouseLeave={() => this.leave('filter')}
+              style={{ display: !this.state.hover.block && this.props.filterMode === 'no_filter' ? 'none' : '' }}
             >
               <i className={`fa ${FILTER_ICONS[this.props.filterMode]}`} />
               <div

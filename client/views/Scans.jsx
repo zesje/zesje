@@ -2,10 +2,14 @@ import React from 'react'
 
 import { toast } from 'bulma-toast'
 import Dropzone from 'react-dropzone'
+import PageVisibility from 'react-page-visibility'
 
 import Hero from '../components/Hero.jsx'
 
 import * as api from '../api.jsx'
+
+const INTERVAL_FAST = 1000 // 1s
+const INTERVAL_SLOW = 10000 // 10s
 
 const ScanStatus = (props) => {
   let iconClass = 'fa fa-'
@@ -49,51 +53,12 @@ class Scans extends React.Component {
     hasStudents: undefined
   };
 
-  updateScans = () => {
-    api.get('scans/' + this.props.examID)
-      .then(scans => {
-        if (JSON.stringify(scans) !== JSON.stringify(this.state.scans)) {
-          this.setState({
-            scans: scans
-          })
-          this.updateMissingPages()
-        }
-      })
-  }
-
-  updateMissingPages = () => {
-    api.get('copies/missing_pages/' + this.props.examID)
-      .then(copies => {
-        this.setState({
-          copies: copies.map(copy => ({
-            number: copy.number,
-            missing: copy.missing_pages
-          }))
-        })
-      })
-  }
-
-  onDropFile = (accepted, rejected) => {
-    if (rejected.length > 0) {
-      toast({ message: 'Please upload a PDF, ZIP or image.', type: 'is-danger' })
-      return
-    }
-    accepted.forEach(file => {
-      const data = new window.FormData()
-      data.append('file', file)
-      api.post('scans/' + this.props.examID, data)
-        .then(() => {
-          this.updateScans()
-        })
-        .catch(resp => {
-          toast({ message: 'Failed to upload file (see javascript console for details)', type: 'is-danger' })
-          console.error('Failed to upload file:', resp)
-        })
-    })
+  constructor (props) {
+    super(props)
+    this.scanUpdater = null
   }
 
   componentDidMount = () => {
-    this.scanUpdater = setInterval(this.updateScans, 1000)
     this.updateScans()
     // TODO: remove this when https://gitlab.kwant-project.org/zesje/zesje/issues/173
     //       has been solved. This is a
@@ -103,12 +68,69 @@ class Scans extends React.Component {
       })
   }
 
-  componentWillUnmount = () => {
-    clearInterval(this.scanUpdater)
+  componentWillUnmount = () => this.cancelScansUpdate()
+
+  cancelScansUpdate = () => {
+    if (this.scanUpdater) {
+      clearInterval(this.scanUpdater)
+      this.scanUpdater = null
+      this.timeInterval = -1
+    }
+  }
+
+  handleVisibilityChange = isVisible => {
+    if (isVisible) {
+      this.updateScans()
+    } else {
+      this.cancelScansUpdate()
+    }
+  }
+
+  updateScans = () => {
+    api.get('scans/' + this.props.examID)
+      .then(scans => {
+        if (JSON.stringify(scans) !== JSON.stringify(this.state.scans)) {
+          this.setState({
+            scans: scans
+          })
+          this.updateMissingPages()
+
+          const hasRunningJobs = scans.some(scan => scan.status !== 'success')
+          const newInterval = hasRunningJobs ? INTERVAL_FAST : INTERVAL_SLOW
+          if (newInterval !== this.timeInterval) {
+            console.log(hasRunningJobs)
+            this.cancelScansUpdate()
+            this.scanUpdater = setInterval(this.updateScans, newInterval)
+            this.timeInterval = newInterval
+          }
+        }
+      })
+  }
+
+  updateMissingPages = () =>
+    api.get('copies/missing_pages/' + this.props.examID)
+      .then(copies => this.setState({ copies }))
+
+  onDropFile = (accepted, rejected) => {
+    if (rejected.length > 0) {
+      toast({ message: 'Please upload a PDF, ZIP or image.', type: 'is-danger' })
+      return
+    }
+
+    accepted.forEach(file => {
+      const data = new window.FormData()
+      data.append('file', file)
+      api.post('scans/' + this.props.examID, data)
+        .then(this.updateScans)
+        .catch(resp => {
+          toast({ message: 'Failed to upload file (see javascript console for details)', type: 'is-danger' })
+          console.error('Failed to upload file:', resp)
+        })
+    })
   }
 
   render () {
-    const missingPages = this.state.copies.filter(c => c.missing.length > 0)
+    const missingPages = this.state.copies.filter(c => c.missing_pages.length > 0)
 
     const missingPagesStatus = (
       missingPages.length > 0
@@ -120,7 +142,7 @@ class Scans extends React.Component {
             <ul className='menu-list'>
               {missingPages.map(copy =>
                 <li key={copy.number}>
-                  Copy {copy.number} is missing pages {copy.missing.join(', ')}
+                  Copy {copy.number} is missing pages {copy.missing_pages.join(', ')}
                 </li>
               )}
             </ul>
@@ -166,24 +188,26 @@ class Scans extends React.Component {
                 </Dropzone>
               </div>
               <div className='column is-full has-text-centered'>
-                <aside className='menu'>
-                  <p className='menu-label'>
-                    Uploaded copies: {this.state.copies.length}
-                  </p>
+                <PageVisibility onChange={this.handleVisibilityChange}>
+                  <aside className='menu'>
+                    <p className='menu-label'>
+                      Uploaded copies: {this.state.copies.length}
+                    </p>
 
-                  {missingPagesStatus}
+                    {missingPagesStatus}
 
-                  <p className='menu-label'>
-                    Upload History
-                  </p>
-                  <ul className='menu-list'>
-                    {this.state.scans.map(scan =>
-                      <li key={scan.id}>
-                  <ScanStatus scan={scan} />
-                </li>
-                    )}
-                  </ul>
-                </aside>
+                    <p className='menu-label'>
+                      Upload History
+                    </p>
+                    <ul className='menu-list'>
+                      {this.state.scans.map(scan =>
+                        <li key={scan.id}>
+                    <ScanStatus scan={scan} />
+                  </li>
+                      )}
+                    </ul>
+                  </aside>
+                </PageVisibility>
               </div>
             </div>
           </div>

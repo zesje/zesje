@@ -56,6 +56,7 @@ class Scans extends React.Component {
   constructor (props) {
     super(props)
     this.scanUpdater = null
+    this.timeInterval = -1
   }
 
   componentDidMount = () => {

@@ -7,6 +7,7 @@ import update from 'immutability-helper'
 import FeedbackPanel from '../components/feedback/FeedbackPanel.jsx'
 import ProblemSelector from './grade/ProblemSelector.jsx'
 import ProgressBar from '../components/ProgressBar.jsx'
+import Img from '../components/Img.jsx'
 import withShortcuts from '../components/ShortcutBinder.jsx'
 import withRouter from '../components/RouterBinder.jsx'
 import GradeNavigation from './grade/GradeNavigation.jsx'
@@ -664,13 +665,16 @@ class Grade extends React.Component {
                 <p className={'box is-sticky' +
                   (solution.gradedAt ? ' is-graded' : '')}
                 >
-                  <img
+                  <Img
                     src={examID
-                      ? ('api/images/solutions/' + examID + '/' +
-                        problem.id + '/' + submission.id + '/' + (this.state.fullPage ? '1' : '0')) + '?' +
-                        Grade.getLocationHash(problem)
+                      ? (`api/images/solutions/${examID}/${problem.id}/${submission.id}/` +
+                          (this.state.fullPage ? '1' : '0')) + '?' + Grade.getLocationHash(problem)
                       : ''}
-                    alt=''
+                    imgProps={{ alt: '' }}
+                    errorElement={
+                      <div className='notification is-danger has-text-centered'>
+                        Error loading image, try reloading the page.
+                      </div>}
                   />
                 </p>
               </div>

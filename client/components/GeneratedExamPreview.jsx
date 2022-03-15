@@ -1,5 +1,5 @@
 import React from 'react'
-import EmptyPDF from '../components/EmptyPDF.jsx'
+import { EmptyPDF, ErrorPDF } from '../components/PDFPlaceholders.jsx'
 
 import { Document, Page } from 'react-pdf/dist/esm/entry.webpack'
 
@@ -10,7 +10,8 @@ class GeneratedExamPreview extends React.Component {
         file={'/api/exams/' + this.props.examID + '/preview'}
         onLoadSuccess={this.props.onPDFLoad}
         loading={<EmptyPDF />}
-        noData={<EmptyPDF />}
+        error={<ErrorPDF />}
+        noData={<ErrorPDF text={'No PDF file specified.'} />}
       >
         <Page
           renderAnnotations={false}

@@ -52,3 +52,14 @@ $fa-font-path: "~@fortawesome/fontawesome-free/webfonts";
   border-radius: 2px;
   border-color: $link;
 }
+
+// close navbar dropdown automatically
+// extracted from: https://github.com/jgthms/bulma/issues/2514#issuecomment-510451361
+@media screen and (min-width: 1025px) {
+    .navbar-item.is-hoverable:hover .navbar-dropdown {
+        display: block !important;
+    }
+    .navbar-item.is-hoverable:focus-within .navbar-dropdown {
+        display: none;
+    }
+}

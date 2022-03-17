@@ -374,8 +374,8 @@ class CheckStudents extends React.Component {
                   <p className='box'>
                     <Img
                       src={`api/images/signature/${this.state.examID}/${copy && copy.number}` }
-                      imgProps={{ alt: '' }}
-                      errorElement={
+                      alt={copy != null ? `Signature image #${copy.number}` : ''}
+                      error={
                         <div className='notification is-danger has-text-centered'>
                           Error loading image, try reloading the page.
                       </div>

@@ -1,6 +1,6 @@
 import React from 'react'
 
-import { Spinner } from './Img.jsx'
+import Spinner from './Img.jsx'
 
 const formatToSize = (format) => {
   switch (format) {
@@ -11,7 +11,7 @@ const formatToSize = (format) => {
   }
 }
 
-export const EmptyPDF = ({ format, color = 'info', children }) => {
+export const EmptyPDF = ({ format = 'a4', children }) => {
   const size = formatToSize(format)
 
   return (
@@ -24,27 +24,17 @@ export const EmptyPDF = ({ format, color = 'info', children }) => {
       }}
       className='has-text-centered'
     >
-      { children || <Spinner />}
+      { children }
     </div>
   )
 }
 
-export const ErrorPDF = ({ format, color = 'info', text }) => {
-  const size = formatToSize(format)
+export const LoadingPDF = ({
+  format = 'a4',
+  color = 'info'
+}) => <EmptyPDF><Spinner color={color} /></EmptyPDF>
 
-  return (
-    <div
-      style={{
-        paddingTop: '4rem',
-        minWidth: size.width + 'px',
-        minHeight: size.height + 'px',
-        backgroundColor: 'white'
-      }}
-      className='has-text-centered'
-    >
-      <div className='notification is-danger has-text-centered'>
-        { text || 'An error was produced while loading the PDF, try reloading the page.' }
-      </div>
-    </div>
-  )
-}
+export const ErrorPDF = ({
+  format = 'a4',
+  text = 'An error was produced while loading the PDF, try reloading the page.'
+}) => <EmptyPDF><div className='notification is-danger has-text-centered'>{ text }</div></EmptyPDF>

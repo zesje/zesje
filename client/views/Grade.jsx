@@ -670,9 +670,8 @@ class Grade extends React.Component {
                       ? (`api/images/solutions/${examID}/${problem.id}/${submission.id}/` +
                           (this.state.fullPage ? '1' : '0')) + '?' + Grade.getLocationHash(problem)
                       : ''}
-                    imgProps={{ alt: '' }}
-                    errorElement={
-                      <div className='notification is-danger has-text-centered'>
+                    alt={`Solution for problem #${problem.id} from submission #${submission.id}`}
+                    error={<div className='notification is-danger has-text-centered'>
                         Error loading image, try reloading the page.
                       </div>}
                   />

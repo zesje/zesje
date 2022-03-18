@@ -95,7 +95,7 @@ class Scans extends React.Component {
           })
           this.updateMissingPages()
 
-          const hasRunningJobs = scans.some(scan => scan.status !== 'success')
+          const hasRunningJobs = scans.some(scan => scan.status === 'processing')
           const newInterval = hasRunningJobs ? INTERVAL_FAST : INTERVAL_SLOW
           if (newInterval !== this.timeInterval) {
             console.log(hasRunningJobs)

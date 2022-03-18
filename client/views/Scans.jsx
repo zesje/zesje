@@ -99,7 +99,6 @@ class Scans extends React.Component {
           const hasRunningJobs = scans.some(scan => scan.status === 'processing')
           const newInterval = hasRunningJobs ? INTERVAL_FAST : INTERVAL_SLOW
           if (newInterval !== this.timeInterval) {
-            console.log(hasRunningJobs)
             this.cancelScansUpdate()
             this.scanUpdater = setInterval(this.updateScans, newInterval)
             this.timeInterval = newInterval

@@ -142,14 +142,15 @@ class FeedbackMenu extends React.Component {
                     <div className='dropdown-item'>
                       <p><b>Parent feedback:</b></p>
                     </div>
-                    {Object.keys(this.state.indexedFeedback)
+                    {Object.values(this.state.indexedFeedback)
                       // id and root_feedback_id have different types so type check comparison (!==) does not work
-                      .filter(id => id != this.props.problem.root_feedback_id) // eslint-disable-line eqeqeq
-                      .map((id, index) =>
+                      .filter(fb => fb.id != this.props.problem.root_feedback_id) // eslint-disable-line eqeqeq
+                      .sort((fb1, fb2) => fb1.index - fb2.index)
+                      .map((fb, index) =>
                         <a key={'dropdown-parent-' + index}
                           className='dropdown-item has-text-overflow'
-                          onClick={() => this.editFeedback(-1, id)}>
-                          {this.state.indexedFeedback[id].name}
+                          onClick={() => this.editFeedback(-1, fb.id)}>
+                          {this.state.indexedFeedback[fb.id].name}
                         </a>
                       )}
                   </div>

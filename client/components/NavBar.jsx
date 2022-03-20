@@ -172,8 +172,6 @@ class NavBar extends React.Component {
   }
 
   render () {
-    if (this.props.grader == null) console.log('NavBar loading without a grader.')
-
     const selectedExam = this.state.examList.find(exam => exam.id === this.state.examID)
 
     const predicateNoExam = [!selectedExam, 'No exam selected.']

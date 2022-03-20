@@ -1,21 +1,7 @@
 import React from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { useLocation, Navigate } from 'react-router-dom'
 
 import zesjeImage from '../components/zesje.png'
-
-const AlreadyLoggedIn = ({ logout, grader, from }) => {
-  const navigate = useNavigate()
-
-  return <>
-    <p>Already logged in as <b>{grader.name}</b></p>
-    <buttons className='buttons is-centered'>
-      <button className='button' onClick={logout}>Log out</button>
-      <button className='button is-link' onClick={() => navigate(from, { replace: true })}>
-        Continue
-      </button>
-    </buttons>
-  </>
-}
 
 const OAuthButton = ({ provider, from }) => (
   provider != null
@@ -48,8 +34,8 @@ const Login = (props) => {
         </div>
         <div className="card-content">
         {props.grader != null
-          ? <AlreadyLoggedIn logout={props.logout} grader={props.grader} from={from} />
-          : <OAuthButton logout={props.logout} provider={props.provider} from={from} />}
+          ? <Navigate to={from} replace />
+          : <OAuthButton provider={props.provider} from={from} />}
         </div>
     </div>
     </div>

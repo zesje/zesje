@@ -193,7 +193,7 @@ def grader_data(problem_id):
     return graders, autograded_solutions
 
 
-ELAPSED_TIME_BREAK = 21600   # 6 hours in seconds
+ELAPSED_TIME_BREAK = 7200   # 2 hours in seconds
 
 
 def estimate_grading_time(problem_id, grader_id):

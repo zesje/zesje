@@ -20,6 +20,8 @@ const Login = (props) => {
   const loc = useLocation()
   const from = loc.state ? loc.state.from.pathname : '/'
 
+  if (props.grader != null) return <Navigate to={from} replace />
+
   return <section className='hero is-fullheight is-vcentered is-info'>
   <div className="hero-body">
     <div className="container has-text-centered is-flex-grow-0">
@@ -33,9 +35,7 @@ const Login = (props) => {
           </figure>
         </div>
         <div className="card-content">
-        {props.grader != null
-          ? <Navigate to={from} replace />
-          : <OAuthButton provider={props.provider} from={from} />}
+          <OAuthButton provider={props.provider} from={from} />
         </div>
     </div>
     </div>

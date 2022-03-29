@@ -11,6 +11,11 @@
     resize: vertical;
 }
 
+.is-sticky {
+    position: sticky;
+    top: 1em;
+}
+
 @media screen and (max-width: 768px) {
   .is-scrollable-mobile {
     overflow-y: auto;

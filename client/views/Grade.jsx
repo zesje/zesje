@@ -193,11 +193,12 @@ class Grade extends React.Component {
 
     const hasProblem = this.state.problem && this.state.problem.id > 0
     const hasSubmission = this.state.submission && this.state.submission.id > 0
-    if ((prevProps.examID !== this.props.examID && this.props.examID !== this.state.examID) ||
-      (prevProps.router.params.problemID !== problemID &&
-        (!hasProblem || problemID !== this.state.problem.id)) ||
-      (prevProps.router.params.submissionID !== submissionID &&
-        (!hasSubmission || submissionID !== this.state.submission.id))) {
+    const examChanged = (prevProps.examID !== this.props.examID && this.props.examID !== this.state.examID)
+    const problemChanged = prevProps.router.params.problemID !== problemID &&
+    (!hasProblem || problemID !== this.state.problem.id.toString())
+    const subChanged = prevProps.router.params.submissionID !== submissionID &&
+      (!hasSubmission || submissionID !== this.state.submission.id.toString())
+    if (examChanged || problemChanged || subChanged) {
       // The URL has changed and at least one of exam metadata, problem or submission does not match the URL
       // or the URL has changed and submission or problem is not defined
       this.setState({

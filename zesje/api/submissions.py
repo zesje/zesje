@@ -147,34 +147,26 @@ def _find_submission(old_submission, problem, shuffle_seed, direction, ungraded,
     required_feedback = set(required_feedback)
     excluded_feedback = set(excluded_feedback)
 
-    def next_and_count(iterator, key, default):
-        count_follows = 0
-        count_precedes = 0
-        match_current = False
-        sub = None
-        for item in iterator:
-            if follows(key(item), old_key):
-                count_follows += 1
-                if sub:
-                    sub = next_(sub, item, key=key)
-                else:
-                    sub = item
-            elif precedes(key(item), old_key):
-                count_precedes += 1
+    count_follows = 0
+    count_precedes = 0
+    match_current = False
+    sub = None
+    for item in (
+        sol.submission for sol in problem.solutions
+        if all_filters(sol, required_feedback, excluded_feedback, graded_by, ungraded)
+    ):
+        if follows(key(item), old_key):
+            count_follows += 1
+            if sub:
+                sub = next_(sub, item, key=key)
             else:
-                match_current = True
+                sub = item
+        elif precedes(key(item), old_key):
+            count_precedes += 1
+        else:
+            match_current = True
 
-        return sub if sub else default, count_follows, count_precedes, match_current
-
-    submission_to_return, no_of_subs_follow, no_of_subs_precede, match_current = next_and_count(
-        (
-            sol.submission for sol in problem.solutions
-            if all_filters(sol, required_feedback, excluded_feedback, graded_by, ungraded)
-        ),
-        key=key,
-        default=old_submission
-    )
-    return submission_to_return, no_of_subs_follow, no_of_subs_precede, match_current
+    return sub if sub else old_submission, count_follows, count_precedes, match_current
 
 
 class Submissions(Resource):
@@ -242,7 +234,7 @@ class Submissions(Resource):
             no_prev_sub = no_of_subs_precede == 0
         elif args.direction in ('next', 'prev'):
             no_next_sub = no_of_subs_follow <= 1
-            no_prev_sub = not (match_current or no_of_subs_precede > 0)
+            no_prev_sub = (no_of_subs_precede + match_current) == 0
         elif args.direction in ('last', 'first'):
             no_next_sub = True
             no_prev_sub = matched <= 1

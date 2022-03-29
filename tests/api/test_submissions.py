@@ -78,7 +78,7 @@ def test_find_next(add_test_data, get_first_feedback, get_second_feedback):
     sol.feedback = get_first_feedback
     sol2.feedback = get_second_feedback
 
-    result = _find_submission(sub, Problem.query.get(20), 1, 'next', False, set([3]), set([2]), None)
+    result, *_ = _find_submission(sub, Problem.query.get(20), 1, 'next', False, set([3]), set([2]), None)
     assert result == sub2
 
 
@@ -97,7 +97,7 @@ def test_find_next_graded_by(add_test_data):
     sol2 = Solution(problem_id=20, submission=sub2, graded_by=grader2, graded_at=datetime.now())
     db.session.add(sol2)
 
-    result = _find_submission(sub, Problem.query.get(20), 1, 'next', False, set(), set(), 2)
+    result, *_ = _find_submission(sub, Problem.query.get(20), 1, 'next', False, set(), set(), 2)
     assert result == sub2
 
 

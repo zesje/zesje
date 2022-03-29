@@ -138,25 +138,43 @@ def _find_submission(old_submission, problem, shuffle_seed, direction, ungraded,
         return md5(b'%i %i' % (sub.id, shuffle_seed)).digest()
 
     old_key = key(old_submission)
-    next_, follows = {
-      'next': (min, operators.gt),
-      'prev': (max, operators.lt),
-      'first': (min, operators.lt),
-      'last': (max, operators.gt)
+    next_, follows, precedes = {
+      'next': (min, operators.gt, operators.lt),
+      'prev': (max, operators.lt, operators.gt),
+      'first': (min, operators.lt, operators.gt),
+      'last': (max, operators.gt, operators.lt)
     }[direction]
     required_feedback = set(required_feedback)
     excluded_feedback = set(excluded_feedback)
-    submission_to_return = next_(
-      (
-        sol.submission for sol in problem.solutions
-        if (all_filters(sol, required_feedback, excluded_feedback, graded_by, ungraded)
-            and follows(key(sol.submission), old_key)
-            )
-      ),
-      key=key,
-      default=old_submission
+
+    def next_and_count(iterator, key, default):
+        count_follows = 0
+        count_precedes = 0
+        match_current = False
+        sub = None
+        for item in iterator:
+            if follows(key(item), old_key):
+                count_follows += 1
+                if sub:
+                    sub = next_(sub, item, key=key)
+                else:
+                    sub = item
+            elif precedes(key(item), old_key):
+                count_precedes += 1
+            else:
+                match_current = True
+
+        return sub if sub else default, count_follows, count_precedes, match_current
+
+    submission_to_return, no_of_subs_follow, no_of_subs_precede, match_current = next_and_count(
+        (
+            sol.submission for sol in problem.solutions
+            if all_filters(sol, required_feedback, excluded_feedback, graded_by, ungraded)
+        ),
+        key=key,
+        default=old_submission
     )
-    return submission_to_return
+    return submission_to_return, no_of_subs_follow, no_of_subs_precede, match_current
 
 
 class Submissions(Resource):
@@ -209,25 +227,35 @@ class Submissions(Resource):
         if args.problem_id:
             if (problem := Problem.query.get(args.problem_id)) is None:
                 return dict(status=404, message='Problem does not exist.'), 404
-            n_graded = len([sol for sol in problem.solutions if sol.graded_by is not None])
+            n_graded = sum(1 for sol in problem.solutions if sol.graded_by is not None)
 
-        matched = len(exam.submissions)
-        if problem is not None:
-            matched = find_number_of_matches(
-                problem, args.ungraded, args.required_feedback or [],
-                args.excluded_feedback or [], args.graded_by)
+        new_sub, no_of_subs_follow, no_of_subs_precede, match_current = _find_submission(
+            sub, problem, current_user.id, args.direction or 'next', args.ungraded,
+            args.required_feedback or [], args.excluded_feedback or [], args.graded_by
+        )
+        if not args.direction:
+            new_sub = sub
 
-        if args.direction:
-            sub = _find_submission(
-                sub, problem, current_user.id, args.direction, args.ungraded,
-                args.required_feedback or [], args.excluded_feedback or [], args.graded_by
-            )
+        matched = no_of_subs_follow + no_of_subs_precede + match_current
+        if args.direction is None:
+            no_next_sub = no_of_subs_follow == 0
+            no_prev_sub = no_of_subs_precede == 0
+        elif args.direction in ('next', 'prev'):
+            no_next_sub = no_of_subs_follow <= 1
+            no_prev_sub = not (match_current or no_of_subs_precede > 0)
+        elif args.direction in ('last', 'first'):
+            no_next_sub = True
+            no_prev_sub = matched <= 1
+
+        # If direction is backwards the availability of subs should be inverted
+        if args.direction in ('prev', 'first'):
+            no_next_sub, no_prev_sub = no_prev_sub, no_next_sub
 
         meta = {
             'filter_matches': matched,
             'n_graded': n_graded,
-            'no_next_sub': args.direction == 'last' or (args.direction == 'next' and sub.id == submission_id),
-            'no_prev_sub': args.direction == 'first' or (args.direction == 'prev' and sub.id == submission_id)
+            'no_next_sub': no_next_sub,
+            'no_prev_sub': no_prev_sub,
         }
 
-        return sub_to_data(sub, meta)
+        return sub_to_data(new_sub, meta)

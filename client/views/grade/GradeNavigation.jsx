@@ -24,8 +24,6 @@ class GradeNavigation extends React.Component {
     const submission = this.props.submission
     const submissions = this.props.submissions
 
-    const cannotNavigate = submission.meta.filter_matches < 2
-
     return (
           <div className='field has-addons is-mobile'>
             <NavButton
@@ -34,7 +32,7 @@ class GradeNavigation extends React.Component {
               onClick={this.props.first}
               tooltip='shift + ←'
               showTooltips={this.props.showTooltips}
-              disabled={cannotNavigate || submission.meta.no_prev_sub}
+              disabled={submission.meta.no_prev_sub}
             />
             <NavButton
               style='is-link'
@@ -42,7 +40,7 @@ class GradeNavigation extends React.Component {
               onClick={this.props.prev}
               tooltip='←'
               showTooltips={this.props.showTooltips}
-              disabled={cannotNavigate || submission.meta.no_prev_sub}
+              disabled={submission.meta.no_prev_sub}
             />
             <div
               id='search'
@@ -101,7 +99,7 @@ class GradeNavigation extends React.Component {
               onClick={this.props.next}
               tooltip='→'
               showTooltips={this.props.showTooltips}
-              disabled={cannotNavigate || submission.meta.no_next_sub}
+              disabled={submission.meta.no_next_sub}
             />
             <NavButton
               style='is-info is-rounded'
@@ -109,7 +107,7 @@ class GradeNavigation extends React.Component {
               onClick={this.props.last}
               tooltip='shift + →'
               showTooltips={this.props.showTooltips}
-              disabled={cannotNavigate || submission.meta.no_next_sub}
+              disabled={submission.meta.no_next_sub}
             />
           </div>
     )

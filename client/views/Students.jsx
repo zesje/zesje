@@ -31,7 +31,7 @@ const ConfirmMergeModal = (props) => {
     &nbsp;with this copy which might affect the total score of the problem.
     &nbsp;Moreover, the solution will have to be approved again.
     <br/>
-    Note that this action <b>cannot be undone</b>.
+    Note that this action cannot be undone automatically.
   </p>
 
   return <ConfirmationModal
@@ -46,6 +46,7 @@ const ConfirmMergeModal = (props) => {
 }
 
 class CheckStudents extends React.Component {
+  searchInput = React.createRef();
   /**
    * Constructor sets empty state, and requests copies for the exam.
    * After getting the copies, if the copyNumber is provided in the URL, loads the corresponding copy,
@@ -170,6 +171,7 @@ class CheckStudents extends React.Component {
   loadCopy = (index) => {
     if (index >= 0 && index < this.state.copies.length) {
       this.props.router.navigate(this.getURL(this.state.copies[index].number))
+      this.searchInput.current.clear()
     }
   }
 
@@ -241,14 +243,19 @@ class CheckStudents extends React.Component {
 
   toggleEdit = (student) => {
     if (student && student.id) {
+      console.log(this.searchInput.current.state.input)
       this.setState({
         editActive: true,
-        editStud: student
+        editStud: student,
+        prevSearch: this.searchInput.current.state.input
       })
     } else {
       this.setState({
         editActive: !this.state.editActive,
-        editStud: null
+        editStud: null,
+
+        // save the previous search when the `add students` is pressed from the `SearchPanel`
+        prevSearch: !this.state.editActive ? this.searchInput.current.state.input : this.state.prevSearch
       })
     }
   }
@@ -290,6 +297,7 @@ class CheckStudents extends React.Component {
                   : <SearchPanel
                     matchStudent={this.matchStudent} toggleEdit={this.toggleEdit} copy={copy}
                     student={copy && copy.student} validated={validated} copyIndex={this.state.index}
+                    ref={this.searchInput} prevSearch={this.state.prevSearch}
                     />}
               </div>
 

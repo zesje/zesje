@@ -35,7 +35,7 @@ class SearchPanel extends React.Component {
     input: '',
     selected: 0,
     result: [],
-    subIndex: null
+    copyIndex: null
   }
 
   searchInput = React.createRef();
@@ -44,6 +44,9 @@ class SearchPanel extends React.Component {
     api.get('students')
       .then(students => {
         this.fuse = new Fuse(students, fuseOptions)
+        if (this.props.prevSearch != null) {
+          this.search({ target: { value: this.props.prevSearch } })
+        }
       })
       .catch(err => {
         toast({ message: 'failed to get students (see javascript console for details)', type: 'is-danger' })
@@ -75,8 +78,10 @@ class SearchPanel extends React.Component {
     }
   }
 
+  clear = () => this.setState({ input: '' })
+
   search = (event) => {
-    const result = this.fuse.search(event.target.value).slice(0, 10)
+    const result = this.fuse.search(event.target.value, { limit: 10 })
 
     this.setState({
       input: event.target.value,
@@ -120,12 +125,12 @@ class SearchPanel extends React.Component {
   }
 
   static getDerivedStateFromProps = (nextProps, prevState) => {
-    if (prevState.subIndex !== nextProps.subIndex) {
+    if (prevState.copyIndex !== nextProps.copyIndex) {
       return {
         input: '',
         selected: 0,
         result: nextProps.student ? [nextProps.student] : [],
-        subIndex: nextProps.subIndex
+        copyIndex: nextProps.copyIndex
       }
     } else return null
   }

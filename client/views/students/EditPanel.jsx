@@ -66,7 +66,7 @@ class EditPanel extends React.Component {
         id: stud.id,
         firstName: stud.firstName,
         lastName: stud.lastName,
-        email: stud.email
+        email: stud.email || '' // Prevent setting email to null in state
       })
     }
   }

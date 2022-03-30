@@ -11,7 +11,7 @@ const OAuthButton = ({ provider, from }) => (
         Login with {provider}
       </span>
     </a>
-    : <p>Could not retrieve login provider. Please, try reloading the page.</p>
+    : <p>Could not retrieve login provider. Please try reloading the page.</p>
 )
 
 const Login = (props) => {

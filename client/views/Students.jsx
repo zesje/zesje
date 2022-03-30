@@ -171,7 +171,9 @@ class CheckStudents extends React.Component {
   loadCopy = (index) => {
     if (index >= 0 && index < this.state.copies.length) {
       this.props.router.navigate(this.getURL(this.state.copies[index].number))
-      this.searchInput.current.clear()
+      if (this.searchInput.current) {
+        this.searchInput.current.clear()
+      }
     }
   }
 
@@ -243,7 +245,6 @@ class CheckStudents extends React.Component {
 
   toggleEdit = (student) => {
     if (student && student.id) {
-      console.log(this.searchInput.current.state.input)
       this.setState({
         editActive: true,
         editStud: student,

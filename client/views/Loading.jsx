@@ -1,6 +1,7 @@
 import React from 'react'
 
 import Hero from '../components/Hero.jsx'
+import Spinner from '../components/Spinner.jsx'
 
 const Home = () => {
   return (
@@ -9,13 +10,7 @@ const Home = () => {
       <Hero title='' subtitle='' />
 
       <section className='section'>
-
-        <div className='container has-text-centered'>
-        <span className="icon is-large has-text-info">
-          <i className="fas fa-spinner fa-2x fa-pulse"></i>
-        </span>
-        </div>
-
+          <Spinner />
       </section>
 
     </div>

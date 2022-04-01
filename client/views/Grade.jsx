@@ -661,7 +661,7 @@ class Grade extends React.Component {
                   </div>
                 </div>
 
-                <p className={'box is-sticky is-scrollable-desktop is-scrollable-tablet' +
+                <p className={'box is-sticky' +
                   (solution.gradedAt ? ' is-graded' : '')}
                 >
                   <img

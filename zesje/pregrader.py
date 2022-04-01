@@ -38,7 +38,7 @@ def grade_problem(copy, page, page_img):
     # TODO Support pregrading for submissions with multiple copies.
     solutions_to_grade = [
         sol for sol in sub.solutions
-        if (not sol.graded_by or sol.graded_by.oauth_id == AUTOGRADER_NAME) and sol.problem.widget.page == page
+        if (not sol.is_graded or sol.graded_by.oauth_id == AUTOGRADER_NAME) and sol.problem.widget.page == page
     ] if len(sub.copies) == 1 else []
 
     if solutions_to_grade:

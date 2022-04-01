@@ -29,14 +29,14 @@ def solution_data(exam_id, student_id):
     results = []
     for solution in sub.solutions:  # Sorted by problem_id
         problem = solution.problem
-        if len(problem.feedback_options) < 2:
+        if not problem.gradable:
             # There is no possible feedback for this problem (take into account that root always exist)..
             continue
 
         problem_data = {
             'id': problem.id,
             'name': problem.name,
-            'max_score': max(fb.score for fb in problem.feedback_options) or 0
+            'max_score': problem.max_score
         }
 
         feedback = [fo for fo in problem.root_feedback.all_descendants if fo in solution.feedback]
@@ -46,7 +46,7 @@ def solution_data(exam_id, student_id):
              'short': fo.text,
              'score': fo.score,
              'description': fo.description}
-            for fo in feedback if solution.graded_by
+            for fo in feedback if solution.is_graded
         ]
         problem_data['score'] = (
             sum(i['score'] or 0 for i in problem_data['feedback'])
@@ -88,15 +88,15 @@ def full_exam_data(exam_id):
     columns[('First name', '')] = 'string'
     columns[('Last name', '')] = 'string'
     for problem in exam.problems:  # Sorted by problem.id
+        if not problem.gradable:
+            # There is no possible feedback for this problem (take into account that root always exist).
+            continue
+
         if problem.name in problem_keys.values():
             key = f'{problem.name} ({problem.id})'
         else:
             key = problem.name
         problem_keys[problem.id] = key
-
-        if len(problem.feedback_options) < 2:
-            # There is no possible feedback for this problem (take into account that root always exist).
-            continue
 
         columns[(key, 'remarks')] = 'string'
         for fo in problem.root_feedback.all_descendants:

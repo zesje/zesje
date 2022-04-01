@@ -14,6 +14,7 @@ from sqlalchemy.orm.session import object_session
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.sql.schema import MetaData, UniqueConstraint
+from sqlalchemy import func
 
 from flask_login import UserMixin, LoginManager
 from pathlib import Path
@@ -219,6 +220,18 @@ class Problem(db.Model):
     def root_feedback(self):
         return next(fb for fb in self.feedback_options if fb.parent_id is None)
 
+    @property
+    def max_score(self):
+        max_score = object_session(self).query(func.max(FeedbackOption.score))\
+            .filter(FeedbackOption.problem_id == self.id).one()
+        return max_score[0]
+
+    @property
+    def gradable(self):
+        count, max_score = object_session(self).query(func.count(FeedbackOption.id), func.max(FeedbackOption.score))\
+            .filter(FeedbackOption.problem_id == self.id).one()
+        return count > 1 and max_score > 0
+
 
 class FeedbackOption(db.Model):
     """feedback option"""
@@ -285,6 +298,10 @@ class Solution(db.Model):
     def feedback_count(self):
         return object_session(self).query(solution_feedback)\
             .filter(solution_feedback.c.solution_id == self.id).count()
+
+    @property
+    def is_graded(self):
+        return self.grader_id is not None and self.feedback_count > 0
 
 
 class Scan(db.Model):

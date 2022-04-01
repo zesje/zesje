@@ -104,18 +104,16 @@ class Statistics(Resource):
         total_max_score = 0
         full_scores = pd.DataFrame(data={},
                                    index=[id for id, in student_ids],
-                                   columns=[p.id for p in exam.problems] + [0],
+                                   columns=[p.id for p in exam.problems if p.gradable] + [0],
                                    dtype=int)
         data = []
 
         for p in exam.problems:
-            if len(p.feedback_options) == 0:
+            if not p.gradable:
                 # exclude problems without feedback options
                 continue
 
-            max_score = max(fb.score for fb in p.feedback_options)
-            if max_score == 0:
-                continue
+            max_score = p.max_score
 
             problem_data = {
                 'id': p.id,
@@ -144,7 +142,7 @@ class Statistics(Resource):
                 mark = sum(fo.score for fo in sol.feedback) if sol.feedback else nan
 
                 if not isnan(mark):
-                    has_grader = True if sol.grader_id else False
+                    has_grader = sol.is_graded
                     if not has_grader:
                         in_revision += 1
 

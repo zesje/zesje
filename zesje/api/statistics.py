@@ -89,17 +89,16 @@ class Statistics(Resource):
         if (exam := Exam.query.get(exam_id)) is None:
             return dict(status=404, message='Exam does not exist.'), 404
 
+        if len(exam.problems) == 0:
+            return dict(status=404, message='There are no problems in this exam.'), 404
+
         # count the total number of students as the number of validated submissions
         student_ids = db.session.query(Submission.student_id)\
             .filter(Submission.exam_id == exam.id, Submission.validated)\
             .all()
 
         if len(student_ids) == 0:
-            # there are no vaidated submissions
             return dict(status=404, message='There are no students with a validated copy for this exam.'), 404
-
-        if len(exam.problems) == 0:
-            return dict(status=404, message='There are no problems in this exam.'), 404
 
         total_max_score = 0
         full_scores = pd.DataFrame(data={},

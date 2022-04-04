@@ -95,6 +95,11 @@ def test_statistics(test_client, add_test_data):
     # One solution has feedback assigned but no grader
     assert p1['inRevision'] == 1
 
+    # count partially graded problems
+    total = data['total']['results']
+    assert total[0]['ungraded'] == 0
+    assert total[1]['ungraded'] == 1
+
 
 def test_no_validated_students(test_client, add_empty_data):
     response = test_client.get('/api/stats/1')

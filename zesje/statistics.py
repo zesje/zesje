@@ -30,7 +30,6 @@ def solution_data(exam_id, student_id):
     for solution in sub.solutions:  # Sorted by problem_id
         problem = solution.problem
         if not problem.gradable:
-            # There is no possible feedback for this problem (take into account that root always exist)..
             continue
 
         problem_data = {
@@ -89,7 +88,6 @@ def full_exam_data(exam_id):
     columns[('Last name', '')] = 'string'
     for problem in exam.problems:  # Sorted by problem.id
         if not problem.gradable:
-            # There is no possible feedback for this problem (take into account that root always exist).
             continue
 
         if problem.name in problem_keys.values():

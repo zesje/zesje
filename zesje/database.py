@@ -230,6 +230,7 @@ class Problem(db.Model):
     def gradable(self):
         count, max_score = object_session(self).query(func.count(FeedbackOption.id), func.max(FeedbackOption.score))\
             .filter(FeedbackOption.problem_id == self.id).one()
+        # There is no possible feedback for this problem (take into account that root always exist).
         return count > 1 and max_score > 0
 
 
@@ -301,7 +302,7 @@ class Solution(db.Model):
 
     @property
     def is_graded(self):
-        return self.grader_id is not None and self.feedback_count > 0
+        return self.grader_id is not None
 
 
 class Scan(db.Model):

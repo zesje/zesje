@@ -18,9 +18,12 @@ def add_test_data(app):
     problem2 = Problem(id=2, name='Empty Problem', exam=exam)
     problem3 = Problem(id=3, name='Extra Space', exam=exam)
     db.session.add_all([problem1, problem2, problem3])
+    db.session.commit()
 
-    fo1_p1 = FeedbackOption(id=1, problem=problem1, text='text', description='desc', score=5)
-    fo1_p3 = FeedbackOption(id=3, problem=problem3, text='blank', description='desc', score=0)
+    fo1_p1 = FeedbackOption(id=11, problem=problem1, text='text', description='desc',
+                            score=5, parent=problem1.root_feedback)
+    fo1_p3 = FeedbackOption(id=12, problem=problem3, text='blank', description='desc',
+                            score=0, parent=problem3.root_feedback)
     db.session.add_all([fo1_p1, fo1_p3])
 
     student1 = Student(id=1000001, first_name='', last_name='')

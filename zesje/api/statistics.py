@@ -1,4 +1,4 @@
-from math import isnan, nan
+from math import isnan
 from flask_restful import Resource
 import pandas as pd
 
@@ -112,7 +112,7 @@ class Statistics(Resource):
                     continue
 
                 student_id = sol.submission.student_id
-                mark = sum(fo.score for fo in sol.feedback) if sol.feedback else nan
+                mark = sol.score
 
                 if not isnan(mark):
                     has_grader = sol.is_graded

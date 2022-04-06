@@ -12,25 +12,21 @@ from .database import db, Exam, Student, Grader, Solution, Submission
 
 def solution_data(exam_id, student_id):
     """Return Python datastructures corresponding to the student submission."""
-    exam = Exam.query.get(exam_id)
-    if exam is None:
-        raise NoResultFound(f"Exam with id #{exam_id} does not exist.")
+
     student = Student.query.get(student_id)
     if student is None:
         raise NoResultFound(f"Student with id #{student_id} does not exist.")
 
-    sub = Submission.query.filter(Submission.exam == exam,
-                                  Submission.student == student,
+    sub = Submission.query.filter(Submission.exam_id == exam_id,
+                                  Submission.student_id == student_id,
                                   Submission.validated).one_or_none()
     if sub is None:
-        raise RuntimeError('Student did not make a '
-                           'submission for this exam')
+        raise RuntimeError(f'Student #{student_id} does not have a validated submission for exam {exam_id}.')
 
     results = []
+    total_score = 0
     for solution in sub.solutions:  # Sorted by problem_id
         problem = solution.problem
-        if not problem.gradable:
-            continue
 
         problem_data = {
             'id': problem.id,
@@ -38,30 +34,27 @@ def solution_data(exam_id, student_id):
             'max_score': problem.max_score
         }
 
-        feedback = [fo for fo in problem.root_feedback.all_descendants if fo in solution.feedback]
-
         problem_data['feedback'] = [
             {'id': fo.id,
              'short': fo.text,
              'score': fo.score,
              'description': fo.description}
-            for fo in feedback if solution.is_graded
-        ]
-        problem_data['score'] = (
-            sum(i['score'] or 0 for i in problem_data['feedback'])
-            if problem_data['feedback']
-            else np.nan
-        )
-        problem_data['remarks'] = solution.remarks
+            for fo in solution.feedback
+        ] if solution.is_graded else []
+
+        problem_data['score'] = solution.score
+        problem_data['remarks'] = solution.remarks or ''
 
         results.append(problem_data)
+
+        total_score += problem_data['score'] if not np.isnan(problem_data['score']) else 0
 
     student = {
         'id': student.id,
         'first_name': student.first_name,
         'last_name': student.last_name,
         'email': student.email,
-        'total': sum(i['score'] for i in results if not np.isnan(i['score']))
+        'total': total_score
     }
 
     return student, results
@@ -71,7 +64,7 @@ def full_exam_data(exam_id):
     """Compute all grades of an exam as a pandas DataFrame."""
     exam = Exam.query.get(exam_id)
     if exam is None:
-        raise KeyError("No such exam.")
+        raise NoResultFound("Exam does not exist.")
 
     student_ids = db.session.query(Submission.student_id)\
         .filter(Submission.exam_id == exam.id, Submission.validated)\
@@ -87,9 +80,6 @@ def full_exam_data(exam_id):
     columns[('First name', '')] = 'string'
     columns[('Last name', '')] = 'string'
     for problem in exam.problems:  # Sorted by problem.id
-        if not problem.gradable:
-            continue
-
         if problem.name in problem_keys.values():
             key = f'{problem.name} ({problem.id})'
         else:
@@ -98,6 +88,7 @@ def full_exam_data(exam_id):
 
         columns[(key, 'remarks')] = 'string'
         for fo in problem.root_feedback.all_descendants:
+            print(fo)
             if (key, fo.text) in feedback_keys.values():
                 feedback_keys[fo.id] = (key, f'{fo.text} ({fo.id})')
             else:
@@ -115,6 +106,8 @@ def full_exam_data(exam_id):
         columns=pandas.MultiIndex.from_tuples(columns.keys())
     )
 
+    print(problem_keys, feedback_keys)
+
     for student_id, in student_ids:
         student, problems = solution_data(exam_id, student_id)
 
@@ -124,7 +117,7 @@ def full_exam_data(exam_id):
         for problem in problems:
             key = problem_keys[problem['id']]
 
-            df.loc[student['id'], (key, 'remarks')] = problem['remarks'] or ''
+            df.loc[student['id'], (key, 'remarks')] = problem['remarks']
 
             for fo in problem['feedback']:
                 df.loc[student['id'], feedback_keys[fo['id']]] = fo['score']

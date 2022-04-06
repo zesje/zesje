@@ -3,6 +3,8 @@
 import enum
 import os
 
+from numpy import nan
+
 from flask import current_app
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean, ForeignKey, Enum
@@ -303,6 +305,13 @@ class Solution(db.Model):
     @property
     def is_graded(self):
         return self.grader_id is not None
+
+    @property
+    def score(self):
+        score, = object_session(self).query(func.sum(FeedbackOption.score))\
+            .join(solution_feedback, FeedbackOption.id == solution_feedback.c.feedback_option_id)\
+            .filter(solution_feedback.c.solution_id == self.id).one_or_none()
+        return int(score) if score is not None else nan
 
 
 class Scan(db.Model):

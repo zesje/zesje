@@ -65,9 +65,6 @@ class Statistics(Resource):
         if (exam := Exam.query.get(exam_id)) is None:
             return dict(status=404, message='Exam does not exist.'), 404
 
-        if len(exam.problems) == 0:
-            return dict(status=404, message='There are no problems in this exam.'), 404
-
         # count the total number of students as the number of validated submissions
         student_ids = db.session.query(Submission.student_id)\
             .filter(Submission.exam_id == exam.id, Submission.validated)\
@@ -147,11 +144,8 @@ class Statistics(Resource):
 
             data.append(problem_data)
 
-        if len(data) == 0:
-            return dict(status=404, message='The problems in the exam have no feedback options.'), 404
-
         # total sum per row, min_count ensures that if all problems are Nan the sum is also Nan
-        full_scores.loc[:, 0] = full_scores.sum(axis=1, min_count=1)
+        full_scores.loc[:, 0] = full_scores.sum(axis=1)
 
         # counts the number of ungraded problems per student
         problems_ungraded = ungraded.sum(axis=1)

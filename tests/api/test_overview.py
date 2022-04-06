@@ -106,14 +106,6 @@ def test_no_validated_students(test_client, add_empty_data):
     assert response.status_code == 404
 
 
-def test_no_problems(app, test_client):
-    db.session.add(Exam(id=1, name='Empty', finalized=True))
-    db.session.commit()
-
-    response = test_client.get('/api/stats/1')
-    assert response.status_code == 404
-
-
 def test_no_gradable_problems(test_client, add_empty_data):
     app, exam = add_empty_data
 
@@ -124,4 +116,7 @@ def test_no_gradable_problems(test_client, add_empty_data):
     db.session.add(sub1)
 
     response = test_client.get('/api/stats/1')
-    assert response.status_code == 404
+    assert response.status_code == 200
+
+    data = json.loads(response.data)
+    assert len(data['problems']) == 0

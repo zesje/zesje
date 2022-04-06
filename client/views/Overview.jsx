@@ -718,6 +718,10 @@ class Overview extends React.Component {
       return <Fail message={this.state.error} />
     }
 
+    if (this.state.stats.problems.length === 0) {
+      return <Fail message="No problems have been found to grade." />
+    }
+
     return (
       <div>
 

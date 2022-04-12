@@ -224,9 +224,9 @@ class Problem(db.Model):
 
     @property
     def max_score(self):
-        max_score = object_session(self).query(func.max(FeedbackOption.score))\
+        max_score, = object_session(self).query(func.max(FeedbackOption.score))\
             .filter(FeedbackOption.problem_id == self.id).one()
-        return max_score[0]
+        return max_score
 
     @property
     def gradable(self):

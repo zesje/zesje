@@ -118,6 +118,87 @@ const estimateGradingTime = (graders) => {
   return total.time / total.graded
 }
 
+const ProblemsSummary = ({ problems, total, students, graders }) => {
+  let totalUngraded = 0
+  let totalInRevision = 0
+  let totalTimeLeft = 0
+  let totalFOs = 0
+  const totalSolutions = problems.length * students
+
+  return <table className='table is-striped is-fullwidth'>
+    <thead>
+      <tr>
+        <th> Problem </th>
+        <th> Feedback count </th>
+        <th> Score </th>
+        <th> Correlation (Rir) </th>
+        <th> Progress </th>
+        <th> Estimated time left </th>
+      </tr>
+    </thead>
+    <tbody>
+      {
+        problems.map((p, i) => {
+          const avgTime = estimateGradingTime(p.graders)
+          const solInRevision = p.inRevision
+          const solToGrade = students - p.results.length
+          let gradingTimeLeft = '-'
+
+          totalUngraded += solToGrade
+          totalInRevision += solInRevision
+          totalTimeLeft += avgTime * solToGrade
+          totalFOs += p.feedback.length
+
+          const text = `${p.results.length}/${students}` + (solInRevision > 0 ? ` ${solInRevision} needs revision` : '')
+
+          if (students > p.results.length) {
+            gradingTimeLeft = formatTime(solToGrade * avgTime)
+          }
+
+          return (
+            <tr key={i}>
+              <td>
+                {p.name}
+              </td>
+              <td>
+                {p.feedback.length}
+              </td>
+              <td>
+                {p.results.length < 2 ? '-' : `${p.mean.value.toPrecision(2)} ± ${p.mean.error.toPrecision(2)}`}
+              </td>
+              <td>
+                {p.results.length < 2 ? '-' : p.correlation.toPrecision(3)}
+              </td>
+              <td> {text} </td>
+              <td> {solToGrade === 0 ? '-' : `${gradingTimeLeft}`} </td>
+            </tr>
+          )
+        })
+      }
+
+      <tr key="0">
+        <td>
+          Total
+        </td>
+        <td>
+          {totalFOs}
+        </td>
+        <td>
+          {total.mean.value.toPrecision(2)} &#177; {total.mean.error.toPrecision(2)}
+        </td>
+        <td>
+          {total.alpha.toPrecision(3)}
+        </td>
+        <td>
+          {totalSolutions - totalUngraded}/{totalSolutions}
+          {totalInRevision > 0 ? ` (${totalInRevision} needs revision)` : ''}
+        </td>
+        <td> {formatTime(totalTimeLeft)} </td>
+      </tr>
+    </tbody>
+  </table>
+}
+
 class Overview extends React.Component {
   state = {
     stats: undefined,
@@ -167,35 +248,10 @@ class Overview extends React.Component {
 
     let totalUngraded = 0
     let totalInRevision = 0
-    let totalTimeLeft = 0
 
-    const hoverText = problems.map((p, i) => {
-      const avgTime = estimateGradingTime(p.graders)
-      const solInRevision = p.inRevision
-      const solToGrade = students - p.results.length
-
-      totalUngraded += solToGrade
-      totalInRevision += solInRevision
-      totalTimeLeft += avgTime * solToGrade
-
-      if (!p.results.length) return `${students} solutions to grade`
-
-      let text = `<b>Score</b>: ${p.mean.value.toPrecision(2)} ± ${p.mean.error.toPrecision(2)}` +
-                  (p.correlation !== null ? `<br><b>Rir</b>: ${p.correlation.toPrecision(3)}` : '')
-
-      if (solToGrade || solInRevision) {
-        const gradingTimeLeft = solToGrade * avgTime
-
-        text += (solToGrade > 0
-          ? (`<br>${solToGrade === 1 ? '1 solution' : `${solToGrade} solutions`}`) + ' to grade'
-          : '')
-        text += (solInRevision > 0
-          ? (`<br>${solInRevision === 1 ? '1 solution' : `${solInRevision} solutions`}`) + ' to revise'
-          : '')
-        text += `<br>Time left: ${formatTime(gradingTimeLeft)}`
-      }
-
-      return text
+    problems.forEach((p, i) => {
+      totalUngraded += (students - p.results.length)
+      totalInRevision += p.inRevision
     })
 
     problems.push({
@@ -206,23 +262,7 @@ class Overview extends React.Component {
       alpha: total.alpha
     })
 
-    hoverText.push(
-      (total.alpha !== null
-        ? `<br><b>Cronbach's α</b>: ${total.alpha.toPrecision(3)}`
-        : '') +
-      (totalUngraded > 0
-        ? `<br>${totalUngraded === 1 ? '1 solution' : `${totalUngraded} solutions`} to grade`
-        : '') +
-      (totalInRevision > 0
-        ? `<br>${totalInRevision === 1 ? '1 solution' : `${totalInRevision} solutions`} to revise`
-        : '') +
-      (totalTimeLeft > 0 ? `<br>Time left: ${formatTime(totalTimeLeft)}` : '')
-    )
-
     problems.reverse()
-    hoverText.reverse()
-
-    const hoverProblemPosition = min(max(-students / 40, -7), -0.2)
 
     const yVals = range(0, problems.length, 1).toArray()
 
@@ -274,11 +314,7 @@ class Overview extends React.Component {
 
     const data = [{
       type: 'heatmap',
-      y: yVals,
-      showlegend: false
-    }, {
-      type: 'heatmap',
-      yaxis: 'y2',
+      yaxis: 'y',
       y: yVals,
       z: problems.map(p => p.results.map(x => 100 * x.score / p.max_score)),
       ygap: 2,
@@ -309,31 +345,6 @@ class Overview extends React.Component {
         bgcolor: 'hsl(217, 71, 53)' // primary
       },
       showlegend: false
-    }, {
-      x: zeros(problems.length + 1).map(x => hoverProblemPosition).toArray(),
-      y: yVals,
-      yaxis: 'y2',
-      type: 'scatter',
-      opacity: 0,
-      mode: 'markers',
-      size: 0,
-      hoverinfo: 'text',
-      hovertext: hoverText,
-      hoverlabel: {
-        bgcolor: 'hsl(0, 0, 96)',
-        bordercolor: problems.map(p => {
-          // for some reason, colors in hsl format are not shown
-          if (p.results.length === 0) {
-            return '#FF3860' // danger
-          }
-          return p.results.length === students ? '#48C774' : '#FFDD57' // success : warning
-        }),
-        font: {
-          color: '#000'
-        },
-        align: 'left'
-      },
-      showlegend: false
     }]
 
     const histGraded = total.results.reduce((acc, v) => v.ungraded === 0 ? acc.concat(v.score) : acc, [])
@@ -352,8 +363,8 @@ class Overview extends React.Component {
         marker: {
           color: 'hsl(204, 86, 53)' // info
         },
-        xaxis: 'x3',
-        yaxis: 'y3'
+        xaxis: 'x2',
+        yaxis: 'y2'
       })
     }
 
@@ -373,8 +384,8 @@ class Overview extends React.Component {
         marker: {
           color: 'hsla(204, 86, 53, 0.5)'
         },
-        xaxis: 'x3',
-        yaxis: 'y3'
+        xaxis: 'x2',
+        yaxis: 'y2'
       })
     }
 
@@ -388,8 +399,8 @@ class Overview extends React.Component {
       data.push({
         x: xScores,
         y: yScores,
-        xaxis: 'x3',
-        yaxis: 'y3',
+        xaxis: 'x2',
+        yaxis: 'y2',
         name: 'PDF',
         fill: 'tozeroy',
         type: 'scatter',
@@ -408,7 +419,8 @@ class Overview extends React.Component {
       xref: 'paper',
       yref: 'paper',
       yanchor: 'bottom',
-      text: 'Histogram of scores',
+      text: 'Histogram of scores<br>' +
+        `(score = ${total.mean.value.toPrecision(2)} &#177; ${total.mean.error.toPrecision(2)})`,
       align: 'center',
       showarrow: false,
       font: {
@@ -446,39 +458,18 @@ class Overview extends React.Component {
         anchor: 'x',
         domain: [0.5, 1]
       },
-      yaxis2: {
-        automargin: true,
-        fixedrange: true,
-        range: [-0.5, problems.length - 0.5],
-        tickmode: 'array',
-        tickfont: {
-          color: 'hsl(0,0,7)',
-          size: 14
-        },
-        tickvals: problems.reduce((acc, p, i) => {
-          if (p.id === 0) return (totalUngraded + totalInRevision === 0 ? acc.concat(i) : acc)
-          return (p.results.length - p.inRevision) === students ? acc.concat(i) : acc
-        }, []),
-        ticktext: problems.reduce((acc, p, i) => {
-          if (p.id === 0) return (totalUngraded + totalInRevision === 0 ? acc.concat(p.name) : acc)
-          return (p.results.length - p.inRevision) === students ? acc.concat(p.name) : acc
-        }, []),
-        zeroline: false,
-        anchor: 'x',
-        domain: [0.5, 1]
-      },
-      xaxis3: {
+      xaxis2: {
         domain: [0, 1],
-        anchor: 'y3',
+        anchor: 'y2',
         zeroline: false,
         dtick: 5,
         title: 'score',
         fixedrange: true
       },
-      yaxis3: {
+      yaxis2: {
         title: 'number of students',
         domain: [0, 0.35],
-        anchor: 'x3',
+        anchor: 'x2',
         fixedrange: true
       },
       title: {
@@ -527,6 +518,8 @@ class Overview extends React.Component {
             style={{ width: '100%', position: 'relative', display: 'inline-block' }}
           />
 
+          <ProblemsSummary problems={this.state.stats.problems} students={students} total={total} />
+
           {this.state.stats.copies / this.state.stats.students > 1.05 &&
             <article className='message is-warning'>
               <div className='message-body'>
@@ -560,6 +553,8 @@ class Overview extends React.Component {
           color: 'hsl(204, 86, 53)'
         }
       })
+
+      traces.push({ x: histGraded, type: 'histogram', yaxis: 'y2', visible: false, histnorm: 'percentage' })
     }
 
     const histRevise = problem.results.reduce((acc, v) => !v.graded ? acc.concat(v.score) : acc, [])
@@ -579,6 +574,7 @@ class Overview extends React.Component {
           color: 'hsla(204, 86, 53, 0.5)'
         }
       })
+      traces.push({ x: histRevise, type: 'histogram', yaxis: 'y2', visible: false, histnorm: 'percentage' })
     }
 
     if (traces.length === 0) return null
@@ -594,6 +590,14 @@ class Overview extends React.Component {
       yaxis: {
         title: 'number of students',
         fixedrange: true
+      },
+      yaxis2: {
+        side: 'right',
+        title: 'Percentage of students',
+        overlaying: 'y',
+        showgrid: false,
+        anchor: 'x',
+        range: [0, 100 / this.state.stats.students]
       },
       title: {
         text: 'Histogram of Scores<br>(score = ' +
@@ -714,7 +718,6 @@ class Overview extends React.Component {
             </div>
           </section>
         </div>
-
       </div>
     )
   }

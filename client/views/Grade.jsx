@@ -26,33 +26,25 @@ const FiltersInfo = ({ hasFilters, matchingResults, clearFilters }) => {
     (matchingResults === 1 ? 'solution' : 'solutions')
 
   return (
-    <div className='column' style={{
-      display: 'grid',
-      gridTemplateColumns: '1fr max-content',
-      gap: '0.5em',
-      justifyItems: 'end',
-      height: 'max-content',
-      alignItems: 'center'
-    }}>
-      {text}
-      <button
-        className='button is-danger'
-        onClick={clearFilters}
-        disabled={!hasFilters}
-      >
-        <span className='icon is-medium'>
-          <i
-            className='fa fa-lg fa-filter'
-            style={{ transform: 'translateX(-17%)' }}
-          />
-          <span
-            className='icon is-small'
-            style={{ position: 'absolute', right: '12%', bottom: 0 }}
-          >
-            <i className='fa fa-times' />
-          </span>
-        </span>
-      </button>
+    <div className='column'>
+      <nav className='level'>
+        <div className='level-right'>
+          <div className='level-item'>
+            {text}
+          </div>
+          <div className='level-item'>
+              <button
+                className='button is-danger'
+                onClick={clearFilters}
+                disabled={!hasFilters}
+              >
+                <span className='icon is-medium'>
+                  <i className='fa fa-lg fa-solid fa-filter-circle-xmark' />
+                </span>
+              </button>
+          </div>
+        </div>
+      </nav>
     </div>
   )
 }
@@ -558,7 +550,7 @@ class Grade extends React.Component {
 
           <div className='container'>
             <div className='columns'>
-              <div className='column is-one-quarter-fullhd is-one-third-desktop'>
+              <div className='column is-one-quarter-fullhd is-one-third-desktop is-one-third-tablet'>
                 <ProblemSelector
                   problems={problems}
                   navigateProblem={this.navigateProblem}
@@ -593,7 +585,7 @@ class Grade extends React.Component {
                     anonymous={gradeAnonymous}
                     showTooltips={this.state.showTooltips}
                   />
-                  <div className='column is-one-quarter-desktop is-half-mobile'>
+                  <div className='column is-one-quarter-desktop is-half-touch'>
                     <div className='control has-icons-left'>
                       <div className='select is-link is-fullwidth'>
                         <select

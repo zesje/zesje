@@ -2,8 +2,6 @@ import React from 'react'
 
 import { toast } from 'bulma-toast'
 
-import Hero from '../components/Hero.jsx'
-
 import * as api from '../api.jsx'
 
 class Graders extends React.Component {
@@ -57,13 +55,7 @@ class Graders extends React.Component {
     const provider = this.state.oauth_provider
 
     return (
-
-      <div>
-
-        <Hero title='Manage Graders' subtitle='Many hands make light work' />
-
-        <section className='section'>
-          <div className='container'>
+      <>
             <form onSubmit={this.submitName}>
               <div className='field has-addons'>
                 <div className='control'>
@@ -99,11 +91,7 @@ class Graders extends React.Component {
                 )}
               </ul>
             </aside>
-          </div>
-        </section>
-
-      </div>
-
+      </>
     )
   }
 }

@@ -1,6 +1,6 @@
 import React from 'react'
 
-import Hero from '../components/Hero.jsx'
+import Loading from './Loading.jsx'
 import Fail from './Fail.jsx'
 import ConfirmationModal from '../components/ConfirmationModal.jsx'
 import ExamTemplated from './exam/ExamTemplated.jsx'
@@ -10,7 +10,7 @@ import * as api from '../api.jsx'
 
 class Exam extends React.Component {
   state = {
-    exam: null,
+    exam: undefined,
     deletingExam: false,
     status: ''
   }
@@ -72,29 +72,18 @@ class Exam extends React.Component {
   render () {
     const exam = this.state.exam
 
+    if (exam === undefined) return <Loading />
+
     if (!exam && this.state.status) {
       return <Fail message={this.state.status} />
     }
 
     return (
-      <div>
-        <Hero />
-        <section className='section'>
-          <div className='container'>
-            {
-            exam
-              ? (
-                <>
+      <>
+        {exam
+          ? <>{this.renderExamContent()}</>
+          : <p className='is-size-5'>{this.state.status}</p>}
 
-                  {this.renderExamContent()}
-                </>
-                )
-              : (
-                <p className='issize-5'>{this.state.status}</p>
-                )
-          }
-          </div>
-        </section>
         {exam && <ConfirmationModal
           active={this.state.deletingExam}
           color='is-danger'
@@ -103,9 +92,8 @@ class Exam extends React.Component {
           onCancel={() => this.setState({ deletingExam: false })}
           onConfirm={() => {
             this.props.deleteExam(exam.id)
-          }}
-                 />}
-      </div>
+          }} />}
+      </>
     )
   }
 }

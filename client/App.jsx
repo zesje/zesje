@@ -31,7 +31,11 @@ const NavBarView = (props) => {
         grader={props.grader}
         examID={props.examID}
         setHelpPage={props.setHelpPage} />
-      <Outlet />
+      <section className='section'>
+        <div className='container is-fluid'>
+          <Outlet />
+        </div>
+      </section>
       <HelpModal
         page={HELP_PAGES[props.helpPage] || { content: null, title: null }}
         closeHelp={() => props.setHelpPage({ helpPage: null })}

@@ -4,7 +4,7 @@ import { toast } from 'bulma-toast'
 
 import * as api from '../api.jsx'
 
-import Hero from '../components/Hero.jsx'
+import Loading from './Loading.jsx'
 import ProgressBar from '../components/ProgressBar.jsx'
 import SearchBox from '../components/SearchBox.jsx'
 import Img from '../components/Img.jsx'
@@ -265,11 +265,9 @@ class CheckStudents extends React.Component {
   render () {
     const copies = this.state.copies
 
-    const hero = <Hero title='Match Students' subtitle='Check that all submissions are correctly identified' />
-
     if (copies === undefined) {
       // copies are being loaded, we just want to show a loading screen
-      return hero
+      return <Loading />
     }
 
     const copy = this.state.copy
@@ -279,21 +277,12 @@ class CheckStudents extends React.Component {
     const hasUnmatchedRight = done === total ? false : copies.some((c, j) => (j > this.state.index) && !c.validated)
     const hasUnmatchedLeft = done === total ? false : copies.some((c, j) => (j < this.state.index) && !c.validated)
 
-    if (this.state.examID === undefined && this) return hero
-
     if (!this.state.examID) {
       return <Fail message='No copies where found for this exam' />
     }
 
     return (
-      <div>
-
-        {hero}
-
-        <section className='section'>
-
-          <div className='container'>
-
+      <>
             <div className='columns'>
               <div className='column is-one-quarter-desktop is-one-third-tablet'>
                 {this.state.editActive
@@ -408,10 +397,7 @@ class CheckStudents extends React.Component {
               onConfirm={() => this.matchStudent(this.state.confirmStudent, true)}
               onCancel={() => { this.setState({ confirmStudent: null }) }}
             />
-          </div>
-        </section>
-
-      </div>
+      </>
     )
   }
 }

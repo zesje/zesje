@@ -21,10 +21,10 @@ const TooltipLink = (props) => {
 
   return (
     <div
-      className={'navbar-item no-padding' + (pred[0] ? ' tooltip has-tooltip-bottom' : '')}
+      className={'navbar-item has-text-white no-padding' + (pred[0] ? ' tooltip has-tooltip-bottom' : '')}
       data-tooltip={pred[1]}
     >
-      <Link className='navbar-item' disabled={pred[0]} to={props.to}> {props.text} </Link>
+      <Link className='navbar-item has-text-white' disabled={pred[0]} to={props.to}> {props.text} </Link>
     </div>
   )
 }
@@ -167,16 +167,16 @@ class NavBar extends React.Component {
       'There are no submissions, please upload some.']
 
     return (
-      <nav className='navbar' role='navigation' aria-label='dropdown navigation'>
+      <nav className='navbar is-info has-shadow' role='navigation' aria-label='dropdown navigation'>
 
         <div className='navbar-brand'>
-          <div className='navbar-item has-text-info'>
+          <div className='navbar-item has-text-white'>
             <span className='icon is-medium'>
               <i className='fa fa-edit fa-2x' />
             </span>
           </div>
 
-          <Link className='navbar-item has-text-info' to='/'><b>Zesje</b></Link>
+          <Link className='navbar-item has-text-white' to='/'><b>Zesje</b></Link>
           <div className='navbar-item' />
 
           <BurgerButton foldOut={this.props.foldOut} burgerClick={this.burgerClick} />

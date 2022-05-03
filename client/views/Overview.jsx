@@ -6,8 +6,8 @@ import createPlotlyComponent from 'react-plotly.js/factory'
 import { range, exp, sqrt, pow, pi } from 'mathjs'
 
 import humanizeDuration from 'humanize-duration'
-import Hero from '../components/Hero.jsx'
 import Fail from './Fail.jsx'
+import Loading from './Loading.jsx'
 import * as api from '../api.jsx'
 
 const Plot = createPlotlyComponent(Plotly)
@@ -706,11 +706,9 @@ class Overview extends React.Component {
   }
 
   render () {
-    const hero = <Hero title='Overview' subtitle='Analyse the exam results' />
-
     if (this.state.stats === undefined) {
       // stats are being loaded, we just want to show a loading screen
-      return hero
+      return <Loading />
     }
 
     if (this.state.stats === null) {
@@ -723,11 +721,8 @@ class Overview extends React.Component {
     }
 
     return (
-      <div>
-
-        <Hero title='Overview' subtitle='Analyse the exam results' />
-
-        <div className='container has-text-centered'>
+      <>
+        <div className='has-text-centered'>
           <h1 className='is-size-1'> {this.state.stats.name} </h1>
           <span className='select is-medium'>
             <select
@@ -752,7 +747,7 @@ class Overview extends React.Component {
             </div>
           </section>
         </div>
-      </div>
+      </>
     )
   }
 }

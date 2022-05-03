@@ -1,19 +1,14 @@
 import React from 'react'
 
-import Hero from '../components/Hero.jsx'
-import Spinner from '../components/Spinner.jsx'
-
 const Home = () => {
   return (
-    <div>
-
-      <Hero title='' subtitle='' />
-
-      <section className='section'>
-          <Spinner />
-      </section>
-
-    </div>
+    <>
+        <div className='container has-text-centered'>
+        <span className="icon is-large has-text-info">
+          <i className="fas fa-spinner fa-2x fa-pulse"></i>
+        </span>
+        </div>
+    </>
   )
 }
 

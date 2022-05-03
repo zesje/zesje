@@ -1,6 +1,6 @@
 import React from 'react'
 import { toast } from 'bulma-toast'
-import Hero from '../components/Hero.jsx'
+import Loading from './Loading.jsx'
 import Fail from './Fail.jsx'
 import update from 'immutability-helper'
 import ReactTimeAgo from 'react-time-ago'
@@ -492,13 +492,12 @@ class Grade extends React.Component {
   }
 
   render () {
-    const hero = (<Hero title='Grade' subtitle='Assign feedback to each solution' />)
     // This should happen when there are no submissions or problems for an exam.
     // More specifically, if a user tries to enter a URL for an exam with no submissions.
     // This will also happen while the initial call to update submission in the constructor is still pending.
     if (this.state.submission === undefined) {
       // submission is being loaded, we just want to show a loading screen
-      return hero
+      return <Loading />
     }
 
     if (!this.state.problems || this.state.problems.length === 0) {
@@ -530,13 +529,7 @@ class Grade extends React.Component {
     const offset = new Date(Date.now()).getTimezoneOffset() * 60000
 
     return (
-      <div>
-
-        {hero}
-
-        <section className='section'>
-
-          <div className='container'>
+      <>
             <div className='columns'>
               <div className='column is-one-quarter-fullhd is-one-third-desktop is-one-third-tablet'>
                 <ProblemSelector
@@ -664,9 +657,7 @@ class Grade extends React.Component {
                 </div>
               </div>
             </div>
-          </div>
-        </section>
-      </div>
+      </>
     )
   }
 }

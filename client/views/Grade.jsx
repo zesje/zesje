@@ -26,25 +26,19 @@ const FiltersInfo = ({ hasFilters, matchingResults, clearFilters }) => {
     (matchingResults === 1 ? 'solution' : 'solutions')
 
   return (
-    <div className='column'>
-      <nav className='level'>
-        <div className='level-right'>
-          <div className='level-item'>
-            {text}
-          </div>
-          <div className='level-item'>
-              <button
-                className='button is-danger'
-                onClick={clearFilters}
-                disabled={!hasFilters}
-              >
-                <span className='icon is-medium'>
-                  <i className='fa fa-lg fa-solid fa-filter-circle-xmark' />
-                </span>
-              </button>
-          </div>
-        </div>
-      </nav>
+    <div className='field is-grouped is-grouped-right is-align-items-center'>
+      <p className='control'>{text}</p>
+      <p className='control'>
+        <button
+          className='button is-danger'
+          onClick={clearFilters}
+          disabled={!hasFilters}
+        >
+          <span className='icon is-medium'>
+            <i className='fa fa-lg fa-solid fa-filter-circle-xmark' />
+          </span>
+        </button>
+      </p>
     </div>
   )
 }
@@ -573,19 +567,21 @@ class Grade extends React.Component {
               </div>
 
               <div className='column'>
-                <div className='columns is-multiline is-mobile'>
-                  <GradeNavigation
-                    submission={submission}
-                    submissions={submissions}
-                    setSubmission={this.navigateSubmission}
-                    first={this.first}
-                    prev={this.prev}
-                    next={this.next}
-                    last={this.last}
-                    anonymous={gradeAnonymous}
-                    showTooltips={this.state.showTooltips}
-                  />
-                  <div className='column is-one-quarter-desktop is-half-touch'>
+                <div className='columns is-multiline is-mobile is-vcentered'>
+                  <div className='column is-half-desktop is-full-touch'>
+                    <GradeNavigation
+                      submission={submission}
+                      submissions={submissions}
+                      setSubmission={this.navigateSubmission}
+                      first={this.first}
+                      prev={this.prev}
+                      next={this.next}
+                      last={this.last}
+                      anonymous={gradeAnonymous}
+                      showTooltips={this.state.showTooltips}
+                    />
+                  </div>
+                  <div className='column'>
                     <div className='control has-icons-left'>
                       <div className='select is-link is-fullwidth'>
                         <select
@@ -606,11 +602,13 @@ class Grade extends React.Component {
                       </span>
                     </div>
                   </div>
-                  <FiltersInfo
-                    hasFilters={this.state.hasFilters}
-                    matchingResults={this.state.matchingResults}
-                    clearFilters={this.clearFilters}
-                  />
+                  <div className='column is-narrow'>
+                    <FiltersInfo
+                      hasFilters={this.state.hasFilters}
+                      matchingResults={this.state.matchingResults}
+                      clearFilters={this.clearFilters}
+                    />
+                  </div>
                 </div>
 
                 <ProgressBar done={problem.n_graded} total={submissions.length} />

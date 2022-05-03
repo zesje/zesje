@@ -24,8 +24,6 @@ class GradeNavigation extends React.Component {
     const submissions = this.props.submissions
 
     return (
-      <div className='column is-half-desktop is-full-mobile level'>
-        <div className='level-item make-wider'>
           <div className='field has-addons is-mobile'>
             {this.createNavButton(
               'is-info is-rounded',
@@ -42,7 +40,7 @@ class GradeNavigation extends React.Component {
             <div
               id='search'
               className={
-                'control is-wider has-tooltip-arrow' + (this.props.showTooltips ? ' has-tooltip-active' : '')
+                'control is-expanded has-tooltip-arrow' + (this.props.showTooltips ? ' has-tooltip-active' : '')
               }
               data-tooltip={'Press ctrl to ' + (this.props.showTooltips ? 'hide' : 'show') + ' shortcuts'}
             >
@@ -103,8 +101,6 @@ class GradeNavigation extends React.Component {
               'shift + →'
             )}
           </div>
-        </div>
-      </div>
     )
   }
 }

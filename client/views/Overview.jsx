@@ -526,38 +526,35 @@ class Overview extends React.Component {
 
     return (
       <>
-        <div className='container'>
+        <Plot
+          data={data}
+          config={config}
+          layout={layout}
+          onClick={(data) => {
+            const selProblem = problems[data.points[0].y]
+            const selStudent = selProblem.results[data.points[0].x].studentId
 
-          <Plot
-            data={data}
-            config={config}
-            layout={layout}
-            onClick={(data) => {
-              const selProblem = problems[data.points[0].y]
-              const selStudent = selProblem.results[data.points[0].x].studentId
+            this.setState({ selectedStudentId: selStudent })
+          }}
+          onDoubleClick={() => this.setState({ selectedStudentId: null })}
+          useResizeHandler
+          style={{ width: '100%', position: 'relative', display: 'inline-block' }}
+        />
 
-              this.setState({ selectedStudentId: selStudent })
-            }}
-            onDoubleClick={() => this.setState({ selectedStudentId: null })}
-            useResizeHandler
-            style={{ width: '100%', position: 'relative', display: 'inline-block' }}
-          />
+      <ProblemsSummary
+        problems={this.state.stats.problems}
+        students={students}
+        total={total}
+        changeProblem={this.changeProblem} />
 
-          <ProblemsSummary
-            problems={this.state.stats.problems}
-            students={students}
-            total={total}
-            changeProblem={this.changeProblem} />
-
-          {this.state.stats.copies / this.state.stats.students > 1.05 &&
-            <article className='message is-warning'>
-              <div className='message-body'>
-                {this.state.stats.copies - this.state.stats.students} extra copies
-                were needed to solve this exam by some students,
-                consider adding more space the next time.
-              </div>
-            </article>}
-        </div>
+      {this.state.stats.copies / this.state.stats.students > 1.05 &&
+        <article className='message is-warning'>
+          <div className='message-body'>
+            {this.state.stats.copies - this.state.stats.students} extra copies
+            were needed to solve this exam by some students,
+            consider adding more space the next time.
+          </div>
+        </article>}
       </>
     )
   }
@@ -740,11 +737,9 @@ class Overview extends React.Component {
             </select>
           </span>
           <section className='section'>
-            <div className='container'>
               {this.state.selectedProblemId === 0
                 ? this.renderAtGlance()
                 : this.renderProblemSummary(this.state.selectedProblemId)}
-            </div>
           </section>
         </div>
       </>

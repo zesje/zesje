@@ -84,7 +84,9 @@ test_py:
     paths:
       - cov.html/
     reports:
-      cobertura: cov.xml
+      coverage_report:
+        coverage_format: cobertura
+        path: cov.xml
       junit: tests.xml
     expire_in: 1 week
 

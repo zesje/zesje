@@ -34,6 +34,7 @@ import shutil
 import sys
 import argparse
 import time
+from datetime import datetime, timedelta
 from io import BytesIO
 
 import lorem
@@ -277,8 +278,9 @@ def validate_signatures(client, exam_id, copies, validate):
 
 
 def grade_problems(client, exam_id, graders, problems, submissions, grade):
-    for k in range(len(submissions)):
-        sub = submissions[k]
+    date = datetime.now()
+
+    for sub in submissions:
         submission_id = sub['id']
 
         for prob in sub['problems']:
@@ -290,6 +292,20 @@ def grade_problems(client, exam_id, graders, problems, submissions, grade):
                 opt = fo[random.randint(0, len(fo) - 1)]
                 client.put(f"/api/solution/{exam_id}/{submission_id}/{prob['problemId']}",
                            json={'id': opt})
+
+                solution = Solution.query.filter(Solution.submission_id == submission_id,
+                                                 Solution.problem_id == prob['problemId']).one_or_none()
+
+                grader = random.choice(graders)
+                solution.grader_id = grader['id']
+                solution.graded_at = date
+
+                dt = timedelta(
+                    seconds=int(random.lognormvariate(mu=0.5, sigma=0.4) * 60),
+                    hours=random.randint(1, 24) if random.random() < 0.05 else 0
+                )
+                date = date + dt
+    db.session.commit()
 
 
 def add_templated_exam(client, pages):

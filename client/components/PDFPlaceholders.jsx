@@ -36,5 +36,5 @@ export const LoadingPDF = ({
 
 export const ErrorPDF = ({
   format = 'a4',
-  text = 'An error was produced while loading the PDF, try reloading the page.'
+  text = 'An error occured while loading the PDF, try reloading the page.'
 }) => <EmptyPDF><div className='notification is-danger has-text-centered'>{ text }</div></EmptyPDF>

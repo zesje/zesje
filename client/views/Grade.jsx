@@ -564,7 +564,7 @@ class Grade extends React.Component {
                   current={problem}
                   showTooltips={this.state.showTooltips}
                 />
-                <nav className='panel'>
+                <nav className='panel is-sticky has-modal'>
                   <FeedbackPanel
                     examID={examID} submissionID={submission.id}
                     problem={problem} solution={solution}
@@ -661,7 +661,7 @@ class Grade extends React.Component {
                   </div>
                 </div>
 
-                <p className={'box is-scrollable-desktop is-scrollable-tablet' +
+                <p className={'box is-sticky' +
                   (solution.gradedAt ? ' is-graded' : '')}
                 >
                   <img

@@ -76,33 +76,6 @@ def all_filters(sol, required_feedback, excluded_feedback, graded_by, ungraded):
             (not ungraded or sol.graded_by is None))
 
 
-def find_number_of_matches(problem, ungraded, required_feedback, excluded_feedback, graded_by):
-    """
-    Finds the number of solutions that match all the filtering criteria.
-
-    Parameters
-    ----------
-    problem : Problem
-        current problem.
-    ungraded: bool
-        value whether the solution should be ungraded or you do not care.
-    required_feedback : List[int]
-        the feedback_id's which the matched submissions should have.
-    excluded_feedback : List[int]
-        the feedback_id's which the macthed submissions should not have.
-    graded_by : int
-        the id of the grader that should have graded the matched submissions, optional.
-
-    Returns
-    --------
-    The number of submissions that match all the filtering criteria.
-    """
-    return sum(
-        all_filters(sol, set(required_feedback), set(excluded_feedback), graded_by, ungraded)
-        for sol in problem.solutions
-    )
-
-
 def _find_submission(old_submission, problem, shuffle_seed, direction, ungraded,
                      required_feedback, excluded_feedback, graded_by):
     """

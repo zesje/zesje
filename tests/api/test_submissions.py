@@ -1,5 +1,5 @@
 import pytest
-from zesje.api.submissions import has_all_required_feedback, _find_submission, find_number_of_matches
+from zesje.api.submissions import has_all_required_feedback, _find_submission
 from datetime import datetime
 from zesje.database import db, Exam, Problem, FeedbackOption,\
                            Student, Submission, Solution, Grader
@@ -124,8 +124,11 @@ def test_find_length(add_test_data, get_first_feedback, get_second_feedback):
     sol2.feedback = get_second_feedback
     sol3.feedback = get_first_feedback
 
-    result = find_number_of_matches(Problem.query.get(20), False, [1], [], 2)
-    assert result == 1
+    ssub, count_follows, count_precedes, matched = \
+        _find_submission(sub, Problem.query.get(20), 1, 'next', False, [1], [], 2)
+    assert count_follows == 1
+    assert count_precedes == 0
+    assert not matched
 
 
 def test_get_all_submissions(test_client, add_test_data, add_test_submissions):

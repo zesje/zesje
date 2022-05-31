@@ -94,7 +94,6 @@ class IDBlock extends React.Component {
 
   blur = (event) => {
     const id = parseInt(event.target.value)
-    console.log(id)
 
     if (id >= 1000000) {
       api.get('students/' + id)

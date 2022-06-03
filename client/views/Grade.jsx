@@ -3,6 +3,7 @@ import { toast } from 'bulma-toast'
 import Hero from '../components/Hero.jsx'
 import Fail from './Fail.jsx'
 import update from 'immutability-helper'
+import humanizeDuration from 'humanize-duration'
 
 import FeedbackPanel from '../components/feedback/FeedbackPanel.jsx'
 import ProblemSelector from './grade/ProblemSelector.jsx'
@@ -534,6 +535,7 @@ class Grade extends React.Component {
     const multiple = otherSubmissions.length > 0
     const gradedTime = new Date(solution.gradedAt)
     const gradeAnonymous = this.state.gradeAnonymous
+    const ellapsedTime = Date.now() - gradedTime
 
     return (
       <div>
@@ -631,7 +633,11 @@ class Grade extends React.Component {
                       {solution.gradedBy
                         ? <div>
                           Graded by: {(solution.gradedBy.name ? solution.gradedBy.name + ' - ' : '') +
-                          solution.gradedBy.oauth_id} <i>({gradedTime.toLocaleString()})</i>
+                          solution.gradedBy.oauth_id} <i>({
+                              ellapsedTime > 604800000  // one week
+                                ? gradedTime.toLocaleDateString()
+                                : humanizeDuration(ellapsedTime)
+                          })</i>
                         </div>
                         : <div>Ungraded</div>}
                     </div>

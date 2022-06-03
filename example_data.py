@@ -34,7 +34,7 @@ import shutil
 import sys
 import argparse
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from io import BytesIO
 
 import lorem
@@ -278,7 +278,7 @@ def validate_signatures(client, exam_id, copies, validate):
 
 
 def grade_problems(client, exam_id, graders, problems, submissions, grade):
-    date = datetime.now()
+    date = datetime.now(timezone.utc)
 
     for sub in submissions:
         submission_id = sub['id']

@@ -636,7 +636,7 @@ class Grade extends React.Component {
                           solution.gradedBy.oauth_id} <i>({
                               ellapsedTime > 604800000  // one week
                                 ? gradedTime.toLocaleDateString()
-                                : humanizeDuration(ellapsedTime)
+                                : (humanizeDuration(ellapsedTime, { largest: 2, language: 'en' }) + ' ago')
                           })</i>
                         </div>
                         : <div>Ungraded</div>}

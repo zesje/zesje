@@ -51,7 +51,7 @@ class Graders(Resource):
         """
         args = self.post_parser.parse_args()
 
-        oauth_id = args['oauth_id']
+        oauth_id = args['oauth_id'].strip()
 
         if Grader.query.filter(Grader.oauth_id == oauth_id).one_or_none():
             return dict(status=409, message=f'Grader with id {oauth_id} already exists.'), 409

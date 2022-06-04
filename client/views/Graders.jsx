@@ -70,7 +70,7 @@ class Graders extends React.Component {
                   <input
                     className='input'
                     name='first_name' value={this.state.oauth_id}
-                    onChange={this.changeIdField} type='text'
+                    onChange={this.changeIdField} type={idField === 'email' ? 'email' : 'text'}
                     maxLength={100} placeholder={provider + ' ' + idField}
                   />
                 </div>

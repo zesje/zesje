@@ -7,6 +7,7 @@ import * as api from '../api.jsx'
 import Hero from '../components/Hero.jsx'
 import ProgressBar from '../components/ProgressBar.jsx'
 import SearchBox from '../components/SearchBox.jsx'
+import Img from '../components/Img.jsx'
 import withShortcuts from '../components/ShortcutBinder.jsx'
 import withRouter from '../components/RouterBinder.jsx'
 import ConfirmationModal from '../components/ConfirmationModal.jsx'
@@ -371,7 +372,15 @@ class CheckStudents extends React.Component {
                   <ProgressBar done={done} total={total} />
 
                   <p className='box'>
-                    <img src={'api/images/signature/' + this.state.examID + '/' + (copy && copy.number)} alt='' />
+                    <Img
+                      src={`api/images/signature/${this.state.examID}/${copy && copy.number}` }
+                      alt={copy != null ? `Signature image #${copy.number}` : ''}
+                      error={
+                        <div className='notification is-danger has-text-centered'>
+                          Error loading image, try reloading the page.
+                      </div>
+                    }
+                    />
                   </p>
 
                 </div>

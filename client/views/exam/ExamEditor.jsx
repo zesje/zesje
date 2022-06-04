@@ -5,7 +5,7 @@ import barcodeExampleImage from '../../components/barcode_example.png'
 import studentIdExampleImage from '../../components/student_id_example.png'
 import answerBoxImage from '../../components/answer_box.png'
 
-import EmptyPDF from '../../components/EmptyPDF.jsx'
+import { LoadingPDF, ErrorPDF } from '../../components/PDFPlaceholders.jsx'
 import PDFOverlay from '../../components/PDFOverlay.jsx'
 
 import { Rnd } from 'react-rnd'
@@ -570,14 +570,16 @@ class ExamEditor extends React.Component {
         <Document
           file={this.getPDFUrl()}
           onLoadSuccess={this.props.onPDFLoad}
-          loading={<EmptyPDF />}
-          noData={<EmptyPDF />}
+          loading={<LoadingPDF />}
+          error={<LoadingPDF />}
+          noData={<ErrorPDF text={'No PDF file specified.'} />}
         >
           <Page
             renderAnnotations={false}
             renderTextLayer={false}
             pageIndex={this.props.page}
             onMouseDown={this.handleMouseDown}
+            loading={<LoadingPDF />}
           />
         </Document>
         <PDFOverlay />

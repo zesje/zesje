@@ -99,7 +99,7 @@ def _process_scan(scan_id, exam_layout):
                     if not success:
                         failures.append((file_info, description))
                 except Exception as e:
-                    report_error(f'Error processing {readable_filename(file_info)}: {e}')
+                    failures.append((file_info, str(e)))
     except Exception as e:
         report_error(f"Failed to read file {scan.name}: {e}")
         raise

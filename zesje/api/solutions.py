@@ -35,7 +35,7 @@ def solution_to_data(solution):
             'name': solution.graded_by.name,
             'oauth_id': solution.graded_by.oauth_id
         } if solution.graded_by else None,
-        'gradedAt': solution.graded_at.isoformat() if solution.graded_at else None,
+        'gradedAt': int(solution.graded_at.timestamp() * 1000) if solution.graded_at else None,
         'remark': solution.remarks or ''
     }
 

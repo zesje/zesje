@@ -304,7 +304,7 @@ def grade_problems(client, exam_id, graders, problems, submissions, grade):
                     seconds=int(random.lognormvariate(mu=0.5, sigma=0.4) * 60),
                     hours=random.randint(1, 24) if random.random() < 0.05 else 0
                 )
-                date = date + dt
+                date = date - dt
     db.session.commit()
 
 

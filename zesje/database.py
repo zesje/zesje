@@ -2,8 +2,7 @@
 
 import enum
 import os
-
-from numpy import nan
+from math import nan
 
 from flask import current_app
 from flask_sqlalchemy import SQLAlchemy
@@ -224,15 +223,19 @@ class Problem(db.Model):
 
     @property
     def max_score(self):
-        max_score, = object_session(self).query(func.max(FeedbackOption.score))\
-            .filter(FeedbackOption.problem_id == self.id).one()
+        max_score, = (
+            object_session(self)
+            .query(func.max(FeedbackOption.score))
+            .filter(FeedbackOption.problem_id == self.id)
+            .one()
+        )
         return max_score
 
     @property
     def gradable(self):
         count, max_score = object_session(self).query(func.count(FeedbackOption.id), func.max(FeedbackOption.score))\
             .filter(FeedbackOption.problem_id == self.id).one()
-        # There is no possible feedback for this problem (take into account that root always exist).
+        # Take into account that root always exists.
         return count > 1 and max_score > 0
 
 

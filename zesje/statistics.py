@@ -88,7 +88,6 @@ def full_exam_data(exam_id):
 
         columns[(key, 'remarks')] = 'string'
         for fo in problem.root_feedback.all_descendants:
-            print(fo)
             if (key, fo.text) in feedback_keys.values():
                 feedback_keys[fo.id] = (key, f'{fo.text} ({fo.id})')
             else:
@@ -105,8 +104,6 @@ def full_exam_data(exam_id):
         index=pandas.Index([id for id, in student_ids], name='Student ID', dtype='int'),
         columns=pandas.MultiIndex.from_tuples(columns.keys())
     )
-
-    print(problem_keys, feedback_keys)
 
     for student_id, in student_ids:
         student, problems = solution_data(exam_id, student_id)

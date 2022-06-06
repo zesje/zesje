@@ -403,8 +403,8 @@ def design_exam(app, client, layout, pages, students, grade, solve, validate, mu
                 fops.append((resp.get_json()['feedback_id'], option['name']))
 
             correct = random.choice(fops)
-            client.put(f'api/feedback/{problem_id}',
-                       data={'id': correct[0], 'name': correct[1], 'score': 1, 'parent': parent})
+            client.patch(f'api/feedback/{problem_id}/{correct[0]}', data={'score': 1})
+            client.patch(f'api/feedback/{problem_id}/{parent}', data={'exclusive': True})
         else:
             result = client.get(f'api/problems/{problem_id}')
             root_id = json.loads(result.data)['root_feedback_id']

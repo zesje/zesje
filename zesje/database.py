@@ -233,8 +233,18 @@ class Problem(db.Model):
 
     @property
     def gradable(self):
-        count, max_score = object_session(self).query(func.count(FeedbackOption.id), func.max(FeedbackOption.score))\
-            .filter(FeedbackOption.problem_id == self.id).one()
+        """Tells wether the problem counts towards the total grade.
+
+        Gradable problems contain at least one feedback option and a non-vanishing max-score.
+        Still, non-gradable problems might contain useful information for grading (i.e. `Extra space` or remarks)
+        but are not statistically significant (i.e. Overview).
+        """
+        count, max_score = (
+            object_session(self)
+            .query(func.count(FeedbackOption.id), func.max(FeedbackOption.score))
+            .filter(FeedbackOption.problem_id == self.id)
+            .one()
+        )
         # Take into account that root always exists.
         return count > 1 and max_score > 0
 
@@ -302,8 +312,7 @@ class Solution(db.Model):
 
     @property
     def feedback_count(self):
-        return object_session(self).query(solution_feedback)\
-            .filter(solution_feedback.c.solution_id == self.id).count()
+        return object_session(self).query(solution_feedback).filter(solution_feedback.c.solution_id == self.id).count()
 
     @property
     def is_graded(self):
@@ -311,9 +320,14 @@ class Solution(db.Model):
 
     @property
     def score(self):
-        score, = object_session(self).query(func.sum(FeedbackOption.score))\
-            .join(solution_feedback, FeedbackOption.id == solution_feedback.c.feedback_option_id)\
-            .filter(solution_feedback.c.solution_id == self.id).one_or_none()
+        score, = (
+            object_session(self)
+            .query(func.sum(FeedbackOption.score))
+            .join(solution_feedback, FeedbackOption.id == solution_feedback.c.feedback_option_id)
+            .filter(solution_feedback.c.solution_id == self.id)
+            .one_or_none()
+        )
+        # convert score to int because the query result is a SQLAlchemy integer which is not JSON serializable
         return int(score) if score is not None else nan
 
 

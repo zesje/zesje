@@ -71,23 +71,9 @@ class EditPanel extends React.Component {
     }
   }
 
-  changeFirstName = (event) => {
-    this.setState({
-      firstName: event.target.value
-    })
-  }
-
-  changeLastName = (event) => {
-    this.setState({
-      lastName: event.target.value
-    })
-  }
-
-  changeMail = (event) => {
-    this.setState({
-      email: event.target.value
-    })
-  }
+  changeFirstName = (event) => this.setState({ firstName: event.target.value })
+  changeLastName = (event) => this.setState({ lastName: event.target.value })
+  changeMail = (event) => this.setState({ email: event.target.value })
 
   setID = (id, student) => {
     this.setState({
@@ -233,7 +219,7 @@ class EditPanel extends React.Component {
             <label className='label'>Email</label>
             <div className='control has-icons-left has-icons-right'>
               <input
-                className='input' placeholder='Email input'
+                className='input' placeholder='Email input' type='email'
                 value={this.state.email} onChange={this.changeMail}
               />
               <span className='icon is-small is-left'>

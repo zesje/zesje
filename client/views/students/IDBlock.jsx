@@ -22,7 +22,7 @@ class IDBlock extends React.Component {
   }
 
   static getDerivedStateFromProps (props, state) {
-    if (props.editStud && !state.input && !state.new) {
+    if (props.editStud && !state.input) {
       return {
         input: props.editStud
       }
@@ -31,14 +31,12 @@ class IDBlock extends React.Component {
     return null
   }
 
-  clear = () => {
-    this.setState({
-      input: '',
-      editing: true,
-      short: false,
-      new: false
-    })
-  }
+  clear = () => this.setState({
+    input: '',
+    editing: true,
+    short: false,
+    new: false
+  })
 
   statusIcon = () => {
     if (this.state.editing) {

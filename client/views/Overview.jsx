@@ -3,7 +3,7 @@ import React from 'react'
 import Plotly from 'plotly.js-cartesian-dist-min'
 import createPlotlyComponent from 'react-plotly.js/factory'
 
-import { range, exp, sqrt, pow, pi, zeros, min, max } from 'mathjs'
+import { range, exp, sqrt, pow, pi } from 'mathjs'
 
 import humanizeDuration from 'humanize-duration'
 import Hero from '../components/Hero.jsx'
@@ -118,83 +118,103 @@ const estimateGradingTime = (graders) => {
   return total.time / total.graded
 }
 
-const ProblemsSummary = ({ problems, total, students, graders }) => {
+const ProblemsSummary = ({ problems, total, students, graders, changeProblem }) => {
   let totalUngraded = 0
   let totalInRevision = 0
   let totalTimeLeft = 0
   let totalFOs = 0
   const totalSolutions = problems.length * students
 
+  const problemRows = problems.map((p, i) => {
+    const avgTime = estimateGradingTime(p.graders)
+    const solInRevision = p.inRevision
+    const solToGrade = students - p.results.length
+    let gradingTimeLeft = '-'
+
+    totalUngraded += solToGrade
+    totalInRevision += solInRevision
+    totalTimeLeft += avgTime * solToGrade
+    totalFOs += p.feedback.length
+
+    if (students > p.results.length) {
+      gradingTimeLeft = formatTime(solToGrade * avgTime)
+    }
+
+    return (
+      <tr key={i}>
+        <td style={{ textAlign: 'left' }}>
+          <a onClick={e => changeProblem(p.id)}>{p.name}</a>
+        </td>
+        <td style={{ textAlign: 'right' }}>
+          {p.feedback.length}
+        </td>
+        <td style={{ textAlign: 'right' }}>
+          {p.results.length < 2 ? '-' : `${p.mean.value.toPrecision(2)} ± ${p.mean.error.toPrecision(2)}`}
+          /
+          {p.max_score}
+        </td>
+        <td style={{ textAlign: 'right' }}>
+          {p.results.length < 2 ? '-' : p.correlation.toPrecision(3)}
+        </td>
+        <td style={{ textAlign: 'right' }}>
+          <span className={solInRevision > 0 ? 'tooltip has-tooltip-top' : 'has-tooltip-hidden'}
+            data-tooltip={solInRevision > 0 ? `${solInRevision} needs revision` : ''}>
+            {Math.round(100 * (p.results.length) / students)}%
+          </span>
+        </td>
+        <td> {solToGrade === 0 ? '-' : `${gradingTimeLeft}`} </td>
+      </tr>
+    )
+  })
+
   return <table className='table is-striped is-fullwidth'>
     <thead>
       <tr>
         <th> Problem </th>
         <th> Feedback count </th>
-        <th> Score </th>
-        <th> Correlation (Rir) </th>
+        <th> Avg. Score/Max Score </th>
+        <th>
+          <div className='has-tooltip-top has-tooltip-multiline'
+            data-tooltip={'The correlation between a question and the rest of the questions.' +
+            'Low or negative means that the question is likely random and does not correlate with learner\'s success.'}>
+              Correlation (Rir)
+          </div>
+        </th>
         <th> Progress </th>
         <th> Estimated time left </th>
       </tr>
     </thead>
     <tbody>
-      {
-        problems.map((p, i) => {
-          const avgTime = estimateGradingTime(p.graders)
-          const solInRevision = p.inRevision
-          const solToGrade = students - p.results.length
-          let gradingTimeLeft = '-'
-
-          totalUngraded += solToGrade
-          totalInRevision += solInRevision
-          totalTimeLeft += avgTime * solToGrade
-          totalFOs += p.feedback.length
-
-          const text = `${p.results.length}/${students}` + (solInRevision > 0 ? ` ${solInRevision} needs revision` : '')
-
-          if (students > p.results.length) {
-            gradingTimeLeft = formatTime(solToGrade * avgTime)
-          }
-
-          return (
-            <tr key={i}>
-              <td>
-                {p.name}
-              </td>
-              <td>
-                {p.feedback.length}
-              </td>
-              <td>
-                {p.results.length < 2 ? '-' : `${p.mean.value.toPrecision(2)} ± ${p.mean.error.toPrecision(2)}`}
-              </td>
-              <td>
-                {p.results.length < 2 ? '-' : p.correlation.toPrecision(3)}
-              </td>
-              <td> {text} </td>
-              <td> {solToGrade === 0 ? '-' : `${gradingTimeLeft}`} </td>
-            </tr>
-          )
-        })
-      }
-
-      <tr key="0">
-        <td>
-          Total
+      <tr key="0" style={{ borderBottom: '2pt solid lightgray' }}>
+        <td style={{ textAlign: 'left' }}>
+          <a onClick={e => changeProblem(0)}>Total</a>
         </td>
-        <td>
-          {totalFOs}
+        <td style={{ textAlign: 'right' }}>
+          <span className='has-tooltip-top' data-tooltip='Average number of feedback options per problem'>
+            {parseInt(totalFOs / problems.length)}
+          </span>
         </td>
-        <td>
-          {total.mean.value.toPrecision(2)} &#177; {total.mean.error.toPrecision(2)}
+        <td style={{ textAlign: 'right' }}>
+          {total.mean.value.toPrecision(2)} &#177; {total.mean.error.toPrecision(2)}/{total.max_score}
         </td>
-        <td>
-          {total.alpha.toPrecision(3)}
+        <td style={{ textAlign: 'right' }}>
+          <div className="tooltip has-tooltip-top has-tooltip-multiline"
+            data-tooltip={'Cronbach\'s α: The measure of whether the exam checks one or multiple skills.' +
+              'A low value may indicate a need to review the learning goals.'}>
+              {total.alpha.toPrecision(3)}
+          </div>
         </td>
-        <td>
-          {totalSolutions - totalUngraded}/{totalSolutions}
-          {totalInRevision > 0 ? ` (${totalInRevision} needs revision)` : ''}
+        <td style={{ textAlign: 'right' }}>
+          <span className={totalInRevision > 0 ? 'has-tooltip-top' : 'has-tooltip-hidden'}
+            data-tooltip={`${totalInRevision} needs revision`}>
+            {Math.round(100 * (totalSolutions - totalUngraded) / totalSolutions)}%
+          </span>
         </td>
         <td> {formatTime(totalTimeLeft)} </td>
       </tr>
+      {
+        problemRows
+      }
     </tbody>
   </table>
 }
@@ -239,6 +259,11 @@ class Overview extends React.Component {
           })
         })
       })
+  }
+
+  changeProblem = (problemId) => {
+    this.setState({ selectedProblemId: problemId })
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   renderAtGlance = () => {
@@ -518,7 +543,11 @@ class Overview extends React.Component {
             style={{ width: '100%', position: 'relative', display: 'inline-block' }}
           />
 
-          <ProblemsSummary problems={this.state.stats.problems} students={students} total={total} />
+          <ProblemsSummary
+            problems={this.state.stats.problems}
+            students={students}
+            total={total}
+            changeProblem={this.changeProblem} />
 
           {this.state.stats.copies / this.state.stats.students > 1.05 &&
             <article className='message is-warning'>
@@ -698,6 +727,7 @@ class Overview extends React.Component {
           <h1 className='is-size-1'> {this.state.stats.name} </h1>
           <span className='select is-medium'>
             <select
+              value={this.state.selectedProblemId}
               onChange={(e) => {
                 this.setState({
                   selectedProblemId: parseInt(e.target.value)

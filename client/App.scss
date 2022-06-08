@@ -63,3 +63,10 @@ $fa-font-path: "~@fortawesome/fontawesome-free/webfonts";
         display: none;
     }
 }
+
+.has-tooltip-hidden {
+    &:after, &:before {
+		opacity: 0 !important;
+		display: none !important;
+  }
+}

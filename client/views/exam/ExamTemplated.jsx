@@ -142,19 +142,12 @@ class ExamTemplated extends React.Component {
       .find(widget => widget.problem && widget.problem.id === problemId)
     const problemWidgetId = problemWidget.id
     api.get(`problems/${problemId}`).then(problem => {
-      this.setState((prevState) => ({
-        widgets: {
-          ...prevState.widgets,
-          [problemWidgetId]: {
-            ...prevState.widgets[problemWidgetId],
-            problem: {
-              ...prevState.widgets[problemWidgetId].problem,
-              feedback: problem.feedback,
-              root_feedback_id: problem.root_feedback_id
-            }
-          }
+      this.updateWidget(problemWidgetId, {
+        problem: {
+          feedback: problem.feedback,
+          root_feedback_id: problem.root_feedback_id
         }
-      }))
+      })
     })
   }
 
@@ -166,40 +159,28 @@ class ExamTemplated extends React.Component {
   updateFeedbackAtIndex = (feedback, problemWidget) => {
     if (feedback.deleted) {
       // delete the feedback if the deleted field is set
-      this.setState((prevState) => {
-        return {
-          widgets: update(prevState.widgets, {
-            [problemWidget.id]: {
-              problem: {
-                feedback: {
-                  $unset: [feedback.id],
-                  [problemWidget.problem.root_feedback_id]: { // remove the FO from the children list
-                    children: {
-                      $set: problemWidget.problem.feedback[problemWidget.problem.root_feedback_id].children
-                        .filter(id => id !== feedback.id)
-                    }
-                  }
-                }
+      this.updateWidget(problemWidget.id, {
+        problem: {
+          feedback: {
+            $unset: [feedback.id],
+            [problemWidget.problem.root_feedback_id]: { // remove the FO from the children list
+              children: {
+                $set: problemWidget.problem.feedback[problemWidget.problem.root_feedback_id].children
+                  .filter(id => id !== feedback.id)
               }
             }
-          })
+          }
         }
       })
     } else {
       // update the existing feedback
-      this.setState(prevState => {
-        return {
-          widgets: update(prevState.widgets, {
-            [problemWidget.id]: {
-              problem: {
-                feedback: {
-                  [feedback.id]: {
-                    $set: feedback
-                  }
-                }
-              }
+      this.updateWidget(problemWidget.id, {
+        problem: {
+          feedback: {
+            [feedback.id]: {
+              $set: feedback
             }
-          })
+          }
         }
       })
     }
@@ -223,10 +204,8 @@ class ExamTemplated extends React.Component {
     if (!problem) return
 
     api.patch('problems/' + problem.id, { name: problem.name })
+      .then(() => this.setState({ changedWidgetId: null }))
       .catch(e => toast({ message: 'Could not save new problem name: ' + e, type: 'is-danger' }))
-      .then(this.setState({
-        changedWidgetId: null
-      }))
   }
 
   onChangeAutoApproveType = (e) => {
@@ -246,17 +225,13 @@ class ExamTemplated extends React.Component {
 
     api.patch('problems/' + problem.id, { grading_policy: newPolicy })
       .then(success => {
-        this.setState(prevState => ({
-          widgets: update(prevState.widgets, {
-            [selectedWidgetId]: {
-              problem: {
-                grading_policy: {
-                  $set: newPolicy
-                }
-              }
+        this.updateWidget(selectedWidgetId, {
+          problem: {
+            grading_policy: {
+              $set: newPolicy
             }
-          })
-        }))
+          }
+        })
         if (newPolicy === 'set_single') {
           api.patch(`feedback/${problem.id}/${problem.root_feedback_id}`, { exclusive: true })
             .then(res => {
@@ -303,16 +278,14 @@ class ExamTemplated extends React.Component {
   }
 
   createNewWidget = (widgetData) => {
-    this.setState((prevState) => {
-      return {
-        selectedWidgetId: widgetData.id,
-        widgets: update(prevState.widgets, {
-          [widgetData.id]: {
-            $set: widgetData
-          }
-        })
-      }
-    })
+    this.setState((prevState) => ({
+      selectedWidgetId: widgetData.id,
+      widgets: update(prevState.widgets, {
+        [widgetData.id]: {
+          $set: widgetData
+        }
+      })
+    }))
   }
 
   deleteWidget = (widgetId) => {
@@ -320,16 +293,14 @@ class ExamTemplated extends React.Component {
     if (widget) {
       api.del('problems/' + widget.problem.id)
         .then(() => {
-          this.setState((prevState) => {
-            return {
-              selectedWidgetId: null,
-              changedWidgetId: null,
-              deletingWidget: false,
-              widgets: update(prevState.widgets, {
-                $unset: [widgetId]
-              })
-            }
-          })
+          this.setState((prevState) => ({
+            selectedWidgetId: null,
+            changedWidgetId: null,
+            deletingWidget: false,
+            widgets: update(prevState.widgets, {
+              $unset: [widgetId]
+            })
+          }))
         })
         .catch(err => {
           console.log(err)
@@ -345,13 +316,11 @@ class ExamTemplated extends React.Component {
     }
   }
 
-  updateWidget = (widgetId, newData) => {
-    this.setState(prevState => ({
-      widgets: update(prevState.widgets, {
-        [widgetId]: newData
-      })
-    }))
-  }
+  updateWidget = (widgetId, newData) => this.setState(prevState => ({
+    widgets: update(prevState.widgets, {
+      [widgetId]: newData
+    })
+  }))
 
   renderContent = () => {
     if (this.state.previewing) {
@@ -391,11 +360,7 @@ class ExamTemplated extends React.Component {
               this.updateFeedbackAtIndex(feedback, widget)
             })
           }}
-          selectWidget={(widgetId) => {
-            this.setState({
-              selectedWidgetId: widgetId
-            })
-          }}
+          selectWidget={(widgetId) => this.setState({ selectedWidgetId: widgetId })}
           createNewWidget={this.createNewWidget}
           updateExam={this.props.updateExam}
           widthMCO={MCO_WIDTH}
@@ -405,23 +370,13 @@ class ExamTemplated extends React.Component {
     }
   }
 
-  onPDFLoad = (pdf) => {
-    this.setState((newProps, prevState) => ({
-      numPages: pdf.numPages
-    }), () => {
-      this.props.updateExam()
-    })
-  }
+  onPDFLoad = (pdf) => this.setState({ numPages: pdf.numPages }, this.props.updateExam)
 
-  setPage = (newPage) => {
-    this.setState((prevState) => {
-      return {
-        // clamp the page
-        selectedWidgetId: null,
-        page: Math.max(0, Math.min(newPage, prevState.numPages - 1))
-      }
-    })
-  }
+  setPage = (newPage) => this.setState((prevState) => ({
+    // clamp the page
+    selectedWidgetId: null,
+    page: Math.max(0, Math.min(newPage, prevState.numPages - 1))
+  }))
 
   /**
    * This method generates MC options by making the right calls to the api and creating
@@ -496,21 +451,9 @@ class ExamTemplated extends React.Component {
    * @param problemWidget The widget the mc option belongs to
    * @param data the mc option
    */
-  addMCOtoState = (problemWidget, data) => {
-    this.setState((prevState) => {
-      return {
-        widgets: update(prevState.widgets, {
-          [problemWidget.id]: {
-            problem: {
-              mc_options: {
-                $push: [data]
-              }
-            }
-          }
-        })
-      }
-    })
-  }
+  addMCOtoState = (problemWidget, data) => this.updateWidget(problemWidget.id, {
+    problem: { mc_options: { $push: [data] } }
+  })
 
   /**
    * This method deletes mc options coupled to a problem in both the state and the database.
@@ -588,15 +531,7 @@ class ExamTemplated extends React.Component {
     })
 
     // update the state with the new locations
-    this.setState(prevState => ({
-      widgets: update(prevState.widgets, {
-        [widget.id]: {
-          problem: {
-            mc_options: newMCO
-          }
-        }
-      })
-    }))
+    this.updateWidget(widget.id, { problem: { mc_options: newMCO } })
   }
 
   panelEdit = (problem, widgetEditDisabled, widgetDeleteDisabled) => {
@@ -650,7 +585,7 @@ class ExamTemplated extends React.Component {
               ? <PanelMCQ
                 problem={problem}
                 generateMCOs={(labels) => {
-                  const problemWidget = this.state.widgets[this.state.selectedWidgetId]
+                  const problemWidget = this.state.widgets[selectedWidgetId]
                   let xPos, yPos
                   if (problem.mc_options.length > 0) {
                     // position the new mc options widget next to the last mc options
@@ -684,21 +619,13 @@ class ExamTemplated extends React.Component {
                     formData.append('problem_id', problem.id)
                     formData.append('label', labels[index])
                     api.patch('mult-choice/' + option.id, formData).then(() => {
-                      this.setState((prevState) => {
-                        return {
-                          widgets: update(prevState.widgets, {
-                            [selectedWidgetId]: {
-                              problem: {
-                                mc_options: {
-                                  [index]: {
-                                    label: {
-                                      $set: labels[index]
-                                    }
-                                  }
-                                }
-                              }
+                      this.updateWidget(selectedWidgetId, {
+                        problem: {
+                          mc_options: {
+                            [index]: {
+                              label: { $set: labels[index] }
                             }
-                          })
+                          }
                         }
                       })
                     }).catch(err => {
@@ -823,11 +750,7 @@ class ExamTemplated extends React.Component {
         <ConfirmationModal
           active={this.state.deletingWidget && this.state.selectedWidgetId != null}
           color='is-danger'
-          headerText={`Are you sure you want to delete problem "${
-          this.state.selectedWidgetId &&
-          this.state.widgets[this.state.selectedWidgetId] &&
-          this.state.widgets[this.state.selectedWidgetId].problem &&
-          this.state.widgets[this.state.selectedWidgetId].problem.name}"`}
+          headerText={`Are you sure you want to delete problem "${problem.name}"`}
           confirmText='Delete problem'
           onCancel={() => this.setState({ deletingWidget: false })}
           onConfirm={() => this.deleteWidget(this.state.selectedWidgetId)}
@@ -835,11 +758,7 @@ class ExamTemplated extends React.Component {
         <ConfirmationModal
           active={this.state.deletingMCWidget && this.state.selectedWidgetId != null}
           color='is-danger'
-          headerText={`Are you sure you want to delete the multiple choice options for problem "${
-          this.state.selectedWidgetId &&
-          this.state.widgets[this.state.selectedWidgetId] &&
-          this.state.widgets[this.state.selectedWidgetId].problem &&
-          this.state.widgets[this.state.selectedWidgetId].problem.name}"`}
+          headerText={`Are you sure you want to delete the multiple choice options for problem "${problem.name}"`}
           confirmText='Delete multiple choice options'
           onCancel={() => this.setState({ deletingMCWidget: false })}
           onConfirm={() => {

@@ -144,8 +144,8 @@ class ExamTemplated extends React.Component {
     api.get(`problems/${problemId}`).then(problem => {
       this.updateWidget(problemWidgetId, {
         problem: {
-          feedback: problem.feedback,
-          root_feedback_id: problem.root_feedback_id
+          feedback: { $set: problem.feedback },
+          root_feedback_id: { $set: problem.root_feedback_id }
         }
       })
     })

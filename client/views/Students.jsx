@@ -10,7 +10,7 @@ import SearchBox from '../components/SearchBox.jsx'
 import Img from '../components/Img.jsx'
 import withShortcuts from '../components/ShortcutBinder.jsx'
 import withRouter from '../components/RouterBinder.jsx'
-import ConfirmationModal from '../components/ConfirmationModal.jsx'
+import ConfirmationModal from '../components/modals/ConfirmationModal.jsx'
 import Fail from './Fail.jsx'
 
 import SearchPanel from './students/SearchPanel.jsx'

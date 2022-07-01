@@ -2,7 +2,7 @@ import React from 'react'
 
 import Loading from './Loading.jsx'
 import Fail from './Fail.jsx'
-import ConfirmationModal from '../components/ConfirmationModal.jsx'
+import ConfirmationModal from '../components/modals/ConfirmationModal.jsx'
 import ExamTemplated from './exam/ExamTemplated.jsx'
 import ExamUnstructured from './exam/ExamUnstructured.jsx'
 

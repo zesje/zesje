@@ -6,7 +6,7 @@ import update from 'immutability-helper'
 import GeneratedExamPreview from '../../components/GeneratedExamPreview.jsx'
 import PanelGenerate from '../../components/PanelGenerate.jsx'
 import PanelMCQ from '../../components/PanelMCQ.jsx'
-import ConfirmationModal from '../../components/ConfirmationModal.jsx'
+import ConfirmationModal from '../../components/modals/ConfirmationModal.jsx'
 import FeedbackMenu from '../../components/feedback/FeedbackMenu.jsx'
 import Tooltip from '../../components/Tooltip.jsx'
 

@@ -1,6 +1,6 @@
 import React from 'react'
 
-import ConfirmationModal from '../ConfirmationModal.jsx'
+import ConfirmationModal from '../modals/ConfirmationModal.jsx'
 import ColorInput from '../ColorInput.jsx'
 import Switch from '../Switch.jsx'
 import * as api from '../../api.jsx'

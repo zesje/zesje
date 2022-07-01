@@ -6,7 +6,8 @@ import { toast } from 'bulma-toast'
 import * as api from '../../api.jsx'
 
 import TabbedPanel from '../../components/TabbedPanel.jsx'
-import ConfirmationButton from '../../components/ConfirmationButton.jsx'
+import ConfirmationButton from '../../components/modals/ConfirmationButton.jsx'
+import ProgressModal from '../../components/modals/ProgressModal.jsx'
 
 const AttachPDF = (props) => (
   <div className='field'>
@@ -90,34 +91,7 @@ const SendWithConfirmationButton = (props) => (
 class EmailIndividualControls extends React.Component {
   state = {
     attachPDF: true,
-    copyTo: null,
-    sending: false
-  }
-
-  sendEmail = async () => {
-    this.setState({ sending: true })
-    try {
-      await api.post(
-        `email/${this.props.examID}/${this.props.student.id}`,
-        {
-          template: this.props.template,
-          attach: this.state.attachPDF,
-          copy_to: this.state.copyTo
-        }
-      )
-      toast({ message: `Sent email to ${this.props.student.email}`, type: 'is-success' })
-      return
-    } catch (error) {
-      try {
-        const resp = await error.json()
-        toast({ message: resp.message, duration: 10000, type: 'is-danger' })
-      } catch (error) {
-        // If we get here there is a bug in the backend
-        toast({ message: `Failed to send email to ${this.props.student.email}`, type: 'is-danger' })
-      }
-    } finally {
-      this.setState({ sending: false })
-    }
+    copyTo: null
   }
 
   render () {
@@ -141,11 +115,11 @@ class EmailIndividualControls extends React.Component {
         <AttachPDF
           attachPDF={this.state.attachPDF}
           onChecked={attachPDF => this.setState({ attachPDF })}
-          disabled={this.state.sending}
+          disabled={this.props.sending}
         />
         <SendButton
-          sending={this.state.sending}
-          onSend={this.sendEmail}
+          sending={this.props.sending}
+          onSend={() => this.props.sendEmail(this.props.student.id, this.state.attachPDF, this.state.copyTo)}
           disabled={disabled}
         />
       </div>
@@ -155,8 +129,32 @@ class EmailIndividualControls extends React.Component {
 
 class EmailEveryoneControls extends React.Component {
   state = {
-    attachPDF: true,
-    sending: false
+    attachPDF: true
+  }
+
+  render () {
+    const disabled = this.props.template === null
+    return (
+      <div style={{ width: '100%' }}>
+        <AttachPDF
+          attachPDF={this.state.attachPDF}
+          onChecked={attachPDF => this.setState({ attachPDF })}
+          disabled={this.props.sending}
+        />
+        <SendWithConfirmationButton
+          sending={this.props.sending}
+          onSend={() => this.props.sendEmail(null, this.state.attachPDF)}
+          disabled={disabled}
+        />
+      </div>
+    )
+  }
+}
+
+class EmailControls extends React.Component {
+  state = {
+    sending: false,
+    failed: null
   }
 
   disableAnonymousMode = () => {
@@ -178,79 +176,44 @@ class EmailEveryoneControls extends React.Component {
     })
   }
 
-  sendEmail = async () => {
-    this.setState({ sending: true })
-    try {
-      const response = await api.post(
-        `email/${this.props.examID}`,
-        {
-          template: this.props.template,
-          attach: this.state.attachPDF
-        }
-      )
-      if (response.status === 200) {
+  sendEmail = async (studentID = null, attachPDF = false, copyTo = null) => {
+    this.setState({ sending: true, failed: null })
+
+    let url = `email/${this.props.examID}`
+    if (studentID != null) {
+      url += `/${studentID}`
+    }
+
+    api.post(url, {
+      template: this.props.template,
+      attach: attachPDF,
+      copy_to: copyTo
+    }).then(resp => {
+      if (resp.status === 200) {
+        this.setState({ sending: false })
         toast({
-          message: 'Sent emails to all students',
+          message: 'Emails sent to all students',
           type: 'is-success'
         })
-      } else if (response.status === 206) {
-        toast({ message: `Sent emails to ${response.sent.length} students`, type: 'is-success' })
-        if (response.failed_to_send.length > 0) {
-          toast({
-            message: 'Failed to send to the following students: ' + response.failed_to_send.join(', '),
-            duration: 60000,
-            type: 'is-danger'
-          })
-        }
-        if (response.failed_to_build.length > 0) {
-          toast({
-            message: 'The following students have no email address specified: ' + response.failed_to_build.join(', '),
-            duration: 60000,
-            type: 'is-danger'
-          })
-        }
+      } else if (resp.status === 206) {
+        this.setState({ sending: false, failed: resp.failed })
+        toast({ message: `Sent emails to ${resp.sent.length} students`, type: 'is-warning' })
       }
-    } catch (error) {
-      try {
-        const response = await error.json()
-        if (response.status === 400 ||
-            response.status === 409) {
-          toast({ message: 'No emails sent: ' + response.message, duration: 10000, type: 'is-danger' })
-        } else if (response.status === 500) {
-          toast({ message: `Sent email to ${this.props.student.email}`, type: 'is-success' })
-        }
-      } catch (error) {
-        // If we get here there is a bug in the backend
-        toast({ message: 'Failed to send emails', duration: 10000, type: 'is-danger' })
-      }
-    } finally {
-      this.setState({ sending: false })
+    }).catch(e => {
+      console.log(e)
+      e.json().then(error => {
+        this.setState({ sending: false, failed: error.failed })
+        toast({ message: error.message, duration: 10000, type: 'is-danger' })
+      })
+    })
+
+    if (studentID == null) {
       this.disableAnonymousMode()
     }
   }
 
   render () {
-    const disabled = this.props.template === null
-    return (
-      <div style={{ width: '100%' }}>
-        <AttachPDF
-          attachPDF={this.state.attachPDF}
-          onChecked={attachPDF => this.setState({ attachPDF })}
-          disabled={this.state.sending}
-        />
-        <SendWithConfirmationButton
-          sending={this.state.sending}
-          onSend={this.sendEmail}
-          disabled={disabled}
-        />
-      </div>
-    )
-  }
-}
-
-class EmailControls extends React.Component {
-  render () {
-    return (
+    return <>
       <div className='panel'>
         <div className='panel-heading has-text-centered'> Email </div>
         <TabbedPanel
@@ -262,6 +225,7 @@ class EmailControls extends React.Component {
                   examID={this.props.examID}
                   student={this.props.student}
                   template={this.props.template}
+                  sendEmail={this.sendEmail}
                 />
               )
             },
@@ -271,13 +235,36 @@ class EmailControls extends React.Component {
                 <EmailEveryoneControls
                   examID={this.props.examID}
                   template={this.props.template}
+                  sendEmail={this.sendEmail}
                 />
               )
             }
           ]}
         />
       </div>
-    )
+      <ProgressModal
+        active={this.state.sending}
+        headerText='Sending emails...'
+      />
+      <div className={'modal ' + (this.state.failed != null ? 'is-active' : '')}>
+        <div className='modal-background' onClick={() => this.setState({ failed: null })} />
+        <div className='modal-card'>
+          <header className='modal-card-head'>
+            <p className='modal-card-title'>{'Failed email status'}</p>
+          </header>
+          <section className='modal-card-body'>
+            <ul>
+              {this.state.failed && this.state.failed.map(data =>
+                <li key={data.studentID}>
+                  <b>#{data.studentID}</b>: ({data.status}) {data.message}
+                </li>
+              )}
+            </ul>
+          </section>
+        </div>
+        <button className='modal-close is-large' aria-label='close' />
+      </div>
+    </>
   }
 }
 

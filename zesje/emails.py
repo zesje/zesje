@@ -204,7 +204,6 @@ def build_and_send(
 
     with current_email_manager() as s:
         for student in students:
-            print(student)
             try:
                 attachment = build_solution_attachment(exam.id, student.id, file_name=f'{student.id}_{exam.name}.pdf')
                 content = render(exam.id, student.id, template)

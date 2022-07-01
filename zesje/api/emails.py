@@ -123,23 +123,29 @@ class Email(Resource):
         copy_to = args['copy_to']
 
         if student_id is None and copy_to is not None:
-            abort(
-                409,
+            return dict(
+                status=409,
                 message="Not CC-ing all emails from the exam."
-            )
+            ), 409
 
         exam = Exam.query.get(exam_id)
         if exam is None:
-            abort(
-                404,
+            return dict(
+                status=404,
                 message="Exam does not exist"
-            )
+            ), 404
 
         if not all(sub.validated for sub in exam.submissions):
-            abort(
-                409,
+            return dict(
+                status=409,
                 message="All copies must be validated before sending emails."
-            )
+            ), 409
+
+        if not (current_app.config.get('SMTP_SERVER') and current_app.config.get('FROM_ADDRESS')):
+            return dict(
+                status=409,
+                message='Sending email is not configured'
+            ), 409
 
         if student_id is not None:
             return self._send_single(exam, student_id, template, attach, copy_to)
@@ -147,11 +153,7 @@ class Email(Resource):
             return self._send_all(exam, template, attach)
 
     def _send_single(self, exam, student_id, template, attach, copy_to):
-        if not (current_app.config.get('SMTP_SERVER') and current_app.config.get('FROM_ADDRESS')):
-            abort(
-                500,
-                message='Sending email is not configured'
-            )
+
         student = Student.query.get(student_id)
         sent, failed = emails.build_and_send(
             [student],
@@ -161,19 +163,13 @@ class Email(Resource):
             attach=attach
         )
         if failed:
-            abort(
-                500,
+            return dict(
+                status=500,
                 message=f'Failed to send email to student #{student_id}'
-            )
+            ), 500
         return dict(status=200)
 
     def _send_all(self, exam, template, attach):
-        if not (current_app.config.get('SMTP_SERVER') and current_app.config.get('FROM_ADDRESS')):
-            abort(
-                500,
-                message='Sending email is not configured'
-            )
-
         students = [sub.student for sub in exam.submissions if sub.student_id and sub.validated]
 
         sent, failed = emails.build_and_send(
@@ -199,4 +195,4 @@ class Email(Resource):
                     failed=failed,
                 ), 500
 
-        return dict(status=200)
+        return dict(status=200), 200

@@ -36,7 +36,7 @@ const ToField = (props) => (
         type='email'
         value={props.email}
         readOnly
-        style={{ paddingLeft: 'calc(0.625em - 1px)' }}
+        style={{ paddingLeft: 'calc(0.625em - 1px)', textOverflow: 'ellipsis', overflow: 'scroll hidden' }}
       />
     </div>
   </div>
@@ -49,6 +49,7 @@ const CCField = (props) => (
     </div>
     <div className='control is-expanded'>
       <input
+        style={{ textOverflow: 'ellipsis', overflow: 'scroll hidden' }}
         className='input'
         type='email'
         placeholder='course-instructor@tudelft.nl'
@@ -58,19 +59,6 @@ const CCField = (props) => (
       />
     </div>
   </div>
-)
-
-const SendButton = (props) => (
-  <button
-    className={
-      'button is-primary is-fullwidth ' +
-      (props.sending ? 'is-loading' : null)
-    }
-    onClick={props.onSend}
-    disabled={props.disabled}
-  >
-    Send
-  </button>
 )
 
 const SendWithConfirmationButton = (props) => (
@@ -94,6 +82,11 @@ class EmailIndividualControls extends React.Component {
     copyTo: null
   }
 
+  onSubmit = (event) => {
+    event.preventDefault()
+    this.props.sendEmail(this.props.student.id, this.state.attachPDF, this.state.copyTo)
+  }
+
   render () {
     const p = this.props
     let email = ''
@@ -103,9 +96,7 @@ class EmailIndividualControls extends React.Component {
       email = p.student.email || '<no email provided>'
     }
     return (
-      <div
-        style={{ width: '100%' }}
-      >
+      <form onSubmit={this.onSubmit}>
         <ToField email={email} />
         <CCField
           email={this.state.copyTo}
@@ -117,12 +108,17 @@ class EmailIndividualControls extends React.Component {
           onChecked={attachPDF => this.setState({ attachPDF })}
           disabled={this.props.sending}
         />
-        <SendButton
-          sending={this.props.sending}
-          onSend={() => this.props.sendEmail(this.props.student.id, this.state.attachPDF, this.state.copyTo)}
+        <button
+          className={
+            'button is-primary is-fullwidth ' +
+            (this.props.sending ? 'is-loading' : null)
+          }
+          type='submit'
           disabled={disabled}
-        />
-      </div>
+        >
+          Send
+        </button>
+      </form>
     )
   }
 }

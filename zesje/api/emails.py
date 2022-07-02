@@ -160,7 +160,8 @@ class Email(Resource):
             from_address=current_app.config['FROM_ADDRESS'],
             exam=exam,
             template=template,
-            attach=attach
+            attach=attach,
+            copy_to=copy_to
         )
         if failed:
             return dict(

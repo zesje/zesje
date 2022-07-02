@@ -66,7 +66,7 @@ class _EmailManager():
             self.server.starttls()
         if self.user and self.password:
             self.server.login(self.user, self.password)
-        return self.server
+        return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         if self.server:
@@ -102,6 +102,7 @@ class _EmailManager():
             )
         except smtplib.SMTPServerDisconnected:
             # server has disconnected, try to reconnect and send the message again
+            print('email server disconnected, trying to connect again.')
             self.reconnect()
             self.send(from_address, message)
 
@@ -241,7 +242,7 @@ def build_and_send(
     failed = []
     sent = []
 
-    with current_email_manager() as s:
+    with current_email_manager() as server:
         for student in students:
             try:
                 attachment = build_solution_attachment(exam.id, student.id, file_name=f'{student.id}_{exam.name}.pdf')
@@ -253,7 +254,7 @@ def build_and_send(
                     copy_to=copy_to,
                     email_from=from_address,
                 )
-                s.send(from_address, message)
+                server.send(from_address, message)
             except TemplateSyntaxError as error:
                 failed.append({
                     'studentID': student.id,

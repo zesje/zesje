@@ -188,12 +188,12 @@ class EmailControls extends React.Component {
       if (resp.status === 200) {
         this.setState({ sending: false })
         toast({
-          message: 'Emails sent to all students',
+          message: studentID != null ? `Email sent to student #${studentID}` : 'Emails sent to all students',
           type: 'is-success'
         })
       } else if (resp.status === 206) {
         this.setState({ sending: false, failed: resp.failed })
-        toast({ message: `Sent emails to ${resp.sent.length} students`, type: 'is-warning' })
+        toast({ message: `Sent emails to only ${resp.sent.length} students`, type: 'is-warning' })
       }
     }).catch(e => {
       console.log(e)

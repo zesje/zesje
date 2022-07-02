@@ -33,6 +33,10 @@ FailStatus = Enum(
 class _EmailManager():
     """Context email manager for sending emails logged in.
 
+    This takes care of reconnecting to the server in case it disconnects which can happen
+    when sending a lot of emails with relatively large idle time between them. For instance,
+    when building the solution pdf.
+
     Parameters
     ----------
     server : string
@@ -58,6 +62,8 @@ class _EmailManager():
 
     def __enter__(self):
         self.server = self.server_type(self.server, self.port)
+        if self.port == 587:
+            self.server.starttls()
         if self.user and self.password:
             self.server.login(self.user, self.password)
         return self.server
@@ -65,6 +71,39 @@ class _EmailManager():
     def __exit__(self, exc_type, exc_val, exc_tb):
         if self.server:
             self.server.__exit__()
+
+    def reconnect(self):
+        """reconnect to the server or raise an `SMTPConnectError`"""
+        status, msg = self.server.connect(self.server, self.port)
+        if status != 220:
+            self.server.close()
+            raise smtplib.SMTPConnectError(status, msg)
+
+    def is_connected(self):
+        try:
+            status = self.server.noop()[0]
+        except smtplib.SMTPServerDisconnected:
+            status = -1
+
+        return status == 250
+
+    def send(self, from_address, message):
+        """sends an email from `from_address` with content `message` but reconnects and tries again if disconnected."""
+        try:
+            recipients = [
+                *message['To'].split(','),
+                *(message['Cc'].split(',') if 'Cc' in message else [])
+            ]
+
+            self.server.sendmail(
+                from_address,
+                recipients,
+                message.as_string()
+            )
+        except smtplib.SMTPServerDisconnected:
+            # server has disconnected, try to reconnect and send the message again
+            self.reconnect()
+            self.send(from_address, message)
 
 
 def current_email_manager():
@@ -214,17 +253,7 @@ def build_and_send(
                     copy_to=copy_to,
                     email_from=from_address,
                 )
-
-                recipients = [
-                    *message['To'].split(','),
-                    *(message['Cc'].split(',') if 'Cc' in message else [])
-                ]
-
-                s.sendmail(
-                    from_address,
-                    recipients,
-                    message.as_string()
-                )
+                s.send(from_address, message)
             except TemplateSyntaxError as error:
                 failed.append({
                     'studentID': student.id,
@@ -246,6 +275,7 @@ def build_and_send(
                     'message': f"No email address provided: {e.message}"
                 })
             except smtplib.SMTPException as e:
+                # see https://docs.python.org/3/library/smtplib.html?highlight=smtplib#smtplib.SMTP.sendmail
                 failed.append({
                     'studentID': student.id,
                     'status': FailStatus.send.name,

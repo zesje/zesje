@@ -80,6 +80,7 @@ class _EmailManager():
             raise smtplib.SMTPConnectError(status, msg)
 
     def is_connected(self):
+        # https://stackoverflow.com/questions/12552905/python-can-i-check-if-smtp-server-is-disconnected-so-i-can-connect-again
         try:
             status = self.server.noop()[0]
         except smtplib.SMTPServerDisconnected:

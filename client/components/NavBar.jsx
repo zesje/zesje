@@ -38,10 +38,12 @@ const ExamDropdown = (props) => {
       <div className='navbar-dropdown'>
         {props.list.map((exam) => (
           <Link
-            className={'navbar-item' + (props.selectedExam && props.selectedExam.id === exam.id ? ' is-active' : '')}
+            className='navbar-item'
             to={'/exams/' + exam.id} key={exam.id}
           >
-            <i>{exam.name}</i>
+            <i className={(props.selectedExam && props.selectedExam.id === exam.id ? 'has-text-info' : '')}>
+              {exam.name}
+            </i>
           </Link>
         ))}
         <hr className='navbar-divider' />

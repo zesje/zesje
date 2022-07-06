@@ -61,7 +61,7 @@ class GradeNavigation extends React.Component {
                   if (student && !this.props.anonymous) {
                     return `${student.firstName} ${student.lastName} (${student.id})`
                   } else {
-                    return `#${id}`
+                    return `Solution #${id}`
                   }
                 }}
                 renderSuggestion={({ id, student }) => {
@@ -80,7 +80,7 @@ class GradeNavigation extends React.Component {
                     return (
                       <div className='flex-parent'>
                         <b className='flex-child fixed'>
-                          #{id}
+                          Solution #{id}
                         </b>
                       </div>
                     )

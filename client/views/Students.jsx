@@ -311,6 +311,8 @@ class CheckStudents extends React.Component {
                         <div className='control'>
                           <button type='submit' className='button is-info is-rounded is-hidden-mobile'
                             onClick={this.prevUnchecked}>unchecked</button>
+                        </div>
+                        <div className='control'>
                           <button type='submit' className={'button' + (validated ? ' is-success' : ' is-link')}
                             onClick={this.prev}>Previous</button>
                         </div>
@@ -328,9 +330,9 @@ class CheckStudents extends React.Component {
                             setSelected={this.selectCopy}
                             renderSelected={({ number, student }) => {
                               if (student) {
-                                return `#${number}: ${student.firstName} ${student.lastName} (${student.id})`
+                                return `Copy #${number}: ${student.firstName} ${student.lastName} (${student.id})`
                               } else {
-                                return `#${number}`
+                                return `Copy #${number}`
                               }
                             }}
                             renderSuggestion={(copy) => {
@@ -359,6 +361,8 @@ class CheckStudents extends React.Component {
                             onClick={this.next}
                           >Next
                           </button>
+                        </div>
+                        <div className='control'>
                           <button
                             type='submit' className='button is-info is-rounded is-hidden-mobile'
                             onClick={this.nextUnchecked}

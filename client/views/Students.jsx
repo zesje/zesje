@@ -306,6 +306,8 @@ class CheckStudents extends React.Component {
                             disabled={!hasUnmatchedLeft}
                           >unchecked
                           </button>
+                        </div>
+                        <div className='control'>
                           <button
                             type='submit'
                             className={'button is-radiusless' + (validated ? ' is-success' : ' is-link')}

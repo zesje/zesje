@@ -11,20 +11,13 @@ import NavBar from './components/NavBar.jsx'
 import ExamRouter from './components/ExamRouter.jsx'
 import Footer from './components/Footer.jsx'
 import Loading from './views/Loading.jsx'
-import HelpModal from './components/help/HelpModal.jsx'
-import shortcutsMarkdown from './components/help/ShortcutsHelp.md'
-import gradingPolicyMarkdown from './components/help/GradingPolicyHelp.md'
+import HelpModal, { HELP_PAGES } from './components/help/HelpModal.jsx'
 
 const Login = loadable(() => import('./views/Login.jsx'), { fallback: <Loading /> })
 const Home = loadable(() => import('./views/Home.jsx'), { fallback: <Loading /> })
 const AddExam = loadable(() => import('./views/AddExam.jsx'), { fallback: <Loading /> })
 const Graders = loadable(() => import('./views/Graders.jsx'), { fallback: <Loading /> })
 const Fail = loadable(() => import('./views/Fail.jsx'), { fallback: <Loading /> })
-
-const HELP_PAGES = {
-  shortcuts: { title: 'Shortcuts', content: shortcutsMarkdown },
-  gradingPolicy: { title: 'Auto-approve', content: gradingPolicyMarkdown }
-}
 
 const NavBarView = (props) => {
   const location = useLocation()

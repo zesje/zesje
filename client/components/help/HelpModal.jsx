@@ -1,6 +1,8 @@
 import React from 'react'
 
 import './../Modal.css'
+import shortcutsMarkdown from './ShortcutsHelp.md'
+import gradingPolicyMarkdown from './GradingPolicyHelp.md'
 
 const HelpModal = (props) => (
   <div className={'modal ' + (props.page.title ? 'is-active' : '')}>
@@ -30,5 +32,10 @@ const HelpModal = (props) => (
     <button className='modal-close is-large' aria-label='close' onClick={props.closeHelp} />
   </div>
 )
+
+export const HELP_PAGES = {
+  shortcuts: { title: 'Shortcuts', content: shortcutsMarkdown },
+  gradingPolicy: { title: 'Auto-approve', content: gradingPolicyMarkdown }
+}
 
 export default HelpModal

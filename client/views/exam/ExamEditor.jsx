@@ -221,8 +221,8 @@ class ExamEditor extends React.Component {
     widget.problem.mc_options.forEach(
       (option, i) => {
         const newData = {
-          x: Math.round(data.x) + i * this.props.widthMCO + this.props.cbOffsetX,
-          y: Math.round(data.y) + this.props.cbOffsetY
+          x: Math.round(data.x) + i * this.props.widthMCO,
+          y: Math.round(data.y)
         }
         this.updateWidgetDB(option, newData)
       })

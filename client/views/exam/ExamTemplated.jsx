@@ -23,9 +23,6 @@ import * as api from '../../api.jsx'
 const MCO_WIDTH = 20
 const MCO_HEIGHT = 34
 
-const CB_OFFSET_X = 7 // checkbox offset relative to option position on x axis
-const CB_OFFSET_Y = 21 // checkbox offset relative to option position on y axis
-
 const Pager = (props) => {
   const isDisabled = props.numPages == null
   const pageNum = isDisabled ? '_' : props.page + 1
@@ -97,13 +94,7 @@ class ExamTemplated extends React.Component {
             grading_policy: problem.grading_policy,
             root_feedback_id: problem.root_feedback_id,
             feedback: problem.feedback || [],
-            mc_options: problem.mc_options.map((option) => {
-              // the database stores the positions of the checkboxes but the front end uses the top-left position
-              // of the option; the cbOffsetX and cbOffsetY are used to manually locate the checkbox precisely
-              option.widget.x -= CB_OFFSET_X
-              option.widget.y -= CB_OFFSET_Y
-              return option
-            })
+            mc_options: problem.mc_options
           }
         }
       })
@@ -366,8 +357,6 @@ class ExamTemplated extends React.Component {
           updateExam={this.props.updateExam}
           widthMCO={MCO_WIDTH}
           heightMCO={MCO_HEIGHT}
-          cbOffsetX={CB_OFFSET_X}
-          cbOffsetY={CB_OFFSET_Y}
         />
       )
     }
@@ -422,8 +411,8 @@ class ExamTemplated extends React.Component {
 
     const formData = new window.FormData()
     formData.append('name', data.widget.name)
-    formData.append('x', data.widget.x + CB_OFFSET_X)
-    formData.append('y', data.widget.y + CB_OFFSET_Y)
+    formData.append('x', data.widget.x)
+    formData.append('y', data.widget.y)
     formData.append('problem_id', data.problem_id)
     formData.append('label', data.label)
     return api.put('mult-choice/', formData).then(result => {
@@ -613,33 +602,28 @@ class ExamTemplated extends React.Component {
                 updateLabels={(labels) => {
                   labels.forEach((label, index) => {
                     const option = problem.mc_options[index]
-                    const formData = new window.FormData()
-                    formData.append('name', option.widget.name)
-                    formData.append('x', option.widget.x + CB_OFFSET_X)
-                    formData.append('y', option.widget.y + CB_OFFSET_Y)
-                    formData.append('problem_id', problem.id)
-                    formData.append('label', labels[index])
-                    api.patch('mult-choice/' + option.id, formData).then(() => {
-                      this.updateWidget(selectedWidgetId, {
-                        problem: {
-                          mc_options: {
-                            [index]: {
-                              label: { $set: labels[index] }
+                    api.patch('mult-choice/' + option.id, { label: labels[index] })
+                      .then(() => {
+                        this.updateWidget(selectedWidgetId, {
+                          problem: {
+                            mc_options: {
+                              [index]: {
+                                label: { $set: labels[index] }
+                              }
                             }
                           }
-                        }
-                      })
-                    }).catch(err => {
-                      console.log(err)
-                      err.json().then(res => {
-                        toast({
-                          message: 'Could not update feedback' + (res.message ? ': ' + res.message : ''),
-                          type: 'is-danger'
                         })
-                        // update to try and get a consistent state
-                        this.props.updateExam()
+                      }).catch(err => {
+                        console.log(err)
+                        err.json().then(res => {
+                          toast({
+                            message: 'Could not update feedback' + (res.message ? ': ' + res.message : ''),
+                            type: 'is-danger'
+                          })
+                          // update to try and get a consistent state
+                          this.props.updateExam()
+                        })
                       })
-                    })
                   })
                 }}
                 />

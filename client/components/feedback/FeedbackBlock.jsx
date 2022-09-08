@@ -17,7 +17,7 @@ class FeedbackBlock extends React.Component {
     return (
       <li>
         <a
-          className='panel-block feedback-item'
+          className={'panel-block feedback-item' + (this.props.feedback.highlight ? ' is-active' : '')}
           onClick={this.props.grading ? this.toggle : this.props.editFeedback}
         >
           <span

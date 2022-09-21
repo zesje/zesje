@@ -151,7 +151,7 @@ class Problems(Resource):
                               choices=[policy.name for policy in GradingPolicy])
 
     def patch(self, problem_id):
-        """PUT to a problem
+        """PATCH a problem
 
         This method accepts both the problem name and the grading policy.
 

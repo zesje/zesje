@@ -5,7 +5,7 @@ const ProgressBar = (props) => {
 
   return (
     <div className='level is-mobile'>
-      <div className='level-item is-hidden-mobile'>
+      <div className='level-item'>
         <progress className='progress is-success' value={props.done} max={props.total}>
           {percentage}%
         </progress>

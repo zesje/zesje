@@ -26,33 +26,19 @@ const FiltersInfo = ({ hasFilters, matchingResults, clearFilters }) => {
     (matchingResults === 1 ? 'solution' : 'solutions')
 
   return (
-    <div className='column' style={{
-      display: 'grid',
-      gridTemplateColumns: '1fr max-content',
-      gap: '0.5em',
-      justifyItems: 'end',
-      height: 'max-content',
-      alignItems: 'center'
-    }}>
-      {text}
-      <button
-        className='button is-danger'
-        onClick={clearFilters}
-        disabled={!hasFilters}
-      >
-        <span className='icon is-medium'>
-          <i
-            className='fa fa-lg fa-filter'
-            style={{ transform: 'translateX(-17%)' }}
-          />
-          <span
-            className='icon is-small'
-            style={{ position: 'absolute', right: '12%', bottom: 0 }}
-          >
-            <i className='fa fa-times' />
+    <div className='field is-grouped is-grouped-right is-align-items-center'>
+      <p className='control'>{text}</p>
+      <p className='control'>
+        <button
+          className='button is-danger'
+          onClick={clearFilters}
+          disabled={!hasFilters}
+        >
+          <span className='icon is-medium'>
+            <i className='fa fa-lg fa-solid fa-filter-circle-xmark' />
           </span>
-        </span>
-      </button>
+        </button>
+      </p>
     </div>
   )
 }
@@ -558,7 +544,7 @@ class Grade extends React.Component {
 
           <div className='container'>
             <div className='columns'>
-              <div className='column is-one-quarter-fullhd is-one-third-desktop'>
+              <div className='column is-one-quarter-fullhd is-one-third-desktop is-one-third-tablet'>
                 <ProblemSelector
                   problems={problems}
                   navigateProblem={this.navigateProblem}
@@ -581,19 +567,21 @@ class Grade extends React.Component {
               </div>
 
               <div className='column'>
-                <div className='columns is-multiline is-mobile'>
-                  <GradeNavigation
-                    submission={submission}
-                    submissions={submissions}
-                    setSubmission={this.navigateSubmission}
-                    first={this.first}
-                    prev={this.prev}
-                    next={this.next}
-                    last={this.last}
-                    anonymous={gradeAnonymous}
-                    showTooltips={this.state.showTooltips}
-                  />
-                  <div className='column is-one-quarter-desktop is-half-mobile'>
+                <div className='columns is-multiline is-mobile is-vcentered'>
+                  <div className='column is-half-desktop is-full-touch'>
+                    <GradeNavigation
+                      submission={submission}
+                      submissions={submissions}
+                      setSubmission={this.navigateSubmission}
+                      first={this.first}
+                      prev={this.prev}
+                      next={this.next}
+                      last={this.last}
+                      anonymous={gradeAnonymous}
+                      showTooltips={this.state.showTooltips}
+                    />
+                  </div>
+                  <div className='column'>
                     <div className='control has-icons-left'>
                       <div className='select is-link is-fullwidth'>
                         <select
@@ -614,11 +602,13 @@ class Grade extends React.Component {
                       </span>
                     </div>
                   </div>
-                  <FiltersInfo
-                    hasFilters={this.state.hasFilters}
-                    matchingResults={this.state.matchingResults}
-                    clearFilters={this.clearFilters}
-                  />
+                  <div className='column is-narrow'>
+                    <FiltersInfo
+                      hasFilters={this.state.hasFilters}
+                      matchingResults={this.state.matchingResults}
+                      clearFilters={this.clearFilters}
+                    />
+                  </div>
                 </div>
 
                 <ProgressBar done={problem.n_graded} total={submissions.length} />

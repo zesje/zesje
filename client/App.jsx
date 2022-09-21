@@ -11,6 +11,7 @@ import NavBar from './components/NavBar.jsx'
 import ExamRouter from './components/ExamRouter.jsx'
 import Footer from './components/Footer.jsx'
 import Loading from './views/Loading.jsx'
+import HelpModal, { HELP_PAGES } from './components/help/HelpModal.jsx'
 
 const Login = loadable(() => import('./views/Login.jsx'), { fallback: <Loading /> })
 const Home = loadable(() => import('./views/Home.jsx'), { fallback: <Loading /> })
@@ -24,15 +25,22 @@ const NavBarView = (props) => {
   return props.grader == null
     ? <Navigate to={{ pathname: '/login', search: `from=${location.pathname}` }} state={{ from: location }} replace />
     : <div>
-      <NavBar logout={props.logout} ref={props.menu} grader={props.grader} examID={props.examID} />
+      <NavBar
+        logout={props.logout}
+        ref={props.menu}
+        grader={props.grader}
+        examID={props.examID}
+        setHelpPage={props.setHelpPage} />
       <Outlet />
+      <HelpModal
+        page={HELP_PAGES[props.helpPage] || { content: null, title: null }}
+        closeHelp={() => props.setHelpPage({ helpPage: null })}
+      />
       <Footer />
     </div>
 }
 
 class App extends React.Component {
-  menu = React.createRef();
-
   state = {
     examID: null,
     /*
@@ -40,7 +48,13 @@ class App extends React.Component {
     * user yet, hence wait for the response before going to the desired url by showing a Home/Welcome screen.
     * Instead, a null user means that is not logged in, then go to the Home page through the router.
     */
-    grader: undefined
+    grader: undefined,
+    helpPage: null
+  }
+
+  constructor (props) {
+    super(props)
+    this.menu = React.createRef()
   }
 
   componentDidMount = () => {
@@ -65,6 +79,7 @@ class App extends React.Component {
 
   selectExam = (id) => this.setState({ examID: parseInt(id) })
   logout = () => api.get('oauth/logout').then(() => this.setState({ grader: null }))
+  setHelpPage = (helpPage) => this.setState({ helpPage: helpPage })
 
   updateExamList = () => {
     if (this.menu.current) {
@@ -73,10 +88,6 @@ class App extends React.Component {
   }
 
   render () {
-    const updateExamList = this.menu.current ? this.menu.current.updateExamList : () => {}
-    const updateGraderList = this.menu.current ? this.menu.current.updateGraderList : () => {}
-    const setHelpPage = this.menu.current ? this.menu.current.setHelpPage : (help) => {}
-
     if (this.state.grader === undefined) return <Loading />
 
     return (
@@ -90,21 +101,26 @@ class App extends React.Component {
           }/>
           <Route path='*' element={<Fail message="404. Could not find that page :'(" />}/>
           <Route path='/' element={
-            <NavBarView logout={this.logout} navRef={this.menu}
-              grader={this.state.grader} examID={this.state.examID} />
+            <NavBarView
+              logout={this.logout}
+              menu={this.menu}
+              grader={this.state.grader}
+              examID={this.state.examID}
+              setHelpPage={this.setHelpPage}
+              helpPage={this.state.helpPage} />
           }>
             <Route index element={<Home />} />
             <Route path='exams' element={<Outlet />}>
-              <Route index element={<AddExam updateExamList={updateExamList}/>} />
+              <Route index element={<AddExam updateExamList={this.updateExamList}/>} />
               <Route path=':examID/*' element={
-                  <ExamRouter
-                    selectExam={this.selectExam}
-                    updateExamList={updateExamList}
-                    setHelpPage={setHelpPage}
-                  />}
+                <ExamRouter
+                  selectExam={this.selectExam}
+                  updateExamList={this.updateExamList}
+                  setHelpPage={this.setHelpPage}
+                />}
               />
             </Route>
-            <Route path='graders' element={<Graders updateGraderList={updateGraderList} />} />
+            <Route path='graders' element={<Graders />} />
           </Route>
         </Routes>
       </Router>

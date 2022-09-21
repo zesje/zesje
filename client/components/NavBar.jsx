@@ -4,10 +4,6 @@ import { Link } from 'react-router-dom'
 import './NavBar.css'
 import * as api from '../api.jsx'
 
-import HelpModal from './help/HelpModal.jsx'
-import shortcutsMarkdown from './help/ShortcutsHelp.md'
-import gradingPolicyMarkdown from './help/GradingPolicyHelp.md'
-
 const BurgerButton = (props) => (
   <button
     className={'button navbar-burger' + (props.foldOut ? ' is-active' : '')}
@@ -127,15 +123,9 @@ const ExportDropdown = (props) => {
 }
 
 class NavBar extends React.Component {
-  pages = {
-    shortcuts: { title: 'Shortcuts', content: shortcutsMarkdown },
-    gradingPolicy: { title: 'Auto-approve', content: gradingPolicyMarkdown }
-  }
-
   state = {
     foldOut: false,
     examList: [],
-    helpPage: null,
     examID: null,
     loginProvider: ''
   }
@@ -165,10 +155,6 @@ class NavBar extends React.Component {
     this.setState({
       foldOut: !this.state.foldOut
     })
-  }
-
-  setHelpPage = (helpPage) => {
-    this.setState({ helpPage: helpPage })
   }
 
   render () {
@@ -232,8 +218,8 @@ class NavBar extends React.Component {
               disabled={predicateNoExam[0] || predicateSubmissionsEmpty[0]}
               examID={this.state.examID}
             />
-            <a className='navbar-item' onClick={() => this.setHelpPage('shortcuts')}>
-              {this.pages.shortcuts.title}
+            <a className='navbar-item' onClick={() => this.props.setHelpPage('shortcuts')}>
+              Shortcuts
             </a>
           </div>
 
@@ -244,10 +230,6 @@ class NavBar extends React.Component {
           </div>
 
         </div>
-        <HelpModal
-          page={this.pages[this.state.helpPage] || { content: null, title: null }}
-          closeHelp={() => this.setState({ helpPage: null })}
-        />
       </nav>
     )
   }

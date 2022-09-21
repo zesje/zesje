@@ -149,7 +149,7 @@ const ProblemsSummary = ({ problems, total, students, graders, changeProblem }) 
           {p.feedback.length}
         </td>
         <td style={{ textAlign: 'right' }}>
-          {p.results.length < 2 ? '-' : `${p.mean.value.toPrecision(2)} ± ${p.mean.error.toPrecision(2)}`}
+          {p.results.length < 2 ? '-' : `(${p.mean.value.toPrecision(2)} ± ${p.mean.error.toPrecision(2)})`}
           /
           {p.max_score}
         </td>
@@ -195,13 +195,14 @@ const ProblemsSummary = ({ problems, total, students, graders, changeProblem }) 
           </span>
         </td>
         <td style={{ textAlign: 'right' }}>
-          {total.mean.value.toPrecision(2)} &#177; {total.mean.error.toPrecision(2)}/{total.max_score}
+          ({total.mean.value.toPrecision(2)} ± {total.mean.error.toPrecision(2)})/{total.max_score}
+          = {(total.mean.value / total.max_score).toPrecision(2)}
         </td>
         <td style={{ textAlign: 'right' }}>
           <div className="tooltip has-tooltip-top has-tooltip-multiline"
             data-tooltip={'Cronbach\'s α: The measure of whether the exam checks one or multiple skills.' +
               'A low value may indicate a need to review the learning goals.'}>
-              {total.alpha.toPrecision(3)}
+              α = {total.alpha.toPrecision(3)}
           </div>
         </td>
         <td style={{ textAlign: 'right' }}>

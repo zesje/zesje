@@ -31,14 +31,12 @@ class IDBlock extends React.Component {
     return null
   }
 
-  clear = () => {
-    this.setState({
-      input: '',
-      editing: false,
-      short: false,
-      new: false
-    })
-  }
+  clear = () => this.setState({
+    input: '',
+    editing: true,
+    short: false,
+    new: false
+  })
 
   statusIcon = () => {
     if (this.state.editing) {

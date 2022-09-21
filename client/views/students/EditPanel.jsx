@@ -9,7 +9,7 @@ import * as api from '../../api.jsx'
 import IDBlock from './IDBlock.jsx'
 
 const BackButton = (props) => (
-  <button className='button is-light is-fullwidth' onClick={props.onClick}>
+  <button className='button is-light is-fullwidth' {...props}>
     <span className='icon is-small'>
       <i className='fa fa-chevron-left' />
     </span>
@@ -18,7 +18,7 @@ const BackButton = (props) => (
 )
 
 const SaveButton = (props) => (
-  <button className='button is-primary is-fullwidth' disabled={props.disabled} onClick={props.onClick}>
+  <button className='button is-primary is-fullwidth' type='submit' {...props}>
     <span className='icon is-small'>
       <i className='fa fa-save' />
     </span>
@@ -71,23 +71,9 @@ class EditPanel extends React.Component {
     }
   }
 
-  changeFirstName = (event) => {
-    this.setState({
-      firstName: event.target.value
-    })
-  }
-
-  changeLastName = (event) => {
-    this.setState({
-      lastName: event.target.value
-    })
-  }
-
-  changeMail = (event) => {
-    this.setState({
-      email: event.target.value
-    })
-  }
+  changeFirstName = (event) => this.setState({ firstName: event.target.value })
+  changeLastName = (event) => this.setState({ lastName: event.target.value })
+  changeMail = (event) => this.setState({ email: event.target.value })
 
   setID = (id, student) => {
     this.setState({
@@ -103,7 +89,7 @@ class EditPanel extends React.Component {
     }
   }
 
-  saveStudent = () => {
+  saveStudent = (event) => {
     api.put('students', {
       studentID: this.state.id,
       firstName: this.state.firstName,
@@ -129,6 +115,7 @@ class EditPanel extends React.Component {
           type: 'is-danger'
         }))
       })
+    event.preventDefault()
   }
 
   uploadStudent = (accepted, rejected) => {
@@ -200,53 +187,57 @@ class EditPanel extends React.Component {
         </p>
         {empty && <UploadBlock onDrop={this.uploadStudent} />}
 
-        <IDBlock setID={this.setID} editStud={this.state.id} ref={(id) => { this.idblock = id }} />
+        <form onSubmit={this.saveStudent}>
 
-        <div className='panel-block'>
-          <div className='field'>
-            <label className='label'>Name</label>
-            <div className='control has-icons-left'>
-              <input
-                className='input' placeholder='First name'
-                value={this.state.firstName} onChange={this.changeFirstName}
-              />
-              <span className='icon is-small is-left'>
-                <i className='fa fa-quote-left' />
-              </span>
-            </div>
+          <IDBlock setID={this.setID} editStud={this.state.id} ref={(id) => { this.idblock = id }} />
 
-            <div className='control has-icons-left'>
-              <input
-                className='input' placeholder='Second name'
-                value={this.state.lastName} onChange={this.changeLastName}
-              />
-              <span className='icon is-small is-left'>
-                <i className='fa fa-quote-right' />
-              </span>
-            </div>
+          <div className='panel-block'>
+            <div className='field'>
+              <label className='label'>Name</label>
+              <div className='control has-icons-left'>
+                <input
+                  className='input' placeholder='First name' type='text'
+                  value={this.state.firstName} onChange={this.changeFirstName}
+                />
+                <span className='icon is-small is-left'>
+                  <i className='fa fa-quote-left' />
+                </span>
+              </div>
 
-          </div>
-        </div>
+              <div className='control has-icons-left'>
+                <input
+                  className='input' placeholder='Second name' type='text'
+                  value={this.state.lastName} onChange={this.changeLastName}
+                />
+                <span className='icon is-small is-left'>
+                  <i className='fa fa-quote-right' />
+                </span>
+              </div>
 
-        <div className='panel-block'>
-          <div className='field'>
-            <label className='label'>Email</label>
-            <div className='control has-icons-left has-icons-right'>
-              <input
-                className='input' placeholder='Email input'
-                value={this.state.email} onChange={this.changeMail}
-              />
-              <span className='icon is-small is-left'>
-                <i className='fa fa-envelope' />
-              </span>
             </div>
           </div>
-        </div>
 
-        <div className='panel-block'>
-          <BackButton onClick={this.props.toggleEdit} />
-          {!empty && <SaveButton disabled={!full} onClick={this.saveStudent} />}
-        </div>
+          <div className='panel-block'>
+            <div className='field'>
+              <label className='label'>Email</label>
+              <div className='control has-icons-left has-icons-right'>
+                <input
+                  className='input' placeholder='Email input' type='email' maxLength={320}
+                  value={this.state.email} onChange={this.changeMail}
+                />
+                <span className='icon is-small is-left'>
+                  <i className='fa fa-envelope' />
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div className='panel-block'>
+            <BackButton onClick={this.props.toggleEdit} />
+            {!empty && <SaveButton disabled={!full} />}
+          </div>
+
+        </form>
       </nav>
     )
   }

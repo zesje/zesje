@@ -1,6 +1,6 @@
 """ REST api for solutions """
 
-from datetime import datetime
+from datetime import datetime, timezone
 
 from flask_restful import Resource, reqparse
 from flask_restful.inputs import boolean
@@ -35,7 +35,7 @@ def solution_to_data(solution):
             'name': solution.graded_by.name,
             'oauth_id': solution.graded_by.oauth_id
         } if solution.graded_by else None,
-        'gradedAt': solution.graded_at.isoformat() if solution.graded_at else None,
+        'gradedAt': int(solution.graded_at.timestamp() * 1000) if solution.graded_at else None,
         'remark': solution.remarks or ''
     }
 
@@ -166,7 +166,7 @@ class Solutions(Resource):
         graded = len(solution.feedback)
 
         if graded and has_valid_feedback(solution.feedback):  # do not approve invalid feedback
-            solution.graded_at = datetime.now()
+            solution.graded_at = datetime.now(timezone.utc)
             solution.graded_by = current_user
         else:
             solution.graded_at = None
@@ -215,7 +215,7 @@ class Approve(Resource):
             return dict(status=409, message='Multiple exclusive option are selected for the same parent.'), 409
 
         if args.approve:
-            solution.graded_at = datetime.now()
+            solution.graded_at = datetime.now(timezone.utc)
             solution.graded_by = current_user
         else:
             solution.graded_at = None

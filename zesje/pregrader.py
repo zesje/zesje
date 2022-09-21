@@ -1,6 +1,6 @@
 import cv2
 import numpy as np
-from datetime import datetime
+from datetime import datetime, timezone
 
 from flask import current_app
 from reportlab.lib.units import inch, mm
@@ -145,7 +145,7 @@ def set_auto_grader(solution):
         Grader(oauth_id=AUTOGRADER_NAME, name=AUTOGRADER_NAME, internal=True)
 
     solution.graded_by = zesje_grader
-    solution.graded_at = datetime.now()
+    solution.graded_at = datetime.now(timezone.utc)
     db.session.commit()
 
 

@@ -3,6 +3,7 @@ import { toast } from 'bulma-toast'
 import Hero from '../components/Hero.jsx'
 import Fail from './Fail.jsx'
 import update from 'immutability-helper'
+import ReactTimeAgo from 'react-time-ago'
 
 import FeedbackPanel from '../components/feedback/FeedbackPanel.jsx'
 import ProblemSelector from './grade/ProblemSelector.jsx'
@@ -534,6 +535,9 @@ class Grade extends React.Component {
     const multiple = otherSubmissions.length > 0
     const gradedTime = new Date(solution.gradedAt)
     const gradeAnonymous = this.state.gradeAnonymous
+    // compute the timezone offset between UTC time and local time
+    // Note that `graded_at` time is in UTC
+    const offset = new Date(Date.now()).getTimezoneOffset() * 60000
 
     return (
       <div>
@@ -631,7 +635,9 @@ class Grade extends React.Component {
                       {solution.gradedBy
                         ? <div>
                           Graded by: {(solution.gradedBy.name ? solution.gradedBy.name + ' - ' : '') +
-                          solution.gradedBy.oauth_id} <i>({gradedTime.toLocaleString()})</i>
+                          solution.gradedBy.oauth_id} <i>(
+                            <ReactTimeAgo date={gradedTime - offset} locale="en-UK" timeStyle="round-minute"/>
+                          )</i>
                         </div>
                         : <div>Ungraded</div>}
                     </div>

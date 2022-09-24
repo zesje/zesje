@@ -1,8 +1,8 @@
 import React from 'react'
 
-import './../Modal.css'
-import shortcutsMarkdown from './ShortcutsHelp.md'
-import gradingPolicyMarkdown from './GradingPolicyHelp.md'
+import './Modal.css'
+import shortcutsMarkdown from '../help/ShortcutsHelp.md'
+import gradingPolicyMarkdown from '../help/GradingPolicyHelp.md'
 
 const HelpModal = (props) => (
   <div className={'modal ' + (props.page.title ? 'is-active' : '')}>
@@ -18,7 +18,7 @@ const HelpModal = (props) => (
           className='content'
           dangerouslySetInnerHTML={
             { __html: (props.page.content) }
-}
+          }
         />
       </section>
       <footer className='modal-card-footer'>

@@ -148,30 +148,9 @@ class Email(Resource):
             ), 409
 
         if student_id is not None:
-            return self._send_single(exam, student_id, template, attach, copy_to)
+            students = [Student.query.get(student_id)]
         else:
-            return self._send_all(exam, template, attach)
-
-    def _send_single(self, exam, student_id, template, attach, copy_to):
-
-        student = Student.query.get(student_id)
-        sent, failed = emails.build_and_send(
-            [student],
-            from_address=current_app.config['FROM_ADDRESS'],
-            exam=exam,
-            template=template,
-            attach=attach,
-            copy_to=copy_to
-        )
-        if failed:
-            return dict(
-                status=500,
-                message=f'Failed to send email to student #{student_id}'
-            ), 500
-        return dict(status=200)
-
-    def _send_all(self, exam, template, attach):
-        students = [sub.student for sub in exam.submissions if sub.student_id and sub.validated]
+            students = [sub.student for sub in exam.submissions if sub.student_id and sub.validated]
 
         sent, failed = emails.build_and_send(
             students,
@@ -185,14 +164,14 @@ class Email(Resource):
             if len(sent) > 0:
                 return dict(
                     status=206,
-                    message='Failed to send some emails',
+                    message=f'Failed to send some emails ({len(sent)}/{len(students)}).',
                     sent=sent,
                     failed=failed
                 ), 206
             else:
                 return dict(
                     status=500,
-                    message='Failed to send emails',
+                    message='Failed to send all emails.',
                     failed=failed,
                 ), 500
 

@@ -163,3 +163,18 @@ def test_send_after_disconnect(app, smtpd, datadir):
 
     assert len(sent) == len(smtpd.messages) == 1
     assert sent[0] == student.id
+
+
+@pytest.mark.parametrize('all', [True, False])
+def test_api(test_client, app, smtpd, datadir, all):
+    exam, student = add_test_data(ExamLayout.templated, datadir)
+
+    app.config['SMTP_SERVER'] = smtpd.hostname
+    app.config['SMTP_PORT'] = smtpd.port
+
+    result = test_client.post(
+        f'/api/email/{exam.id}' if all else f'/api/email/{exam.id}/{student.id}',
+        data={'template': default_email_template, 'attach': False}
+    )
+
+    assert result.status_code == 200

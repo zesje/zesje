@@ -39,7 +39,7 @@ class _EmailManager():
 
     Parameters
     ----------
-    server : string
+    hostname : string
         SMTP server domain name or IP address.
     use_ssl : bool or None
         Whether to use SSL connection. If not provided, it is inferred from the
@@ -50,10 +50,10 @@ class _EmailManager():
         Login credentials.
     """
 
-    def __init__(self, server, use_ssl=None, port=465, user=None, password=None):
-        self.server = server
-        self.use_ssl = use_ssl
+    def __init__(self, hostname, port=465, use_ssl=None, user=None, password=None):
+        self.hostname = hostname
         self.port = port
+        self.use_ssl = use_ssl
         if self.use_ssl is None:
             self.use_ssl = self.port == 465
         self.server_type = smtplib.SMTP_SSL if self.use_ssl else smtplib.SMTP
@@ -61,7 +61,7 @@ class _EmailManager():
         self.password = password
 
     def __enter__(self):
-        self.server = self.server_type(self.server, self.port)
+        self.server = self.server_type(self.hostname, self.port)
         if self.port == 587:
             self.server.starttls()
         if self.user and self.password:
@@ -74,7 +74,7 @@ class _EmailManager():
 
     def reconnect(self):
         """reconnect to the server or raise an `SMTPConnectError`"""
-        status, msg = self.server.connect(self.server, self.port)
+        status, msg = self.server.connect(self.hostname, self.port)
         if status != 220:
             self.server.close()
             raise smtplib.SMTPConnectError(status, msg)
@@ -90,12 +90,12 @@ class _EmailManager():
 
     def send(self, from_address, message):
         """sends an email from `from_address` with content `message` but reconnects and tries again if disconnected."""
-        try:
-            recipients = [
-                *message['To'].split(','),
-                *(message['Cc'].split(',') if 'Cc' in message else [])
-            ]
+        recipients = [
+            *message['To'].split(','),
+            *(message['Cc'].split(',') if 'Cc' in message else [])
+        ]
 
+        try:
             self.server.sendmail(
                 from_address,
                 recipients,
@@ -105,14 +105,18 @@ class _EmailManager():
             # server has disconnected, try to reconnect and send the message again
             print('email server disconnected, trying to connect again.')
             self.reconnect()
-            self.send(from_address, message)
+            self.server.sendmail(
+                from_address,
+                recipients,
+                message.as_string()
+            )
 
 
 def current_email_manager():
     return _EmailManager(
-        server=current_app.config['SMTP_SERVER'],
-        use_ssl=current_app.config.get('USE_SSL'),
+        hostname=current_app.config.get('SMTP_SERVER'),
         port=current_app.config.get('SMTP_PORT'),
+        use_ssl=current_app.config.get('USE_SSL'),
         user=current_app.config.get('SMTP_USERNAME'),
         password=current_app.config.get('SMTP_PASSWORD')
     )
@@ -202,7 +206,7 @@ def build(email_to, content, attachment=None, copy_to=None,
     msg['Subject'] = subject
     msg['From'] = email_from
     msg['To'] = email_to
-    if copy_to is not None:
+    if copy_to:
         msg['Cc'] = copy_to
     msg['Reply-to'] = email_from
     msg.attach(MIMEText(content, 'plain'))
@@ -214,7 +218,7 @@ def build(email_to, content, attachment=None, copy_to=None,
 
 
 def build_and_send(
-    students, from_address, exam, template, attach=False, copy_to=None
+    students, from_address, exam, template, attach=False, copy_to=None, _email_manager=None
 ):
     """Build and send the student solution emails.
 
@@ -243,7 +247,10 @@ def build_and_send(
     failed = []
     sent = []
 
-    with current_email_manager() as server:
+    if _email_manager is None:
+        _email_manager = current_email_manager()  # only modify this during tests
+
+    with _email_manager as server:
         for student in students:
             try:
                 attachment = build_solution_attachment(exam.id, student.id, file_name=f'{student.id}_{exam.name}.pdf')

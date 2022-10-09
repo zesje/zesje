@@ -172,7 +172,7 @@ class Submissions(Resource):
         if sub.exam != exam:
             return dict(status=400, message='Submission does not belong to this exam.'), 400
 
-        if args.problem_id and Problem.query.get(args.problem_id) is None:
+        if args.problem_id is None or Problem.query.get(args.problem_id) is None:
             return dict(status=404, message='Problem does not exist.'), 404
 
         n_graded = Solution.query.filter(Solution.problem_id == args.problem_id,

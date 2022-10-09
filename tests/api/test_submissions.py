@@ -166,9 +166,19 @@ def test_submission_from_different_exam(test_client, add_test_data, add_test_sub
     assert res.status_code == 400
 
 
-def test_get_submission(test_client, add_test_data, add_test_submissions, monkeypatch_current_user):
-    res = test_client.get('/api/submissions/42/25?problem_id=20&direction=next')
+@pytest.mark.parametrize('direction, sub, no_prev_sub, no_next_sub', [
+    ('prev', 25, True, False),
+    ('next', 27, False, False),
+    ('first', 25, True, False),
+    ('last', 26, False, True)
+])
+def test_get_submission(test_client, add_test_data, add_test_submissions, monkeypatch_current_user,
+                        direction, sub, no_prev_sub, no_next_sub):
+    res = test_client.get(f'/api/submissions/42/25?problem_id=20&direction={direction}')
     data = res.get_json()
+
     assert data['meta']['filter_matches'] == 3
     assert data['meta']['n_graded'] == 3
-    assert data['id'] == 27
+    assert data['meta']['no_next_sub'] == no_next_sub
+    assert data['meta']['no_prev_sub'] == no_prev_sub
+    assert data['id'] == sub

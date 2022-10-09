@@ -182,11 +182,10 @@ class Submissions(Resource):
             sub, args.problem_id, current_user.id, args.direction or 'next', args.ungraded,
             args.required_feedback or [], args.excluded_feedback or [], args.graded_by
         )
-        if not args.direction:
-            new_sub = sub
 
         matched = no_of_subs_follow + no_of_subs_precede + match_current
         if args.direction is None:
+            new_sub = sub
             no_next_sub = no_of_subs_follow == 0
             no_prev_sub = no_of_subs_precede == 0
         elif args.direction in ('next', 'prev'):

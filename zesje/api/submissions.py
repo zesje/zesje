@@ -1,4 +1,5 @@
 from hashlib import md5
+
 from sqlalchemy.sql import operators
 from flask_restful import Resource, reqparse
 from flask_restful.inputs import boolean
@@ -28,8 +29,7 @@ def sub_to_data(sub, meta=None):
 
 def has_all_required_feedback(sol, required_feedback, excluded_feedback):
     """
-    If solution has all the required feedback and non of the excluded_feedback returns true
-    else return false.
+    Check if solution has all the required feedback and none of the excluded_feedback
 
     Parameters
     ----------
@@ -42,7 +42,8 @@ def has_all_required_feedback(sol, required_feedback, excluded_feedback):
 
     Returns
     -------
-    A boolean, true if sol meets all requirements false otherwhise.
+    result : boolean
+        true if sol meets all requirements false otherwhise.
 
     """
     if not required_feedback and not excluded_feedback:
@@ -106,25 +107,28 @@ def _find_submission(old_submission, problem_id, shuffle_seed, direction, ungrad
     match_current = False
     sub = None
 
-    solutions = Solution.query.filter(Solution.problem_id == problem_id,
-                                      (Solution.grader_id.is_(None)) if ungraded else (
-                                        True if graded_by is None else (Solution.grader_id == graded_by))).all()
+    solutions = Solution.query.filter(
+        Solution.problem_id == problem_id,
+        (
+            Solution.grader_id.is_(None) if ungraded
+            else (graded_by is None) or (Solution.grader_id == graded_by)
+        ),
+    ).all()
 
     for sol in solutions:
-        if has_all_required_feedback(sol, required_feedback, excluded_feedback):
-            sub_id = sol.submission_id
-            if follows(key(sub_id), old_key):
-                count_follows += 1
-                if sub:
-                    sub = next_(sub, sub_id, key=key)
-                else:
-                    sub = sub_id
-            elif precedes(key(sub_id), old_key):
-                count_precedes += 1
-            else:
-                match_current = True
+        if not has_all_required_feedback(sol, required_feedback, excluded_feedback):
+            continue
+        sub_id = sol.submission_id
+        if follows(key(sub_id), old_key):
+            count_follows += 1
+            sub = sub_id if not sub else next_(sub, sub_id, key=key)
+        elif precedes(key(sub_id), old_key):
+            count_precedes += 1
+        else:
+            match_current = True
 
-    return Submission.query.get(sub) if sub else old_submission, count_follows, count_precedes, match_current
+    new_submission = Submission.query.get(sub) if sub else old_submission
+    return new_submission, count_follows, count_precedes, match_current
 
 
 class Submissions(Resource):
@@ -133,7 +137,10 @@ class Submissions(Resource):
     get_parser = reqparse.RequestParser()
     get_parser.add_argument('problem_id', type=int, required=False)
     get_parser.add_argument('ungraded', type=boolean, required=False, default=False)
-    get_parser.add_argument('direction', type=str, required=False, choices=["next", "prev", "first", "last"])
+    get_parser.add_argument(
+        'direction', type=str, required=False, choices=["next", "prev", "first", "last"],
+        default="next"
+    )
     get_parser.add_argument('required_feedback', type=int, required=False, action='append')
     get_parser.add_argument('excluded_feedback', type=int, required=False, action='append')
     get_parser.add_argument('graded_by', type=int, required=False)
@@ -179,7 +186,7 @@ class Submissions(Resource):
                                          Solution.grader_id.is_not(None)).count()
 
         new_sub, no_of_subs_follow, no_of_subs_precede, match_current = _find_submission(
-            sub, args.problem_id, current_user.id, args.direction or 'next', args.ungraded,
+            sub, args.problem_id, current_user.id, args.direction, args.ungraded,
             args.required_feedback or [], args.excluded_feedback or [], args.graded_by
         )
 

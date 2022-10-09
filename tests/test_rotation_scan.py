@@ -57,7 +57,7 @@ test_args = [
 def test_detect_enough_cornermarkers(name, expected, datadir, config_app):
     image = generate_image(name, datadir)
     keypoints = scans.find_corner_marker_keypoints(image)
-    assert(len(keypoints) == expected)
+    assert len(keypoints) == expected
 
 
 # Tests whether the detected keypoints are actually corner markers.
@@ -85,7 +85,7 @@ def test_detect_valid_cornermarkers(name, datadir, config_app):
         binlist = distlist < maxdist
         result = binlist + result
 
-    assert(sum(result > 1) == 0)
+    assert sum(result > 1) == 0
 
 
 # Untested:

@@ -524,12 +524,12 @@ def calc_angle(keyp1, keyp2):
         return 90
 
     if keyp1[0] < keyp2[0]:
-        if(keyp2[1] > keyp1[1]):
+        if keyp2[1] > keyp1[1]:
             return -1 * math.degrees(math.atan(ydiff / xdiff))
         else:
             return math.degrees(math.atan(ydiff / xdiff))
     else:
-        if(keyp1[1] > keyp2[1]):
+        if keyp1[1] > keyp2[1]:
             return -1 * math.degrees(math.atan(ydiff / xdiff))
         else:
             return math.degrees(math.atan(ydiff / xdiff))

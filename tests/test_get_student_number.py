@@ -15,4 +15,4 @@ def test_get_studentnumber_precision(config_app, datadir):
         filename_short, _ = os.path.splitext(filename_full)
         expected_number = int(filename_short)
         detected_number = scans.get_student_number(image, [50, 231, 50, 363])
-        assert(expected_number == detected_number)
+        assert expected_number == detected_number

@@ -88,7 +88,6 @@ class Grade extends React.Component {
           this.setState({
             submission: submission,
             problem: problem,
-            matchingResults: submission.meta.filter_matches,
             ...partialState
           }, () => this.props.router.navigate(this.getURL(submissionID, problemID)), { replace: true })
         }).catch(err => {
@@ -127,13 +126,10 @@ class Grade extends React.Component {
       api.get(`submissions/${this.props.examID}/${submissionID}?${
         [`problem_id=${problemID}`, ...this.getFilterArguments()].join('&')}`),
       api.get(`problems/${problemID}`)
-    ]).then(values => {
-      const submission = values[0]
-      const problem = values[1]
+    ]).then(([submission, problem]) => {
       this.setState({
         submission: submission,
-        problem: problem,
-        matchingResults: submission.meta.filter_matches
+        problem: problem
       }, () => {
         this.props.router.navigate(this.getURL(submission.id, problem.id), { replace: true })
       })
@@ -197,11 +193,12 @@ class Grade extends React.Component {
 
     const hasProblem = this.state.problem && this.state.problem.id > 0
     const hasSubmission = this.state.submission && this.state.submission.id > 0
-    if ((prevProps.examID !== this.props.examID && this.props.examID !== this.state.examID) ||
-      (prevProps.router.params.problemID !== problemID &&
-        (!hasProblem || problemID !== this.state.problem.id)) ||
-      (prevProps.router.params.submissionID !== submissionID &&
-        (!hasSubmission || submissionID !== this.state.submission.id))) {
+    const examChanged = (prevProps.examID !== this.props.examID && this.props.examID !== this.state.examID)
+    const problemChanged = prevProps.router.params.problemID !== problemID &&
+    (!hasProblem || problemID !== this.state.problem.id.toString())
+    const subChanged = prevProps.router.params.submissionID !== submissionID &&
+      (!hasSubmission || submissionID !== this.state.submission.id.toString())
+    if (examChanged || problemChanged || subChanged) {
       // The URL has changed and at least one of exam metadata, problem or submission does not match the URL
       // or the URL has changed and submission or problem is not defined
       this.setState({
@@ -240,8 +237,7 @@ class Grade extends React.Component {
     )
 
     this.setState({
-      submission,
-      matchingResults: submission.meta.filter_matches
+      submission
     }, () => {
       this.props.router.navigate(this.getURL(this.state.submission.id, this.state.problem.id))
     })
@@ -290,12 +286,6 @@ class Grade extends React.Component {
 
     this.setState(prevState => ({
       submission,
-      matchingResults: submission.meta.filter_matches,
-      problem: update(prevState.problem, {
-        n_graded: {
-          $set: submission.meta.n_graded
-        }
-      }),
       hasFilters: this.hasFilters()
     }))
   }
@@ -609,13 +599,13 @@ class Grade extends React.Component {
                   <div className='column is-narrow'>
                     <FiltersInfo
                       hasFilters={this.state.hasFilters}
-                      matchingResults={this.state.matchingResults}
+                      matchingResults={submission.meta.filter_matches}
                       clearFilters={this.clearFilters}
                     />
                   </div>
                 </div>
 
-                <ProgressBar done={problem.n_graded} total={submissions.length} />
+                <ProgressBar done={submission.meta.n_graded} total={submissions.length} />
 
                 {multiple
                   ? <article className='message is-info'>

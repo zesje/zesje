@@ -1,5 +1,5 @@
 import pytest
-from zesje.api.submissions import has_all_required_feedback, _find_submission, find_number_of_matches
+from zesje.api.submissions import has_all_required_feedback, _find_submission
 from datetime import datetime
 from zesje.database import db, Exam, Problem, FeedbackOption,\
                            Student, Submission, Solution, Grader
@@ -51,17 +51,20 @@ def add_test_submissions(app):
     yield app
 
 
-def test_has_all_required(get_first_feedback):
+def test_has_all_required(app, add_test_data, get_first_feedback):
     student = Student(first_name='', last_name='')
     grader = Grader(name='Zesje', oauth_id='Zesje')
     sub = Submission(student=student, exam_id=42)
     sol = Solution(problem_id=20, submission=sub, graded_by=grader, graded_at=datetime.now())
-    sol.feedback = get_first_feedback
+    sol.feedback.extend(get_first_feedback)
+
+    db.session.add_all([student, grader, sub, sol])
+    db.session.commit()
 
     assert has_all_required_feedback(sol, set([1, 2]), set([3]))
 
 
-def test_find_next(add_test_data, get_first_feedback, get_second_feedback):
+def test_find_next(app, add_test_data, get_first_feedback, get_second_feedback):
     student = Student(first_name='', last_name='')
     student2 = Student(first_name='bob', last_name='alice')
 
@@ -71,18 +74,19 @@ def test_find_next(add_test_data, get_first_feedback, get_second_feedback):
     sub2 = Submission(id=26, student=student2, exam_id=42)
 
     sol = Solution(problem_id=20, submission=sub, graded_by=grader, graded_at=datetime.now())
-    db.session.add(sol)
     sol2 = Solution(problem_id=20, submission=sub2, graded_by=grader, graded_at=datetime.now())
-    db.session.add(sol2)
 
     sol.feedback = get_first_feedback
     sol2.feedback = get_second_feedback
 
-    result = _find_submission(sub, Problem.query.get(20), 1, 'next', False, set([3]), set([2]), None)
+    db.session.add_all([sol, sol2])
+    db.session.commit()
+
+    result, *_ = _find_submission(sub, 20, 1, 'next', False, set([3]), set([2]), None)
     assert result == sub2
 
 
-def test_find_next_graded_by(add_test_data):
+def test_find_next_graded_by(app, add_test_data):
     student = Student(first_name='', last_name='')
     student2 = Student(first_name='bob', last_name='alice')
 
@@ -97,7 +101,7 @@ def test_find_next_graded_by(add_test_data):
     sol2 = Solution(problem_id=20, submission=sub2, graded_by=grader2, graded_at=datetime.now())
     db.session.add(sol2)
 
-    result = _find_submission(sub, Problem.query.get(20), 1, 'next', False, set(), set(), 2)
+    result, *_ = _find_submission(sub, 20, 1, 'next', False, set(), set(), 2)
     assert result == sub2
 
 
@@ -124,8 +128,11 @@ def test_find_length(add_test_data, get_first_feedback, get_second_feedback):
     sol2.feedback = get_second_feedback
     sol3.feedback = get_first_feedback
 
-    result = find_number_of_matches(Problem.query.get(20), False, [1], [], 2)
-    assert result == 1
+    ssub, count_follows, count_precedes, matched = \
+        _find_submission(sub, 20, 1, 'next', False, [1], [], 2)
+    assert count_follows == 1
+    assert count_precedes == 0
+    assert not matched
 
 
 def test_get_all_submissions(test_client, add_test_data, add_test_submissions):
@@ -159,9 +166,19 @@ def test_submission_from_different_exam(test_client, add_test_data, add_test_sub
     assert res.status_code == 400
 
 
-def test_get_submission(test_client, add_test_data, add_test_submissions, monkeypatch_current_user):
-    res = test_client.get('/api/submissions/42/25?problem_id=20&direction=next')
+@pytest.mark.parametrize('direction, sub, no_prev_sub, no_next_sub', [
+    ('prev', 25, True, False),
+    ('next', 27, False, False),
+    ('first', 25, True, False),
+    ('last', 26, False, True)
+])
+def test_get_submission(test_client, add_test_data, add_test_submissions, monkeypatch_current_user,
+                        direction, sub, no_prev_sub, no_next_sub):
+    res = test_client.get(f'/api/submissions/42/25?problem_id=20&direction={direction}')
     data = res.get_json()
+
     assert data['meta']['filter_matches'] == 3
     assert data['meta']['n_graded'] == 3
-    assert data['id'] == 27
+    assert data['meta']['no_next_sub'] == no_next_sub
+    assert data['meta']['no_prev_sub'] == no_prev_sub
+    assert data['id'] == sub

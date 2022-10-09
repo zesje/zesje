@@ -1,22 +1,23 @@
 import React from 'react'
 import SearchBox from '../../components/SearchBox.jsx'
 
+const NavButton = (props) => {
+  return (
+    <div className={'control has-tooltip-arrow' + (props.showTooltips ? ' has-tooltip-active' : '')}
+      data-tooltip={props.tooltip}>
+      <button
+        type='submit'
+        className={`button ${props.style} fa ${props.faIcon}`}
+        style={{ width: '4em' }}
+        onClick={props.onClick}
+        disabled={props.disabled} />
+    </div>
+  )
+}
+
 class GradeNavigation extends React.Component {
   setSubmission = (submission) => {
     this.props.setSubmission(submission.id)
-  }
-
-  createNavButton = (style, faIcon, onClick, tooltip) => {
-    return (
-      <div className={'control has-tooltip-arrow' + (this.props.showTooltips ? ' has-tooltip-active' : '')}
-        data-tooltip={tooltip}>
-        <button
-          type='submit'
-          className={`button ${style} fa ${faIcon}`}
-          style={{ width: '4em' }}
-          onClick={onClick} />
-      </div>
-    )
   }
 
   render () {
@@ -25,18 +26,22 @@ class GradeNavigation extends React.Component {
 
     return (
           <div className='field has-addons is-mobile'>
-            {this.createNavButton(
-              'is-info is-rounded',
-              'fa-angle-double-left',
-              this.props.first,
-              'shift + ←'
-            )}
-            {this.createNavButton(
-              'is-link',
-              'fa-angle-left',
-              this.props.prev,
-              '←'
-            )}
+            <NavButton
+              style='is-info is-rounded'
+              faIcon='fa-angle-double-left'
+              onClick={this.props.first}
+              tooltip='shift + ←'
+              showTooltips={this.props.showTooltips}
+              disabled={submission.meta.no_prev_sub}
+            />
+            <NavButton
+              style='is-link'
+              faIcon='fa-angle-left'
+              onClick={this.props.prev}
+              tooltip='←'
+              showTooltips={this.props.showTooltips}
+              disabled={submission.meta.no_prev_sub}
+            />
             <div
               id='search'
               className={
@@ -88,18 +93,22 @@ class GradeNavigation extends React.Component {
                 }}
               />
             </div>
-            {this.createNavButton(
-              'is-link',
-              'fa-angle-right',
-              this.props.next,
-              '→'
-            )}
-            {this.createNavButton(
-              'is-info is-rounded',
-              'fa-angle-double-right',
-              this.props.last,
-              'shift + →'
-            )}
+            <NavButton
+              style='is-link'
+              faIcon='fa-angle-right'
+              onClick={this.props.next}
+              tooltip='→'
+              showTooltips={this.props.showTooltips}
+              disabled={submission.meta.no_next_sub}
+            />
+            <NavButton
+              style='is-info is-rounded'
+              faIcon='fa-angle-double-right'
+              onClick={this.props.last}
+              tooltip='shift + →'
+              showTooltips={this.props.showTooltips}
+              disabled={submission.meta.no_next_sub}
+            />
           </div>
     )
   }

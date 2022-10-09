@@ -15,7 +15,8 @@ def feedback_to_data(feedback, full_children=True):
         'description': feedback.description,
         'score': feedback.score,
         'parent': feedback.parent_id,
-        'used': len(feedback.solutions),
+        'used':
+            db.session.query(solution_feedback).filter(solution_feedback.c.feedback_option_id == feedback.id).count(),
         'children': [feedback_to_data(child) if full_children else child.id for child in feedback.children],
         'exclusive': feedback.mut_excl_children
     }

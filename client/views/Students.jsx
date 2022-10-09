@@ -276,6 +276,8 @@ class CheckStudents extends React.Component {
     const validated = copy && copy.validated
     const total = copies.length
     const done = copies.filter(c => c.validated).length
+    const hasUnmatchedRight = done === total ? false : copies.some((c, j) => (j > this.state.index) && !c.validated)
+    const hasUnmatchedLeft = done === total ? false : copies.some((c, j) => (j < this.state.index) && !c.validated)
 
     if (this.state.examID === undefined && this) return hero
 
@@ -309,12 +311,19 @@ class CheckStudents extends React.Component {
                     <div className='level-item make-wider'>
                       <div className='field has-addons is-mobile'>
                         <div className='control'>
-                          <button type='submit' className='button is-info is-rounded is-hidden-mobile'
-                            onClick={this.prevUnchecked}>unchecked</button>
-                        </div>
-                        <div className='control'>
-                          <button type='submit' className={'button' + (validated ? ' is-success' : ' is-link')}
-                            onClick={this.prev}>Previous</button>
+                          <button
+                            type='submit' className='button is-info is-rounded is-hidden-mobile'
+                            onClick={this.prevUnchecked}
+                            disabled={!hasUnmatchedLeft}
+                          >unchecked
+                          </button>
+                          <button
+                            type='submit'
+                            className={'button is-radiusless' + (validated ? ' is-success' : ' is-link')}
+                            onClick={this.prev}
+                            disabled={this.state.index === 0}
+                          >Previous
+                          </button>
                         </div>
                         <div className='control is-wider'>
                           <SearchBox
@@ -359,6 +368,7 @@ class CheckStudents extends React.Component {
                           <button
                             type='submit' className={'button is-radiusless' + (validated ? ' is-success' : ' is-link')}
                             onClick={this.next}
+                            disabled={this.state.index === total - 1}
                           >Next
                           </button>
                         </div>
@@ -366,6 +376,7 @@ class CheckStudents extends React.Component {
                           <button
                             type='submit' className='button is-info is-rounded is-hidden-mobile'
                             onClick={this.nextUnchecked}
+                            disabled={!hasUnmatchedRight}
                           >unchecked
                           </button>
                         </div>

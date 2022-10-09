@@ -21,7 +21,7 @@ def problem_to_data(problem):
         'root_feedback_id': problem.root_feedback.id,
         'page': problem.widget.page,
         'widget': widget_to_data(problem.widget),
-        'n_graded': len([sol for sol in problem.solutions if sol.graded_by is not None]),
+        'n_graded': Solution.query.filter(Solution.problem_id == problem.id, Solution.grader_id.is_not(None)).count(),
         'grading_policy': problem.grading_policy.name,
         'mc_options': [
             {

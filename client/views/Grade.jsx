@@ -286,11 +286,6 @@ class Grade extends React.Component {
 
     this.setState(prevState => ({
       submission,
-      problem: update(prevState.problem, {
-        n_graded: {
-          $set: submission.meta.n_graded
-        }
-      }),
       hasFilters: this.hasFilters()
     }))
   }
@@ -610,7 +605,7 @@ class Grade extends React.Component {
                   </div>
                 </div>
 
-                <ProgressBar done={problem.n_graded} total={submissions.length} />
+                <ProgressBar done={submission.meta.n_graded} total={submissions.length} />
 
                 {multiple
                   ? <article className='message is-info'>

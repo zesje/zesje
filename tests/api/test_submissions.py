@@ -51,17 +51,20 @@ def add_test_submissions(app):
     yield app
 
 
-def test_has_all_required(get_first_feedback):
+def test_has_all_required(app, add_test_data, get_first_feedback):
     student = Student(first_name='', last_name='')
     grader = Grader(name='Zesje', oauth_id='Zesje')
     sub = Submission(student=student, exam_id=42)
     sol = Solution(problem_id=20, submission=sub, graded_by=grader, graded_at=datetime.now())
-    sol.feedback = get_first_feedback
+    sol.feedback.extend(get_first_feedback)
+
+    db.session.add_all([student, grader, sub, sol])
+    db.session.commit()
 
     assert has_all_required_feedback(sol, set([1, 2]), set([3]))
 
 
-def test_find_next(add_test_data, get_first_feedback, get_second_feedback):
+def test_find_next(app, add_test_data, get_first_feedback, get_second_feedback):
     student = Student(first_name='', last_name='')
     student2 = Student(first_name='bob', last_name='alice')
 
@@ -71,18 +74,19 @@ def test_find_next(add_test_data, get_first_feedback, get_second_feedback):
     sub2 = Submission(id=26, student=student2, exam_id=42)
 
     sol = Solution(problem_id=20, submission=sub, graded_by=grader, graded_at=datetime.now())
-    db.session.add(sol)
     sol2 = Solution(problem_id=20, submission=sub2, graded_by=grader, graded_at=datetime.now())
-    db.session.add(sol2)
 
     sol.feedback = get_first_feedback
     sol2.feedback = get_second_feedback
 
-    result, *_ = _find_submission(sub, Problem.query.get(20), 1, 'next', False, set([3]), set([2]), None)
+    db.session.add_all([sol, sol2])
+    db.session.commit()
+
+    result, *_ = _find_submission(sub, 20, 1, 'next', False, set([3]), set([2]), None)
     assert result == sub2
 
 
-def test_find_next_graded_by(add_test_data):
+def test_find_next_graded_by(app, add_test_data):
     student = Student(first_name='', last_name='')
     student2 = Student(first_name='bob', last_name='alice')
 
@@ -97,7 +101,7 @@ def test_find_next_graded_by(add_test_data):
     sol2 = Solution(problem_id=20, submission=sub2, graded_by=grader2, graded_at=datetime.now())
     db.session.add(sol2)
 
-    result, *_ = _find_submission(sub, Problem.query.get(20), 1, 'next', False, set(), set(), 2)
+    result, *_ = _find_submission(sub, 20, 1, 'next', False, set(), set(), 2)
     assert result == sub2
 
 
@@ -125,7 +129,7 @@ def test_find_length(add_test_data, get_first_feedback, get_second_feedback):
     sol3.feedback = get_first_feedback
 
     ssub, count_follows, count_precedes, matched = \
-        _find_submission(sub, Problem.query.get(20), 1, 'next', False, [1], [], 2)
+        _find_submission(sub, 20, 1, 'next', False, [1], [], 2)
     assert count_follows == 1
     assert count_precedes == 0
     assert not matched

@@ -5,7 +5,7 @@ from flask_restful.inputs import boolean
 from flask_login import current_user
 
 from .solutions import solution_to_data
-from ..database import Exam, Submission, Problem
+from ..database import db, Exam, Submission, Problem, Solution, solution_feedback
 
 
 def sub_to_data(sub, meta=None):
@@ -45,38 +45,23 @@ def has_all_required_feedback(sol, required_feedback, excluded_feedback):
     A boolean, true if sol meets all requirements false otherwhise.
 
     """
-    feedback_ids = set(fb.id for fb in sol.feedback)
+    if not required_feedback and not excluded_feedback:
+        return True
+
+    feedback_ids = set(map(lambda x: x[0], db.session.query(solution_feedback.c.feedback_option_id)
+                           .filter(solution_feedback.c.solution_id == sol.id).all()))
     return (required_feedback <= feedback_ids) and (not excluded_feedback & feedback_ids)
 
 
-def all_filters(sol, required_feedback, excluded_feedback, graded_by, ungraded):
-    """
-    Returns whether a submission meets all requirements.
-
-    Parameters
-    ----------
-
-    sol: Solution
-        the solution to check if it meets all the requirements.
-    required_feedback: Set[int]
-        the feedback_id's which the submission should have.
-    excluded_feedback: Set[int]
-        the feedback_id's which the submission should not have.
-    graded_by: int
-        the id of the grader that should have graded the exam, optional
-    ungraded: bool
-        value whether the solution should be ungraded or you do not care.
-
-    Retuns
-    ----------
-    If this current submission matches all the filters.
-    """
-    return (has_all_required_feedback(sol, required_feedback, excluded_feedback) and
-            (graded_by is None or (sol.graded_by is not None and sol.graded_by.id == graded_by)) and
-            (not ungraded or sol.graded_by is None))
+_DIRECTION_OPERATORS = {
+  'next': (min, operators.gt, operators.lt),
+  'prev': (max, operators.lt, operators.gt),
+  'first': (min, operators.lt, operators.gt),
+  'last': (max, operators.gt, operators.lt)
+}
 
 
-def _find_submission(old_submission, problem, shuffle_seed, direction, ungraded,
+def _find_submission(old_submission, problem_id, shuffle_seed, direction, ungraded,
                      required_feedback, excluded_feedback, graded_by):
     """
     Finds a submission based on the parameters of the function.
@@ -88,8 +73,8 @@ def _find_submission(old_submission, problem, shuffle_seed, direction, ungraded,
     ----------
     old_submission : Submission
         the submission to base next or prev on.
-    problem : Problem
-        current problem.
+    problem_id : Problem
+        current problem id.
     shuffle_seed : int
         the seed to shuffle the submissions on.
     direction : string
@@ -107,16 +92,12 @@ def _find_submission(old_submission, problem, shuffle_seed, direction, ungraded,
     -------
     A new submission, or the old one if no submission matching the criteria is found.
     """
-    def key(sub):
-        return md5(b'%i %i' % (sub.id, shuffle_seed)).digest()
+    def key(sub_id):
+        return md5(b'%i %i' % (sub_id, shuffle_seed)).digest()
 
-    old_key = key(old_submission)
-    next_, follows, precedes = {
-      'next': (min, operators.gt, operators.lt),
-      'prev': (max, operators.lt, operators.gt),
-      'first': (min, operators.lt, operators.gt),
-      'last': (max, operators.gt, operators.lt)
-    }[direction]
+    old_key = key(old_submission.id)
+    next_, follows, precedes = _DIRECTION_OPERATORS[direction]
+
     required_feedback = set(required_feedback)
     excluded_feedback = set(excluded_feedback)
 
@@ -124,22 +105,26 @@ def _find_submission(old_submission, problem, shuffle_seed, direction, ungraded,
     count_precedes = 0
     match_current = False
     sub = None
-    for item in (
-        sol.submission for sol in problem.solutions
-        if all_filters(sol, required_feedback, excluded_feedback, graded_by, ungraded)
-    ):
-        if follows(key(item), old_key):
-            count_follows += 1
-            if sub:
-                sub = next_(sub, item, key=key)
-            else:
-                sub = item
-        elif precedes(key(item), old_key):
-            count_precedes += 1
-        else:
-            match_current = True
 
-    return sub if sub else old_submission, count_follows, count_precedes, match_current
+    solutions = Solution.query.filter(Solution.problem_id == problem_id,
+                                      (Solution.grader_id.is_(None)) if ungraded else (
+                                        True if graded_by is None else (Solution.grader_id == graded_by))).all()
+
+    for sol in solutions:
+        if has_all_required_feedback(sol, required_feedback, excluded_feedback):
+            sub_id = sol.submission_id
+            if follows(key(sub_id), old_key):
+                count_follows += 1
+                if sub:
+                    sub = next_(sub, sub_id, key=key)
+                else:
+                    sub = sub_id
+            elif precedes(key(sub_id), old_key):
+                count_precedes += 1
+            else:
+                match_current = True
+
+    return Submission.query.get(sub) if sub else old_submission, count_follows, count_precedes, match_current
 
 
 class Submissions(Resource):
@@ -187,15 +172,14 @@ class Submissions(Resource):
         if sub.exam != exam:
             return dict(status=400, message='Submission does not belong to this exam.'), 400
 
-        problem = None
-        n_graded = None
-        if args.problem_id:
-            if (problem := Problem.query.get(args.problem_id)) is None:
-                return dict(status=404, message='Problem does not exist.'), 404
-            n_graded = sum(1 for sol in problem.solutions if sol.graded_by is not None)
+        if args.problem_id and Problem.query.get(args.problem_id) is None:
+            return dict(status=404, message='Problem does not exist.'), 404
+
+        n_graded = Solution.query.filter(Solution.problem_id == args.problem_id,
+                                         Solution.grader_id.is_not(None)).count()
 
         new_sub, no_of_subs_follow, no_of_subs_precede, match_current = _find_submission(
-            sub, problem, current_user.id, args.direction or 'next', args.ungraded,
+            sub, args.problem_id, current_user.id, args.direction or 'next', args.ungraded,
             args.required_feedback or [], args.excluded_feedback or [], args.graded_by
         )
         if not args.direction:

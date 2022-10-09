@@ -27,7 +27,7 @@ def remove_feedback_from_solution(fb, solution):
 
 def solution_to_data(solution):
     return {
-        'problemId': solution.problem.id,
+        'problemId': solution.problem_id,
         'feedback': [fb.id for fb in solution.feedback],
         'valid': has_valid_feedback(solution.feedback),
         'gradedBy': {

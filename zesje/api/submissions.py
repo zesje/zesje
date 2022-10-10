@@ -137,10 +137,7 @@ class Submissions(Resource):
     get_parser = reqparse.RequestParser()
     get_parser.add_argument('problem_id', type=int, required=False)
     get_parser.add_argument('ungraded', type=boolean, required=False, default=False)
-    get_parser.add_argument(
-        'direction', type=str, required=False, choices=["next", "prev", "first", "last"],
-        default="next"
-    )
+    get_parser.add_argument('direction', type=str, required=False, choices=["next", "prev", "first", "last"])
     get_parser.add_argument('required_feedback', type=int, required=False, action='append')
     get_parser.add_argument('excluded_feedback', type=int, required=False, action='append')
     get_parser.add_argument('graded_by', type=int, required=False)
@@ -186,7 +183,7 @@ class Submissions(Resource):
                                          Solution.grader_id.is_not(None)).count()
 
         new_sub, no_of_subs_follow, no_of_subs_precede, match_current = _find_submission(
-            sub, args.problem_id, current_user.id, args.direction, args.ungraded,
+            sub, args.problem_id, current_user.id, args.direction or "next", args.ungraded,
             args.required_feedback or [], args.excluded_feedback or [], args.graded_by
         )
 

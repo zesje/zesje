@@ -193,7 +193,7 @@ class Statistics(Resource):
                     .corr(full_scores[0]
                           .subtract(full_scores[id])
                           .astype(float))
-                    )
+                    ) if len(student_ids) > 2 else nan
             data[j]['correlation'] = corr if not isnan(corr) else None
 
         if len(total_results) > 2 and full_scores[0].var():

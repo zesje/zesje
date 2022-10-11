@@ -149,9 +149,8 @@ const ProblemsSummary = ({ problems, total, students, graders, changeProblem }) 
           {p.feedback.length}
         </td>
         <td style={{ textAlign: 'right' }}>
-          ({p.mean.value.toPrecision(2)} ± {p.mean.error.toPrecision(2)})
-          /
-          {p.max_score}
+          ({p.mean.value.toPrecision(2)} ± {p.mean.error.toPrecision(2)})/{p.max_score}
+          = {(p.mean.value / p.max_score).toPrecision(2)}
         </td>
         <td style={{ textAlign: 'right' }}>
           {p.correlation !== null ? p.correlation.toPrecision(3) : '-'}

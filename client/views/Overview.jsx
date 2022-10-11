@@ -124,7 +124,6 @@ const ProblemsSummary = ({ problems, total, students, graders, changeProblem }) 
   let totalTimeLeft = 0
   let totalFOs = 0
   const totalSolutions = problems.length * students
-  const hasEnoughStudents = students > 2
 
   const problemRows = problems.map((p, i) => {
     const avgTime = estimateGradingTime(p.graders)
@@ -150,13 +149,13 @@ const ProblemsSummary = ({ problems, total, students, graders, changeProblem }) 
           {p.feedback.length}
         </td>
         <td style={{ textAlign: 'right' }}>
-          {hasEnoughStudents ? `(${p.mean.value.toPrecision(2)} ± ${p.mean.error.toPrecision(2)})` : '-'}
+          ({p.mean.value.toPrecision(2)} ± {p.mean.error.toPrecision(2)})
           /
           {p.max_score}
         </td>
-        {hasEnoughStudents && <td style={{ textAlign: 'right' }}>
+        <td style={{ textAlign: 'right' }}>
           {p.correlation !== null ? p.correlation.toPrecision(3) : '-'}
-        </td>}
+        </td>
         <td style={{ textAlign: 'right' }}>
           <div className={solInRevision > 0 ? 'tooltip has-tooltip-top' : 'has-tooltip-hidden'}
             data-tooltip={solInRevision > 0 ? `${solInRevision} needs revision` : ''}>
@@ -174,13 +173,13 @@ const ProblemsSummary = ({ problems, total, students, graders, changeProblem }) 
         <th> Problem </th>
         <th> Feedback count </th>
         <th> Avg. Score/Max Score </th>
-        {hasEnoughStudents && <th>
+        <th>
           <div className='has-tooltip-top has-tooltip-multiline'
             data-tooltip={'The correlation between a question and the rest of the questions.' +
             'Low or negative means that the question is likely random and does not correlate with learner\'s success.'}>
               Correlation (Rir)
           </div>
-        </th>}
+        </th>
         <th> Progress </th>
         <th> Estimated time left </th>
       </tr>
@@ -199,14 +198,14 @@ const ProblemsSummary = ({ problems, total, students, graders, changeProblem }) 
           ({total.mean.value.toPrecision(2)} ± {total.mean.error.toPrecision(2)})/{total.max_score}
           = {(total.mean.value / total.max_score).toPrecision(2)}
         </td>
-        {hasEnoughStudents && <td style={{ textAlign: 'right' }}>
+        <td style={{ textAlign: 'right' }}>
           {total.alpha !== null
             ? <div className="tooltip has-tooltip-top has-tooltip-multiline"
             data-tooltip={'Cronbach\'s α: The measure of whether the exam checks one or multiple skills.' +
               'A low value may indicate a need to review the learning goals.'}>
               α = {total.alpha.toPrecision(3)}</div>
             : '-'}
-        </td>}
+        </td>
         <td style={{ textAlign: 'right' }}>
           <div className={'tooltip ' + (totalInRevision > 0 ? 'has-tooltip-top' : 'has-tooltip-hidden')}
             data-tooltip={`${totalInRevision} needs revision`}>

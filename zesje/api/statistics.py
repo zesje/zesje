@@ -164,7 +164,7 @@ class Statistics(Resource):
             problem_data['autograded'] = autograded
 
             problem_data['mean'] = {
-                'value': full_scores.loc[:, p.id].mean() if len(results) > 1 else 0,
+                'value': full_scores.loc[:, p.id].mean() if len(results) >= 1 else 0,
                 'error': full_scores.loc[:, p.id].std() if len(results) > 1 else 0
             }
 
@@ -182,7 +182,7 @@ class Statistics(Resource):
         total_results = scores_to_data(full_scores.loc[:, 0].dropna().to_dict(), problems_ungraded)
 
         total_mean = {
-            'value': full_scores.loc[:, 0].mean() if len(total_results) > 1 else 0,
+            'value': full_scores.loc[:, 0].mean() if len(total_results) >= 1 else 0,
             'error': full_scores.loc[:, 0].std() if len(total_results) > 1 else 0
         }
 

@@ -198,7 +198,7 @@ class Statistics(Resource):
 
         if len(total_results) > 2 and full_scores[0].var():
             alpha = ((len(full_scores) - 1) / (len(full_scores) - 2)
-                     * (1 - full_scores.var()[:-1].sum()
+                     * (1 - full_scores.var().iloc[:-1].sum()
                         / full_scores[0].var()))
         else:
             alpha = None

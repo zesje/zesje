@@ -149,18 +149,17 @@ const ProblemsSummary = ({ problems, total, students, graders, changeProblem }) 
           {p.feedback.length}
         </td>
         <td style={{ textAlign: 'right' }}>
-          {p.results.length < 2 ? '-' : `(${p.mean.value.toPrecision(2)} ± ${p.mean.error.toPrecision(2)})`}
-          /
-          {p.max_score}
+          ({p.mean.value.toPrecision(2)} ± {p.mean.error.toPrecision(2)})/{p.max_score}
+          = {(p.mean.value / p.max_score).toPrecision(2)}
         </td>
         <td style={{ textAlign: 'right' }}>
-          {p.results.length < 2 ? '-' : p.correlation.toPrecision(3)}
+          {p.correlation !== null ? p.correlation.toPrecision(3) : '-'}
         </td>
         <td style={{ textAlign: 'right' }}>
-          <span className={solInRevision > 0 ? 'tooltip has-tooltip-top' : 'has-tooltip-hidden'}
+          <div className={solInRevision > 0 ? 'tooltip has-tooltip-top' : 'has-tooltip-hidden'}
             data-tooltip={solInRevision > 0 ? `${solInRevision} needs revision` : ''}>
             {Math.round(100 * (p.results.length) / students)}%
-          </span>
+          </div>
         </td>
         <td> {solToGrade === 0 ? '-' : `${gradingTimeLeft}`} </td>
       </tr>
@@ -199,17 +198,18 @@ const ProblemsSummary = ({ problems, total, students, graders, changeProblem }) 
           = {(total.mean.value / total.max_score).toPrecision(2)}
         </td>
         <td style={{ textAlign: 'right' }}>
-          <div className="tooltip has-tooltip-top has-tooltip-multiline"
+          {total.alpha !== null
+            ? <div className="tooltip has-tooltip-top has-tooltip-multiline"
             data-tooltip={'Cronbach\'s α: The measure of whether the exam checks one or multiple skills.' +
               'A low value may indicate a need to review the learning goals.'}>
-              α = {total.alpha.toPrecision(3)}
-          </div>
+              α = {total.alpha.toPrecision(3)}</div>
+            : '-'}
         </td>
         <td style={{ textAlign: 'right' }}>
-          <span className={totalInRevision > 0 ? 'has-tooltip-top' : 'has-tooltip-hidden'}
+          <div className={'tooltip ' + (totalInRevision > 0 ? 'has-tooltip-top' : 'has-tooltip-hidden')}
             data-tooltip={`${totalInRevision} needs revision`}>
             {Math.round(100 * (totalSolutions - totalUngraded) / totalSolutions)}%
-          </span>
+          </div>
         </td>
         <td> {formatTime(totalTimeLeft)} </td>
       </tr>
@@ -469,16 +469,15 @@ class Overview extends React.Component {
         range: [-0.5, problems.length - 0.5],
         tickmode: 'array',
         tickfont: {
-          color: 'hsl(0,0,71)',
           size: 14
         },
-        tickvals: problems.reduce((acc, p, i) => {
-          if (p.id === 0) return (totalUngraded + totalInRevision > 0 ? acc.concat(i) : acc)
-          return (p.results.length - p.inRevision) < students ? acc.concat(i) : acc
-        }, []),
-        ticktext: problems.reduce((acc, p, i) => {
-          if (p.id === 0) return (totalUngraded + totalInRevision > 0 ? acc.concat(p.name) : acc)
-          return (p.results.length - p.inRevision) < students ? acc.concat(p.name) : acc
+        tickvals: yVals,
+        ticktext: problems.map(p => {
+          let color = 'black'
+          if (p.id === 0) color = (totalUngraded + totalInRevision > 0 ? 'grey' : color)
+          else color = (p.results.length - p.inRevision) < students ? 'grey' : color
+
+          return `<span style="color:${color}">${p.name}</span>`
         }, []),
         zeroline: false,
         anchor: 'x',

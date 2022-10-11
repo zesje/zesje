@@ -164,7 +164,7 @@ class Statistics(Resource):
             problem_data['autograded'] = autograded
 
             problem_data['mean'] = {
-                'value': full_scores.loc[:, p.id].mean() if len(results) > 1 else 0,
+                'value': full_scores.loc[:, p.id].mean() if len(results) >= 1 else 0,
                 'error': full_scores.loc[:, p.id].std() if len(results) > 1 else 0
             }
 
@@ -182,7 +182,7 @@ class Statistics(Resource):
         total_results = scores_to_data(full_scores.loc[:, 0].dropna().to_dict(), problems_ungraded)
 
         total_mean = {
-            'value': full_scores.loc[:, 0].mean() if len(total_results) > 1 else 0,
+            'value': full_scores.loc[:, 0].mean() if len(total_results) >= 1 else 0,
             'error': full_scores.loc[:, 0].std() if len(total_results) > 1 else 0
         }
 
@@ -193,12 +193,12 @@ class Statistics(Resource):
                     .corr(full_scores[0]
                           .subtract(full_scores[id])
                           .astype(float))
-                    )
+                    ) if len(student_ids) > 2 else nan
             data[j]['correlation'] = corr if not isnan(corr) else None
 
         if len(total_results) > 2 and full_scores[0].var():
             alpha = ((len(full_scores) - 1) / (len(full_scores) - 2)
-                     * (1 - full_scores.var()[:-1].sum()
+                     * (1 - full_scores.var().iloc[:-1].sum()
                         / full_scores[0].var()))
         else:
             alpha = None

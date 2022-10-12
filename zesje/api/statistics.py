@@ -1,4 +1,4 @@
-from math import isnan
+from math import isnan, nan
 from flask_restful import Resource
 import pandas as pd
 

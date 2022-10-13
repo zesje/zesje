@@ -20,7 +20,8 @@ def add_test_data(app):
         db.session.add(problem_widget)
         db.session.commit()
 
-        feedback_option = FeedbackOption(id=id, problem_id=id, text='text', description='desc', score=1)
+        feedback_option = FeedbackOption(id=id * 10, problem_id=id, text='text', description='desc', score=1,
+                                         parent_id=problem.root_feedback.id)
         db.session.add(feedback_option)
         db.session.commit()
 

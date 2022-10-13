@@ -169,7 +169,7 @@ class Page(db.Model):
 
     @hybrid_property
     def copy_number(self):
-        return self.copy.number
+        return object_session(self).query(Copy.number).filter(Copy.id == self.copy_id).one()
 
     @hybrid_property
     def submission(self):
@@ -223,10 +223,12 @@ class Problem(db.Model):
 
     @property
     def root_feedback(self):
-        return (object_session(self)
-                .query(FeedbackOption)
-                .filter(FeedbackOption.problem_id == self.id, FeedbackOption.parent_id.is_(None))
-                .one())
+        return (
+            object_session(self)
+            .query(FeedbackOption)
+            .filter(FeedbackOption.problem_id == self.id, FeedbackOption.parent_id.is_(None))
+            .one()
+        )
 
     @property
     def max_score(self):
@@ -333,7 +335,11 @@ class Solution(db.Model):
 
     @hybrid_property
     def is_graded(self):
-        return self.grader_id.isnot(None)
+        return self.grader_id is not None
+
+    @is_graded.expression
+    def is_graded(cls):
+        return cls.grader_id.isnot(None)
 
     @property
     def score(self):

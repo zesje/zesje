@@ -115,15 +115,14 @@ class Statistics(Resource):
                 mark = sol.score
 
                 if not isnan(mark):
-                    has_grader = sol.is_graded
-                    if not has_grader:
+                    if not (is_graded := sol.is_graded):
                         in_revision += 1
                         ungraded.loc[student_id, p.id] = 1
 
                     results.append({
                         'studentId': student_id,
                         'score': mark,
-                        'graded': has_grader
+                        'graded': is_graded
                     })
 
                     full_scores.loc[student_id, p.id] = mark
@@ -144,7 +143,6 @@ class Statistics(Resource):
 
             data.append(problem_data)
 
-        # total sum per row, min_count ensures that if all problems are Nan the sum is also Nan
         full_scores.loc[:, 0] = full_scores.sum(axis=1)
 
         # counts the number of ungraded problems per student

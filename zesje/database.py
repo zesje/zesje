@@ -219,7 +219,10 @@ class Problem(db.Model):
 
     @property
     def root_feedback(self):
-        return next(fb for fb in self.feedback_options if fb.parent_id is None)
+        return (object_session(self)
+                .query(FeedbackOption)
+                .filter(FeedbackOption.problem_id == self.id, FeedbackOption.parent_id.is_(None))
+                .one())
 
     @property
     def max_score(self):
@@ -314,9 +317,9 @@ class Solution(db.Model):
     def feedback_count(self):
         return object_session(self).query(solution_feedback).filter(solution_feedback.c.solution_id == self.id).count()
 
-    @property
+    @hybrid_property
     def is_graded(self):
-        return self.grader_id is not None
+        return self.grader_id.isnot(None)
 
     @property
     def score(self):

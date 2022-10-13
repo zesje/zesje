@@ -110,7 +110,7 @@ def _find_submission(old_submission, problem_id, shuffle_seed, direction, ungrad
     solutions = Solution.query.filter(
         Solution.problem_id == problem_id,
         (
-            Solution.grader_id.is_(None) if ungraded
+            Solution.is_graded.is_(False) if ungraded
             else (graded_by is None) or (Solution.grader_id == graded_by)
         ),
     ).all()
@@ -180,7 +180,7 @@ class Submissions(Resource):
             return dict(status=404, message='Problem does not exist.'), 404
 
         n_graded = Solution.query.filter(Solution.problem_id == args.problem_id,
-                                         Solution.grader_id.is_not(None)).count()
+                                         Solution.is_graded).count()
 
         new_sub, no_of_subs_follow, no_of_subs_precede, match_current = _find_submission(
             sub, args.problem_id, current_user.id, args.direction or "next", args.ungraded,

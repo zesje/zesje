@@ -21,7 +21,9 @@ def solution_data(exam_id, student_id):
                                   Submission.student_id == student_id,
                                   Submission.validated).one_or_none()
     if sub is None:
-        raise RuntimeError(f'Student #{student_id} does not have a validated submission for exam {exam_id}.')
+        raise RuntimeError(
+            f'Student #{student_id} does not have a validated submission for exam {exam_id}.'
+        )
 
     results = []
     total_score = 0

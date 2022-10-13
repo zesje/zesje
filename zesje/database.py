@@ -215,7 +215,11 @@ class Problem(db.Model):
 
     @hybrid_property
     def mc_options(self):
-        return [feedback_option.mc_option for feedback_option in self.feedback_options if feedback_option.mc_option]
+        return [
+            feedback_option.mc_option
+            for feedback_option in self.feedback_options
+            if feedback_option.mc_option
+        ]
 
     @property
     def root_feedback(self):
@@ -235,9 +239,10 @@ class Problem(db.Model):
     def gradable(self):
         """Tells wether the problem counts towards the total grade.
 
-        Gradable problems contain at least one feedback option and a non-vanishing max-score.
-        Still, non-gradable problems might contain useful information for grading (i.e. `Extra space` or remarks)
-        but are not statistically significant (i.e. Overview).
+        Gradable problems contain at least one feedback option and a
+        non-vanishing max-score. Still, non-gradable problems might contain
+        useful information for grading (i.e. `Extra space` or remarks) but are
+        not statistically significant (i.e. Overview).
         """
         count, max_score = (
             object_session(self)
@@ -261,7 +266,9 @@ class FeedbackOption(db.Model):
                                 cascade='all', uselist=False, lazy=True)
     parent_id = Column(Integer, ForeignKey('feedback_option.id'), nullable=True)
     mut_excl_children = Column(Boolean, nullable=False, server_default='0')
-    children = db.relationship("FeedbackOption", backref=backref('parent', remote_side=[id]), cascade='all, delete')
+    children = db.relationship(
+        "FeedbackOption", backref=backref('parent', remote_side=[id]), cascade='all, delete'
+    )
 
     @property
     def all_descendants(self):
@@ -307,12 +314,19 @@ class Solution(db.Model):
     # if grader_id, and thus graded_by, is null, this has not yet been graded
     grader_id = Column(Integer, ForeignKey('grader.id'), nullable=True)  # backref graded_by
     graded_at = Column(DateTime, nullable=True)
-    feedback = db.relationship('FeedbackOption', secondary=solution_feedback, backref='solutions', lazy=True)
+    feedback = db.relationship(
+        'FeedbackOption', secondary=solution_feedback, backref='solutions', lazy=True
+    )
     remarks = Column(Text)
 
     @property
     def feedback_count(self):
-        return object_session(self).query(solution_feedback).filter(solution_feedback.c.solution_id == self.id).count()
+        return (
+            object_session(self)
+            .query(solution_feedback)
+            .filter(solution_feedback.c.solution_id == self.id)
+            .count()
+        )
 
     @property
     def is_graded(self):
@@ -327,7 +341,8 @@ class Solution(db.Model):
             .filter(solution_feedback.c.solution_id == self.id)
             .one_or_none()
         )
-        # convert score to int because the query result is a SQLAlchemy integer which is not JSON serializable
+        # convert score to int because the query result is a SQLAlchemy integer
+        # which is not JSON serializable
         return int(score) if score is not None else nan
 
 

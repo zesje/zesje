@@ -182,12 +182,7 @@ class Exams(Resource):
             'submissions': [
                 {
                     'id': sub.id,
-                    'student': {
-                        'id': sub.student.id,
-                        'firstName': sub.student.first_name,
-                        'lastName': sub.student.last_name,
-                        'email': sub.student.email
-                    } if sub.student else None
+                    'student_id': sub.student.id if sub.student else None
                 } for sub in _shuffle(exam.submissions, current_user.id, key_extractor=lambda s: s.id)
             ],
             'problems': [

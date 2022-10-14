@@ -6,30 +6,6 @@ from ..database import db, Exam, Submission, ExamLayout
 from ..statistics import grader_data
 
 
-def scores_to_data(scores, ungraded):
-    """ Construct the list to be send in the response sorted by total score.
-
-    Parameters
-    ----------
-    scores : dict(int: int)
-        dictionary containing the items (studentId, score)
-    ungraded : dict(int: int)
-        dictionary containing the items (studentId, number of problems ungraded)
-
-    Returns
-    -------
-    list of dict:
-        'studentId' : the student id,
-        'score' : the score of that student,
-        'ungraded' : number of ungraded problems
-    """
-    return sorted([{
-        'studentId': id,
-        'score': x,
-        'ungraded': ungraded[id]
-    } for id, x in scores.items()], key=lambda item: item['score'])
-
-
 class Statistics(Resource):
     """Getting a list of uploaded scans, and uploading new ones."""
 
@@ -95,27 +71,22 @@ class Statistics(Resource):
             .all()
 
         if len(student_ids) == 0:
-            # there are no vaidated submissions
             return dict(status=404, message='There are no students with a validated copy for this exam.'), 404
-
-        if len(exam.problems) == 0:
-            return dict(status=404, message='There are no problems in this exam.'), 404
 
         total_max_score = 0
         full_scores = pd.DataFrame(data={},
                                    index=[id for id, in student_ids],
-                                   columns=[p.id for p in exam.problems] + [0],
+                                   columns=[p.id for p in exam.problems if p.gradable] + [0],
                                    dtype=int)
+        ungraded = full_scores.copy()
         data = []
 
         for p in exam.problems:
-            if len(p.feedback_options) == 0:
+            if not p.gradable:
                 # exclude problems without feedback options
                 continue
 
-            max_score = max(fb.score for fb in p.feedback_options)
-            if max_score == 0:
-                continue
+            max_score = p.max_score
 
             problem_data = {
                 'id': p.id,
@@ -141,20 +112,22 @@ class Statistics(Resource):
                     continue
 
                 student_id = sol.submission.student_id
-                mark = sum(fo.score for fo in sol.feedback) if sol.feedback else nan
+                mark = sol.score
 
                 if not isnan(mark):
-                    has_grader = True if sol.grader_id else False
-                    if not has_grader:
+                    if not (is_graded := sol.is_graded):
                         in_revision += 1
+                        ungraded.loc[student_id, p.id] = 1
 
                     results.append({
                         'studentId': student_id,
                         'score': mark,
-                        'graded': has_grader
+                        'graded': is_graded
                     })
 
                     full_scores.loc[student_id, p.id] = mark
+                else:
+                    ungraded.loc[student_id, p.id] = 1
 
             problem_data['results'] = sorted(results, key=lambda x: x['score'])
             problem_data['inRevision'] = in_revision
@@ -170,16 +143,17 @@ class Statistics(Resource):
 
             data.append(problem_data)
 
-        if len(data) == 0:
-            return dict(status=404, message='The problems in the exam have no feedback options.'), 404
-
-        # total sum per row, min_count ensures that if all problems are Nan the sum is also Nan
-        full_scores.loc[:, 0] = full_scores.sum(axis=1, min_count=1)
+        full_scores.loc[:, 0] = full_scores.sum(axis=1)
 
         # counts the number of ungraded problems per student
-        problems_ungraded = full_scores.loc[:, full_scores.columns != 0].isna().sum(axis=1).to_dict()
+        problems_ungraded = ungraded.sum(axis=1)
 
-        total_results = scores_to_data(full_scores.loc[:, 0].dropna().to_dict(), problems_ungraded)
+        # list with total score and number of ungraded problems by student
+        total_results = sorted([{
+            'studentId': id,
+            'score': full_scores.loc[id, 0],
+            'ungraded': int(problems_ungraded.loc[id])
+        } for id, in student_ids], key=lambda item: item['score'])
 
         total_mean = {
             'value': full_scores.loc[:, 0].mean() if len(total_results) >= 1 else 0,

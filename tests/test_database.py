@@ -221,6 +221,34 @@ def test_copy_exam_relationship_list_single_flush(app, copy, submission, exam):
     db.session.commit()
 
 
+def test_problem_gradable(app, exam, problem):
+    problem.exam = exam
+    db.session.add(exam)
+    db.session.add(problem)
+    db.session.commit()
+
+    # no feedback option
+    assert not problem.gradable
+
+    problem.feedback_options.append(FeedbackOption(text='Blank', score=0))
+    db.session.commit()
+
+    # one feedback but max score is 0
+    assert not problem.gradable
+
+    problem.feedback_options.append(FeedbackOption(text='Negative', score=-1))
+    db.session.commit()
+
+    # has feedback but max score is still <= 0
+    assert not problem.gradable
+
+    problem.feedback_options.append(FeedbackOption(text='Positive', score=1))
+    db.session.commit()
+
+    # has feedback and max score is still > 0
+    assert problem.gradable
+
+
 def test_empty_session(app):
     # Assert no objects in session
     assert all(False for _ in db.session)

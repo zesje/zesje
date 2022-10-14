@@ -53,10 +53,10 @@ def exam(file_format, exam_id):
     try:
         data = full_exam_data(exam_id)
     except KeyError as e:
-        abort(404, message=str(e))
+        abort(404, str(e))
 
     if file_format not in ('dataframe', 'xlsx', 'xlsx_detailed'):
-        abort(404, message='File format is not one of [dataframe, xlsx, xlsx_detailed]')
+        abort(404, 'File format is not one of [dataframe, xlsx, xlsx_detailed]')
 
     serialized = ResilientBytesIO()
 

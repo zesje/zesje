@@ -182,7 +182,7 @@ class Problems(Resource):
         if (problem := Problem.query.get(problem_id)) is None:
             return dict(status=404, message=f"Problem with id {problem_id} doesn't exist"), 404
 
-        if any([sol.graded_by is not None for sol in problem.solutions]):
+        if any(sol.is_graded for sol in problem.solutions):
             return dict(status=403, message='Problem has already been graded'), 403
 
         exam = problem.exam

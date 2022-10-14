@@ -12,57 +12,51 @@ from .database import db, Exam, Student, Grader, Solution, Submission
 
 def solution_data(exam_id, student_id):
     """Return Python datastructures corresponding to the student submission."""
-    exam = Exam.query.get(exam_id)
-    if exam is None:
-        raise NoResultFound(f"Exam with id #{exam_id} does not exist.")
+
     student = Student.query.get(student_id)
     if student is None:
         raise NoResultFound(f"Student with id #{student_id} does not exist.")
 
-    sub = Submission.query.filter(Submission.exam == exam,
-                                  Submission.student == student,
+    sub = Submission.query.filter(Submission.exam_id == exam_id,
+                                  Submission.student_id == student_id,
                                   Submission.validated).one_or_none()
     if sub is None:
-        raise RuntimeError('Student did not make a '
-                           'submission for this exam')
+        raise RuntimeError(
+            f'Student #{student_id} does not have a validated submission for exam {exam_id}.'
+        )
 
     results = []
+    total_score = 0
     for solution in sub.solutions:  # Sorted by problem_id
         problem = solution.problem
-        if len(problem.feedback_options) < 2:
-            # There is no possible feedback for this problem (take into account that root always exist)..
-            continue
 
         problem_data = {
             'id': problem.id,
             'name': problem.name,
-            'max_score': max(fb.score for fb in problem.feedback_options) or 0
+            'max_score': problem.max_score
         }
-
-        feedback = [fo for fo in problem.root_feedback.all_descendants if fo in solution.feedback]
 
         problem_data['feedback'] = [
             {'id': fo.id,
              'short': fo.text,
              'score': fo.score,
              'description': fo.description}
-            for fo in feedback if solution.graded_by
-        ]
-        problem_data['score'] = (
-            sum(i['score'] or 0 for i in problem_data['feedback'])
-            if problem_data['feedback']
-            else np.nan
-        )
-        problem_data['remarks'] = solution.remarks
+            for fo in solution.feedback
+        ] if solution.is_graded else []
+
+        problem_data['score'] = solution.score
+        problem_data['remarks'] = solution.remarks or ''
 
         results.append(problem_data)
+
+        total_score += problem_data['score'] if not np.isnan(problem_data['score']) else 0
 
     student = {
         'id': student.id,
         'first_name': student.first_name,
         'last_name': student.last_name,
         'email': student.email,
-        'total': sum(i['score'] for i in results if not np.isnan(i['score']))
+        'total': total_score
     }
 
     return student, results
@@ -72,7 +66,7 @@ def full_exam_data(exam_id):
     """Compute all grades of an exam as a pandas DataFrame."""
     exam = Exam.query.get(exam_id)
     if exam is None:
-        raise KeyError("No such exam.")
+        raise NoResultFound("Exam does not exist.")
 
     student_ids = db.session.query(Submission.student_id)\
         .filter(Submission.exam_id == exam.id, Submission.validated)\
@@ -93,10 +87,6 @@ def full_exam_data(exam_id):
         else:
             key = problem.name
         problem_keys[problem.id] = key
-
-        if len(problem.feedback_options) < 2:
-            # There is no possible feedback for this problem (take into account that root always exist).
-            continue
 
         columns[(key, 'remarks')] = 'string'
         for fo in problem.root_feedback.all_descendants:
@@ -126,7 +116,7 @@ def full_exam_data(exam_id):
         for problem in problems:
             key = problem_keys[problem['id']]
 
-            df.loc[student['id'], (key, 'remarks')] = problem['remarks'] or ''
+            df.loc[student['id'], (key, 'remarks')] = problem['remarks']
 
             for fo in problem['feedback']:
                 df.loc[student['id'], feedback_keys[fo['id']]] = fo['score']

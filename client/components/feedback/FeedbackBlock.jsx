@@ -4,8 +4,12 @@ import Tooltip from '../Tooltip.jsx'
 import { FILTER_COLORS, FILTER_ICONS, FeedbackList } from './FeedbackUtils.jsx'
 
 class FeedbackBlock extends React.Component {
+  state = {
+    edit: false
+  }
+
   toggle = () => {
-    if (!this.state.hover.edit) {
+    if (!this.state.edit) {
       this.props.toggleOption(this.props.feedback.id)
     }
   }
@@ -37,6 +41,7 @@ class FeedbackBlock extends React.Component {
             <button
               className={'button is-edit is-pulled-right'}
               onClick={this.props.editFeedback}
+              onMouseEnter={() => this.setState({ edit: true })} onMouseLeave={() => this.setState({ edit: false })}
             >
               <i className='fa fa-pen' />
             </button>

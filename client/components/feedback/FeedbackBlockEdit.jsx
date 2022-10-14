@@ -225,8 +225,8 @@ class EditPanel extends React.Component {
           </div>
         }
         <div className={this.props.parent !== null ? 'panel-block' : ''}>
-          <div className={'flex-space-between is-fullwidth'}>
-            <div className={'buttons is-marginless'}>
+          <div className='flex-space-between is-fullwidth'>
+            <div className='buttons is-marginless'>
               <SaveButton onClick={this.saveFeedback} exists={this.props.feedback}
                 disabled={!this.state.name ||
                   (!this.state.score && this.state.score !== 0) ||

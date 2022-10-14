@@ -1,0 +1,142 @@
+@import "bulma/bulma";
+
+.panel-block.attach-bottom {
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+.control.is-score-control {
+    width: 3rem;
+    margin-right: 0;
+}
+
+.control.is-score-control > .input {
+    text-align: center;
+    padding-left: 0.1rem;
+    padding-right: 0.1rem;
+}
+
+.panel-block.feedback-item {
+    display: grid;
+    border-top: hidden;
+    border-left: hidden;
+    border-right: hidden;
+    min-height: 48px;
+    max-width: 100%;
+    grid-template-columns: 1.5rem 1fr auto;
+    border-radius: 2px;
+    align-items: end;
+}
+
+.add-box-shadow {
+  box-shadow: whitesmoke 0 0 0.15rem 0.15rem;
+}
+
+.edit-container {
+  display: none;
+  grid-column: 3;
+  grid-row: 1;
+  z-index: 8;
+
+  @extend .add-box-shadow;
+}
+
+.filter-container {
+  display: block;
+  grid-column: 4;
+  grid-row: 1;
+  z-index: 8;
+
+  @extend .is-small;
+  @extend .is-light;
+  @extend .add-box-shadow;
+
+  &:hover {
+    @extend .is-link;
+  }
+
+  &.no-filter {
+    // @extend .is-inverted;
+    display: none;
+  }
+}
+
+.panel-block.feedback-item:hover {
+
+  .filter-container {
+    display: block;
+  }
+
+  .edit-container {
+    display: flex;
+  }
+}
+
+.is-edit {
+  @extend .is-small;
+  @extend .is-light;
+
+  &:hover {
+    @extend .is-link;
+  }
+}
+
+.is-filter {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 4em;
+  height: 4em;
+  transform: translateY(-25%);
+}
+
+.is-score {
+  width: 1.5rem;
+  grid-column: 1;
+  grid-row: 1;
+  align-self: center;
+}
+
+.grow {
+    flex-grow: 1 !important;
+}
+
+.no-grow {
+    flex-grow: 0 !important;
+}
+
+.flex-space-between {
+    display: flex;
+    justify-content: space-between;
+}
+
+.is-fullwidth {
+    width: 100%;
+}
+
+.text-container {
+    display: block;
+    justify-content: flex-start;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: normal;
+    grid-column: 2 / 999;
+    grid-row: 1;
+    min-width: 100%;
+    max-width: 100%;
+    padding-left: 0.5em;
+}
+
+/*
+    Quick fix for removing 1px spacing between arrow and tooltip, should not be necessary.
+    TODO: Find out why this happens
+*/
+[data-tooltip].tag.has-tooltip-left.has-tooltip-arrow::after {
+    left: -1px !important;
+}
+
+/* Remove the dashed bottom border introduced by span tags */
+span.tag {
+  border-style: solid;
+  border-width: 0.5px;
+}

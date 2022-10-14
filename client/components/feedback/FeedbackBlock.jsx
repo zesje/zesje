@@ -4,36 +4,11 @@ import Tooltip from '../Tooltip.jsx'
 import { FILTER_COLORS, FILTER_ICONS, FeedbackList } from './FeedbackUtils.jsx'
 
 class FeedbackBlock extends React.Component {
-  state = {
-    hover: {
-      block: false,
-      edit: false,
-      filter: false
-    }
-  }
+  toggle = () => this.props.toggleOption(this.props.feedback.id)
 
-  leave = (component) => {
-    this.setState(prevState => ({
-      hover: {
-        ...prevState.hover,
-        [component]: false
-      }
-    }))
-  }
-
-  enter = (component) => {
-    this.setState(prevState => ({
-      hover: {
-        ...prevState.hover,
-        [component]: true
-      }
-    }))
-  }
-
-  toggle = () => {
-    if (!this.state.hover.edit) {
-      this.props.toggleOption(this.props.feedback.id)
-    }
+  editFeedback = (e) => {
+    e.stopPropagation()
+    this.props.editFeedback()
   }
 
   render () {
@@ -44,11 +19,9 @@ class FeedbackBlock extends React.Component {
         <a
           className='panel-block feedback-item'
           onClick={this.props.grading ? this.toggle : this.props.editFeedback}
-          onMouseEnter={() => this.enter('block')} onMouseLeave={() => this.leave('block')}
         >
           <span
-            style={{ width: '1.5rem' }}
-            className={'tag has-tooltip-left has-tooltip-arrow' +
+            className={'tag is-score has-tooltip-left has-tooltip-arrow' +
               (this.props.exclusive ? ' is-circular' : ' is-squared') +
               (this.props.checked ? (this.props.valid ? ' is-link' : ' is-danger') : '') +
               ((this.props.showIndex && this.props.feedback.index <= 20)
@@ -57,37 +30,27 @@ class FeedbackBlock extends React.Component {
             data-tooltip={shortcut}>
             {this.props.feedback.score}
           </span>
-          <span className={'grow has-text-overflow'} style={{ paddingLeft: '0.5em' }}>
+          <span className='text-container'>
             {this.props.feedback.name}
-            <Tooltip text={this.props.feedback.description} />
           </span>
-          <button
-            className={'button is-pulled-right is-small is-light' +
-              (this.state.hover.block ? '' : ' is-invisible') +
-              (this.state.hover.edit ? ' is-link' : '')}
-            onMouseEnter={() => this.enter('edit')} onMouseLeave={() => this.leave('edit')}
-            onClick={this.props.editFeedback}
-          >
-            <i className='fa fa-pen' />
-          </button>
+          <div className='edit-container'>
+            <Tooltip button text={this.props.feedback.description} location='top' />
+            <button
+              className={'button is-edit is-pulled-right'}
+              onClick={this.editFeedback}
+            >
+              <i className='fa fa-pen' />
+            </button>
+          </div>
           {this.props.grading &&
             <div
-              className={`popover is-popover-right button is-pulled-right is-small is-light
-            ${(this.props.filterMode !== 'no_filter' ? 'is-inverted' : (this.state.hover.block ? '' : 'is-invisible'))}
-            ${FILTER_COLORS[this.props.filterMode]}`}
-              onMouseEnter={() => this.enter('filter')} onMouseLeave={() => this.leave('filter')}
+              className={
+                `popover is-popover-right button is-pulled-right filter-container
+                ${(this.props.filterMode === 'no_filter' ? ' no-filter' : '')}
+                ${FILTER_COLORS[this.props.filterMode]}`}
             >
               <i className={`fa ${FILTER_ICONS[this.props.filterMode]}`} />
-              <div
-                style={{
-                  display: this.state.hover.filter ? '' : 'none',
-                  position: 'absolute',
-                  left: 0,
-                  top: 0,
-                  width: '4em',
-                  height: '4em',
-                  transform: 'translateY(-25%)'
-                }}
+              <div className='is-filter'
                 onClick={e => this.props.applyFilter(e, 'no_filter')}
               />
               <div className='popover-content' style={{ display: 'grid', gridAutoFlow: 'row', gap: '1em' }}>

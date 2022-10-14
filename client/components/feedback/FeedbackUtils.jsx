@@ -69,7 +69,7 @@ const FeedbackList = (props) => {
       blockRef={props.feedbackBlock} />
   )
 
-  return <ul className='menu-list'>{children}</ul>
+  return <ul className='menu-list' style={{ marginRight: '0px' }}>{children}</ul>
 }
 
 const FeedbackItem = (props) => {

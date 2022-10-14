@@ -1,6 +1,5 @@
 @import "bulma/bulma";
 
-
 .panel-block.attach-bottom {
     padding-bottom: 0;
     border-bottom: none;
@@ -25,6 +24,7 @@
     min-height: 48px;
     max-width: 100%;
     grid-template-columns: 1.5rem 1fr auto;
+    border-radius: 2px;
 }
 
 .edit-container {

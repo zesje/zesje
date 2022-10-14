@@ -34,10 +34,6 @@
   z-index: 8;
 }
 
-.panel-block.feedback-item:hover .edit-container {
-  display: flex;
-}
-
 .filter-container {
   display: block;
   grid-column: 4;
@@ -57,8 +53,15 @@
   }
 }
 
-.panel-block.feedback-item:hover .filter-container {
-  display: block;
+.panel-block.feedback-item:hover {
+
+  .filter-container {
+    display: block;
+  }
+
+  .edit-container {
+    display: flex;
+  }
 }
 
 .is-edit {
@@ -102,9 +105,8 @@
     width: 100%;
 }
 
-
-.has-text-overflow {
-    display: flex;
+.text-container {
+    display: block;
     justify-content: flex-start;
     text-overflow: ellipsis;
     overflow: hidden;
@@ -113,6 +115,7 @@
     grid-row: 1;
     min-width: 100%;
     max-width: 100%;
+    padding-left: 0.5em;
 }
 
 /*

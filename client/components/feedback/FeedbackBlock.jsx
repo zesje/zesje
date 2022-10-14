@@ -29,7 +29,7 @@ class FeedbackBlock extends React.Component {
             data-tooltip={shortcut}>
             {this.props.feedback.score}
           </span>
-          <span className={'has-text-overflow'} style={{ paddingLeft: '0.5em' }}>
+          <span className='text-container'>
             {this.props.feedback.name}
           </span>
           <div className='edit-container'>

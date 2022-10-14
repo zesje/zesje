@@ -15,11 +15,13 @@
 }
 
 .panel-block.feedback-item {
-    display: flex;
+    display: grid;
     border-top: hidden;
     border-left: hidden;
     border-right: hidden;
     min-height: 48px;
+    max-width: 100%;
+    grid-template-columns: 1.5rem 1fr auto;
 }
 
 .grow {
@@ -41,9 +43,15 @@
 
 
 .has-text-overflow {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
     text-overflow: ellipsis;
     overflow: hidden;
-    white-space: normal;  /* use nowrap to force single-line text */
+    white-space: nowrap;  /* use nowrap to force single-line text */
+    grid-column: 2;
+    grid-row: 1;
+    min-width: 100%;
 }
 
 /*

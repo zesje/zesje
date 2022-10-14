@@ -47,7 +47,7 @@ class FeedbackBlock extends React.Component {
           onMouseEnter={() => this.enter('block')} onMouseLeave={() => this.leave('block')}
         >
           <span
-            style={{ width: '1.5rem' }}
+            style={{ width: '1.5rem', gridColumn: 1, gridRow: 1 }}
             className={'tag has-tooltip-left has-tooltip-arrow' +
               (this.props.exclusive ? ' is-circular' : ' is-squared') +
               (this.props.checked ? (this.props.valid ? ' is-link' : ' is-danger') : '') +
@@ -57,19 +57,20 @@ class FeedbackBlock extends React.Component {
             data-tooltip={shortcut}>
             {this.props.feedback.score}
           </span>
-          <span className={'grow has-text-overflow'} style={{ paddingLeft: '0.5em' }}>
+          <span className={'has-text-overflow'} style={{ paddingLeft: '0.5em' }}>
             {this.props.feedback.name}
           </span>
-          <Tooltip text={this.props.feedback.description} />
+          <div style={{ gridColumn: '3', zIndex: 8, gridRow: 1, display: this.state.hover.block ? 'flex' : 'none' }}>
+          <Tooltip text={this.props.feedback.description} location='top' />
           <button
             className={'button is-pulled-right is-small is-light' +
               (this.state.hover.edit ? ' is-link' : '')}
             onMouseEnter={() => this.enter('edit')} onMouseLeave={() => this.leave('edit')}
-            style={{ display: this.state.hover.block ? '' : 'none' }}
             onClick={this.props.editFeedback}
           >
             <i className='fa fa-pen' />
           </button>
+          </div>
           {this.props.grading &&
             <div
               className={
@@ -77,7 +78,12 @@ class FeedbackBlock extends React.Component {
                 ${(this.props.filterMode !== 'no_filter' ? ' is-inverted' : '')}
                 ${FILTER_COLORS[this.props.filterMode]}`}
               onMouseEnter={() => this.enter('filter')} onMouseLeave={() => this.leave('filter')}
-              style={{ display: !this.state.hover.block && this.props.filterMode === 'no_filter' ? 'none' : '' }}
+              style={{
+                display: !this.state.hover.block && this.props.filterMode === 'no_filter' ? 'none' : '',
+                gridColumn: '4',
+                zIndex: 8,
+                gridRow: 1
+              }}
             >
               <i className={`fa ${FILTER_ICONS[this.props.filterMode]}`} />
               <div

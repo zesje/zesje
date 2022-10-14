@@ -25,6 +25,11 @@
     max-width: 100%;
     grid-template-columns: 1.5rem 1fr auto;
     border-radius: 2px;
+    align-items: end;
+}
+
+.add-box-shadow {
+  box-shadow: whitesmoke 0 0 0.15rem 0.15rem;
 }
 
 .edit-container {
@@ -32,6 +37,8 @@
   grid-column: 3;
   grid-row: 1;
   z-index: 8;
+
+  @extend .add-box-shadow;
 }
 
 .filter-container {
@@ -42,6 +49,7 @@
 
   @extend .is-small;
   @extend .is-light;
+  @extend .add-box-shadow;
 
   &:hover {
     @extend .is-link;
@@ -86,6 +94,7 @@
   width: 1.5rem;
   grid-column: 1;
   grid-row: 1;
+  align-self: center;
 }
 
 .grow {
@@ -110,8 +119,8 @@
     justify-content: flex-start;
     text-overflow: ellipsis;
     overflow: hidden;
-    white-space: nowrap;  /* use nowrap to force single-line text */
-    grid-column: 2;
+    white-space: normal;
+    grid-column: 2 / 999;
     grid-row: 1;
     min-width: 100%;
     max-width: 100%;

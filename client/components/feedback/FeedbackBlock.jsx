@@ -34,7 +34,7 @@ class FeedbackBlock extends React.Component {
             {this.props.feedback.name}
           </span>
           <div className='edit-container'>
-            <Tooltip text={this.props.feedback.description} location='top' />
+            <Tooltip button text={this.props.feedback.description} location='top' />
             <button
               className={'button is-edit is-pulled-right'}
               onClick={this.editFeedback}

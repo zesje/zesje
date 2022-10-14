@@ -1,3 +1,6 @@
+@import "bulma/bulma";
+
+
 .panel-block.attach-bottom {
     padding-bottom: 0;
     border-bottom: none;
@@ -24,6 +27,64 @@
     grid-template-columns: 1.5rem 1fr auto;
 }
 
+.edit-container {
+  display: none;
+  grid-column: 3;
+  grid-row: 1;
+  z-index: 8;
+}
+
+.panel-block.feedback-item:hover .edit-container {
+  display: flex;
+}
+
+.filter-container {
+  display: block;
+  grid-column: 4;
+  grid-row: 1;
+  z-index: 8;
+
+  @extend .is-small;
+  @extend .is-light;
+
+  &:hover {
+    @extend .is-link;
+  }
+
+  &.no-filter {
+    // @extend .is-inverted;
+    display: none;
+  }
+}
+
+.panel-block.feedback-item:hover .filter-container {
+  display: block;
+}
+
+.is-edit {
+  @extend .is-small;
+  @extend .is-light;
+
+  &:hover {
+    @extend .is-link;
+  }
+}
+
+.is-filter {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 4em;
+  height: 4em;
+  transform: translateY(-25%);
+}
+
+.is-score {
+  width: 1.5rem;
+  grid-column: 1;
+  grid-row: 1;
+}
+
 .grow {
     flex-grow: 1 !important;
 }
@@ -45,13 +106,13 @@
 .has-text-overflow {
     display: flex;
     justify-content: flex-start;
-    align-items: center;
     text-overflow: ellipsis;
     overflow: hidden;
     white-space: nowrap;  /* use nowrap to force single-line text */
     grid-column: 2;
     grid-row: 1;
     min-width: 100%;
+    max-width: 100%;
 }
 
 /*

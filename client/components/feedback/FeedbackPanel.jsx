@@ -8,7 +8,7 @@ import withShortcuts from '../ShortcutBinder.jsx'
 
 import FeedbackMenu from './FeedbackMenu.jsx'
 
-import './Feedback.css'
+import './Feedback.scss'
 
 class FeedbackPanel extends React.Component {
   state = {

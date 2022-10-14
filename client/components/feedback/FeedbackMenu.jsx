@@ -4,7 +4,7 @@ import withShortcuts from '../ShortcutBinder.jsx'
 import FeedbackBlockEdit from './FeedbackBlockEdit.jsx'
 import { indexFeedbackOptions, findFeedbackByIndex, FeedbackList } from './FeedbackUtils.jsx'
 
-import './Feedback.css'
+import './Feedback.scss'
 
 class FeedbackMenu extends React.Component {
   feedbackBlock = React.createRef();

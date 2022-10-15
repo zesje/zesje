@@ -1,4 +1,4 @@
-# This base image can be found in 'Dockerfile'
+# This base image can be found in 'test.Dockerfile'
 image: $TEST_IMAGE
 
 stages:

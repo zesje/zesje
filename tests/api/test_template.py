@@ -91,7 +91,6 @@ def test_render_template(app_with_data, test_client, mock_solution_data):
         "{% for problem in results -%}{{problem.name}} {{problem.score}} {{problem.max_score}}{% endfor %}"
     )
     result = test_client.post('/api/templates/rendered/1/1', data={'template': test_template})
-    print(result)
     assert result.status_code == 200
 
     data = json.loads(result.data)
@@ -106,3 +105,12 @@ def test_render_template(app_with_data, test_client, mock_solution_data):
     assert parts[0] == 'name'
     assert int(parts[1]) == 8
     assert int(parts[2]) == 10
+
+
+@pytest.mark.parametrize('template, status_code', [
+    ('{{student.first_name} {{student.last_name}}', 400),
+    ('{{teacher.address}}', 400)
+], ids=['Syntax error', 'Undefined variable'])
+def test_render_invalid_template(app_with_data, test_client, mock_solution_data, template, status_code):
+    result = test_client.post('/api/templates/rendered/1/1', data={'template': template})
+    assert result.status_code == status_code

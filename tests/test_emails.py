@@ -12,7 +12,7 @@ from zesje.images import get_box
 from zesje.scans import exam_student_id_widget
 
 
-def add_test_data(layout, data_dir):
+def add_test_data(layout, data_dir, validated=True):
     exam = Exam(name='Email', layout=layout, finalized=True)
     student = Student(id=1234323, first_name='Jamy', last_name='Macgiver', email='J.M@tudelft.nl')
     db.session.add(exam)
@@ -28,7 +28,7 @@ def add_test_data(layout, data_dir):
         ))
         db.session.commit()
 
-    sub = Submission(exam=exam, student=student, validated=True)
+    sub = Submission(exam=exam, student=student, validated=validated)
     db.session.add(sub)
 
     copy = Copy(submission=sub, number=1)
@@ -41,6 +41,14 @@ def add_test_data(layout, data_dir):
     db.session.commit()
 
     return exam, student
+
+
+@pytest.fixture
+def email_app(app, smtpd):
+    app.config['SMTP_SERVER'] = smtpd.hostname
+    app.config['SMTP_PORT'] = smtpd.port
+
+    yield app
 
 
 @pytest.mark.parametrize('layout, anonymous', [
@@ -81,24 +89,18 @@ def test_build_email():
     assert message['Subject'] == 'Secret key'
 
 
-def test_defaul_email_manager(app):
+def test_defaul_email_manager(email_app):
     manager = current_email_manager()
 
-    assert manager.hostname == app.config['SMTP_SERVER']
-    assert manager.port == app.config['SMTP_PORT']
-    assert manager.use_ssl == app.config['USE_SSL']
-    assert manager.user == app.config['SMTP_USERNAME']
-    assert manager.password == app.config['SMTP_PASSWORD']
+    assert manager.hostname == email_app.config['SMTP_SERVER']
+    assert manager.port == email_app.config['SMTP_PORT']
+    assert manager.use_ssl == email_app.config['USE_SSL']
+    assert manager.user == email_app.config['SMTP_USERNAME']
+    assert manager.password == email_app.config['SMTP_PASSWORD']
 
 
-def test_email_manager_reconnect(app, smtpd):
-    manager = _EmailManager(
-        hostname=smtpd.hostname,
-        use_ssl=False,
-        port=smtpd.port,
-        user=app.config.get('SMTP_USERNAME'),
-        password=app.config.get('SMTP_PASSWORD')
-    )
+def test_email_manager_reconnect(email_app):
+    manager = current_email_manager()
 
     with manager as server:
         assert server.is_connected()
@@ -113,18 +115,11 @@ def test_email_manager_reconnect(app, smtpd):
 
 
 @pytest.mark.parametrize('attach', [True, False])
-def test_build_and_send(app, smtpd, datadir, attach):
-    manager = _EmailManager(
-        hostname=smtpd.hostname,
-        use_ssl=False,
-        port=smtpd.port,
-        user=app.config.get('SMTP_USERNAME'),
-        password=app.config.get('SMTP_PASSWORD')
-    )
+def test_build_and_send(email_app, smtpd, datadir, attach):
     exam, student = add_test_data(ExamLayout.templated, datadir)
 
     sent, failed = build_and_send(
-        [student], 'marks@teacher.com', exam, default_email_template, attach, _email_manager=manager
+        [student], 'marks@teacher.com', exam, default_email_template, attach
     )
 
     assert len(sent) == len(smtpd.messages) == 1
@@ -132,7 +127,7 @@ def test_build_and_send(app, smtpd, datadir, attach):
 
 
 class _DisconnectedManager(_EmailManager):
-    """dummy server that does not connect automatically"""
+    """dummy server that counts the number of reconnects"""
     reconnects = 0
 
     def __enter__(self):
@@ -166,11 +161,8 @@ def test_send_after_disconnect(app, smtpd, datadir):
 
 
 @pytest.mark.parametrize('all', [True, False])
-def test_api(test_client, app, smtpd, datadir, all):
+def test_api(test_client, email_app, datadir, all):
     exam, student = add_test_data(ExamLayout.templated, datadir)
-
-    app.config['SMTP_SERVER'] = smtpd.hostname
-    app.config['SMTP_PORT'] = smtpd.port
 
     result = test_client.post(
         f'/api/email/{exam.id}' if all else f'/api/email/{exam.id}/{student.id}',
@@ -178,3 +170,39 @@ def test_api(test_client, app, smtpd, datadir, all):
     )
 
     assert result.status_code == 200
+
+
+def test_copy_to_without_student(test_client, email_app, datadir):
+    exam, student = add_test_data(ExamLayout.templated, datadir)
+
+    result = test_client.post(
+        f'/api/email/{exam.id}',
+        data={'template': default_email_template, 'attach': False, 'copy_to': 'john.doe@unknown'}
+    )
+
+    assert result.status_code == 409
+
+
+def test_submission_not_validated(test_client, email_app, datadir):
+    exam, student = add_test_data(ExamLayout.templated, datadir, validated=False)
+
+    result = test_client.post(
+        f'/api/email/{exam.id}',
+        data={'template': default_email_template, 'attach': False}
+    )
+
+    assert result.status_code == 409
+
+
+def test_server_not_configured(test_client, email_app, datadir):
+    exam, student = add_test_data(ExamLayout.templated, datadir)
+
+    email_app.config['SMTP_SERVER'] = None
+    email_app.config['FROM_ADDRESS'] = None
+
+    result = test_client.post(
+        f'/api/email/{exam.id}',
+        data={'template': default_email_template, 'attach': False}
+    )
+
+    assert result.status_code == 409

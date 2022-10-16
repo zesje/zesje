@@ -250,34 +250,43 @@ def build_and_send(
     if _email_manager is None:
         _email_manager = current_email_manager()  # only modify this during tests
 
+    student_messages = []
+    for student in students:
+        try:
+            student_messages.append((student, render(exam.id, student.id, template)))
+        except TemplateSyntaxError as error:
+            failed.append({
+                'studentID': student.id,
+                'status': FailStatus.build.name,
+                'message': f"Syntax error in the template: {error.message}"
+            })
+        except UndefinedError as error:
+            failed.append({
+                'studentID': student.id,
+                'status': FailStatus.build.name,
+                'message': f"Undefined variables in the template: {error.message}"
+            })
+
+    if not student_messages:
+        return sent, failed
+
     with _email_manager as server:
-        for student in students:
+        for student, content in student_messages:
             try:
-                attachment = build_solution_attachment(exam.id, student.id, file_name=f'{student.id}_{exam.name}.pdf')
-                content = render(exam.id, student.id, template)
+                attachment = (
+                    build_solution_attachment(exam.id, student.id, file_name=f'{student.id}_{exam.name}.pdf')
+                    if attach else None
+                )
                 message = build(
                     student.email,
                     content,
-                    attachment if attach else None,
+                    attachment,
                     copy_to=copy_to,
                     email_from=from_address,
                 )
                 server.send(from_address, message)
-            except TemplateSyntaxError as error:
-                failed.append({
-                    'studentID': student.id,
-                    'status': FailStatus.build.name,
-                    'message': f"Syntax error in the template: {error.message}"
-                })
-            except UndefinedError as error:
-                failed.append({
-                    'studentID': student.id,
-                    'status': FailStatus.build.name,
-                    'message': f"Undefined variables in the template: {error.message}"
-                })
             except werkzeug.exceptions.Conflict as e:
-                # No email address provided. Any other failures are errors,
-                # so we let other exceptions raise.
+                # No email address provided.
                 failed.append({
                     'studentID': student.id,
                     'status': FailStatus.build.name,

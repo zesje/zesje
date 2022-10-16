@@ -5,7 +5,6 @@ import { toast } from 'bulma-toast'
 import { Document, Page } from 'react-pdf/dist/esm/entry.webpack'
 
 import * as api from '../api.jsx'
-import Hero from '../components/Hero.jsx'
 
 const LAYOUTS = [
   {
@@ -102,11 +101,6 @@ class Exams extends React.Component {
 
     return (
       <>
-
-        <Hero title='Add exam' subtitle='first step' />
-
-        <section className='section'>
-          <div className='container'>
             <div className='field is-horizontal'>
               <div className='field-label'>
                 <label className='label'>Name</label>
@@ -224,11 +218,6 @@ class Exams extends React.Component {
                 </div>
               </div>
             </div>
-
-          </div>
-
-        </section>
-
       </>
     )
   }

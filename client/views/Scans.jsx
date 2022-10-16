@@ -4,8 +4,6 @@ import { toast } from 'bulma-toast'
 import Dropzone from 'react-dropzone'
 import PageVisibility from 'react-page-visibility'
 
-import Hero from '../components/Hero.jsx'
-
 import * as api from '../api.jsx'
 
 const INTERVAL_FAST = 1000 // 1s
@@ -155,13 +153,7 @@ class Scans extends React.Component {
       'application/zip,application/octet-stream,application/x-zip-compressed,multipart/x-zip'
 
     return (
-      <div>
-
-        <Hero title='Scans' subtitle='Upload scans and check missing pages' />
-
-        <section className='section'>
-
-          <div className='container'>
+      <>
             {this.state.hasStudents === false &&
               <article className='message is-warning'>
                 <div className='message-body'>
@@ -210,9 +202,7 @@ class Scans extends React.Component {
                 </PageVisibility>
               </div>
             </div>
-          </div>
-        </section>
-      </div>
+      </>
     )
   }
 }

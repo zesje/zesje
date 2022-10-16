@@ -1,6 +1,5 @@
 import React from 'react'
 
-import Hero from '../components/Hero.jsx'
 import Fail from './Fail.jsx'
 import * as api from '../api.jsx'
 
@@ -49,9 +48,6 @@ class Email extends React.Component {
 
     return (
       <>
-        <Hero title='Email' subtitle='So the students get their feedback' />
-        <section className='section'>
-          <div className='container'>
             <div className='columns is-tablet'>
               <div className='column is-3-tablet'>
                 <TemplateControls
@@ -85,8 +81,6 @@ class Email extends React.Component {
                 }}
               />
             </div>
-          </div>
-        </section>
       </>
     )
   }

@@ -1,6 +1,6 @@
 import React from 'react'
 
-const Hero = (props) => {
+const Footer = (props) => {
   return (
     <footer className='footer'>
       <div className='container'>
@@ -26,4 +26,4 @@ const Hero = (props) => {
   )
 }
 
-export default Hero
+export default Footer

@@ -1,22 +1,12 @@
 import React from 'react'
 
-import Hero from '../components/Hero.jsx'
-
 const Home = (props) => {
   return (
-    <div>
+    <div className='notification is-danger has-text-centered content'>
 
-      <Hero
-        title='Oops!'
-        subtitle={props.message ? props.message : "Something went wrong :'("}
-        colour='is-danger'
-      />
+      <h1 className='has-text-white'>Oops!</h1>
 
-      <section className='section'>
-
-        <div className='container' />
-
-      </section>
+      <h4 className='has-text-white'>{props.message ? props.message : "Something went wrong :'("}</h4>
 
     </div>
   )

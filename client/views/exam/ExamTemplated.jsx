@@ -546,32 +546,6 @@ class ExamTemplated extends React.Component {
     }))
   }
 
-  sidePanel = () => {
-    const selectedWidgetId = this.state.selectedWidgetId
-    const selectedWidget = selectedWidgetId && this.state.widgets[selectedWidgetId]
-    const problem = selectedWidget && selectedWidget.problem
-    const widgetEditDisabled = (this.state.previewing || !problem)
-    const isGraded = problem && problem.n_graded > 0
-    const widgetDeleteDisabled = widgetEditDisabled || isGraded
-
-    return (
-      <>
-        <Pager
-          page={this.state.page}
-          numPages={this.state.numPages}
-          setPage={this.setPage}
-        />
-        {this.panelEdit(problem, widgetEditDisabled, widgetDeleteDisabled)}
-        {this.panelExamActions()}
-        {this.props.exam.finalized && <PanelGradeAnonymous
-          examID={this.props.exam.id}
-          gradeAnonymous={this.props.exam.gradeAnonymous}
-          onChange={(anonymous) => this.props.updateExam()}
-          />}
-      </>
-    )
-  }
-
   panelEdit = (problem, widgetEditDisabled, widgetDeleteDisabled) => {
     const selectedWidgetId = this.state.selectedWidgetId
 
@@ -746,7 +720,7 @@ class ExamTemplated extends React.Component {
 
     return (
       <PanelFinalize
-        examID={this.props.examID}
+        examID={this.state.examID}
         onFinalize={this.onFinalize}
         deleteExam={this.props.deleteExam}
       >
@@ -756,22 +730,42 @@ class ExamTemplated extends React.Component {
   }
 
   render () {
+    const selectedWidgetId = this.state.selectedWidgetId
+    const selectedWidget = selectedWidgetId && this.state.widgets[selectedWidgetId]
+    const problem = selectedWidget && selectedWidget.problem
+    const widgetEditDisabled = (this.state.previewing || !problem)
+    const isGraded = problem && problem.n_graded > 0
+    const widgetDeleteDisabled = widgetEditDisabled || isGraded
+
     return (
       <>
-        <div className='columns is-centered'>
-          <div className='column is-one-quarter-fullhd is-one-third-desktop'>
+        <div className='columns is-centered is-multiline'>
+          <div className='column is-one-quarter-fullhd is-full-desktop is-full-touch'>
             <PanelExamName
               name={this.props.examName}
               examID={this.state.examID}
               updateExam={this.props.updateExam}
               updateExamList={this.props.updateExamList}
             />
-            {this.sidePanel()}
+            {this.panelExamActions()}
+            {this.props.exam.finalized && <PanelGradeAnonymous
+              examID={this.state.examID}
+              gradeAnonymous={this.props.exam.gradeAnonymous}
+              onChange={(anonymous) => this.props.updateExam()}
+              />}
           </div>
           <div className='column is-narrow'>
+            <Pager
+              page={this.state.page}
+              numPages={this.state.numPages}
+              setPage={this.setPage}
+            />
             <div className='editor-content'>
               {this.renderContent()}
             </div>
+          </div>
+          <div className='column'>
+            {this.panelEdit(problem, widgetEditDisabled, widgetDeleteDisabled)}
           </div>
         </div>
         <ConfirmationModal

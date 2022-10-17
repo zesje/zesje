@@ -3,6 +3,8 @@ import os
 
 from pikepdf import Pdf
 import numpy as np
+import werkzeug
+import smtplib
 
 from zesje.database import db, Exam, ExamLayout, ExamWidget, Submission, Copy, Page, Student
 from zesje.emails import solution_pdf, build, build_and_send, current_email_manager, _EmailManager
@@ -49,6 +51,12 @@ def email_app(app, smtpd):
     app.config['SMTP_PORT'] = smtpd.port
 
     yield app
+
+
+@pytest.fixture
+def email_client(email_app):
+    with email_app.test_client() as client:
+        yield client
 
 
 @pytest.mark.parametrize('layout, anonymous', [
@@ -161,10 +169,10 @@ def test_send_after_disconnect(app, smtpd, datadir):
 
 
 @pytest.mark.parametrize('all', [True, False])
-def test_api(test_client, email_app, datadir, all):
+def test_api(email_client, datadir, all):
     exam, student = add_test_data(ExamLayout.templated, datadir)
 
-    result = test_client.post(
+    result = email_client.post(
         f'/api/email/{exam.id}' if all else f'/api/email/{exam.id}/{student.id}',
         data={'template': default_email_template, 'attach': False}
     )
@@ -172,10 +180,10 @@ def test_api(test_client, email_app, datadir, all):
     assert result.status_code == 200
 
 
-def test_copy_to_without_student(test_client, email_app, datadir):
+def test_copy_to_without_student(email_client, datadir):
     exam, student = add_test_data(ExamLayout.templated, datadir)
 
-    result = test_client.post(
+    result = email_client.post(
         f'/api/email/{exam.id}',
         data={'template': default_email_template, 'attach': False, 'copy_to': 'john.doe@unknown'}
     )
@@ -183,10 +191,10 @@ def test_copy_to_without_student(test_client, email_app, datadir):
     assert result.status_code == 409
 
 
-def test_submission_not_validated(test_client, email_app, datadir):
+def test_submission_not_validated(email_client, datadir):
     exam, student = add_test_data(ExamLayout.templated, datadir, validated=False)
 
-    result = test_client.post(
+    result = email_client.post(
         f'/api/email/{exam.id}',
         data={'template': default_email_template, 'attach': False}
     )
@@ -194,13 +202,49 @@ def test_submission_not_validated(test_client, email_app, datadir):
     assert result.status_code == 409
 
 
-def test_server_not_configured(test_client, email_app, datadir):
+class _RaiseManager(_EmailManager):
+    """dummy server that counts the number of reconnects"""
+    def __init__(self, error, **kwargs):
+        super().__init__(**kwargs)
+        self.error = error
+
+    def send(self, from_address, message):
+        raise self.error
+
+
+@pytest.mark.parametrize('error, status', [
+    (werkzeug.exceptions.Conflict(), 'build'),
+    (smtplib.SMTPRecipientsRefused({'J.M@tudelft.nl': (666, b'devil')}), 'send'),
+    (smtplib.SMTPResponseException(666, b'devil'), 'send'),
+    (RuntimeError, 'attach')
+])
+def test_server_error(app, smtpd, datadir, error, status):
+    exam, student = add_test_data(ExamLayout.templated, datadir)
+
+    manager = _RaiseManager(
+        error=error,
+        hostname=smtpd.hostname,
+        use_ssl=False,
+        port=smtpd.port,
+        user=app.config.get('SMTP_USERNAME'),
+        password=app.config.get('SMTP_PASSWORD')
+    )
+
+    sent, failed = build_and_send(
+        [student], 'marks@teacher.com', exam, default_email_template, attach=False, _email_manager=manager
+    )
+
+    assert len(failed) == 1
+    assert failed[0]['status'] == status
+
+
+def test_server_not_configured(email_client, email_app, datadir):
     exam, student = add_test_data(ExamLayout.templated, datadir)
 
     email_app.config['SMTP_SERVER'] = None
     email_app.config['FROM_ADDRESS'] = None
 
-    result = test_client.post(
+    result = email_client.post(
         f'/api/email/{exam.id}',
         data={'template': default_email_template, 'attach': False}
     )

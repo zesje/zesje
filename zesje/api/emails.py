@@ -4,7 +4,6 @@ import textwrap
 
 from jinja2 import Template, TemplateSyntaxError, UndefinedError
 
-import werkzeug.exceptions
 from flask import current_app
 from flask_restful import Resource, reqparse
 
@@ -54,33 +53,6 @@ def render_email(exam_id, student_id, template):
             400,
             message=f"Undefined variables in the template: {error.message}",
         )
-
-
-def build_email(exam_id, student_id, template, attach, from_address, copy_to=None):
-    student = Student.query.get(student_id)
-    if student is None:
-        abort(
-            404,
-            message=f"Student #{student_id} does not exist"
-        )
-    if not student.email:
-        abort(
-            409,
-            message=f'Student #{student_id} has no email address'
-        )
-
-    exam = Exam.query.get(exam_id)
-    file_name = f"{student_id}_{exam.name}.pdf"
-
-    return emails.build(
-        student.email,
-        render_email(exam_id, student_id, template),
-        emails.build_solution_attachment(exam_id, student_id, file_name)
-        if attach
-        else None,
-        copy_to=copy_to,
-        email_from=from_address,
-    )
 
 
 class EmailTemplate(Resource):
@@ -142,8 +114,8 @@ class Email(Resource):
 
         Returns
         -------
-        400 error if not all submissions from exam are validated (because we
-        might send wrong emails this way).
+        400 error if not all submissions from exam are validated
+        (because we might send wrong emails this way).
         """
         args = self.post_parser.parse_args()
         template = args['template']
@@ -151,125 +123,56 @@ class Email(Resource):
         copy_to = args['copy_to']
 
         if student_id is None and copy_to is not None:
-            abort(
-                409,
+            return dict(
+                status=409,
                 message="Not CC-ing all emails from the exam."
-            )
+            ), 409
 
         exam = Exam.query.get(exam_id)
         if exam is None:
-            abort(
-                404,
+            return dict(
+                status=404,
                 message="Exam does not exist"
-            )
+            ), 404
 
         if not all(sub.validated for sub in exam.submissions):
-            abort(
-                409,
-                message="All copies must be validated before "
-                        "sending emails."
-            )
+            return dict(
+                status=409,
+                message="All copies must be validated before sending emails."
+            ), 409
+
+        if not (current_app.config.get('SMTP_SERVER') and current_app.config.get('FROM_ADDRESS')):
+            return dict(
+                status=409,
+                message='Sending email is not configured'
+            ), 409
 
         if student_id is not None:
-            return self._send_single(exam_id, student_id, template, attach, copy_to)
+            students = [Student.query.get(student_id)]
         else:
-            return self._send_all(exam_id, template, attach)
+            students = [sub.student for sub in exam.submissions if sub.student_id and sub.validated]
 
-    def _send_single(self, exam_id, student_id, template, attach, copy_to):
-        if not (current_app.config.get('SMTP_SERVER') and current_app.config.get('FROM_ADDRESS')):
-            abort(
-                500,
-                message='Sending email is not configured'
-            )
-        message = build_email(
-            exam_id, student_id, template,
-            attach, current_app.config['FROM_ADDRESS'], copy_to,
-        )
-        failed = emails.send(
-            {student_id: message},
-            server=current_app.config['SMTP_SERVER'],
+        sent, failed = emails.build_and_send(
+            students,
             from_address=current_app.config['FROM_ADDRESS'],
-            port=current_app.config.get('SMTP_PORT'),
-            user=current_app.config.get('SMTP_USERNAME'),
-            password=current_app.config.get('SMTP_PASSWORD'),
-            use_ssl=current_app.config.get('USE_SSL'),
+            exam=exam,
+            template=template,
+            attach=attach
         )
+
         if failed:
-            abort(
-                500,
-                message=f'Failed to send email to student #{student_id}'
-            )
-        return dict(status=200)
-
-    def _send_all(self, exam_id, template, attach):
-        if not (current_app.config.get('SMTP_SERVER') and current_app.config.get('FROM_ADDRESS')):
-            abort(
-                500,
-                message='Sending email is not configured'
-            )
-        exam = Exam.query.get(exam_id)
-        if exam is None:
-            abort(
-                404,
-                message="Exam does not exist"
-            )
-        student_ids = [sub.student_id for sub in exam.submissions if sub.student_id and sub.validated]
-
-        failed_to_build = list()
-        to_send = dict()
-        for student_id in student_ids:
-            try:
-                to_send[student_id] = build_email(
-                    exam_id, student_id, template,
-                    attach, current_app.config['FROM_ADDRESS'],
-                )
-            except werkzeug.exceptions.Conflict:
-                # No email address provided. Any other failures are errors,
-                # so we let other exceptions raise.
-                failed_to_build.append(student_id)
-
-        failed_to_send = emails.send(
-            to_send,
-            server=current_app.config['SMTP_SERVER'],
-            from_address=current_app.config['FROM_ADDRESS'],
-            port=current_app.config.get('SMTP_PORT'),
-            user=current_app.config.get('SMTP_USERNAME'),
-            password=current_app.config.get('SMTP_PASSWORD'),
-            use_ssl=current_app.config.get('USE_SSL'),
-        )
-
-        sent = set(student_ids) - (set(failed_to_send) | set(failed_to_build))
-        sent = list(sent)
-
-        if failed_to_build or failed_to_send:
             if len(sent) > 0:
                 return dict(
                     status=206,
-                    message='Failed to send some emails',
+                    message=f'Failed to send some emails ({len(sent)}/{len(students)}).',
                     sent=sent,
-                    failed_to_build=failed_to_build,
-                    failed_to_send=failed_to_send,
+                    failed=failed
                 ), 206
-            elif not failed_to_send:  # all failed to build
-                abort(
-                    409,
-                    message='No students have email addresses specified',
-                ), 409
-            elif not failed_to_build:  # all failed to send
-                abort(
-                    500,
-                    message='Failed to send emails',
-                    failed_to_send=failed_to_send,
-                ), 500
             else:
-                abort(
-                    500,
-                    message=(
-                        f'Email addresses unspecified for {len(failed_to_build)} students '
-                        f'and {len(failed_to_send)} messages failed to send.'
-                    ),
-                    failed_to_build=failed_to_build,
-                    failed_to_send=failed_to_send,
+                return dict(
+                    status=500,
+                    message='Failed to send all emails.',
+                    failed=failed,
                 ), 500
-        else:
-            return dict(status=200)
+
+        return dict(status=200), 200

@@ -11,7 +11,7 @@ import NavBar from './components/NavBar.jsx'
 import ExamRouter from './components/ExamRouter.jsx'
 import Footer from './components/Footer.jsx'
 import Loading from './views/Loading.jsx'
-import HelpModal, { HELP_PAGES } from './components/help/HelpModal.jsx'
+import HelpModal, { HELP_PAGES } from './components/modals/HelpModal.jsx'
 
 const Login = loadable(() => import('./views/Login.jsx'), { fallback: <Loading /> })
 const Home = loadable(() => import('./views/Home.jsx'), { fallback: <Loading /> })

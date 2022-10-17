@@ -23,3 +23,11 @@ OAUTH_INFO_URL = 'https://localhost/oauth/userinfo'
 OAUTH_ID_FIELD = 'email'
 OAUTH_NAME_FIELD = 'name'
 OAUTH_SCOPES = []
+
+# Email settings
+USE_SSL = False
+SMTP_SERVER = 'localhost'
+SMTP_PORT = 415
+FROM_ADDRESS = 'mock@email.nl'
+SMTP_USERNAME = ''
+SMTP_PASSWORD = ''

@@ -10,7 +10,7 @@ import SearchBox from '../components/SearchBox.jsx'
 import Img from '../components/Img.jsx'
 import withShortcuts from '../components/ShortcutBinder.jsx'
 import withRouter from '../components/RouterBinder.jsx'
-import ConfirmationModal from '../components/ConfirmationModal.jsx'
+import ConfirmationModal from '../components/modals/ConfirmationModal.jsx'
 import Fail from './Fail.jsx'
 
 import SearchPanel from './students/SearchPanel.jsx'
@@ -377,7 +377,7 @@ class CheckStudents extends React.Component {
 
                   <ProgressBar done={done} total={total} />
 
-                  <p className='box'>
+                  <div className='box'>
                     <Img
                       src={`api/images/signature/${this.state.examID}/${copy && copy.number}` }
                       alt={copy != null ? `Signature image #${copy.number}` : ''}
@@ -387,7 +387,7 @@ class CheckStudents extends React.Component {
                       </div>
                     }
                     />
-                  </p>
+                  </div>
 
                 </div>
                 : null}

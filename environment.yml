@@ -1,7 +1,6 @@
 name: zesje-dev
 channels:
     - conda-forge
-    - anaconda
 dependencies:
     - python=3.8
     - yarn
@@ -11,6 +10,32 @@ dependencies:
     - imagemagick
     - mysql=8.0
     - pymysql
+
+    # Exporting
+    - pandas
+    - openpyxl  # required for writing dataframes as Excel spreadsheets
+
+    # General utilities
+    - numpy
+    - scipy
+
+    # PDF generation
+    - pillow>=8.2.0  # also scan processing
+
+    #
+    # Development dependencies
+    #
+
+    # Sandbox data generation
+    - lorem # For random text
+
+    # Tests
+    - pytest
+    - pytest-cov
+    - requests-mock
+
+    # Linting
+    - flake8
 
     - pip:
         # Core components
@@ -35,15 +60,10 @@ dependencies:
         #flask role management
         - flask-principal
 
-        # General utilities
-        - numpy
-        - scipy
-
         # PDF generation
         - pdfrw>=0.4
         - reportlab>=3.5.0
         - wand>=0.6.6
-        - pillow>=8.2.0  # also scan processing
         - zipstream-new>=1.1.8
 
         # Scan processing
@@ -51,10 +71,6 @@ dependencies:
         - pikepdf>=2.12.1
         - pylibdmtx>=0.1.9
         - pdfminer.six>=20201018
-
-        # Exporting
-        - pandas
-        - openpyxl  # required for writing dataframes as Excel spreadsheets
 
         # mysql
         - cryptography
@@ -64,14 +80,8 @@ dependencies:
         #
 
         # Sandbox data generation
-        - lorem # For random text
         - names # For random names
 
         # Tests
-        - pytest
         - pyssim
-        - pytest-cov
-        - requests-mock
-
-        # Linting
-        - flake8
+        - smtpdfix  # mock email server

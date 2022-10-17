@@ -2,7 +2,7 @@ import React from 'react'
 import { toast } from 'bulma-toast'
 
 import FeedbackMenu from '../../components/feedback/FeedbackMenu.jsx'
-import ConfirmationModal from '../../components/ConfirmationModal.jsx'
+import ConfirmationModal from '../../components/modals/ConfirmationModal.jsx'
 import ExamUnstructuredRules from './ExamUnstructuredRules.md'
 import PanelGradeAnonymous from './PanelGradeAnonymous.jsx'
 import PanelExamName from './PanelExamName.jsx'

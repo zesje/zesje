@@ -1,4 +1,5 @@
 from io import BytesIO
+from enum import Enum
 
 import smtplib
 
@@ -7,8 +8,9 @@ from email.mime.text import MIMEText
 from email.mime.base import MIMEBase
 from email import encoders
 
-import jinja2
+from jinja2 import Template, TemplateSyntaxError, UndefinedError
 from flask import current_app
+import werkzeug.exceptions
 
 from reportlab.pdfgen import canvas
 from reportlab.lib.utils import ImageReader
@@ -22,8 +24,106 @@ from .api.images import _grey_out_student_widget
 from .scans import exam_student_id_widget
 
 
+FailStatus = Enum(
+    'FailStatus',
+    'build attach send'
+)
+
+
+class _EmailManager():
+    """Context email manager for sending emails logged in.
+
+    This takes care of reconnecting to the server in case it disconnects which can happen
+    when sending a lot of emails with relatively large idle time between them. For instance,
+    when building the solution pdf.
+
+    Parameters
+    ----------
+    hostname : string
+        SMTP server domain name or IP address.
+    use_ssl : bool or None
+        Whether to use SSL connection. If not provided, it is inferred from the
+        port.
+    port : int, optional
+        STMP port.
+    user, password : string, optional
+        Login credentials.
+    """
+
+    def __init__(self, hostname, port=465, use_ssl=None, user=None, password=None):
+        self.hostname = hostname
+        self.port = port
+        self.use_ssl = use_ssl
+        if self.use_ssl is None:
+            self.use_ssl = self.port == 465
+        self.server_type = smtplib.SMTP_SSL if self.use_ssl else smtplib.SMTP
+        self.user = user
+        self.password = password
+
+    def __enter__(self):
+        self.server = self.server_type(self.hostname, self.port)
+        if self.port == 587:
+            self.server.starttls()
+        if self.user and self.password:
+            self.server.login(self.user, self.password)
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if self.server:
+            self.server.__exit__()
+
+    def reconnect(self):
+        """reconnect to the server or raise an `SMTPConnectError`"""
+        status, msg = self.server.connect(self.hostname, self.port)
+        if status != 220:
+            self.server.close()
+            raise smtplib.SMTPConnectError(status, msg)
+
+    def is_connected(self):
+        # https://stackoverflow.com/questions/12552905/python-can-i-check-if-smtp-server-is-disconnected-so-i-can-connect-again
+        try:
+            status = self.server.noop()[0]
+        except smtplib.SMTPServerDisconnected:
+            status = -1
+
+        return status == 250
+
+    def send(self, from_address, message):
+        """sends an email from `from_address` with content `message` but reconnects and tries again if disconnected."""
+        recipients = [
+            *message['To'].split(','),
+            *(message['Cc'].split(',') if 'Cc' in message else [])
+        ]
+
+        try:
+            self.server.sendmail(
+                from_address,
+                recipients,
+                message.as_string()
+            )
+        except smtplib.SMTPServerDisconnected:
+            # server has disconnected, try to reconnect and send the message again
+            print('email server disconnected, trying to connect again.')
+            self.reconnect()
+            self.server.sendmail(
+                from_address,
+                recipients,
+                message.as_string()
+            )
+
+
+def current_email_manager():
+    return _EmailManager(
+        hostname=current_app.config.get('SMTP_SERVER'),
+        port=current_app.config.get('SMTP_PORT'),
+        use_ssl=current_app.config.get('USE_SSL'),
+        user=current_app.config.get('SMTP_USERNAME'),
+        password=current_app.config.get('SMTP_PASSWORD')
+    )
+
+
 def solution_pdf(exam_id, student_id, anonymous=False):
-    """Build a (anonymous) pdf from student's solution images of an exam
+    """Build a (anonymous) pdf from student's solution images of an exam.
 
     Parameters
     ----------
@@ -77,7 +177,7 @@ def solution_pdf(exam_id, student_id, anonymous=False):
 
 
 def render(exam_id, student_id, template):
-    template = jinja2.Template(template)
+    template = Template(template)
     student, results = statistics.solution_data(exam_id, student_id)
     return template.render(student=student, results=results)
 
@@ -90,7 +190,7 @@ def build_solution_attachment(exam_id, student_id, file_name=None):
     encoders.encode_base64(pdf)
 
     if file_name is None:
-        # construct the default filename is non is provided
+        # construct the default filename if none is provided
         file_name = f"{student_id}.pdf"
 
     # Set the filename parameter
@@ -106,7 +206,7 @@ def build(email_to, content, attachment=None, copy_to=None,
     msg['Subject'] = subject
     msg['From'] = email_from
     msg['To'] = email_to
-    if copy_to is not None:
+    if copy_to:
         msg['Cc'] = copy_to
     msg['Reply-to'] = email_from
     msg.attach(MIMEText(content, 'plain'))
@@ -117,48 +217,103 @@ def build(email_to, content, attachment=None, copy_to=None,
     return msg
 
 
-def send(
-    messages,
-    from_address,
-    server, port=0, user=None, password=None, use_ssl=None,
+def build_and_send(
+    students, from_address, exam, template, attach=False, copy_to=None, _email_manager=None
 ):
-    """Send a dict of messages
+    """Build and send the student solution emails.
 
     Parameters
     ----------
-    messages : dictionary
-        A dict where the values are the messages to send, and
-        the keys are unique message identifiers.
-    server : string
-        SMTP server domain name or IP address.
-    port : int, optional
-        STMP port.
-    user, password : string, optional
-        Login credentials.
-    use_ssl : bool or None
-        Whether to use SSL connection. If not provided, it is inferred from the
-        port.
+    students : list of Student
+        the students to send the emails to
+    from_address : str
+        the from email address
+    exam : Exam
+        the exam to send
+    template : str
+        the jinja2 template to send as email content
+    attach : bool
+        whether to attach the solution pdf (default to False)
+    copy_to : str
+        the CC email address
 
-    Returns a list of the identifiers for messages that failed to send.
+    Returns
+    -------
+    sent
+        the list of of students id that where send
+    failed
+        dict of students that failed, including status and error message
     """
     failed = []
-    if use_ssl is None:
-        use_ssl = port == 465
-    server_type = smtplib.SMTP_SSL if use_ssl else smtplib.SMTP
-    with server_type(server, port) as s:
-        if user and password:
-            s.login(user, password)
-        for identifier, message in messages.items():
-            recipients = [
-                *message['To'].split(','),
-                *(message['Cc'].split(',') if 'Cc' in message else [])
-            ]
+    sent = []
+
+    if _email_manager is None:
+        _email_manager = current_email_manager()  # only modify this during tests
+
+    student_messages = []
+    for student in students:
+        try:
+            student_messages.append((student, render(exam.id, student.id, template)))
+        except TemplateSyntaxError as error:
+            failed.append({
+                'studentID': student.id,
+                'status': FailStatus.build.name,
+                'message': f"Syntax error in the template: {error.message}"
+            })
+        except UndefinedError as error:
+            failed.append({
+                'studentID': student.id,
+                'status': FailStatus.build.name,
+                'message': f"Undefined variables in the template: {error.message}"
+            })
+
+    if not student_messages:
+        return sent, failed
+
+    with _email_manager as server:
+        for student, content in student_messages:
             try:
-                s.sendmail(
-                    from_address,
-                    recipients,
-                    message.as_string()
+                attachment = (
+                    build_solution_attachment(exam.id, student.id, file_name=f'{student.id}_{exam.name}.pdf')
+                    if attach else None
                 )
-            except smtplib.SMTPException:
-                failed.append(identifier)
-    return failed
+                message = build(
+                    student.email,
+                    content,
+                    attachment,
+                    copy_to=copy_to,
+                    email_from=from_address,
+                )
+                server.send(from_address, message)
+            except werkzeug.exceptions.Conflict as e:
+                # No email address provided.
+                failed.append({
+                    'studentID': student.id,
+                    'status': FailStatus.build.name,
+                    'message': f"No email address provided: {e.description}"
+                })
+            except smtplib.SMTPResponseException as e:
+                # see https://docs.python.org/3/library/smtplib.html?highlight=smtplib#smtplib.SMTP.sendmail
+                failed.append({
+                    'studentID': student.id,
+                    'status': FailStatus.send.name,
+                    'message': f'{e.smtp_error.decode("ascii")} ({e.smtp_code})'
+                })
+            except smtplib.SMTPRecipientsRefused as e:
+                recipients, *_ = e.args
+                code, msg = recipients[student.email]
+                failed.append({
+                    'studentID': student.id,
+                    'status': FailStatus.send.name,
+                    'message': f'{msg.decode("ascii")} ({code})'
+                })
+            except Exception as e:
+                failed.append({
+                    'studentID': student.id,
+                    'status': FailStatus.attach.name,
+                    'message': str(e)
+                })
+            else:
+                sent.append(student.id)
+
+    return sent, failed

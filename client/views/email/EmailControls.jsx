@@ -96,7 +96,7 @@ class EmailIndividualControls extends React.Component {
       email = p.student.email || '<no email provided>'
     }
     return (
-      <form onSubmit={this.onSubmit}>
+      <form onSubmit={this.onSubmit} style={{ width: '100%' }}>
         <ToField email={email} />
         <CCField
           email={this.state.copyTo}

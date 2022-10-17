@@ -1,6 +1,7 @@
 MYSQL_DATABASE = 'course_test'
 
 SECRET_KEY = 'test_secret_key'
+SESSION_TYPE = 'null'
 
 PROXY_COUNT = 0
 

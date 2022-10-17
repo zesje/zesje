@@ -1,3 +1,5 @@
+import redis
+
 # Folder to save exam scans and database
 DATA_DIRECTORY = 'data'
 
@@ -30,6 +32,8 @@ LOGIN_DISABLED = False
 
 # Secret key required for flask.session
 SECRET_KEY = None
+SESSION_TYPE = 'redis'
+SESSION_REDIS = redis.Redis(port=6479)
 
 # Prevent CSRF
 SESSION_COOKIE_HTTPONLY = True

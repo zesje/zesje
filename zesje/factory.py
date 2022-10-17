@@ -3,6 +3,7 @@ from os.path import abspath, dirname
 
 from flask import Flask
 from flask_migrate import Migrate
+from flask_session import Session
 from werkzeug.exceptions import NotFound
 
 from .database import db, login_manager, Grader
@@ -20,6 +21,8 @@ def create_app(celery=None, app_config=None):
 
     if app.config['SECRET_KEY'] is None:
         raise KeyError
+
+    Session(app)
 
     login_manager.init_app(app)
 

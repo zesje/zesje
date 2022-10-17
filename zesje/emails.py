@@ -292,12 +292,20 @@ def build_and_send(
                     'status': FailStatus.build.name,
                     'message': f"No email address provided: {e.message}"
                 })
-            except smtplib.SMTPException as e:
+            except smtplib.SMTPResponseException as e:
                 # see https://docs.python.org/3/library/smtplib.html?highlight=smtplib#smtplib.SMTP.sendmail
                 failed.append({
                     'studentID': student.id,
                     'status': FailStatus.send.name,
-                    'message': str(e)
+                    'message': f'{e.smtp_error.decode("ascii")} ({e.stmp_code})'
+                })
+            except smtplib.SMTPRecipientsRefused as e:
+                recipients, *_ = e.args
+                code, msg = recipients[student.email]
+                failed.append({
+                    'studentID': student.id,
+                    'status': FailStatus.send.name,
+                    'message': f'{msg.decode("ascii")} ({code})'
                 })
             except Exception as e:
                 failed.append({

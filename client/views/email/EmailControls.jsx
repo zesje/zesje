@@ -198,10 +198,10 @@ class EmailControls extends React.Component {
     }).catch(e => {
       console.log(e)
       e.json().then(error => {
-        this.setState({ sending: false, failed: error.failed })
+        this.setState({ failed: error.failed })
         toast({ message: error.message, duration: 10000, type: 'is-danger' })
       })
-    })
+    }).finally(() => this.setState({ sending: false }))
 
     if (studentID == null) {
       this.disableAnonymousMode()

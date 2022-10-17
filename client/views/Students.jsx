@@ -377,7 +377,7 @@ class CheckStudents extends React.Component {
 
                   <ProgressBar done={done} total={total} />
 
-                  <p className='box'>
+                  <div className='box'>
                     <Img
                       src={`api/images/signature/${this.state.examID}/${copy && copy.number}` }
                       alt={copy != null ? `Signature image #${copy.number}` : ''}
@@ -387,7 +387,7 @@ class CheckStudents extends React.Component {
                       </div>
                     }
                     />
-                  </p>
+                  </div>
 
                 </div>
                 : null}

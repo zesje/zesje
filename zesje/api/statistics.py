@@ -6,7 +6,7 @@ from ..database import db, Exam, Submission, ExamLayout
 from ..statistics import grader_data
 
 
-class Statistics(Resource):
+class Statistics(MethodView):
     """Getting a list of uploaded scans, and uploading new ones."""
 
     def get(self, exam_id):

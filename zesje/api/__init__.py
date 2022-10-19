@@ -1,5 +1,4 @@
 from flask import current_app, request, Blueprint
-from flask_restful import Api
 from flask_login import current_user
 
 from .graders import Graders
@@ -51,51 +50,49 @@ def check_user_login():
 api_bp = Blueprint('zesje', __name__)
 api_bp.before_request(check_user_login)
 
-api = Api(api_bp)
-
-api.add_resource(Graders, '/graders')
-api.add_resource(Exams, '/exams', '/exams/<int:exam_id>', '/exams/<int:exam_id>/<string:attr>')
-api.add_resource(ExamSource, '/exams/<int:exam_id>/source_pdf')
-api.add_resource(ExamGeneratedPdfs, '/exams/<int:exam_id>/generated_pdfs')
-api.add_resource(ExamPreview, '/exams/<int:exam_id>/preview')
-api.add_resource(Scans, '/scans/<int:exam_id>')
-api.add_resource(Students, '/students', '/students/<int:student_id>')
-api.add_resource(Copies,
-                 '/copies/<int:exam_id>',
-                 '/copies/<int:exam_id>/<int:copy_number>')
-api.add_resource(MissingPages,
-                 '/copies/missing_pages/<int:exam_id>')
-api.add_resource(Submissions,
-                 '/submissions/<int:exam_id>',
-                 '/submissions/<int:exam_id>/<int:submission_id>')
-api.add_resource(Problems,
-                 '/problems',
-                 '/problems/<int:problem_id>')
-api.add_resource(Feedback,
-                 '/feedback/<int:problem_id>',
-                 '/feedback/<int:problem_id>/<int:feedback_id>')
-api.add_resource(Solutions, '/solution/<int:exam_id>/<int:submission_id>/<int:problem_id>')
-api.add_resource(Widgets,
-                 '/widgets',
-                 '/widgets/<int:widget_id>')
-api.add_resource(EmailTemplate,
-                 '/templates/<int:exam_id>')
-api.add_resource(RenderedEmailTemplate,
-                 '/templates/rendered/<int:exam_id>/<int:student_id>')
-api.add_resource(Email,
-                 '/email/<int:exam_id>',
-                 '/email/<int:exam_id>/<int:student_id>')
-api.add_resource(Approve,
-                 '/solution/approve/<int:exam_id>/<int:submission_id>/<int:problem_id>')
-api.add_resource(MultipleChoice,
-                 '/mult-choice/<int:id>',
-                 '/mult-choice/')
-api.add_resource(Statistics,
-                 '/stats/<int:exam_id>')
-api.add_resource(OAuthStatus, '/oauth/status')
-api.add_resource(OAuthStart, '/oauth/start')
-api.add_resource(OAuthCallback, '/oauth/callback')
-api.add_resource(OAuthLogout, '/oauth/logout')
+api_bp.add_url_rule('/graders',
+                    view_func=Graders.as_view('graders'))
+api_bp.add_url_rule('/exams', '/exams/<int:exam_id>', '/exams/<int:exam_id>/<string:attr>',
+                    view_func=Exams.as_view('exams'))
+api_bp.add_url_rule('/exams/<int:exam_id>/source_pdf',
+                    view_func=ExamSource.as_view('exam_source'))
+api_bp.add_url_rule('/exams/<int:exam_id>/generated_pdfs',
+                    view_func=ExamGeneratedPdfs.as_view('exam_generated_pdfs'))
+api_bp.add_url_rule('/exams/<int:exam_id>/preview',
+                    view_func=ExamPreview.as_view('exam_preview'))
+api_bp.add_url_rule('/scans/<int:exam_id>',
+                    view_func=Scans.as_view('scans'))
+api_bp.add_url_rule('/students', '/students/<int:student_id>',
+                    view_func=Students.as_view('students'))
+api_bp.add_url_rule('/copies/<int:exam_id>', '/copies/<int:exam_id>/<int:copy_number>',
+                    view_func=Copies.as_view('copies'))
+api_bp.add_url_rule('/copies/missing_pages/<int:exam_id>',
+                    view_func=MissingPages.as_view('missing_pages'))
+api_bp.add_url_rule('/submissions/<int:exam_id>', '/submissions/<int:exam_id>/<int:submission_id>',
+                    view_func=Submissions.as_view('submissions'))
+api_bp.add_url_rule('/problems', '/problems/<int:problem_id>',
+                    view_func=Problems.as_view('problems'))
+api_bp.add_url_rule('/feedback/<int:problem_id>', '/feedback/<int:problem_id>/<int:feedback_id>',
+                    view_func=Feedback.as_view('feedback'))
+api_bp.add_url_rule('/solution/<int:exam_id>/<int:submission_id>/<int:problem_id>',
+                    view_func=Solutions.as_view('solutions'))
+api_bp.add_url_rule('/widgets', '/widgets/<int:widget_id>',
+                    view_func=Widgets.as_view('widgets'))
+api_bp.add_url_rule('/templates/<int:exam_id>',
+                    view_func=EmailTemplate.as_view('exam_template'))
+api_bp.add_url_rule('/templates/rendered/<int:exam_id>/<int:student_id>',
+                    view_func=RenderedEmailTemplate.as_view('rendered_exam_template'))
+api_bp.add_url_rule('/email/<int:exam_id>', '/email/<int:exam_id>/<int:student_id>',
+                    view_func=Email.as_view('email'))
+api_bp.add_url_rule('/solution/approve/<int:exam_id>/<int:submission_id>/<int:problem_id>',
+                    view_func=Approve.as_view('approve'))
+api_bp.add_url_rule('/mult-choice/<int:id>', '/mult-choice/',
+                    view_func=MultipleChoice.as_view('multiple_choice'))
+api_bp.add_url_rule('/stats/<int:exam_id>', view_func=Statistics.as_view('statistics'))
+api_bp.add_url_rule('/oauth/status', view_func=OAuthStatus.as_view('oauth_status'))
+api_bp.add_url_rule('/oauth/start', view_func=OAuthStart.as_view('oauth_start'))
+api_bp.add_url_rule('/oauth/callback', view_func=OAuthCallback.as_view('oauth_callback'))
+api_bp.add_url_rule('/oauth/logout', view_func=OAuthLogout.as_view('oauth_logout'))
 # Other resources that don't return JSON
 # It is possible to get flask_restful to work with these, but not
 # very idiomatic.

@@ -1,4 +1,3 @@
-import flask_restful
 from hashlib import md5
 
 
@@ -12,10 +11,6 @@ def nonempty_string(s):
 def required_string(parser, name):
     parser.add_argument(name, type=nonempty_string,
                         required=True, nullable=False)
-
-
-def abort(status, **kwargs):
-    flask_restful.abort(status, status=status, **kwargs)
 
 
 def _shuffle(to_shuffle, shuffle_seed, key_extractor=lambda v: v):

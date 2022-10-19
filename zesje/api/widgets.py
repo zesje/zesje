@@ -57,7 +57,7 @@ def normalise_pages(widgets):
     return pages_to_substract > 0
 
 
-class Widgets(Resource):
+class Widgets(MethodView):
 
     def patch(self, widget_id):
         if (widget := Widget.query.get(widget_id)) is None:

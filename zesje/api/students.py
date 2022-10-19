@@ -1,4 +1,4 @@
-from flask_restful import Resource, reqparse
+from flask.views import MethodView
 
 from werkzeug.datastructures import FileStorage
 import pandas as pd
@@ -17,7 +17,7 @@ def student_to_data(s):
     }
 
 
-class Students(Resource):
+class Students(MethodView):
     """Getting a list of students."""
 
     def get(self, student_id=None):

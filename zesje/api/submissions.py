@@ -1,7 +1,7 @@
 from hashlib import md5
 
 from sqlalchemy.sql import operators
-from flask_restful import Resource, reqparse
+from flask.views import MethodView
 from flask_restful.inputs import boolean
 from flask_login import current_user
 
@@ -131,7 +131,7 @@ def _find_submission(old_submission, problem_id, shuffle_seed, direction, ungrad
     return new_submission, count_follows, count_precedes, match_current
 
 
-class Submissions(Resource):
+class Submissions(MethodView):
     """Getting a list of submissions"""
 
     get_parser = reqparse.RequestParser()

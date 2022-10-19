@@ -1,12 +1,12 @@
 from flask import current_app
-from flask_restful import Resource, reqparse
+from flask.views import MethodView
 from werkzeug.datastructures import FileStorage
 
 from ..scans import process_scan
 from ..database import db, Exam, Scan
 
 
-class Scans(Resource):
+class Scans(MethodView):
     """Getting a list of uploaded scans, and uploading new ones."""
 
     def _is_mimetype_allowed(self, mimetype):

@@ -2,7 +2,8 @@
 
 import os
 
-from flask_restful import Resource, reqparse, current_app
+from flask import current_app
+from flask.views import MethodView
 
 from .widgets import widget_to_data, normalise_pages
 from ..database import db, Exam, Problem, ProblemWidget, Solution, GradingPolicy, ExamLayout
@@ -39,7 +40,7 @@ def problem_to_data(problem):
     }
 
 
-class Problems(Resource):
+class Problems(MethodView):
     """ List of problems associated with a particular exam_id """
 
     def get(self, problem_id):

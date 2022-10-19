@@ -1,4 +1,4 @@
-from flask_restful import Resource, reqparse
+from flask.views import MethodView
 
 from ..database import db, MultipleChoiceOption, FeedbackOption, Problem
 
@@ -25,7 +25,7 @@ def update_mc_option(mc_option, args, feedback_id=None):
         mc_option.feedback_id = feedback_id
 
 
-class MultipleChoice(Resource):
+class MultipleChoice(MethodView):
 
     put_parser = reqparse.RequestParser()
 

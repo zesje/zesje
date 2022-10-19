@@ -1,6 +1,6 @@
 """ REST api for problems """
 
-from flask_restful import Resource, reqparse
+from flask.views import MethodView
 from flask_restful.inputs import boolean
 from sqlalchemy import func
 import numpy as np
@@ -22,7 +22,7 @@ def feedback_to_data(feedback, full_children=True):
     }
 
 
-class Feedback(Resource):
+class Feedback(MethodView):
     """ List of feedback options of a problem """
 
     def get(self, problem_id):

@@ -2,7 +2,7 @@
 
 from datetime import datetime, timezone
 
-from flask_restful import Resource, reqparse
+from flask.views import MethodView
 from flask_restful.inputs import boolean
 from flask_login import current_user
 
@@ -40,7 +40,7 @@ def solution_to_data(solution):
     }
 
 
-class Solutions(Resource):
+class Solutions(MethodView):
     """ Solution provided on a specific problem and exam """
 
     def get(self, exam_id, submission_id, problem_id):
@@ -177,7 +177,7 @@ class Solutions(Resource):
         return {'state': state}
 
 
-class Approve(Resource):
+class Approve(MethodView):
     """Mark a solution as graded."""
     put_parser = reqparse.RequestParser()
     put_parser.add_argument('approve', type=boolean, required=True)

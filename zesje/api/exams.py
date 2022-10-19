@@ -2,15 +2,15 @@ import hashlib
 from io import BytesIO
 import os
 
-from flask import current_app, send_file, stream_with_context, Response
-from flask_restful import Resource, reqparse
+from flask import current_app, send_file, stream_with_context, Response, abort
+from flask.views import MethodView
 from flask_restful.inputs import boolean
 from flask_login import current_user
 from werkzeug.datastructures import FileStorage
 from sqlalchemy.orm import selectinload
 from sqlalchemy import func
 
-from zesje.api._helpers import _shuffle, abort
+from zesje.api._helpers import _shuffle
 from zesje.api.problems import problem_to_data
 from ..pdf_generation import exam_dir, exam_pdf_path, _exam_generate_data
 from ..pdf_generation import generate_pdfs, generate_single_pdf, generate_zipped_pdfs
@@ -45,7 +45,7 @@ def generate_exam_token(exam_id, exam_name, exam_pdf):
     return hasher.hexdigest()[0:12]
 
 
-class Exams(Resource):
+class Exams(MethodView):
 
     get_parser = reqparse.RequestParser()
     get_parser.add_argument('only_metadata', type=boolean, required=False)
@@ -358,7 +358,7 @@ class Exams(Resource):
         return dict(status=200, message='ok'), 200
 
 
-class ExamSource(Resource):
+class ExamSource(MethodView):
 
     def get(self, exam_id):
 
@@ -374,7 +374,7 @@ class ExamSource(Resource):
             mimetype='application/pdf')
 
 
-class ExamGeneratedPdfs(Resource):
+class ExamGeneratedPdfs(MethodView):
 
     get_parser = reqparse.RequestParser()
     get_parser.add_argument('copies_start', type=int, required=True)
@@ -445,7 +445,7 @@ class ExamGeneratedPdfs(Resource):
         return dict(status=400, message='type must be one of ["pdf", "zip"]'), 400
 
 
-class ExamPreview(Resource):
+class ExamPreview(MethodView):
 
     def get(self, exam_id):
         if (exam := Exam.query.get(exam_id)) is None:

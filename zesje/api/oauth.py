@@ -1,6 +1,6 @@
 """REST API for OAuth callback"""
 
-from flask_restful import Resource, reqparse
+from flask.views import MethodView
 from flask import current_app, session, request, redirect, url_for
 from flask_login import login_user, current_user, logout_user
 from requests_oauthlib import OAuth2Session
@@ -9,7 +9,7 @@ from urllib.parse import urlparse
 from ..database import db, Grader
 
 
-class OAuthStart(Resource):
+class OAuthStart(MethodView):
 
     get_parser = reqparse.RequestParser()
     get_parser.add_argument('userurl', type=str, required=False)
@@ -48,7 +48,7 @@ class OAuthStart(Resource):
         return redirect(authorization_url)
 
 
-class OAuthCallback(Resource):
+class OAuthCallback(MethodView):
 
     get_parser = reqparse.RequestParser()
     get_parser.add_argument('userurl', type=str, required=False)
@@ -98,7 +98,7 @@ class OAuthCallback(Resource):
         return redirect(userurl)
 
 
-class OAuthStatus(Resource):
+class OAuthStatus(MethodView):
     def get(self):
         """returns the current oauth status
 
@@ -129,7 +129,7 @@ class OAuthStatus(Resource):
         )
 
 
-class OAuthLogout(Resource):
+class OAuthLogout(MethodView):
     def get(self):
         """Logs the user out
 

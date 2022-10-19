@@ -1,7 +1,7 @@
 """ REST api for graders page """
 
 from flask import abort, current_app
-from flask_restful import Resource, reqparse
+from flask.views import MethodView
 
 from ..database import db
 
@@ -12,7 +12,7 @@ from ..database import Grader
 # TODO: when making new database structure, have only a single
 #       'name' field: it is just an identifier
 
-class Graders(Resource):
+class Graders(MethodView):
     """ Graders that are able to use the software, also logged during grading """
 
     def get(self):

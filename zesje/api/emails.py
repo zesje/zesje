@@ -5,11 +5,11 @@ import textwrap
 from jinja2 import Template, TemplateSyntaxError, UndefinedError
 
 from flask import current_app
-from flask_restful import Resource, reqparse
+from flask.views import MethodView
 
 from .. import emails
 from ..database import Exam, Student
-from ._helpers import abort
+from flask import abort
 
 default_email_template = str.strip(textwrap.dedent("""
     Dear {{student.first_name.split(' ') | first }} {{student.last_name}},
@@ -55,7 +55,7 @@ def render_email(exam_id, student_id, template):
         )
 
 
-class EmailTemplate(Resource):
+class EmailTemplate(MethodView):
     """ Email template. """
 
     def get(self, exam_id):
@@ -92,7 +92,7 @@ class EmailTemplate(Resource):
             f.write(email_template)
 
 
-class RenderedEmailTemplate(Resource):
+class RenderedEmailTemplate(MethodView):
 
     post_parser = reqparse.RequestParser()
     post_parser.add_argument('template', type=str, required=True)
@@ -102,7 +102,7 @@ class RenderedEmailTemplate(Resource):
         return render_email(exam_id, student_id, template)
 
 
-class Email(Resource):
+class Email(MethodView):
 
     post_parser = reqparse.RequestParser()
     post_parser.add_argument('template', type=str, required=True)

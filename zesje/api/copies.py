@@ -1,5 +1,5 @@
 from flask import current_app as app
-from flask_restful import Resource, reqparse, inputs
+from flask.views import MethodView
 from pdfrw import PdfReader
 
 from ..database import db, Exam, Submission, Student, Copy, Solution, ExamLayout
@@ -20,7 +20,7 @@ def copy_to_data(copy):
     }
 
 
-class Copies(Resource):
+class Copies(MethodView):
     """Getting a list of copies, and assigning students to them."""
 
     def get(self, exam_id, copy_number=None):
@@ -165,7 +165,7 @@ def unapprove_grading(sub):
         sol.graded_at = None
 
 
-class MissingPages(Resource):
+class MissingPages(MethodView):
 
     def get(self, exam_id):
         """

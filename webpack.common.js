@@ -41,5 +41,12 @@ module.exports = {
     new webpack.DefinePlugin({
       __ZESJE_VERSION__: JSON.stringify(zesjeVersion)
     })
-  ]
+  ],
+  resolve: {
+    extensions: ['.ts', '.js'],
+    fallback: {
+      // Webpack 5 + Nodejs 17+ compatibility: https://github.com/diegomura/react-pdf/issues/1029
+      buffer: require.resolve('buffer')
+    }
+  }
 }

@@ -2,7 +2,7 @@ import React from 'react'
 import withRouter from '../components/RouterBinder.jsx'
 import Dropzone from 'react-dropzone'
 import { toast } from 'bulma-toast'
-import { Document, Page } from 'react-pdf/dist/esm/entry.webpack'
+import { Document, Page } from 'react-pdf/dist/esm/entry.webpack5'
 
 import * as api from '../api.jsx'
 

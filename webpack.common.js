@@ -23,7 +23,9 @@ module.exports = {
     path: path.resolve('zesje/static'),
     filename: 'index_bundle.js',
     publicPath: '/',
-    globalObject: 'this'
+    globalObject: 'this',
+    // NodeJS 17 compatibility: https://stackoverflow.com/a/73027407/2214847
+    hashFunction: 'xxhash64'
   },
   module: {
     rules: [

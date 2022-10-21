@@ -56,6 +56,7 @@ class Copies(Resource):
 
     put_parser = reqparse.RequestParser()
     put_parser.add_argument('studentID', type=int, required=True)
+    put_parser.add_argument('allowMerge', type=bool, required=True)
 
     def put(self, exam_id, copy_number):
         """Assign a student to the given copy.
@@ -98,6 +99,12 @@ class Copies(Resource):
             Submission.student == student,
             Submission.validated
         ).one_or_none()
+
+        # Check if we are going to merge feedback
+        if new_submission is not None and new_submission != old_submission and not args.allowMerge:
+            return dict(status=409,
+                        message='Submissions will be merged, but this was not allowed by the request',
+                        other_copies=[copy.number for copy in new_submission.copies]), 409
 
         # If not, find the submission we are going to assign the copy to
         if new_submission is None:

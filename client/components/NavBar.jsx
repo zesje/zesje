@@ -1,7 +1,7 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
 
-import './NavBar.css'
+import './NavBar.scss'
 import * as api from '../api.jsx'
 
 const BurgerButton = (props) => (
@@ -20,12 +20,17 @@ const TooltipLink = (props) => {
   if (!pred) pred = [false, null]
 
   return (
-    <div
-      className={'navbar-item no-padding' + (pred[0] ? ' tooltip has-tooltip-bottom' : '')}
+    <a
+      className={'navbar-item' + (pred[0] ? ' tooltip has-tooltip-bottom' : '')}
       data-tooltip={pred[1]}
     >
-      <Link className='navbar-link is-arrowless' disabled={pred[0]} to={props.to}> {props.text} </Link>
-    </div>
+      <Link
+        className={'navbar-item'}
+        disabled={pred[0]}
+        to={props.to}>
+        {props.text}
+      </Link>
+    </a>
   )
 }
 

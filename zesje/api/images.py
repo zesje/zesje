@@ -1,4 +1,5 @@
 from flask import abort, Response, current_app, request
+from webargs import fields
 from pathlib import Path
 from werkzeug.http import parse_date, http_date
 from datetime import datetime
@@ -6,12 +7,19 @@ from datetime import datetime
 import cv2
 import numpy as np
 
+from ._helpers import DBModel, use_kwargs
 from ..images import get_box, guess_dpi, widget_area
 from ..database import Exam, Submission, Problem, Page, Solution, Copy, ExamLayout
 from ..scans import exam_student_id_widget
 
 
-def get(exam_id, problem_id, submission_id, full_page=False):
+@use_kwargs({
+    'exam_id': DBModel(Exam, required=True),
+    'problem_id': DBModel(Problem, required=True),
+    'submission_id': DBModel(Submission, required=True),
+    'full_page': fields.Bool(required=False, load_default=0)
+}, location='view_args')
+def get(exam, problem, submission, full_page):
     """get image for the given problem.
 
     Parameters
@@ -30,15 +38,6 @@ def get(exam_id, problem_id, submission_id, full_page=False):
     -------
     Image (JPEG mimetype)
     """
-    if (exam := Exam.query.get(exam_id)) is None:
-        abort(404, 'Exam does not exist.')
-
-    if (problem := Problem.query.get(problem_id)) is None:
-        abort(404, 'Problem does not exist.')
-
-    if (sub := Submission.query.get(submission_id)) is None:
-        abort(404, 'Submission does not exist.')
-
     pages = None
     if exam.layout == ExamLayout.unstructured:
         full_page = True
@@ -46,7 +45,7 @@ def get(exam_id, problem_id, submission_id, full_page=False):
         if max(problem.widget.page for problem in exam.problems) == 0:
             # single paged exam, show all pages from all copies
             pages = Page.query.filter(Page.copy_id == Copy.id,
-                                      Copy.submission == sub)\
+                                      Copy.submission == submission)\
                               .order_by(Page.number, Copy.number)\
                               .all()
 
@@ -55,13 +54,13 @@ def get(exam_id, problem_id, submission_id, full_page=False):
 
         #  get the pages
         pages = Page.query.filter(Page.copy_id == Copy.id,
-                                  Copy.submission == sub,
+                                  Copy.submission == submission,
                                   Page.number == page_number)\
                           .order_by(Copy.number)\
                           .all()
 
     if len(pages) == 0:
-        abort(404, f'Page #{page_number} is missing for all copies of submission #{submission_id}.')
+        abort(404, f'Page #{page_number} is missing for all copies of submission #{submission.id}.')
 
     # Convert to int to match the time resolution of HTTP headers (seconds)
     last_modified = int(max(Path(page.abs_path).stat().st_mtime for page in pages))
@@ -72,8 +71,8 @@ def get(exam_id, problem_id, submission_id, full_page=False):
             # Send 304 Not Modified with empty body
             return '', 304
 
-    solution = Solution.query.filter(Solution.submission_id == sub.id,
-                                     Solution.problem_id == problem_id).one()
+    solution = Solution.query.filter(Solution.submission_id == submission.id,
+                                     Solution.problem_id == problem.id).one()
 
     if exam.layout == ExamLayout.templated and exam.grade_anonymous and page_number == 0:
         student_id_widget, coords = exam_student_id_widget(exam.id)

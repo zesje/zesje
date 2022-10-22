@@ -1,14 +1,21 @@
 from flask import abort, Response
+from webargs import fields
 
 import numpy as np
 import cv2
 
+from ._helpers import DBModel, use_kwargs
+from ..database import ExamLayout
 from ..images import get_box
-from ..database import Exam, Copy, ExamLayout
+from ..database import Exam, Copy
 from ..scans import exam_student_id_widget
 
 
-def get(exam_id, copy_number):
+@use_kwargs({
+    'exam_id': DBModel(Exam, required=True, validate_model=[lambda exam: exam.layout == ExamLayout.templated]),
+    'copy_number': fields.Int(required=False)
+}, location='view_args')
+def get(exam_id, exam, copy_number):
     """get student signature for the given submission.
 
     Parameters
@@ -24,17 +31,11 @@ def get(exam_id, copy_number):
     """
     # We could register an app-global error handler for this,
     # but it would add more code then it removes.
-    if (exam := Exam.query.get(exam_id)) is None:
-        return dict(status=404, message='Exam does not exist.'), 404
-
-    if exam.layout == ExamLayout.unstructured:
-        return dict(status=400, message='Signatures are not available for unstructured exams.'), 400
-
     if (copy := Copy.query.filter(Copy.exam == exam,
                                   Copy.number == copy_number).one_or_none()) is None:
         return dict(status=404, message='Copy does not exist.'), 404
 
-    _, student_id_widget_coords = exam_student_id_widget(exam_id)
+    _, student_id_widget_coords = exam_student_id_widget(exam.id)
     widget_area = np.asarray(student_id_widget_coords)
 
     # TODO: use points as base unit

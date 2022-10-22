@@ -1,26 +1,28 @@
 from flask.views import MethodView
+from webargs import fields, validate
 
-from werkzeug.datastructures import FileStorage
 import pandas as pd
 from io import BytesIO
 from enum import Enum
 
+from ._helpers import DBModel, use_args, use_kwargs
 from ..database import db, Student
 
 
-def student_to_data(s):
+def student_to_data(student):
     return {
-        'id': s.id,
-        'firstName': s.first_name,
-        'lastName': s.last_name,
-        'email': s.email,
+        'id': student.id,
+        'firstName': student.first_name,
+        'lastName': student.last_name,
+        'email': student.email,
     }
 
 
 class Students(MethodView):
     """Getting a list of students."""
 
-    def get(self, student_id=None):
+    @use_kwargs({'student_id': DBModel(Student, required=False, missing=None)}, location='view_args')
+    def get(self, student_id):
         """get all students for the course.
 
          Parameters
@@ -38,24 +40,18 @@ class Students(MethodView):
 
         If no student_id is provided the entire list of students will be returned.
         """
-
         if student_id is not None:
-            if (s := Student.query.get(student_id)) is None:
-                return dict(status=404, message='Student not found'), 404
-            return student_to_data(s)
+            return student_to_data(student_id)
 
-        return [
-            student_to_data(s)
-            for s in Student.query.all()
-        ]
+        return [student_to_data(s) for s in Student.query.all()]
 
-    put_parser = reqparse.RequestParser()
-    put_parser.add_argument('studentID', type=int, required=True)
-    put_parser.add_argument('firstName', type=str, required=True)
-    put_parser.add_argument('lastName', type=str, required=True)
-    put_parser.add_argument('email', type=str, required=False)
-
-    def put(self, student_id=None):
+    @use_args({
+        'id': fields.Int(required=True, data_key='studentID', validate=validate.Range(1, 9999999)),
+        'first_name': fields.Str(required=True, data_key='firstName'),
+        'last_name': fields.Str(required=True, data_key='lastName'),
+        'email': fields.Email(required=False, missing=None),
+    }, location='json')
+    def put(self, args):
         """Insert or update an existing student
 
         Expects a json payload in the format::
@@ -80,13 +76,7 @@ class Students(MethodView):
             email: str OR null
 
         """
-
-        args = self.put_parser.parse_args()
-
-        student = Student(id=args.studentID,
-                          first_name=args.firstName,
-                          last_name=args.lastName,
-                          email=args.email or None)
+        student = Student(**args)
 
         result, reason = _add_or_update_student(student)
 
@@ -96,18 +86,10 @@ class Students(MethodView):
         if result == Result.ERROR:
             return dict(status=400, message=reason), 400
 
-        return {
-            'studentID': student.id,
-            "firstName": student.first_name,
-            "lastName": student.last_name,
-            "email": student.email
-        }
+        return student_to_data(student)
 
-    post_parser = reqparse.RequestParser()
-    post_parser.add_argument('csv', type=FileStorage, required=True,
-                             location='files')
-
-    def post(self):
+    @use_kwargs({'csv': fields.Field(required=True)}, location='files')
+    def post(self, csv):
         """Upload a CSV file and add/update the students.
 
         Parameters
@@ -123,12 +105,11 @@ class Students(MethodView):
         -------
         The number of *new* students that were added.
         """
-        args = self.post_parser.parse_args()
         try:
             # Disable the NaN filter to allow for empty email fields
-            df = pd.read_csv(BytesIO(args['csv'].read()), na_filter=False)
+            df = pd.read_csv(BytesIO(csv.read()), na_filter=False)
         except Exception:
-            return dict(message='Uploaded file is not CSV'), 400
+            return dict(message='Uploaded file is not CSV', status=400), 400
 
         results = []
         errors = []
@@ -152,7 +133,7 @@ class Students(MethodView):
             message = ('All the rows failed to process, '
                        'CSV is not in the correct format: '
                        'did you export it from Brightspace?')
-            return dict(message=message), 400
+            return dict(message=message, status=400), 400
 
         # At least one student was added to the database
         db.session.commit()

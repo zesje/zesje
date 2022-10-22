@@ -1,7 +1,7 @@
 import React from 'react'
 import { LoadingPDF, ErrorPDF } from '../components/PDFPlaceholders.jsx'
 
-import { Document, Page } from 'react-pdf/dist/esm/entry.webpack'
+import { Document, Page } from 'react-pdf/dist/esm/entry.webpack5'
 
 class GeneratedExamPreview extends React.Component {
   render = () => {

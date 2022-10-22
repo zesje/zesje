@@ -10,7 +10,7 @@ import PDFOverlay from '../../components/PDFOverlay.jsx'
 
 import { Rnd } from 'react-rnd'
 
-import { Document, Page } from 'react-pdf/dist/esm/entry.webpack'
+import { Document, Page } from 'react-pdf/dist/esm/entry.webpack5'
 
 import * as api from '../../api.jsx'
 

@@ -23,7 +23,9 @@ module.exports = {
     path: path.resolve('zesje/static'),
     filename: 'index_bundle.js',
     publicPath: '/',
-    globalObject: 'this'
+    globalObject: 'this',
+    // NodeJS 17 compatibility: https://stackoverflow.com/a/73027407/2214847
+    hashFunction: 'xxhash64'
   },
   module: {
     rules: [
@@ -39,5 +41,12 @@ module.exports = {
     new webpack.DefinePlugin({
       __ZESJE_VERSION__: JSON.stringify(zesjeVersion)
     })
-  ]
+  ],
+  resolve: {
+    extensions: ['.ts', '.js'],
+    fallback: {
+      // Webpack 5 + Nodejs 17+ compatibility: https://github.com/diegomura/react-pdf/issues/1029
+      buffer: require.resolve('buffer')
+    }
+  }
 }

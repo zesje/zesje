@@ -6,7 +6,7 @@ import * as api from '../api.jsx'
 
 const BurgerButton = (props) => (
   <button
-    className={'button navbar-burger' + (props.foldOut ? ' is-active' : '')}
+    className={'button navbar-burger is-info' + (props.foldOut ? ' is-active' : '')}
     onClick={props.burgerClick}
   >
     <span />

@@ -1,5 +1,5 @@
 import React from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 
 import './NavBar.scss'
 import * as api from '../api.jsx'
@@ -18,10 +18,15 @@ const BurgerButton = (props) => (
 const TooltipLink = (props) => {
   let pred = props.predicate.find(pred => pred[0])
   if (!pred) pred = [false, null]
+  const isActive = useLocation().pathname.startsWith(props.to)
+
+  let className = 'navbar-item'
+  className += pred[0] ? ' tooltip has-tooltip-bottom' : ''
+  className += isActive ? ' is-active' : ''
 
   return (
     <a
-      className={'navbar-item' + (pred[0] ? ' tooltip has-tooltip-bottom' : '')}
+      className={className}
       data-tooltip={pred[1]}
     >
       <Link
@@ -35,9 +40,11 @@ const TooltipLink = (props) => {
 }
 
 const ExamDropdown = (props) => {
+  const to = '/exams/' + (props.selectedExam ? props.selectedExam.id : '')
+  const isActive = useLocation().pathname === to
   return (
-    <div className='navbar-item has-dropdown is-hoverable'>
-      <Link className='navbar-link' to={'/exams/' + (props.selectedExam ? props.selectedExam.id : '')}>
+    <div className={'navbar-item has-dropdown is-hoverable' + (isActive ? ' is-active' : '')}>
+      <Link className='navbar-link' to={to}>
         {props.selectedExam ? <i>{props.selectedExam.name}</i> : 'Add exam'}
       </Link>
       <div className='navbar-dropdown'>

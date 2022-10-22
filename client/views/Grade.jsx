@@ -538,7 +538,7 @@ class Grade extends React.Component {
                   current={problem}
                   showTooltips={this.state.showTooltips}
                 />
-                <nav className='panel is-sticky has-modal'>
+                <nav className='panel is-sticky'>
                   <FeedbackPanel
                     examID={examID} submissionID={submission.id}
                     problem={problem} solution={solution}

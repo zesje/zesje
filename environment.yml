@@ -47,6 +47,7 @@ dependencies:
         - pyyaml
         - celery>=5.1.0,<6.0.0
         - redis>=3.5.3
+        - webargs
 
         #oauth library
         - requests-oauthlib>=1.3.0,<2.0.0

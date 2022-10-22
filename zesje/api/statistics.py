@@ -1,7 +1,9 @@
 from math import isnan, nan
-from flask_restful import Resource
+
+from flask.views import MethodView
 import pandas as pd
 
+from ._helpers import DBModel, use_kwargs
 from ..database import db, Exam, Submission, ExamLayout
 from ..statistics import grader_data
 
@@ -9,6 +11,7 @@ from ..statistics import grader_data
 class Statistics(MethodView):
     """Getting a list of uploaded scans, and uploading new ones."""
 
+    @use_kwargs({'exam_id': DBModel(Exam, required=False)}, location='view_args')
     def get(self, exam_id):
         """get statistics for a particular exam.
 
@@ -61,13 +64,9 @@ class Statistics(MethodView):
                     'error': the standard deviation,
 
         """
-
-        if (exam := Exam.query.get(exam_id)) is None:
-            return dict(status=404, message='Exam does not exist.'), 404
-
         # count the total number of students as the number of validated submissions
         student_ids = db.session.query(Submission.student_id)\
-            .filter(Submission.exam_id == exam.id, Submission.validated)\
+            .filter(Submission.exam_id == exam_id.id, Submission.validated)\
             .all()
 
         if len(student_ids) == 0:
@@ -76,12 +75,12 @@ class Statistics(MethodView):
         total_max_score = 0
         full_scores = pd.DataFrame(data={},
                                    index=[id for id, in student_ids],
-                                   columns=[p.id for p in exam.problems if p.gradable] + [0],
+                                   columns=[p.id for p in exam_id.problems if p.gradable] + [0],
                                    dtype=int)
         ungraded = full_scores.copy()
         data = []
 
-        for p in exam.problems:
+        for p in exam_id.problems:
             if not p.gradable:
                 # exclude problems without feedback options
                 continue
@@ -178,10 +177,10 @@ class Statistics(MethodView):
             alpha = None
 
         return {
-            'id': exam.id,
-            'name': exam.name,
+            'id': exam_id.id,
+            'name': exam_id.name,
             'students': len(student_ids),
-            'copies': len(exam.copies) if exam.layout == ExamLayout.templated else len(student_ids),
+            'copies': len(exam_id.copies) if exam_id.layout == ExamLayout.templated else len(student_ids),
             'problems': data,
             'total': {
                 'alpha': alpha,

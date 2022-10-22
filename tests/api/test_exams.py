@@ -84,7 +84,6 @@ def test_get_exams_mult_choice(test_client, add_test_data):
         'x': 100,
         'y': 40,
         'problem_id': 1,
-        'page': 1,
         'label': 'a',
         'name': 'test'
     }
@@ -94,7 +93,6 @@ def test_get_exams_mult_choice(test_client, add_test_data):
         'x': 100,
         'y': 40,
         'problem_id': 1,
-        'page': 1,
         'label': 'a',
         'name': 'test'
     }

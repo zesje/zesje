@@ -6,10 +6,12 @@ from jinja2 import Template, TemplateSyntaxError, UndefinedError
 
 from flask import current_app
 from flask.views import MethodView
+from flask import abort
+from webargs import fields, validate
 
+from ._helpers import DBModel, use_args, use_kwargs
 from .. import emails
 from ..database import Exam, Student
-from flask import abort
 
 default_email_template = str.strip(textwrap.dedent("""
     Dear {{student.first_name.split(' ') | first }} {{student.last_name}},
@@ -58,58 +60,58 @@ def render_email(exam_id, student_id, template):
 class EmailTemplate(MethodView):
     """ Email template. """
 
+    @use_kwargs({'exam_id': DBModel(Exam, required=True)}, location='view_args')
     def get(self, exam_id):
         """Get an email template for a given exam."""
-        if not Exam.query.get(exam_id):
-            return dict(status=404, message='Exam does not exist.'), 404
-
         try:
-            with open(template_path(exam_id)) as f:
+            with open(template_path(exam_id.id)) as f:
                 return f.read()
         except FileNotFoundError:
-            with open(template_path(exam_id), 'w') as f:
+            with open(template_path(exam_id.id), 'w') as f:
                 f.write(default_email_template)
             return default_email_template
 
-    put_parser = reqparse.RequestParser()
-    put_parser.add_argument('template', type=str, required=True)
-
-    def put(self, exam_id):
+    @use_kwargs({'exam_id': DBModel(Exam, required=True)}, location='view_args')
+    @use_kwargs({"template": fields.Str(required=True)}, location="form")
+    def put(self, exam_id, template):
         """Update an email template."""
-        if not Exam.query.get(exam_id):
-            return dict(status=404, message='Exam does not exist.'), 404
-
-        email_template = self.put_parser.parse_args().template
         try:
-            Template(email_template)
+            Template(template)
         except TemplateSyntaxError as error:
             return dict(
                 status=400,
                 message=f"Syntax error in the template: {error.message}"
             ), 400
 
-        with open(template_path(exam_id), 'w') as f:
-            f.write(email_template)
+        with open(template_path(exam_id.id), 'w') as f:
+            f.write(template)
+
+        return dict(status=200), 200
 
 
 class RenderedEmailTemplate(MethodView):
 
-    post_parser = reqparse.RequestParser()
-    post_parser.add_argument('template', type=str, required=True)
-
-    def post(self, exam_id, student_id):
-        template = self.post_parser.parse_args().template
+    @use_kwargs({
+        'exam_id': fields.Integer(required=True),
+        'student_id': fields.Integer(required=True, validate=validate.Range(1, 9999999))
+    }, location='view_args')
+    @use_kwargs({"template": fields.Str(required=True)}, location="form")
+    def post(self, exam_id, student_id, template):
         return render_email(exam_id, student_id, template)
 
 
 class Email(MethodView):
 
-    post_parser = reqparse.RequestParser()
-    post_parser.add_argument('template', type=str, required=True)
-    post_parser.add_argument('attach', type=bool, required=True)
-    post_parser.add_argument('copy_to', type=str, required=False)
-
-    def post(self, exam_id, student_id=None):
+    @use_kwargs({
+        'exam_id': DBModel(Exam, required=True),
+        'student_id': DBModel(Student, required=False, missing=None)
+    }, location='view_args')
+    @use_args({
+        "template": fields.Str(required=True),
+        'attach': fields.Bool(required=True),
+        'copy_to': fields.Email(required=False, missing=None)
+    }, location="form")
+    def post(self, args, exam_id, student_id):
         """Send an email.
 
         Returns
@@ -117,7 +119,6 @@ class Email(MethodView):
         400 error if not all submissions from exam are validated
         (because we might send wrong emails this way).
         """
-        args = self.post_parser.parse_args()
         template = args['template']
         attach = args['attach']
         copy_to = args['copy_to']
@@ -128,14 +129,7 @@ class Email(MethodView):
                 message="Not CC-ing all emails from the exam."
             ), 409
 
-        exam = Exam.query.get(exam_id)
-        if exam is None:
-            return dict(
-                status=404,
-                message="Exam does not exist"
-            ), 404
-
-        if not all(sub.validated for sub in exam.submissions):
+        if not all(sub.validated for sub in exam_id.submissions):
             return dict(
                 status=409,
                 message="All copies must be validated before sending emails."
@@ -148,14 +142,14 @@ class Email(MethodView):
             ), 409
 
         if student_id is not None:
-            students = [Student.query.get(student_id)]
+            students = [student_id]
         else:
-            students = [sub.student for sub in exam.submissions if sub.student_id and sub.validated]
+            students = [sub.student for sub in exam_id.submissions if sub.student_id and sub.validated]
 
         sent, failed = emails.build_and_send(
             students,
             from_address=current_app.config['FROM_ADDRESS'],
-            exam=exam,
+            exam=exam_id,
             template=template,
             attach=attach
         )

@@ -1,5 +1,4 @@
 import pytest
-import json
 
 from zesje.database import db, Exam, Student, Problem
 from zesje.api.emails import template_path, default_email_template
@@ -63,7 +62,7 @@ def test_get_template(app_with_data, test_client, exam_id, status):
     if status == 200:
         assert path.exists()
 
-        text = json.loads(result.data)
+        text = result.data.decode('ascii')
         assert text == default_email_template
 
 
@@ -93,7 +92,7 @@ def test_render_template(app_with_data, test_client, mock_solution_data):
     result = test_client.post('/api/templates/rendered/1/1', data={'template': test_template})
     assert result.status_code == 200
 
-    data = json.loads(result.data)
+    data = result.data.decode('ascii')
     student, problem = data.split('\n')
 
     parts = student.split(' ')

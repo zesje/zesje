@@ -32,7 +32,6 @@ def default_mco():
     return {
         'x': 100,
         'y': 40,
-        'page': 1,
         'label': 'a',
         'name': 'test'
     }
@@ -44,7 +43,6 @@ def mco_json(problem_id):
     return {
         'x': defaults['x'],
         'y': defaults['y'],
-        'page': defaults['page'],
         'label': defaults['label'],
         'name': defaults['name'],
         'problem_id': problem_id
@@ -133,6 +131,7 @@ def test_update_patch(test_client, add_test_data):
     mult_choice_id = data['mult_choice_id']
 
     req2 = req.copy()
+    del req2['problem_id']
     req2['label'] = 'b'
     req2['x'] += 1
     req2['y'] += 1
@@ -156,6 +155,7 @@ def test_update_finalized_exam(test_client, add_test_data, monkeypatch_write_fin
     test_client.put(f'api/exams/{problem.exam_id}', data={'finalized': 'true'})
 
     req2 = req.copy()
+    del req2['problem_id']
     req2['label'] = 'b'
     req2['x'] += 1
     req2['y'] += 1

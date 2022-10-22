@@ -1,20 +1,20 @@
 """REST API for OAuth callback"""
 
-from flask.views import MethodView
 from flask import current_app, session, request, redirect, url_for
+from flask.views import MethodView
 from flask_login import login_user, current_user, logout_user
 from requests_oauthlib import OAuth2Session
 from urllib.parse import urlparse
+from webargs import fields
 
+from ._helpers import use_kwargs
 from ..database import db, Grader
 
 
 class OAuthStart(MethodView):
 
-    get_parser = reqparse.RequestParser()
-    get_parser.add_argument('userurl', type=str, required=False)
-
-    def get(self):
+    @use_kwargs({'user_url': fields.Str(required=False)}, location="query")
+    def get(self, user_url):
         """Logs the user in by redirecting to the OAuth provider with the appropriate client ID
 
         Returns
@@ -27,13 +27,10 @@ class OAuthStart(MethodView):
          returns current state, used for testing
         is_authenticated: boolean
         """
-        args = self.get_parser.parse_args()
-        if args.userurl:
-            args.userurl = urlparse(args.userurl).path
-        session['oauth_userurl'] = args.userurl or url_for('index')
+        session['oauth_userurl'] = urlparse(user_url).path if user_url else url_for('index')
 
         if current_app.config['LOGIN_DISABLED']:
-            authorization_url, state = url_for('zesje.oauthcallback'), 'state'
+            authorization_url, state = url_for('zesje.oauth_callback'), 'state'
         else:
             oauth2_session = OAuth2Session(current_app.config['OAUTH_CLIENT_ID'],
                                            redirect_uri=url_for('zesje.oauthcallback', _external=True),
@@ -50,9 +47,6 @@ class OAuthStart(MethodView):
 
 class OAuthCallback(MethodView):
 
-    get_parser = reqparse.RequestParser()
-    get_parser.add_argument('userurl', type=str, required=False)
-
     def get(self):
         """OAuth provider redirects to this route after authorization. Fetches token and redirects /
 
@@ -60,12 +54,12 @@ class OAuthCallback(MethodView):
         -------
         redirect to /
         """
-        userurl = session['oauth_userurl']
+        user_url = session['oauth_userurl']
         del session['oauth_userurl']
 
         if current_app.config['LOGIN_DISABLED']:
             login_user(Grader.query.first())
-            return redirect(userurl)
+            return redirect(user_url)
 
         oauth2_session = OAuth2Session(current_app.config['OAUTH_CLIENT_ID'],
                                        redirect_uri=url_for('zesje.oauthcallback', _external=True),
@@ -95,7 +89,7 @@ class OAuthCallback(MethodView):
 
         login_user(grader)
 
-        return redirect(userurl)
+        return redirect(user_url)
 
 
 class OAuthStatus(MethodView):
@@ -139,4 +133,4 @@ class OAuthLogout(MethodView):
         message: str
         """
         logout_user()
-        return dict(status=200, message="Logout successful")
+        return dict(status=200, message="Logout successful"), 200

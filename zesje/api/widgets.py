@@ -1,6 +1,7 @@
-from flask_restful import Resource
+from flask.views import MethodView
 from flask import current_app, request
 
+from ._helpers import DBModel, use_kwargs
 from ..database import db, Widget, ExamWidget, MultipleChoiceOption, ExamLayout
 
 
@@ -59,13 +60,11 @@ def normalise_pages(widgets):
 
 class Widgets(MethodView):
 
+    @use_kwargs({'widget_id': DBModel(Widget, required=True)}, location='view_args')
     def patch(self, widget_id):
-        if (widget := Widget.query.get(widget_id)) is None:
-            msg = f"Widget with id {widget_id} doesn't exist"
-            return dict(status=404, message=msg), 404
-        elif isinstance(widget, ExamWidget) and widget.exam.finalized:
+        if isinstance(widget_id, ExamWidget) and widget_id.exam.finalized:
             return dict(status=403, message='Exam is finalized'), 403
-        elif isinstance(widget, MultipleChoiceOption) and widget.feedback.problem.exam.finalized:
+        elif isinstance(widget_id, MultipleChoiceOption) and widget_id.feedback.problem.exam.finalized:
             return dict(status=405, message='Exam is finalized'), 405
 
         # will 400 on malformed json
@@ -73,19 +72,19 @@ class Widgets(MethodView):
 
         for attr, value in body.items():
             try:
-                setattr(widget, attr, value)
+                setattr(widget_id, attr, value)
             except AttributeError:
                 msg = f"Widget doesn't have a property {attr}"
                 return dict(status=400, message=msg), 400
             except (TypeError, ValueError) as error:
                 return dict(status=400, message=str(error)), 400
 
-        exam = widget.exam
+        exam = widget_id.exam
 
         if exam.layout == ExamLayout.templated:
-            name = 'Student ID' if widget.name == 'student_id_widget' else 'Barcode'
+            name = 'Student ID' if widget_id.name == 'student_id_widget' else 'Barcode'
             message = f'The "{name}" widget has to lay between the corner markers region.'
-            changed = force_boundaries(widget)
+            changed = force_boundaries(widget_id)
         elif exam.layout == ExamLayout.unstructured:
             message = "There can't be a gap in the page numbers"
             changed = normalise_pages(list(p.widget for p in exam.problems))
@@ -99,6 +98,6 @@ class Widgets(MethodView):
             # this response forces the client to update the widget to the new state
             return dict(status=409,
                         message=message,
-                        data=widget_to_data(widget)), 409
+                        data=widget_to_data(widget_id)), 409
 
         return dict(status=200, message="ok"), 200

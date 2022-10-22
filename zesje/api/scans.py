@@ -1,7 +1,8 @@
 from flask import current_app
 from flask.views import MethodView
-from werkzeug.datastructures import FileStorage
+from webargs import fields
 
+from ._helpers import DBModel, use_kwargs
 from ..scans import process_scan
 from ..database import db, Exam, Scan
 
@@ -16,6 +17,7 @@ class Scans(MethodView):
             mimetype in current_app.config['ZIP_MIME_TYPES']
         )
 
+    @use_kwargs({'exam_id': DBModel(Exam, required=True)}, location='view_args')
     def get(self, exam_id):
         """get all uploaded scans for a particular exam.
 
@@ -29,10 +31,6 @@ class Scans(MethodView):
             name: str
                 filename of the uploaded PDF
         """
-
-        if (exam := Exam.query.get(exam_id)) is None:
-            return dict(status=404, message='Exam does not exist.'), 404
-
         return [
             {
                 'id': scan.id,
@@ -40,14 +38,14 @@ class Scans(MethodView):
                 'status': scan.status,
                 'message': scan.message,
             }
-            for scan in exam.scans
+            for scan in exam_id.scans
         ]
 
-    post_parser = reqparse.RequestParser()
-    post_parser.add_argument('file', type=FileStorage, required=True,
-                             location='files')
-
-    def post(self, exam_id):
+    @use_kwargs({
+        'exam_id': DBModel(Exam, required=True, validate_model=[lambda exam: exam.finalized])
+    }, location='view_args')
+    @use_kwargs({'file': fields.Field(required=True)}, location='files')
+    def post(self, exam_id, file):
         """Upload a scan PDF
 
         Parameters
@@ -62,22 +60,16 @@ class Scans(MethodView):
         status : str
         message : str
         """
-        args = self.post_parser.parse_args()
-        if not self._is_mimetype_allowed(args['file'].mimetype):
+        if not self._is_mimetype_allowed(file.mimetype):
             return dict(message='File is not a PDF, ZIP or image.'), 400
 
-        if (exam := Exam.query.get(exam_id)) is None:
-            return dict(status=404, message='Exam does not exist.'), 404
-        elif not exam.finalized:
-            return dict(status=403, message='Exam is not finalized.'), 403
-
-        scan = Scan(exam=exam, name=args['file'].filename,
+        scan = Scan(exam=exam_id, name=file.filename,
                     status='processing', message='Waiting...')
         db.session.add(scan)
         db.session.commit()
 
         try:
-            args['file'].save(scan.path)
+            file.save(scan.path)
         except Exception:
             scan = Scan.query.get(scan.id)
             if scan is not None:
@@ -89,7 +81,7 @@ class Scans(MethodView):
         # TODO: save these into a process-local datastructure, or save
         # it into the DB as well so that we can cull 'processing' tasks
         # that are actually dead.
-        process_scan.delay(scan_id=scan.id, scan_type=exam.layout.value)
+        process_scan.delay(scan_id=scan.id, scan_type=exam_id.layout.value)
 
         return {
             'id': scan.id,

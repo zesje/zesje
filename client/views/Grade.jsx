@@ -44,6 +44,10 @@ const FiltersInfo = ({ hasFilters, matchingResults, clearFilters }) => {
   )
 }
 
+// Used to add .has-modal class when children have a modal displayed
+// TODO: Remove this once :has() is supported by Firefox
+export const HasModalContext = React.createContext({ updateHasModal: () => {} })
+
 class Grade extends React.Component {
   /**
    * Constructor sets empty state, and requests metadata for the exam.
@@ -53,8 +57,16 @@ class Grade extends React.Component {
    */
   constructor (props) {
     super(props)
-    this.state = { feedbackFilters: {}, gradedBy: defaultGraderFilter }
-    this.state = { ...this.state, hasFilters: this.hasFilters() }
+    this.state = {
+      feedbackFilters: {},
+      gradedBy: defaultGraderFilter,
+      feedbackPanelHasModal: false
+    }
+    // Since hasFilters depends on FeedbackFilters, this needs to be separate
+    this.state = {
+      ...this.state,
+      hasFilters: this.hasFilters()
+    }
 
     Promise.all([
       api.get(`exams/${this.props.examID}?only_metadata=true`),
@@ -538,18 +550,20 @@ class Grade extends React.Component {
                   current={problem}
                   showTooltips={this.state.showTooltips}
                 />
-                <nav className='panel is-sticky'>
-                  <FeedbackPanel
-                    examID={examID} submissionID={submission.id}
-                    problem={problem} solution={solution}
-                    showTooltips={this.state.showTooltips}
-                    setSubmission={this.updateSubmission}
-                    toggleOption={this.toggleFeedbackOption}
-                    toggleApprove={this.toggleApprove}
-                    feedbackFilters={this.state.feedbackFilters}
-                    applyFilter={this.applyFeedbackFilter}
-                    updateFeedback={this.syncSubmission}
-                  />
+                <nav className={'panel is-sticky' + (this.state.feedbackPanelHasModal ? ' has-modal' : '')}>
+                  <HasModalContext.Provider value={(hasModal) => this.setState({ feedbackPanelHasModal: hasModal })}>
+                    <FeedbackPanel
+                      examID={examID} submissionID={submission.id}
+                      problem={problem} solution={solution}
+                      showTooltips={this.state.showTooltips}
+                      setSubmission={this.updateSubmission}
+                      toggleOption={this.toggleFeedbackOption}
+                      toggleApprove={this.toggleApprove}
+                      feedbackFilters={this.state.feedbackFilters}
+                      applyFilter={this.applyFeedbackFilter}
+                      updateFeedback={this.syncSubmission}
+                    />
+                  </HasModalContext.Provider>
                 </nav>
               </div>
 

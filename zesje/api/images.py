@@ -19,7 +19,7 @@ from ..scans import exam_student_id_widget
     'submission_id': DBModel(Submission, required=True),
     'full_page': fields.Bool(required=False, load_default=0)
 }, location='view_args')
-def get(exam, problem, submission, full_page):
+def get(exam_id, problem_id, submission_id, full_page):
     """get image for the given problem.
 
     Parameters
@@ -39,28 +39,28 @@ def get(exam, problem, submission, full_page):
     Image (JPEG mimetype)
     """
     pages = None
-    if exam.layout == ExamLayout.unstructured:
+    if exam_id.layout == ExamLayout.unstructured:
         full_page = True
 
-        if max(problem.widget.page for problem in exam.problems) == 0:
+        if max(problem.widget.page for problem in exam_id.problems) == 0:
             # single paged exam, show all pages from all copies
             pages = Page.query.filter(Page.copy_id == Copy.id,
-                                      Copy.submission == submission)\
+                                      Copy.submission == submission_id)\
                               .order_by(Page.number, Copy.number)\
                               .all()
 
     if not pages:
-        page_number = problem.widget.page
+        page_number = problem_id.widget.page
 
         #  get the pages
         pages = Page.query.filter(Page.copy_id == Copy.id,
-                                  Copy.submission == submission,
+                                  Copy.submission == submission_id,
                                   Page.number == page_number)\
                           .order_by(Copy.number)\
                           .all()
 
     if len(pages) == 0:
-        abort(404, f'Page #{page_number} is missing for all copies of submission #{submission.id}.')
+        abort(404, f'Page #{page_number} is missing for all copies of submission #{submission_id.id}.')
 
     # Convert to int to match the time resolution of HTTP headers (seconds)
     last_modified = int(max(Path(page.abs_path).stat().st_mtime for page in pages))
@@ -71,18 +71,18 @@ def get(exam, problem, submission, full_page):
             # Send 304 Not Modified with empty body
             return '', 304
 
-    solution = Solution.query.filter(Solution.submission_id == submission.id,
-                                     Solution.problem_id == problem.id).one()
+    solution = Solution.query.filter(Solution.submission_id == submission_id.id,
+                                     Solution.problem_id == problem_id.id).one()
 
-    if exam.layout == ExamLayout.templated and exam.grade_anonymous and page_number == 0:
-        student_id_widget, coords = exam_student_id_widget(exam.id)
+    if exam_id.layout == ExamLayout.templated and exam_id.grade_anonymous and page_number == 0:
+        student_id_widget, coords = exam_student_id_widget(exam_id.id)
     else:
         student_id_widget = None
 
     raw_images = []
 
     # TODO: use points as base unit
-    widget_area_in = widget_area(problem)
+    widget_area_in = widget_area(problem_id)
 
     for page in pages:
         page_path = page.abs_path
@@ -95,7 +95,7 @@ def get(exam, problem, submission, full_page):
 
         # pregrade highlighting
         fb = list(map(lambda x: x.id, solution.feedback))
-        for option in problem.mc_options:
+        for option in problem_id.mc_options:
             if option.feedback_id in fb:
                 x = int(option.x / 72 * dpi)
                 y = int(option.y / 72 * dpi)

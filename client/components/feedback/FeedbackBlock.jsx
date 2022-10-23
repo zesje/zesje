@@ -45,7 +45,8 @@ class FeedbackBlock extends React.Component {
           {this.props.grading &&
             <div
               className={
-                `popover is-popover-right button is-pulled-right filter-container
+                // TODO: Change to is-popover-right once Firefox supports :has()
+                `popover is-popover-top button is-pulled-right filter-container
                 ${(this.props.filterMode === 'no_filter' ? ' no-filter' : '')}
                 ${FILTER_COLORS[this.props.filterMode]}`}
             >
@@ -53,7 +54,7 @@ class FeedbackBlock extends React.Component {
               <div className='is-filter'
                 onClick={e => this.props.applyFilter(e, 'no_filter')}
               />
-              <div className='popover-content' style={{ display: 'grid', gridAutoFlow: 'row', gap: '1em' }}>
+              <div className='popover-content' style={{ display: 'grid', gridAutoFlow: 'column', gap: '1em' }}>
                 <button
                   className={
                     `button popover-trigger is-inverted is-small fa ${FILTER_ICONS.required} ${FILTER_COLORS.required}`}

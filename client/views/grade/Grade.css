@@ -18,7 +18,7 @@
 
 /* Class that manually sets the z-index of sticky objects with a modal as a child.
    Required since the model will inherit the z-index of sticky parents. */
-.is-sticky:has(.modal.is-active) {
+.is-sticky.has-modal {
   z-index: 40;
 }
 

@@ -20,12 +20,12 @@ const TooltipLink = (props) => {
   if (!pred) pred = [false, null]
   const isActive = useLocation().pathname.startsWith(props.to)
 
-  let className = 'navbar-item'
+  let className = 'navbar-item has-navbar-item '
   className += pred[0] ? ' tooltip has-tooltip-bottom' : ''
   className += isActive ? ' is-active' : ''
 
   return (
-    <a
+    <div
       className={className}
       data-tooltip={pred[1]}
     >
@@ -35,7 +35,7 @@ const TooltipLink = (props) => {
         to={props.to}>
         {props.text}
       </Link>
-    </a>
+    </div>
   )
 }
 

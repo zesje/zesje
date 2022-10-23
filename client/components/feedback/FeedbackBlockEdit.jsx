@@ -3,6 +3,7 @@ import React from 'react'
 import ConfirmationModal from '../modals/ConfirmationModal.jsx'
 import ColorInput from '../ColorInput.jsx'
 import Switch from '../Switch.jsx'
+import { HasModalContext } from '../../views/Grade.jsx'
 import * as api from '../../api.jsx'
 import { toast } from 'bulma-toast'
 
@@ -43,6 +44,8 @@ class EditPanel extends React.Component {
     exclusive: false,
     deleting: false
   }
+
+  static contextType = HasModalContext
 
   static getDerivedStateFromProps (nextProps, prevState) {
     // In case nothing is set, use an empty function that no-ops
@@ -158,7 +161,7 @@ class EditPanel extends React.Component {
 
   render () {
     return (
-      <React.Fragment>
+      <HasModalContext.Consumer>{updateHasModal => (<React.Fragment>
         {this.props.parent && <div className='panel-block attach-bottom'>
           {this.props.parent.parent === null
             ? <div>Add on top-level</div>
@@ -233,7 +236,9 @@ class EditPanel extends React.Component {
                   isNaN(parseInt(this.state.score))} />
               <CancelButton onClick={this.props.goBack} />
             </div>
-            <DeleteButton onClick={() => { this.setState({ deleting: true }) }} disabled={this.props.feedback} />
+            <DeleteButton
+              onClick={() => { this.setState({ deleting: true }, () => updateHasModal(true)) }}
+              disabled={this.props.feedback} />
           </div>
           <ConfirmationModal
             headerText={`Do you want to irreversibly delete feedback option "${this.state.name}"?`}
@@ -255,11 +260,11 @@ class EditPanel extends React.Component {
             confirmText='Delete feedback'
             active={this.state.deleting}
             onConfirm={this.deleteFeedback}
-            onCancel={() => { this.setState({ deleting: false }) }}
+            onCancel={() => { this.setState({ deleting: false }, () => updateHasModal(false)) }}
           />
         </div>
         {this.props.feedback && <FeedbackList {...this.props.parentProps} feedback={this.props.feedback} />}
-      </React.Fragment>
+      </React.Fragment>)}</HasModalContext.Consumer>
     )
   }
 }

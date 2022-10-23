@@ -3,13 +3,20 @@
 // container which has hover events. The styles below add this functionality
 // for a .navbar with .is-info coloring.
 
-div.navbar-item a, .navbar-item > .navbar-item {
+.navbar-item > .navbar-item {
   height: 100%;
 }
 
 .navbar-item:is([disabled]) {
   pointer-events: none;
   opacity: 0.65;
+}
+
+// TODO: Remove .has-navbar-item once firefox supports :has()
+// This needs to be its own rule, since browserse not supporting :has()
+// will ignore a rule if a single selector is unrecognized.
+.navbar-item.has-navbar-item {
+  padding: 0;
 }
 
 .navbar .navbar-start .navbar-item:has(.navbar-item) {

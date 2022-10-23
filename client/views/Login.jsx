@@ -23,7 +23,7 @@ const Login = (props) => {
   return <section className='hero is-fullheight is-vcentered is-info'>
   <div className="hero-body">
     <div className="container has-text-centered is-flex-grow-0">
-      <p className="title" style={{ 'font-size': '4rem' }}>
+      <p className="title" style={{ fontSize: '4rem' }}>
         <i className='fa fa-edit' />
         &nbsp;Zesje
       </p>

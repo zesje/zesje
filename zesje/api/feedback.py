@@ -25,8 +25,8 @@ def feedback_to_data(feedback, full_children=True):
 class Feedback(MethodView):
     """ List of feedback options of a problem """
 
-    @use_kwargs({'problem_id': DBModel(Problem, required=True)}, location='view_args')
-    def get(self, problem_id):
+    @use_kwargs({'problem': DBModel(Problem, required=True)}, location='view_args')
+    def get(self, problem):
         """get list of feedback connected to a specific problem
 
         Returns
@@ -42,16 +42,16 @@ class Feedback(MethodView):
                 list of children ids
 
         """
-        return feedback_to_data(problem_id.root_feedback)
+        return feedback_to_data(problem.root_feedback)
 
-    @use_kwargs({'problem_id': DBModel(Problem, required=True)}, location='view_args')
+    @use_kwargs({'problem': DBModel(Problem, required=True)}, location='view_args')
     @use_args({
         'name': fields.Str(required=True, validate=non_empty_string),
         'description': fields.Str(required=False),
         'score': fields.Int(required=False),
-        'parentId': DBModel(FeedbackOption, required=False)
+        'parent': DBModel(FeedbackOption, required=False, data_key='parentId')
     }, location='form')
-    def post(self, args, problem_id):
+    def post(self, args, problem):
         """Post a new feedback option
 
         Parameters
@@ -61,11 +61,7 @@ class Feedback(MethodView):
             score: int
             parent: int
         """
-        fb = FeedbackOption(problem=problem_id,
-                            text=args['name'],
-                            description=args['description'],
-                            score=args['score'],
-                            parent=args['parentId'])
+        fb = FeedbackOption(problem=problem, **args)
         db.session.add(fb)
         db.session.commit()
 
@@ -78,16 +74,16 @@ class Feedback(MethodView):
         }
 
     @use_kwargs({
-        'problem_id': DBModel(Problem, required=True),
-        'feedback_id': DBModel(FeedbackOption, required=True)
+        'problem': DBModel(Problem, required=True),
+        'feedback': DBModel(FeedbackOption, required=True)
     }, location='view_args')
     @use_args({
-        'name': fields.Str(required=False, missing=None),
-        'description': fields.Str(required=False, missing=None),
-        'score': fields.Int(required=False, missing=None),
-        'exclusive': fields.Bool(required=False, missing=None)
+        'name': fields.Str(required=False, load_default=None),
+        'description': fields.Str(required=False, load_default=None),
+        'score': fields.Int(required=False, load_default=None),
+        'exclusive': fields.Bool(required=False, load_default=None)
     }, location='form')
-    def patch(self, args, problem_id, feedback_id):
+    def patch(self, args, problem, feedback):
         """Modify an existing feedback option
 
         Parameters
@@ -100,12 +96,12 @@ class Feedback(MethodView):
         set_aside_solutions = 0
 
         if args['exclusive'] is not None:
-            if len(feedback_id.children) == 0:
+            if len(feedback.children) == 0:
                 return dict(status=409,
                             message="Tryed to modify the exclusive property on a feedback option with no children"), 409
-            if not feedback_id.mut_excl_children and args['exclusive']:  # we go from non-exclusive to exclusive
+            if not feedback.mut_excl_children and args['exclusive']:  # we go from non-exclusive to exclusive
                 # look at all solutions and ungrade those with inconsistencies
-                ids = [f.id for f in feedback_id.children]
+                ids = [f.id for f in feedback.children]
                 res = np.array(
                     db.session.query(solution_feedback.c.solution_id,
                                      func.count(solution_feedback.c.feedback_option_id))
@@ -122,31 +118,31 @@ class Feedback(MethodView):
                                     message='Error changing the exclusive state of '
                                             f'({len(invalid_solutions) - set_aside_solutions} solutions.'), 404
 
-            feedback_id.mut_excl_children = args['exclusive']
+            feedback.mut_excl_children = args['exclusive']
 
         if args['name'] is not None:
             if (name := args['name'].strip()):
-                feedback_id.text = name
+                feedback.text = name
             else:
                 return dict(status=409, message="Feedback Option name cannot be empty."), 409
 
         if args['score'] is not None:
-            feedback_id.score = args['score']
+            feedback.score = args['score']
 
         if args['description'] is not None:
-            feedback_id.description = args['description']
+            feedback.description = args['description']
 
         db.session.commit()
 
         return dict(status=200,
-                    feedback=feedback_to_data(feedback_id, full_children=False),
+                    feedback=feedback_to_data(feedback, full_children=False),
                     set_aside_solutions=set_aside_solutions), 200
 
     @use_kwargs({
-        'problem_id': DBModel(Problem, required=True),
-        'feedback_id': DBModel(FeedbackOption, required=True)
+        'problem': DBModel(Problem, required=True),
+        'feedback': DBModel(FeedbackOption, required=True)
     }, location='view_args')
-    def delete(self, problem_id, feedback_id):
+    def delete(self, problem, feedback):
         """Delete an existing feedback option
 
         Parameters
@@ -161,24 +157,24 @@ class Feedback(MethodView):
         We use the problem id for extra safety check that we don't corrupt
         things accidentally.
         """
-        if feedback_id.problem.id != problem_id.id:
+        if feedback.problem.id != problem.id:
             return dict(status=400, message="Feedback option does not belong to this problem."), 400
-        if feedback_id.mc_option:
+        if feedback.mc_option:
             return dict(status=405, message='Cannot delete feedback option'
                                             + ' attached to a multiple choice option.'), 405
-        if feedback_id.parent_id is None:
+        if feedback.parent_id is None:
             return dict(status=405, message='Cannot delete root feedback option.'), 405
 
         # All feedback options, that are the child of the original feedback option will be deleted
-        if len(feedback_id.parent.children) == 1 and feedback_id.parent.mut_excl_children:
+        if len(feedback.parent.children) == 1 and feedback.parent.mut_excl_children:
             # we are about to delete the only child of a parent option that has exclusive enabled
-            feedback_id.parent.mut_excl_children = False
+            feedback.parent.mut_excl_children = False
 
-        db.session.delete(feedback_id)
+        db.session.delete(feedback)
 
         # If there are submissions with no feedback, we should mark them as
         # ungraded.
-        solutions = Solution.query.filter(Solution.problem_id == problem_id.id,
+        solutions = Solution.query.filter(Solution.problem_id == problem.id,
                                           Solution.grader_id is not None).all()
         for solution in solutions:
             if solution.feedback_count == 0:
@@ -187,4 +183,4 @@ class Feedback(MethodView):
 
         db.session.commit()
 
-        return dict(status=200, message=f"Feedback option with id {feedback_id.id} deleted."), 200
+        return dict(status=200, message=f"Feedback option with id {feedback.id} deleted."), 200

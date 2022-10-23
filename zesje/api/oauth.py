@@ -33,7 +33,7 @@ class OAuthStart(MethodView):
             authorization_url, state = url_for('zesje.oauth_callback'), 'state'
         else:
             oauth2_session = OAuth2Session(current_app.config['OAUTH_CLIENT_ID'],
-                                           redirect_uri=url_for('zesje.oauthcallback', _external=True),
+                                           redirect_uri=url_for('zesje.oauth_callback', _external=True),
                                            scope=current_app.config['OAUTH_SCOPES'])
             # add prompt='login' below to force surf conext to ask for login everytime disabling single sign-on, see:
             # https://wiki.surfnet.nl/display/surfconextdev/OpenID+Connect+features#OpenIDConnectfeatures-Prompt=login
@@ -41,6 +41,8 @@ class OAuthStart(MethodView):
                 .authorization_url(current_app.config['OAUTH_AUTHORIZATION_URL'])
 
         session['oauth_state'] = state
+
+        print(session)
 
         return redirect(authorization_url)
 
@@ -62,7 +64,7 @@ class OAuthCallback(MethodView):
             return redirect(user_url)
 
         oauth2_session = OAuth2Session(current_app.config['OAUTH_CLIENT_ID'],
-                                       redirect_uri=url_for('zesje.oauthcallback', _external=True),
+                                       redirect_uri=url_for('zesje.oauth_callback', _external=True),
                                        state=session['oauth_state'])
 
         token = oauth2_session.fetch_token(

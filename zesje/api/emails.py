@@ -60,20 +60,20 @@ def render_email(exam_id, student_id, template):
 class EmailTemplate(MethodView):
     """ Email template. """
 
-    @use_kwargs({'exam_id': DBModel(Exam, required=True)}, location='view_args')
-    def get(self, exam_id):
+    @use_kwargs({'exam': DBModel(Exam, required=True)}, location='view_args')
+    def get(self, exam):
         """Get an email template for a given exam."""
         try:
-            with open(template_path(exam_id.id)) as f:
+            with open(template_path(exam.id)) as f:
                 return f.read()
         except FileNotFoundError:
-            with open(template_path(exam_id.id), 'w') as f:
+            with open(template_path(exam.id), 'w') as f:
                 f.write(default_email_template)
             return default_email_template
 
-    @use_kwargs({'exam_id': DBModel(Exam, required=True)}, location='view_args')
+    @use_kwargs({'exam': DBModel(Exam, required=True)}, location='view_args')
     @use_kwargs({"template": fields.Str(required=True)}, location="form")
-    def put(self, exam_id, template):
+    def put(self, exam, template):
         """Update an email template."""
         try:
             Template(template)
@@ -83,7 +83,7 @@ class EmailTemplate(MethodView):
                 message=f"Syntax error in the template: {error.message}"
             ), 400
 
-        with open(template_path(exam_id.id), 'w') as f:
+        with open(template_path(exam.id), 'w') as f:
             f.write(template)
 
         return dict(status=200), 200
@@ -92,8 +92,11 @@ class EmailTemplate(MethodView):
 class RenderedEmailTemplate(MethodView):
 
     @use_kwargs({
-        'exam_id': fields.Integer(required=True),
-        'student_id': fields.Integer(required=True, validate=validate.Range(1, 9999999))
+        'exam_id': fields.Integer(
+            required=True, validate=validate.Range(min=1, error="Exam id ({input}) is not valid.")),
+        'student_id': fields.Integer(
+            required=True,
+            validate=validate.Range(1, 9999999, error="{input} is not a valid TU Delft identifier [{min}, {max}]"))
     }, location='view_args')
     @use_kwargs({"template": fields.Str(required=True)}, location="form")
     def post(self, exam_id, student_id, template):
@@ -103,15 +106,15 @@ class RenderedEmailTemplate(MethodView):
 class Email(MethodView):
 
     @use_kwargs({
-        'exam_id': DBModel(Exam, required=True),
-        'student_id': DBModel(Student, required=False, missing=None)
+        'exam': DBModel(Exam, required=True),
+        'student': DBModel(Student, required=False, load_default=None)
     }, location='view_args')
     @use_args({
         "template": fields.Str(required=True),
         'attach': fields.Bool(required=True),
-        'copy_to': fields.Email(required=False, missing=None)
+        'copy_to': fields.Email(required=False, load_default=None)
     }, location="form")
-    def post(self, args, exam_id, student_id):
+    def post(self, args, exam, student):
         """Send an email.
 
         Returns
@@ -123,13 +126,13 @@ class Email(MethodView):
         attach = args['attach']
         copy_to = args['copy_to']
 
-        if student_id is None and copy_to is not None:
+        if student is None and copy_to is not None:
             return dict(
                 status=409,
                 message="Not CC-ing all emails from the exam."
             ), 409
 
-        if not all(sub.validated for sub in exam_id.submissions):
+        if not all(sub.validated for sub in exam.submissions):
             return dict(
                 status=409,
                 message="All copies must be validated before sending emails."
@@ -141,15 +144,15 @@ class Email(MethodView):
                 message='Sending email is not configured'
             ), 409
 
-        if student_id is not None:
-            students = [student_id]
+        if student is not None:
+            students = [student]
         else:
-            students = [sub.student for sub in exam_id.submissions if sub.student_id and sub.validated]
+            students = [sub.student for sub in exam.submissions if sub.student_id and sub.validated]
 
         sent, failed = emails.build_and_send(
             students,
             from_address=current_app.config['FROM_ADDRESS'],
-            exam=exam_id,
+            exam=exam,
             template=template,
             attach=attach
         )

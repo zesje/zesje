@@ -45,24 +45,24 @@ def generate_exam_token(exam_id, exam_name, exam_pdf):
 
 class Exams(MethodView):
 
-    @use_kwargs({'exam_id': DBModel(Exam, required=False, missing=None)}, location='view_args')
-    @use_kwargs({'only_metadata': fields.Bool(missing=False)}, location='query')
-    def get(self, exam_id, only_metadata):
-        if exam_id:
+    @use_kwargs({'exam': DBModel(Exam, required=False, load_default=None)}, location='view_args')
+    @use_kwargs({'only_metadata': fields.Bool(load_default=False)}, location='query')
+    def get(self, exam, only_metadata):
+        if exam:
             if only_metadata:
-                return self._get_single_metadata(exam_id)
-            return self._get_single(exam_id)
+                return self._get_single_metadata(exam)
+            return self._get_single(exam)
         else:
             return self._get_all()
 
-    @use_kwargs({'exam_id': DBModel(Exam, required=True, validate_model=[lambda exam: not exam.finalized])},
+    @use_kwargs({'exam': DBModel(Exam, required=True, validate_model=[lambda exam: not exam.finalized])},
                 location='view_args')
-    def delete(self, exam_id):
-        if Submission.query.filter(Submission.exam_id == exam_id.id).count():
+    def delete(self, exam):
+        if Submission.query.filter(Submission.exam_id == exam.id).count():
             return dict(status=500, message='Exam is not finalized but already has submissions.'), 500
 
         # All corresponding solutions, scans and problems are automatically deleted
-        db.session.delete(exam_id)
+        db.session.delete(exam)
         db.session.commit()
 
         return dict(status=200, message="ok"), 200
@@ -101,7 +101,7 @@ class Exams(MethodView):
 
         URL Parameters
         --------------
-        exam_id : int
+        exam : int
             exam ID
 
         Returns
@@ -152,7 +152,7 @@ class Exams(MethodView):
 
         Parameters
         ----------
-        exam_id : int
+        exam : int
             id of exam to get metadata for.
 
         Returns
@@ -180,7 +180,7 @@ class Exams(MethodView):
 
         }
 
-    @use_kwargs({'pdf': fields.Field(required=False, missing=None)}, location='files')
+    @use_kwargs({'pdf': fields.Field(required=False, load_default=None)}, location='files')
     @use_kwargs({
         'exam_name': fields.Str(required=True, validate=non_empty_string),
         'layout': fields.Enum(ExamLayout, required=True)
@@ -275,35 +275,35 @@ class Exams(MethodView):
 
         return exam
 
-    @use_kwargs({'exam_id': DBModel(Exam, required=True)}, location='view_args')
+    @use_kwargs({'exam': DBModel(Exam, required=True)}, location='view_args')
     @use_kwargs({
-        'finalized': fields.Bool(required=False, missing=None),
-        'grade_anonymous': fields.Bool(required=False, missing=None)
+        'finalized': fields.Bool(required=False, load_default=None),
+        'grade_anonymous': fields.Bool(required=False, load_default=None)
     }, location='form')
-    def put(self, exam_id, finalized, grade_anonymous):
+    def put(self, exam, finalized, grade_anonymous):
         if finalized is not None and finalized:
-            add_blank_feedback(exam_id.problems)
+            add_blank_feedback(exam.problems)
 
-            if exam_id.layout == ExamLayout.templated:
-                write_finalized_exam(exam_id)
+            if exam.layout == ExamLayout.templated:
+                write_finalized_exam(exam)
 
-            exam_id.finalized = True
+            exam.finalized = True
             db.session.commit()
             return dict(status=200, message="ok"), 200
         else:
             return dict(status=403, message='Exam can not be unfinalized'), 403
 
         if grade_anonymous is not None:
-            changed = exam_id.grade_anonymous != grade_anonymous
-            exam_id.grade_anonymous = grade_anonymous
+            changed = exam.grade_anonymous != grade_anonymous
+            exam.grade_anonymous = grade_anonymous
             db.session.commit()
             return dict(status=200, message="ok", changed=changed), 200
 
         return dict(status=400, message='One of finalized or anonymous must be present'), 400
 
-    @use_kwargs({'exam_id': DBModel(Exam, required=True)}, location='view_args')
+    @use_kwargs({'exam': DBModel(Exam, required=True)}, location='view_args')
     @use_kwargs({'name': fields.Str(required=True, validate=non_empty_string)}, location='form')
-    def patch(self, exam_id, name):
+    def patch(self, exam, name):
         """Update the name of an existing exam.
 
         Parameters
@@ -311,7 +311,7 @@ class Exams(MethodView):
         name: str
             name for the exam
         """
-        exam_id.name = name.strip()
+        exam.name = name.strip()
         db.session.commit()
 
         return dict(status=200, message='ok'), 200
@@ -320,11 +320,11 @@ class Exams(MethodView):
 class ExamSource(MethodView):
 
     @use_kwargs({
-        'exam_id': DBModel(Exam, required=True, validate_model=[lambda exam: exam.layout == ExamLayout.templated])
+        'exam': DBModel(Exam, required=True, validate_model=[lambda exam: exam.layout == ExamLayout.templated])
     }, location='view_args')
-    def get(self, exam_id):
+    def get(self, exam):
         return send_file(
-            exam_pdf_path(exam_id.id),
+            exam_pdf_path(exam.id),
             max_age=0,
             mimetype='application/pdf')
 
@@ -332,15 +332,15 @@ class ExamSource(MethodView):
 class ExamGeneratedPdfs(MethodView):
 
     @use_kwargs({
-        'exam_id': DBModel(Exam, required=True,
-                           validate_model=[lambda exam: exam.finalized and exam.layout == ExamLayout.templated])
+        'exam': DBModel(Exam, required=True,
+                        validate_model=[lambda exam: exam.finalized and exam.layout == ExamLayout.templated])
     }, location='view_args')
     @use_args({
         'copies_start': fields.Int(required=False, load_default=0),
         'copies_end': fields.Int(required=True),
         'type': fields.Str(required=True, validate=validate.OneOf(['pdf', 'zip']))
     }, location='form')
-    def get(self, args, exam_id):
+    def get(self, args, exam):
         """Generates the exams with datamatrices and copy numbers.
 
         A range is given. Ranges should be starting from 1.
@@ -371,12 +371,12 @@ class ExamGeneratedPdfs(MethodView):
             msg = 'copies_start should be larger than 0'
             return dict(status=400, message=msg), 400
 
-        attachment_filename = f'{exam_id.name}_{copies_start}-{copies_end}.{args["type"]}'
+        attachment_filename = f'{exam.name}_{copies_start}-{copies_end}.{args["type"]}'
         mimetype = f'application/{args["type"]}'
 
         if args['type'] == 'pdf':
             output_file = BytesIO()
-            generate_single_pdf(exam_id, copies_start, copies_end, output_file)
+            generate_single_pdf(exam, copies_start, copies_end, output_file)
             output_file.seek(0)
             return send_file(
                 output_file,
@@ -385,7 +385,7 @@ class ExamGeneratedPdfs(MethodView):
                 as_attachment=True,
                 mimetype=mimetype)
         elif args['type'] == 'zip':
-            generator = generate_zipped_pdfs(exam_id, copies_start, copies_end)
+            generator = generate_zipped_pdfs(exam, copies_start, copies_end)
             response = Response(stream_with_context(generator), mimetype=mimetype)
             response.headers['Content-Disposition'] = f'attachment; filename="{attachment_filename}"'
             return response
@@ -396,10 +396,10 @@ class ExamGeneratedPdfs(MethodView):
 class ExamPreview(MethodView):
 
     @use_kwargs({
-        'exam_id': DBModel(Exam, required=True, validate_model=[lambda exam: exam.layout == ExamLayout.templated])
+        'exam': DBModel(Exam, required=True, validate_model=[lambda exam: exam.layout == ExamLayout.templated])
     }, location='view_args')
-    def get(self, exam_id):
-        exam_dir, student_id_widget, barcode_widget, exam_path, cb_data = _exam_generate_data(exam_id)
+    def get(self, exam):
+        exam_dir, student_id_widget, barcode_widget, exam_path, cb_data = _exam_generate_data(exam)
 
         # Generate generic overlay
         _, intermediate_file = next(generate_pdfs(

@@ -31,7 +31,7 @@ class Graders(MethodView):
             for g in Grader.query.filter(Grader.oauth_id != current_app.config['AUTOGRADER_NAME']).all()
         ]
 
-    @use_kwargs({"oauth_id": fields.Email(required=True)}, location="json")
+    @use_kwargs({"oauth_id": fields.Email(required=True)}, location="form")
     def post(self, oauth_id):
         """add a grader.
 

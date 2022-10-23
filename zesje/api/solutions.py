@@ -45,11 +45,11 @@ class Solutions(MethodView):
     """ Solution provided on a specific problem and exam """
 
     @use_kwargs({
-        'exam_id': DBModel(Exam, required=True),
-        'problem_id': DBModel(Problem, required=True),
-        'submission_id': DBModel(Submission, required=True),
+        'exam': DBModel(Exam, required=True),
+        'problem': DBModel(Problem, required=True),
+        'submission': DBModel(Submission, required=True),
     }, location='view_args')
-    def get(self, exam_id, submission_id, problem_id):
+    def get(self, exam, submission, problem):
         """get solution to problem
 
         Returns
@@ -60,23 +60,23 @@ class Solutions(MethodView):
             imagePath: string (url)
             remarks: string
         """
-        if submission_id.exam_id != exam_id.id:
+        if submission.exam != exam.id:
             return dict(status=400, message='Submission does not belong to this exam.'), 400
 
-        solution = Solution.query.filter(Solution.submission_id == submission_id.id,
-                                         Solution.problem_id == problem_id.id).one_or_none()
+        solution = Solution.query.filter(Solution.submission_id == submission.id,
+                                         Solution.problem_id == problem.id).one_or_none()
         if solution is None:
             return dict(status=404, message='Solution does not exist.'), 404
 
         return solution_to_data(solution)
 
     @use_kwargs({
-        'exam_id': DBModel(Exam, required=True),
-        'problem_id': DBModel(Problem, required=True),
-        'submission_id': DBModel(Submission, required=True),
+        'exam': DBModel(Exam, required=True),
+        'problem': DBModel(Problem, required=True),
+        'submission': DBModel(Submission, required=True),
     }, location='view_args')
     @use_kwargs({'remark': fields.Str(required=True)}, location='form')
-    def post(self, exam_id, submission_id, problem_id, remark):
+    def post(self, exam, submission, problem, remark):
         """Change the remark of a solution
 
         Parameters
@@ -87,11 +87,11 @@ class Solutions(MethodView):
         -------
             true (if succesfull)
         """
-        if submission_id.exam_id != exam_id.id:
+        if submission.exam_id != exam.id:
             return dict(status=400, message='Submission does not belong to this exam.'), 400
 
-        solution = Solution.query.filter(Solution.submission_id == submission_id.id,
-                                         Solution.problem_id == problem_id.id).one_or_none()
+        solution = Solution.query.filter(Solution.submission_id == submission.id,
+                                         Solution.problem_id == problem.id).one_or_none()
         if solution is None:
             return dict(status=404, message='Solution does not exist.'), 404
 
@@ -101,36 +101,36 @@ class Solutions(MethodView):
         return dict(status=200), 200
 
     @use_kwargs({
-        'exam_id': DBModel(Exam, required=True),
-        'problem_id': DBModel(Problem, required=True),
-        'submission_id': DBModel(Submission, required=True),
+        'exam': DBModel(Exam, required=True),
+        'problem': DBModel(Problem, required=True),
+        'submission': DBModel(Submission, required=True),
     }, location='view_args')
-    @use_kwargs({'id': DBModel(FeedbackOption, required=True)}, location='form')
-    def put(self, exam_id, submission_id, problem_id, id):
+    @use_kwargs({'feedback': DBModel(FeedbackOption, required=True, data_key='id')}, location='form')
+    def put(self, exam, submission, problem, feedback):
         """Toggles an existing feedback option
 
         Parameters
         ----------
-            id: int
+            feedback: FeedbackOption
 
         Returns
         -------
             state: boolean
         """
-        if submission_id.exam_id != exam_id.id:
+        if submission.exam_id != exam.id:
             return dict(status=400, message='Submission does not belong to this exam.'), 400
 
-        solution = Solution.query.filter(Solution.submission_id == submission_id.id,
-                                         Solution.problem_id == problem_id.id).one_or_none()
+        solution = Solution.query.filter(Solution.submission_id == submission.id,
+                                         Solution.problem_id == problem.id).one_or_none()
         if solution is None:
             return dict(status=404, message='Solution does not exist.'), 404
 
-        if id in solution.feedback:
-            remove_feedback_from_solution(id, solution)
+        if feedback in solution.feedback:
+            remove_feedback_from_solution(feedback, solution)
             state = False
         else:
-            fb_child = id
-            for parent in id.all_ancestors:
+            fb_child = feedback
+            for parent in feedback.all_ancestors:
                 if parent.mut_excl_children:
                     # Should be exclusive, so we uncheck all siblings
                     for sibling in fb_child.siblings:
@@ -164,12 +164,12 @@ class Approve(MethodView):
     """Mark a solution as graded."""
 
     @use_kwargs({
-        'exam_id': DBModel(Exam, required=True),
-        'problem_id': DBModel(Problem, required=True),
-        'submission_id': DBModel(Submission, required=True),
+        'exam': DBModel(Exam, required=True),
+        'problem': DBModel(Problem, required=True),
+        'submission': DBModel(Submission, required=True),
     }, location='view_args')
     @use_kwargs({'approve': fields.Bool(required=True)}, location='form')
-    def put(self, exam_id, submission_id, problem_id, approve):
+    def put(self, exam, submission, problem, approve):
         """Approve a solution or set it aside for later grading.
 
         If the grader id is provided, the solution is marked as being graded by that grader,
@@ -180,11 +180,11 @@ class Approve(MethodView):
         -------
             state: boolean
         """
-        if submission_id.exam_id != exam_id.id:
+        if submission.exam_id != exam.id:
             return dict(status=400, message='Submission does not belong to this exam.'), 400
 
-        solution = Solution.query.filter(Solution.submission_id == submission_id.id,
-                                         Solution.problem_id == problem_id.id).one_or_none()
+        solution = Solution.query.filter(Solution.submission_id == submission.id,
+                                         Solution.problem_id == problem.id).one_or_none()
         if solution is None:
             return dict(status=404, message='Solution does not exist.'), 404
 

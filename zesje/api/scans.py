@@ -17,8 +17,8 @@ class Scans(MethodView):
             mimetype in current_app.config['ZIP_MIME_TYPES']
         )
 
-    @use_kwargs({'exam_id': DBModel(Exam, required=True)}, location='view_args')
-    def get(self, exam_id):
+    @use_kwargs({'exam': DBModel(Exam, required=True)}, location='view_args')
+    def get(self, exam):
         """get all uploaded scans for a particular exam.
 
         Parameters
@@ -38,14 +38,14 @@ class Scans(MethodView):
                 'status': scan.status,
                 'message': scan.message,
             }
-            for scan in exam_id.scans
+            for scan in exam.scans
         ]
 
     @use_kwargs({
-        'exam_id': DBModel(Exam, required=True, validate_model=[lambda exam: exam.finalized])
+        'exam': DBModel(Exam, required=True, validate_model=[lambda exam: exam.finalized])
     }, location='view_args')
     @use_kwargs({'file': fields.Field(required=True)}, location='files')
-    def post(self, exam_id, file):
+    def post(self, exam, file):
         """Upload a scan PDF
 
         Parameters
@@ -63,7 +63,7 @@ class Scans(MethodView):
         if not self._is_mimetype_allowed(file.mimetype):
             return dict(message='File is not a PDF, ZIP or image.'), 400
 
-        scan = Scan(exam=exam_id, name=file.filename,
+        scan = Scan(exam=exam, name=file.filename,
                     status='processing', message='Waiting...')
         db.session.add(scan)
         db.session.commit()
@@ -81,7 +81,7 @@ class Scans(MethodView):
         # TODO: save these into a process-local datastructure, or save
         # it into the DB as well so that we can cull 'processing' tasks
         # that are actually dead.
-        process_scan.delay(scan_id=scan.id, scan_type=exam_id.layout.value)
+        process_scan.delay(scan_id=scan.id, scan_type=exam.layout.value)
 
         return {
             'id': scan.id,

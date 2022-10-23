@@ -29,8 +29,8 @@ def update_mc_option(mc_option, args, feedback_id=None):
 
 class MultipleChoice(MethodView):
 
-    @use_kwargs({'id': DBModel(MultipleChoiceOption)}, location='view_args')
-    def get(self, id):
+    @use_kwargs({'mc_option': DBModel(MultipleChoiceOption)}, location='view_args')
+    def get(self, mc_option):
         """Fetches multiple choice option from the database
 
         Parameters
@@ -41,20 +41,15 @@ class MultipleChoice(MethodView):
         -------
         A JSON object with the multiple choice option data
         """
-        json = {
-            'id': id.id,
-            'name': id.name,
-            'x': id.x,
-            'y': id.y,
-            'type': id.type,
-            'feedback_id': id.feedback_id
+        return {
+            'id': mc_option.id,
+            'name': mc_option.name,
+            'x': mc_option.x,
+            'y': mc_option.y,
+            'type': mc_option.type,
+            'feedback_id': mc_option.feedback_id,
+            'label': mc_option.label
         }
-
-        # Nullable database fields
-        if id.label:
-            json['label'] = id.label
-
-            return json
 
     @use_args({
         'name': fields.Str(required=False),
@@ -96,14 +91,14 @@ class MultipleChoice(MethodView):
                     message=f'New multiple choice question with id {mc_entry.id} inserted. '
                     + f'New feedback option with id {new_feedback_option.id} inserted.'), 200
 
-    @use_kwargs({'id': DBModel(MultipleChoiceOption)}, location='view_args')
+    @use_kwargs({'mc_option': DBModel(MultipleChoiceOption)}, location='view_args')
     @use_args({
         'name': fields.Str(required=False),
         'x': fields.Int(required=False),
         'y': fields.Int(required=False),
         'label': fields.Str(required=False),
     }, location='form')
-    def patch(self, args, id):
+    def patch(self, args, mc_option):
         """
         Updates a multiple choice option
 
@@ -111,17 +106,17 @@ class MultipleChoice(MethodView):
         ----------
             id: The id of the multiple choice option in the database.
         """
-        if id.feedback.problem.exam.finalized:
+        if mc_option.feedback.problem.exam.finalized:
             return dict(status=405, message='Exam is finalized'), 405
 
-        update_mc_option(id, args)
+        update_mc_option(mc_option, args)
 
         db.session.commit()
 
-        return dict(status=200, message=f'Multiple choice question with id {id.id} updated'), 200
+        return dict(status=200, message=f'Multiple choice question with id {mc_option.id} updated'), 200
 
-    @use_kwargs({'id': DBModel(MultipleChoiceOption)}, location='view_args')
-    def delete(self, id):
+    @use_kwargs({'mc_option': DBModel(MultipleChoiceOption)}, location='view_args')
+    def delete(self, mc_option):
         """Deletes a multiple choice option from the database.
         Also deletes the associated feedback option with this multiple choice option.
 
@@ -137,12 +132,12 @@ class MultipleChoice(MethodView):
             A message indicating success or failure
         """
         # Check if the exam is finalized, do not delete the multiple choice option otherwise
-        if id.feedback.problem.exam.finalized:
+        if mc_option.feedback.problem.exam.finalized:
             return dict(status=405, message='Cannot delete multiple choice option in a finalized exam.'), 405
 
-        db.session.delete(id)
+        db.session.delete(mc_option)
         db.session.commit()
 
-        return dict(status=200, mult_choice_id=id.id, feedback_id=id.feedback_id,
-                    message=f'Multiple choice question with id {id.id} deleted.'
-                    + f'Feedback option with id {id.feedback_id} deleted.'), 200
+        return dict(status=200, mult_choice_id=mc_option.id, feedback_id=mc_option.feedback_id,
+                    message=f'Multiple choice question with id {mc_option.id} deleted.'
+                    + f'Feedback option with id {mc_option.feedback_id} deleted.'), 200

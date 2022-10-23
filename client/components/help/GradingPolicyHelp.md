@@ -5,4 +5,4 @@ supports three different strategies:
 
 - **Nothing**: Do not approve anything
 - **Blanks**: Approve blank answers
-- **One answer**: Approve multiple choice questions with only one selected option
+- **≤1 answer**: Approve multiple choice questions with only one selected option or blanks

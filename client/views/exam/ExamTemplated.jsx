@@ -58,7 +58,7 @@ const Pager = (props) => {
 const GRADING_POLICY = [
   { id: 'set_nothing', name: 'Nothing', onlyMCQ: false },
   { id: 'set_blank', name: 'Blanks', onlyMCQ: false },
-  { id: 'set_single', name: 'One answer', onlyMCQ: true }
+  { id: 'set_single', name: '≤1 answer', onlyMCQ: true }
 ]
 
 class ExamTemplated extends React.Component {

@@ -1,5 +1,4 @@
-from flask import current_app, request, Blueprint, abort
-from webargs.flaskparser import parser
+from flask import current_app, request, Blueprint
 from flask_login import current_user
 
 from .graders import Graders
@@ -58,42 +57,39 @@ api_bp = Blueprint('zesje', __name__)
 api_bp.before_request(check_user_login)
 
 add_url_rules(api_bp, Graders, '/graders')
-add_url_rules(api_bp, Exams, '/exams', '/exams/<int:exam_id>', '/exams/<int:exam_id>/<string:attr>')
-add_url_rules(api_bp, ExamSource, '/exams/<int:exam_id>/source_pdf', name='exam_source')
-add_url_rules(api_bp, ExamGeneratedPdfs, '/exams/<int:exam_id>/generated_pdfs', name='exam_generated_pdfs')
-add_url_rules(api_bp, ExamPreview, '/exams/<int:exam_id>/preview', 'exam_preview')
-add_url_rules(api_bp, Scans, '/scans/<int:exam_id>')
-add_url_rules(api_bp, Students, '/students', '/students/<int:student_id>')
-add_url_rules(api_bp, Copies, '/copies/<int:exam_id>', '/copies/<int:exam_id>/<int:copy_number>')
-add_url_rules(api_bp, MissingPages, '/copies/missing_pages/<int:exam_id>', name='missing_pages')
-add_url_rules(api_bp, Submissions, '/submissions/<int:exam_id>', '/submissions/<int:exam_id>/<int:submission_id>')
-add_url_rules(api_bp, Problems, '/problems', '/problems/<int:problem_id>')
-add_url_rules(api_bp, Feedback, '/feedback/<int:problem_id>', '/feedback/<int:problem_id>/<int:feedback_id>')
-add_url_rules(api_bp, Solutions, '/solution/<int:exam_id>/<int:submission_id>/<int:problem_id>')
-add_url_rules(api_bp, Widgets, '/widgets', '/widgets/<int:widget_id>')
-add_url_rules(api_bp, EmailTemplate, '/templates/<int:exam_id>', name='exam_template')
-add_url_rules(api_bp, RenderedEmailTemplate, '/templates/rendered/<int:exam_id>/<int:student_id>',
+add_url_rules(api_bp, Exams, '/exams', '/exams/<int:exam>', '/exams/<int:exam>/<string:attr>')
+add_url_rules(api_bp, ExamSource, '/exams/<int:exam>/source_pdf', name='exam_source')
+add_url_rules(api_bp, ExamGeneratedPdfs, '/exams/<int:exam>/generated_pdfs', name='exam_generated_pdfs')
+add_url_rules(api_bp, ExamPreview, '/exams/<int:exam>/preview', 'exam_preview')
+add_url_rules(api_bp, Scans, '/scans/<int:exam>')
+add_url_rules(api_bp, Students, '/students', '/students/<int:student>')
+add_url_rules(api_bp, Copies, '/copies/<int:exam>', '/copies/<int:exam>/<int:copy_number>')
+add_url_rules(api_bp, MissingPages, '/copies/missing_pages/<int:exam>', name='missing_pages')
+add_url_rules(api_bp, Submissions, '/submissions/<int:exam>', '/submissions/<int:exam>/<int:submission>')
+add_url_rules(api_bp, Problems, '/problems', '/problems/<int:problem>')
+add_url_rules(api_bp, Feedback, '/feedback/<int:problem>', '/feedback/<int:problem>/<int:feedback>')
+add_url_rules(api_bp, Solutions, '/solution/<int:exam>/<int:submission>/<int:problem>')
+add_url_rules(api_bp, Widgets, '/widgets', '/widgets/<int:widget>')
+add_url_rules(api_bp, EmailTemplate, '/templates/<int:exam>', name='exam_template')
+add_url_rules(api_bp, RenderedEmailTemplate, '/templates/rendered/<int:exam>/<int:student>',
               name='rendered_exam_template')
-add_url_rules(api_bp, Email, '/email/<int:exam_id>', '/email/<int:exam_id>/<int:student_id>')
-add_url_rules(api_bp, Approve, '/solution/approve/<int:exam_id>/<int:submission_id>/<int:problem_id>')
-add_url_rules(api_bp, MultipleChoice, '/mult-choice/<int:id>', '/mult-choice/', name='multiple_choice')
-add_url_rules(api_bp, Statistics, '/stats/<int:exam_id>')
+add_url_rules(api_bp, Email, '/email/<int:exam>', '/email/<int:exam>/<int:student>')
+add_url_rules(api_bp, Approve, '/solution/approve/<int:exam>/<int:submission>/<int:problem>')
+add_url_rules(api_bp, MultipleChoice, '/mult-choice/<int:mc_option>', '/mult-choice/', name='multiple_choice')
+add_url_rules(api_bp, Statistics, '/stats/<int:exam>')
 add_url_rules(api_bp, OAuthStatus, '/oauth/status', name='oauth_status')
 add_url_rules(api_bp, OAuthStart, '/oauth/start', name='oauth_start')
 add_url_rules(api_bp, OAuthCallback, '/oauth/callback', name='oauth_callback')
 add_url_rules(api_bp, OAuthLogout, '/oauth/logout', name='oauth_logout')
-# Other resources that don't return JSON
-# It is possible to get flask_restful to work with these, but not
-# very idiomatic.
 
 # Images
 api_bp.add_url_rule(
-    '/images/signature/<int:exam_id>/<int:copy_number>',
+    '/images/signature/<int:exam>/<int:copy_number>',
     'signature',
     signature.get,
 )
 api_bp.add_url_rule(
-    '/images/solutions/<int:exam_id>/<int:problem_id>/<int:submission_id>/<int:full_page>',
+    '/images/solutions/<int:exam>/<int:problem>/<int:submission>/<int:full_page>',
     'solution_image',
     images.get,
 )

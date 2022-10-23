@@ -11,8 +11,8 @@ from ..statistics import grader_data
 class Statistics(MethodView):
     """Getting a list of uploaded scans, and uploading new ones."""
 
-    @use_kwargs({'exam_id': DBModel(Exam, required=False)}, location='view_args')
-    def get(self, exam_id):
+    @use_kwargs({'exam': DBModel(Exam, required=False)}, location='view_args')
+    def get(self, exam):
         """get statistics for a particular exam.
 
         Parameters
@@ -66,7 +66,7 @@ class Statistics(MethodView):
         """
         # count the total number of students as the number of validated submissions
         student_ids = db.session.query(Submission.student_id)\
-            .filter(Submission.exam_id == exam_id.id, Submission.validated)\
+            .filter(Submission.exam_id == exam.id, Submission.validated)\
             .all()
 
         if len(student_ids) == 0:
@@ -75,12 +75,12 @@ class Statistics(MethodView):
         total_max_score = 0
         full_scores = pd.DataFrame(data={},
                                    index=[id for id, in student_ids],
-                                   columns=[p.id for p in exam_id.problems if p.gradable] + [0],
+                                   columns=[p.id for p in exam.problems if p.gradable] + [0],
                                    dtype=int)
         ungraded = full_scores.copy()
         data = []
 
-        for p in exam_id.problems:
+        for p in exam.problems:
             if not p.gradable:
                 # exclude problems without feedback options
                 continue
@@ -177,10 +177,10 @@ class Statistics(MethodView):
             alpha = None
 
         return {
-            'id': exam_id.id,
-            'name': exam_id.name,
+            'id': exam.id,
+            'name': exam.name,
             'students': len(student_ids),
-            'copies': len(exam_id.copies) if exam_id.layout == ExamLayout.templated else len(student_ids),
+            'copies': len(exam.copies) if exam.layout == ExamLayout.templated else len(student_ids),
             'problems': data,
             'total': {
                 'alpha': alpha,

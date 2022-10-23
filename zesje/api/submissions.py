@@ -131,19 +131,19 @@ def _find_submission(old_submission, problem_id, shuffle_seed, direction, ungrad
 class Submissions(MethodView):
     """Getting a list of submissions"""
     @use_kwargs({
-        'exam_id': DBModel(Exam, required=True),
-        'submission_id': DBModel(Submission, required=False, missing=None)
+        'exam': DBModel(Exam, required=True),
+        'submission': DBModel(Submission, required=False, load_default=None)
     }, location='view_args')
     @use_args({
-        'problem': DBModel(Problem, required=False, missing=None, data_key='problem_id'),
-        'ungraded': fields.Bool(required=False, missing=False),
+        'problem': DBModel(Problem, required=False, load_default=None, data_key='problem_id'),
+        'ungraded': fields.Bool(required=False, load_default=False),
         'direction':
-            fields.Str(required=False, missing=None, validate=validate.OneOf(["next", "prev", "first", "last"])),
-        'required_feedback': fields.List(fields.Int, required=False, missing=None),
-        'excluded_feedback': fields.List(fields.Int, required=False, missing=None),
-        'graded_by': fields.Int(required=False, missing=None)
+            fields.Str(required=False, load_default=None, validate=validate.OneOf(["next", "prev", "first", "last"])),
+        'required_feedback': fields.List(fields.Int, required=False, load_default=None),
+        'excluded_feedback': fields.List(fields.Int, required=False, load_default=None),
+        'graded_by': fields.Int(required=False, load_default=None)
     }, location='query')
-    def get(self, args, exam_id, submission_id):
+    def get(self, args, exam, submission):
         """get submissions for the given exam
 
         if args.direction is specified, returns a submission based on
@@ -164,23 +164,23 @@ class Submissions(MethodView):
 
         See `sub_to_data` for the dictionary format.
         """
-        if submission_id is None:
-            return [sub_to_data(sub) for sub in exam_id.submissions]
+        if submission is None:
+            return [sub_to_data(sub) for sub in exam.submissions]
 
-        if submission_id.exam != exam_id:
+        if submission.exam_id != exam.id:
             return dict(status=400, message='Submission does not belong to this exam.'), 400
 
         n_graded = Solution.query.filter(Solution.problem_id == args['problem'].id,
                                          Solution.is_graded).count()
 
         new_sub, no_of_subs_follow, no_of_subs_precede, match_current = _find_submission(
-            submission_id, args['problem'].id, current_user.id, args['direction'] or "next", args['ungraded'],
+            submission, args['problem'].id, current_user.id, args['direction'] or "next", args['ungraded'],
             args['required_feedback'] or [], args['excluded_feedback'] or [], args['graded_by']
         )
 
         matched = no_of_subs_follow + no_of_subs_precede + match_current
         if args['direction'] is None:
-            new_sub = submission_id
+            new_sub = submission
             no_next_sub = no_of_subs_follow == 0
             no_prev_sub = no_of_subs_precede == 0
         elif args['direction'] in ('next', 'prev'):

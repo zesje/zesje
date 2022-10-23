@@ -34,9 +34,17 @@ class DBModel(fields.Integer):
     Attributes
     ----------
     model: db.Model
-        the dtabase model to initiate.
-        By default, the model is passed to the function by the name `model.__name__.lower()`,
-        this can be changed by specifying the `attribute` property of the field
+        the database model to initiate.
+    validate_model: list of `Validator`
+        the validators to use when the model has been loaded
+
+    Exceptions
+    ----------
+    ValidationError
+        * `id` is not a valid integer
+        * `id` is smaller than 1
+        * Model with `id` does not exist in database
+        * Model does not satisfy the `validate_model` requirements
     """
 
     default_error_messages = {
@@ -61,7 +69,7 @@ class DBModel(fields.Integer):
         if not self.validate_model:
             return True
 
-        return validate.And(*self.validate_model)(item)
+        validate.And(*self.validate_model)(item)
 
     def _serialize(self, value, attr, obj, **kwargs):
         """Converts a `db.Model` into a python integer identifying the item."""

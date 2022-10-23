@@ -22,15 +22,15 @@ class Copies(MethodView):
     """Getting a list of copies, and assigning students to them."""
 
     @use_kwargs({
-        'exam_id': DBModel(Exam, required=True),
+        'exam': DBModel(Exam, required=True),
         'copy_number': fields.Int(required=False)
     }, location='view_args')
-    def get(self, exam_id, copy_number=None):
+    def get(self, exam, copy_number=None):
         """get all copies for the given exam
 
         Parameters
         ----------
-        exam_id : int
+        exam : int
             The id of the exam for which copies must be retrievevd
         copy_number : int
             Optionally, the specific copy number to retrieve
@@ -45,23 +45,23 @@ class Copies(MethodView):
                 True if the assigned student has been validated by a human.
         """
         if copy_number:
-            if (copy := Copy.query.filter(Copy.exam == exam_id,
+            if (copy := Copy.query.filter(Copy.exam == exam,
                                           Copy.number == copy_number).one_or_none()) is None:
                 return dict(status=404, message='Copy does not exist.'), 404
 
             return copy_to_data(copy)
 
-        return [copy_to_data(copy) for copy in exam_id.copies]  # Ordered by copy number
+        return [copy_to_data(copy) for copy in exam.copies]  # Ordered by copy number
 
     @use_kwargs({
-        'exam_id': DBModel(Exam, required=True),
-        'copy_number': fields.Int(required=False, missing=None)
+        'exam': DBModel(Exam, required=True),
+        'copy_number': fields.Int(required=False, load_default=None)
     }, location='view_args')
     @use_kwargs({
-        "studentID": DBModel(Student, required=True),
-        'allowMerge': fields.Bool(required=True)
+        "student": DBModel(Student, required=True, data_key='studentID'),
+        'allow_merge': fields.Bool(required=True, data_key='allowMerge')
     }, location='form')
-    def put(self, exam_id, copy_number, studentID, allowMerge):
+    def put(self, exam, copy_number, student, allow_merge):
         """Assign a student to the given copy.
 
         Expects a json payload in the format::
@@ -71,17 +71,17 @@ class Copies(MethodView):
 
         Parameters
         ----------
-        exam_id : int
+        exam : int
         copy_number : int
             The number of the copy. This uniquely identifies
             the copy *within a given exam*.
 
         """
-        if exam_id.layout == ExamLayout.unstructured:
+        if exam.layout == ExamLayout.unstructured:
             return dict(status=403, message='Signatures cannot be validated for unstructured exams.'), 403
 
         if (copy := Copy.query.filter(Copy.number == copy_number,
-                                      Copy.exam == exam_id).one_or_none()) is None:
+                                      Copy.exam == exam).one_or_none()) is None:
             return dict(status=404, message='Copy does not exist.'), 404
 
         old_student = copy.submission.student
@@ -89,30 +89,30 @@ class Copies(MethodView):
 
         # Does this student have other validated copies?
         new_submission = Submission.query.filter(
-            Submission.exam == exam_id,
-            Submission.student == studentID,
+            Submission.exam == exam,
+            Submission.student == student,
             Submission.validated
         ).one_or_none()
 
         # Check if we are going to merge feedback
-        if (new_submission is not None) and new_submission != old_submission and not allowMerge:
+        if (new_submission is not None) and new_submission != old_submission and not allow_merge:
             return dict(status=409,
                         message='Submissions will be merged, but this was not allowed by the request',
                         other_copies=[copy.number for copy in new_submission.copies]), 409
 
         # If not, find the submission we are going to assign the copy to
         if new_submission is None:
-            if studentID == old_student or len(old_submission.copies) == 1:
+            if student == old_student or len(old_submission.copies) == 1:
                 new_submission = old_submission
             else:
                 # Create a new empty submission for the student
-                new_submission = Submission(exam=exam_id)
+                new_submission = Submission(exam=exam)
                 db.session.add(new_submission)
-                for problem in exam_id.problems:
+                for problem in exam.problems:
                     db.session.add(Solution(problem=problem, submission=new_submission))
 
         copy.submission = new_submission
-        new_submission.student = studentID
+        new_submission.student = student
         new_submission.validated = True
 
         if old_submission != new_submission:
@@ -126,7 +126,7 @@ class Copies(MethodView):
 
         db.session.commit()
         return dict(status=200,
-                    message=f'Student {studentID.id} matched to copy {copy.number}',
+                    message=f'Student {student.id} matched to copy {copy.number}',
                     new_submission_id=new_submission.id), 200
 
 
@@ -161,13 +161,13 @@ def unapprove_grading(sub):
 
 class MissingPages(MethodView):
 
-    @use_kwargs({'exam_id': DBModel(Exam, required=True)}, location='view_args')
-    def get(self, exam_id):
+    @use_kwargs({'exam': DBModel(Exam, required=True)}, location='view_args')
+    def get(self, exam):
         """Compute which copies are missing which pages.
 
         Parameters
         ----------
-        exam_id : int
+        exam : int
             The id of the exam for which the missing pages must be computed.
 
         Returns
@@ -176,14 +176,14 @@ class MissingPages(MethodView):
             copyID: int
             missing_pages: list of ints
         """
-        if exam_id.layout == ExamLayout.templated:
-            all_pages = set(range(len(PdfReader(exam_pdf_path(exam_id.id)).pages)))
-        elif exam_id.layout == ExamLayout.unstructured:
-            all_pages = set(problem.widget.page for problem in exam_id.problems)
+        if exam.layout == ExamLayout.templated:
+            all_pages = set(range(len(PdfReader(exam_pdf_path(exam.id)).pages)))
+        elif exam.layout == ExamLayout.unstructured:
+            all_pages = set(problem.widget.page for problem in exam.problems)
 
         return [
             {
                 'number': copy.number,
                 'missing_pages': sorted(all_pages - set(page.number for page in copy.pages)),
-            } for copy in exam_id.copies
+            } for copy in exam.copies
         ]

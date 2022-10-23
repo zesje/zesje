@@ -10,6 +10,7 @@ from ._helpers import DBModel, use_args, use_kwargs
 from .widgets import widget_to_data, normalise_pages
 from .feedback import feedback_to_data
 from ..database import db, Exam, Problem, ProblemWidget, Solution, GradingPolicy, ExamLayout
+from ..pdf_generation import exam_dir
 from zesje.pdf_reader import guess_problem_title, get_problem_page
 
 
@@ -45,12 +46,12 @@ def problem_to_data(problem):
 class Problems(MethodView):
     """ List of problems associated with a particular exam_id """
 
-    @use_kwargs({'problem_id': DBModel(Problem, required=True)}, location='view_args')
-    def get(self, problem_id):
-        return problem_to_data(problem_id)
+    @use_kwargs({'problem': DBModel(Problem, required=True)}, location='view_args')
+    def get(self, problem):
+        return problem_to_data(problem)
 
     @use_args({
-        'exam_id': DBModel(Exam, required=True),
+        'exam': DBModel(Exam, required=True, data_key='exam_id'),
         'name': fields.Str(required=True),
         'page': fields.Int(required=True),
         'x': fields.Int(required=True),
@@ -84,7 +85,7 @@ class Problems(MethodView):
             `widget_id`: the problem widget id,
             `grading_policy`: the grading policy
         """
-        exam = args['exam_id']
+        exam = args['exam']
 
         if exam.layout == ExamLayout.templated:
             page_size = current_app.config['PAGE_FORMATS'][current_app.config['PAGE_FORMAT']]
@@ -118,8 +119,7 @@ class Problems(MethodView):
         widget.name = f'problem_{problem.id}'
 
         if exam.layout == ExamLayout.templated:
-            data_dir = current_app.config['DATA_DIRECTORY']
-            pdf_path = os.path.join(data_dir, f'{problem.exam_id}_data', 'exam.pdf')
+            pdf_path = os.path.join(exam_dir(exam.id), 'exam.pdf')
 
             page = get_problem_page(problem, pdf_path)
 
@@ -181,16 +181,16 @@ class Problems(MethodView):
 
         return dict(status=200, message="ok"), 200
 
-    @use_kwargs({'problem_id': DBModel(Problem, required=True)}, location='view_args')
-    def delete(self, problem_id):
+    @use_kwargs({'problem': DBModel(Problem, required=True)}, location='view_args')
+    def delete(self, problem):
         """Deletes a problem of an exam if nothing has been graded."""
-        if any(sol.is_graded for sol in problem_id.solutions):
+        if any(sol.is_graded for sol in problem.solutions):
             return dict(status=403, message='Problem has already been graded'), 403
 
-        exam = problem_id.exam
+        exam = problem.exam
 
         # The widget and all associated solutions are automatically deleted
-        db.session.delete(problem_id)
+        db.session.delete(problem)
         db.session.commit()
 
         if exam.layout == ExamLayout.unstructured:

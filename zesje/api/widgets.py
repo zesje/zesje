@@ -60,11 +60,11 @@ def normalise_pages(widgets):
 
 class Widgets(MethodView):
 
-    @use_kwargs({'widget_id': DBModel(Widget, required=True)}, location='view_args')
-    def patch(self, widget_id):
-        if isinstance(widget_id, ExamWidget) and widget_id.exam.finalized:
+    @use_kwargs({'widget': DBModel(Widget, required=True)}, location='view_args')
+    def patch(self, widget):
+        if isinstance(widget, ExamWidget) and widget.exam.finalized:
             return dict(status=403, message='Exam is finalized'), 403
-        elif isinstance(widget_id, MultipleChoiceOption) and widget_id.feedback.problem.exam.finalized:
+        elif isinstance(widget, MultipleChoiceOption) and widget.feedback.problem.exam.finalized:
             return dict(status=405, message='Exam is finalized'), 405
 
         # will 400 on malformed json
@@ -72,19 +72,19 @@ class Widgets(MethodView):
 
         for attr, value in body.items():
             try:
-                setattr(widget_id, attr, value)
+                setattr(widget, attr, value)
             except AttributeError:
                 msg = f"Widget doesn't have a property {attr}"
                 return dict(status=400, message=msg), 400
             except (TypeError, ValueError) as error:
                 return dict(status=400, message=str(error)), 400
 
-        exam = widget_id.exam
+        exam = widget.exam
 
         if exam.layout == ExamLayout.templated:
-            name = 'Student ID' if widget_id.name == 'student_id_widget' else 'Barcode'
+            name = 'Student ID' if widget.name == 'student_id_widget' else 'Barcode'
             message = f'The "{name}" widget has to lay between the corner markers region.'
-            changed = force_boundaries(widget_id)
+            changed = force_boundaries(widget)
         elif exam.layout == ExamLayout.unstructured:
             message = "There can't be a gap in the page numbers"
             changed = normalise_pages(list(p.widget for p in exam.problems))
@@ -98,6 +98,6 @@ class Widgets(MethodView):
             # this response forces the client to update the widget to the new state
             return dict(status=409,
                         message=message,
-                        data=widget_to_data(widget_id)), 409
+                        data=widget_to_data(widget.id)), 409
 
         return dict(status=200, message="ok"), 200

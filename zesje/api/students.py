@@ -21,8 +21,8 @@ def student_to_data(student):
 class Students(MethodView):
     """Getting a list of students."""
 
-    @use_kwargs({'student_id': DBModel(Student, required=False, missing=None)}, location='view_args')
-    def get(self, student_id):
+    @use_kwargs({'student': DBModel(Student, required=False, load_default=None)}, location='view_args')
+    def get(self, student):
         """get all students for the course.
 
          Parameters
@@ -40,16 +40,19 @@ class Students(MethodView):
 
         If no student_id is provided the entire list of students will be returned.
         """
-        if student_id is not None:
-            return student_to_data(student_id)
+        if student is not None:
+            return student_to_data(student)
 
         return [student_to_data(s) for s in Student.query.all()]
 
     @use_args({
-        'id': fields.Int(required=True, data_key='studentID', validate=validate.Range(1, 9999999)),
+        'id': fields.Int(
+            required=True, data_key='studentID',
+            validate=validate.Range(min=1, max=9999999,
+                                    error="{input} is not a valid TU Delft identifier [{min}, {max}]")),
         'first_name': fields.Str(required=True, data_key='firstName'),
         'last_name': fields.Str(required=True, data_key='lastName'),
-        'email': fields.Email(required=False, missing=None),
+        'email': fields.Email(required=False, load_default=None),
     }, location='json')
     def put(self, args):
         """Insert or update an existing student

@@ -12,10 +12,10 @@ from ..scans import exam_student_id_widget
 
 
 @use_kwargs({
-    'exam_id': DBModel(Exam, required=True, validate_model=[lambda exam: exam.layout == ExamLayout.templated]),
+    'exam': DBModel(Exam, required=True, validate_model=[lambda exam: exam.layout == ExamLayout.templated]),
     'copy_number': fields.Int(required=False)
 }, location='view_args')
-def get(exam_id, copy_number):
+def get(exam, copy_number):
     """get student signature for the given submission.
 
     Parameters
@@ -31,11 +31,11 @@ def get(exam_id, copy_number):
     """
     # We could register an app-global error handler for this,
     # but it would add more code then it removes.
-    if (copy := Copy.query.filter(Copy.exam == exam_id,
+    if (copy := Copy.query.filter(Copy.exam == exam,
                                   Copy.number == copy_number).one_or_none()) is None:
         return dict(status=404, message='Copy does not exist.'), 404
 
-    _, student_id_widget_coords = exam_student_id_widget(exam_id.id)
+    _, student_id_widget_coords = exam_student_id_widget(exam.id)
     widget_area = np.asarray(student_id_widget_coords)
 
     # TODO: use points as base unit

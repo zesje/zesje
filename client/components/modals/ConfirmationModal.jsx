@@ -34,7 +34,7 @@ const ConfirmationModal = (props) => {
           </div>
         </footer>
       </div>
-      <button className='modal-close is-large' aria-label='close' />
+      <button className='modal-close is-large' aria-label='close' onClick={props.onCancel} />
     </div>
   )
 }

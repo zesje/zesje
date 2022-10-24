@@ -238,7 +238,10 @@ class ExamTemplated extends React.Component {
     const problem = selectedWidget.problem
     if (!problem) return
 
+    const oldPolicy = problem.grading_policy
     const newPolicy = e.target.value
+
+    if (oldPolicy === newPolicy) return
 
     api.patch('problems/' + problem.id, { grading_policy: newPolicy })
       .then(success => {
@@ -255,6 +258,24 @@ class ExamTemplated extends React.Component {
         }))
         if (newPolicy === 'set_single') {
           api.patch(`feedback/${problem.id}/${problem.root_feedback_id}`, { exclusive: true })
+            .then(res => {
+              this.updateFeedback(problem.id)
+              if (res.set_aside_solutions > 0) {
+                toast({
+                  message: `${res.set_aside_solutions} solution${res.set_aside_solutions > 1 ? 's have' : ' has'} ` +
+                    'been marked as ungraded due to incompatible feedback options.',
+                  type: 'is-warning',
+                  duration: 5000
+                })
+              }
+            })
+            .catch(error => console.log(error))
+        } else if (oldPolicy === 'set_single' &&
+          problem.mc_options.length > 0 &&
+          problem.feedback[problem.root_feedback_id].exclusive) {
+          // the problem has multiple choice questions but the grading policy is not set single
+          // so change the root feedback to not exclusive
+          api.patch(`feedback/${problem.id}/${problem.root_feedback_id}`, { exclusive: false })
             .then(res => {
               this.updateFeedback(problem.id)
               if (res.set_aside_solutions > 0) {

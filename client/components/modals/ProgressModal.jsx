@@ -19,7 +19,7 @@ const ProgressModal = ({
           <Spinner />
         </section>
       </div>
-      {onCancel && <button className='modal-close is-large' aria-label='close' />}
+      {onCancel && <button className='modal-close is-large' aria-label='close' onClick={onCancel} />}
     </div>
   )
 }

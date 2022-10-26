@@ -169,6 +169,5 @@ def test_delete_exam(test_client, finalized, status_code):
 
     response = test_client.get('/api/exams')
     data = response.get_json()
-    print(data)
 
     assert len(data) == (1 if finalized else 0)

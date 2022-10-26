@@ -6,7 +6,7 @@ from zesje.database import db, Grader
 
 @pytest.fixture
 def add_test_data(app):
-    grader1 = Grader(oauth_id='grader')
+    grader1 = Grader(oauth_id='grader@tu.nl')
     db.session.add(grader1)
 
     db.session.commit()
@@ -15,8 +15,8 @@ def add_test_data(app):
 # Actual tests
 
 @pytest.mark.parametrize('grader_name, expected_status_code', [
-    ('grader', 409),
-    ('grader2', 200)],
+    ('grader@tu.nl', 409),
+    ('grader2@ty.nl', 200)],
     ids=['Duplicate grader name', 'Unused grader name'])
 def test_add_grader(test_client, add_test_data, grader_name, expected_status_code):
     body = {'oauth_id': grader_name}

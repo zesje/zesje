@@ -60,7 +60,7 @@ def normalise_pages(widgets):
 
 class Widgets(MethodView):
 
-    @use_kwargs({'widget': DBModel(Widget, required=True)}, location='view_args')
+    @use_kwargs({'widget': DBModel(Widget, required=True)})
     def patch(self, widget):
         if isinstance(widget, ExamWidget) and widget.exam.finalized:
             return dict(status=403, message='Exam is finalized'), 403

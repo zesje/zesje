@@ -1,5 +1,6 @@
-from flask import current_app, request, Blueprint
+from flask import current_app, request, Blueprint, jsonify
 from flask_login import current_user
+from werkzeug.exceptions import HTTPException
 
 from .graders import Graders
 from .exams import Exams, ExamSource, ExamGeneratedPdfs, ExamPreview
@@ -53,8 +54,25 @@ def add_url_rules(bp, view_class, *rules, name=None):
         bp.add_url_rule(rule, view_func=view_func)
 
 
+def handle_exception(e):
+    # pass through HTTP errors
+    if isinstance(e, HTTPException):
+        return jsonify({
+            "status": e.code,
+            "name": e.name,
+            "message": e.description,
+        }), e.code
+
+    # now you're handling non-HTTP exceptions only
+    return jsonify({
+        'status': 500,
+        'message': str(e)
+    }), 500
+
+
 api_bp = Blueprint('zesje', __name__)
 api_bp.before_request(check_user_login)
+api_bp.register_error_handler(Exception, handle_exception)
 
 add_url_rules(api_bp, Graders, '/graders')
 add_url_rules(api_bp, Exams, '/exams', '/exams/<int:exam>', '/exams/<int:exam>/<string:attr>')
@@ -71,7 +89,7 @@ add_url_rules(api_bp, Feedback, '/feedback/<int:problem>', '/feedback/<int:probl
 add_url_rules(api_bp, Solutions, '/solution/<int:exam>/<int:submission>/<int:problem>')
 add_url_rules(api_bp, Widgets, '/widgets', '/widgets/<int:widget>')
 add_url_rules(api_bp, EmailTemplate, '/templates/<int:exam>', name='exam_template')
-add_url_rules(api_bp, RenderedEmailTemplate, '/templates/rendered/<int:exam>/<int:student>',
+add_url_rules(api_bp, RenderedEmailTemplate, '/templates/rendered/<int:exam_id>/<int:student_id>',
               name='rendered_exam_template')
 add_url_rules(api_bp, Email, '/email/<int:exam>', '/email/<int:exam>/<int:student>')
 add_url_rules(api_bp, Approve, '/solution/approve/<int:exam>/<int:submission>/<int:problem>')

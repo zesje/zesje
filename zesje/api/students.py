@@ -21,7 +21,7 @@ def student_to_data(student):
 class Students(MethodView):
     """Getting a list of students."""
 
-    @use_kwargs({'student': DBModel(Student, required=False, load_default=None)}, location='view_args')
+    @use_kwargs({'student': DBModel(Student, required=False, load_default=None)})
     def get(self, student):
         """get all students for the course.
 

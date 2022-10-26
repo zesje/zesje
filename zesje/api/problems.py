@@ -46,7 +46,7 @@ def problem_to_data(problem):
 class Problems(MethodView):
     """ List of problems associated with a particular exam_id """
 
-    @use_kwargs({'problem': DBModel(Problem, required=True)}, location='view_args')
+    @use_kwargs({'problem': DBModel(Problem, required=True)})
     def get(self, problem):
         return problem_to_data(problem)
 
@@ -139,7 +139,7 @@ class Problems(MethodView):
             'root_feedback_id': problem.root_feedback.id,
         }
 
-    @use_kwargs({'problem': DBModel(Problem, required=True)}, location='view_args')
+    @use_kwargs({'problem': DBModel(Problem, required=True)})
     @use_args({
         'name': fields.Str(required=False),
         'grading_policy': fields.Enum(GradingPolicy, required=False),
@@ -181,7 +181,7 @@ class Problems(MethodView):
 
         return dict(status=200, message="ok"), 200
 
-    @use_kwargs({'problem': DBModel(Problem, required=True)}, location='view_args')
+    @use_kwargs({'problem': DBModel(Problem, required=True)})
     def delete(self, problem):
         """Deletes a problem of an exam if nothing has been graded."""
         if any(sol.is_graded for sol in problem.solutions):

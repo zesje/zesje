@@ -141,7 +141,7 @@ def test_new_problem_has_root_fo(test_client, add_test_data):
     data = json.loads(result.data)
     assert len(data['feedback']) == 1
     assert data['root_feedback_id'] is not None
-    print(data)
+
     fb = data['feedback'][str(data['root_feedback_id'])]
     assert fb['parent'] is None
     assert len(fb['children']) == 0

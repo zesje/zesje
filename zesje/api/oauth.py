@@ -42,8 +42,6 @@ class OAuthStart(MethodView):
 
         session['oauth_state'] = state
 
-        print(session)
-
         return redirect(authorization_url)
 
 

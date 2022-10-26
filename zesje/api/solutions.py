@@ -48,7 +48,7 @@ class Solutions(MethodView):
         'exam': DBModel(Exam, required=True),
         'problem': DBModel(Problem, required=True),
         'submission': DBModel(Submission, required=True),
-    }, location='view_args')
+    })
     def get(self, exam, submission, problem):
         """get solution to problem
 
@@ -60,7 +60,7 @@ class Solutions(MethodView):
             imagePath: string (url)
             remarks: string
         """
-        if submission.exam != exam.id:
+        if submission.exam_id != exam.id:
             return dict(status=400, message='Submission does not belong to this exam.'), 400
 
         solution = Solution.query.filter(Solution.submission_id == submission.id,
@@ -74,7 +74,7 @@ class Solutions(MethodView):
         'exam': DBModel(Exam, required=True),
         'problem': DBModel(Problem, required=True),
         'submission': DBModel(Submission, required=True),
-    }, location='view_args')
+    })
     @use_kwargs({'remark': fields.Str(required=True)}, location='form')
     def post(self, exam, submission, problem, remark):
         """Change the remark of a solution
@@ -104,7 +104,7 @@ class Solutions(MethodView):
         'exam': DBModel(Exam, required=True),
         'problem': DBModel(Problem, required=True),
         'submission': DBModel(Submission, required=True),
-    }, location='view_args')
+    })
     @use_kwargs({'feedback': DBModel(FeedbackOption, required=True, data_key='id')}, location='form')
     def put(self, exam, submission, problem, feedback):
         """Toggles an existing feedback option
@@ -167,7 +167,7 @@ class Approve(MethodView):
         'exam': DBModel(Exam, required=True),
         'problem': DBModel(Problem, required=True),
         'submission': DBModel(Submission, required=True),
-    }, location='view_args')
+    })
     @use_kwargs({'approve': fields.Bool(required=True)}, location='form')
     def put(self, exam, submission, problem, approve):
         """Approve a solution or set it aside for later grading.

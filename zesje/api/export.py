@@ -1,9 +1,10 @@
 from io import BytesIO
 
-from flask import abort, send_file, stream_with_context, Response, current_app
+from flask import send_file, stream_with_context, Response, current_app
 import zipstream
 import json
 
+from ._helpers import abort
 from ..database import Exam, Submission
 from ..statistics import full_exam_data, grader_data
 from ..emails import solution_pdf

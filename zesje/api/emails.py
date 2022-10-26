@@ -6,10 +6,9 @@ from jinja2 import Template, TemplateSyntaxError, UndefinedError
 
 from flask import current_app
 from flask.views import MethodView
-from flask import abort
 from webargs import fields, validate
 
-from ._helpers import DBModel, use_args, use_kwargs
+from ._helpers import DBModel, use_args, use_kwargs, abort
 from .. import emails
 from ..database import Exam, Student
 
@@ -60,7 +59,7 @@ def render_email(exam_id, student_id, template):
 class EmailTemplate(MethodView):
     """ Email template. """
 
-    @use_kwargs({'exam': DBModel(Exam, required=True)}, location='view_args')
+    @use_kwargs({'exam': DBModel(Exam, required=True)})
     def get(self, exam):
         """Get an email template for a given exam."""
         try:
@@ -71,7 +70,7 @@ class EmailTemplate(MethodView):
                 f.write(default_email_template)
             return default_email_template
 
-    @use_kwargs({'exam': DBModel(Exam, required=True)}, location='view_args')
+    @use_kwargs({'exam': DBModel(Exam, required=True)})
     @use_kwargs({"template": fields.Str(required=True)}, location="form")
     def put(self, exam, template):
         """Update an email template."""
@@ -97,7 +96,7 @@ class RenderedEmailTemplate(MethodView):
         'student_id': fields.Integer(
             required=True,
             validate=validate.Range(1, 9999999, error="{input} is not a valid TU Delft identifier [{min}, {max}]"))
-    }, location='view_args')
+    })
     @use_kwargs({"template": fields.Str(required=True)}, location="form")
     def post(self, exam_id, student_id, template):
         return render_email(exam_id, student_id, template)
@@ -108,7 +107,7 @@ class Email(MethodView):
     @use_kwargs({
         'exam': DBModel(Exam, required=True),
         'student': DBModel(Student, required=False, load_default=None)
-    }, location='view_args')
+    })
     @use_args({
         "template": fields.Str(required=True),
         'attach': fields.Bool(required=True),

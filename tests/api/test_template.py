@@ -56,7 +56,6 @@ def test_get_template(app_with_data, test_client, exam_id, status):
     path.parent.mkdir()
 
     result = test_client.get(f'/api/templates/{exam_id}')
-    print(result)
     assert result.status_code == status
 
     if status == 200:
@@ -78,7 +77,6 @@ def test_save_template(app_with_data, test_client, exam_id, template, status):
     path.parent.mkdir()
 
     result = test_client.put(f'/api/templates/{exam_id}', data={'template': template})
-    print(result)
     assert result.status_code == status
     # template should only be saved if status code is 200
     assert path.exists() == (status == 200)

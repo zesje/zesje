@@ -30,7 +30,6 @@ def mco_json():
         'x': 100,
         'y': 40,
         'problem_id': 1,
-        'page': 1,
         'label': 'a',
         'name': 'test'
     }
@@ -255,7 +254,8 @@ def test_get_children(test_client, add_test_data):
     ('score', 400, ''),
     ('description', 200, 'This is a valid description'),
     ('description', 200, '')
-    ], ids=['Valid name', 'Invalid name', 'Valid name', 'Invalid name', 'Valid description', 'Valid empty description'])
+    ], ids=['Valid name', 'Invalid name', 'Valid score', 'Invalid score',
+            'Valid description', 'Valid empty description'])
 def test_change_property(test_client, add_test_data, prop, status_code, new_value):
     result = test_client.patch('/api/feedback/1/5', data={prop: new_value})
     assert result.status_code == status_code

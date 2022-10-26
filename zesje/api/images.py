@@ -1,4 +1,4 @@
-from flask import abort, Response, current_app, request
+from flask import Response, current_app, request
 from webargs import fields
 from pathlib import Path
 from werkzeug.http import parse_date, http_date
@@ -7,7 +7,7 @@ from datetime import datetime
 import cv2
 import numpy as np
 
-from ._helpers import DBModel, use_kwargs
+from ._helpers import DBModel, use_kwargs, abort
 from ..images import get_box, guess_dpi, widget_area
 from ..database import Exam, Submission, Problem, Page, Solution, Copy, ExamLayout
 from ..scans import exam_student_id_widget
@@ -18,7 +18,7 @@ from ..scans import exam_student_id_widget
     'problem': DBModel(Problem, required=True),
     'submission': DBModel(Submission, required=True),
     'full_page': fields.Bool(required=False, load_default=0)
-}, location='view_args')
+})
 def get(exam, problem, submission, full_page):
     """get image for the given problem.
 

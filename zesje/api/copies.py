@@ -3,7 +3,7 @@ from flask.views import MethodView
 from webargs import fields
 from pdfrw import PdfReader
 
-from ._helpers import DBModel, use_kwargs
+from ._helpers import DBModel, ZesjeValidationError, use_kwargs
 from .students import student_to_data
 from ..database import db, Exam, Submission, Student, Copy, Solution, ExamLayout
 from ..pdf_generation import exam_pdf_path
@@ -24,7 +24,7 @@ class Copies(MethodView):
     @use_kwargs({
         'exam': DBModel(Exam, required=True),
         'copy_number': fields.Int(required=False)
-    }, location='view_args')
+    })
     def get(self, exam, copy_number=None):
         """get all copies for the given exam
 
@@ -54,9 +54,10 @@ class Copies(MethodView):
         return [copy_to_data(copy) for copy in exam.copies]  # Ordered by copy number
 
     @use_kwargs({
-        'exam': DBModel(Exam, required=True),
+        'exam': DBModel(Exam, required=True, validate_model=[lambda exam: exam.layout == ExamLayout.templated or
+                ZesjeValidationError('Signatures cannot be validated for unstructured exams.', 403)]),
         'copy_number': fields.Int(required=False, load_default=None)
-    }, location='view_args')
+    })
     @use_kwargs({
         "student": DBModel(Student, required=True, data_key='studentID'),
         'allow_merge': fields.Bool(required=True, data_key='allowMerge')
@@ -77,9 +78,6 @@ class Copies(MethodView):
             the copy *within a given exam*.
 
         """
-        if exam.layout == ExamLayout.unstructured:
-            return dict(status=403, message='Signatures cannot be validated for unstructured exams.'), 403
-
         if (copy := Copy.query.filter(Copy.number == copy_number,
                                       Copy.exam == exam).one_or_none()) is None:
             return dict(status=404, message='Copy does not exist.'), 404
@@ -161,7 +159,7 @@ def unapprove_grading(sub):
 
 class MissingPages(MethodView):
 
-    @use_kwargs({'exam': DBModel(Exam, required=True)}, location='view_args')
+    @use_kwargs({'exam': DBModel(Exam, required=True)})
     def get(self, exam):
         """Compute which copies are missing which pages.
 

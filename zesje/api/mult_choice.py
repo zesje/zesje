@@ -29,7 +29,7 @@ def update_mc_option(mc_option, args, feedback_id=None):
 
 class MultipleChoice(MethodView):
 
-    @use_kwargs({'mc_option': DBModel(MultipleChoiceOption)}, location='view_args')
+    @use_kwargs({'mc_option': DBModel(MultipleChoiceOption)})
     def get(self, mc_option):
         """Fetches multiple choice option from the database
 
@@ -91,7 +91,7 @@ class MultipleChoice(MethodView):
                     message=f'New multiple choice question with id {mc_entry.id} inserted. '
                     + f'New feedback option with id {new_feedback_option.id} inserted.'), 200
 
-    @use_kwargs({'mc_option': DBModel(MultipleChoiceOption)}, location='view_args')
+    @use_kwargs({'mc_option': DBModel(MultipleChoiceOption)})
     @use_args({
         'name': fields.Str(required=False),
         'x': fields.Int(required=False),
@@ -115,7 +115,7 @@ class MultipleChoice(MethodView):
 
         return dict(status=200, message=f'Multiple choice question with id {mc_option.id} updated'), 200
 
-    @use_kwargs({'mc_option': DBModel(MultipleChoiceOption)}, location='view_args')
+    @use_kwargs({'mc_option': DBModel(MultipleChoiceOption)})
     def delete(self, mc_option):
         """Deletes a multiple choice option from the database.
         Also deletes the associated feedback option with this multiple choice option.

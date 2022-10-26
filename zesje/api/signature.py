@@ -1,10 +1,10 @@
-from flask import abort, Response
+from flask import Response
 from webargs import fields
 
 import numpy as np
 import cv2
 
-from ._helpers import DBModel, use_kwargs
+from ._helpers import DBModel, ZesjeValidationError, use_kwargs, abort
 from ..database import ExamLayout
 from ..images import get_box
 from ..database import Exam, Copy
@@ -12,9 +12,10 @@ from ..scans import exam_student_id_widget
 
 
 @use_kwargs({
-    'exam': DBModel(Exam, required=True, validate_model=[lambda exam: exam.layout == ExamLayout.templated]),
+    'exam': DBModel(Exam, required=True, validate_model=[lambda exam: exam.layout == ExamLayout.templated or
+            ZesjeValidationError('Signatures cannot be validated for unstructured exams.', 400)]),
     'copy_number': fields.Int(required=False)
-}, location='view_args')
+})
 def get(exam, copy_number):
     """get student signature for the given submission.
 

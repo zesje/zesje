@@ -2,13 +2,13 @@ import hashlib
 from io import BytesIO
 import os
 
-from flask import current_app, send_file, stream_with_context, Response, abort
+from flask import current_app, send_file, stream_with_context, Response
 from flask.views import MethodView
 from flask_login import current_user
 from webargs import fields, validate
 from sqlalchemy import func
 
-from ._helpers import _shuffle, DBModel, non_empty_string, use_args, use_kwargs
+from ._helpers import _shuffle, DBModel, ZesjeValidationError, non_empty_string, use_args, use_kwargs, abort
 from .problems import problem_to_data
 from ..pdf_generation import exam_dir, exam_pdf_path, _exam_generate_data
 from ..pdf_generation import generate_pdfs, generate_single_pdf, generate_zipped_pdfs
@@ -45,7 +45,7 @@ def generate_exam_token(exam_id, exam_name, exam_pdf):
 
 class Exams(MethodView):
 
-    @use_kwargs({'exam': DBModel(Exam, required=False, load_default=None)}, location='view_args')
+    @use_kwargs({'exam': DBModel(Exam, required=False, load_default=None)})
     @use_kwargs({'only_metadata': fields.Bool(load_default=False)}, location='query')
     def get(self, exam, only_metadata):
         if exam:
@@ -55,8 +55,9 @@ class Exams(MethodView):
         else:
             return self._get_all()
 
-    @use_kwargs({'exam': DBModel(Exam, required=True, validate_model=[lambda exam: not exam.finalized])},
-                location='view_args')
+    @use_kwargs({'exam': DBModel(Exam, required=True, validate_model=[
+        lambda exam: not exam.finalized or ZesjeValidationError('Validated exams cannot be deleted', 409)
+    ])})
     def delete(self, exam):
         if Submission.query.filter(Submission.exam_id == exam.id).count():
             return dict(status=500, message='Exam is not finalized but already has submissions.'), 500
@@ -275,7 +276,7 @@ class Exams(MethodView):
 
         return exam
 
-    @use_kwargs({'exam': DBModel(Exam, required=True)}, location='view_args')
+    @use_kwargs({'exam': DBModel(Exam, required=True)})
     @use_kwargs({
         'finalized': fields.Bool(required=False, load_default=None),
         'grade_anonymous': fields.Bool(required=False, load_default=None)
@@ -301,7 +302,7 @@ class Exams(MethodView):
 
         return dict(status=400, message='One of finalized or anonymous must be present'), 400
 
-    @use_kwargs({'exam': DBModel(Exam, required=True)}, location='view_args')
+    @use_kwargs({'exam': DBModel(Exam, required=True)})
     @use_kwargs({'name': fields.Str(required=True, validate=non_empty_string)}, location='form')
     def patch(self, exam, name):
         """Update the name of an existing exam.
@@ -317,11 +318,13 @@ class Exams(MethodView):
         return dict(status=200, message='ok'), 200
 
 
+ERROR_MSG_PDF = 'PDF is only available in templated exams.'
+
+
 class ExamSource(MethodView):
 
-    @use_kwargs({
-        'exam': DBModel(Exam, required=True, validate_model=[lambda exam: exam.layout == ExamLayout.templated])
-    }, location='view_args')
+    @use_kwargs({'exam': DBModel(Exam, required=True, validate_model=[
+        lambda exam: exam.layout == ExamLayout.templated or ZesjeValidationError(ERROR_MSG_PDF, 404)])})
     def get(self, exam):
         return send_file(
             exam_pdf_path(exam.id),
@@ -331,10 +334,9 @@ class ExamSource(MethodView):
 
 class ExamGeneratedPdfs(MethodView):
 
-    @use_kwargs({
-        'exam': DBModel(Exam, required=True,
-                        validate_model=[lambda exam: exam.finalized and exam.layout == ExamLayout.templated])
-    }, location='view_args')
+    @use_kwargs({'exam': DBModel(Exam, required=True, validate_model=[
+        lambda exam: exam.finalized or ZesjeValidationError('Exam must be finalized.', 403),
+        lambda exam: exam.layout == ExamLayout.templated or ZesjeValidationError(ERROR_MSG_PDF, 404)])})
     @use_args({
         'copies_start': fields.Int(required=False, load_default=0),
         'copies_end': fields.Int(required=True),
@@ -395,9 +397,9 @@ class ExamGeneratedPdfs(MethodView):
 
 class ExamPreview(MethodView):
 
-    @use_kwargs({
-        'exam': DBModel(Exam, required=True, validate_model=[lambda exam: exam.layout == ExamLayout.templated])
-    }, location='view_args')
+    @use_kwargs({'exam': DBModel(Exam, required=True, validate_model=[
+        lambda exam: exam.layout == ExamLayout.templated or ZesjeValidationError(ERROR_MSG_PDF, 404)])
+    })
     def get(self, exam):
         exam_dir, student_id_widget, barcode_widget, exam_path, cb_data = _exam_generate_data(exam)
 

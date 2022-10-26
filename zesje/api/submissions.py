@@ -133,7 +133,7 @@ class Submissions(MethodView):
     @use_kwargs({
         'exam': DBModel(Exam, required=True),
         'submission': DBModel(Submission, required=False, load_default=None)
-    }, location='view_args')
+    })
     @use_args({
         'problem': DBModel(Problem, required=False, load_default=None, data_key='problem_id'),
         'ungraded': fields.Bool(required=False, load_default=False),

@@ -177,9 +177,15 @@ class Problems(Resource):
 
         if args.grading_policy is not None:
             if problem.exam.layout is not ExamLayout.templated:
-                return dict(status=409, message='Cannot modify grading policy on an unstructured exam.'), 409
-            if args.grading_policy == GradingPolicy.set_single.name and len(problem.mc_options) == 0:
-                return dict(status=409, message='one_answer cannot be set for open answer questions.'), 409
+                return dict(
+                    status=409,
+                    message='Cannot modify grading policy on an unstructured exam.'
+                ), 409
+            if args.grading_policy == GradingPolicy.set_single.name and not problem.mc_options:
+                return dict(
+                    status=409,
+                    message='one_answer cannot be set for open answer questions.'
+                ), 409
 
             problem.grading_policy = args.grading_policy
 

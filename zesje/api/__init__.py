@@ -1,3 +1,5 @@
+from traceback import format_exc
+
 from flask import current_app, request, Blueprint, jsonify
 from flask_login import current_user
 from werkzeug.exceptions import HTTPException
@@ -58,15 +60,18 @@ def handle_exception(e):
     # pass through HTTP errors
     if isinstance(e, HTTPException):
         return jsonify({
-            "status": e.code,
-            "name": e.name,
-            "message": e.description,
+            'status': e.code,
+            'name': e.name,
+            'message': e.description,
+            'description': None
         }), e.code
 
     # now you're handling non-HTTP exceptions only
     return jsonify({
         'status': 500,
-        'message': str(e)
+        'name': 'Internal Python Exception',
+        'message': str(e),
+        'description': format_exc()
     }), 500
 
 

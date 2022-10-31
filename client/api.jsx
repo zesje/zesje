@@ -22,14 +22,14 @@ function _fetch (method) {
       .catch(error =>
         console.error('Error: ', error, ' in', method, endpoint, 'with data', data))
       .then(resp => {
-        if (!resp.ok) {
-          throw resp
+        // valid responses always return JSON
+        const jsonValue = resp.json()
+        if (resp.ok) {
+          return Promise.resolve(jsonValue)
         } else {
-          return resp
+          return Promise.reject(jsonValue)
         }
       })
-      // valid responses always return JSON
-      .then(r => r.json())
   }
 }
 

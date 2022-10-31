@@ -22,12 +22,12 @@ const ConfirmMergeModal = (props) => {
   if (!props.student) return null
 
   let msg = ''
-  const other = props.copies.filter(c => c.student != null && c.student.id === props.student.id)
+  const other = props.otherCopies
 
   msg = <p>
     Student #{props.student.id} is already matched with {other.length > 1 ? 'copies' : 'copy'}&nbsp;
     {other.reduce((prev, c, index) =>
-      prev + `${c.number}${index < other.length - 2 ? ', ' : (index === other.length - 1 ? '' : ' and ')}`, '')}.
+      prev + `${c}${index < other.length - 2 ? ', ' : (index === other.length - 1 ? '' : ' and ')}`, '')}.
     &nbsp;This action will merge {other.length > 1 ? 'them' : 'it'}
     &nbsp;with this copy which might affect the total score of the problem.
     &nbsp;Moreover, the solution will have to be approved again.
@@ -60,7 +60,8 @@ class CheckStudents extends React.Component {
       examID: this.props.examID,
       editActive: false,
       editStudent: null,
-      confirmStudent: null
+      confirmStudent: null,
+      waitingForValidation: false
     }
     api.get(`copies/${this.props.examID}`).then(copies => {
       const copyNumber = this.props.router.params.copyNumber || copies[0].number
@@ -99,19 +100,23 @@ class CheckStudents extends React.Component {
   syncCopyWithUrl = () => {
     const urlIsDifferent = !this.state.copy || this.props.router.params.copyNumber !== this.state.copy.number
     if (urlIsDifferent) {
-      const copyNumber = this.props.router.params.copyNumber || this.state.copies[0].number
-      api.get(`copies/${this.props.examID}/${copyNumber}`).then(copy => {
-        this.setState({
-          copy: copy,
-          index: this.state.copies.findIndex(c => c.number === copy.number)
-        }, () => this.props.router.navigate(this.getURL(copyNumber)), { replace: true })
-      }).catch(_ => {
-        this.setState({
-          copy: null,
-          index: 0
-        })
-      })
+      this.fetchCopyFromUrl()
     }
+  }
+
+  fetchCopyFromUrl = () => {
+    const copyNumber = this.props.router.params.copyNumber || this.state.copies[0].number
+    api.get(`copies/${this.props.examID}/${copyNumber}`).then(copy => {
+      this.setState({
+        copy: copy,
+        index: this.state.copies.findIndex(c => c.number === copy.number)
+      }, () => this.props.router.navigate(this.getURL(copyNumber)), { replace: true })
+    }).catch(_ => {
+      this.setState({
+        copy: null,
+        index: 0
+      })
+    })
   }
 
   getURL = (copyNumber) => `/exams/${this.props.examID}/students/${copyNumber}`
@@ -208,40 +213,44 @@ class CheckStudents extends React.Component {
   }
 
   matchStudent = (stud, force = false) => {
-    if (!this.state.copies) return
+    if (!this.state.copies || this.state.waitingForValidation) return
 
-    const copyNumber = this.state.copies[this.state.index].number
-    const hasOtherCopies = this.state.copies.some(
-      c => c.student != null && c.student.id === stud.id && c.number !== copyNumber
-    )
-    if (hasOtherCopies && !force) {
-      this.setState({ confirmStudent: stud })
-    } else {
-      api.put(`copies/${this.props.examID}/${copyNumber}`, { studentID: stud.id })
-        .then(resp => {
-          // TODO When do we want to update the full list of copies?
-          if (this.state.confirmStudent !== null) this.setState({ confirmStudent: null })
-          if (!this.nextUnchecked()) this.updateFromUrl()
+    // Make sure there are no concurrent requests
+    this.setState({ waitingForValidation: true })
+    api.put(`copies/${this.props.examID}/${this.state.copies[this.state.index].number}`,
+      { studentID: stud.id, allowMerge: force })
+      .then(resp => {
+        this.setState({ confirmStudent: null })
 
+        if (!this.nextUnchecked()) {
+          // If there is no next copy, we should fetch and update the current copy
+          this.fetchCopyFromUrl()
+        }
+
+        if (force) {
           const msg = <p>Student matched with copy {this.state.copies[this.state.index].number}, go to&nbsp;
-            <a href={`/exams/${this.state.examID}/grade/${resp.new_submission_id}`}>Grade</a>&nbsp;
-            to approve the merged submission.</p>
+          <a href={`/exams/${this.state.examID}/grade/${resp.new_submission_id}`}>Grade</a>&nbsp;
+          to approve the merged submission.</p>
 
-          if (hasOtherCopies) {
-            toast({
-              message: ReactDOMServer.renderToString(msg),
-              type: 'is-success',
-              pauseOnHover: true,
-              duration: 5000
-            })
+          toast({
+            message: ReactDOMServer.renderToString(msg),
+            type: 'is-success',
+            pauseOnHover: true,
+            duration: 5000
+          })
+        }
+      })
+      .catch(err => {
+        if (!err.json) throw err // Error unrelated to API, we should throw it
+        err.json().then(res => {
+          if (res.status === 409) {
+            this.setState({ confirmStudent: stud, otherCopies: res.other_copies })
+          } else {
+            toast({ message: `Failed to validate copy: ${res.message}`, type: 'is-danger' })
           }
         })
-        .catch(err => {
-          err.json().then(res => {
-            toast({ message: `Failed to validate copy: ${res.message}`, type: 'is-danger' })
-          })
-        })
-    }
+      })
+      .finally(() => this.setState({ waitingForValidation: false }))
   }
 
   toggleEdit = (student) => {
@@ -395,9 +404,9 @@ class CheckStudents extends React.Component {
 
             <ConfirmMergeModal
               student={this.state.confirmStudent}
-              copies={this.state.copies}
+              otherCopies={this.state.otherCopies}
               onConfirm={() => this.matchStudent(this.state.confirmStudent, true)}
-              onCancel={() => { this.setState({ confirmStudent: null }) }}
+              onCancel={() => { this.setState({ confirmStudent: null, otherCopies: [] }) }}
             />
       </>
     )

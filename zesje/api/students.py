@@ -8,6 +8,15 @@ from enum import Enum
 from ..database import db, Student
 
 
+def student_to_data(s):
+    return {
+        'id': s.id,
+        'firstName': s.first_name,
+        'lastName': s.last_name,
+        'email': s.email,
+    }
+
+
 class Students(Resource):
     """Getting a list of students."""
 
@@ -33,20 +42,10 @@ class Students(Resource):
         if student_id is not None:
             if (s := Student.query.get(student_id)) is None:
                 return dict(status=404, message='Student not found'), 404
-            return {
-                'id': s.id,
-                'firstName': s.first_name,
-                'lastName': s.last_name,
-                'email': s.email,
-            }
+            return student_to_data(s)
 
         return [
-            {
-                'id': s.id,
-                'firstName': s.first_name,
-                'lastName': s.last_name,
-                'email': s.email,
-            }
+            student_to_data(s)
             for s in Student.query.all()
         ]
 

@@ -18,6 +18,7 @@ from ..pdf_generation import page_is_size, save_with_even_pages
 from ..pdf_generation import write_finalized_exam
 from ..database import db, Exam, ExamWidget, Submission, FeedbackOption, token_length, ExamLayout
 from .submissions import sub_to_data
+from .students import student_to_data
 
 
 def add_blank_feedback(problems):
@@ -172,7 +173,6 @@ class Exams(Resource):
         the exam metadata.
 
         """
-
         if (exam := Exam.query.get(exam_id)) is None:
             return dict(status=404, message='Exam does not exist.'), 404
 
@@ -182,7 +182,9 @@ class Exams(Resource):
             'submissions': [
                 {
                     'id': sub.id,
-                    'student_id': sub.student.id if sub.student else None
+                    'student': (
+                        {'id': sub.student_id} if exam.grade_anonymous else student_to_data(sub.student)
+                        ) if sub.student_id else None
                 } for sub in _shuffle(exam.submissions, current_user.id, key_extractor=lambda s: s.id)
             ],
             'problems': [

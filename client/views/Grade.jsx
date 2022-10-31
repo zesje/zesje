@@ -531,7 +531,7 @@ class Grade extends React.Component {
     const problems = this.state.problems
     const solution = submission.problems.find(p => p.problemId === problem.id)
     const otherSubmissions = this.state.submissions.filter((sub) => (
-      sub.id !== submission.id && submission.student && sub.student_id && sub.student_id === submission.student.id)
+      sub.id !== submission.id && submission.student && sub.student.id && sub.student.id === submission.student.id)
     ).map((sub) => ' #' + sub.id)
     const multiple = otherSubmissions.length > 0
     const gradedTime = new Date(solution.gradedAt)

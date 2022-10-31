@@ -83,7 +83,8 @@ class Widgets(Resource):
         exam = widget.exam
 
         if exam.layout == ExamLayout.templated:
-            message = "The Exam widget has to lay between the corner markers region."
+            name = 'Student ID' if widget.name == 'student_id_widget' else 'Barcode'
+            message = f'The "{name}" widget has to lay between the corner markers region.'
             changed = force_boundaries(widget)
         elif exam.layout == ExamLayout.unstructured:
             message = "There can't be a gap in the page numbers"

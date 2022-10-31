@@ -217,7 +217,7 @@ class CheckStudents extends React.Component {
       { studentID: stud.id, allowMerge: force })
       .then(resp => {
         this.setState({ confirmStudent: null })
-        this.fetchCopy(this.state.index)
+        this.loadCopy(this.state.index)
         this.nextUnchecked()
 
         if (force) {
@@ -234,6 +234,7 @@ class CheckStudents extends React.Component {
         }
       })
       .catch(err => {
+        console.log(err)
         err.json().then(res => {
           if (res.status === 409) {
             this.setState({ confirmStudent: stud, otherCopies: res.other_copies })

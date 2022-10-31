@@ -100,19 +100,23 @@ class CheckStudents extends React.Component {
   syncCopyWithUrl = () => {
     const urlIsDifferent = !this.state.copy || this.props.router.params.copyNumber !== this.state.copy.number
     if (urlIsDifferent) {
-      const copyNumber = this.props.router.params.copyNumber || this.state.copies[0].number
-      api.get(`copies/${this.props.examID}/${copyNumber}`).then(copy => {
-        this.setState({
-          copy: copy,
-          index: this.state.copies.findIndex(c => c.number === copy.number)
-        }, () => this.props.router.navigate(this.getURL(copyNumber)), { replace: true })
-      }).catch(_ => {
-        this.setState({
-          copy: null,
-          index: 0
-        })
-      })
+      this.fetchCopyFromUrl()
     }
+  }
+
+  fetchCopyFromUrl = () => {
+    const copyNumber = this.props.router.params.copyNumber || this.state.copies[0].number
+    api.get(`copies/${this.props.examID}/${copyNumber}`).then(copy => {
+      this.setState({
+        copy: copy,
+        index: this.state.copies.findIndex(c => c.number === copy.number)
+      }, () => this.props.router.navigate(this.getURL(copyNumber)), { replace: true })
+    }).catch(_ => {
+      this.setState({
+        copy: null,
+        index: 0
+      })
+    })
   }
 
   getURL = (copyNumber) => `/exams/${this.props.examID}/students/${copyNumber}`
@@ -217,8 +221,11 @@ class CheckStudents extends React.Component {
       { studentID: stud.id, allowMerge: force })
       .then(resp => {
         this.setState({ confirmStudent: null })
-        this.loadCopy(this.state.index)
-        this.nextUnchecked()
+
+        if (!this.nextUnchecked()) {
+          // If there is no next copy, we should fetch and update the current copy
+          this.fetchCopyFromUrl()
+        }
 
         if (force) {
           const msg = <p>Student matched with copy {this.state.copies[this.state.index].number}, go to&nbsp;
@@ -234,7 +241,7 @@ class CheckStudents extends React.Component {
         }
       })
       .catch(err => {
-        console.log(err)
+        if (!err.json) throw err // Error unrelated to API, we should throw it
         err.json().then(res => {
           if (res.status === 409) {
             this.setState({ confirmStudent: stud, otherCopies: res.other_copies })

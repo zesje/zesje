@@ -735,7 +735,7 @@ class ExamTemplated extends React.Component {
         <ConfirmationModal
           active={this.state.deletingWidget && this.state.selectedWidgetId != null}
           color='is-danger'
-          headerText={`Are you sure you want to delete problem "${problem.name}"`}
+          headerText={`Are you sure you want to delete problem "${problem && problem.name}"`}
           confirmText='Delete problem'
           onCancel={() => this.setState({ deletingWidget: false })}
           onConfirm={() => this.deleteWidget(this.state.selectedWidgetId)}
@@ -743,7 +743,8 @@ class ExamTemplated extends React.Component {
         <ConfirmationModal
           active={this.state.deletingMCWidget && this.state.selectedWidgetId != null}
           color='is-danger'
-          headerText={`Are you sure you want to delete the multiple choice options for problem "${problem.name}"`}
+          headerText={
+            `Are you sure you want to delete the multiple choice options for problem "${problem && problem.name}"`}
           confirmText='Delete multiple choice options'
           onCancel={() => this.setState({ deletingMCWidget: false })}
           onConfirm={() => {

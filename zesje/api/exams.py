@@ -423,5 +423,5 @@ class ExamPreview(MethodView):
 
         return send_file(
             output_file,
-            cache_timeout=0,
+            max_age=0,
             mimetype='application/pdf')

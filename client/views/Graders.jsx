@@ -36,16 +36,11 @@ class Graders extends React.Component {
 
   submitName = (event) => {
     api.post('graders', { oauth_id: this.state.oauth_id })
-      .then(graders => {
-        this.setState({
-          oauth_id: '',
-          graders: graders
-        })
-      })
-      .catch(resp => {
-        resp.json().then(e => toast({ message: e.message, type: 'is-danger' }))
-        console.error('Error saving grader:', resp)
-      })
+      .then(graders => this.setState({
+        oauth_id: '',
+        graders: graders
+      }))
+      .catch(err => toast({ message: err.message, type: 'is-danger' }))
 
     event.preventDefault()
   }

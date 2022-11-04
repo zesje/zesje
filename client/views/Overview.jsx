@@ -246,20 +246,14 @@ class Overview extends React.Component {
 
   loadStats = (id) => {
     api.get(`stats/${id}`)
-      .then(stats => {
-        this.setState({
-          stats: stats,
-          selectedProblemId: 0
-        })
-      }).catch(err => {
-        console.log(err)
-        err.json().then(res => {
-          this.setState({
-            stats: null,
-            error: 'Error loading statistics: ' + res.message
-          })
-        })
-      })
+      .then(stats => this.setState({
+        stats: stats,
+        selectedProblemId: 0
+      }))
+      .catch(err => this.setState({
+        stats: null,
+        error: 'Error loading statistics: ' + err.message
+      }))
   }
 
   changeProblem = (problemId) => {

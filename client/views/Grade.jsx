@@ -2,7 +2,6 @@ import React from 'react'
 import { toast } from 'bulma-toast'
 import Loading from './Loading.jsx'
 import Fail from './Fail.jsx'
-import update from 'immutability-helper'
 import ReactTimeAgo from 'react-time-ago'
 
 import FeedbackPanel from '../components/feedback/FeedbackPanel.jsx'
@@ -411,16 +410,11 @@ class Grade extends React.Component {
 
      api.put(`solution/approve/${this.props.examID}/${submission.id}/${problem.id}`, {
        approve: approve
-     }).catch(resp => {
-       resp.json().then(body => {
-         toast({
-           message: 'Could not ' + (approve ? 'set aside' : 'approve') + ' feedback: ' + body.message,
-           type: 'is-danger'
-         })
-       })
-     }).then(result => {
-       this.updateSubmission()
-     })
+     }).then(result => this.updateSubmission())
+       .catch(err => toast({
+         message: 'Could not ' + (approve ? 'set aside' : 'approve') + ' feedback: ' + err.message,
+         type: 'is-danger'
+       }))
    }
 
   /**

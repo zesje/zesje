@@ -114,10 +114,7 @@ class ExamEditor extends React.Component {
           widgetData.problem = problemData
 
           this.props.createNewWidget(widgetData)
-        }).catch(err => {
-          console.log(err)
-          err.json().then(e => toast({ message: e.message, type: 'is-danger' }))
-        })
+        }).catch(err => toast({ message: err.message, type: 'is-danger' }))
       }
     }
   }
@@ -183,21 +180,15 @@ class ExamEditor extends React.Component {
    * @param data  the new location
    */
   updateWidgetDB = (widget, data) => {
-    return api.patch('widgets/' + widget.id, data).then(() => {
-      // ok
-    }).catch(err => {
-      console.log(err)
-
-      err.json().then(res => {
-        if (res.status === 409) {
-          // exam widget position is not valid, notify and update it
-          toast({ message: res.message, type: 'is-warning' })
-          this.props.updateWidget(res.data.id, {
-            x: { $set: res.data.x },
-            y: { $set: res.data.y }
-          })
-        }
-      })
+    return api.patch('widgets/' + widget.id, data).catch(err => {
+      if (err.status === 409) {
+        // exam widget position is not valid, notify and update it
+        toast({ message: err.message, type: 'is-warning' })
+        this.props.updateWidget(err.data.id, {
+          x: { $set: err.data.x },
+          y: { $set: err.data.y }
+        })
+      }
       // update to try and get a consistent state
       this.props.updateExam()
     })

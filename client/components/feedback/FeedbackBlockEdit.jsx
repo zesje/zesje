@@ -146,15 +146,13 @@ class EditPanel extends React.Component {
           this.props.goBack()
         })
         .catch(err => {
-          err.json().then(res => {
-            toast({
-              message: 'Could not delete feedback' + (res.message ? ': ' + res.message : ''),
-              type: 'is-danger'
-            })
-            // update to try and get a consistent state
-            this.state.updateCallback()
-            this.props.goBack()
+          toast({
+            message: 'Could not delete feedback' + (err.message ? ': ' + err.message : ''),
+            type: 'is-danger'
           })
+          // update to try and get a consistent state
+          this.state.updateCallback()
+          this.props.goBack()
         })
     }
   }

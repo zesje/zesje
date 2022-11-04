@@ -69,11 +69,9 @@ class App extends React.Component {
       })
     }).catch(err => {
       if (err.status === 401) {
-        err.json().then(status => {
-          this.setState({
-            grader: null,
-            loginProvider: status.provider
-          })
+        this.setState({
+          grader: null,
+          loginProvider: err.provider
         })
       } else {
         console.log(err)

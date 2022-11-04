@@ -1,4 +1,4 @@
-from traceback import format_exc
+from traceback import format_stack
 
 from flask import current_app, request, Blueprint, jsonify
 from flask_login import current_user
@@ -71,7 +71,7 @@ def handle_exception(e):
         'status': 500,
         'name': 'Internal Python Exception',
         'message': str(e),
-        'description': format_exc()
+        'description': format_stack()
     }), 500
 
 

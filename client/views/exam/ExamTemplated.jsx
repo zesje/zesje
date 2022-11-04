@@ -237,7 +237,7 @@ class ExamTemplated extends React.Component {
                 })
               }
             })
-            .catch(error => console.log(error))
+            .catch(console.error)
         } else if (oldPolicy === 'set_single' &&
           problem.mc_options.length > 0 &&
           problem.feedback[problem.root_feedback_id].exclusive) {
@@ -255,17 +255,15 @@ class ExamTemplated extends React.Component {
                 })
               }
             })
-            .catch(error => console.log(error))
+            .catch(console.error)
         }
       })
-      .catch(error => {
-        error.json().then(res => {
-          let message = res.message
-          if (typeof message === 'object') {
-            message = Object.values(message)[0]
-          }
-          toast({ message: 'Could not change grading policy: ' + message, type: 'is-danger' })
-        })
+      .catch(err => {
+        let message = err.message
+        if (typeof message === 'object') {
+          message = Object.values(message)[0]
+        }
+        toast({ message: 'Could not change grading policy: ' + message, type: 'is-danger' })
       })
   }
 
@@ -295,15 +293,10 @@ class ExamTemplated extends React.Component {
           }))
         })
         .catch(err => {
-          console.log(err)
-          err.json().then(res => {
-            this.setState({
-              deletingWidget: false
-            })
-            toast({ message: 'Could not delete problem' + (res.message ? ': ' + res.message : ''), type: 'is-danger' })
-            // update to try and get a consistent state
-            this.props.updateExam()
-          })
+          this.setState({ deletingWidget: false })
+          toast({ message: 'Could not delete problem' + (err.message ? ': ' + err.message : ''), type: 'is-danger' })
+          // update to try and get a consistent state
+          this.props.updateExam()
         })
     }
   }
@@ -423,16 +416,14 @@ class ExamTemplated extends React.Component {
       this.updateFeedback(problemWidget.problem.id)
       return this.generateMCOs(problemWidget, labels, index + 1, xPos + MCO_WIDTH, yPos)
     }).catch(err => {
-      console.log(err)
-      err.json().then(res => {
-        toast({ message: 'Could not delete problem' + (res.message ? ': ' + res.message : ''), type: 'is-danger' })
-        // update to try and get a consistent state
-        this.props.updateExam()
-        this.setState({
-          selectedWidgetId: null
-        })
-        return false
+      toast({ message: 'Could not delete problem' + (err.message ? ': ' + err.message : ''), type: 'is-danger' })
+      // update to try and get a consistent state
+      this.props.updateExam()
+      this.setState({
+        selectedWidgetId: null
       })
+
+      return false
     })
   }
 
@@ -483,19 +474,16 @@ class ExamTemplated extends React.Component {
         })
       })
       .catch(err => {
-        console.log(err)
-        err.json().then(res => {
-          toast({
-            message: 'Could not delete multiple choice option' + (res.message ? ': ' + res.message : ''),
-            type: 'is-danger'
-          })
-          // update to try and get a consistent state
-          this.props.updateExam()
-          this.setState({
-            selectedWidgetId: null
-          })
-          return Promise.resolve(false)
+        toast({
+          message: 'Could not delete multiple choice option' + (err.message ? ': ' + err.message : ''),
+          type: 'is-danger'
         })
+        // update to try and get a consistent state
+        this.props.updateExam()
+        this.setState({
+          selectedWidgetId: null
+        })
+        return Promise.resolve(false)
       })
   }
 
@@ -614,15 +602,12 @@ class ExamTemplated extends React.Component {
                           }
                         })
                       }).catch(err => {
-                        console.log(err)
-                        err.json().then(res => {
-                          toast({
-                            message: 'Could not update feedback' + (res.message ? ': ' + res.message : ''),
-                            type: 'is-danger'
-                          })
-                          // update to try and get a consistent state
-                          this.props.updateExam()
+                        toast({
+                          message: 'Could not update feedback' + (err.message ? ': ' + err.message : ''),
+                          type: 'is-danger'
                         })
+                        // update to try and get a consistent state
+                        this.props.updateExam()
                       })
                   })
                 }}

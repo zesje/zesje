@@ -23,7 +23,7 @@ function _fetch (method) {
       .then(resp => {
         if (!resp.json) throw resp
 
-        resp.json().then(json => {
+        return resp.json().then(json => {
           if (resp.ok) {
             return json
           } else {

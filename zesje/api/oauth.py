@@ -13,7 +13,7 @@ from ..database import db, Grader
 
 class OAuthStart(MethodView):
 
-    @use_kwargs({'user_url': fields.Str(required=False, load_default=None)}, location="query")
+    @use_kwargs({'user_url': fields.Str(required=False, load_default=None, data_key='userurl')}, location="query")
     def get(self, user_url):
         """Logs the user in by redirecting to the OAuth provider with the appropriate client ID
 
@@ -27,6 +27,7 @@ class OAuthStart(MethodView):
          returns current state, used for testing
         is_authenticated: boolean
         """
+        print(user_url)
         session['oauth_userurl'] = urlparse(user_url).path if user_url else url_for('index')
 
         if current_app.config['LOGIN_DISABLED']:

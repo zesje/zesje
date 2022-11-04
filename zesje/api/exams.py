@@ -341,7 +341,7 @@ class ExamGeneratedPdfs(MethodView):
         'copies_start': fields.Int(required=False, load_default=0),
         'copies_end': fields.Int(required=True),
         'type': fields.Str(required=True, validate=validate.OneOf(['pdf', 'zip']))
-    }, location='form')
+    }, location='query')
     def get(self, args, exam):
         """Generates the exams with datamatrices and copy numbers.
 

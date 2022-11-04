@@ -241,14 +241,11 @@ class CheckStudents extends React.Component {
         }
       })
       .catch(err => {
-        if (!err.json) throw err // Error unrelated to API, we should throw it
-        err.json().then(res => {
-          if (res.status === 409) {
-            this.setState({ confirmStudent: stud, otherCopies: res.other_copies })
-          } else {
-            toast({ message: `Failed to validate copy: ${res.message}`, type: 'is-danger' })
-          }
-        })
+        if (err.status === 409) {
+          this.setState({ confirmStudent: stud, otherCopies: err.other_copies })
+        } else {
+          toast({ message: `Failed to validate copy: ${err.message}`, type: 'is-danger' })
+        }
       })
       .finally(() => this.setState({ waitingForValidation: false }))
   }

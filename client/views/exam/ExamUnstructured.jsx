@@ -155,10 +155,9 @@ class ExamUnstructured extends React.Component {
 
     api.patch('problems/' + id, { name: name })
       .then(resp => this.props.updateExam())
-      .catch(e => {
+      .catch(err => {
         this.selectProblem(id) // takes care of updating the problem name to previous state
-        console.log(e)
-        e.json().then(err => toast({ message: 'Could not save new problem name: ' + err.message, type: 'is-danger' }))
+        toast({ message: 'Could not save new problem name: ' + err.message, type: 'is-danger' })
       })
   }
 
@@ -170,28 +169,18 @@ class ExamUnstructured extends React.Component {
 
     api.patch(`widgets/${widgetId}`, { page: parseInt(page) - 1 })
       .then(resp => this.props.updateExam())
-      .catch(e => {
-        console.log(e)
+      .catch(err => {
         this.props.updateExam()
-        e.json().then(res => {
-          toast({ message: 'Could not save new problem page: ' + res.message, type: 'is-warning' })
-        })
+        toast({ message: 'Could not save new problem page: ' + err.message, type: 'is-warning' })
       })
   }
 
   deleteProblem = (id) => {
     api.del('problems/' + id)
-      .then(() => {
-        this.props.updateExam()
-      })
+      .then(this.props.updateExam)
       .catch(err => {
-        console.log(err)
-        err.json().then(res => {
-          this.setState({
-            deletingProblem: false
-          })
-          toast({ message: 'Could not delete problem' + (res.message ? ': ' + res.message : ''), type: 'is-danger' })
-        })
+        this.setState({ deletingProblem: false })
+        toast({ message: 'Could not delete problem' + (err.message ? ': ' + err.message : ''), type: 'is-danger' })
       })
   }
 

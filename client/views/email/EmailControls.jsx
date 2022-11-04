@@ -195,12 +195,9 @@ class EmailControls extends React.Component {
         this.setState({ sending: false, failed: resp.failed })
         toast({ message: `Sent emails to only ${resp.sent.length} students`, type: 'is-warning' })
       }
-    }).catch(e => {
-      console.log(e)
-      e.json().then(error => {
-        this.setState({ failed: error.failed })
-        toast({ message: error.message, duration: 10000, type: 'is-danger' })
-      })
+    }).catch(error => {
+      this.setState({ failed: error.failed })
+      toast({ message: error.message, duration: 10000, type: 'is-danger' })
     }).finally(() => this.setState({ sending: false }))
 
     if (studentID == null) {

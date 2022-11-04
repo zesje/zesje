@@ -108,13 +108,8 @@ class EditPanel extends React.Component {
         } else {
           this.idblock.clear()
         }
-      }).catch(resp => {
-        resp.json().then(r => toast({
-          message: r.message,
-          duration: 10000,
-          type: 'is-danger'
-        }))
       })
+      .catch(err => toast({ message: err.message, duration: 10000, type: 'is-danger' }))
     event.preventDefault()
   }
 
@@ -169,9 +164,9 @@ class EditPanel extends React.Component {
             })
           }
         })
-        .catch(resp => {
+        .catch(err => {
           console.error('failed to upload student CSV file')
-          resp.json().then(r => toast({ message: r.message, duration: 10000, type: 'is-danger' }))
+          toast({ message: err.message, duration: 10000, type: 'is-danger' })
         })
     })
   }

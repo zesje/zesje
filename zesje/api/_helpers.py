@@ -88,15 +88,11 @@ class DBModel(fields.Integer):
         return id
 
     def _validate_all_model(self, item):
-        if not self.validate_model:
-            return True
-
-        for validator in self.validate_model:
-            res = validator(item)
-            if isinstance(res, ZesjeValidationError):
-                raise res
-
-        return True
+        if self.validate_model:
+            for validator in self.validate_model:
+                res = validator(item)
+                if isinstance(res, ZesjeValidationError):
+                    raise res
 
     def _serialize(self, value, attr, obj, **kwargs):
         """Converts a `db.Model` into a python integer identifying the item."""
@@ -115,9 +111,8 @@ class DBModel(fields.Integer):
         if item is None:
             raise ZesjeValidationError(f"{self.model.__name__} with id #{id} does not exist.", ERROR_CODE_NOT_FOUND)
 
-        if not self._validate_all_model(item):
-            raise ZesjeValidationError(f"{self.model.__name__} does not match the necessary attributes.",
-                                       ERROR_CODE_FORBIDDEN)
+        self._validate_all_model(item)
+
         return item
 
 

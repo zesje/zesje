@@ -169,7 +169,7 @@ class Problems(MethodView):
                     status=409,
                     message='Cannot modify grading policy on an unstructured exam.'
                 ), 409
-            if args['grading_policy'] == GradingPolicy.set_single.name and not problem.mc_options:
+            if args['grading_policy'] == GradingPolicy.set_single and not problem.mc_options:
                 return dict(
                     status=409,
                     message='one_answer cannot be set for open answer questions.'

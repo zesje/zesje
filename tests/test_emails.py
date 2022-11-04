@@ -188,7 +188,7 @@ def test_copy_to_without_student(email_client, datadir):
         data={'template': default_email_template, 'attach': False, 'copy_to': 'john.doe@unknown'}
     )
 
-    assert result.status_code == 409
+    assert result.status_code == 422
 
 
 def test_submission_not_validated(email_client, datadir):

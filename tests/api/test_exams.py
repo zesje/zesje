@@ -62,12 +62,12 @@ def test_add_exam_invalid_layout(test_client):
     response = test_client.post('/api/exams',
                                 data={'exam_name': 'The Exam', 'layout': -1})
 
-    assert response.status_code == 400
+    assert response.status_code == 422
 
 
 @pytest.mark.parametrize(
     'name, status_code',
-    [('New name', 200), ('', 400)],
+    [('New name', 200), ('', 422)],
     ids=['New name', 'Empty'])
 def test_change_exam_name(test_client, add_test_data, name, status_code):
     response = test_client.patch('/api/exams/1', data={'name': name})

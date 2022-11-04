@@ -114,9 +114,7 @@ class EditPanel extends React.Component {
             })
           }
         })
-        .catch(err => {
-          console.log(err)
-        })
+        .catch(console.error)
     } else {
       fb.parentId = this.props.parentId
       api.post(uri, fb)
@@ -132,9 +130,7 @@ class EditPanel extends React.Component {
             exclusive: false
           })
         })
-        .catch(err => {
-          console.log(err)
-        })
+        .catch(console.error)
     }
   }
 

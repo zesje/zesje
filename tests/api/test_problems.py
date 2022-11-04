@@ -65,7 +65,7 @@ def test_add_problem(test_client, add_test_data, exam_id, position, status):
     (1, 'New', 200),
     (2, 'New', 200),
     (42, 'New', 404),
-    (1, '   ', 400)
+    (1, '   ', 422)
 ], ids=['Allowed templated', 'Allowed unstructured', 'Not exists', 'Empty'])
 def test_rename_problem(test_client, add_test_data, id, new_name, status):
     result = test_client.patch(f'/api/problems/{id}', data={'name': new_name})

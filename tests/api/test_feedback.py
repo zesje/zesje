@@ -249,9 +249,9 @@ def test_get_children(test_client, add_test_data):
 
 @pytest.mark.parametrize('prop, status_code, new_value', [
     ('name', 200, 'This is a new name.'),
-    ('name', 409, ' '),
+    ('name', 422, ' '),
     ('score', 200, 42),
-    ('score', 400, ''),
+    ('score', 422, ''),
     ('description', 200, 'This is a valid description'),
     ('description', 200, '')
     ], ids=['Valid name', 'Invalid name', 'Valid score', 'Invalid score',

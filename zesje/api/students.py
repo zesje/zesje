@@ -5,7 +5,7 @@ import pandas as pd
 from io import BytesIO
 from enum import Enum
 
-from ._helpers import DBModel, use_args, use_kwargs
+from ._helpers import DBModel, use_args, use_kwargs, non_empty_string
 from ..database import db, Student
 
 
@@ -27,18 +27,18 @@ class Students(MethodView):
 
          Parameters
         ----------
-        student_id : int, optional
+        student : int, optional
             The ID of the student, often the studentnumber but mainly used as unique identifier
 
         Returns
         -------
-        If a valid 'student_id' is provided the single instance of the student will be returned:
+        If a valid 'student' id is provided the single instance of the student will be returned:
             id: int
             first_name: str
             last_name: str
             email: str
 
-        If no student_id is provided the entire list of students will be returned.
+        If no student id is provided the entire list of students will be returned.
         """
         if student is not None:
             return student_to_data(student)
@@ -50,8 +50,8 @@ class Students(MethodView):
             required=True, data_key='studentID',
             validate=validate.Range(min=1, max=9999999,
                                     error="{input} is not a valid TU Delft identifier [{min}, {max}]")),
-        'first_name': fields.Str(required=True, data_key='firstName'),
-        'last_name': fields.Str(required=True, data_key='lastName'),
+        'first_name': fields.Str(required=True, data_key='firstName', validate=non_empty_string),
+        'last_name': fields.Str(required=True, data_key='lastName', validate=non_empty_string),
         'email': fields.Email(required=False, load_default=None),
     }, location='json')
     def put(self, args):

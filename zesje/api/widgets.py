@@ -63,9 +63,9 @@ class Widgets(MethodView):
     @use_kwargs({'widget': DBModel(Widget, required=True)})
     def patch(self, widget):
         if isinstance(widget, ExamWidget) and widget.exam.finalized:
-            return dict(status=403, message='Exam is finalized'), 403
+            return dict(status=409, message='Exam is finalized'), 409
         elif isinstance(widget, MultipleChoiceOption) and widget.feedback.problem.exam.finalized:
-            return dict(status=405, message='Exam is finalized'), 405
+            return dict(status=409, message='Exam is finalized'), 409
 
         # will 400 on malformed json
         body = request.get_json()

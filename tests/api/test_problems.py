@@ -118,7 +118,7 @@ def test_delete_problem_graded(test_client, add_test_data, exam_id, problem_id):
 
     result = test_client.delete(f'/api/problems/{problem_id}')
 
-    assert result.status_code == 403
+    assert result.status_code == 409
     assert Problem.query.get(problem_id) is not None
 
 

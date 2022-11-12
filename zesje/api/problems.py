@@ -185,7 +185,7 @@ class Problems(MethodView):
     def delete(self, problem):
         """Deletes a problem of an exam if nothing has been graded."""
         if any(sol.is_graded for sol in problem.solutions):
-            return dict(status=403, message='Problem has already been graded'), 403
+            return dict(status=409, message='Problem has already been graded'), 409
 
         exam = problem.exam
 

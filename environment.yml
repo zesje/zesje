@@ -56,9 +56,6 @@ dependencies:
         - flask-login
         - flask-session
 
-        #flask role management
-        - flask-principal
-
         # PDF generation
         - pdfrw>=0.4
         - reportlab>=3.5.0

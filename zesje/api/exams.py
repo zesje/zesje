@@ -8,7 +8,8 @@ from flask_login import current_user
 from webargs import fields, validate
 from sqlalchemy import func
 
-from ._helpers import _shuffle, DBModel, ZesjeValidationError, non_empty_string, use_args, use_kwargs, abort
+from ._helpers import _shuffle, DBModel, ZesjeValidationError, non_empty_string,\
+    use_args, use_kwargs, abort, ExamNotFinalizedError
 from .problems import problem_to_data
 from ..pdf_generation import exam_dir, exam_pdf_path, _exam_generate_data
 from ..pdf_generation import generate_pdfs, generate_single_pdf, generate_zipped_pdfs
@@ -292,7 +293,7 @@ class Exams(MethodView):
             db.session.commit()
             return dict(status=200, message="ok"), 200
         else:
-            return dict(status=403, message='Exam can not be unfinalized'), 403
+            return dict(status=409, message='Exam can not be unfinalized'), 409
 
         if grade_anonymous is not None:
             changed = exam.grade_anonymous != grade_anonymous
@@ -335,7 +336,7 @@ class ExamSource(MethodView):
 class ExamGeneratedPdfs(MethodView):
 
     @use_kwargs({'exam': DBModel(Exam, required=True, validate_model=[
-        lambda exam: exam.finalized or ZesjeValidationError('Exam must be finalized.', 403),
+        lambda exam: exam.finalized or ExamNotFinalizedError,
         lambda exam: exam.layout == ExamLayout.templated or ZesjeValidationError(ERROR_MSG_PDF, 404)])})
     @use_args({
         'copies_start': fields.Int(required=False, load_default=0),

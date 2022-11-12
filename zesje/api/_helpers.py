@@ -38,11 +38,11 @@ class ZesjeValidationError(HTTPException):
         self.code = status_code
 
 
-ExamNotFinalizedError = ZesjeValidationError('Exam is not finalized', ERROR_CODE_FORBIDDEN)
+ExamNotFinalizedError = ZesjeValidationError('Exam must be finalized', ERROR_CODE_CONFLICT)
 
 
 def non_empty_string(text):
-    if not text.strip():
+    if text is None or not text.strip():
         raise ZesjeValidationError("String must not be empty", ERROR_CODE_MALFORMED)
 
 

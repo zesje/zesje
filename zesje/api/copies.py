@@ -55,7 +55,7 @@ class Copies(MethodView):
 
     @use_kwargs({
         'exam': DBModel(Exam, required=True, validate_model=[lambda exam: exam.layout == ExamLayout.templated or
-                ZesjeValidationError('Signatures cannot be validated for unstructured exams.', 403)]),
+                ZesjeValidationError('Signatures cannot be validated for unstructured exams.', 422)]),
         'copy_number': fields.Int(required=False, load_default=None)
     })
     @use_kwargs({

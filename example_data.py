@@ -129,12 +129,13 @@ def generate_problem(pdf, problem):
 
 
 def generate_students(students):
-    return [{
-        'studentID': str(i + 1000000),
-        'firstName': names.get_first_name(),
-        'lastName': names.get_last_name(),
-        'email': str(i + 1000000) + '@fakestudent.tudelft.nl'
-    } for i in range(students)]
+    for i in range(students):
+        yield {
+            'studentID': str(i + 1000000),
+            'firstName': names.get_first_name(),
+            'lastName': names.get_last_name(),
+            'email': str(i + 1000000) + '@fakestudent.tudelft.nl'
+        }
 
 
 def generate_random_page_image(file_path_or_buffer, size):

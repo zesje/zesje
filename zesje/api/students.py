@@ -53,7 +53,7 @@ class Students(MethodView):
         'first_name': fields.Str(required=True, data_key='firstName', validate=non_empty_string),
         'last_name': fields.Str(required=True, data_key='lastName', validate=non_empty_string),
         'email': fields.Email(required=False, load_default=None),
-    }, location='json')
+    }, location='form')
     def put(self, args):
         """Insert or update an existing student
 

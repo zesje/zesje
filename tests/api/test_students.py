@@ -4,7 +4,7 @@ import pytest
 @pytest.mark.parametrize('email', ['student@school.edu', ''], ids=['email', 'no email'])
 def test_add_student(test_client, email):
     student = new_student(1000000, email)
-    result = test_client.put('api/students', json=student)
+    result = test_client.put('api/students', data=student)
 
     assert result.status_code == 200
 
@@ -20,7 +20,7 @@ def test_get_students(test_client):
     ]
 
     for student in students:
-        assert test_client.put('api/students', json=student).status_code == 200
+        assert test_client.put('api/students', data=student).status_code == 200
 
     result = test_client.get('api/students')
     assert result.status_code == 200
@@ -49,7 +49,7 @@ def test_get_students(test_client):
 def test_update_students(test_client, data, code, expected):
     for index, student_data in enumerate(data):
         student = new_student(student_data[0], student_data[3], student_data[1], student_data[2])
-        assert test_client.put('api/students', json=student).status_code == code[index]
+        assert test_client.put('api/students', data=student).status_code == code[index]
 
     result = test_client.get('api/students')
     assert result.status_code == 200

@@ -38,13 +38,13 @@ def test_get_students(test_client):
 
 # Data is in the format [id, first, last, email]
 @pytest.mark.parametrize('data,code,expected', [
-    ([[1000000, 'a', 'b', 'c@c.nl'], [1000000, 'a2', 'b2', 'c@c.nl']], [200, 200], [[1000000, 'a2', 'b2', 'c@c.nl']]),
-    ([[1000000, 'a', 'b', 'c@c.nl'], [1000001, 'a2', 'b2', 'c@c.nl']], [200, 400], [[1000000, 'a', 'b', 'c@c.nl']]),
+    ([[1000000, 'a', 'b', 'c@c.nl'], [1000000, 'a2', 'b2', 'c@c.nl']], [200, 200], {1000000: ['a2', 'b2', 'c@c.nl']}),
+    ([[1000000, 'a', 'b', 'c@c.nl'], [1000001, 'a2', 'b2', 'c@c.nl']], [200, 400], {1000000: ['a', 'b', 'c@c.nl']}),
     ([[1000000, 'a', 'b', 'c@c.nl'], [1000000, 'a2', 'b2', 'c2@c2.nl']], [200, 200],
-        [[1000000, 'a2', 'b2', 'c2@c2.nl']]),
-    ([[1000000, 'a', 'b', 'c@c.nl'], [1000000, 'a2', 'b2', '']], [200, 200], [[1000000, 'a2', 'b2', None]]),
+        {1000000: ['a2', 'b2', 'c2@c2.nl']}),
+    ([[1000000, 'a', 'b', 'c@c.nl'], [1000000, 'a2', 'b2', '']], [200, 200], {1000000: ['a2', 'b2', None]}),
     ([[1000000, 'a', 'b', 'c@c.nl'], [1000001, 'a2', 'b2', 'c2@c2.nl'], [1000001, 'a3', 'b3', 'c@c.nl']],
-        [200, 200, 400], [[1000000, 'a', 'b', 'c@c.nl'], [1000001, 'a2', 'b2', 'c2@c2.nl']]),
+        [200, 200, 400], {1000000: ['a', 'b', 'c@c.nl'], 1000001: ['a2', 'b2', 'c2@c2.nl']}),
 ], ids=['same id same email', 'new id same email', 'same id new mail', 'same id no mail', 'update id same mail'])
 def test_update_students(test_client, data, code, expected):
     for index, student_data in enumerate(data):
@@ -57,12 +57,11 @@ def test_update_students(test_client, data, code, expected):
     data = result.get_json()
     assert len(data) == len(expected)
 
-    data = list(map(lambda d: list(d.values()), data))
-
-    for student in expected:
-        for opt in data:
-            assert all(v in opt for v in student)
-        # assert student in data
+    for stu in data:
+        assert stu['id'] in expected
+        assert stu['firstName'] == expected[stu['id']][0]
+        assert stu['lastName'] == expected[stu['id']][1]
+        assert stu['email'] == expected[stu['id']][2]
 
 
 def new_student(id, mail, first='First', last='Last'):

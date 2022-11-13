@@ -83,7 +83,7 @@ class DBModel(fields.Integer):
             raise ZesjeValidationError(e.message, ERROR_CODE_MALFORMED)
 
         if id < 1:  # MySQL db identifiers start at 1
-            raise ZesjeValidationError("Id must be larger than 1.", ERROR_CODE_MALFORMED)
+            raise ZesjeValidationError("Id must be 1 or larger.", ERROR_CODE_MALFORMED)
 
         return id
 

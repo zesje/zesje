@@ -1,3 +1,4 @@
+from flask import jsonify
 from flask.views import MethodView
 from webargs import fields, validate
 
@@ -43,7 +44,7 @@ class Students(MethodView):
         if student is not None:
             return student_to_data(student)
 
-        return [student_to_data(s) for s in Student.query.all()]
+        return jsonify([student_to_data(s) for s in Student.query.all()])
 
     @use_args({
         'id': fields.Int(

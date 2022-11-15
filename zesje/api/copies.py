@@ -1,4 +1,4 @@
-from flask import current_app as app
+from flask import current_app, jsonify
 from flask.views import MethodView
 from webargs import fields
 from pdfrw import PdfReader
@@ -51,7 +51,7 @@ class Copies(MethodView):
 
             return copy_to_data(copy)
 
-        return [copy_to_data(copy) for copy in exam.copies]  # Ordered by copy number
+        return jsonify([copy_to_data(copy) for copy in exam.copies])  # Ordered by copy number
 
     @use_kwargs({
         'exam': DBModel(Exam, required=True, validate_model=[lambda exam: exam.layout == ExamLayout.templated or
@@ -129,12 +129,12 @@ class Copies(MethodView):
 
 
 def is_exactly_blank(solution):
-    BLANK_FEEDBACK_NAME = app.config['BLANK_FEEDBACK_NAME']
+    BLANK_FEEDBACK_NAME = current_app.config['BLANK_FEEDBACK_NAME']
     return all(fb.text == BLANK_FEEDBACK_NAME for fb in solution.feedback) and len(solution.feedback)
 
 
 def merge_feedback(sub, sub_to_merge):
-    BLANK_FEEDBACK_NAME = app.config['BLANK_FEEDBACK_NAME']
+    BLANK_FEEDBACK_NAME = current_app.config['BLANK_FEEDBACK_NAME']
 
     # Ordering is the same since Submission.solutions is ordered by problem_id
     for sol, sol_to_merge in zip(sub.solutions, sub_to_merge.solutions):
@@ -179,9 +179,9 @@ class MissingPages(MethodView):
         elif exam.layout == ExamLayout.unstructured:
             all_pages = set(problem.widget.page for problem in exam.problems)
 
-        return [
+        return jsonify([
             {
                 'number': copy.number,
                 'missing_pages': sorted(all_pages - set(page.number for page in copy.pages)),
             } for copy in exam.copies
-        ]
+        ])

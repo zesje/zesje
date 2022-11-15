@@ -1,4 +1,4 @@
-from flask import current_app
+from flask import current_app, jsonify
 from flask.views import MethodView
 from webargs import fields
 
@@ -34,7 +34,7 @@ class Scans(MethodView):
             name: str
                 filename of the uploaded PDF
         """
-        return [
+        return jsonify([
             {
                 'id': scan.id,
                 'name': scan.name,
@@ -42,7 +42,7 @@ class Scans(MethodView):
                 'message': scan.message,
             }
             for scan in exam.scans
-        ]
+        ])
 
     @use_kwargs({'exam': DBModel(Exam, required=True, validate_model=[
         lambda exam: exam.finalized or ExamNotFinalizedError])})

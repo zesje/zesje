@@ -1,10 +1,10 @@
 """ REST api for graders page """
 
-from flask import current_app
+from flask import current_app, jsonify
 from flask.views import MethodView
 from webargs import fields
 
-from ._helpers import use_kwargs
+from ._helpers import use_kwargs, non_empty_string
 from ..database import db, Grader
 
 
@@ -22,16 +22,16 @@ class Graders(MethodView):
             id: int
             oauth_id: str
         """
-        return [
+        return jsonify([
             {
                 'id': g.id,
                 'oauth_id': g.oauth_id,
                 'name': g.name
             }
             for g in Grader.query.filter(Grader.oauth_id != current_app.config['AUTOGRADER_NAME']).all()
-        ]
+        ])
 
-    @use_kwargs({"oauth_id": fields.Email(required=True)}, location="form")
+    @use_kwargs({"oauth_id": fields.Email(required=True, validate=non_empty_string)}, location="form")
     def post(self, oauth_id):
         """add a grader.
 

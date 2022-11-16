@@ -61,7 +61,7 @@ class Exams(MethodView):
     ])})
     def delete(self, exam):
         if Submission.query.filter(Submission.exam_id == exam.id).count():
-            return dict(status=500, message='Exam is not finalized but already has submissions.'), 500
+            return dict(status=409, message='Exam is not finalized but already has submissions.'), 409
 
         # All corresponding solutions, scans and problems are automatically deleted
         db.session.delete(exam)

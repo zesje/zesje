@@ -91,15 +91,12 @@ class EmailTemplate(MethodView):
 class RenderedEmailTemplate(MethodView):
 
     @use_kwargs({
-        'exam_id': fields.Integer(
-            required=True, validate=validate.Range(min=1, error="Exam id ({input}) is not valid.")),
-        'student_id': fields.Integer(
-            required=True,
-            validate=validate.Range(1, 9999999, error="{input} is not a valid TU Delft identifier [{min}, {max}]"))
+        'exam': DBModel(Exam, required=True),
+        'student': DBModel(Student, required=True)
     })
     @use_kwargs({"template": fields.Str(required=True)}, location="form")
-    def post(self, exam_id, student_id, template):
-        return render_email(exam_id, student_id, template)
+    def post(self, exam, student, template):
+        return render_email(exam.id, student.id, template)
 
 
 class Email(MethodView):

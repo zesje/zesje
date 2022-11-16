@@ -94,7 +94,7 @@ add_url_rules(api_bp, Feedback, '/feedback/<int:problem>', '/feedback/<int:probl
 add_url_rules(api_bp, Solutions, '/solution/<int:exam>/<int:submission>/<int:problem>')
 add_url_rules(api_bp, Widgets, '/widgets', '/widgets/<int:widget>')
 add_url_rules(api_bp, EmailTemplate, '/templates/<int:exam>', name='exam_template')
-add_url_rules(api_bp, RenderedEmailTemplate, '/templates/rendered/<int:exam_id>/<int:student_id>',
+add_url_rules(api_bp, RenderedEmailTemplate, '/templates/rendered/<int:exam>/<int:student>',
               name='rendered_exam_template')
 add_url_rules(api_bp, Email, '/email/<int:exam>', '/email/<int:exam>/<int:student>')
 add_url_rules(api_bp, Approve, '/solution/approve/<int:exam>/<int:submission>/<int:problem>')

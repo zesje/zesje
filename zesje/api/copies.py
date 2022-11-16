@@ -3,7 +3,7 @@ from flask.views import MethodView
 from webargs import fields
 from pdfrw import PdfReader
 
-from ._helpers import DBModel, ZesjeValidationError, use_kwargs
+from ._helpers import DBModel, ApiValidationError, use_kwargs
 from .students import student_to_data
 from ..database import db, Exam, Submission, Student, Copy, Solution, ExamLayout
 from ..pdf_generation import exam_pdf_path
@@ -55,7 +55,7 @@ class Copies(MethodView):
 
     @use_kwargs({
         'exam': DBModel(Exam, required=True, validate_model=[lambda exam: exam.layout == ExamLayout.templated or
-                ZesjeValidationError('Signatures cannot be validated for unstructured exams.', 422)]),
+                ApiValidationError('Signatures cannot be validated for unstructured exams.', 422)]),
         'copy_number': fields.Int(required=False, load_default=None)
     })
     @use_kwargs({

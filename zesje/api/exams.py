@@ -7,6 +7,7 @@ from flask.views import MethodView
 from flask_login import current_user
 from webargs import fields, validate
 from sqlalchemy import func
+from sqlalchemy.orm import selectinload
 
 from ._helpers import _shuffle, DBModel, ApiValidationError, non_empty_string,\
     use_args, use_kwargs, abort, ExamNotFinalizedError
@@ -119,15 +120,10 @@ class Exams(MethodView):
         widgets
             list of widgets in this exam
         """
-        submissions = [sub_to_data(sub) for sub in exam.submissions]
-
-        # Sort submissions by selecting those with students assigned, then by
-        # student number, then by submission id.
-        # TODO: This is a minimal fix of #166, to be replaced later.
-        submissions = sorted(
-            submissions,
-            key=(lambda s: (bool(s['student']) and -s['student']['id'], s['id']))
-        )
+        submission_query = Submission.query.options(selectinload(Submission.solutions))\
+            .filter(Submission.exam == exam)\
+            .order_by(Submission.student_id, Submission.id)
+        submissions = [sub_to_data(sub) for sub in submission_query.all()]
 
         return {
             'id': exam.id,

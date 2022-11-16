@@ -24,29 +24,29 @@ def abort(http_status_code, **kwargs):
         raise
 
 
-class ZesjeParser(FlaskParser):
+class ApiParser(FlaskParser):
 
     DEFAULT_VALIDATION_STATUS = ERROR_CODE_MALFORMED
     DEFAULT_LOCATION = 'view_args'
 
 
-class ZesjeValidationError(HTTPException):
+class ApiValidationError(HTTPException):
 
-    def __init__(self, msg, status_code=ZesjeParser.DEFAULT_VALIDATION_STATUS):
+    def __init__(self, msg, status_code=ApiParser.DEFAULT_VALIDATION_STATUS):
         super().__init__(status_code)
         self.description = msg
         self.code = status_code
 
 
-ExamNotFinalizedError = ZesjeValidationError('Exam must be finalized', ERROR_CODE_CONFLICT)
+ExamNotFinalizedError = ApiValidationError('Exam must be finalized', ERROR_CODE_CONFLICT)
 
 
 def non_empty_string(text):
     if text is None or not text.strip():
-        raise ZesjeValidationError("String must not be empty", ERROR_CODE_MALFORMED)
+        raise ApiValidationError("String must not be empty", ERROR_CODE_MALFORMED)
 
 
-parser = ZesjeParser()
+parser = ApiParser()
 use_args = parser.use_args
 use_kwargs = parser.use_kwargs
 
@@ -63,7 +63,7 @@ class DBModel(fields.Integer):
 
     Exceptions
     ----------
-    ZesjeValidationError
+    ApiValidationError
         * `id` is not a valid integer
         * `id` is smaller than 1
         * Model with `id` does not exist in database
@@ -80,10 +80,10 @@ class DBModel(fields.Integer):
         try:
             id = super()._validated(value)
         except ValidationError as e:
-            raise ZesjeValidationError(e.message, ERROR_CODE_MALFORMED)
+            raise ApiValidationError(e.message, ERROR_CODE_MALFORMED)
 
         if id < 1:  # MySQL db identifiers start at 1
-            raise ZesjeValidationError("Id must be 1 or larger.", ERROR_CODE_MALFORMED)
+            raise ApiValidationError("Id must be 1 or larger.", ERROR_CODE_MALFORMED)
 
         return id
 
@@ -91,7 +91,7 @@ class DBModel(fields.Integer):
         if self.validate_model:
             for validator in self.validate_model:
                 res = validator(item)
-                if isinstance(res, ZesjeValidationError):
+                if isinstance(res, ApiValidationError):
                     raise res
 
     def _serialize(self, value, attr, obj, **kwargs):
@@ -109,7 +109,7 @@ class DBModel(fields.Integer):
 
         item = self.model.query.get(id)
         if item is None:
-            raise ZesjeValidationError(f"{self.model.__name__} with id #{id} does not exist.", ERROR_CODE_NOT_FOUND)
+            raise ApiValidationError(f"{self.model.__name__} with id #{id} does not exist.", ERROR_CODE_NOT_FOUND)
 
         self._validate_all_model(item)
 

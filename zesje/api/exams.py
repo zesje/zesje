@@ -8,7 +8,7 @@ from flask_login import current_user
 from webargs import fields, validate
 from sqlalchemy import func
 
-from ._helpers import _shuffle, DBModel, ZesjeValidationError, non_empty_string,\
+from ._helpers import _shuffle, DBModel, ApiValidationError, non_empty_string,\
     use_args, use_kwargs, abort, ExamNotFinalizedError
 from .problems import problem_to_data
 from ..pdf_generation import exam_dir, exam_pdf_path, _exam_generate_data
@@ -57,7 +57,7 @@ class Exams(MethodView):
             return self._get_all()
 
     @use_kwargs({'exam': DBModel(Exam, required=True, validate_model=[
-        lambda exam: not exam.finalized or ZesjeValidationError('Validated exams cannot be deleted', 409)
+        lambda exam: not exam.finalized or ApiValidationError('Validated exams cannot be deleted', 409)
     ])})
     def delete(self, exam):
         if Submission.query.filter(Submission.exam_id == exam.id).count():
@@ -325,7 +325,7 @@ ERROR_MSG_PDF = 'PDF is only available in templated exams.'
 class ExamSource(MethodView):
 
     @use_kwargs({'exam': DBModel(Exam, required=True, validate_model=[
-        lambda exam: exam.layout == ExamLayout.templated or ZesjeValidationError(ERROR_MSG_PDF, 404)])})
+        lambda exam: exam.layout == ExamLayout.templated or ApiValidationError(ERROR_MSG_PDF, 404)])})
     def get(self, exam):
         return send_file(
             exam_pdf_path(exam.id),
@@ -337,7 +337,7 @@ class ExamGeneratedPdfs(MethodView):
 
     @use_kwargs({'exam': DBModel(Exam, required=True, validate_model=[
         lambda exam: exam.finalized or ExamNotFinalizedError,
-        lambda exam: exam.layout == ExamLayout.templated or ZesjeValidationError(ERROR_MSG_PDF, 404)])})
+        lambda exam: exam.layout == ExamLayout.templated or ApiValidationError(ERROR_MSG_PDF, 404)])})
     @use_args({
         'copies_start': fields.Int(required=False, load_default=0),
         'copies_end': fields.Int(required=True),
@@ -399,7 +399,7 @@ class ExamGeneratedPdfs(MethodView):
 class ExamPreview(MethodView):
 
     @use_kwargs({'exam': DBModel(Exam, required=True, validate_model=[
-        lambda exam: exam.layout == ExamLayout.templated or ZesjeValidationError(ERROR_MSG_PDF, 404)])
+        lambda exam: exam.layout == ExamLayout.templated or ApiValidationError(ERROR_MSG_PDF, 404)])
     })
     def get(self, exam):
         exam_dir, student_id_widget, barcode_widget, exam_path, cb_data = _exam_generate_data(exam)

@@ -21,5 +21,5 @@ def add_test_data(app):
 def test_add_grader(test_client, add_test_data, grader_name, expected_status_code):
     body = {'oauth_id': grader_name}
 
-    result = test_client.post('/api/graders', data=body)
+    result = test_client.post('/api/graders', json=body)
     assert result.status_code == expected_status_code

@@ -58,7 +58,7 @@ class Problems(MethodView):
         'y': fields.Int(required=True),
         'width': fields.Int(required=True),
         'height': fields.Int(required=True)
-    }, location='form')
+    }, location='json')
     def post(self, args):
         """Add a new problem.
 
@@ -130,20 +130,23 @@ class Problems(MethodView):
 
         return {
             'id': problem.id,
-            'widget_id': widget.id,
-            'problem_name': problem.name,
+            'name': problem.name,
+            'widget': widget_to_data(widget),
             'grading_policy': problem.grading_policy.name,
             'feedback': {
                 problem.root_feedback.id: feedback_to_data(problem.root_feedback, full_children=False)
             },
             'root_feedback_id': problem.root_feedback.id,
+            'page': problem.widget.page,
+            'n_graded': 0,
+            'mc_options': []
         }
 
     @use_kwargs({'problem': DBModel(Problem, required=True)})
     @use_args({
         'name': fields.Str(required=False),
         'grading_policy': fields.Enum(GradingPolicy, required=False),
-    }, location='form')
+    }, location='json')
     def patch(self, args, problem):
         """PATCH to a problem
 

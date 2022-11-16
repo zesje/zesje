@@ -74,7 +74,7 @@ def test_problem_not_present(test_client, add_test_data):
     _, problems, _ = add_test_data
     problem_id = max(problem.id for problem in problems) + 1
 
-    result = test_client.put('/api/mult-choice/', data=mco_json(problem_id))
+    result = test_client.put('/api/mult-choice/', json=mco_json(problem_id))
     data = json.loads(result.data)
 
     assert data['status'] == 404
@@ -84,7 +84,7 @@ def test_add(test_client, add_test_data):
     _, problems, _ = add_test_data
     req = mco_json(problems[0].id)
 
-    response = test_client.put('/api/mult-choice/', data=req)
+    response = test_client.put('/api/mult-choice/', json=req)
     data = json.loads(response.data)
 
     assert data['status'] == 200
@@ -94,7 +94,7 @@ def test_add_get(test_client, add_test_data):
     _, problems, _ = add_test_data
     req = mco_json(problems[0].id)
 
-    response = test_client.put('/api/mult-choice/', data=req)
+    response = test_client.put('/api/mult-choice/', json=req)
     data = json.loads(response.data)
 
     assert data['mult_choice_id']
@@ -123,7 +123,7 @@ def test_update_patch(test_client, add_test_data):
     _, problems, _ = add_test_data
     req = mco_json(problems[0].id)
 
-    response = test_client.put('/api/mult-choice/', data=req)
+    response = test_client.put('/api/mult-choice/', json=req)
     data = json.loads(response.data)
 
     assert data['mult_choice_id']
@@ -136,7 +136,7 @@ def test_update_patch(test_client, add_test_data):
     req2['x'] += 1
     req2['y'] += 1
 
-    result = test_client.patch(f'/api/mult-choice/{mult_choice_id}', data=req2)
+    result = test_client.patch(f'/api/mult-choice/{mult_choice_id}', json=req2)
     data = json.loads(result.data)
 
     assert data['status'] == 200
@@ -147,12 +147,12 @@ def test_update_finalized_exam(test_client, add_test_data, monkeypatch_write_fin
     problem = problems[0]
     req = mco_json(problem.id)
 
-    response = test_client.put('/api/mult-choice/', data=req)
+    response = test_client.put('/api/mult-choice/', json=req)
     data = json.loads(response.data)
 
     mult_choice_id = data['mult_choice_id']
 
-    test_client.put(f'api/exams/{problem.exam_id}', data={'finalized': 'true'})
+    test_client.put(f'api/exams/{problem.exam_id}', json={'finalized': 'true'})
 
     req2 = req.copy()
     del req2['problem_id']
@@ -160,7 +160,7 @@ def test_update_finalized_exam(test_client, add_test_data, monkeypatch_write_fin
     req2['x'] += 1
     req2['y'] += 1
 
-    result = test_client.patch(f'/api/mult-choice/{mult_choice_id}', data=req2)
+    result = test_client.patch(f'/api/mult-choice/{mult_choice_id}', json=req2)
     data = json.loads(result.data)
 
     assert data['status'] == 405
@@ -170,7 +170,7 @@ def test_delete(test_client, add_test_data):
     _, problems, _ = add_test_data
     req = mco_json(problems[0].id)
 
-    response = test_client.put('/api/mult-choice/', data=req)
+    response = test_client.put('/api/mult-choice/', json=req)
     data = json.loads(response.data)
     mult_choice_id = data['mult_choice_id']
 
@@ -185,7 +185,7 @@ def test_delete_problem_check_mco(test_client, add_test_data):
     problem = problems[0]
     req = mco_json(problem.id)
 
-    response = test_client.put('/api/mult-choice/', data=req)
+    response = test_client.put('/api/mult-choice/', json=req)
     data = json.loads(response.data)
     mult_choice_id = data['mult_choice_id']
 
@@ -204,7 +204,7 @@ def test_delete_mco_check_feedback(test_client, add_test_data):
     problem = problems[0]
     req = mco_json(problem.id)
 
-    response = test_client.put('/api/mult-choice/', data=req)
+    response = test_client.put('/api/mult-choice/', json=req)
     data = json.loads(response.data)
     mult_choice_id = data['mult_choice_id']
 
@@ -228,7 +228,7 @@ def test_add_finalized_exam(test_client, add_test_data):
     _, problems, _ = add_test_data
     req = mco_json(problems[1].id)
 
-    response = test_client.put('/api/mult-choice/', data=req)
+    response = test_client.put('/api/mult-choice/', json=req)
     data = json.loads(response.data)
 
     assert data['status'] == 405
@@ -239,12 +239,12 @@ def test_delete_finalized_exam(test_client, add_test_data, monkeypatch_write_fin
     problem = problems[0]
     req = mco_json(problem.id)
 
-    response = test_client.put('/api/mult-choice/', data=req)
+    response = test_client.put('/api/mult-choice/', json=req)
     data = json.loads(response.data)
 
     mult_choice_id = data['mult_choice_id']
 
-    test_client.put(f'api/exams/{problem.exam_id}', data={'finalized': 'true'})
+    test_client.put(f'api/exams/{problem.exam_id}', json={'finalized': 'true'})
 
     result = test_client.delete(f'/api/mult-choice/{mult_choice_id}')
     data = json.loads(result.data)

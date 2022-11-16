@@ -132,19 +132,18 @@ class ExamUnstructured extends React.Component {
   }
 
   createProblem = (page) => {
-    const formData = new window.FormData()
-    formData.append('exam_id', this.props.examID)
-    formData.append('name', `Problem (${this.state.problems.length + 1})`)
-    formData.append('page', page)
-    formData.append('x', 0)
-    formData.append('y', 0)
-    formData.append('width', 0)
-    formData.append('height', 0)
-    api.post('problems', formData).then(result => {
-      this.setState({ selectedProblemId: result.id }, () => this.props.updateExam())
-    }).catch(err => {
-      console.log(err)
-    })
+    const jsonData = {
+      exam_id: this.props.examID,
+      name: `Problem (${this.state.problems.length + 1})`,
+      page: page,
+      x: 0,
+      y: 0,
+      width: 0,
+      height: 0
+    }
+    api.post('problems', jsonData).then(result =>
+      this.setState({ selectedProblemId: result.id }, this.props.updateExam)
+    ).catch(console.error)
   }
 
   saveProblemName = (id, name) => {

@@ -50,7 +50,7 @@ class Feedback(MethodView):
         'description': fields.Str(required=False),
         'score': fields.Int(required=False),
         'parent': DBModel(FeedbackOption, required=False, data_key='parentId')
-    }, location='form')
+    }, location='json')
     def post(self, args, problem):
         """Post a new feedback option
 
@@ -82,7 +82,7 @@ class Feedback(MethodView):
         'description': fields.Str(required=False),
         'score': fields.Int(required=False),
         'exclusive': fields.Bool(required=False, load_default=None)
-    }, location='form')
+    }, location='json')
     def patch(self, args, problem, feedback):
         """Modify an existing feedback option
 

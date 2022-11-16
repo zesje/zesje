@@ -281,7 +281,7 @@ class Exams(MethodView):
     @use_kwargs({
         'finalized': fields.Bool(required=False, load_default=None),
         'grade_anonymous': fields.Bool(required=False, load_default=None)
-    }, location='form')
+    }, location='json')
     def put(self, exam, finalized, grade_anonymous):
         if finalized is not None:
             if not finalized:
@@ -305,7 +305,7 @@ class Exams(MethodView):
         return dict(status=400, message='One of finalized or anonymous must be present'), 400
 
     @use_kwargs({'exam': DBModel(Exam, required=True)})
-    @use_kwargs({'name': fields.Str(required=True, validate=non_empty_string)}, location='form')
+    @use_kwargs({'name': fields.Str(required=True, validate=non_empty_string)}, location='json')
     def patch(self, exam, name):
         """Update the name of an existing exam.
 

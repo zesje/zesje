@@ -402,12 +402,14 @@ class ExamTemplated extends React.Component {
       }
     }
 
-    const formData = new window.FormData()
-    formData.append('name', data.widget.name)
-    formData.append('x', data.widget.x)
-    formData.append('y', data.widget.y)
-    formData.append('problem_id', data.problem_id)
-    formData.append('label', data.label)
+    // TODO: a lot of duplicates but will change in #672
+    const formData = {
+      name: data.widget.name,
+      x: data.widget.x,
+      y: data.widget.y,
+      problem_id: data.problem_id,
+      label: data.label
+    }
     return api.put('mult-choice/', formData).then(result => {
       data.id = result.mult_choice_id
       data.feedback_id = result.feedback_id

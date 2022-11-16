@@ -320,13 +320,13 @@ class Exams(MethodView):
         return dict(status=200, message='ok'), 200
 
 
-ERROR_MSG_PDF = 'PDF is only available in templated exams.'
+PDFNeededError = ApiValidationError('PDF is only available in templated exams.', 404)
 
 
 class ExamSource(MethodView):
 
     @use_kwargs({'exam': DBModel(Exam, required=True, validate_model=[
-        lambda exam: exam.layout == ExamLayout.templated or ApiValidationError(ERROR_MSG_PDF, 404)])})
+        lambda exam: exam.layout == ExamLayout.templated or PDFNeededError])})
     def get(self, exam):
         return send_file(
             exam_pdf_path(exam.id),
@@ -338,7 +338,7 @@ class ExamGeneratedPdfs(MethodView):
 
     @use_kwargs({'exam': DBModel(Exam, required=True, validate_model=[
         lambda exam: exam.finalized or ExamNotFinalizedError,
-        lambda exam: exam.layout == ExamLayout.templated or ApiValidationError(ERROR_MSG_PDF, 404)])})
+        lambda exam: exam.layout == ExamLayout.templated or PDFNeededError])})
     @use_args({
         'copies_start': fields.Int(required=False, load_default=1),
         'copies_end': fields.Int(required=True),
@@ -400,7 +400,7 @@ class ExamGeneratedPdfs(MethodView):
 class ExamPreview(MethodView):
 
     @use_kwargs({'exam': DBModel(Exam, required=True, validate_model=[
-        lambda exam: exam.layout == ExamLayout.templated or ApiValidationError(ERROR_MSG_PDF, 404)])
+        lambda exam: exam.layout == ExamLayout.templated or PDFNeededError])
     })
     def get(self, exam):
         exam_dir, student_id_widget, barcode_widget, exam_path, cb_data = _exam_generate_data(exam)

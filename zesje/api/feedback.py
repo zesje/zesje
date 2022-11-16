@@ -48,8 +48,8 @@ class Feedback(MethodView):
     @use_args({
         'text': fields.Str(required=True, validate=non_empty_string, data_key='name'),
         'description': fields.Str(required=False),
-        'score': fields.Int(required=False),
-        'parent': DBModel(FeedbackOption, required=False, data_key='parentId')
+        'score': fields.Int(required=True),
+        'parent': DBModel(FeedbackOption, required=True, data_key='parentId')
     }, location='json')
     def post(self, args, problem):
         """Post a new feedback option

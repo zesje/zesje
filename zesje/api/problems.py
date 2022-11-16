@@ -6,7 +6,7 @@ from flask import current_app
 from flask.views import MethodView
 from webargs import fields
 
-from ._helpers import DBModel, use_args, use_kwargs
+from ._helpers import DBModel, use_args, use_kwargs, non_empty_string
 from .widgets import widget_to_data, normalise_pages
 from .feedback import feedback_to_data
 from ..database import db, Exam, Problem, ProblemWidget, Solution, GradingPolicy, ExamLayout
@@ -144,7 +144,7 @@ class Problems(MethodView):
 
     @use_kwargs({'problem': DBModel(Problem, required=True)})
     @use_args({
-        'name': fields.Str(required=False),
+        'name': fields.Str(required=False, validate=non_empty_string),
         'grading_policy': fields.Enum(GradingPolicy, required=False),
     }, location='json')
     def patch(self, args, problem):
@@ -161,10 +161,7 @@ class Problems(MethodView):
             HTTP 200 on success, 404 if the problem does not exist
         """
         if 'name' in args:
-            if (name := args['name'].strip()):
-                problem.name = name
-            else:
-                return dict(status=422, message='Name cannot be empty.'), 422
+            problem.name = args['name']
 
         if 'grading_policy' in args:
             if problem.exam.layout is not ExamLayout.templated:

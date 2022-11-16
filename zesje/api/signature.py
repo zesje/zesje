@@ -14,7 +14,7 @@ from ..scans import exam_student_id_widget
 @use_kwargs({
     'exam': DBModel(Exam, required=True, validate_model=[lambda exam: exam.layout == ExamLayout.templated or
             ApiValidationError('Signatures cannot be validated for unstructured exams.', 400)]),
-    'copy_number': fields.Int(required=False)
+    'copy_number': fields.Int(required=True)
 })
 def get(exam, copy_number):
     """get student signature for the given submission.

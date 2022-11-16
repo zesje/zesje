@@ -76,7 +76,7 @@ def test_save_template(app_with_data, test_client, exam_id, template, status):
     assert not path.parent.exists()
     path.parent.mkdir()
 
-    result = test_client.put(f'/api/templates/{exam_id}', data={'template': template})
+    result = test_client.put(f'/api/templates/{exam_id}', json={'template': template})
     assert result.status_code == status
     # template should only be saved if status code is 200
     assert path.exists() == (status == 200)
@@ -87,7 +87,7 @@ def test_render_template(app_with_data, test_client, mock_solution_data):
         "{{student.first_name}} {{student.last_name}} {{student.total}}\n"
         "{% for problem in results -%}{{problem.name}} {{problem.score}} {{problem.max_score}}{% endfor %}"
     )
-    result = test_client.post('/api/templates/rendered/1/1', data={'template': test_template})
+    result = test_client.post('/api/templates/rendered/1/1', json={'template': test_template})
     assert result.status_code == 200
 
     data = result.data.decode('ascii')
@@ -109,5 +109,5 @@ def test_render_template(app_with_data, test_client, mock_solution_data):
     ('{{teacher.address}}', 400)
 ], ids=['Syntax error', 'Undefined variable'])
 def test_render_invalid_template(app_with_data, test_client, mock_solution_data, template, status_code):
-    result = test_client.post('/api/templates/rendered/1/1', data={'template': template})
+    result = test_client.post('/api/templates/rendered/1/1', json={'template': template})
     assert result.status_code == status_code

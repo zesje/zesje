@@ -70,7 +70,7 @@ def test_add_exam_invalid_layout(test_client):
     [('New name', 200), ('', 422)],
     ids=['New name', 'Empty'])
 def test_change_exam_name(test_client, add_test_data, name, status_code):
-    response = test_client.patch('/api/exams/1', data={'name': name})
+    response = test_client.patch('/api/exams/1', json={'name': name})
 
     assert response.status_code == status_code
 
@@ -87,7 +87,7 @@ def test_get_exams_mult_choice(test_client, add_test_data):
         'label': 'a',
         'name': 'test'
     }
-    test_client.put('/api/mult-choice/', data=mc_option_1)
+    test_client.put('/api/mult-choice/', json=mc_option_1)
 
     mc_option_2 = {
         'x': 100,
@@ -96,7 +96,7 @@ def test_get_exams_mult_choice(test_client, add_test_data):
         'label': 'a',
         'name': 'test'
     }
-    test_client.put('/api/mult-choice/', data=mc_option_2)
+    test_client.put('/api/mult-choice/', json=mc_option_2)
 
     response = test_client.get('/api/exams/1')
     data = json.loads(response.data)
@@ -178,5 +178,5 @@ def test_unfinalize_exam(test_client):
     db.session.add(exam)
     db.session.commit()
 
-    response = test_client.put(f'/api/exams/{exam.id}', data={'finalized': False})
+    response = test_client.put(f'/api/exams/{exam.id}', json={'finalized': False})
     assert response.status_code == 409

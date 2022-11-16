@@ -86,7 +86,7 @@ def test_get_solution(test_client, add_test_data):
 
 def test_add_remark(test_client, add_test_data, monkeypatch_current_user):
     remark = 'this is a remark'
-    res = test_client.post('/api/solution/1/1/1', data={
+    res = test_client.post('/api/solution/1/1/1', json={
         'remark': remark
     })
 
@@ -103,7 +103,7 @@ def test_add_remark(test_client, add_test_data, monkeypatch_current_user):
 def test_toggle_feedback(test_client, add_test_data, monkeypatch_current_user, parent_id):
     # toogle parent
     for j in range(2):
-        res = test_client.put('/api/solution/1/1/1', data={
+        res = test_client.put('/api/solution/1/1/1', json={
             'id': parent_id
         })
 
@@ -112,7 +112,7 @@ def test_toggle_feedback(test_client, add_test_data, monkeypatch_current_user, p
 
     # toogle child
     for j in range(2):
-        res = test_client.put('/api/solution/1/1/1', data={
+        res = test_client.put('/api/solution/1/1/1', json={
             'id': parent_id * 10 + 2
         })
         assert res.status_code == 200
@@ -128,7 +128,7 @@ def test_toggle_feedback(test_client, add_test_data, monkeypatch_current_user, p
             assert parent_id in checked_feedback
 
     # toogle other child of same parent
-    res = test_client.put('/api/solution/1/1/1', data={
+    res = test_client.put('/api/solution/1/1/1', json={
         'id': parent_id * 10 + 1
     })
     assert res.status_code == 200
@@ -141,7 +141,7 @@ def test_toggle_feedback(test_client, add_test_data, monkeypatch_current_user, p
     assert (parent_id * 10 + 1) in checked_feedback
 
     # uncheck parent
-    res = test_client.put('/api/solution/1/1/1', data={
+    res = test_client.put('/api/solution/1/1/1', json={
         'id': parent_id
     })
     assert res.status_code == 200
@@ -154,20 +154,20 @@ def test_toggle_feedback(test_client, add_test_data, monkeypatch_current_user, p
 
 
 def test_approve(test_client, add_test_data, monkeypatch_current_user):
-    res = test_client.put('/api/solution/approve/1/1/1', data={
+    res = test_client.put('/api/solution/approve/1/1/1', json={
         'approve': True
     })
 
     # no feedback selected
     assert res.status_code == 409
 
-    res = test_client.put('/api/solution/1/1/1', data={
+    res = test_client.put('/api/solution/1/1/1', json={
         'id': 1
     })
 
     # toogle approve
     for j in range(2):
-        res = test_client.put('/api/solution/approve/1/1/1', data={
+        res = test_client.put('/api/solution/approve/1/1/1', json={
             'approve': j == 0
         })
 
@@ -191,14 +191,14 @@ def test_has_valid_feedback(test_client, add_test_data, monkeypatch_current_user
     solution.feedback.append(excl_FO.children[0])
     solution.feedback.append(excl_FO.children[1])
 
-    res = test_client.put('/api/solution/approve/1/1/1', data={
+    res = test_client.put('/api/solution/approve/1/1/1', json={
         'approve': True
     })
     assert res.status_code == 409
 
     remove_feedback_from_solution(excl_FO.children[0], solution)
 
-    res = test_client.put('/api/solution/approve/1/1/1', data={
+    res = test_client.put('/api/solution/approve/1/1/1', json={
         'approve': True
     })
     assert res.status_code == 200
@@ -212,13 +212,13 @@ def test_has_valid_feedback(test_client, add_test_data, monkeypatch_current_user
     (1, 200), (11, 409)
 ], ids=['Valid', 'No children'])
 def test_set_exclusive(test_client, add_test_data, id, status_code):
-    res = test_client.patch(f'/api/feedback/1/{id}', data={'exclusive': True})
+    res = test_client.patch(f'/api/feedback/1/{id}', json={'exclusive': True})
     assert res.status_code == status_code
 
 
 def test_add_exclusive_options(test_client, add_test_data):
     # add the first exclusive children
-    res = test_client.put('/api/solution/1/1/1', data={
+    res = test_client.put('/api/solution/1/1/1', json={
         'id': 2 * 10 + 1
     })
 
@@ -228,7 +228,7 @@ def test_add_exclusive_options(test_client, add_test_data):
     assert (2 * 10 + 1) in checked_feedback
 
     # add the second exclusive children to ensure that the first one got removed
-    res = test_client.put('/api/solution/1/1/1', data={
+    res = test_client.put('/api/solution/1/1/1', json={
         'id': 2 * 10 + 2
     })
 
@@ -239,7 +239,7 @@ def test_add_exclusive_options(test_client, add_test_data):
     assert (2 * 10 + 1) not in checked_feedback
 
     # add a FO belonging to a different parent to ensure that it didn't touch the previous part
-    res = test_client.put('/api/solution/1/1/1', data={
+    res = test_client.put('/api/solution/1/1/1', json={
         'id': 1 * 10 + 2
     })
     res = test_client.get('/api/solution/1/1/1')
@@ -248,18 +248,18 @@ def test_add_exclusive_options(test_client, add_test_data):
 
 
 def test_invalid_feedback_cannot_approved(test_client, add_test_data, monkeypatch_current_user):
-    test_client.put('/api/solution/1/1/1', data={'id': 11})
-    test_client.put('/api/solution/1/1/1', data={'id': 12})
-    res = test_client.put('/api/solution/approve/1/1/1', data={'approve': True})
+    test_client.put('/api/solution/1/1/1', json={'id': 11})
+    test_client.put('/api/solution/1/1/1', json={'id': 12})
+    res = test_client.put('/api/solution/approve/1/1/1', json={'approve': True})
     assert res.status_code == 200
 
-    res = test_client.patch('/api/feedback/1/1', data={'exclusive': True})
+    res = test_client.patch('/api/feedback/1/1', json={'exclusive': True})
     assert res.status_code == 200
     assert res.get_json()['set_aside_solutions'] == 1
 
-    res = test_client.put('/api/solution/approve/1/1/1', data={'approve': True})
+    res = test_client.put('/api/solution/approve/1/1/1', json={'approve': True})
     assert res.status_code == 409
 
-    test_client.put('/api/solution/1/1/1', data={'id': 12})
-    res = test_client.put('/api/solution/approve/1/1/1', data={'approve': True})
+    test_client.put('/api/solution/1/1/1', json={'id': 12})
+    res = test_client.put('/api/solution/approve/1/1/1', json={'approve': True})
     assert res.status_code == 200

@@ -57,7 +57,7 @@ class MultipleChoice(MethodView):
         'y': fields.Int(required=True),
         'label': fields.Str(required=False),
         'problem': DBModel(Problem, required=True, data_key='problem_id')
-    }, location='form')
+    }, location='json')
     def put(self, args):
         """Adds a multiple choice option to the database
 
@@ -97,7 +97,7 @@ class MultipleChoice(MethodView):
         'x': fields.Int(required=False),
         'y': fields.Int(required=False),
         'label': fields.Str(required=False),
-    }, location='form')
+    }, location='json')
     def patch(self, args, mc_option):
         """
         Updates a multiple choice option

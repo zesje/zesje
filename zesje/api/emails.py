@@ -6,7 +6,7 @@ from jinja2 import Template, TemplateSyntaxError, UndefinedError
 
 from flask import current_app
 from flask.views import MethodView
-from webargs import fields, validate
+from webargs import fields
 
 from ._helpers import DBModel, use_args, use_kwargs, abort
 from .. import emails
@@ -71,7 +71,7 @@ class EmailTemplate(MethodView):
             return default_email_template
 
     @use_kwargs({'exam': DBModel(Exam, required=True)})
-    @use_kwargs({"template": fields.Str(required=True)}, location="form")
+    @use_kwargs({"template": fields.Str(required=True)}, location='json')
     def put(self, exam, template):
         """Update an email template."""
         try:
@@ -94,7 +94,7 @@ class RenderedEmailTemplate(MethodView):
         'exam': DBModel(Exam, required=True),
         'student': DBModel(Student, required=True)
     })
-    @use_kwargs({"template": fields.Str(required=True)}, location="form")
+    @use_kwargs({"template": fields.Str(required=True)}, location='json')
     def post(self, exam, student, template):
         return render_email(exam.id, student.id, template)
 
@@ -109,7 +109,7 @@ class Email(MethodView):
         "template": fields.Str(required=True),
         'attach': fields.Bool(required=True),
         'copy_to': fields.Email(required=False, load_default=None)
-    }, location="form")
+    }, location='json')
     def post(self, args, exam, student):
         """Send an email.
 

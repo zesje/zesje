@@ -61,7 +61,7 @@ class Copies(MethodView):
     @use_kwargs({
         "student": DBModel(Student, required=True, data_key='studentID'),
         'allow_merge': fields.Bool(required=True, data_key='allowMerge')
-    }, location='form')
+    }, location='json')
     def put(self, exam, copy_number, student, allow_merge):
         """Assign a student to the given copy.
 

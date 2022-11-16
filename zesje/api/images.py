@@ -17,7 +17,7 @@ from ..scans import exam_student_id_widget
     'exam': DBModel(Exam, required=True),
     'problem': DBModel(Problem, required=True),
     'submission': DBModel(Submission, required=True),
-    'full_page': fields.Bool(required=False, load_default=0)
+    'full_page': fields.Bool(required=False, load_default=False)
 })
 def get(exam, problem, submission, full_page):
     """get image for the given problem.

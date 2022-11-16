@@ -140,8 +140,8 @@ class Submissions(MethodView):
         'ungraded': fields.Bool(required=False, load_default=False),
         'direction':
             fields.Str(required=False, load_default=None, validate=validate.OneOf(["next", "prev", "first", "last"])),
-        'required_feedback': fields.List(fields.Int, required=False, load_default=None),
-        'excluded_feedback': fields.List(fields.Int, required=False, load_default=None),
+        'required_feedback': fields.List(fields.Int, required=False, load_default=[]),
+        'excluded_feedback': fields.List(fields.Int, required=False, load_default=[]),
         'graded_by': fields.Int(required=False, load_default=None)
     }, location='query')
     def get(self, args, exam, submission):
@@ -176,7 +176,7 @@ class Submissions(MethodView):
 
         new_sub, no_of_subs_follow, no_of_subs_precede, match_current = _find_submission(
             submission, args['problem'].id, current_user.id, args['direction'] or "next", args['ungraded'],
-            args['required_feedback'] or [], args['excluded_feedback'] or [], args['graded_by']
+            args['required_feedback'], args['excluded_feedback'], args['graded_by']
         )
 
         matched = no_of_subs_follow + no_of_subs_precede + match_current

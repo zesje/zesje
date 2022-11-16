@@ -197,7 +197,7 @@ class ExamTemplated extends React.Component {
 
     api.patch('problems/' + problem.id, { name: problem.name })
       .then(() => this.setState({ changedWidgetId: null }))
-      .catch(e => toast({ message: 'Could not save new problem name: ' + e, type: 'is-danger' }))
+      .catch(e => toast({ message: 'Could not save new problem name: ' + e.message, type: 'is-danger' }))
   }
 
   onChangeAutoApproveType = (e) => {
@@ -554,9 +554,7 @@ class ExamTemplated extends React.Component {
                         })
                       }))
                     }}
-                    onBlur={(e) => {
-                      this.saveProblemName(e.target.value)
-                    }}
+                    onBlur={this.saveProblemName}
                   />
                 </div>
               </div>

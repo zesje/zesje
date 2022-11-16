@@ -11,7 +11,7 @@ from ..statistics import grader_data
 class Statistics(MethodView):
     """Getting a list of uploaded scans, and uploading new ones."""
 
-    @use_kwargs({'exam': DBModel(Exam, required=False)})
+    @use_kwargs({'exam': DBModel(Exam, required=True)})
     def get(self, exam):
         """get statistics for a particular exam.
 

@@ -23,9 +23,9 @@ class Copies(MethodView):
 
     @use_kwargs({
         'exam': DBModel(Exam, required=True),
-        'copy_number': fields.Int(required=False)
+        'copy_number': fields.Int(required=False, load_default=None)
     })
-    def get(self, exam, copy_number=None):
+    def get(self, exam, copy_number):
         """get all copies for the given exam
 
         Parameters
@@ -56,10 +56,10 @@ class Copies(MethodView):
     @use_kwargs({
         'exam': DBModel(Exam, required=True, validate_model=[lambda exam: exam.layout == ExamLayout.templated or
                 ApiValidationError('Signatures cannot be validated for unstructured exams.', 422)]),
-        'copy_number': fields.Int(required=False, load_default=None)
+        'copy_number': fields.Int(required=True)
     })
     @use_kwargs({
-        "student": DBModel(Student, required=True, data_key='studentID'),
+        'student': DBModel(Student, required=True, data_key='studentID'),
         'allow_merge': fields.Bool(required=True, data_key='allowMerge')
     }, location='json')
     def put(self, exam, copy_number, student, allow_merge):

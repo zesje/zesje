@@ -275,7 +275,7 @@ def validate_signatures(client, exam_id, copies, validate):
             print(f'\tNo student detected for copy {number} of exam {exam_id}')
         elif random.random() < validate:
             student_id = student['id']
-            client.put(f'/api/copies/{exam_id}/{number}', json={'studentID': student_id})
+            client.put(f'/api/copies/{exam_id}/{number}', json={'studentID': student_id, 'allowMerge': True})
 
 
 def grade_problems(client, exam_id, graders, problems, submissions, grade):

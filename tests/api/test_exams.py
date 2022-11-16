@@ -171,3 +171,12 @@ def test_delete_exam(test_client, finalized, status_code):
     data = response.get_json()
 
     assert len(data) == (1 if finalized else 0)
+
+
+def test_unfinalize_exam(test_client):
+    exam = Exam(name='finalized', finalized=True)
+    db.session.add(exam)
+    db.session.commit()
+
+    response = test_client.put(f'/api/exams/{exam.id}', data={'finalized': False})
+    assert response.status_code == 409

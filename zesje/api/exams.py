@@ -283,7 +283,10 @@ class Exams(MethodView):
         'grade_anonymous': fields.Bool(required=False, load_default=None)
     }, location='form')
     def put(self, exam, finalized, grade_anonymous):
-        if finalized is not None and finalized:
+        if finalized is not None:
+            if not finalized:
+                return dict(status=409, message='Exam can not be unfinalized'), 409
+
             add_blank_feedback(exam.problems)
 
             if exam.layout == ExamLayout.templated:
@@ -292,8 +295,6 @@ class Exams(MethodView):
             exam.finalized = True
             db.session.commit()
             return dict(status=200, message="ok"), 200
-        else:
-            return dict(status=409, message='Exam can not be unfinalized'), 409
 
         if grade_anonymous is not None:
             changed = exam.grade_anonymous != grade_anonymous
@@ -339,7 +340,7 @@ class ExamGeneratedPdfs(MethodView):
         lambda exam: exam.finalized or ExamNotFinalizedError,
         lambda exam: exam.layout == ExamLayout.templated or ApiValidationError(ERROR_MSG_PDF, 404)])})
     @use_args({
-        'copies_start': fields.Int(required=False, load_default=0),
+        'copies_start': fields.Int(required=False, load_default=1),
         'copies_end': fields.Int(required=True),
         'type': fields.Str(required=True, validate=validate.OneOf(['pdf', 'zip']))
     }, location='query')

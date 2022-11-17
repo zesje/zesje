@@ -244,7 +244,7 @@ def join_pdfs(output_filename, pdf_paths):
     writer.write(output_filename)
 
 
-def generate_zipped_pdfs(exam_id, start, end):
+def generate_zipped_pdfs(exam, start, end):
     """Generates a zip file with all the copies joined together.
 
     Inside the zip, the copies are named by their copy number.
@@ -258,7 +258,6 @@ def generate_zipped_pdfs(exam_id, start, end):
     end : int
         The final copy number, included
     """
-    exam = Exam.query.get(exam_id)
     exam_dir, _, barcode_widget, exam_path, _ = _exam_generate_data(exam)
 
     zf = zipstream.ZipFile(mode='w')

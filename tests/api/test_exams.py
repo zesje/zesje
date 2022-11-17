@@ -180,3 +180,4 @@ def test_unfinalize_exam(test_client):
 
     response = test_client.put(f'/api/exams/{exam.id}', json={'finalized': False})
     assert response.status_code == 409
+    assert exam.finalized

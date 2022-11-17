@@ -375,6 +375,12 @@ class ExamTemplated extends React.Component {
   generateMCOs = (problemWidget, labels, index, xPos, yPos) => {
     if (labels.length === index) {
       const minWidthMCOs = MCO_WIDTH * (problemWidget.problem.mc_options.length + 1)
+
+      // Really ugly fix, since the mc_options will not be loaded yet when creating the MCQ
+      // In the current design, they will never overflow on creation, so there is no issue.
+      // TODO: Multiple choice option handling completely in the back-end, see #672
+      if (problemWidget.problem.mc_options.length === 0) return true
+
       const diff = problemWidget.problem.mc_options[0].widget.x - problemWidget.x
       if (problemWidget.x + problemWidget.width < xPos + MCO_WIDTH) {
         const width = Math.max(minWidthMCOs + diff, 75)

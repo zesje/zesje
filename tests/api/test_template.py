@@ -61,7 +61,7 @@ def test_get_template(app_with_data, test_client, exam_id, status):
     if status == 200:
         assert path.exists()
 
-        text = result.data.decode('ascii')
+        text = result.get_json()
         assert text == default_email_template
 
 
@@ -90,7 +90,7 @@ def test_render_template(app_with_data, test_client, mock_solution_data):
     result = test_client.post('/api/templates/rendered/1/1', json={'template': test_template})
     assert result.status_code == 200
 
-    data = result.data.decode('ascii')
+    data = result.get_json()
     student, problem = data.split('\n')
 
     parts = student.split(' ')

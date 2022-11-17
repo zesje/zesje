@@ -4,7 +4,7 @@ import textwrap
 
 from jinja2 import Template, TemplateSyntaxError, UndefinedError
 
-from flask import current_app
+from flask import current_app, jsonify
 from flask.views import MethodView
 from webargs import fields
 
@@ -64,7 +64,7 @@ class EmailTemplate(MethodView):
         """Get an email template for a given exam."""
         try:
             with open(template_path(exam.id)) as f:
-                return f.read()
+                return jsonify(f.read())
         except FileNotFoundError:
             with open(template_path(exam.id), 'w') as f:
                 f.write(default_email_template)
@@ -96,7 +96,7 @@ class RenderedEmailTemplate(MethodView):
     })
     @use_kwargs({"template": fields.Str(required=True)}, location='json')
     def post(self, exam, student, template):
-        return render_email(exam.id, student.id, template)
+        return jsonify(render_email(exam.id, student.id, template))
 
 
 class Email(MethodView):

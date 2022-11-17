@@ -336,7 +336,7 @@ class ExamGeneratedPdfs(MethodView):
         lambda exam: exam.finalized or ExamNotFinalizedError,
         lambda exam: exam.layout == ExamLayout.templated or PDFNeededError])})
     @use_args({
-        'copies_start': fields.Int(required=False, load_default=1),
+        'copies_start': fields.Int(required=False, load_default=1, validate=lambda x: x > 0),
         'copies_end': fields.Int(required=True),
         'type': fields.Str(required=True, validate=validate.OneOf(['pdf', 'zip']))
     }, location='query')
@@ -366,10 +366,7 @@ class ExamGeneratedPdfs(MethodView):
 
         if copies_end < copies_start:
             msg = 'copies_end should be larger than copies_start'
-            return dict(status=400, message=msg), 400
-        if copies_start <= 0:
-            msg = 'copies_start should be larger than 0'
-            return dict(status=400, message=msg), 400
+            return dict(status=422, message=msg), 422
 
         attachment_filename = f'{exam.name}_{copies_start}-{copies_end}.{args["type"]}'
         mimetype = f'application/{args["type"]}'

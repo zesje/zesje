@@ -1,9 +1,9 @@
 import os
 from io import BytesIO
 from tempfile import NamedTemporaryFile
+import zipfile
 
 import PIL
-from PIL import Image
 import pytest
 from ssim import compute_ssim
 from reportlab.lib.pagesizes import A4
@@ -16,7 +16,7 @@ from pdfrw import PdfReader
 import zipstream
 
 from zesje import pdf_generation
-from zesje.database import Exam, ExamWidget
+from zesje.database import db, Exam, ExamWidget
 
 
 # Mock fixtures #
@@ -141,12 +141,34 @@ def test_join_pdfs(mock_generate_datamatrix, mock_generate_id_grid,
     assert_pdf_and_images_are_equal(out, images)
 
 
-def test_generate_zip(datadir, tmpdir, config_app, monkeypatch_exam_generate_data):
-    generator = pdf_generation.generate_zipped_pdfs(1, 1, 3)
+def test_generate_zip(datadir, tmpdir, app, monkeypatch_exam_generate_data):
+    generator = pdf_generation.generate_zipped_pdfs(Exam(token='ABCDEFGHIJKL'), 1, 3)
     zf = zipstream.ZipFile()
     zf.write_iter('pdfs', generator)
 
-    len(zf.namelist()) == 3
+    with NamedTemporaryFile() as tempfile:
+        with open(tempfile.name, 'wb') as f:
+            for data in zf:
+                f.write(data)
+
+        assert len(zf.namelist()) == 3
+
+
+@pytest.mark.parametrize('start, end, status', [
+    (1, 3, 200),
+    (0, 3, 422),
+    (3, 1, 422)
+], ids=['Valid range', 'Invalid start', 'End < Start'])
+def test_generate_zip_api(datadir, tmpdir, app, test_client, monkeypatch_exam_generate_data, start, end, status):
+    db.session.add(Exam(id=1, name='A', token='ABCDEFGHIJKL', finalized=True))
+    db.session.commit()
+
+    result = test_client.get(f'/api/exams/1/generated_pdfs?copies_start={start}&copies_end={end}&type=zip')
+    assert result.status_code == status
+
+    if status == 200:
+        zf = zipfile.ZipFile(BytesIO(result.data))
+        assert len(zf.namelist()) == 3
 
 
 def test_generate_single_pdf(datadir, tmpdir, config_app, monkeypatch_exam_generate_data):
@@ -163,7 +185,7 @@ def test_generate_single_pdf(datadir, tmpdir, config_app, monkeypatch_exam_gener
 def test_generate_datamatrix(config_app):
     # Checks for input and output formats, as well as string contents.
     datamatrix = pdf_generation.generate_datamatrix('ABCD', 2, 3)
-    assert isinstance(datamatrix, Image.Image)
+    assert isinstance(datamatrix, PIL.Image.Image)
     assert pylibdmtx.decode(datamatrix)[0].data.decode('utf-8') == 'ABCD/0003/02'
 
 

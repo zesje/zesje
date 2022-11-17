@@ -418,7 +418,7 @@ class ExamTemplated extends React.Component {
       this.updateFeedback(problemWidget.problem.id)
       return this.generateMCOs(problemWidget, labels, index + 1, xPos + MCO_WIDTH, yPos)
     }).catch(err => {
-      toast({ message: 'Could not delete problem' + (err.message ? ': ' + err.message : ''), type: 'is-danger' })
+      toast({ message: 'Could not create multiple choice option' + (err.message ? ': ' + err.message : ''), type: 'is-danger' })
       // update to try and get a consistent state
       this.props.updateExam()
       this.setState({

@@ -140,8 +140,8 @@ class Submissions(MethodView):
         'ungraded': fields.Bool(required=False, load_default=False),
         'direction':
             fields.Str(required=False, load_default=None, validate=validate.OneOf(["next", "prev", "first", "last"])),
-        'required_feedback': fields.List(fields.Int, required=False, load_default=[]),
-        'excluded_feedback': fields.List(fields.Int, required=False, load_default=[]),
+        'required_feedback': fields.List(fields.Int, required=False, load_default=list),
+        'excluded_feedback': fields.List(fields.Int, required=False, load_default=list),
         'graded_by': fields.Int(required=False, load_default=None)
     }, location='query')
     def get(self, args, exam, submission):

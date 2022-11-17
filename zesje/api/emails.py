@@ -62,13 +62,13 @@ class EmailTemplate(MethodView):
     @use_kwargs({'exam': DBModel(Exam, required=True)})
     def get(self, exam):
         """Get an email template for a given exam."""
-        try:
-            with open(template_path(exam.id)) as f:
+        if (path := template_path(exam.id)).exists():
+            with open(path) as f:
                 return jsonify(f.read())
-        except FileNotFoundError:
-            with open(template_path(exam.id), 'w') as f:
-                f.write(default_email_template)
-            return default_email_template
+
+        with open(path, 'w') as f:
+            f.write(default_email_template)
+        return jsonify(default_email_template)
 
     @use_kwargs({'exam': DBModel(Exam, required=True)})
     @use_kwargs({"template": fields.Str(required=True)}, location='json')

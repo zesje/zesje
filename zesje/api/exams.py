@@ -9,8 +9,8 @@ from webargs import fields, validate
 from sqlalchemy import func
 from sqlalchemy.orm import selectinload
 
-from ._helpers import _shuffle, DBModel, ApiValidationError, non_empty_string,\
-    use_args, use_kwargs, abort, ExamNotFinalizedError
+from ._helpers import _shuffle, DBModel, ApiError, non_empty_string,\
+    use_args, use_kwargs, ExamNotFinalizedError
 from .problems import problem_to_data
 from ..pdf_generation import exam_dir, exam_pdf_path, _exam_generate_data
 from ..pdf_generation import generate_pdfs, generate_single_pdf, generate_zipped_pdfs
@@ -58,7 +58,7 @@ class Exams(MethodView):
             return self._get_all()
 
     @use_kwargs({'exam': DBModel(Exam, required=True, validate_model=[
-        lambda exam: not exam.finalized or ApiValidationError('Validated exams cannot be deleted', 409)
+        lambda exam: not exam.finalized or ApiError('Validated exams cannot be deleted', 409)
     ])})
     def delete(self, exam):
         if Submission.query.filter(Submission.exam_id == exam.id).count():
@@ -215,18 +215,12 @@ class Exams(MethodView):
 
     def _add_templated_exam(self, exam_name, pdf_data):
         if not pdf_data:
-            abort(
-                400,
-                message='Upload a PDF to add a templated exam.'
-            )
+            raise ApiError('Upload a PDF to add a templated exam.', 409)
 
         format = current_app.config['PAGE_FORMAT']
 
         if not page_is_size(pdf_data, current_app.config['PAGE_FORMATS'][format], tolerance=0.01):
-            abort(
-                400,
-                message=f'PDF page size is not {format}.'
-            )
+            raise ApiError(f'PDF page size is not {format}.', 409)
 
         exam = Exam(
             name=exam_name,
@@ -316,7 +310,7 @@ class Exams(MethodView):
         return dict(status=200, message='ok'), 200
 
 
-PDFNeededError = ApiValidationError('PDF is only available in templated exams.', 404)
+PDFNeededError = ApiError('PDF is only available in templated exams.', 404)
 
 
 class ExamSource(MethodView):

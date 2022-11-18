@@ -2,7 +2,7 @@ from flask import current_app, jsonify
 from flask.views import MethodView
 from webargs import fields
 
-from ._helpers import DBModel, ApiValidationError, ExamNotFinalizedError, use_kwargs
+from ._helpers import DBModel, ApiError, ExamNotFinalizedError, use_kwargs
 from ..scans import process_scan
 from ..database import db, Exam, Scan
 
@@ -14,7 +14,7 @@ def _is_mimetype_allowed(pdf):
         mimetype.startswith('image') or
         mimetype in current_app.config['ZIP_MIME_TYPES']
     ):
-        raise ApiValidationError('File is not a PDF, ZIP or image.', 400)
+        raise ApiError('File is not a PDF, ZIP or image.', 400)
 
 
 class Scans(MethodView):

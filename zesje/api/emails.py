@@ -8,7 +8,7 @@ from flask import current_app, jsonify
 from flask.views import MethodView
 from webargs import fields
 
-from ._helpers import DBModel, use_args, use_kwargs, abort
+from ._helpers import DBModel, use_args, use_kwargs, ApiError
 from .. import emails
 from ..database import Exam, Student
 
@@ -45,15 +45,9 @@ def render_email(exam_id, student_id, template):
     try:
         return emails.render(exam_id, student_id, template)
     except TemplateSyntaxError as error:
-        abort(
-            400,
-            message=f"Syntax error in the template: {error.message}",
-        )
+        raise ApiError(f"Syntax error in the template: {error.message}", 400)
     except UndefinedError as error:
-        abort(
-            400,
-            message=f"Undefined variables in the template: {error.message}",
-        )
+        raise ApiError(f"Undefined variables in the template: {error.message}", 400)
 
 
 class EmailTemplate(MethodView):

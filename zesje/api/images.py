@@ -7,7 +7,7 @@ from datetime import datetime
 import cv2
 import numpy as np
 
-from ._helpers import DBModel, use_kwargs, abort
+from ._helpers import DBModel, use_kwargs, ApiError
 from ..images import get_box, guess_dpi, widget_area
 from ..database import Exam, Submission, Problem, Page, Solution, Copy, ExamLayout
 from ..scans import exam_student_id_widget
@@ -60,7 +60,7 @@ def get(exam, problem, submission, full_page):
                           .all()
 
     if len(pages) == 0:
-        abort(404, f'Page #{page_number} is missing for all copies of submission #{submission.id}.')
+        raise ApiError(f'Page #{page_number} is missing for all copies of submission #{submission.id}.', 404)
 
     # Convert to int to match the time resolution of HTTP headers (seconds)
     last_modified = int(max(Path(page.abs_path).stat().st_mtime for page in pages))

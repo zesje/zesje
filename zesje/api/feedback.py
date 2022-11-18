@@ -4,7 +4,7 @@ from webargs import fields
 from sqlalchemy import func
 import numpy as np
 
-from ._helpers import DBModel, ApiValidationError, non_empty_string, use_args, use_kwargs
+from ._helpers import DBModel, ApiError, non_empty_string, use_args, use_kwargs
 from ..database import db, Problem, FeedbackOption, Solution, solution_feedback
 
 
@@ -132,9 +132,9 @@ class Feedback(MethodView):
     @use_kwargs({
         'problem': DBModel(Problem, required=True),
         'feedback': DBModel(FeedbackOption, required=True, validate_model=[
-            lambda fb: fb.parent_id is not None or ApiValidationError('Cannot delete root feedback option.', 405),
+            lambda fb: fb.parent_id is not None or ApiError('Cannot delete root feedback option.', 405),
             lambda fb: not fb.mc_option or
-                ApiValidationError('Cannot delete feedback option attached to a multiple choice option.', 405)])
+                ApiError('Cannot delete feedback option attached to a multiple choice option.', 405)])
     })
     def delete(self, problem, feedback):
         """Delete an existing feedback option

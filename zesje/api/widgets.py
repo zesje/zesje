@@ -98,6 +98,6 @@ class Widgets(MethodView):
             # this response forces the client to update the widget to the new state
             return dict(status=409,
                         message=message,
-                        data=widget_to_data(widget.id)), 409
+                        data=widget_to_data(widget)), 409
 
         return dict(status=200, message="ok"), 200

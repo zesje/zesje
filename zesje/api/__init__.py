@@ -1,4 +1,5 @@
-from traceback import format_stack
+import sys
+from traceback import format_exception, print_exception
 
 from flask import current_app, request, Blueprint, jsonify
 from flask_login import current_user
@@ -67,11 +68,13 @@ def handle_exception(e):
         }), e.code
 
     # now you're handling non-HTTP exceptions only
+    exp = sys.exc_info()
+    print_exception(*exp)
     return jsonify({
         'status': 500,
         'name': 'Internal Python Exception',
         'message': str(e),
-        'description': format_stack()
+        'description': format_exception(*exp)
     }), 500
 
 

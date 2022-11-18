@@ -1,4 +1,3 @@
-import flask
 from hashlib import md5
 from webargs.flaskparser import FlaskParser
 from webargs import ValidationError, fields
@@ -12,25 +11,13 @@ ERROR_CODE_FORBIDDEN = 403
 ERROR_CODE_BAD_REQUEST = 400
 
 
-def abort(http_status_code, **kwargs):
-    """Raise a HTTPException for the given http_status_code. Attach any keyword
-    arguments to the exception for later processing.
-    """
-    try:
-        flask.abort(http_status_code)
-    except HTTPException as e:
-        if len(kwargs):
-            e.data = kwargs
-        raise
-
-
 class ApiParser(FlaskParser):
 
     DEFAULT_VALIDATION_STATUS = ERROR_CODE_MALFORMED
     DEFAULT_LOCATION = 'view_args'
 
 
-class ApiValidationError(HTTPException):
+class ApiError(HTTPException):
 
     def __init__(self, msg, status_code=ApiParser.DEFAULT_VALIDATION_STATUS):
         super().__init__(status_code)
@@ -38,12 +25,12 @@ class ApiValidationError(HTTPException):
         self.code = status_code
 
 
-ExamNotFinalizedError = ApiValidationError('Exam must be finalized', ERROR_CODE_CONFLICT)
+ExamNotFinalizedError = ApiError('Exam must be finalized', ERROR_CODE_CONFLICT)
 
 
 def non_empty_string(text):
     if text is None or not text.strip():
-        raise ApiValidationError("String must not be empty", ERROR_CODE_MALFORMED)
+        raise ApiError("String must not be empty", ERROR_CODE_MALFORMED)
 
 
 parser = ApiParser()
@@ -63,7 +50,7 @@ class DBModel(fields.Integer):
 
     Exceptions
     ----------
-    ApiValidationError
+    ApiError
         * `id` is not a valid integer
         * `id` is smaller than 1
         * Model with `id` does not exist in database
@@ -80,10 +67,10 @@ class DBModel(fields.Integer):
         try:
             id = super()._validated(value)
         except ValidationError as e:
-            raise ApiValidationError(e.message, ERROR_CODE_MALFORMED)
+            raise ApiError(e.message, ERROR_CODE_MALFORMED)
 
         if id < 1:  # MySQL db identifiers start at 1
-            raise ApiValidationError("Id must be 1 or larger.", ERROR_CODE_MALFORMED)
+            raise ApiError("Id must be 1 or larger.", ERROR_CODE_MALFORMED)
 
         return id
 
@@ -91,7 +78,7 @@ class DBModel(fields.Integer):
         if self.validate_model:
             for validator in self.validate_model:
                 res = validator(item)
-                if isinstance(res, ApiValidationError):
+                if isinstance(res, ApiError):
                     raise res
 
     def _serialize(self, value, attr, obj, **kwargs):
@@ -109,7 +96,7 @@ class DBModel(fields.Integer):
 
         item = self.model.query.get(id)
         if item is None:
-            raise ApiValidationError(f"{self.model.__name__} with id #{id} does not exist.", ERROR_CODE_NOT_FOUND)
+            raise ApiError(f"{self.model.__name__} with id #{id} does not exist.", ERROR_CODE_NOT_FOUND)
 
         self._validate_all_model(item)
 

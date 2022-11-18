@@ -4,7 +4,7 @@ from webargs import fields
 import numpy as np
 import cv2
 
-from ._helpers import DBModel, ApiValidationError, use_kwargs, abort
+from ._helpers import DBModel, ApiError, use_kwargs
 from ..database import ExamLayout
 from ..images import get_box
 from ..database import Exam, Copy
@@ -13,7 +13,7 @@ from ..scans import exam_student_id_widget
 
 @use_kwargs({
     'exam': DBModel(Exam, required=True, validate_model=[lambda exam: exam.layout == ExamLayout.templated or
-            ApiValidationError('Signatures cannot be validated for unstructured exams.', 400)]),
+            ApiError('Signatures cannot be validated for unstructured exams.', 400)]),
     'copy_number': fields.Int(required=True)
 })
 def get(exam, copy_number):
@@ -45,7 +45,8 @@ def get(exam, copy_number):
     try:
         first_page_path = next(p.abs_path for p in copy.pages if p.number == 0)
     except StopIteration:
-        abort(404)
+        raise ApiError(f'First page is missing for the copy #{copy_number}', 404)
+
     first_page_im = cv2.imread(first_page_path)
 
     raw_image = get_box(first_page_im, widget_area_in, padding=0.3)

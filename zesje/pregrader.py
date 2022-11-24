@@ -6,7 +6,7 @@ from flask import current_app
 from reportlab.lib.units import inch, mm
 
 from .blanks import reference_image
-from .database import db, Grader, FeedbackOption, GradingPolicy
+from .database import db, Grader, FeedbackOption, GradingPolicy, rollback_transaction_if_pending
 from .images import guess_dpi, get_box, widget_area, covers, is_misaligned
 
 mm_per_inch = inch / mm
@@ -36,35 +36,41 @@ def grade_problem(copy, page, page_img):
     # not graded yet or graded by Zesje. Submissions with multiple copies are excluded.
 
     # TODO Support pregrading for submissions with multiple copies.
-    solutions_to_grade = [
+    if len(sub.copies) > 1:
+        return
+
+    dpi = guess_dpi(page_img)
+    reference_img = reference_image(sub.exam_id, page, dpi)
+
+    solutions_to_grade = (
         sol for sol in sub.solutions
         if (
             (not sol.is_graded or sol.graded_by.oauth_id == AUTOGRADER_NAME)
             and sol.problem.widget.page == page
         )
-    ] if len(sub.copies) == 1 else []
-
-    if solutions_to_grade:
-        dpi = guess_dpi(page_img)
-        page = solutions_to_grade[0].problem.widget.page
-        reference_img = reference_image(sub.exam_id, page, dpi)
+    )
 
     for sol in solutions_to_grade:
-        # Completely reset the solution and pregrade with a fresh start
-        sol.feedback = []
-        sol.grader_id = None
-        sol.graded_at = None
-
         problem = sol.problem
 
         if not is_problem_misaligned(problem, page_img, reference_img):
+            # Completely reset the solution and pregrade with a fresh start
+            sol.feedback = []
+            sol.grader_id = None
+            sol.graded_at = None
+
             if problem.mc_options:
                 grade_mcq(sol, page_img, reference_img)
             elif is_solution_blank(problem, page_img, reference_img):
                 grade_as_blank(sol)
 
-    if solutions_to_grade:
-        db.session.commit()
+            try:
+                db.session.commit()
+            except Exception as e:
+                # Rollback the transaction if a rollback was pending due to an error.
+                # If there was no pending rollback, the unexpected error is raised.
+                if not rollback_transaction_if_pending():
+                    raise e
 
 
 def grade_mcq(sol, page_img, reference_img):
@@ -75,6 +81,8 @@ def grade_mcq(sol, page_img, reference_img):
     - Adds a feedback option for every option that has been detected as filled
 
     In both cases, a grader named 'Zesje' is set for this problem.
+
+    Warning: Does not commit the database changes
 
     Parameters
     ----------
@@ -101,12 +109,12 @@ def grade_mcq(sol, page_img, reference_img):
     elif mc_filled_counter == 1 and problem.grading_policy == GradingPolicy.set_single:
         set_auto_grader(sol)
 
-    db.session.commit()
-
 
 def grade_as_blank(sol):
     """
     Pre-grades a solution as identified as blank.
+
+    Warning: Does not commit the database changes
 
     Parameters
     ----------
@@ -126,7 +134,6 @@ def grade_as_blank(sol):
         db.session.add(feedback)
 
     sol.feedback.append(feedback)
-    db.session.commit()
 
 
 def set_auto_grader(solution):
@@ -137,6 +144,8 @@ def set_auto_grader(solution):
     To ensure a solution is graded manually, the grader of a solution
     is set to a grader named Zesje. That way, the detected option is
     not set as 'ungraded'.
+
+    Warning: Does not commit the database changes
 
     Parameters
     ----------
@@ -149,7 +158,6 @@ def set_auto_grader(solution):
 
     solution.graded_by = zesje_grader
     solution.graded_at = datetime.now(timezone.utc)
-    db.session.commit()
 
 
 def is_problem_misaligned(problem, student_img, reference_img):

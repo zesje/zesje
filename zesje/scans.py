@@ -14,7 +14,8 @@ from pylibdmtx import pylibdmtx
 from sqlalchemy.exc import InternalError, IntegrityError
 from reportlab.lib.units import inch
 
-from .database import db, Scan, Exam, Page, Student, Submission, Copy, Solution, ExamWidget, ExamLayout
+from .database import db, Scan, Exam, Page, Student, Submission, Copy, Solution, ExamWidget, ExamLayout, \
+    rollback_transaction_if_pending
 from .images import guess_dpi, get_box, is_misaligned
 from .pregrader import grade_problem
 from .image_extraction import extract_pages_from_file, readable_filename
@@ -98,6 +99,8 @@ def _process_scan(scan_id, exam_layout):
                     if not success:
                         failures.append((file_info, description))
                 except Exception as e:
+                    rollback_transaction_if_pending()
+
                     failures.append((file_info, str(e)))
     except Exception as e:
         report_error(f"Failed to read file {scan.name}: {e}")

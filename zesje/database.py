@@ -9,6 +9,7 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean, ForeignKey, Enum
 from sqlalchemy import event
 from flask_sqlalchemy.model import BindMetaMixin, Model
+from sqlalchemy.exc import PendingRollbackError
 from sqlalchemy.ext.declarative import DeclarativeMeta, declarative_base
 from sqlalchemy.orm import backref, validates
 from sqlalchemy.orm.session import object_session
@@ -46,6 +47,28 @@ login_manager = LoginManager()
 @login_manager.user_loader
 def load_grader(grader_id):
     return Grader.query.get(grader_id)
+
+
+def rollback_transaction_if_pending():
+    """Rollback current database transaction when in an error state
+
+    The transaction can be in an error state due to SQL related errors.
+    If so, we should rollback the current transaction to recover.
+
+    Returns
+    ------
+    True if a rollback was pending, else False
+    """
+    try:
+        _ = db.session.connection()
+    except PendingRollbackError:
+        db.session.rollback()
+        return True
+    except Exception:
+        # Another unknown issue occured
+        return False
+    else:
+        return False
 
 # db.Models #
 

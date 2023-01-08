@@ -42,7 +42,7 @@ def test_add_templated_exam_without_pdf(datadir, test_client):
     response = test_client.post('/api/exams',
                                 data={'exam_name': 'The Exam', 'layout': ExamLayout.templated.name})
 
-    assert response.status_code == 400
+    assert response.status_code == 409
 
 
 def test_add_unstructured_exam(test_client):

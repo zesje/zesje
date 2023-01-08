@@ -12,8 +12,6 @@ from reportlab.pdfgen import canvas
 from reportlab.lib.utils import ImageReader
 import zipstream
 
-from .database import Exam
-
 
 def exam_dir(exam_id):
     return os.path.join(

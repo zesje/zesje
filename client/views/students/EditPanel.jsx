@@ -94,7 +94,7 @@ class EditPanel extends React.Component {
       studentID: this.state.id,
       firstName: this.state.firstName,
       lastName: this.state.lastName,
-      email: this.state.email
+      email: this.state.email || null
     })
       .then((stud) => {
         this.setState({

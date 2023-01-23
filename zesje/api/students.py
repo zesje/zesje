@@ -53,7 +53,7 @@ class Students(MethodView):
                                     error="{input} is not a valid TU Delft identifier [{min}, {max}]")),
         'first_name': fields.Str(required=True, data_key='firstName', validate=non_empty_string),
         'last_name': fields.Str(required=True, data_key='lastName', validate=non_empty_string),
-        'email': fields.Email(required=False, load_default=None),
+        'email': fields.Email(required=False, load_default=None, allow_none=True),
     }, location='json')
     def put(self, args):
         """Insert or update an existing student

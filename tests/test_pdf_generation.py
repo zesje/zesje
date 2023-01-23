@@ -13,7 +13,6 @@ from wand.color import Color as WandColor
 from wand.image import Image as WandImage
 from pylibdmtx import pylibdmtx
 from pdfrw import PdfReader
-import zipstream
 
 from zesje import pdf_generation
 from zesje.database import db, Exam, ExamWidget

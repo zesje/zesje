@@ -223,7 +223,9 @@ class CheckStudents extends React.Component {
         this.setState({ confirmStudent: null })
 
         if (!this.nextUnchecked()) {
-          // If there is no next copy, we should fetch and update the current copy
+          // If there is no next copy, we should fetch all copies to update progress bar
+          this.updateFromUrl()
+          // and the current copy to update its details which won't be done automatically because the url is the same
           this.fetchCopyFromUrl()
         }
 

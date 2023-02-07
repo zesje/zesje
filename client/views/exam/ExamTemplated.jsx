@@ -8,6 +8,7 @@ import PanelGenerate from '../../components/PanelGenerate.jsx'
 import PanelMCQ from '../../components/PanelMCQ.jsx'
 import ConfirmationModal from '../../components/modals/ConfirmationModal.jsx'
 import FeedbackMenu from '../../components/feedback/FeedbackMenu.jsx'
+import { HasModalContext } from '../../components/feedback/FeedbackUtils.jsx'
 import Tooltip from '../../components/Tooltip.jsx'
 
 import ExamEditor from './ExamEditor.jsx'
@@ -75,7 +76,8 @@ class ExamTemplated extends React.Component {
     previewing: false,
     deletingWidget: false,
     deletingMCWidget: false,
-    showPanelMCQ: false
+    showPanelMCQ: false,
+    feedbackPanelHasModal: false
   }
 
   static getDerivedStateFromProps = (newProps, prevState) => {
@@ -524,7 +526,7 @@ class ExamTemplated extends React.Component {
     const selectedWidgetId = this.state.selectedWidgetId
 
     return (
-      <nav className='panel'>
+      <nav className={'panel is-sticky' + (this.state.feedbackPanelHasModal ? ' has-modal' : '')}>
         <p className='panel-heading'>
           Problem details
         </p>
@@ -624,9 +626,11 @@ class ExamTemplated extends React.Component {
                 <div className='panel-block'>
                   <label className='label'>Feedback options</label>
                 </div>
-                <FeedbackMenu
-                  problem={problem}
-                  updateFeedback={() => this.updateFeedback(problem.id)} />
+                <HasModalContext.Provider value={(hasModal) => this.setState({ feedbackPanelHasModal: hasModal })}>
+                  <FeedbackMenu
+                    problem={problem}
+                    updateFeedback={() => this.updateFeedback(problem.id)} />
+                </HasModalContext.Provider>
               </>
             }
           </>

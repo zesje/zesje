@@ -11,7 +11,7 @@ import Img from '../components/Img.jsx'
 import withShortcuts from '../components/ShortcutBinder.jsx'
 import withRouter from '../components/RouterBinder.jsx'
 import GradeNavigation from './grade/GradeNavigation.jsx'
-import { indexFeedbackOptions, findFeedbackByIndex } from '../components/feedback/FeedbackUtils.jsx'
+import { indexFeedbackOptions, findFeedbackByIndex, HasModalContext } from '../components/feedback/FeedbackUtils.jsx'
 
 import * as api from '../api.jsx'
 
@@ -42,10 +42,6 @@ const FiltersInfo = ({ hasFilters, matchingResults, clearFilters }) => {
     </div>
   )
 }
-
-// Used to add .has-modal class when children have a modal displayed
-// TODO: Remove this once :has() is supported by Firefox
-export const HasModalContext = React.createContext({ updateHasModal: () => {} })
 
 class Grade extends React.Component {
   /**

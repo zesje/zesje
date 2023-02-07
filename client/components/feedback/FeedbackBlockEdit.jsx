@@ -3,11 +3,10 @@ import React from 'react'
 import ConfirmationModal from '../modals/ConfirmationModal.jsx'
 import ColorInput from '../ColorInput.jsx'
 import Switch from '../Switch.jsx'
-import { HasModalContext } from '../../views/Grade.jsx'
 import * as api from '../../api.jsx'
 import { toast } from 'bulma-toast'
 
-import { FeedbackList } from './FeedbackUtils.jsx'
+import { FeedbackList, HasModalContext } from './FeedbackUtils.jsx'
 
 const CancelButton = (props) => (
   <button className='button is-light tooltip' onClick={props.onClick} data-tooltip='Cancel'>
@@ -155,7 +154,8 @@ class EditPanel extends React.Component {
 
   render () {
     return (
-      <HasModalContext.Consumer>{updateHasModal => (<React.Fragment>
+      <HasModalContext.Consumer>{updateHasModal => (
+        <React.Fragment>
         {this.props.parent && <div className='panel-block attach-bottom'>
           {this.props.parent.parent === null
             ? <div>Add on top-level</div>
@@ -258,7 +258,9 @@ class EditPanel extends React.Component {
           />
         </div>
         {this.props.feedback && <FeedbackList {...this.props.parentProps} feedback={this.props.feedback} />}
-      </React.Fragment>)}</HasModalContext.Consumer>
+      </React.Fragment>
+      )}
+      </HasModalContext.Consumer>
     )
   }
 }

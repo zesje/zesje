@@ -90,20 +90,6 @@ class CheckStudents extends React.Component {
     })
   }
 
-  /**
-   * This method changes the state of the copy to the URL.
-   * This method is called once the list of copies is fetched from the backend.
-   * If the copy number is specified in the URL, then it loads the copy corresponding to the URL.
-   * If it is missing, it loads the first copy from the metadata and then replaces the URL to reflect the state.
-   * It also sets the copy to null to display error component when unwanted behaviour is observed.
-   */
-  syncCopyWithUrl = () => {
-    const urlIsDifferent = !this.state.copy || this.props.router.params.copyNumber !== this.state.copy.number
-    if (urlIsDifferent) {
-      this.fetchCopyFromUrl()
-    }
-  }
-
   fetchCopyFromUrl = () => {
     const copyNumber = this.props.router.params.copyNumber || this.state.copies[0].number
     api.get(`copies/${this.props.examID}/${copyNumber}`).then(copy => {
@@ -156,22 +142,22 @@ class CheckStudents extends React.Component {
 
   /**
    * Updates the copies for the current exam.
-   * It then calls syncCopyWithUrl to update the copy in the state according to the URL.
+   * It then calls fetchCopyFromUrl to update the copy in the state according to the URL.
    * In case of unwanted behaviour, sets the copy to null for displaying error component.
    */
   updateFromUrl = () => {
     api.get(`copies/${this.props.examID}`)
-      .then(copies => {
+      .then(copies =>
         this.setState({
           copies
-        }, this.syncCopyWithUrl)
-      }).catch(_ => {
+        }, this.fetchCopyFromUrl)
+      ).catch(_ =>
         this.setState({
           copies: [],
           copy: null,
           index: 0
         })
-      })
+      )
   }
 
   loadCopy = (index) => {
@@ -222,12 +208,7 @@ class CheckStudents extends React.Component {
       .then(resp => {
         this.setState({ confirmStudent: null })
 
-        if (!this.nextUnchecked()) {
-          // If there is no next copy, we should fetch all copies to update progress bar
-          this.updateFromUrl()
-          // and the current copy to update its details which won't be done automatically because the url is the same
-          this.fetchCopyFromUrl()
-        }
+        if (!this.nextUnchecked()) this.updateFromUrl()
 
         if (force) {
           const msg = <p>Student matched with copy {this.state.copies[this.state.index].number}, go to&nbsp;

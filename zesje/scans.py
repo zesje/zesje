@@ -7,7 +7,6 @@ import signal
 
 import cv2
 import numpy as np
-from scipy import spatial
 from flask import current_app
 
 from PIL import Image
@@ -693,7 +692,7 @@ def realign_image(image_array, page_shape, keypoints=None):
     reference_keypoints = original_corner_markers(dpi)
 
     # create a matrix with the distances between each keypoint and match the keypoint sets
-    dists = spatial.distance.cdist(keypoints, reference_keypoints)
+    dists = np.sqrt(np.sum((keypoints[:, np.newaxis] - reference_keypoints) ** 2, axis=-1))
 
     idxs = np.argmin(dists, 1)  # apply to column 1 so indices for input keypoints
     adjusted_markers = reference_keypoints[idxs]

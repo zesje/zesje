@@ -2,10 +2,11 @@ name: zesje-dev
 channels:
     - conda-forge
 dependencies:
-    - python=3.8
-    - yarn
+    - python=3.9
+    - yarn<2
     - gunicorn
-    - redis
+    - redis-py
+    - redis-server
     - pip
     - imagemagick
     - mysql=8.0

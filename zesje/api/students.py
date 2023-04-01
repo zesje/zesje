@@ -1,6 +1,6 @@
-from flask import jsonify
+from flask import jsonify, current_app
 from flask.views import MethodView
-from webargs import fields, validate
+from webargs import fields
 
 import pandas as pd
 from io import BytesIO
@@ -47,10 +47,7 @@ class Students(MethodView):
         return jsonify([student_to_data(s) for s in Student.query.all()])
 
     @use_args({
-        'id': fields.Int(
-            required=True, data_key='studentID',
-            validate=validate.Range(min=1, max=9999999,
-                                    error="{input} is not a valid TU Delft identifier [{min}, {max}]")),
+        'id': fields.Int(required=True, data_key='studentID'),
         'first_name': fields.Str(required=True, data_key='firstName', validate=non_empty_string),
         'last_name': fields.Str(required=True, data_key='lastName', validate=non_empty_string),
         'email': fields.Email(required=False, load_default=None, allow_none=True),
@@ -80,6 +77,8 @@ class Students(MethodView):
             email: str OR null
 
         """
+        if len(str(args['id'])) > (n_digits := current_app.config["ID_GRID_DIGITS"]):
+            return dict(status=400, message=f"Student ID must be a {n_digits}-digit number"), 400
         student = Student(**args)
 
         result, reason = _add_or_update_student(student)

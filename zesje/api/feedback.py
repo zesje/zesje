@@ -96,9 +96,6 @@ class Feedback(MethodView):
         set_aside_solutions = 0
 
         if (exclusive := args.pop('exclusive')) is not None:
-            if len(feedback.children) == 0:
-                return dict(status=409,
-                            message="Tryed to modify the exclusive property on a feedback option with no children"), 409
             if not feedback.mut_excl_children and exclusive:  # we go from non-exclusive to exclusive
                 # look at all solutions and ungrade those with inconsistencies
                 ids = [f.id for f in feedback.children]

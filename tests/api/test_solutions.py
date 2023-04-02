@@ -209,8 +209,8 @@ def test_has_valid_feedback(test_client, add_test_data, monkeypatch_current_user
 
 
 @pytest.mark.parametrize('id, status_code', [
-    (1, 200), (11, 409)
-], ids=['Valid', 'No children'])
+    (1, 200), (11, 200)
+], ids=['Children', 'No children'])
 def test_set_exclusive(test_client, add_test_data, id, status_code):
     res = test_client.patch(f'/api/feedback/1/{id}', json={'exclusive': True})
     assert res.status_code == status_code

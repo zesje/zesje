@@ -374,8 +374,8 @@ def add_checkbox(canvas, x, y, label):
         A string representing the label that is drawn on top of the box, will only take the first character
 
     """
-    # coordinates are stored as the top-left position of the options but they are draw using the bottom-left
-    # position of the box; the manual offset ensure the position of the box is kept between frontend and backend
+    # coordinates are stored as the top-left position of the options but they are drawn using the
+    # bottom-left position of the box. We correct for this with the manual offset.
     x += 7
     y -= 21
 

@@ -58,7 +58,7 @@ class Exams(MethodView):
             return self._get_all()
 
     @use_kwargs({'exam': DBModel(Exam, required=True, validate_model=[
-        lambda exam: not exam.finalized or ApiError('Validated exams cannot be deleted', 409)
+        lambda exam: not exam.finalized or ApiError('Finalized exams cannot be deleted', 409)
     ])})
     def delete(self, exam):
         if Submission.query.filter(Submission.exam_id == exam.id).count():

@@ -41,6 +41,10 @@ export const findFeedbackByIndex = (feedback, index) => {
   return Object.values(feedback).find(fb => fb.index === index)
 }
 
+// Used to add .has-modal class when children have a modal displayed
+// TODO: Remove this once :has() is supported by Firefox
+export const HasModalContext = React.createContext({ updateHasModal: () => {} })
+
 const FeedbackList = (props) => {
   if (!props.feedback.children.length) return null
 

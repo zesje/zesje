@@ -2,6 +2,7 @@ import React from 'react'
 import { toast } from 'bulma-toast'
 
 import FeedbackMenu from '../../components/feedback/FeedbackMenu.jsx'
+import { HasModalContext } from '../../components/feedback/FeedbackUtils.jsx'
 import ConfirmationModal from '../../components/modals/ConfirmationModal.jsx'
 import ExamUnstructuredRules from './ExamUnstructuredRules.md'
 import PanelGradeAnonymous from './PanelGradeAnonymous.jsx'
@@ -254,9 +255,11 @@ class ExamUnstructured extends React.Component {
               <div className='panel-block'>
                 {!this.state.editActive && <label className='label'>Feedback options</label>}
               </div>
-              <FeedbackMenu
-                problem={problem}
-                updateFeedback={this.props.updateExam} />
+              <HasModalContext.Provider value={(hasModal) => {}}>
+                <FeedbackMenu
+                  problem={problem}
+                  updateFeedback={this.props.updateExam} />
+              </HasModalContext.Provider>
 
               <div className='panel-block'>
                 <button

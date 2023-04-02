@@ -12,10 +12,10 @@ from .images import guess_dpi, get_box, widget_area, covers, is_misaligned
 mm_per_inch = inch / mm
 
 
-def grade_problem(copy, page, page_img):
-    """
-    Automatically checks if a problem is blank, and adds a feedback option
-    'blank' if so.
+def grade_page(copy, page, page_img):
+    """Grades all the problems in the `copy` belonging to the corresponding `page`.
+
+    Automatically checks if a problem is blank, and adds a feedback option 'blank' if so.
     For multiple choice problems, a feedback option is added for each checkbox
     that is identified as filled in is created.
     For submissions with multipe copies, no grading is done at all.
@@ -32,9 +32,6 @@ def grade_problem(copy, page, page_img):
     AUTOGRADER_NAME = current_app.config['AUTOGRADER_NAME']
     sub = copy.submission
 
-    # The solutions to grade are all submissions on the current page that are either
-    # not graded yet or graded by Zesje. Submissions with multiple copies are excluded.
-
     # TODO Support pregrading for submissions with multiple copies.
     if len(sub.copies) > 1:
         return
@@ -42,16 +39,15 @@ def grade_problem(copy, page, page_img):
     dpi = guess_dpi(page_img)
     reference_img = reference_image(sub.exam_id, page, dpi)
 
-    solutions_to_grade = (
-        sol for sol in sub.solutions
-        if (
-            (not sol.is_graded or sol.graded_by.oauth_id == AUTOGRADER_NAME)
-            and sol.problem.widget.page == page
-        )
-    )
+    for sol in sub.solutions:
+        # exclude solutions which are already graded by someone that is not Zesje
+        if sol.is_graded and sol.graded_by.oauth_id != AUTOGRADER_NAME:
+            continue
 
-    for sol in solutions_to_grade:
         problem = sol.problem
+        # exclude problems on a different page
+        if problem.widget.page != page:
+            continue
 
         if not is_problem_misaligned(problem, page_img, reference_img):
             # Completely reset the solution and pregrade with a fresh start

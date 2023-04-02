@@ -1,7 +1,6 @@
 from hashlib import md5
 
 from sqlalchemy.sql import operators
-from flask import jsonify
 from flask.views import MethodView
 from flask_login import current_user
 from webargs import fields, validate
@@ -166,7 +165,7 @@ class Submissions(MethodView):
         See `sub_to_data` for the dictionary format.
         """
         if submission is None:
-            return jsonify([sub_to_data(sub) for sub in exam.submissions])
+            return [sub_to_data(sub) for sub in exam.submissions]
 
         if submission.exam_id != exam.id:
             return dict(status=400, message='Submission does not belong to this exam.'), 400

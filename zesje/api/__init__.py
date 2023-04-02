@@ -1,7 +1,7 @@
 import sys
 from traceback import format_exception, print_exception
 
-from flask import current_app, request, Blueprint, jsonify
+from flask import current_app, request, Blueprint
 from flask_login import current_user
 from werkzeug.exceptions import HTTPException
 
@@ -60,22 +60,22 @@ def add_url_rules(bp, view_class, *rules, name=None):
 def handle_exception(e):
     # pass through HTTP errors
     if isinstance(e, HTTPException):
-        return jsonify({
+        return {
             'status': e.code,
             'name': e.name,
             'message': e.description,
             'description': None
-        }), e.code
+        }, e.code
 
     # now you're handling non-HTTP exceptions only
     exp = sys.exc_info()
     print_exception(*exp)
-    return jsonify({
+    return {
         'status': 500,
         'name': 'Internal Python Exception',
         'message': str(e),
         'description': format_exception(*exp)
-    }), 500
+    }, 500
 
 
 api_bp = Blueprint('zesje', __name__)

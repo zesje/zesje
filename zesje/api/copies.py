@@ -1,4 +1,4 @@
-from flask import current_app, jsonify
+from flask import current_app
 from flask.views import MethodView
 from webargs import fields
 from pdfrw import PdfReader
@@ -51,7 +51,7 @@ class Copies(MethodView):
 
             return copy_to_data(copy)
 
-        return jsonify([copy_to_data(copy) for copy in exam.copies])  # Ordered by copy number
+        return [copy_to_data(copy) for copy in exam.copies]  # Ordered by copy number
 
     @use_kwargs({
         'exam': DBModel(Exam, required=True, validate_model=[lambda exam: exam.layout == ExamLayout.templated or
@@ -179,9 +179,12 @@ class MissingPages(MethodView):
         elif exam.layout == ExamLayout.unstructured:
             all_pages = set(problem.widget.page for problem in exam.problems)
 
-        return jsonify([
+        return [
             {
                 'number': copy.number,
-                'missing_pages': sorted(all_pages - set(page.number for page in copy.pages)),
-            } for copy in exam.copies
-        ])
+                'missing_pages': sorted(
+                    all_pages - set(page.number for page in copy.pages)
+                ),
+            }
+            for copy in exam.copies
+        ]

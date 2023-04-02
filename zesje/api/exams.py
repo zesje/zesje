@@ -2,7 +2,7 @@ import hashlib
 from io import BytesIO
 import os
 
-from flask import current_app, send_file, stream_with_context, Response, jsonify
+from flask import current_app, send_file, stream_with_context, Response
 from flask.views import MethodView
 from flask_login import current_user
 from webargs import fields, validate
@@ -88,7 +88,7 @@ class Exams(MethodView):
             db.session.query(Submission.exam_id, func.count(Submission.id).label('sub_count'))
             .group_by(Submission.exam_id).all()
         }
-        return jsonify([
+        return [
             {
                 'id': ex.id,
                 'name': ex.name,
@@ -97,7 +97,7 @@ class Exams(MethodView):
                 'finalized': ex.finalized
             }
             for ex in db.session.query(Exam).order_by(Exam.id).all()
-        ])
+        ]
 
     def _get_single(self, exam):
         """Get detailed information about a single exam

@@ -14,9 +14,10 @@ from pylibdmtx import pylibdmtx
 from sqlalchemy.exc import InternalError, IntegrityError
 from reportlab.lib.units import inch
 
-from .database import db, Scan, Exam, Page, Student, Submission, Copy, Solution, ExamWidget, ExamLayout
+from .database import db, Scan, Exam, Page, Student, Submission, Copy, Solution, ExamWidget, ExamLayout, \
+    rollback_transaction_if_pending
 from .images import guess_dpi, get_box, is_misaligned
-from .pregrader import grade_problem
+from .pregrader import grade_page
 from .image_extraction import extract_pages_from_file, readable_filename
 from .blanks import reference_image
 from .raw_scans import process_page as process_page_raw
@@ -98,6 +99,8 @@ def _process_scan(scan_id, exam_layout):
                     if not success:
                         failures.append((file_info, description))
                 except Exception as e:
+                    rollback_transaction_if_pending()
+
                     failures.append((file_info, str(e)))
     except Exception as e:
         report_error(f"Failed to read file {scan.name}: {e}")
@@ -260,7 +263,7 @@ def process_page(image_data, page_info, file_info, exam_config, output_dir=None,
 
     try:
         # If the corresponding submission has multiple copies, this doesn't grade anything
-        grade_problem(copy, barcode.page, image_array)
+        grade_page(copy, barcode.page, image_array)
     except InternalError as e:
         if strict:
             return False, str(e)

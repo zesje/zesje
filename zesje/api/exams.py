@@ -3,15 +3,15 @@ from io import BytesIO
 import os
 
 from flask import current_app, send_file, stream_with_context, Response
-from flask_restful import Resource, reqparse
-from flask_restful.inputs import boolean
+from flask.views import MethodView
 from flask_login import current_user
-from werkzeug.datastructures import FileStorage
-from sqlalchemy.orm import selectinload
+from webargs import fields, validate
 from sqlalchemy import func
+from sqlalchemy.orm import selectinload
 
-from zesje.api._helpers import _shuffle, abort
-from zesje.api.problems import problem_to_data
+from ._helpers import _shuffle, DBModel, ApiError, non_empty_string,\
+    use_args, use_kwargs, ExamNotFinalizedError
+from .problems import problem_to_data
 from ..pdf_generation import exam_dir, exam_pdf_path, _exam_generate_data
 from ..pdf_generation import generate_pdfs, generate_single_pdf, generate_zipped_pdfs
 from ..pdf_generation import page_is_size, save_with_even_pages
@@ -45,33 +45,30 @@ def generate_exam_token(exam_id, exam_name, exam_pdf):
     return hasher.hexdigest()[0:12]
 
 
-class Exams(Resource):
+class Exams(MethodView):
 
-    get_parser = reqparse.RequestParser()
-    get_parser.add_argument('only_metadata', type=boolean, required=False)
-
-    def get(self, exam_id=None):
-        args = self.get_parser.parse_args()
-        if exam_id:
-            if args.only_metadata:
-                return self._get_single_metadata(exam_id)
-            return self._get_single(exam_id)
+    @use_kwargs({'exam': DBModel(Exam, required=False, load_default=None)})
+    @use_kwargs({'only_metadata': fields.Bool(load_default=False)}, location='query')
+    def get(self, exam, only_metadata):
+        if exam:
+            if only_metadata:
+                return self._get_single_metadata(exam)
+            return self._get_single(exam)
         else:
             return self._get_all()
 
-    def delete(self, exam_id):
-        if (exam := Exam.query.get(exam_id)) is None:
-            return dict(status=404, message='Exam does not exist.'), 404
-        elif exam.finalized:
-            return dict(status=409, message='Cannot delete a finalized exam.'), 409
-        elif Submission.query.filter(Submission.exam_id == exam.id).count():
-            return dict(status=500, message='Exam is not finalized but already has submissions.'), 500
-        else:
-            # All corresponding solutions, scans and problems are automatically deleted
-            db.session.delete(exam)
-            db.session.commit()
+    @use_kwargs({'exam': DBModel(Exam, required=True, validate_model=[
+        lambda exam: not exam.finalized or ApiError('Finalized exams cannot be deleted', 409)
+    ])})
+    def delete(self, exam):
+        if Submission.query.filter(Submission.exam_id == exam.id).count():
+            return dict(status=409, message='Exam is not finalized but already has submissions.'), 409
 
-            return dict(status=200, message="ok"), 200
+        # All corresponding solutions, scans and problems are automatically deleted
+        db.session.delete(exam)
+        db.session.commit()
+
+        return dict(status=200, message="ok"), 200
 
     def _get_all(self):
         """get list of uploaded exams.
@@ -102,12 +99,12 @@ class Exams(Resource):
             for ex in db.session.query(Exam).order_by(Exam.id).all()
         ]
 
-    def _get_single(self, exam_id):
+    def _get_single(self, exam):
         """Get detailed information about a single exam
 
         URL Parameters
         --------------
-        exam_id : int
+        exam : int
             exam ID
 
         Returns
@@ -123,25 +120,13 @@ class Exams(Resource):
         widgets
             list of widgets in this exam
         """
-        # Load exam using the following most efficient strategy
-        exam = Exam.query.options(selectinload(Exam.submissions).
-                                  selectinload(Submission.solutions)).get(exam_id)
-
-        if exam is None:
-            return dict(status=404, message='Exam does not exist.'), 404
-
-        submissions = [sub_to_data(sub) for sub in exam.submissions]
-
-        # Sort submissions by selecting those with students assigned, then by
-        # student number, then by submission id.
-        # TODO: This is a minimal fix of #166, to be replaced later.
-        submissions = sorted(
-            submissions,
-            key=(lambda s: (bool(s['student']) and -s['student']['id'], s['id']))
-        )
+        submission_query = Submission.query.options(selectinload(Submission.solutions))\
+            .filter(Submission.exam == exam)\
+            .order_by(Submission.student_id, Submission.id)
+        submissions = [sub_to_data(sub) for sub in submission_query.all()]
 
         return {
-            'id': exam_id,
+            'id': exam.id,
             'name': exam.name,
             'submissions': submissions,
             'problems': [problem_to_data(prob) for prob in exam.problems],  # Sorted by prob.id
@@ -159,13 +144,13 @@ class Exams(Resource):
             'layout': exam.layout.name
         }
 
-    def _get_single_metadata(self, exam_id):
+    def _get_single_metadata(self, exam):
         """ Serves metadata for an exam.
         Shuffles submissions based on the grader ID.
 
         Parameters
         ----------
-        exam_id : int
+        exam : int
             id of exam to get metadata for.
 
         Returns
@@ -173,9 +158,6 @@ class Exams(Resource):
         the exam metadata.
 
         """
-        if (exam := Exam.query.get(exam_id)) is None:
-            return dict(status=404, message='Exam does not exist.'), 404
-
         return {
             'exam_id': exam.id,
             'layout': exam.layout.name,
@@ -196,13 +178,12 @@ class Exams(Resource):
 
         }
 
-    post_parser = reqparse.RequestParser()
-    post_parser.add_argument('pdf', type=FileStorage, required=False, location='files')
-    post_parser.add_argument('exam_name', type=str, required=True, location='form')
-    post_parser.add_argument('layout', type=str, required=True, location='form',
-                             choices=[layout.name for layout in ExamLayout])
-
-    def post(self):
+    @use_kwargs({'pdf': fields.Field(required=False, load_default=None)}, location='files')
+    @use_kwargs({
+        'exam_name': fields.Str(required=True, validate=non_empty_string),
+        'layout': fields.Enum(ExamLayout, required=True)
+    }, location='form')
+    def post(self, exam_name, layout, pdf):
         """Add a new exam.
 
         Parameters
@@ -219,42 +200,27 @@ class Exams(Resource):
         id : int
             exam ID
         """
+        exam_name = exam_name.strip()
 
-        args = self.post_parser.parse_args()
-        exam_name = args['exam_name'].strip()
-        layout = args['layout']
-
-        if not exam_name:
-            return dict(status=400, message='Exam name is empty'), 400
-
-        if layout == ExamLayout.templated.name:
-            pdf_data = args['pdf']
-            exam = self._add_templated_exam(exam_name, pdf_data)
-        elif layout == ExamLayout.unstructured.name:
+        if layout == ExamLayout.templated:
+            exam = self._add_templated_exam(exam_name, pdf)
+        elif layout == ExamLayout.unstructured:
             exam = self._add_unstructured_exam(exam_name)
         else:
-            return dict(status=400, message=f'Exam type {layout} is not defined'), 400
+            raise NotImplementedError
 
         print(f"Added exam {exam.id} (name: {exam_name}, token: {exam.token}) to database")
 
-        return {
-            'id': exam.id
-        }
+        return {'id': exam.id}
 
     def _add_templated_exam(self, exam_name, pdf_data):
         if not pdf_data:
-            abort(
-                400,
-                message='Upload a PDF to add a templated exam.'
-            )
+            raise ApiError('Upload a PDF to add a templated exam.', 409)
 
         format = current_app.config['PAGE_FORMAT']
 
         if not page_is_size(pdf_data, current_app.config['PAGE_FORMATS'][format], tolerance=0.01):
-            abort(
-                400,
-                message=f'PDF page size is not {format}.'
-            )
+            raise ApiError(f'PDF page size is not {format}.', 409)
 
         exam = Exam(
             name=exam_name,
@@ -301,19 +267,16 @@ class Exams(Resource):
 
         return exam
 
-    put_parser = reqparse.RequestParser()
-    put_parser.add_argument('finalized', type=bool, required=False)
-    put_parser.add_argument('grade_anonymous', type=bool, required=False)
+    @use_kwargs({'exam': DBModel(Exam, required=True)})
+    @use_kwargs({
+        'finalized': fields.Bool(required=False, load_default=None),
+        'grade_anonymous': fields.Bool(required=False, load_default=None)
+    }, location='json')
+    def put(self, exam, finalized, grade_anonymous):
+        if finalized is not None:
+            if not finalized:
+                return dict(status=409, message='Exam can not be unfinalized'), 409
 
-    def put(self, exam_id):
-        if (exam := Exam.query.get(exam_id)) is None:
-            return dict(status=404, message='Exam does not exist.'), 404
-
-        args = self.put_parser.parse_args()
-
-        if args['finalized'] is None:
-            pass
-        elif args['finalized']:
             add_blank_feedback(exam.problems)
 
             if exam.layout == ExamLayout.templated:
@@ -322,21 +285,18 @@ class Exams(Resource):
             exam.finalized = True
             db.session.commit()
             return dict(status=200, message="ok"), 200
-        else:
-            return dict(status=403, message='Exam can not be unfinalized'), 403
 
-        if args['grade_anonymous'] is not None:
-            changed = exam.grade_anonymous != args['grade_anonymous']
-            exam.grade_anonymous = args['grade_anonymous']
+        if grade_anonymous is not None:
+            changed = exam.grade_anonymous != grade_anonymous
+            exam.grade_anonymous = grade_anonymous
             db.session.commit()
             return dict(status=200, message="ok", changed=changed), 200
 
         return dict(status=400, message='One of finalized or anonymous must be present'), 400
 
-    patch_parser = reqparse.RequestParser()
-    patch_parser.add_argument('name', type=str, required=True)
-
-    def patch(self, exam_id):
+    @use_kwargs({'exam': DBModel(Exam, required=True)})
+    @use_kwargs({'name': fields.Str(required=True, validate=non_empty_string)}, location='json')
+    def patch(self, exam, name):
         """Update the name of an existing exam.
 
         Parameters
@@ -344,44 +304,37 @@ class Exams(Resource):
         name: str
             name for the exam
         """
-
-        if (exam := Exam.query.get(exam_id)) is None:
-            return dict(status=404, message='Exam does not exist.'), 404
-
-        args = self.patch_parser.parse_args()
-        if not (name := args['name'].strip()):
-            return dict(status=400, message='Exam name is empty.'), 400
-
-        exam.name = name
+        exam.name = name.strip()
         db.session.commit()
 
         return dict(status=200, message='ok'), 200
 
 
-class ExamSource(Resource):
+PDFNeededError = ApiError('PDF is only available in templated exams.', 404)
 
-    def get(self, exam_id):
 
-        if (exam := Exam.query.get(exam_id)) is None:
-            return dict(status=404, message='Exam does not exist.'), 404
+class ExamSource(MethodView):
 
-        if exam.layout == ExamLayout.unstructured:
-            return dict(status=404, message='Unstructured exams have no pdf.'), 404
-
+    @use_kwargs({'exam': DBModel(Exam, required=True, validate_model=[
+        lambda exam: exam.layout == ExamLayout.templated or PDFNeededError])})
+    def get(self, exam):
         return send_file(
             exam_pdf_path(exam.id),
             max_age=0,
             mimetype='application/pdf')
 
 
-class ExamGeneratedPdfs(Resource):
+class ExamGeneratedPdfs(MethodView):
 
-    get_parser = reqparse.RequestParser()
-    get_parser.add_argument('copies_start', type=int, required=True)
-    get_parser.add_argument('copies_end', type=int, required=True)
-    get_parser.add_argument('type', type=str, required=True)
-
-    def get(self, exam_id):
+    @use_kwargs({'exam': DBModel(Exam, required=True, validate_model=[
+        lambda exam: exam.finalized or ExamNotFinalizedError,
+        lambda exam: exam.layout == ExamLayout.templated or PDFNeededError])})
+    @use_args({
+        'copies_start': fields.Int(required=False, load_default=1, validate=lambda x: x > 0),
+        'copies_end': fields.Int(required=True),
+        'type': fields.Str(required=True, validate=validate.OneOf(['pdf', 'zip']))
+    }, location='query')
+    def get(self, args, exam):
         """Generates the exams with datamatrices and copy numbers.
 
         A range is given. Ranges should be starting from 1.
@@ -402,26 +355,12 @@ class ExamGeneratedPdfs(Resource):
         the file : File
             The requested file (zip or pdf)
         """
-
-        args = self.get_parser.parse_args()
-
-        copies_start = args.get('copies_start')
-        copies_end = args.get('copies_end')
-
-        if (exam := Exam.query.get(exam_id)) is None:
-            return dict(status=404, message='Exam does not exist.'), 404
-        if not exam.finalized:
-            msg = 'Exam is not finalized.'
-            return dict(status=403, message=msg), 403
-        if exam.layout == ExamLayout.unstructured:
-            return dict(status=404, message='Unstructured exams have no pdf.'), 404
+        copies_start = args['copies_start']
+        copies_end = args['copies_end']
 
         if copies_end < copies_start:
             msg = 'copies_end should be larger than copies_start'
-            return dict(status=400, message=msg), 400
-        if copies_start <= 0:
-            msg = 'copies_start should be larger than 0'
-            return dict(status=400, message=msg), 400
+            return dict(status=422, message=msg), 422
 
         attachment_filename = f'{exam.name}_{copies_start}-{copies_end}.{args["type"]}'
         mimetype = f'application/{args["type"]}'
@@ -437,7 +376,7 @@ class ExamGeneratedPdfs(Resource):
                 as_attachment=True,
                 mimetype=mimetype)
         elif args['type'] == 'zip':
-            generator = generate_zipped_pdfs(exam.id, copies_start, copies_end)
+            generator = generate_zipped_pdfs(exam, copies_start, copies_end)
             response = Response(stream_with_context(generator), mimetype=mimetype)
             response.headers['Content-Disposition'] = f'attachment; filename="{attachment_filename}"'
             return response
@@ -445,14 +384,12 @@ class ExamGeneratedPdfs(Resource):
         return dict(status=400, message='type must be one of ["pdf", "zip"]'), 400
 
 
-class ExamPreview(Resource):
+class ExamPreview(MethodView):
 
-    def get(self, exam_id):
-        if (exam := Exam.query.get(exam_id)) is None:
-            return dict(status=404, message='Exam does not exist.'), 404
-        if exam.layout == ExamLayout.unstructured:
-            return dict(status=404, message='Unstructured exams have no pdf.'), 404
-
+    @use_kwargs({'exam': DBModel(Exam, required=True, validate_model=[
+        lambda exam: exam.layout == ExamLayout.templated or PDFNeededError])
+    })
+    def get(self, exam):
         exam_dir, student_id_widget, barcode_widget, exam_path, cb_data = _exam_generate_data(exam)
 
         # Generate generic overlay
@@ -475,5 +412,5 @@ class ExamPreview(Resource):
 
         return send_file(
             output_file,
-            cache_timeout=0,
+            max_age=0,
             mimetype='application/pdf')

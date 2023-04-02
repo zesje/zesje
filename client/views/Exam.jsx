@@ -21,23 +21,14 @@ class Exam extends React.Component {
     }
   }
 
-  componentDidMount = () => {
-    this.loadExam(this.props.examID)
-  }
+  componentDidMount = () => this.loadExam(this.props.examID)
 
   loadExam = () => {
     if (!this.props.examID) return
 
     return api.get(`exams/${this.props.examID}`)
-      .then(resp => {
-        this.setState({ exam: resp })
-      })
-      .catch(err => {
-        console.log(err)
-        err.json().then(data => {
-          this.setState({ exam: null, status: data.message })
-        })
-      })
+      .then(resp => this.setState({ exam: resp }))
+      .catch(err => this.setState({ exam: null, status: err.message }))
   }
 
   renderExamContent = () => {

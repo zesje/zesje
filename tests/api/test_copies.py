@@ -102,7 +102,7 @@ def validate_with_warn_check(copy, student, exam, test_client):
 
 def validate(copy, student, exam, test_client, return_code=200, allow_merge=False):
     response = test_client.put(f'/api/copies/{exam.id}/{copy.number}',
-                               data={'studentID': student.id, 'allowMerge': allow_merge})
+                               json={'studentID': student.id, 'allowMerge': allow_merge})
     assert response.status_code == return_code
 
     assert_valid_state()

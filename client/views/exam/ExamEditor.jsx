@@ -83,41 +83,20 @@ class ExamEditor extends React.Component {
     if (selectionBox) {
       if (selectionBox.width >= this.props.problemMinWidth && selectionBox.height >= this.props.problemMinHeight) {
         const problemData = {
-          name: 'New problem', // TODO: Name
+          exam_id: this.props.examID,
+          name: 'New problem',
           page: this.props.page,
-          feedback: [],
-          mc_options: [],
-          isMCQ: false
-        }
-        const widgetData = {
           x: Math.round(selectionBox.left),
           y: Math.round(selectionBox.top),
           width: Math.round(selectionBox.width),
-          height: Math.round(selectionBox.height),
-          type: 'problem_widget'
+          height: Math.round(selectionBox.height)
         }
-        const formData = new window.FormData()
-        formData.append('exam_id', this.props.examID)
-        formData.append('name', problemData.name)
-        formData.append('page', problemData.page)
-        formData.append('x', widgetData.x)
-        formData.append('y', widgetData.y)
-        formData.append('width', widgetData.width)
-        formData.append('height', widgetData.height)
-        api.post('problems', formData).then(result => {
-          widgetData.id = result.widget_id
-          problemData.id = result.id
-          problemData.name = result.problem_name
-          problemData.grading_policy = result.grading_policy
-          problemData.feedback = result.feedback
-          problemData.root_feedback_id = result.root_feedback_id
-          widgetData.problem = problemData
-
-          this.props.createNewWidget(widgetData)
-        }).catch(err => {
-          console.log(err)
-          err.json().then(e => toast({ message: e.message, type: 'is-danger' }))
-        })
+        api.post('problems', problemData).then(result => {
+          this.props.createNewWidget({
+            ...result.widget,
+            problem: result
+          })
+        }).catch(err => toast({ message: err.message, type: 'is-danger' }))
       }
     }
   }
@@ -183,21 +162,15 @@ class ExamEditor extends React.Component {
    * @param data  the new location
    */
   updateWidgetDB = (widget, data) => {
-    return api.patch('widgets/' + widget.id, data).then(() => {
-      // ok
-    }).catch(err => {
-      console.log(err)
-
-      err.json().then(res => {
-        if (res.status === 409) {
-          // exam widget position is not valid, notify and update it
-          toast({ message: res.message, type: 'is-warning' })
-          this.props.updateWidget(res.data.id, {
-            x: { $set: res.data.x },
-            y: { $set: res.data.y }
-          })
-        }
-      })
+    return api.patch('widgets/' + widget.id, data).catch(err => {
+      if (err.status === 409) {
+        // exam widget position is not valid, notify and update it
+        toast({ message: err.message, type: 'is-warning' })
+        this.props.updateWidget(err.data.id, {
+          x: { $set: err.data.x },
+          y: { $set: err.data.y }
+        })
+      }
       // update to try and get a consistent state
       this.props.updateExam()
     })

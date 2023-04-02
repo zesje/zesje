@@ -26,25 +26,15 @@ class Email extends React.Component {
     }
   }
 
-  loadTemplate = () => {
-    api
-      .get(`templates/${this.props.examID}`)
-      .then(template => this.setState({ template }))
-      .catch(err => {
-        console.log(err)
-        err.json().then(e => {
-          if (e.status === 404) {
-            this.setState({ error: e.message })
-          }
-        })
-      })
-  }
+  loadTemplate = () => api.get(`templates/${this.props.examID}`)
+    .then(template => this.setState({ template }))
+    .catch(err => {
+      if (err.status === 404) this.setState({ error: err.message })
+    })
 
   render () {
     // This should happen when the exam does not exist.
-    if (this.state.error) {
-      return <Fail message={this.state.error} />
-    }
+    if (this.state.error) return <Fail message={this.state.error} />
 
     return (
       <>

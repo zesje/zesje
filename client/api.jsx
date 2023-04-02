@@ -19,17 +19,19 @@ function _fetch (method) {
       body: data,
       headers: headers
     })
-      .catch(error =>
-        console.error('Error: ', error, ' in', method, endpoint, 'with data', data))
+      .catch(error => console.error('Error: ', error, ' in', method, endpoint, 'with data', data))
       .then(resp => {
-        if (!resp.ok) {
-          throw resp
-        } else {
-          return resp
-        }
+        if (!resp.json) throw resp
+
+        return resp.json().then(json => {
+          if (resp.ok) {
+            return json
+          } else {
+            console.error(json)
+            return Promise.reject(json)
+          }
+        })
       })
-      // valid responses always return JSON
-      .then(r => r.json())
   }
 }
 

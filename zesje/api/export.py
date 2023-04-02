@@ -1,9 +1,10 @@
 from io import BytesIO
 
-from flask import abort, send_file, stream_with_context, Response, current_app
+from flask import send_file, stream_with_context, Response, current_app
 import zipstream
 import json
 
+from ._helpers import ApiError
 from ..database import Exam, Submission
 from ..statistics import full_exam_data, grader_data
 from ..emails import solution_pdf
@@ -22,7 +23,7 @@ def full():
     try:
         output = dump(current_app.config)
     except Exception as e:
-        abort(500, 'Could not export database content: ' + str(e))
+        raise ApiError('Could not export database content: ' + str(e), 500)
 
     return send_file(
         BytesIO(output),
@@ -50,13 +51,13 @@ def exam(file_format, exam_id):
     if file_format == 'pdf':
         return exam_pdf(exam_id)
 
+    if file_format not in ('dataframe', 'xlsx', 'xlsx_detailed'):
+        raise ApiError('File format is not one of [dataframe, xlsx, xlsx_detailed]', 422)
+
     try:
         data = full_exam_data(exam_id)
     except KeyError as e:
-        abort(404, str(e))
-
-    if file_format not in ('dataframe', 'xlsx', 'xlsx_detailed'):
-        abort(404, 'File format is not one of [dataframe, xlsx, xlsx_detailed]')
+        raise ApiError(str(e), 404)
 
     serialized = ResilientBytesIO()
 
@@ -140,7 +141,7 @@ def exam_pdf(exam_id):
     """
     exam_data = Exam.query.get(exam_id)
     if exam_data is None:
-        abort(404)
+        raise ApiError(f"Exam with id #{exam_id} does not exist.", 404)
 
     generator = zipped_exam_solutions_generator(exam_id, exam_data.grade_anonymous)
     response = Response(stream_with_context(generator), mimetype='application/zip')
@@ -169,7 +170,7 @@ def grader_statistics(exam_id):
         serialized.write(data_str.encode('utf-8'))
         serialized.seek(0)
     except Exception:
-        abort(404, 'Failed to load grader data.')
+        raise ApiError('Failed to load grader data.', 400)
 
     return send_file(
         serialized,

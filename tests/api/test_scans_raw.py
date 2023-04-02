@@ -34,7 +34,7 @@ def test_no_zip(test_client, app_with_data):
         f'api/scans/{exam.id}', data=data,
         content_type='multipart/form-data'
     )
-    assert response.status_code == 400
+    assert response.status_code == 422
 
 
 def test_no_exam(test_client, zip_file):
@@ -60,7 +60,7 @@ def test_not_finalized_exam(test_client, zip_file, app_with_data):
         f'api/scans/{exam.id}', data=data,
         content_type='multipart/form-data'
     )
-    assert response.status_code == 403
+    assert response.status_code == 409
 
 
 def test_saving_zip_failed(test_client, zip_file, app_with_data, monkeypatch):

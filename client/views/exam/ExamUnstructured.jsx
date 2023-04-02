@@ -132,19 +132,18 @@ class ExamUnstructured extends React.Component {
   }
 
   createProblem = (page) => {
-    const formData = new window.FormData()
-    formData.append('exam_id', this.props.examID)
-    formData.append('name', `Problem (${this.state.problems.length + 1})`)
-    formData.append('page', page)
-    formData.append('x', 0)
-    formData.append('y', 0)
-    formData.append('width', 0)
-    formData.append('height', 0)
-    api.post('problems', formData).then(result => {
-      this.setState({ selectedProblemId: result.id }, () => this.props.updateExam())
-    }).catch(err => {
-      console.log(err)
-    })
+    const jsonData = {
+      exam_id: this.props.examID,
+      name: `Problem (${this.state.problems.length + 1})`,
+      page: page,
+      x: 0,
+      y: 0,
+      width: 0,
+      height: 0
+    }
+    api.post('problems', jsonData).then(result =>
+      this.setState({ selectedProblemId: result.id }, this.props.updateExam)
+    ).catch(console.error)
   }
 
   saveProblemName = (id, name) => {
@@ -155,10 +154,9 @@ class ExamUnstructured extends React.Component {
 
     api.patch('problems/' + id, { name: name })
       .then(resp => this.props.updateExam())
-      .catch(e => {
+      .catch(err => {
         this.selectProblem(id) // takes care of updating the problem name to previous state
-        console.log(e)
-        e.json().then(err => toast({ message: 'Could not save new problem name: ' + err.message, type: 'is-danger' }))
+        toast({ message: 'Could not save new problem name: ' + err.message, type: 'is-danger' })
       })
   }
 
@@ -170,28 +168,18 @@ class ExamUnstructured extends React.Component {
 
     api.patch(`widgets/${widgetId}`, { page: parseInt(page) - 1 })
       .then(resp => this.props.updateExam())
-      .catch(e => {
-        console.log(e)
+      .catch(err => {
         this.props.updateExam()
-        e.json().then(res => {
-          toast({ message: 'Could not save new problem page: ' + res.message, type: 'is-warning' })
-        })
+        toast({ message: 'Could not save new problem page: ' + err.message, type: 'is-warning' })
       })
   }
 
   deleteProblem = (id) => {
     api.del('problems/' + id)
-      .then(() => {
-        this.props.updateExam()
-      })
+      .then(this.props.updateExam)
       .catch(err => {
-        console.log(err)
-        err.json().then(res => {
-          this.setState({
-            deletingProblem: false
-          })
-          toast({ message: 'Could not delete problem' + (res.message ? ': ' + res.message : ''), type: 'is-danger' })
-        })
+        this.setState({ deletingProblem: false })
+        toast({ message: 'Could not delete problem' + (err.message ? ': ' + err.message : ''), type: 'is-danger' })
       })
   }
 

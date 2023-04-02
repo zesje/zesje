@@ -42,7 +42,7 @@ def test_add_templated_exam_without_pdf(datadir, test_client):
     response = test_client.post('/api/exams',
                                 data={'exam_name': 'The Exam', 'layout': ExamLayout.templated.name})
 
-    assert response.status_code == 400
+    assert response.status_code == 409
 
 
 def test_add_unstructured_exam(test_client):
@@ -62,15 +62,15 @@ def test_add_exam_invalid_layout(test_client):
     response = test_client.post('/api/exams',
                                 data={'exam_name': 'The Exam', 'layout': -1})
 
-    assert response.status_code == 400
+    assert response.status_code == 422
 
 
 @pytest.mark.parametrize(
     'name, status_code',
-    [('New name', 200), ('', 400)],
+    [('New name', 200), ('', 422)],
     ids=['New name', 'Empty'])
 def test_change_exam_name(test_client, add_test_data, name, status_code):
-    response = test_client.patch('/api/exams/1', data={'name': name})
+    response = test_client.patch('/api/exams/1', json={'name': name})
 
     assert response.status_code == status_code
 
@@ -84,21 +84,19 @@ def test_get_exams_mult_choice(test_client, add_test_data):
         'x': 100,
         'y': 40,
         'problem_id': 1,
-        'page': 1,
         'label': 'a',
         'name': 'test'
     }
-    test_client.put('/api/mult-choice/', data=mc_option_1)
+    test_client.put('/api/mult-choice/', json=mc_option_1)
 
     mc_option_2 = {
         'x': 100,
         'y': 40,
         'problem_id': 1,
-        'page': 1,
         'label': 'a',
         'name': 'test'
     }
-    test_client.put('/api/mult-choice/', data=mc_option_2)
+    test_client.put('/api/mult-choice/', json=mc_option_2)
 
     response = test_client.get('/api/exams/1')
     data = json.loads(response.data)
@@ -171,6 +169,15 @@ def test_delete_exam(test_client, finalized, status_code):
 
     response = test_client.get('/api/exams')
     data = response.get_json()
-    print(data)
 
     assert len(data) == (1 if finalized else 0)
+
+
+def test_unfinalize_exam(test_client):
+    exam = Exam(name='finalized', finalized=True)
+    db.session.add(exam)
+    db.session.commit()
+
+    response = test_client.put(f'/api/exams/{exam.id}', json={'finalized': False})
+    assert response.status_code == 409
+    assert exam.finalized

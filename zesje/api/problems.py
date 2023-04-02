@@ -2,12 +2,16 @@
 
 import os
 
-from flask_restful import Resource, reqparse, current_app
+from flask import current_app
+from flask.views import MethodView
+from webargs import fields
 
+from ._helpers import DBModel, use_args, use_kwargs, non_empty_string
 from .widgets import widget_to_data, normalise_pages
+from .feedback import feedback_to_data
 from ..database import db, Exam, Problem, ProblemWidget, Solution, GradingPolicy, ExamLayout
+from ..pdf_generation import exam_dir
 from zesje.pdf_reader import guess_problem_title, get_problem_page
-from zesje.api.feedback import feedback_to_data
 
 
 def problem_to_data(problem):
@@ -39,25 +43,23 @@ def problem_to_data(problem):
     }
 
 
-class Problems(Resource):
+class Problems(MethodView):
     """ List of problems associated with a particular exam_id """
 
-    def get(self, problem_id):
-        if (problem := Problem.query.get(problem_id)) is None:
-            return dict(status=404, message=f"Problem with id {problem_id} doesn't exist"), 404
-
+    @use_kwargs({'problem': DBModel(Problem, required=True)})
+    def get(self, problem):
         return problem_to_data(problem)
 
-    post_parser = reqparse.RequestParser()
-    post_parser.add_argument('exam_id', type=int, required=True, location='form')
-    post_parser.add_argument('name', type=str, required=True, location='form')
-    post_parser.add_argument('page', type=int, required=True, location='form')
-    post_parser.add_argument('x', type=int, required=True, location='form')
-    post_parser.add_argument('y', type=int, required=True, location='form')
-    post_parser.add_argument('width', type=int, required=True, location='form')
-    post_parser.add_argument('height', type=int, required=True, location='form')
-
-    def post(self):
+    @use_args({
+        'exam': DBModel(Exam, required=True, data_key='exam_id'),
+        'name': fields.Str(required=True),
+        'page': fields.Int(required=True),
+        'x': fields.Int(required=True),
+        'y': fields.Int(required=True),
+        'width': fields.Int(required=True),
+        'height': fields.Int(required=True)
+    }, location='json')
+    def post(self, args):
         """Add a new problem.
 
         Will error if exam for given id does not exist
@@ -83,14 +85,7 @@ class Problems(Resource):
             `widget_id`: the problem widget id,
             `grading_policy`: the grading policy
         """
-
-        args = self.post_parser.parse_args()
-
-        exam_id = args['exam_id']
-
-        if (exam := Exam.query.get(exam_id)) is None:
-            msg = f"Exam with id {exam_id} doesn't exist"
-            return dict(status=400, message=msg), 400
+        exam = args['exam']
 
         if exam.layout == ExamLayout.templated:
             page_size = current_app.config['PAGE_FORMATS'][current_app.config['PAGE_FORMAT']]
@@ -124,8 +119,7 @@ class Problems(Resource):
         widget.name = f'problem_{problem.id}'
 
         if exam.layout == ExamLayout.templated:
-            data_dir = current_app.config['DATA_DIRECTORY']
-            pdf_path = os.path.join(data_dir, f'{problem.exam_id}_data', 'exam.pdf')
+            pdf_path = os.path.join(exam_dir(exam.id), 'exam.pdf')
 
             page = get_problem_page(problem, pdf_path)
 
@@ -136,22 +130,25 @@ class Problems(Resource):
 
         return {
             'id': problem.id,
-            'widget_id': widget.id,
-            'problem_name': problem.name,
+            'name': problem.name,
+            'widget': widget_to_data(widget),
             'grading_policy': problem.grading_policy.name,
             'feedback': {
                 problem.root_feedback.id: feedback_to_data(problem.root_feedback, full_children=False)
             },
             'root_feedback_id': problem.root_feedback.id,
+            'page': problem.widget.page,
+            'n_graded': 0,
+            'mc_options': []
         }
 
-    patch_parser = reqparse.RequestParser()
-    patch_parser.add_argument('name', type=str, required=False)
-    patch_parser.add_argument('grading_policy', type=str, required=False,
-                              choices=[policy.name for policy in GradingPolicy])
-
-    def patch(self, problem_id):
-        """PATCH a problem
+    @use_kwargs({'problem': DBModel(Problem, required=True)})
+    @use_args({
+        'name': fields.Str(required=False, validate=non_empty_string),
+        'grading_policy': fields.Enum(GradingPolicy, required=False),
+    }, location='json')
+    def patch(self, args, problem):
+        """PATCH to a problem
 
         This method accepts both the problem name and the grading policy.
 
@@ -163,43 +160,32 @@ class Problems(Resource):
         Returns
             HTTP 200 on success, 404 if the problem does not exist
         """
+        if 'name' in args:
+            problem.name = args['name']
 
-        args = self.patch_parser.parse_args()
-
-        if (problem := Problem.query.get(problem_id)) is None:
-            return dict(status=404, message=f"Problem with id {problem_id} doesn't exist"), 404
-
-        if args.name is not None:
-            if (name := args.name.strip()):
-                problem.name = name
-            else:
-                return dict(status=400, message='Name cannot be empty.'), 400
-
-        if args.grading_policy is not None:
+        if 'grading_policy' in args:
             if problem.exam.layout is not ExamLayout.templated:
                 return dict(
                     status=409,
                     message='Cannot modify grading policy on an unstructured exam.'
                 ), 409
-            if args.grading_policy == GradingPolicy.set_single.name and not problem.mc_options:
+            if args['grading_policy'] == GradingPolicy.set_single and not problem.mc_options:
                 return dict(
                     status=409,
                     message='one_answer cannot be set for open answer questions.'
                 ), 409
 
-            problem.grading_policy = args.grading_policy
+            problem.grading_policy = args['grading_policy']
 
         db.session.commit()
 
         return dict(status=200, message="ok"), 200
 
-    def delete(self, problem_id):
+    @use_kwargs({'problem': DBModel(Problem, required=True)})
+    def delete(self, problem):
         """Deletes a problem of an exam if nothing has been graded."""
-        if (problem := Problem.query.get(problem_id)) is None:
-            return dict(status=404, message=f"Problem with id {problem_id} doesn't exist"), 404
-
         if any(sol.is_graded for sol in problem.solutions):
-            return dict(status=403, message='Problem has already been graded'), 403
+            return dict(status=409, message='Problem has already been graded'), 409
 
         exam = problem.exam
 

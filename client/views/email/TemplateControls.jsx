@@ -33,9 +33,8 @@ class TemplateControls extends React.Component {
       )
       toast({ message: 'Template saved', type: 'is-success' })
       this.setState({ templateWasModified: false })
-    } catch (response) {
-      if (response.status === 400) {
-        const error = await response.json()
+    } catch (error) {
+      if (error.status === 400) {
         templateSaveError(error.message)
       } else {
         templateSaveError()

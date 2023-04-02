@@ -61,5 +61,5 @@ THRESHOLD_MCQ = 190
 THRESHOLD_MISALIGMENT = 175
 
 # Routes exempted from authentication
-EXEMPT_ROUTES = ['zesje.oauthstart', 'zesje.oauthcallback', 'zesje.oauthstatus']
+EXEMPT_ROUTES = ['zesje.oauth_start', 'zesje.oauth_callback', 'zesje.oauth_status']
 EXEMPT_METHODS = ['OPTIONS']

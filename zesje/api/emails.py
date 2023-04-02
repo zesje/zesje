@@ -4,12 +4,13 @@ import textwrap
 
 from jinja2 import Template, TemplateSyntaxError, UndefinedError
 
-from flask import current_app
-from flask_restful import Resource, reqparse
+from flask import current_app, jsonify
+from flask.views import MethodView
+from webargs import fields
 
+from ._helpers import DBModel, use_args, use_kwargs, ApiError
 from .. import emails
 from ..database import Exam, Student
-from ._helpers import abort
 
 default_email_template = str.strip(textwrap.dedent("""
     Dear {{student.first_name.split(' ') | first }} {{student.last_name}},
@@ -44,72 +45,66 @@ def render_email(exam_id, student_id, template):
     try:
         return emails.render(exam_id, student_id, template)
     except TemplateSyntaxError as error:
-        abort(
-            400,
-            message=f"Syntax error in the template: {error.message}",
-        )
+        raise ApiError(f"Syntax error in the template: {error.message}", 400)
     except UndefinedError as error:
-        abort(
-            400,
-            message=f"Undefined variables in the template: {error.message}",
-        )
+        raise ApiError(f"Undefined variables in the template: {error.message}", 400)
 
 
-class EmailTemplate(Resource):
+class EmailTemplate(MethodView):
     """ Email template. """
 
-    def get(self, exam_id):
+    @use_kwargs({'exam': DBModel(Exam, required=True)})
+    def get(self, exam):
         """Get an email template for a given exam."""
-        if not Exam.query.get(exam_id):
-            return dict(status=404, message='Exam does not exist.'), 404
+        if (path := template_path(exam.id)).exists():
+            with open(path) as f:
+                return jsonify(f.read())
 
-        try:
-            with open(template_path(exam_id)) as f:
-                return f.read()
-        except FileNotFoundError:
-            with open(template_path(exam_id), 'w') as f:
-                f.write(default_email_template)
-            return default_email_template
+        with open(path, 'w') as f:
+            f.write(default_email_template)
+        return jsonify(default_email_template)
 
-    put_parser = reqparse.RequestParser()
-    put_parser.add_argument('template', type=str, required=True)
-
-    def put(self, exam_id):
+    @use_kwargs({'exam': DBModel(Exam, required=True)})
+    @use_kwargs({"template": fields.Str(required=True)}, location='json')
+    def put(self, exam, template):
         """Update an email template."""
-        if not Exam.query.get(exam_id):
-            return dict(status=404, message='Exam does not exist.'), 404
-
-        email_template = self.put_parser.parse_args().template
         try:
-            Template(email_template)
+            Template(template)
         except TemplateSyntaxError as error:
             return dict(
                 status=400,
                 message=f"Syntax error in the template: {error.message}"
             ), 400
 
-        with open(template_path(exam_id), 'w') as f:
-            f.write(email_template)
+        with open(template_path(exam.id), 'w') as f:
+            f.write(template)
+
+        return dict(status=200), 200
 
 
-class RenderedEmailTemplate(Resource):
+class RenderedEmailTemplate(MethodView):
 
-    post_parser = reqparse.RequestParser()
-    post_parser.add_argument('template', type=str, required=True)
+    @use_kwargs({
+        'exam': DBModel(Exam, required=True),
+        'student': DBModel(Student, required=True)
+    })
+    @use_kwargs({"template": fields.Str(required=True)}, location='json')
+    def post(self, exam, student, template):
+        return jsonify(render_email(exam.id, student.id, template))
 
-    def post(self, exam_id, student_id):
-        template = self.post_parser.parse_args().template
-        return render_email(exam_id, student_id, template)
 
+class Email(MethodView):
 
-class Email(Resource):
-
-    post_parser = reqparse.RequestParser()
-    post_parser.add_argument('template', type=str, required=True)
-    post_parser.add_argument('attach', type=bool, required=True)
-    post_parser.add_argument('copy_to', type=str, required=False)
-
-    def post(self, exam_id, student_id=None):
+    @use_kwargs({
+        'exam': DBModel(Exam, required=True),
+        'student': DBModel(Student, required=False, load_default=None)
+    })
+    @use_args({
+        "template": fields.Str(required=True),
+        'attach': fields.Bool(required=True),
+        'copy_to': fields.Email(required=False, load_default=None)
+    }, location='json')
+    def post(self, args, exam, student):
         """Send an email.
 
         Returns
@@ -117,23 +112,15 @@ class Email(Resource):
         400 error if not all submissions from exam are validated
         (because we might send wrong emails this way).
         """
-        args = self.post_parser.parse_args()
         template = args['template']
         attach = args['attach']
         copy_to = args['copy_to']
 
-        if student_id is None and copy_to is not None:
+        if student is None and copy_to is not None:
             return dict(
                 status=409,
                 message="Not CC-ing all emails from the exam."
             ), 409
-
-        exam = Exam.query.get(exam_id)
-        if exam is None:
-            return dict(
-                status=404,
-                message="Exam does not exist"
-            ), 404
 
         if not all(sub.validated for sub in exam.submissions):
             return dict(
@@ -147,8 +134,8 @@ class Email(Resource):
                 message='Sending email is not configured'
             ), 409
 
-        if student_id is not None:
-            students = [Student.query.get(student_id)]
+        if student is not None:
+            students = [student]
         else:
             students = [sub.student for sub in exam.submissions if sub.student_id and sub.validated]
 

@@ -48,9 +48,8 @@ class TemplateEditor extends React.Component {
     try {
       const renderedTemplate = await renderTemplate(props)
       this.setState({ renderedTemplate })
-    } catch (response) {
-      if (response.status === 400) {
-        const error = await response.json()
+    } catch (error) {
+      if (error.status === 400) {
         templateRenderError(error.message)
       } else {
         templateRenderError()

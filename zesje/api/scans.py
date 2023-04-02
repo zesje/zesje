@@ -1,22 +1,27 @@
 from flask import current_app
-from flask_restful import Resource, reqparse
-from werkzeug.datastructures import FileStorage
+from flask.views import MethodView
+from webargs import fields
 
+from ._helpers import DBModel, ApiError, ExamNotFinalizedError, use_kwargs
 from ..scans import process_scan
 from ..database import db, Exam, Scan
 
 
-class Scans(Resource):
+def _is_mimetype_allowed(pdf):
+    mimetype = pdf.mimetype
+    if not (
+        mimetype == 'application/pdf' or
+        mimetype.startswith('image') or
+        mimetype in current_app.config['ZIP_MIME_TYPES']
+    ):
+        raise ApiError('File is not a PDF, ZIP or image.', 400)
+
+
+class Scans(MethodView):
     """Getting a list of uploaded scans, and uploading new ones."""
 
-    def _is_mimetype_allowed(self, mimetype):
-        return (
-            mimetype == 'application/pdf' or
-            mimetype.startswith('image') or
-            mimetype in current_app.config['ZIP_MIME_TYPES']
-        )
-
-    def get(self, exam_id):
+    @use_kwargs({'exam': DBModel(Exam, required=True)})
+    def get(self, exam):
         """get all uploaded scans for a particular exam.
 
         Parameters
@@ -29,10 +34,6 @@ class Scans(Resource):
             name: str
                 filename of the uploaded PDF
         """
-
-        if (exam := Exam.query.get(exam_id)) is None:
-            return dict(status=404, message='Exam does not exist.'), 404
-
         return [
             {
                 'id': scan.id,
@@ -43,11 +44,10 @@ class Scans(Resource):
             for scan in exam.scans
         ]
 
-    post_parser = reqparse.RequestParser()
-    post_parser.add_argument('file', type=FileStorage, required=True,
-                             location='files')
-
-    def post(self, exam_id):
+    @use_kwargs({'exam': DBModel(Exam, required=True, validate_model=[
+        lambda exam: exam.finalized or ExamNotFinalizedError])})
+    @use_kwargs({'file': fields.Field(required=True, validate=_is_mimetype_allowed)}, location='files')
+    def post(self, exam, file):
         """Upload a scan PDF
 
         Parameters
@@ -62,22 +62,13 @@ class Scans(Resource):
         status : str
         message : str
         """
-        args = self.post_parser.parse_args()
-        if not self._is_mimetype_allowed(args['file'].mimetype):
-            return dict(message='File is not a PDF, ZIP or image.'), 400
-
-        if (exam := Exam.query.get(exam_id)) is None:
-            return dict(status=404, message='Exam does not exist.'), 404
-        elif not exam.finalized:
-            return dict(status=403, message='Exam is not finalized.'), 403
-
-        scan = Scan(exam=exam, name=args['file'].filename,
+        scan = Scan(exam=exam, name=file.filename,
                     status='processing', message='Waiting...')
         db.session.add(scan)
         db.session.commit()
 
         try:
-            args['file'].save(scan.path)
+            file.save(scan.path)
         except Exception:
             scan = Scan.query.get(scan.id)
             if scan is not None:

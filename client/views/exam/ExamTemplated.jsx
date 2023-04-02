@@ -197,7 +197,7 @@ class ExamTemplated extends React.Component {
 
     api.patch('problems/' + problem.id, { name: problem.name })
       .then(() => this.setState({ changedWidgetId: null }))
-      .catch(e => toast({ message: 'Could not save new problem name: ' + e, type: 'is-danger' }))
+      .catch(e => toast({ message: 'Could not save new problem name: ' + e.message, type: 'is-danger' }))
   }
 
   onChangeAutoApproveType = (e) => {
@@ -237,7 +237,7 @@ class ExamTemplated extends React.Component {
                 })
               }
             })
-            .catch(error => console.log(error))
+            .catch(console.error)
         } else if (oldPolicy === 'set_single' &&
           problem.mc_options.length > 0 &&
           problem.feedback[problem.root_feedback_id].exclusive) {
@@ -255,17 +255,15 @@ class ExamTemplated extends React.Component {
                 })
               }
             })
-            .catch(error => console.log(error))
+            .catch(console.error)
         }
       })
-      .catch(error => {
-        error.json().then(res => {
-          let message = res.message
-          if (typeof message === 'object') {
-            message = Object.values(message)[0]
-          }
-          toast({ message: 'Could not change grading policy: ' + message, type: 'is-danger' })
-        })
+      .catch(err => {
+        let message = err.message
+        if (typeof message === 'object') {
+          message = Object.values(message)[0]
+        }
+        toast({ message: 'Could not change grading policy: ' + message, type: 'is-danger' })
       })
   }
 
@@ -295,15 +293,10 @@ class ExamTemplated extends React.Component {
           }))
         })
         .catch(err => {
-          console.log(err)
-          err.json().then(res => {
-            this.setState({
-              deletingWidget: false
-            })
-            toast({ message: 'Could not delete problem' + (res.message ? ': ' + res.message : ''), type: 'is-danger' })
-            // update to try and get a consistent state
-            this.props.updateExam()
-          })
+          this.setState({ deletingWidget: false })
+          toast({ message: 'Could not delete problem' + (err.message ? ': ' + err.message : ''), type: 'is-danger' })
+          // update to try and get a consistent state
+          this.props.updateExam()
         })
     }
   }
@@ -382,6 +375,12 @@ class ExamTemplated extends React.Component {
   generateMCOs = (problemWidget, labels, index, xPos, yPos) => {
     if (labels.length === index) {
       const minWidthMCOs = MCO_WIDTH * (problemWidget.problem.mc_options.length + 1)
+
+      // Really ugly fix, since the mc_options will not be loaded yet when creating the MCQ
+      // In the current design, they will never overflow on creation, so there is no issue.
+      // TODO: Multiple choice option handling completely in the back-end, see #672
+      if (problemWidget.problem.mc_options.length === 0) return true
+
       const diff = problemWidget.problem.mc_options[0].widget.x - problemWidget.x
       if (problemWidget.x + problemWidget.width < xPos + MCO_WIDTH) {
         const width = Math.max(minWidthMCOs + diff, 75)
@@ -409,12 +408,14 @@ class ExamTemplated extends React.Component {
       }
     }
 
-    const formData = new window.FormData()
-    formData.append('name', data.widget.name)
-    formData.append('x', data.widget.x)
-    formData.append('y', data.widget.y)
-    formData.append('problem_id', data.problem_id)
-    formData.append('label', data.label)
+    // TODO: a lot of duplicates but will change in #672
+    const formData = {
+      name: data.widget.name,
+      x: data.widget.x,
+      y: data.widget.y,
+      problem_id: data.problem_id,
+      label: data.label
+    }
     return api.put('mult-choice/', formData).then(result => {
       data.id = result.mult_choice_id
       data.feedback_id = result.feedback_id
@@ -423,16 +424,14 @@ class ExamTemplated extends React.Component {
       this.updateFeedback(problemWidget.problem.id)
       return this.generateMCOs(problemWidget, labels, index + 1, xPos + MCO_WIDTH, yPos)
     }).catch(err => {
-      console.log(err)
-      err.json().then(res => {
-        toast({ message: 'Could not delete problem' + (res.message ? ': ' + res.message : ''), type: 'is-danger' })
-        // update to try and get a consistent state
-        this.props.updateExam()
-        this.setState({
-          selectedWidgetId: null
-        })
-        return false
+      toast({ message: 'Could not create multiple choice option' + (err.message ? ': ' + err.message : ''), type: 'is-danger' })
+      // update to try and get a consistent state
+      this.props.updateExam()
+      this.setState({
+        selectedWidgetId: null
       })
+
+      return false
     })
   }
 
@@ -483,19 +482,16 @@ class ExamTemplated extends React.Component {
         })
       })
       .catch(err => {
-        console.log(err)
-        err.json().then(res => {
-          toast({
-            message: 'Could not delete multiple choice option' + (res.message ? ': ' + res.message : ''),
-            type: 'is-danger'
-          })
-          // update to try and get a consistent state
-          this.props.updateExam()
-          this.setState({
-            selectedWidgetId: null
-          })
-          return Promise.resolve(false)
+        toast({
+          message: 'Could not delete multiple choice option' + (err.message ? ': ' + err.message : ''),
+          type: 'is-danger'
         })
+        // update to try and get a consistent state
+        this.props.updateExam()
+        this.setState({
+          selectedWidgetId: null
+        })
+        return Promise.resolve(false)
       })
   }
 
@@ -564,9 +560,7 @@ class ExamTemplated extends React.Component {
                         })
                       }))
                     }}
-                    onBlur={(e) => {
-                      this.saveProblemName(e.target.value)
-                    }}
+                    onBlur={this.saveProblemName}
                   />
                 </div>
               </div>
@@ -614,15 +608,12 @@ class ExamTemplated extends React.Component {
                           }
                         })
                       }).catch(err => {
-                        console.log(err)
-                        err.json().then(res => {
-                          toast({
-                            message: 'Could not update feedback' + (res.message ? ': ' + res.message : ''),
-                            type: 'is-danger'
-                          })
-                          // update to try and get a consistent state
-                          this.props.updateExam()
+                        toast({
+                          message: 'Could not update feedback' + (err.message ? ': ' + err.message : ''),
+                          type: 'is-danger'
                         })
+                        // update to try and get a consistent state
+                        this.props.updateExam()
                       })
                   })
                 }}

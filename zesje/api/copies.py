@@ -1,7 +1,10 @@
-from flask import current_app as app
-from flask_restful import Resource, reqparse, inputs
+from flask import current_app
+from flask.views import MethodView
+from webargs import fields
 from pdfrw import PdfReader
 
+from ._helpers import DBModel, ApiError, use_kwargs
+from .students import student_to_data
 from ..database import db, Exam, Submission, Student, Copy, Solution, ExamLayout
 from ..pdf_generation import exam_pdf_path
 
@@ -10,25 +13,24 @@ def copy_to_data(copy):
     sub = copy.submission
     return {
         'number': copy.number,
-        'student': {
-            'id': sub.student.id,
-            'firstName': sub.student.first_name,
-            'lastName': sub.student.last_name,
-            'email': sub.student.email
-        } if sub.student else None,
+        'student': student_to_data(sub.student) if sub.student else None,
         'validated': copy.validated
     }
 
 
-class Copies(Resource):
+class Copies(MethodView):
     """Getting a list of copies, and assigning students to them."""
 
-    def get(self, exam_id, copy_number=None):
+    @use_kwargs({
+        'exam': DBModel(Exam, required=True),
+        'copy_number': fields.Int(required=False, load_default=None)
+    })
+    def get(self, exam, copy_number):
         """get all copies for the given exam
 
         Parameters
         ----------
-        exam_id : int
+        exam : int
             The id of the exam for which copies must be retrievevd
         copy_number : int
             Optionally, the specific copy number to retrieve
@@ -42,23 +44,25 @@ class Copies(Resource):
             validated: bool
                 True if the assigned student has been validated by a human.
         """
-        if (exam := Exam.query.get(exam_id)) is None:
-            return dict(status=404, message='Exam does not exist.'), 404
-
         if copy_number:
             if (copy := Copy.query.filter(Copy.exam == exam,
                                           Copy.number == copy_number).one_or_none()) is None:
                 return dict(status=404, message='Copy does not exist.'), 404
 
             return copy_to_data(copy)
-        else:
-            return [copy_to_data(copy) for copy in exam.copies]  # Ordered by copy number
 
-    put_parser = reqparse.RequestParser()
-    put_parser.add_argument('studentID', type=int, required=True)
-    put_parser.add_argument('allowMerge', type=inputs.boolean, required=True)
+        return [copy_to_data(copy) for copy in exam.copies]  # Ordered by copy number
 
-    def put(self, exam_id, copy_number):
+    @use_kwargs({
+        'exam': DBModel(Exam, required=True, validate_model=[lambda exam: exam.layout == ExamLayout.templated or
+                ApiError('Signatures cannot be validated for unstructured exams.', 422)]),
+        'copy_number': fields.Int(required=True)
+    })
+    @use_kwargs({
+        'student': DBModel(Student, required=True, data_key='studentID'),
+        'allow_merge': fields.Bool(required=True, data_key='allowMerge')
+    }, location='json')
+    def put(self, exam, copy_number, student, allow_merge):
         """Assign a student to the given copy.
 
         Expects a json payload in the format::
@@ -68,27 +72,15 @@ class Copies(Resource):
 
         Parameters
         ----------
-        exam_id : int
+        exam : int
         copy_number : int
             The number of the copy. This uniquely identifies
             the copy *within a given exam*.
 
         """
-        args = self.put_parser.parse_args()
-
-        if (exam := Exam.query.get(exam_id)) is None:
-            return dict(status=404, message='Exam does not exist.'), 404
-
-        if exam.layout == ExamLayout.unstructured:
-            return dict(status=403, message='Signatures cannot be validated for unstructured exams.'), 403
-
         if (copy := Copy.query.filter(Copy.number == copy_number,
                                       Copy.exam == exam).one_or_none()) is None:
             return dict(status=404, message='Copy does not exist.'), 404
-
-        if (student := Student.query.get(args.studentID)) is None:
-            msg = f'Student {args.studentID} does not exist'
-            return dict(status=404, message=msg), 404
 
         old_student = copy.submission.student
         old_submission = copy.submission
@@ -101,7 +93,7 @@ class Copies(Resource):
         ).one_or_none()
 
         # Check if we are going to merge feedback
-        if (new_submission is not None) and new_submission != old_submission and not args.allowMerge:
+        if (new_submission is not None) and new_submission != old_submission and not allow_merge:
             return dict(status=409,
                         message='Submissions will be merged, but this was not allowed by the request',
                         other_copies=[copy.number for copy in new_submission.copies]), 409
@@ -137,12 +129,12 @@ class Copies(Resource):
 
 
 def is_exactly_blank(solution):
-    BLANK_FEEDBACK_NAME = app.config['BLANK_FEEDBACK_NAME']
+    BLANK_FEEDBACK_NAME = current_app.config['BLANK_FEEDBACK_NAME']
     return all(fb.text == BLANK_FEEDBACK_NAME for fb in solution.feedback) and len(solution.feedback)
 
 
 def merge_feedback(sub, sub_to_merge):
-    BLANK_FEEDBACK_NAME = app.config['BLANK_FEEDBACK_NAME']
+    BLANK_FEEDBACK_NAME = current_app.config['BLANK_FEEDBACK_NAME']
 
     # Ordering is the same since Submission.solutions is ordered by problem_id
     for sol, sol_to_merge in zip(sub.solutions, sub_to_merge.solutions):
@@ -165,15 +157,15 @@ def unapprove_grading(sub):
         sol.graded_at = None
 
 
-class MissingPages(Resource):
+class MissingPages(MethodView):
 
-    def get(self, exam_id):
-        """
-        Compute which copies are missing which pages.
+    @use_kwargs({'exam': DBModel(Exam, required=True)})
+    def get(self, exam):
+        """Compute which copies are missing which pages.
 
         Parameters
         ----------
-        exam_id : int
+        exam : int
             The id of the exam for which the missing pages must be computed.
 
         Returns
@@ -182,22 +174,17 @@ class MissingPages(Resource):
             copyID: int
             missing_pages: list of ints
         """
-
-        exam = Exam.query.get(exam_id)
-
-        if exam is None:
-            return dict(status=404, message='Exam does not exist.'), 404
-
         if exam.layout == ExamLayout.templated:
-            all_pages = set(range(len(
-                PdfReader(exam_pdf_path(exam.id)).pages)
-            ))
+            all_pages = set(range(len(PdfReader(exam_pdf_path(exam.id)).pages)))
         elif exam.layout == ExamLayout.unstructured:
             all_pages = set(problem.widget.page for problem in exam.problems)
 
         return [
             {
                 'number': copy.number,
-                'missing_pages': sorted(all_pages - set(page.number for page in copy.pages)),
-            } for copy in exam.copies
+                'missing_pages': sorted(
+                    all_pages - set(page.number for page in copy.pages)
+                ),
+            }
+            for copy in exam.copies
         ]

@@ -129,12 +129,13 @@ def generate_problem(pdf, problem):
 
 
 def generate_students(students):
-    return [{
-        'studentID': str(i + 1000000),
-        'firstName': names.get_first_name(),
-        'lastName': names.get_last_name(),
-        'email': str(i + 1000000) + '@fakestudent.tudelft.nl'
-    } for i in range(students)]
+    for i in range(students):
+        yield {
+            'studentID': str(i + 1000000),
+            'firstName': names.get_first_name(),
+            'lastName': names.get_last_name(),
+            'email': str(i + 1000000) + '@fakestudent.tudelft.nl'
+        }
 
 
 def generate_random_page_image(file_path_or_buffer, size):
@@ -274,7 +275,7 @@ def validate_signatures(client, exam_id, copies, validate):
             print(f'\tNo student detected for copy {number} of exam {exam_id}')
         elif random.random() < validate:
             student_id = student['id']
-            client.put(f'/api/copies/{exam_id}/{number}', data={'studentID': student_id})
+            client.put(f'/api/copies/{exam_id}/{number}', json={'studentID': student_id, 'allowMerge': True})
 
 
 def grade_problems(client, exam_id, graders, problems, submissions, grade):
@@ -352,7 +353,7 @@ def add_unstructured_exam(client, pages):
 
     exam_id = client.post('/api/exams',
                           content_type='multipart/form-data',
-                          data={
+                          json={
                               'exam_name': exam_name,
                               'layout': ExamLayout.unstructured.name}
                           ).get_json()['id']
@@ -373,7 +374,7 @@ def design_exam(app, client, layout, pages, students, grade, solve, validate, mu
     print('\tDesigning a hard exam.')
     # Create problems
     for problem in problems:
-        problem_id = client.post('api/problems', data={
+        problem_id = client.post('api/problems', json={
             'exam_id': exam_id,
             'name': problem['question'],
             'page': problem['page'],
@@ -387,14 +388,14 @@ def design_exam(app, client, layout, pages, students, grade, solve, validate, mu
         is_mcq = 'mc_options' in problem
         # Have to put name again, because the endpoint first guesses a name.
         client.put(f'api/problems/{problem_id}',
-                   data={'name': problem['question'], 'grading_policy': 'set_single' if is_mcq else 'set_blank'})
+                   json={'name': problem['question'], 'grading_policy': 'set_single' if is_mcq else 'set_blank'})
 
         if is_mcq:
             result = client.get(f'api/problems/{problem_id}')
             parent = json.loads(result.data)['root_feedback_id']
             fops = []
             for option in problem['mc_options']:
-                resp = client.put('api/mult-choice/', data={
+                resp = client.put('api/mult-choice/', json={
                     'problem_id': problem_id,
                     'name': option['name'], 'label': option['name'],
                     'x': option['x'],
@@ -403,15 +404,15 @@ def design_exam(app, client, layout, pages, students, grade, solve, validate, mu
                 fops.append((resp.get_json()['feedback_id'], option['name']))
 
             correct = random.choice(fops)
-            client.patch(f'api/feedback/{problem_id}/{correct[0]}', data={'score': 1})
-            client.patch(f'api/feedback/{problem_id}/{parent}', data={'exclusive': True})
+            client.patch(f'api/feedback/{problem_id}/{correct[0]}', json={'score': 1})
+            client.patch(f'api/feedback/{problem_id}/{parent}', json={'exclusive': True})
         else:
             result = client.get(f'api/problems/{problem_id}')
             root_id = json.loads(result.data)['root_feedback_id']
             fb_ids = []
             # Add random top-level FOs
             for _ in range(random.randint(2, 10)):
-                result = client.post(f'api/feedback/{problem_id}', data={
+                result = client.post(f'api/feedback/{problem_id}', json={
                     'name': lorem_name.sentence(),
                     'description': (lorem.sentence() if random.choice([True, False]) else ''),
                     'score': random.randint(0, 10),
@@ -426,7 +427,7 @@ def design_exam(app, client, layout, pages, students, grade, solve, validate, mu
             for parent_id in parent_ids_with_children:
                 for _ in range(random.randint(2, 5)):
                     # get random id from list
-                    client.post(f'api/feedback/{problem_id}', data={
+                    client.post(f'api/feedback/{problem_id}', json={
                         'name': lorem_name.sentence(),
                         'description': (lorem.sentence() if random.choice([True, False]) else ''),
                         'score': random.randint(0, 10),
@@ -437,9 +438,9 @@ def design_exam(app, client, layout, pages, students, grade, solve, validate, mu
 
             exclusive_parent_ids = random.sample(parent_ids_with_children + [root_id], random.randint(0, 3))
             for id in exclusive_parent_ids:
-                client.patch(f'api/feedback/{problem_id}/{id}', data={'exclusive': True})
+                client.patch(f'api/feedback/{problem_id}/{id}', json={'exclusive': True})
 
-    client.put(f'api/exams/{exam_id}', data={'finalized': True})
+    client.put(f'api/exams/{exam_id}', json={'finalized': True})
 
     student_ids = [s['id'] for s in client.get('/api/students').get_json()]
     random.shuffle(student_ids)
@@ -517,7 +518,7 @@ def create_exams(app,
 
     # create students
     for student in generate_students(students):
-        client.put('api/students', data=student)
+        client.put('api/students', json=student)
 
     generated_exams = []
     for _ in range(exams):

@@ -2,10 +2,11 @@
 
 from datetime import datetime, timezone
 
-from flask_restful import Resource, reqparse
-from flask_restful.inputs import boolean
+from flask.views import MethodView
 from flask_login import current_user
+from webargs import fields
 
+from ._helpers import DBModel, use_kwargs
 from ..database import db, Exam, Submission, Problem, Solution, FeedbackOption
 
 
@@ -40,10 +41,15 @@ def solution_to_data(solution):
     }
 
 
-class Solutions(Resource):
+class Solutions(MethodView):
     """ Solution provided on a specific problem and exam """
 
-    def get(self, exam_id, submission_id, problem_id):
+    @use_kwargs({
+        'exam': DBModel(Exam, required=True),
+        'problem': DBModel(Problem, required=True),
+        'submission': DBModel(Submission, required=True),
+    })
+    def get(self, exam, submission, problem):
         """get solution to problem
 
         Returns
@@ -54,30 +60,23 @@ class Solutions(Resource):
             imagePath: string (url)
             remarks: string
         """
-
-        if (problem := Problem.query.get(problem_id)) is None:
-            return dict(status=404, message='Problem does not exist.'), 404
-
-        if Exam.query.get(exam_id) is None:
-            return dict(status=404, message='Exam does not exist.'), 404
-
-        if (sub := Submission.query.get(submission_id)) is None:
-            return dict(status=404, message='Submission does not exist.'), 404
-
-        if sub.exam_id != exam_id:
+        if submission.exam_id != exam.id:
             return dict(status=400, message='Submission does not belong to this exam.'), 400
 
-        solution = Solution.query.filter(Solution.submission_id == sub.id,
+        solution = Solution.query.filter(Solution.submission_id == submission.id,
                                          Solution.problem_id == problem.id).one_or_none()
         if solution is None:
             return dict(status=404, message='Solution does not exist.'), 404
 
         return solution_to_data(solution)
 
-    post_parser = reqparse.RequestParser()
-    post_parser.add_argument('remark', type=str, required=True)
-
-    def post(self, exam_id, submission_id, problem_id):
+    @use_kwargs({
+        'exam': DBModel(Exam, required=True),
+        'problem': DBModel(Problem, required=True),
+        'submission': DBModel(Submission, required=True),
+    })
+    @use_kwargs({'remark': fields.Str(required=True)}, location='json')
+    def post(self, exam, submission, problem, remark):
         """Change the remark of a solution
 
         Parameters
@@ -88,66 +87,50 @@ class Solutions(Resource):
         -------
             true (if succesfull)
         """
-
-        args = self.post_parser.parse_args()
-
-        if (problem := Problem.query.get(problem_id)) is None:
-            return dict(status=404, message='Problem does not exist.'), 404
-
-        if Exam.query.get(exam_id) is None:
-            return dict(status=404, message='Exam does not exist.'), 404
-
-        if (sub := Submission.query.get(submission_id)) is None:
-            return dict(status=404, message='Submission does not exist.'), 404
-
-        if sub.exam_id != exam_id:
+        if submission.exam_id != exam.id:
             return dict(status=400, message='Submission does not belong to this exam.'), 400
 
-        solution = Solution.query.filter(Solution.submission_id == sub.id,
+        solution = Solution.query.filter(Solution.submission_id == submission.id,
                                          Solution.problem_id == problem.id).one_or_none()
         if solution is None:
             return dict(status=404, message='Solution does not exist.'), 404
 
-        solution.remarks = args.remark
+        solution.remarks = remark
 
         db.session.commit()
-        return True
+        return dict(status=200), 200
 
-    put_parser = reqparse.RequestParser()
-    put_parser.add_argument('id', type=int, required=True)
-
-    def put(self, exam_id, submission_id, problem_id):
+    @use_kwargs({
+        'exam': DBModel(Exam, required=True),
+        'problem': DBModel(Problem, required=True),
+        'submission': DBModel(Submission, required=True),
+    })
+    @use_kwargs({'feedback': DBModel(FeedbackOption, required=True, data_key='id')}, location='json')
+    def put(self, exam, submission, problem, feedback):
         """Toggles an existing feedback option
 
         Parameters
         ----------
-            id: int
+            feedback: FeedbackOption
 
         Returns
         -------
             state: boolean
         """
-        args = self.put_parser.parse_args()
-        if (sub := Submission.query.get(submission_id)) is None:
-            return dict(status=404, message='Submission does not exist.'), 404
-
-        if sub.exam_id != exam_id:
+        if submission.exam_id != exam.id:
             return dict(status=400, message='Submission does not belong to this exam.'), 400
 
-        solution = Solution.query.filter(Solution.submission_id == submission_id,
-                                         Solution.problem_id == problem_id).one_or_none()
+        solution = Solution.query.filter(Solution.submission_id == submission.id,
+                                         Solution.problem_id == problem.id).one_or_none()
         if solution is None:
             return dict(status=404, message='Solution does not exist.'), 404
 
-        if (fb := FeedbackOption.query.get(args.id)) is None:
-            return dict(status=404, message='Feedback Option does not exist.'), 404
-
-        if fb in solution.feedback:
-            remove_feedback_from_solution(fb, solution)
+        if feedback in solution.feedback:
+            remove_feedback_from_solution(feedback, solution)
             state = False
         else:
-            fb_child = fb
-            for parent in fb.all_ancestors:
+            fb_child = feedback
+            for parent in feedback.all_ancestors:
                 if parent.mut_excl_children:
                     # Should be exclusive, so we uncheck all siblings
                     for sibling in fb_child.siblings:
@@ -177,12 +160,16 @@ class Solutions(Resource):
         return {'state': state}
 
 
-class Approve(Resource):
+class Approve(MethodView):
     """Mark a solution as graded."""
-    put_parser = reqparse.RequestParser()
-    put_parser.add_argument('approve', type=boolean, required=True)
 
-    def put(self, exam_id, submission_id, problem_id):
+    @use_kwargs({
+        'exam': DBModel(Exam, required=True),
+        'problem': DBModel(Problem, required=True),
+        'submission': DBModel(Submission, required=True),
+    })
+    @use_kwargs({'approve': fields.Bool(required=True)}, location='json')
+    def put(self, exam, submission, problem, approve):
         """Approve a solution or set it aside for later grading.
 
         If the grader id is provided, the solution is marked as being graded by that grader,
@@ -193,16 +180,11 @@ class Approve(Resource):
         -------
             state: boolean
         """
-        args = self.put_parser.parse_args()
-
-        if (sub := Submission.query.get(submission_id)) is None:
-            return dict(status=404, message='Submission does not exist.'), 404
-
-        if sub.exam_id != exam_id:
+        if submission.exam_id != exam.id:
             return dict(status=400, message='Submission does not belong to this exam.'), 400
 
-        solution = Solution.query.filter(Solution.submission_id == sub.id,
-                                         Solution.problem_id == problem_id).one_or_none()
+        solution = Solution.query.filter(Solution.submission_id == submission.id,
+                                         Solution.problem_id == problem.id).one_or_none()
         if solution is None:
             return dict(status=404, message='Solution does not exist.'), 404
 
@@ -214,7 +196,7 @@ class Approve(Resource):
         if not has_valid_feedback(solution.feedback):
             return dict(status=409, message='Multiple exclusive option are selected for the same parent.'), 409
 
-        if args.approve:
+        if approve:
             solution.graded_at = datetime.now(timezone.utc)
             solution.graded_by = current_user
         else:
@@ -223,4 +205,4 @@ class Approve(Resource):
 
         db.session.commit()
 
-        return {'state': args.approve}
+        return {'state': approve}

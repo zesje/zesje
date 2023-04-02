@@ -246,20 +246,14 @@ class Overview extends React.Component {
 
   loadStats = (id) => {
     api.get(`stats/${id}`)
-      .then(stats => {
-        this.setState({
-          stats: stats,
-          selectedProblemId: 0
-        })
-      }).catch(err => {
-        console.log(err)
-        err.json().then(res => {
-          this.setState({
-            stats: null,
-            error: 'Error loading statistics: ' + res.message
-          })
-        })
-      })
+      .then(stats => this.setState({
+        stats: stats,
+        selectedProblemId: 0
+      }))
+      .catch(err => this.setState({
+        stats: null,
+        error: 'Error loading statistics: ' + err.message
+      }))
   }
 
   changeProblem = (problemId) => {
@@ -532,9 +526,10 @@ class Overview extends React.Component {
           layout={layout}
           onClick={(data) => {
             const selProblem = problems[data.points[0].y]
-            const selStudent = selProblem.results[data.points[0].x].studentId
-
-            this.setState({ selectedStudentId: selStudent })
+            if (!selProblem) { // prevent an error when a mouse click occurs in the histogram
+              const selStudent = selProblem.results[data.points[0].x].studentId
+              this.setState({ selectedStudentId: selStudent })
+            }
           }}
           onDoubleClick={() => this.setState({ selectedStudentId: null })}
           useResizeHandler

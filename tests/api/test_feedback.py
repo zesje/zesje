@@ -30,7 +30,6 @@ def mco_json():
         'x': 100,
         'y': 40,
         'problem_id': 1,
-        'page': 1,
         'label': 'a',
         'name': 'test'
     }
@@ -69,7 +68,7 @@ def test_delete_with_mc_option(test_client, add_test_data):
     """Attempt to delete a FeedbackOption related to a MultipleChoiceOption"""
     req = mco_json()
 
-    result = test_client.put('/api/mult-choice/', data=req)
+    result = test_client.put('/api/mult-choice/', json=req)
     data = json.loads(result.data)
 
     assert data['feedback_id']
@@ -87,7 +86,7 @@ def test_create_and_get_fo(test_client, add_test_data):
     """Create a new FeedbackOption without a parent"""
     fo = fo_json(add_test_data)
 
-    result = test_client.post('/api/feedback/1', data=fo)
+    result = test_client.post('/api/feedback/1', json=fo)
     data = json.loads(result.data)
     assert data['name'] == fo['name']
     assert data['description'] == fo['description']
@@ -106,7 +105,7 @@ def test_create_and_get_fo_with_parent(test_client, add_test_data):
     """Create a new FeedbackOption with a parent"""
     fo_child = fo_child_json()
 
-    result = test_client.post('api/feedback/1', data=fo_child)
+    result = test_client.post('api/feedback/1', json=fo_child)
     data = json.loads(result.data)
     assert data['parent'] == fo_child['parentId']
 
@@ -126,7 +125,7 @@ def test_delete_fo(test_client, add_test_data):
 
     assert len(data_get['children']) == 1
 
-    result = test_client.post('/api/feedback/1', data=fo)
+    result = test_client.post('/api/feedback/1', json=fo)
     data = json.loads(result.data)
 
     assert data['id']
@@ -158,7 +157,7 @@ def test_delete_parent_of_fo(test_client, add_test_data):
     """Delete a FeedbackOption with 1 level of children, check if children also get deleted"""
     fo_child = fo_child_json()
 
-    result = test_client.post('/api/feedback/1', data=fo_child)
+    result = test_client.post('/api/feedback/1', json=fo_child)
     data = json.loads(result.data)
 
     assert data['id']
@@ -185,7 +184,7 @@ def test_delete_parent_with_subchildren(test_client, add_test_data):
     """Delete a FeedbackOption with 2 levels of children, check if sub-children also get deleted"""
     fo_child = fo_child_json()
 
-    result = test_client.post('/api/feedback/1', data=fo_child)
+    result = test_client.post('/api/feedback/1', json=fo_child)
     data = json.loads(result.data)
 
     assert data['id']
@@ -202,7 +201,7 @@ def test_delete_parent_with_subchildren(test_client, add_test_data):
     fo_subchild = fo_subchild_json()
     fo_subchild['parentId'] = parent_id
 
-    result = test_client.post('/api/feedback/1', data=fo_subchild)
+    result = test_client.post('/api/feedback/1', json=fo_subchild)
     data = json.loads(result.data)
 
     assert data['id']
@@ -233,7 +232,7 @@ def test_get_children(test_client, add_test_data):
 
     fo_p = fo_child_json()
 
-    result = test_client.post('/api/feedback/1', data=fo_p)
+    result = test_client.post('/api/feedback/1', json=fo_p)
     data = json.loads(result.data)
 
     result = test_client.get("/api/feedback/1")
@@ -250,14 +249,15 @@ def test_get_children(test_client, add_test_data):
 
 @pytest.mark.parametrize('prop, status_code, new_value', [
     ('name', 200, 'This is a new name.'),
-    ('name', 409, ' '),
+    ('name', 422, ' '),
     ('score', 200, 42),
-    ('score', 400, ''),
+    ('score', 422, ''),
     ('description', 200, 'This is a valid description'),
     ('description', 200, '')
-    ], ids=['Valid name', 'Invalid name', 'Valid name', 'Invalid name', 'Valid description', 'Valid empty description'])
+    ], ids=['Valid name', 'Invalid name', 'Valid score', 'Invalid score',
+            'Valid description', 'Valid empty description'])
 def test_change_property(test_client, add_test_data, prop, status_code, new_value):
-    result = test_client.patch('/api/feedback/1/5', data={prop: new_value})
+    result = test_client.patch('/api/feedback/1/5', json={prop: new_value})
     assert result.status_code == status_code
 
     data = json.loads(result.data)

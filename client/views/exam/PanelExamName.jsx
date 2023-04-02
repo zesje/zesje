@@ -50,8 +50,7 @@ class PanelExamName extends React.Component {
           examName: this.props.name,
           editing: false
         })
-        console.log(err)
-        err.json().then(e => toast({ message: 'Could not save exam name: ' + e.message, type: 'is-danger' }))
+        toast({ message: 'Could not save exam name: ' + err.message, type: 'is-danger' })
       })
   }
 

@@ -57,7 +57,7 @@ def test_add_problem(test_client, add_test_data, exam_id, position, status):
         'name': 'Problem'
     }
 
-    result = test_client.post('/api/problems', data=req_body)
+    result = test_client.post('/api/problems', json=req_body)
     assert result.status_code == status
 
 
@@ -65,10 +65,10 @@ def test_add_problem(test_client, add_test_data, exam_id, position, status):
     (1, 'New', 200),
     (2, 'New', 200),
     (42, 'New', 404),
-    (1, '   ', 400)
+    (1, '   ', 422)
 ], ids=['Allowed templated', 'Allowed unstructured', 'Not exists', 'Empty'])
 def test_rename_problem(test_client, add_test_data, id, new_name, status):
-    result = test_client.patch(f'/api/problems/{id}', data={'name': new_name})
+    result = test_client.patch(f'/api/problems/{id}', json={'name': new_name})
 
     assert result.status_code == status
     if status == 200:
@@ -80,7 +80,7 @@ def test_rename_problem(test_client, add_test_data, id, new_name, status):
     *[(2, policy.name, 409) for policy in GradingPolicy],
 ], ids=[f'{layout.name}_{policy.name}' for layout in ExamLayout for policy in GradingPolicy])
 def test_set_grading_policy(test_client, add_test_data, id, policy, status):
-    result = test_client.patch(f'/api/problems/{id}', data={'grading_policy': policy})
+    result = test_client.patch(f'/api/problems/{id}', json={'grading_policy': policy})
 
     assert result.status_code == status
     if status == 200:
@@ -118,7 +118,7 @@ def test_delete_problem_graded(test_client, add_test_data, exam_id, problem_id):
 
     result = test_client.delete(f'/api/problems/{problem_id}')
 
-    assert result.status_code == 403
+    assert result.status_code == 409
     assert Problem.query.get(problem_id) is not None
 
 
@@ -132,7 +132,7 @@ def test_new_problem_has_root_fo(test_client, add_test_data):
         'page': 1,
         'name': 'Problem'
     }
-    result = test_client.post('/api/problems', data=req_body)
+    result = test_client.post('/api/problems', json=req_body)
 
     data = json.loads(result.data)
     assert result.status_code == 200
@@ -141,7 +141,7 @@ def test_new_problem_has_root_fo(test_client, add_test_data):
     data = json.loads(result.data)
     assert len(data['feedback']) == 1
     assert data['root_feedback_id'] is not None
-    print(data)
+
     fb = data['feedback'][str(data['root_feedback_id'])]
     assert fb['parent'] is None
     assert len(fb['children']) == 0

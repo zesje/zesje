@@ -1,20 +1,20 @@
 """REST API for OAuth callback"""
 
-from flask_restful import Resource, reqparse
 from flask import current_app, session, request, redirect, url_for
+from flask.views import MethodView
 from flask_login import login_user, current_user, logout_user
 from requests_oauthlib import OAuth2Session
 from urllib.parse import urlparse
+from webargs import fields
 
+from ._helpers import use_kwargs
 from ..database import db, Grader
 
 
-class OAuthStart(Resource):
+class OAuthStart(MethodView):
 
-    get_parser = reqparse.RequestParser()
-    get_parser.add_argument('userurl', type=str, required=False)
-
-    def get(self):
+    @use_kwargs({'user_url': fields.Str(required=False, load_default=None, data_key='userurl')}, location="query")
+    def get(self, user_url):
         """Logs the user in by redirecting to the OAuth provider with the appropriate client ID
 
         Returns
@@ -27,16 +27,13 @@ class OAuthStart(Resource):
          returns current state, used for testing
         is_authenticated: boolean
         """
-        args = self.get_parser.parse_args()
-        if args.userurl:
-            args.userurl = urlparse(args.userurl).path
-        session['oauth_userurl'] = args.userurl or url_for('index')
+        session['oauth_userurl'] = urlparse(user_url).path if user_url else url_for('index')
 
         if current_app.config['LOGIN_DISABLED']:
-            authorization_url, state = url_for('zesje.oauthcallback'), 'state'
+            authorization_url, state = url_for('zesje.oauth_callback'), 'state'
         else:
             oauth2_session = OAuth2Session(current_app.config['OAUTH_CLIENT_ID'],
-                                           redirect_uri=url_for('zesje.oauthcallback', _external=True),
+                                           redirect_uri=url_for('zesje.oauth_callback', _external=True),
                                            scope=current_app.config['OAUTH_SCOPES'])
             # add prompt='login' below to force surf conext to ask for login everytime disabling single sign-on, see:
             # https://wiki.surfnet.nl/display/surfconextdev/OpenID+Connect+features#OpenIDConnectfeatures-Prompt=login
@@ -48,10 +45,7 @@ class OAuthStart(Resource):
         return redirect(authorization_url)
 
 
-class OAuthCallback(Resource):
-
-    get_parser = reqparse.RequestParser()
-    get_parser.add_argument('userurl', type=str, required=False)
+class OAuthCallback(MethodView):
 
     def get(self):
         """OAuth provider redirects to this route after authorization. Fetches token and redirects /
@@ -60,15 +54,15 @@ class OAuthCallback(Resource):
         -------
         redirect to /
         """
-        userurl = session['oauth_userurl']
+        user_url = session['oauth_userurl']
         del session['oauth_userurl']
 
         if current_app.config['LOGIN_DISABLED']:
             login_user(Grader.query.first())
-            return redirect(userurl)
+            return redirect(user_url)
 
         oauth2_session = OAuth2Session(current_app.config['OAUTH_CLIENT_ID'],
-                                       redirect_uri=url_for('zesje.oauthcallback', _external=True),
+                                       redirect_uri=url_for('zesje.oauth_callback', _external=True),
                                        state=session['oauth_state'])
 
         token = oauth2_session.fetch_token(
@@ -95,10 +89,10 @@ class OAuthCallback(Resource):
 
         login_user(grader)
 
-        return redirect(userurl)
+        return redirect(user_url)
 
 
-class OAuthStatus(Resource):
+class OAuthStatus(MethodView):
     def get(self):
         """returns the current oauth status
 
@@ -129,7 +123,7 @@ class OAuthStatus(Resource):
         )
 
 
-class OAuthLogout(Resource):
+class OAuthLogout(MethodView):
     def get(self):
         """Logs the user out
 
@@ -139,4 +133,4 @@ class OAuthLogout(Resource):
         message: str
         """
         logout_user()
-        return dict(status=200, message="Logout successful")
+        return dict(status=200, message="Logout successful"), 200

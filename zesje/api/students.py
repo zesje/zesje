@@ -1,61 +1,58 @@
-from flask_restful import Resource, reqparse
+from flask import current_app
+from flask.views import MethodView
+from webargs import fields
 
-from werkzeug.datastructures import FileStorage
 import pandas as pd
 from io import BytesIO
 from enum import Enum
 
+from ._helpers import DBModel, use_args, use_kwargs, non_empty_string
 from ..database import db, Student
 
 
-def student_to_data(s):
+def student_to_data(student):
     return {
-        'id': s.id,
-        'firstName': s.first_name,
-        'lastName': s.last_name,
-        'email': s.email,
+        'id': student.id,
+        'firstName': student.first_name,
+        'lastName': student.last_name,
+        'email': student.email,
     }
 
 
-class Students(Resource):
+class Students(MethodView):
     """Getting a list of students."""
 
-    def get(self, student_id=None):
+    @use_kwargs({'student': DBModel(Student, required=False, load_default=None)})
+    def get(self, student):
         """get all students for the course.
 
          Parameters
         ----------
-        student_id : int, optional
+        student : int, optional
             The ID of the student, often the studentnumber but mainly used as unique identifier
 
         Returns
         -------
-        If a valid 'student_id' is provided the single instance of the student will be returned:
+        If a valid 'student' id is provided the single instance of the student will be returned:
             id: int
             first_name: str
             last_name: str
             email: str
 
-        If no student_id is provided the entire list of students will be returned.
+        If no student id is provided the entire list of students will be returned.
         """
+        if student is not None:
+            return student_to_data(student)
 
-        if student_id is not None:
-            if (s := Student.query.get(student_id)) is None:
-                return dict(status=404, message='Student not found'), 404
-            return student_to_data(s)
+        return [student_to_data(s) for s in Student.query.all()]
 
-        return [
-            student_to_data(s)
-            for s in Student.query.all()
-        ]
-
-    put_parser = reqparse.RequestParser()
-    put_parser.add_argument('studentID', type=int, required=True)
-    put_parser.add_argument('firstName', type=str, required=True)
-    put_parser.add_argument('lastName', type=str, required=True)
-    put_parser.add_argument('email', type=str, required=False)
-
-    def put(self, student_id=None):
+    @use_args({
+        'id': fields.Int(required=True, data_key='studentID'),
+        'first_name': fields.Str(required=True, data_key='firstName', validate=non_empty_string),
+        'last_name': fields.Str(required=True, data_key='lastName', validate=non_empty_string),
+        'email': fields.Email(required=False, load_default=None, allow_none=True),
+    }, location='json')
+    def put(self, args):
         """Insert or update an existing student
 
         Expects a json payload in the format::
@@ -80,13 +77,9 @@ class Students(Resource):
             email: str OR null
 
         """
-
-        args = self.put_parser.parse_args()
-
-        student = Student(id=args.studentID,
-                          first_name=args.firstName,
-                          last_name=args.lastName,
-                          email=args.email or None)
+        if len(str(args['id'])) > (n_digits := current_app.config["ID_GRID_DIGITS"]):
+            return dict(status=400, message=f"Student ID must be a {n_digits}-digit number"), 400
+        student = Student(**args)
 
         result, reason = _add_or_update_student(student)
 
@@ -96,18 +89,10 @@ class Students(Resource):
         if result == Result.ERROR:
             return dict(status=400, message=reason), 400
 
-        return {
-            'studentID': student.id,
-            "firstName": student.first_name,
-            "lastName": student.last_name,
-            "email": student.email
-        }
+        return student_to_data(student)
 
-    post_parser = reqparse.RequestParser()
-    post_parser.add_argument('csv', type=FileStorage, required=True,
-                             location='files')
-
-    def post(self):
+    @use_kwargs({'csv': fields.Field(required=True)}, location='files')
+    def post(self, csv):
         """Upload a CSV file and add/update the students.
 
         Parameters
@@ -123,12 +108,11 @@ class Students(Resource):
         -------
         The number of *new* students that were added.
         """
-        args = self.post_parser.parse_args()
         try:
             # Disable the NaN filter to allow for empty email fields
-            df = pd.read_csv(BytesIO(args['csv'].read()), na_filter=False)
+            df = pd.read_csv(BytesIO(csv.read()), na_filter=False)
         except Exception:
-            return dict(message='Uploaded file is not CSV'), 400
+            return dict(message='Uploaded file is not CSV', status=400), 400
 
         results = []
         errors = []
@@ -152,7 +136,7 @@ class Students(Resource):
             message = ('All the rows failed to process, '
                        'CSV is not in the correct format: '
                        'did you export it from Brightspace?')
-            return dict(message=message), 400
+            return dict(message=message, status=400), 400
 
         # At least one student was added to the database
         db.session.commit()

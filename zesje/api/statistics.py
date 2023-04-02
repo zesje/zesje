@@ -1,15 +1,18 @@
 from math import isnan, nan
-from flask_restful import Resource
+
+from flask.views import MethodView
 import pandas as pd
 
+from ._helpers import DBModel, use_kwargs
 from ..database import db, Exam, Submission, ExamLayout
 from ..statistics import grader_data
 
 
-class Statistics(Resource):
+class Statistics(MethodView):
     """Getting a list of uploaded scans, and uploading new ones."""
 
-    def get(self, exam_id):
+    @use_kwargs({'exam': DBModel(Exam, required=True)})
+    def get(self, exam):
         """get statistics for a particular exam.
 
         Parameters
@@ -61,10 +64,6 @@ class Statistics(Resource):
                     'error': the standard deviation,
 
         """
-
-        if (exam := Exam.query.get(exam_id)) is None:
-            return dict(status=404, message='Exam does not exist.'), 404
-
         # count the total number of students as the number of validated submissions
         student_ids = db.session.query(Submission.student_id)\
             .filter(Submission.exam_id == exam.id, Submission.validated)\

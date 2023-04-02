@@ -174,7 +174,7 @@ def test_api(email_client, datadir, all):
 
     result = email_client.post(
         f'/api/email/{exam.id}' if all else f'/api/email/{exam.id}/{student.id}',
-        data={'template': default_email_template, 'attach': False}
+        json={'template': default_email_template, 'attach': False}
     )
 
     assert result.status_code == 200
@@ -185,10 +185,10 @@ def test_copy_to_without_student(email_client, datadir):
 
     result = email_client.post(
         f'/api/email/{exam.id}',
-        data={'template': default_email_template, 'attach': False, 'copy_to': 'john.doe@unknown'}
+        json={'template': default_email_template, 'attach': False, 'copy_to': 'john.doe@unknown'}
     )
 
-    assert result.status_code == 409
+    assert result.status_code == 422
 
 
 def test_submission_not_validated(email_client, datadir):
@@ -196,7 +196,7 @@ def test_submission_not_validated(email_client, datadir):
 
     result = email_client.post(
         f'/api/email/{exam.id}',
-        data={'template': default_email_template, 'attach': False}
+        json={'template': default_email_template, 'attach': False}
     )
 
     assert result.status_code == 409
@@ -246,7 +246,7 @@ def test_server_not_configured(email_client, email_app, datadir):
 
     result = email_client.post(
         f'/api/email/{exam.id}',
-        data={'template': default_email_template, 'attach': False}
+        json={'template': default_email_template, 'attach': False}
     )
 
     assert result.status_code == 409

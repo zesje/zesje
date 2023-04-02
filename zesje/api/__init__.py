@@ -1,6 +1,9 @@
+import sys
+from traceback import format_exception, print_exception
+
 from flask import current_app, request, Blueprint
-from flask_restful import Api
 from flask_login import current_user
+from werkzeug.exceptions import HTTPException
 
 from .graders import Graders
 from .exams import Exams, ExamSource, ExamGeneratedPdfs, ExamPreview
@@ -48,66 +51,71 @@ def check_user_login():
         return current_app.login_manager.unauthorized()
 
 
+def add_url_rules(bp, view_class, *rules, name=None):
+    view_func = view_class.as_view(name or view_class.__name__.lower())
+    for rule in rules:
+        bp.add_url_rule(rule, view_func=view_func)
+
+
+def handle_exception(e):
+    # pass through HTTP errors
+    if isinstance(e, HTTPException):
+        return {
+            'status': e.code,
+            'name': e.name,
+            'message': e.description,
+            'description': None
+        }, e.code
+
+    # now you're handling non-HTTP exceptions only
+    exp = sys.exc_info()
+    print_exception(*exp)
+    return {
+        'status': 500,
+        'name': 'Internal Python Exception',
+        'message': str(e),
+        'description': format_exception(*exp)
+    }, 500
+
+
 api_bp = Blueprint('zesje', __name__)
 api_bp.before_request(check_user_login)
+api_bp.register_error_handler(Exception, handle_exception)
 
-api = Api(api_bp)
-
-api.add_resource(Graders, '/graders')
-api.add_resource(Exams, '/exams', '/exams/<int:exam_id>', '/exams/<int:exam_id>/<string:attr>')
-api.add_resource(ExamSource, '/exams/<int:exam_id>/source_pdf')
-api.add_resource(ExamGeneratedPdfs, '/exams/<int:exam_id>/generated_pdfs')
-api.add_resource(ExamPreview, '/exams/<int:exam_id>/preview')
-api.add_resource(Scans, '/scans/<int:exam_id>')
-api.add_resource(Students, '/students', '/students/<int:student_id>')
-api.add_resource(Copies,
-                 '/copies/<int:exam_id>',
-                 '/copies/<int:exam_id>/<int:copy_number>')
-api.add_resource(MissingPages,
-                 '/copies/missing_pages/<int:exam_id>')
-api.add_resource(Submissions,
-                 '/submissions/<int:exam_id>',
-                 '/submissions/<int:exam_id>/<int:submission_id>')
-api.add_resource(Problems,
-                 '/problems',
-                 '/problems/<int:problem_id>')
-api.add_resource(Feedback,
-                 '/feedback/<int:problem_id>',
-                 '/feedback/<int:problem_id>/<int:feedback_id>')
-api.add_resource(Solutions, '/solution/<int:exam_id>/<int:submission_id>/<int:problem_id>')
-api.add_resource(Widgets,
-                 '/widgets',
-                 '/widgets/<int:widget_id>')
-api.add_resource(EmailTemplate,
-                 '/templates/<int:exam_id>')
-api.add_resource(RenderedEmailTemplate,
-                 '/templates/rendered/<int:exam_id>/<int:student_id>')
-api.add_resource(Email,
-                 '/email/<int:exam_id>',
-                 '/email/<int:exam_id>/<int:student_id>')
-api.add_resource(Approve,
-                 '/solution/approve/<int:exam_id>/<int:submission_id>/<int:problem_id>')
-api.add_resource(MultipleChoice,
-                 '/mult-choice/<int:id>',
-                 '/mult-choice/')
-api.add_resource(Statistics,
-                 '/stats/<int:exam_id>')
-api.add_resource(OAuthStatus, '/oauth/status')
-api.add_resource(OAuthStart, '/oauth/start')
-api.add_resource(OAuthCallback, '/oauth/callback')
-api.add_resource(OAuthLogout, '/oauth/logout')
-# Other resources that don't return JSON
-# It is possible to get flask_restful to work with these, but not
-# very idiomatic.
+add_url_rules(api_bp, Graders, '/graders')
+add_url_rules(api_bp, Exams, '/exams', '/exams/<int:exam>', '/exams/<int:exam>/<string:attr>')
+add_url_rules(api_bp, ExamSource, '/exams/<int:exam>/source_pdf', name='exam_source')
+add_url_rules(api_bp, ExamGeneratedPdfs, '/exams/<int:exam>/generated_pdfs', name='exam_generated_pdfs')
+add_url_rules(api_bp, ExamPreview, '/exams/<int:exam>/preview', name='exam_preview')
+add_url_rules(api_bp, Scans, '/scans/<int:exam>')
+add_url_rules(api_bp, Students, '/students', '/students/<int:student>')
+add_url_rules(api_bp, Copies, '/copies/<int:exam>', '/copies/<int:exam>/<int:copy_number>')
+add_url_rules(api_bp, MissingPages, '/copies/missing_pages/<int:exam>', name='missing_pages')
+add_url_rules(api_bp, Submissions, '/submissions/<int:exam>', '/submissions/<int:exam>/<int:submission>')
+add_url_rules(api_bp, Problems, '/problems', '/problems/<int:problem>')
+add_url_rules(api_bp, Feedback, '/feedback/<int:problem>', '/feedback/<int:problem>/<int:feedback>')
+add_url_rules(api_bp, Solutions, '/solution/<int:exam>/<int:submission>/<int:problem>')
+add_url_rules(api_bp, Widgets, '/widgets', '/widgets/<int:widget>')
+add_url_rules(api_bp, EmailTemplate, '/templates/<int:exam>', name='exam_template')
+add_url_rules(api_bp, RenderedEmailTemplate, '/templates/rendered/<int:exam>/<int:student>',
+              name='rendered_exam_template')
+add_url_rules(api_bp, Email, '/email/<int:exam>', '/email/<int:exam>/<int:student>')
+add_url_rules(api_bp, Approve, '/solution/approve/<int:exam>/<int:submission>/<int:problem>')
+add_url_rules(api_bp, MultipleChoice, '/mult-choice/<int:mc_option>', '/mult-choice/', name='multiple_choice')
+add_url_rules(api_bp, Statistics, '/stats/<int:exam>')
+add_url_rules(api_bp, OAuthStatus, '/oauth/status', name='oauth_status')
+add_url_rules(api_bp, OAuthStart, '/oauth/start', name='oauth_start')
+add_url_rules(api_bp, OAuthCallback, '/oauth/callback', name='oauth_callback')
+add_url_rules(api_bp, OAuthLogout, '/oauth/logout', name='oauth_logout')
 
 # Images
 api_bp.add_url_rule(
-    '/images/signature/<int:exam_id>/<int:copy_number>',
+    '/images/signature/<int:exam>/<int:copy_number>',
     'signature',
     signature.get,
 )
 api_bp.add_url_rule(
-    '/images/solutions/<int:exam_id>/<int:problem_id>/<int:submission_id>/<int:full_page>',
+    '/images/solutions/<int:exam>/<int:problem>/<int:submission>/<int:full_page>',
     'solution_image',
     images.get,
 )

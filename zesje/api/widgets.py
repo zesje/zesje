@@ -1,6 +1,7 @@
-from flask_restful import Resource
+from flask.views import MethodView
 from flask import current_app, request
 
+from ._helpers import DBModel, use_kwargs
 from ..database import db, Widget, ExamWidget, MultipleChoiceOption, ExamLayout
 
 
@@ -57,16 +58,14 @@ def normalise_pages(widgets):
     return pages_to_substract > 0
 
 
-class Widgets(Resource):
+class Widgets(MethodView):
 
-    def patch(self, widget_id):
-        if (widget := Widget.query.get(widget_id)) is None:
-            msg = f"Widget with id {widget_id} doesn't exist"
-            return dict(status=404, message=msg), 404
-        elif isinstance(widget, ExamWidget) and widget.exam.finalized:
-            return dict(status=403, message='Exam is finalized'), 403
+    @use_kwargs({'widget': DBModel(Widget, required=True)})
+    def patch(self, widget):
+        if isinstance(widget, ExamWidget) and widget.exam.finalized:
+            return dict(status=409, message='Exam is finalized'), 409
         elif isinstance(widget, MultipleChoiceOption) and widget.feedback.problem.exam.finalized:
-            return dict(status=405, message='Exam is finalized'), 405
+            return dict(status=409, message='Exam is finalized'), 409
 
         # will 400 on malformed json
         body = request.get_json()

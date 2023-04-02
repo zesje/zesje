@@ -1,11 +1,13 @@
 from hashlib import md5
 
 from sqlalchemy.sql import operators
-from flask_restful import Resource, reqparse
-from flask_restful.inputs import boolean
+from flask.views import MethodView
 from flask_login import current_user
+from webargs import fields, validate
 
+from ._helpers import DBModel, use_args, use_kwargs
 from .solutions import solution_to_data
+from .students import student_to_data
 from ..database import db, Exam, Submission, Problem, Solution, solution_feedback
 
 
@@ -14,12 +16,7 @@ def sub_to_data(sub, meta=None):
     return {
         'meta': meta,
         'id': sub.id,
-        'student': {
-            'id': sub.student.id,
-            'firstName': sub.student.first_name,
-            'lastName': sub.student.last_name,
-            'email': sub.student.email
-        } if sub.student else None,
+        'student': student_to_data(sub.student) if sub.student else None,
         'validated': sub.validated,
         'problems': [
             solution_to_data(sol) for sol in sub.solutions  # Sorted by sol.problem_id
@@ -131,18 +128,22 @@ def _find_submission(old_submission, problem_id, shuffle_seed, direction, ungrad
     return new_submission, count_follows, count_precedes, match_current
 
 
-class Submissions(Resource):
+class Submissions(MethodView):
     """Getting a list of submissions"""
-
-    get_parser = reqparse.RequestParser()
-    get_parser.add_argument('problem_id', type=int, required=False)
-    get_parser.add_argument('ungraded', type=boolean, required=False, default=False)
-    get_parser.add_argument('direction', type=str, required=False, choices=["next", "prev", "first", "last"])
-    get_parser.add_argument('required_feedback', type=int, required=False, action='append')
-    get_parser.add_argument('excluded_feedback', type=int, required=False, action='append')
-    get_parser.add_argument('graded_by', type=int, required=False)
-
-    def get(self, exam_id, submission_id=None):
+    @use_kwargs({
+        'exam': DBModel(Exam, required=True),
+        'submission': DBModel(Submission, required=False, load_default=None)
+    })
+    @use_args({
+        'problem': DBModel(Problem, required=False, load_default=None, data_key='problem_id'),
+        'ungraded': fields.Bool(required=False, load_default=False),
+        'direction':
+            fields.Str(required=False, load_default=None, validate=validate.OneOf(["next", "prev", "first", "last"])),
+        'required_feedback': fields.List(fields.Int, required=False, load_default=list),
+        'excluded_feedback': fields.List(fields.Int, required=False, load_default=list),
+        'graded_by': fields.Int(required=False, load_default=None)
+    }, location='query')
+    def get(self, args, exam, submission):
         """get submissions for the given exam
 
         if args.direction is specified, returns a submission based on
@@ -163,44 +164,34 @@ class Submissions(Resource):
 
         See `sub_to_data` for the dictionary format.
         """
-        args = self.get_parser.parse_args()
-        if (exam := Exam.query.get(exam_id)) is None:
-            return dict(status=404, message='Exam does not exist.'), 404
-
-        if submission_id is None:
+        if submission is None:
             return [sub_to_data(sub) for sub in exam.submissions]
 
-        if (sub := Submission.query.get(submission_id)) is None:
-            return dict(status=404, message='Submission does not exist.'), 404
-
-        if sub.exam != exam:
+        if submission.exam_id != exam.id:
             return dict(status=400, message='Submission does not belong to this exam.'), 400
 
-        if args.problem_id is None or Problem.query.get(args.problem_id) is None:
-            return dict(status=404, message='Problem does not exist.'), 404
-
-        n_graded = Solution.query.filter(Solution.problem_id == args.problem_id,
+        n_graded = Solution.query.filter(Solution.problem_id == args['problem'].id,
                                          Solution.is_graded).count()
 
         new_sub, no_of_subs_follow, no_of_subs_precede, match_current = _find_submission(
-            sub, args.problem_id, current_user.id, args.direction or "next", args.ungraded,
-            args.required_feedback or [], args.excluded_feedback or [], args.graded_by
+            submission, args['problem'].id, current_user.id, args['direction'] or "next", args['ungraded'],
+            args['required_feedback'], args['excluded_feedback'], args['graded_by']
         )
 
         matched = no_of_subs_follow + no_of_subs_precede + match_current
-        if args.direction is None:
-            new_sub = sub
+        if args['direction'] is None:
+            new_sub = submission
             no_next_sub = no_of_subs_follow == 0
             no_prev_sub = no_of_subs_precede == 0
-        elif args.direction in ('next', 'prev'):
+        elif args['direction'] in ('next', 'prev'):
             no_next_sub = no_of_subs_follow <= 1
             no_prev_sub = (no_of_subs_precede + match_current) == 0
-        elif args.direction in ('last', 'first'):
+        elif args['direction'] in ('last', 'first'):
             no_next_sub = True
             no_prev_sub = matched <= 1
 
         # If direction is backwards the availability of subs should be inverted
-        if args.direction in ('prev', 'first'):
+        if args['direction'] in ('prev', 'first'):
             no_next_sub, no_prev_sub = no_prev_sub, no_next_sub
 
         meta = {

@@ -80,10 +80,9 @@ class Exams extends React.Component {
       .then(exam => {
         this.props.updateExamList()
         this.props.router.navigate('/exams/' + exam.id)
-      })
-      .catch(resp => {
-        resp.json().then(body => toast({ message: body.message, type: 'is-danger' }))
-      })
+      }, err =>
+        toast({ message: err.message, type: 'is-danger' })
+      )
   }
 
   render () {

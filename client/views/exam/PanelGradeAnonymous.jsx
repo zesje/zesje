@@ -38,11 +38,8 @@ class PanelGradeAnonymous extends React.Component {
           }, () => this.props.onChange && this.props.onChange(this.state.gradeAnonymous))
         })
         .catch(err => {
-          console.log(err)
-          err.json().then(e => {
-            if (e.status === 409) toast({ message: e.message, type: 'is-warning' })
-            else toast({ message: 'Could not change Grade Anonymous setting: ' + e.message, type: 'is-danger' })
-          })
+          if (err.status === 409) toast({ message: err.message, type: 'is-warning' })
+          else toast({ message: 'Could not change Grade Anonymous setting: ' + err.message, type: 'is-danger' })
           this.setState({ isLoading: false })
         })
     )

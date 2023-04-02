@@ -5,9 +5,8 @@ import numpy as np
 import cv2
 
 from ._helpers import DBModel, ApiError, use_kwargs
-from ..database import ExamLayout
 from ..images import get_box
-from ..database import Exam, Copy
+from ..database import Exam, Copy, ExamLayout
 from ..scans import exam_student_id_widget
 
 

@@ -112,8 +112,6 @@ class Email(MethodView):
         400 error if not all submissions from exam are validated
         (because we might send wrong emails this way).
         """
-        template = args['template']
-        attach = args['attach']
         copy_to = args['copy_to']
 
         if student is None and copy_to is not None:
@@ -143,8 +141,9 @@ class Email(MethodView):
             students,
             from_address=current_app.config['FROM_ADDRESS'],
             exam=exam,
-            template=template,
-            attach=attach
+            template=args['template'],
+            attach=args['attach'],
+            copy_to=copy_to
         )
 
         if failed:

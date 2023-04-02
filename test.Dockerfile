@@ -1,29 +1,23 @@
 # A Dockerfile containing the production deployment for Zesje
+FROM mambaorg/micromamba:1.4-kinetic
 
-FROM continuumio/miniconda3
-
+USER root
 RUN apt-get update && \
     apt-get install -y libdmtx-dev
 
-WORKDIR /yarn
-
-# Setup PYTHON packages
-
-ADD environment.yml .
-RUN conda env create && conda clean --all
-
-# From https://medium.com/@chadlagore/conda-environments-with-docker-82cdc9d25754
-RUN echo "source activate zesje-dev" > ~/.bashrc
-ENV PATH /opt/conda/envs/zesje-dev/bin:$PATH
-
-RUN rm environment.yml
+COPY --chown=$MAMBA_USER:$MAMBA_USER environment.yml /tmp/env.yaml
+USER $MAMBA_USER
+RUN micromamba install -y -n base -f /tmp/env.yaml && \
+    micromamba clean --all --yes
 
 # Setup YARN packages
-
+USER root
+WORKDIR /yarn
 ADD package.json .
 RUN yarn install
 RUN rm package.json
 
 WORKDIR /app
 
+ARG MAMBA_DOCKERFILE_ACTIVATE=1
 CMD bash

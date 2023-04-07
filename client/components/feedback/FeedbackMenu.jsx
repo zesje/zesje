@@ -7,7 +7,7 @@ import { indexFeedbackOptions, findFeedbackByIndex, FeedbackList } from './Feedb
 import './Feedback.scss'
 
 class FeedbackMenu extends React.Component {
-  feedbackBlock = React.createRef();
+  feedbackBlock = React.createRef()
 
   state = {
     selectedFeedback: null,

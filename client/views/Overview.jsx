@@ -247,7 +247,7 @@ class Overview extends React.Component {
   loadStats = (id) => {
     api.get(`stats/${id}`)
       .then(stats => this.setState({
-        stats: stats,
+        stats,
         selectedProblemId: 0
       }))
       .catch(err => this.setState({
@@ -508,7 +508,7 @@ class Overview extends React.Component {
       barmode: 'stack',
       plot_bgcolor: 'hsl(0,0,86)',
       height: 1000,
-      annotations: annotations
+      annotations
     }
 
     const config = {

@@ -28,7 +28,7 @@ class Exams extends React.Component {
     previewPageCount: 0,
     examName: '',
     selectedLayout: LAYOUTS[0]
-  };
+  }
 
   onChangeLayout = (event) => {
     const newLayout = LAYOUTS[event.target.value]

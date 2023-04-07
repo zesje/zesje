@@ -111,7 +111,7 @@ class ExamTemplated extends React.Component {
         numPages: null,
         selectedWidgetId: null,
         changedWidgetId: null,
-        widgets: widgets,
+        widgets,
         previewing: false
       }
     }
@@ -386,7 +386,7 @@ class ExamTemplated extends React.Component {
       const diff = problemWidget.problem.mc_options[0].widget.x - problemWidget.x
       if (problemWidget.x + problemWidget.width < xPos + MCO_WIDTH) {
         const width = Math.max(minWidthMCOs + diff, 75)
-        api.patch('widgets/' + problemWidget.id, { width: width })
+        api.patch('widgets/' + problemWidget.id, { width })
           .then(() => this.updateWidget(problemWidget.id, { width: { $set: width } }))
       }
       return true
@@ -426,7 +426,10 @@ class ExamTemplated extends React.Component {
       this.updateFeedback(problemWidget.problem.id)
       return this.generateMCOs(problemWidget, labels, index + 1, xPos + MCO_WIDTH, yPos)
     }).catch(err => {
-      toast({ message: 'Could not create multiple choice option' + (err.message ? ': ' + err.message : ''), type: 'is-danger' })
+      toast({
+        message: 'Could not create multiple choice option' + (err.message ? ': ' + err.message : ''),
+        type: 'is-danger'
+      })
       // update to try and get a consistent state
       this.props.updateExam()
       this.setState({

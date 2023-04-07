@@ -81,5 +81,5 @@ dependencies:
         - names # For random names
 
         # Tests
-        - git+https://github.com/jterrace/pyssim.git
+        - pyssim>=0.6
         - smtpdfix  # mock email server

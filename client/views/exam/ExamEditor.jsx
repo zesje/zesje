@@ -51,8 +51,8 @@ class ExamEditor extends React.Component {
     }
 
     return {
-      top: top,
-      left: left
+      top,
+      left
     }
   }
 
@@ -107,7 +107,7 @@ class ExamEditor extends React.Component {
       const selectionEndPoint = this.getCoordinatesForEvent(e)
       this.setState((prevState) => {
         return {
-          selectionEndPoint: selectionEndPoint,
+          selectionEndPoint,
           selectionBox: this.calculateSelectionBox(prevState.selectionStartPoint, selectionEndPoint)
         }
       })
@@ -130,10 +130,10 @@ class ExamEditor extends React.Component {
     const width = Math.min(Math.abs(left - Math.max(selectionStartPoint.x, selectionEndPoint.x)), 595 - padding - left)
     const height = Math.min(Math.abs(top - Math.max(selectionStartPoint.y, selectionEndPoint.y)), 841 - padding - top)
     const result = {
-      left: left,
-      top: top,
-      width: width,
-      height: height,
+      left,
+      top,
+      width,
+      height,
 
       background:
         width >= this.props.problemMinWidth &&
@@ -275,8 +275,8 @@ class ExamEditor extends React.Component {
           y: yPos
         }}
         size={{
-          width: width,
-          height: height
+          width,
+          height
         }}
         onDragStart={() => {
           this.props.selectWidget(widget.id)

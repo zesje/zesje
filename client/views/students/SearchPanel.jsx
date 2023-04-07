@@ -29,7 +29,7 @@ class SearchPanel extends React.Component {
       lastName: '',
       email: ''
     }
-  ];
+  ]
 
   state = {
     input: '',
@@ -38,7 +38,7 @@ class SearchPanel extends React.Component {
     copyIndex: null
   }
 
-  searchInput = React.createRef();
+  searchInput = React.createRef()
 
   componentDidMount = () => {
     api.get('students')

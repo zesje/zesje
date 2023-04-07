@@ -36,7 +36,7 @@ class PanelExamName extends React.Component {
   }
 
   saveName = (name) => {
-    api.patch(`exams/${this.props.examID}`, { name: name })
+    api.patch(`exams/${this.props.examID}`, { name })
       .then(() => {
         this.setState({
           examName: name,

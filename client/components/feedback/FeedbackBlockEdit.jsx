@@ -57,10 +57,10 @@ class EditPanel extends React.Component {
         description: fb.description === null ? '' : fb.description,
         score: fb.score,
         exclusive: nextProps.indexedFeedback[fb.parent].exclusive,
-        updateCallback: updateCallback
+        updateCallback
       }
     }
-    return { updateCallback: updateCallback }
+    return { updateCallback }
   }
 
   changeText = (event) => {

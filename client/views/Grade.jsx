@@ -73,7 +73,7 @@ class Grade extends React.Component {
         isUnstructured: metadata.layout === 'unstructured',
         examID: props.examID,
         gradeAnonymous: metadata.gradeAnonymous,
-        graders: graders
+        graders
       }
 
       const examID = metadata.exam_id
@@ -93,8 +93,8 @@ class Grade extends React.Component {
           api.get(`problems/${problemID}`)
         ]).then(([submission, problem]) => {
           this.setState({
-            submission: submission,
-            problem: problem,
+            submission,
+            problem,
             ...partialState
           }, () => this.props.router.navigate(this.getURL(submissionID, problemID)), { replace: true })
         }).catch(err => {
@@ -135,8 +135,8 @@ class Grade extends React.Component {
       api.get(`problems/${problemID}`)
     ]).then(([submission, problem]) => {
       this.setState({
-        submission: submission,
-        problem: problem
+        submission,
+        problem
       }, () => {
         this.props.router.navigate(this.getURL(submission.id, problem.id), { replace: true })
       })
@@ -387,7 +387,7 @@ class Grade extends React.Component {
     const problem = this.state.problem
 
     api.put(`solution/${this.props.examID}/${submission.id}/${problem.id}`, {
-      id: id
+      id
     }).then(result => {
       this.updateSubmission()
     })
@@ -397,21 +397,21 @@ class Grade extends React.Component {
    * Toggle approve, if a solution is approved it removes the grader,
    * otherwise a grader is added.
    */
-   toggleApprove = () => {
-     const submission = this.state.submission
-     const problem = this.state.problem
-     const solution = submission.problems.find(p => p.problemId === problem.id)
+  toggleApprove = () => {
+    const submission = this.state.submission
+    const problem = this.state.problem
+    const solution = submission.problems.find(p => p.problemId === problem.id)
 
-     const approve = solution.gradedBy === null
+    const approve = solution.gradedBy === null
 
-     api.put(`solution/approve/${this.props.examID}/${submission.id}/${problem.id}`, {
-       approve: approve
-     }).then(result => this.updateSubmission())
-       .catch(err => toast({
-         message: 'Could not ' + (approve ? 'set aside' : 'approve') + ' feedback: ' + err.message,
-         type: 'is-danger'
-       }))
-   }
+    api.put(`solution/approve/${this.props.examID}/${submission.id}/${problem.id}`, {
+      approve
+    }).then(result => this.updateSubmission())
+      .catch(err => toast({
+        message: 'Could not ' + (approve ? 'set aside' : 'approve') + ' feedback: ' + err.message,
+        type: 'is-danger'
+      }))
+  }
 
   /**
    * Toggles full page view.

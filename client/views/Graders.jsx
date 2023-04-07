@@ -22,7 +22,7 @@ class Graders extends React.Component {
 
     api.get('graders')
       .then(graders => {
-        this.setState({ graders: graders })
+        this.setState({ graders })
       })
       .catch(resp => {
         toast({ message: 'Could not fetch graders (see Javascript console for details)', type: 'is-danger' })
@@ -38,7 +38,7 @@ class Graders extends React.Component {
     api.post('graders', { oauth_id: this.state.oauth_id })
       .then(graders => this.setState({
         oauth_id: '',
-        graders: graders
+        graders
       }))
       .catch(err => toast({ message: err.message, type: 'is-danger' }))
 

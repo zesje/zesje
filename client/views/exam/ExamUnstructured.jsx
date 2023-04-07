@@ -94,7 +94,7 @@ class ExamUnstructured extends React.Component {
 
       return {
         exam: newProps.exam,
-        problems: problems,
+        problems,
         selectedProblemId: problem ? problem.id : null,
         problemName: problem ? problem.name : null,
         problemPage: problem ? problem.page + 1 : -1,
@@ -136,7 +136,7 @@ class ExamUnstructured extends React.Component {
     const jsonData = {
       exam_id: this.props.examID,
       name: `Problem (${this.state.problems.length + 1})`,
-      page: page,
+      page,
       x: 0,
       y: 0,
       width: 0,
@@ -153,7 +153,7 @@ class ExamUnstructured extends React.Component {
       return
     }
 
-    api.patch('problems/' + id, { name: name })
+    api.patch('problems/' + id, { name })
       .then(resp => this.props.updateExam())
       .catch(err => {
         this.selectProblem(id) // takes care of updating the problem name to previous state

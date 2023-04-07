@@ -14,10 +14,10 @@ function _fetch (method) {
     }
 
     return window.fetch('/api/' + endpoint, {
-      method: method,
+      method,
       credentials: 'same-origin',
       body: data,
-      headers: headers
+      headers
     })
       .catch(error => console.error('Error: ', error, ' in', method, endpoint, 'with data', data))
       .then(resp => {

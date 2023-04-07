@@ -47,7 +47,7 @@ const ConfirmMergeModal = (props) => {
 }
 
 class CheckStudents extends React.Component {
-  searchInput = React.createRef();
+  searchInput = React.createRef()
   /**
    * Constructor sets empty state, and requests copies for the exam.
    * After getting the copies, if the copyNumber is provided in the URL, loads the corresponding copy,
@@ -68,7 +68,7 @@ class CheckStudents extends React.Component {
       api.get(`copies/${this.props.examID}/${copyNumber}`).then(copy => {
         this.setState({
           copies,
-          copy: copy,
+          copy,
           index: copies.findIndex(c => c.number === copy.number),
           ...partialState
         }, () => this.props.router.navigate(this.getURL(copyNumber), { replace: true }))
@@ -94,7 +94,7 @@ class CheckStudents extends React.Component {
     const copyNumber = this.props.router.params.copyNumber || this.state.copies[0].number
     api.get(`copies/${this.props.examID}/${copyNumber}`).then(copy => {
       this.setState({
-        copy: copy,
+        copy,
         index: this.state.copies.findIndex(c => c.number === copy.number)
       }, () => this.props.router.navigate(this.getURL(copyNumber)), { replace: true })
     }).catch(_ => {

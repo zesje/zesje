@@ -81,7 +81,7 @@ class App extends React.Component {
 
   selectExam = (id) => this.setState({ examID: parseInt(id) })
   logout = () => api.get('oauth/logout').then(() => this.setState({ grader: null }))
-  setHelpPage = (helpPage) => this.setState({ helpPage: helpPage })
+  setHelpPage = (helpPage) => this.setState({ helpPage })
 
   updateExamList = () => {
     if (this.menu.current) {

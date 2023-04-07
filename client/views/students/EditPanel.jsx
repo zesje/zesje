@@ -77,7 +77,7 @@ class EditPanel extends React.Component {
 
   setID = (id, student) => {
     this.setState({
-      id: id
+      id
     })
 
     if (student) {

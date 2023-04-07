@@ -13,7 +13,7 @@ function withShortcuts (WrappedComponent) {
 
     bindShortcut = (keys, callback, type) => {
       Mousetrap.bind(keys, callback, type)
-      this.boundShortcuts.push({ keys: keys, type: type })
+      this.boundShortcuts.push({ keys, type })
     }
 
     unbindAllShortcuts = () => {

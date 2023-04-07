@@ -21,11 +21,11 @@ class PanelGradeAnonymous extends React.Component {
         gradeAnonymous: nextProps.gradeAnonymous,
         text: nextProps.text,
         isLoading: false,
-        onChange: onChange
+        onChange
       }
     }
 
-    return { onChange: onChange }
+    return { onChange }
   }
 
   toogleGradeAnonymous = () => {

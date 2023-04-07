@@ -49,7 +49,7 @@ class Scans extends React.Component {
     copies: [],
     examID: null,
     hasStudents: undefined
-  };
+  }
 
   constructor (props) {
     super(props)
@@ -90,7 +90,7 @@ class Scans extends React.Component {
       .then(scans => {
         if (JSON.stringify(scans) !== JSON.stringify(this.state.scans)) {
           this.setState({
-            scans: scans
+            scans
           })
           this.updateMissingPages()
 

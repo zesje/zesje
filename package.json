@@ -103,11 +103,11 @@
     "react-time-ago": "^7.2.1",
     "sass": "^1.49.7",
     "sass-loader": "^12.4.0",
-    "sizeof-loader": "^2.0.0",
     "style-loader": "^3.3.1",
     "webpack": "^5.68.0",
     "webpack-cli": "^4.9.2",
-    "webpack-merge": "^5.8.0"
+    "webpack-merge": "^5.8.0",
+    "image-size": "^1.0.2"
   },
   "devDependencies": {
     "@babel/core": "^7.17.0",

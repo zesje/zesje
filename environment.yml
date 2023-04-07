@@ -37,6 +37,8 @@ dependencies:
     # Linting
     - flake8
 
+    - git  # not provided by micromamba image
+
     - pip:
         # Core components
         - flask>=2.2.2

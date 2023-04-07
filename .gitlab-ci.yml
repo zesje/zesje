@@ -31,7 +31,6 @@ build-image:
 
 .conda-env: &conda-env
   before_script:
-    - source activate zesje-dev
     - ln -s /yarn/* ./
     - if [[ $CI_JOB_NAME != *"py"* ]]; then yarn install; fi
 

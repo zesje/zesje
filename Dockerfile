@@ -1,23 +1,25 @@
 # A Dockerfile containing the production deployment for Zesje
 
-FROM continuumio/miniconda3
+FROM mambaorg/micromamba:1.4-kinetic
+
+USER root
 
 RUN apt-get update && \
     apt-get install -y libdmtx-dev && \
     apt-get install -y git supervisor nginx cron
 
+COPY --chown=$MAMBA_USER:$MAMBA_USER environment.yml /tmp/env.yaml
+USER $MAMBA_USER
+RUN micromamba install -y -n base -f /tmp/env.yaml && \
+    micromamba clean --all --yes
+
+ARG MAMBA_DOCKERFILE_ACTIVATE=1
+USER root
 WORKDIR /app
-
-ADD environment.yml .
-RUN conda env create && conda clean --all
-
-RUN echo "source activate zesje-dev" > ~/.bashrc
-ENV PATH /opt/conda/envs/zesje-dev/bin:$PATH
-
 ADD . .
 RUN yarn install
 RUN yarn build
 
 RUN rm -rf node_modules
 
-ENTRYPOINT [ "/bin/bash" ]
+ENTRYPOINT ["/usr/local/bin/_entrypoint.sh", "/usr/bin/bash"]

@@ -230,19 +230,19 @@ def test_problem_gradable(app, exam, problem):
     # no feedback option
     assert not problem.gradable
 
-    problem.feedback_options.append(FeedbackOption(text='Blank', score=0))
+    problem.feedback_options.append(FeedbackOption(text="Blank", score=0))
     db.session.commit()
 
     # one feedback but max score is 0
     assert not problem.gradable
 
-    problem.feedback_options.append(FeedbackOption(text='Negative', score=-1))
+    problem.feedback_options.append(FeedbackOption(text="Negative", score=-1))
     db.session.commit()
 
     # has feedback but max score is still <= 0
     assert not problem.gradable
 
-    problem.feedback_options.append(FeedbackOption(text='Positive', score=1))
+    problem.feedback_options.append(FeedbackOption(text="Positive", score=1))
     db.session.commit()
 
     # has feedback and max score is still > 0
@@ -262,27 +262,27 @@ def test_empty_db(app):
 
 @pytest.fixture
 def mc_option():
-    return MultipleChoiceOption(name='', x=0, y=0)
+    return MultipleChoiceOption(name="", x=0, y=0)
 
 
 @pytest.fixture
 def exam():
-    return Exam(name='')
+    return Exam(name="")
 
 
 @pytest.fixture
 def problem():
-    return Problem(name='')
+    return Problem(name="")
 
 
 @pytest.fixture
 def problem_widget():
-    return ProblemWidget(name='', page=0, x=0, y=0, width=0, height=0)
+    return ProblemWidget(name="", page=0, x=0, y=0, width=0, height=0)
 
 
 @pytest.fixture
 def exam_widget():
-    return ExamWidget(name='', x=0, y=0)
+    return ExamWidget(name="", x=0, y=0)
 
 
 @pytest.fixture
@@ -302,14 +302,14 @@ def solution():
 
 @pytest.fixture
 def scan():
-    return Scan(name='', status='')
+    return Scan(name="", status="")
 
 
 @pytest.fixture
 def page():
-    return Page(path='', number=0)
+    return Page(path="", number=0)
 
 
 @pytest.fixture
 def feedback_option():
-    return FeedbackOption(text='')
+    return FeedbackOption(text="")

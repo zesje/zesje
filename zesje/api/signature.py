@@ -10,11 +10,19 @@ from ..database import Exam, Copy, ExamLayout
 from ..scans import exam_student_id_widget
 
 
-@use_kwargs({
-    'exam': DBModel(Exam, required=True, validate_model=[lambda exam: exam.layout == ExamLayout.templated or
-            ApiError('Signatures cannot be validated for unstructured exams.', 400)]),
-    'copy_number': fields.Int(required=True)
-})
+@use_kwargs(
+    {
+        "exam": DBModel(
+            Exam,
+            required=True,
+            validate_model=[
+                lambda exam: exam.layout == ExamLayout.templated
+                or ApiError("Signatures cannot be validated for unstructured exams.", 400)
+            ],
+        ),
+        "copy_number": fields.Int(required=True),
+    }
+)
 def get(exam, copy_number):
     """get student signature for the given submission.
 
@@ -31,9 +39,8 @@ def get(exam, copy_number):
     """
     # We could register an app-global error handler for this,
     # but it would add more code then it removes.
-    if (copy := Copy.query.filter(Copy.exam == exam,
-                                  Copy.number == copy_number).one_or_none()) is None:
-        return dict(status=404, message='Copy does not exist.'), 404
+    if (copy := Copy.query.filter(Copy.exam == exam, Copy.number == copy_number).one_or_none()) is None:
+        return dict(status=404, message="Copy does not exist."), 404
 
     _, student_id_widget_coords = exam_student_id_widget(exam.id)
     widget_area = np.asarray(student_id_widget_coords)
@@ -44,10 +51,10 @@ def get(exam, copy_number):
     try:
         first_page_path = next(p.abs_path for p in copy.pages if p.number == 0)
     except StopIteration:
-        raise ApiError(f'First page is missing for the copy #{copy_number}', 404)
+        raise ApiError(f"First page is missing for the copy #{copy_number}", 404)
 
     first_page_im = cv2.imread(first_page_path)
 
     raw_image = get_box(first_page_im, widget_area_in, padding=0.3)
     image_encoded = cv2.imencode(".jpg", raw_image)[1].tostring()
-    return Response(image_encoded, 200, mimetype='image/jpeg')
+    return Response(image_encoded, 200, mimetype="image/jpeg")

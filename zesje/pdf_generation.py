@@ -15,24 +15,18 @@ import zipstream
 
 def exam_dir(exam_id):
     return os.path.join(
-        current_app.config['DATA_DIRECTORY'],
-        f'{exam_id}_data',
+        current_app.config["DATA_DIRECTORY"],
+        f"{exam_id}_data",
     )
 
 
 def exam_pdf_path(exam_id):
-    return os.path.join(
-        exam_dir(exam_id),
-        'exam.pdf'
-    )
+    return os.path.join(exam_dir(exam_id), "exam.pdf")
 
 
-def generate_pdfs(exam_pdf_file,
-                  copy_nums,
-                  exam_token=None,
-                  id_grid_x=0, id_grid_y=0,
-                  datamatrix_x=0, datamatrix_y=0,
-                  cb_data=None):
+def generate_pdfs(
+    exam_pdf_file, copy_nums, exam_token=None, id_grid_x=0, id_grid_y=0, datamatrix_x=0, datamatrix_y=0, cb_data=None
+):
     """
     Generates an overlay onto the exam PDF file and saves it at the output path.
 
@@ -86,12 +80,12 @@ def generate_pdfs(exam_pdf_file,
             overlay_canv = canvas.Canvas(overlay_file.name, pagesize=pagesize)
             if copy_num is None:
                 # Draw corner markers and student id grid
-                _generate_generic_overlay(overlay_canv, pagesize, len(exam_pdf.pages),
-                                          id_grid_x, id_grid_y, cb_data)
+                _generate_generic_overlay(overlay_canv, pagesize, len(exam_pdf.pages), id_grid_x, id_grid_y, cb_data)
             else:
                 # Draw the datamatric and copy number
-                _generate_copy_overlay(overlay_canv, pagesize, exam_token, copy_num,
-                                       len(exam_pdf.pages), datamatrix_x, datamatrix_y)
+                _generate_copy_overlay(
+                    overlay_canv, pagesize, exam_token, copy_num, len(exam_pdf.pages), datamatrix_x, datamatrix_y
+                )
             overlay_canv.save()
 
             # Merge overlay and exam
@@ -134,26 +128,28 @@ def write_finalized_exam(exam):
     """
     exam_dir, student_id_widget, _, exam_pdf_file, cb_data = _exam_generate_data(exam)
 
-    original_pdf_file = os.path.join(exam_dir, 'original.pdf')
+    original_pdf_file = os.path.join(exam_dir, "original.pdf")
     shutil.move(exam_pdf_file, original_pdf_file)
 
-    _, output = next(generate_pdfs(
-        exam_pdf_file=original_pdf_file,
-        exam_token=None,
-        copy_nums=[None],
-        id_grid_x=student_id_widget.x,
-        id_grid_y=student_id_widget.y,
-        cb_data=cb_data
-    ))
+    _, output = next(
+        generate_pdfs(
+            exam_pdf_file=original_pdf_file,
+            exam_token=None,
+            copy_nums=[None],
+            id_grid_x=student_id_widget.x,
+            id_grid_y=student_id_widget.y,
+            cb_data=cb_data,
+        )
+    )
 
-    with open(exam_pdf_file, 'wb') as of:
+    with open(exam_pdf_file, "wb") as of:
         of.write(output.getbuffer())
 
     os.remove(original_pdf_file)
 
 
 def _exam_generate_data(exam):
-    """ Retrieve data necessary to generate exam PDFs
+    """Retrieve data necessary to generate exam PDFs
 
     Parameters
     ----------
@@ -175,19 +171,9 @@ def _exam_generate_data(exam):
     """
     os.makedirs(exam_dir(exam.id), exist_ok=True)
 
-    student_id_widget = next(
-        widget
-        for widget
-        in exam.widgets
-        if widget.name == 'student_id_widget'
-    )
+    student_id_widget = next(widget for widget in exam.widgets if widget.name == "student_id_widget")
 
-    barcode_widget = next(
-        widget
-        for widget
-        in exam.widgets
-        if widget.name == 'barcode_widget'
-    )
+    barcode_widget = next(widget for widget in exam.widgets if widget.name == "barcode_widget")
 
     exam_path = exam_pdf_path(exam.id)
 
@@ -258,15 +244,16 @@ def generate_zipped_pdfs(exam, start, end):
     """
     exam_dir, _, barcode_widget, exam_path, _ = _exam_generate_data(exam)
 
-    zf = zipstream.ZipFile(mode='w')
+    zf = zipstream.ZipFile(mode="w")
 
     for copy_num, pdf in generate_pdfs(
-            exam_pdf_file=exam_path,
-            copy_nums=list(range(start, end + 1)),
-            exam_token=exam.token,
-            datamatrix_x=barcode_widget.x,
-            datamatrix_y=barcode_widget.y):
-        zf.writestr(current_app.config['OUTPUT_PDF_FILENAME_FORMAT'].format(copy_num), pdf.getvalue())
+        exam_pdf_file=exam_path,
+        copy_nums=list(range(start, end + 1)),
+        exam_token=exam.token,
+        datamatrix_x=barcode_widget.x,
+        datamatrix_y=barcode_widget.y,
+    ):
+        zf.writestr(current_app.config["OUTPUT_PDF_FILENAME_FORMAT"].format(copy_num), pdf.getvalue())
         yield from zf.flush()
 
     yield from zf
@@ -294,12 +281,12 @@ def generate_single_pdf(exam, start, end, output_file):
     writer = PdfWriter()
 
     for copy_num, pdf in generate_pdfs(
-            exam_pdf_file=exam_path,
-            copy_nums=list(range(start, end + 1)),
-            exam_token=exam.token,
-            datamatrix_x=barcode_widget.x,
-            datamatrix_y=barcode_widget.y):
-
+        exam_pdf_file=exam_path,
+        copy_nums=list(range(start, end + 1)),
+        exam_token=exam.token,
+        datamatrix_x=barcode_widget.x,
+        datamatrix_y=barcode_widget.y,
+    ):
         writer.addpages(PdfReader(pdf).pages)
 
     writer.write(output_file)
@@ -318,14 +305,14 @@ def generate_id_grid(canv, x, y):
     x : int
         The y coordinate where the grid should be drawn
     """
-    fontsize = current_app.config['ID_GRID_FONT_SIZE']  # Size of font
-    margin = current_app.config['ID_GRID_MARGIN']  # Margin between elements and sides
-    digits = current_app.config['ID_GRID_DIGITS']  # Max amount of digits you want for student numbers
+    fontsize = current_app.config["ID_GRID_FONT_SIZE"]  # Size of font
+    margin = current_app.config["ID_GRID_MARGIN"]  # Margin between elements and sides
+    digits = current_app.config["ID_GRID_DIGITS"]  # Max amount of digits you want for student numbers
 
-    mark_box_size = current_app.config['ID_GRID_BOX_SIZE']  # Size of student number boxes
-    text_box_width, text_box_height = current_app.config['ID_GRID_TEXT_BOX_SIZE']  # size of textbox
+    mark_box_size = current_app.config["ID_GRID_BOX_SIZE"]  # Size of student number boxes
+    text_box_width, text_box_height = current_app.config["ID_GRID_TEXT_BOX_SIZE"]  # size of textbox
 
-    canv.setFont(current_app.config['ID_GRID_FONT'], fontsize)
+    canv.setFont(current_app.config["ID_GRID_FONT"], fontsize)
 
     # Remember to modify the ExamWidget size property after a change
     # in the layout that affects the size of the widget
@@ -333,29 +320,33 @@ def generate_id_grid(canv, x, y):
     # Draw numbers and boxes for student number
     canv.drawString(x + margin, y - fontsize - margin, "Student number :")
     for i in range(10):
-        canv.drawString(x + margin,
-                        y - ((i + 2) * (fontsize + margin)),
-                        str(i))
+        canv.drawString(x + margin, y - ((i + 2) * (fontsize + margin)), str(i))
         for j in range(digits):
-            canv.rect(x + (j + 1) * (fontsize + margin),
-                      y - (i + 2) * (fontsize + margin) - 1,
-                      mark_box_size, mark_box_size)
+            canv.rect(
+                x + (j + 1) * (fontsize + margin), y - (i + 2) * (fontsize + margin) - 1, mark_box_size, mark_box_size
+            )
 
     # Draw first name text and box
-    canv.drawString(x + (digits + 1) * (fontsize + margin) + 3 * margin - 1,
-                    y - fontsize - margin, "First name :")
+    canv.drawString(x + (digits + 1) * (fontsize + margin) + 3 * margin - 1, y - fontsize - margin, "First name :")
 
-    canv.rect(x + (digits + 1) * (fontsize + margin) + 3 * margin,
-              y - fontsize * 3 - 3 * margin - 1,
-              text_box_width, text_box_height)
+    canv.rect(
+        x + (digits + 1) * (fontsize + margin) + 3 * margin,
+        y - fontsize * 3 - 3 * margin - 1,
+        text_box_width,
+        text_box_height,
+    )
 
     # Draw last name text and box
-    canv.drawString(x + (digits + 1) * (fontsize + margin) + 3 * margin - 1,
-                    y - 5 * fontsize - 2 * margin, "Last name :")
+    canv.drawString(
+        x + (digits + 1) * (fontsize + margin) + 3 * margin - 1, y - 5 * fontsize - 2 * margin, "Last name :"
+    )
 
-    canv.rect(x + (digits + 1) * (fontsize + margin) + 3 * margin,
-              y - fontsize * 6 - 6 * margin - 1,
-              text_box_width, text_box_height)
+    canv.rect(
+        x + (digits + 1) * (fontsize + margin) + 3 * margin,
+        y - fontsize * 6 - 6 * margin - 1,
+        text_box_width,
+        text_box_height,
+    )
 
 
 def add_checkbox(canvas, x, y, label):
@@ -379,16 +370,16 @@ def add_checkbox(canvas, x, y, label):
     x += 7
     y -= 21
 
-    box_size = current_app.config['CHECKBOX_SIZE']
-    margin = current_app.config['CHECKBOX_MARGIN']
+    box_size = current_app.config["CHECKBOX_SIZE"]
+    margin = current_app.config["CHECKBOX_MARGIN"]
     x_label = x + 1  # location of the label
     y_label = y + margin  # remove fontsize from the y label since we draw from the bottom left up
     box_y = y - box_size  # remove the markboxsize because the y is the coord of the top
     # and reportlab prints from the bottom
 
     # check that there is a label to print
-    if (label and not (len(label) == 0)):
-        canvas.setFont(current_app.config['CHECKBOX_FONT'], current_app.config['CHECKBOX_FONT_SIZE'])
+    if label and not (len(label) == 0):
+        canvas.setFont(current_app.config["CHECKBOX_FONT"], current_app.config["CHECKBOX_FONT_SIZE"])
         canvas.drawString(x_label, y_label, label[0])
 
     canvas.rect(x, box_y, box_size, box_size)
@@ -423,13 +414,13 @@ def generate_datamatrix(exam_token, page_num, copy_num):
         don't need to add a quiet zone yourself)
     """
 
-    data = f'{exam_token}/{copy_num:04d}/{page_num:02d}'
+    data = f"{exam_token}/{copy_num:04d}/{page_num:02d}"
 
-    box_size = current_app.config['COPY_NUMBER_MATRIX_BOX_SIZE']
+    box_size = current_app.config["COPY_NUMBER_MATRIX_BOX_SIZE"]
 
-    encoded = encode(data.encode('utf-8'), size='18x18')
-    datamatrix = PIL.Image.frombytes('RGB', (encoded.width, encoded.height), encoded.pixels)
-    datamatrix = datamatrix.resize((box_size, box_size)).convert('L')
+    encoded = encode(data.encode("utf-8"), size="18x18")
+    datamatrix = PIL.Image.frombytes("RGB", (encoded.width, encoded.height), encoded.pixels)
+    datamatrix = datamatrix.resize((box_size, box_size)).convert("L")
     return datamatrix
 
 
@@ -517,9 +508,9 @@ def _generate_copy_overlay(canv, pagesize, exam_token, copy_num, num_pages, data
         The y coordinate where the DataMatrix codes should be placed
     """
     # Font settings for the copy number (printed under the datamatrix)
-    fontsize = current_app.config['COPY_NUMBER_FONTSIZE']
+    fontsize = current_app.config["COPY_NUMBER_FONTSIZE"]
 
-    canv.setFont(current_app.config['COPY_NUMBER_FONT'], fontsize)
+    canv.setFont(current_app.config["COPY_NUMBER_FONT"], fontsize)
 
     for page_num in range(num_pages):
         datamatrix = generate_datamatrix(exam_token, page_num, copy_num)
@@ -528,10 +519,7 @@ def _generate_copy_overlay(canv, pagesize, exam_token, copy_num, num_pages, data
         datamatrix_y_adjusted = pagesize[1] - datamatrix_y - datamatrix.height
 
         canv.drawImage(ImageReader(datamatrix), datamatrix_x, datamatrix_y_adjusted)
-        canv.drawString(
-            datamatrix_x, datamatrix_y_adjusted - (fontsize * 0.66),
-            f" # {copy_num}"
-        )
+        canv.drawString(datamatrix_x, datamatrix_y_adjusted - (fontsize * 0.66), f" # {copy_num}")
 
         canv.showPage()
 
@@ -550,30 +538,32 @@ def _add_corner_markers(canv, pagesize):
     """
     page_width = pagesize[0]
     page_height = pagesize[1]
-    marker_line_length = current_app.config['MARKER_LINE_LENGTH']
+    marker_line_length = current_app.config["MARKER_LINE_LENGTH"]
 
     # Calculate coordinates offset from page edge
-    margin = current_app.config['MARKER_MARGIN']
+    margin = current_app.config["MARKER_MARGIN"]
     left = margin
     bottom = margin
     right = page_width - margin
     top = page_height - margin
 
-    canv.setLineWidth(current_app.config['MARKER_LINE_WIDTH'])
-    canv.lines([
-        # Bottom left corner marker
-        (left, bottom, left + marker_line_length, bottom),
-        (left, bottom, left, bottom + marker_line_length),
-        # Bottom right corner marker
-        (right, bottom, right - marker_line_length, bottom),
-        (right, bottom, right, bottom + marker_line_length),
-        # Top right corner marker
-        (right, top, right - marker_line_length, top),
-        (right, top, right, top - marker_line_length),
-        # Top left corner marker
-        (left, top, left + marker_line_length, top),
-        (left, top, left, top - marker_line_length)
-    ])
+    canv.setLineWidth(current_app.config["MARKER_LINE_WIDTH"])
+    canv.lines(
+        [
+            # Bottom left corner marker
+            (left, bottom, left + marker_line_length, bottom),
+            (left, bottom, left, bottom + marker_line_length),
+            # Bottom right corner marker
+            (right, bottom, right - marker_line_length, bottom),
+            (right, bottom, right, bottom + marker_line_length),
+            # Top right corner marker
+            (right, top, right - marker_line_length, top),
+            (right, top, right, top - marker_line_length),
+            # Top left corner marker
+            (left, top, left + marker_line_length, top),
+            (left, top, left, top - marker_line_length),
+        ]
+    )
 
 
 def page_is_size(exam_pdf_file, shape, tolerance=0):
@@ -603,8 +593,7 @@ def page_is_size(exam_pdf_file, shape, tolerance=0):
     tol = (shape[0] * tolerance, shape[1] * tolerance)
 
     def page_is_bad(page):
-        return (abs(float(page.MediaBox[2]) - shape[0]) > tol[0]
-                or abs(float(page.MediaBox[3]) - shape[1]) > tol[1])
+        return abs(float(page.MediaBox[2]) - shape[0]) > tol[0] or abs(float(page.MediaBox[3]) - shape[1]) > tol[1]
 
     invalid = any(page_is_bad(p) for p in exam_pdf.pages)
 
@@ -639,7 +628,7 @@ def save_with_even_pages(exam_id, exam_pdf_file):
     exam_pdf = PdfReader(exam_pdf_file)
     pagecount = len(exam_pdf.pages)
 
-    if (pagecount % 2 == 0):
+    if pagecount % 2 == 0:
         exam_pdf_file.seek(0)
         exam_pdf_file.save(pdf_path)
         return

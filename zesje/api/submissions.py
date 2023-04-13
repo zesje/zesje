@@ -14,13 +14,11 @@ from ..database import db, Exam, Submission, Problem, Solution, solution_feedbac
 def sub_to_data(sub, meta=None):
     """Transform a submission into a data structure frontend expects."""
     return {
-        'meta': meta,
-        'id': sub.id,
-        'student': student_to_data(sub.student) if sub.student else None,
-        'validated': sub.validated,
-        'problems': [
-            solution_to_data(sol) for sol in sub.solutions  # Sorted by sol.problem_id
-        ]
+        "meta": meta,
+        "id": sub.id,
+        "student": student_to_data(sub.student) if sub.student else None,
+        "validated": sub.validated,
+        "problems": [solution_to_data(sol) for sol in sub.solutions],  # Sorted by sol.problem_id
     }
 
 
@@ -46,21 +44,28 @@ def has_all_required_feedback(sol, required_feedback, excluded_feedback):
     if not required_feedback and not excluded_feedback:
         return True
 
-    feedback_ids = set(map(lambda x: x[0], db.session.query(solution_feedback.c.feedback_option_id)
-                           .filter(solution_feedback.c.solution_id == sol.id).all()))
+    feedback_ids = set(
+        map(
+            lambda x: x[0],
+            db.session.query(solution_feedback.c.feedback_option_id)
+            .filter(solution_feedback.c.solution_id == sol.id)
+            .all(),
+        )
+    )
     return (required_feedback <= feedback_ids) and (not excluded_feedback & feedback_ids)
 
 
 _DIRECTION_OPERATORS = {
-  'next': (min, operators.gt, operators.lt),
-  'prev': (max, operators.lt, operators.gt),
-  'first': (min, operators.lt, operators.gt),
-  'last': (max, operators.gt, operators.lt)
+    "next": (min, operators.gt, operators.lt),
+    "prev": (max, operators.lt, operators.gt),
+    "first": (min, operators.lt, operators.gt),
+    "last": (max, operators.gt, operators.lt),
 }
 
 
-def _find_submission(old_submission, problem_id, shuffle_seed, direction, ungraded,
-                     required_feedback, excluded_feedback, graded_by):
+def _find_submission(
+    old_submission, problem_id, shuffle_seed, direction, ungraded, required_feedback, excluded_feedback, graded_by
+):
     """
     Finds a submission based on the parameters of the function.
     Finds all solutions for the problem, and shuffles them based on the shuffle_seed.
@@ -90,8 +95,9 @@ def _find_submission(old_submission, problem_id, shuffle_seed, direction, ungrad
     -------
     A new submission, or the old one if no submission matching the criteria is found.
     """
+
     def key(sub_id):
-        return md5(b'%i %i' % (sub_id, shuffle_seed)).digest()
+        return md5(b"%i %i" % (sub_id, shuffle_seed)).digest()
 
     old_key = key(old_submission.id)
     next_, follows, precedes = _DIRECTION_OPERATORS[direction]
@@ -106,10 +112,7 @@ def _find_submission(old_submission, problem_id, shuffle_seed, direction, ungrad
 
     solutions = Solution.query.filter(
         Solution.problem_id == problem_id,
-        (
-            Solution.is_graded.is_(False) if ungraded
-            else (graded_by is None) or (Solution.grader_id == graded_by)
-        ),
+        (Solution.is_graded.is_(False) if ungraded else (graded_by is None) or (Solution.grader_id == graded_by)),
     ).all()
 
     for sol in solutions:
@@ -130,19 +133,23 @@ def _find_submission(old_submission, problem_id, shuffle_seed, direction, ungrad
 
 class Submissions(MethodView):
     """Getting a list of submissions"""
-    @use_kwargs({
-        'exam': DBModel(Exam, required=True),
-        'submission': DBModel(Submission, required=False, load_default=None)
-    })
-    @use_args({
-        'problem': DBModel(Problem, required=False, load_default=None, data_key='problem_id'),
-        'ungraded': fields.Bool(required=False, load_default=False),
-        'direction':
-            fields.Str(required=False, load_default=None, validate=validate.OneOf(["next", "prev", "first", "last"])),
-        'required_feedback': fields.List(fields.Int, required=False, load_default=list),
-        'excluded_feedback': fields.List(fields.Int, required=False, load_default=list),
-        'graded_by': fields.Int(required=False, load_default=None)
-    }, location='query')
+
+    @use_kwargs(
+        {"exam": DBModel(Exam, required=True), "submission": DBModel(Submission, required=False, load_default=None)}
+    )
+    @use_args(
+        {
+            "problem": DBModel(Problem, required=False, load_default=None, data_key="problem_id"),
+            "ungraded": fields.Bool(required=False, load_default=False),
+            "direction": fields.Str(
+                required=False, load_default=None, validate=validate.OneOf(["next", "prev", "first", "last"])
+            ),
+            "required_feedback": fields.List(fields.Int, required=False, load_default=list),
+            "excluded_feedback": fields.List(fields.Int, required=False, load_default=list),
+            "graded_by": fields.Int(required=False, load_default=None),
+        },
+        location="query",
+    )
     def get(self, args, exam, submission):
         """get submissions for the given exam
 
@@ -168,37 +175,42 @@ class Submissions(MethodView):
             return [sub_to_data(sub) for sub in exam.submissions]
 
         if submission.exam_id != exam.id:
-            return dict(status=400, message='Submission does not belong to this exam.'), 400
+            return dict(status=400, message="Submission does not belong to this exam."), 400
 
-        n_graded = Solution.query.filter(Solution.problem_id == args['problem'].id,
-                                         Solution.is_graded).count()
+        n_graded = Solution.query.filter(Solution.problem_id == args["problem"].id, Solution.is_graded).count()
 
         new_sub, no_of_subs_follow, no_of_subs_precede, match_current = _find_submission(
-            submission, args['problem'].id, current_user.id, args['direction'] or "next", args['ungraded'],
-            args['required_feedback'], args['excluded_feedback'], args['graded_by']
+            submission,
+            args["problem"].id,
+            current_user.id,
+            args["direction"] or "next",
+            args["ungraded"],
+            args["required_feedback"],
+            args["excluded_feedback"],
+            args["graded_by"],
         )
 
         matched = no_of_subs_follow + no_of_subs_precede + match_current
-        if args['direction'] is None:
+        if args["direction"] is None:
             new_sub = submission
             no_next_sub = no_of_subs_follow == 0
             no_prev_sub = no_of_subs_precede == 0
-        elif args['direction'] in ('next', 'prev'):
+        elif args["direction"] in ("next", "prev"):
             no_next_sub = no_of_subs_follow <= 1
             no_prev_sub = (no_of_subs_precede + match_current) == 0
-        elif args['direction'] in ('last', 'first'):
+        elif args["direction"] in ("last", "first"):
             no_next_sub = True
             no_prev_sub = matched <= 1
 
         # If direction is backwards the availability of subs should be inverted
-        if args['direction'] in ('prev', 'first'):
+        if args["direction"] in ("prev", "first"):
             no_next_sub, no_prev_sub = no_prev_sub, no_next_sub
 
         meta = {
-            'filter_matches': matched,
-            'n_graded': n_graded,
-            'no_next_sub': no_next_sub,
-            'no_prev_sub': no_prev_sub,
+            "filter_matches": matched,
+            "n_graded": n_graded,
+            "no_next_sub": no_next_sub,
+            "no_prev_sub": no_prev_sub,
         }
 
         return sub_to_data(new_sub, meta)

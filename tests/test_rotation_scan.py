@@ -17,23 +17,22 @@ def distance(keyp1, keyp2):
 # Given a name of a exam image and the location it is stored, retrieves the
 # image and converts it to binary image
 def generate_image(name, datadir):
-    pdf_path = os.path.join(datadir, 'scanned_pdfs', f'{name}')
+    pdf_path = os.path.join(datadir, "scanned_pdfs", f"{name}")
     pil_im = PIL.Image.open(pdf_path)
-    pil_im = pil_im.convert('RGB')
+    pil_im = pil_im.convert("RGB")
     image_array = np.array(pil_im)
     return image_array
+
 
 # Tests
 
 
 # Tests whether the output of calc angle is correct
-@pytest.mark.parametrize('test_input1, test_input2, expected', [
-    ((1337, 69), (9001, 69), 0),
-    ((0, 100), (0, 1000), 90),
-    ((25, 25), (50, 50), -45),
-    ((25, 25), (50, 0), 45)],
-    ids=['Same horizontal line', 'Same vertical line', 'Negative angle',
-         'Positive angle'])
+@pytest.mark.parametrize(
+    "test_input1, test_input2, expected",
+    [((1337, 69), (9001, 69), 0), ((0, 100), (0, 1000), 90), ((25, 25), (50, 50), -45), ((25, 25), (50, 0), 45)],
+    ids=["Same horizontal line", "Same vertical line", "Negative angle", "Positive angle"],
+)
 def test_calc_angle(test_input1, test_input2, expected):
     assert math.isclose(scans.calc_angle(test_input1, test_input2), expected, abs_tol=0.1)
 
@@ -41,19 +40,18 @@ def test_calc_angle(test_input1, test_input2, expected):
 # Tests whether the amount of cornermakers is enough to calculate the angle and
 # whether it is lower than 5 as we only add 4 corner markers per page.
 test_args = [
-    ('blank.jpg', 0),
-    ('missing_two_corners.jpg', 2),
-    ('sample_exam.jpg', 4),
-    ('shifted.jpg', 4),
-    ('tilted.jpg', 4),
-    ('tilted_extreme.jpg', 4),
-    ('tilted_extreme_2.jpg', 4),
-    ('messy_three_corners.jpg', 3)]
+    ("blank.jpg", 0),
+    ("missing_two_corners.jpg", 2),
+    ("sample_exam.jpg", 4),
+    ("shifted.jpg", 4),
+    ("tilted.jpg", 4),
+    ("tilted_extreme.jpg", 4),
+    ("tilted_extreme_2.jpg", 4),
+    ("messy_three_corners.jpg", 3),
+]
 
 
-@pytest.mark.parametrize(
-    'name,expected', test_args,
-    ids=list(map(lambda e: f"{e[0]} ({e[1]} markers)", test_args)))
+@pytest.mark.parametrize("name,expected", test_args, ids=list(map(lambda e: f"{e[0]} ({e[1]} markers)", test_args)))
 def test_detect_enough_cornermarkers(name, expected, datadir, config_app):
     image = generate_image(name, datadir)
     keypoints = scans.find_corner_marker_keypoints(image)
@@ -64,7 +62,7 @@ def test_detect_enough_cornermarkers(name, expected, datadir, config_app):
 # This is done by checking whether they are close enough to the corner
 # of the image. Only A4 is considered as there is no test data yet for
 # US letter size.
-@pytest.mark.parametrize('name', map(lambda tup: tup[0], test_args))
+@pytest.mark.parametrize("name", map(lambda tup: tup[0], test_args))
 def test_detect_valid_cornermarkers(name, datadir, config_app):
     image = generate_image(name, datadir)
     keypoints = scans.find_corner_marker_keypoints(image)
@@ -80,8 +78,7 @@ def test_detect_valid_cornermarkers(name, datadir, config_app):
     # If there is, one of those probably isn't a corner marker.
     result = np.array([0, 0, 0, 0])
     for detected_keypoint in keypoints:
-        distlist = np.array([distance(detected_keypoint, corner_keypoint)
-                            for corner_keypoint in cornerlist])
+        distlist = np.array([distance(detected_keypoint, corner_keypoint) for corner_keypoint in cornerlist])
         binlist = distlist < maxdist
         result = binlist + result
 

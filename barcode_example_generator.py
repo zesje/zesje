@@ -1,4 +1,3 @@
-
 import sys
 import os
 from io import BytesIO
@@ -29,9 +28,8 @@ canv = canvas.Canvas(result_pdf, pagesize=imagesize)
 
 canv.drawInlineImage(datamatrix, datamatrix_x, datamatrix_y)
 
-canv.setFont('Helvetica', fontsize)
-canv.drawString(datamatrix_x, datamatrix_y - (fontsize * 0.66),
-                f" # {copy_num}")
+canv.setFont("Helvetica", fontsize)
+canv.drawString(datamatrix_x, datamatrix_y - (fontsize * 0.66), f" # {copy_num}")
 
 canv.showPage()
 canv.save()

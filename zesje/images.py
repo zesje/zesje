@@ -55,24 +55,21 @@ def widget_area(problem):
     widget_area_in : numpy array
         An array with consisting of [top, bottom, left, right] in inches
     """
-    widget_area = np.asarray([
-        problem.widget.y,  # top
-        problem.widget.y + problem.widget.height,  # bottom
-        problem.widget.x,  # left
-        problem.widget.x + problem.widget.width,  # right
-    ])
+    widget_area = np.asarray(
+        [
+            problem.widget.y,  # top
+            problem.widget.y + problem.widget.height,  # bottom
+            problem.widget.x,  # left
+            problem.widget.x + problem.widget.width,  # right
+        ]
+    )
 
     widget_area_in = widget_area / 72
 
     return widget_area_in
 
 
-def covers(cover_img,
-           to_cover_img,
-           padding_pixels=0,
-           threshold=0,
-           binary_threshold=150,
-           kernel_size=9):
+def covers(cover_img, to_cover_img, padding_pixels=0, threshold=0, binary_threshold=150, kernel_size=9):
     """Check if an image covers another image
 
     First, both images are converted to binary. Then, all the content
@@ -136,15 +133,18 @@ def is_misaligned(area_inch, img, reference, padding_inch=0.2):
 
     # The diameter of the kernel to thicken the lines with. This allows
     # misalignment up to the max alignment error in any direction.
-    kernel_size_mm = 2 * current_app.config['MAX_ALIGNMENT_ERROR_MM']
+    kernel_size_mm = 2 * current_app.config["MAX_ALIGNMENT_ERROR_MM"]
     kernel_size = int(kernel_size_mm * dpi / mm_per_inch)
 
     img_cropped = get_box(img, area_inch, padding=padding_inch)
     reference_cropped = get_box(reference, area_inch, padding=padding_inch)
 
-    binary_threshold = current_app.config['THRESHOLD_MISALIGMENT']
+    binary_threshold = current_app.config["THRESHOLD_MISALIGMENT"]
 
-    return not covers(img_cropped, reference_cropped,
-                      padding_pixels=padding_pixels,
-                      binary_threshold=binary_threshold,
-                      kernel_size=kernel_size)
+    return not covers(
+        img_cropped,
+        reference_cropped,
+        padding_pixels=padding_pixels,
+        binary_threshold=binary_threshold,
+        kernel_size=kernel_size,
+    )

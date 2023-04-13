@@ -12,10 +12,10 @@ from zesje.database import db, Exam, Student, Submission, Scan, Problem, Problem
 
 @pytest.fixture
 def app_with_data(app):
-    exam = Exam(name='', layout=ExamLayout.unstructured)
-    problem = Problem(exam=exam, name='Problem')
+    exam = Exam(name="", layout=ExamLayout.unstructured)
+    problem = Problem(exam=exam, name="Problem")
     widget = ProblemWidget(problem=problem, x=0, y=0, width=0, height=0)
-    students = [Student(id=i+1000000, first_name='', last_name='') for i in range(2)]
+    students = [Student(id=i + 1000000, first_name="", last_name="") for i in range(2)]
     db.session.add(exam)
     db.session.add(problem)
     db.session.add(widget)
@@ -36,17 +36,17 @@ def test_create_copy(app_with_data):
 @pytest.fixture
 def image_file():
     with BytesIO() as image_bytes:
-        image = Image.new('RGB', (10, 10))
-        image.save(image_bytes, format='PNG')
+        image = Image.new("RGB", (10, 10))
+        image.save(image_bytes, format="PNG")
         yield image_bytes
 
 
 @pytest.fixture
 def zip_file(image_file):
     with BytesIO() as zip_bytes:
-        with zipfile.ZipFile(zip_bytes, 'w') as z:
-            z.writestr('1000000-1.png', image_file.getvalue())
-            z.writestr('1000001-1.png', image_file.getvalue())
+        with zipfile.ZipFile(zip_bytes, "w") as z:
+            z.writestr("1000000-1.png", image_file.getvalue())
+            z.writestr("1000001-1.png", image_file.getvalue())
 
         zip_bytes.seek(0)
         yield zip_bytes
@@ -54,18 +54,17 @@ def zip_file(image_file):
 
 def test_zip_process(app_with_data, zip_file):
     app, exam, students = app_with_data
-    scan = Scan(exam=exam, name='test.zip', status='processing')
+    scan = Scan(exam=exam, name="test.zip", status="processing")
     db.session.add(scan)
     db.session.commit()
 
-    with open(str(scan.path), 'wb') as file:
+    with open(str(scan.path), "wb") as file:
         file.write(zip_file.getvalue())
 
     _process_scan(scan.id, exam.layout)
 
     for student in students:
-        sub = Submission.query.filter(Submission.student == student,
-                                      Submission.exam == exam).one()
+        sub = Submission.query.filter(Submission.student == student, Submission.exam == exam).one()
         assert sub.validated
         assert len(sub.copies) == 1
         copy = sub.copies[0]
@@ -78,7 +77,7 @@ def test_zip_process(app_with_data, zip_file):
 def test_reupload_page(app_with_data, zip_file):
     app, exam, students = app_with_data
     student = students[0]
-    file_name = 'old.txt'
+    file_name = "old.txt"
 
     sub = Submission(exam=exam, student_id=student.id, validated=True)
     copy = Copy(submission=sub, number=1)
@@ -86,14 +85,14 @@ def test_reupload_page(app_with_data, zip_file):
     db.session.add_all([sub, copy, page])
     db.session.commit()
 
-    old_path = Path(app.config['DATA_DIRECTORY']) / file_name
-    old_path.write_text('old image data')
+    old_path = Path(app.config["DATA_DIRECTORY"]) / file_name
+    old_path.write_text("old image data")
 
-    image = Image.new('RGB', (10, 10))
+    image = Image.new("RGB", (10, 10))
     page_info = (student.id, page.number, copy.number)
-    file_info = [f'{student.id}-{page.number+1}-{page.copy.number}.jpg']
+    file_info = [f"{student.id}-{page.number+1}-{page.copy.number}.jpg"]
     exam_config = exam_metadata(exam)
-    output_directory = app.config['DATA_DIRECTORY']
+    output_directory = app.config["DATA_DIRECTORY"]
 
     process_page(image, page_info, file_info, exam_config, output_directory)
 

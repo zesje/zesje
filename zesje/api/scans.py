@@ -10,17 +10,17 @@ from ..database import db, Exam, Scan
 def _is_mimetype_allowed(pdf):
     mimetype = pdf.mimetype
     if not (
-        mimetype == 'application/pdf' or
-        mimetype.startswith('image') or
-        mimetype in current_app.config['ZIP_MIME_TYPES']
+        mimetype == "application/pdf"
+        or mimetype.startswith("image")
+        or mimetype in current_app.config["ZIP_MIME_TYPES"]
     ):
-        raise ApiError('File is not a PDF, ZIP or image.', 400)
+        raise ApiError("File is not a PDF, ZIP or image.", 400)
 
 
 class Scans(MethodView):
     """Getting a list of uploaded scans, and uploading new ones."""
 
-    @use_kwargs({'exam': DBModel(Exam, required=True)})
+    @use_kwargs({"exam": DBModel(Exam, required=True)})
     def get(self, exam):
         """get all uploaded scans for a particular exam.
 
@@ -36,17 +36,18 @@ class Scans(MethodView):
         """
         return [
             {
-                'id': scan.id,
-                'name': scan.name,
-                'status': scan.status,
-                'message': scan.message,
+                "id": scan.id,
+                "name": scan.name,
+                "status": scan.status,
+                "message": scan.message,
             }
             for scan in exam.scans
         ]
 
-    @use_kwargs({'exam': DBModel(Exam, required=True, validate_model=[
-        lambda exam: exam.finalized or ExamNotFinalizedError])})
-    @use_kwargs({'file': fields.Field(required=True, validate=_is_mimetype_allowed)}, location='files')
+    @use_kwargs(
+        {"exam": DBModel(Exam, required=True, validate_model=[lambda exam: exam.finalized or ExamNotFinalizedError])}
+    )
+    @use_kwargs({"file": fields.Field(required=True, validate=_is_mimetype_allowed)}, location="files")
     def post(self, exam, file):
         """Upload a scan PDF
 
@@ -62,8 +63,7 @@ class Scans(MethodView):
         status : str
         message : str
         """
-        scan = Scan(exam=exam, name=file.filename,
-                    status='processing', message='Waiting...')
+        scan = Scan(exam=exam, name=file.filename, status="processing", message="Waiting...")
         db.session.add(scan)
         db.session.commit()
 
@@ -82,9 +82,4 @@ class Scans(MethodView):
         # that are actually dead.
         process_scan.delay(scan_id=scan.id, scan_type=exam.layout.value)
 
-        return {
-            'id': scan.id,
-            'name': scan.name,
-            'status': scan.status,
-            'message': scan.message
-        }
+        return {"id": scan.id, "name": scan.name, "status": scan.status, "message": scan.message}

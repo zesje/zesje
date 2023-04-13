@@ -11,7 +11,7 @@ from ..statistics import grader_data
 class Statistics(MethodView):
     """Getting a list of uploaded scans, and uploading new ones."""
 
-    @use_kwargs({'exam': DBModel(Exam, required=True)})
+    @use_kwargs({"exam": DBModel(Exam, required=True)})
     def get(self, exam):
         """get statistics for a particular exam.
 
@@ -65,18 +65,20 @@ class Statistics(MethodView):
 
         """
         # count the total number of students as the number of validated submissions
-        student_ids = db.session.query(Submission.student_id)\
-            .filter(Submission.exam_id == exam.id, Submission.validated)\
-            .all()
+        student_ids = (
+            db.session.query(Submission.student_id).filter(Submission.exam_id == exam.id, Submission.validated).all()
+        )
 
         if len(student_ids) == 0:
-            return dict(status=404, message='There are no students with a validated copy for this exam.'), 404
+            return dict(status=404, message="There are no students with a validated copy for this exam."), 404
 
         total_max_score = 0
-        full_scores = pd.DataFrame(data={},
-                                   index=[id for id, in student_ids],
-                                   columns=[p.id for p in exam.problems if p.gradable] + [0],
-                                   dtype=int)
+        full_scores = pd.DataFrame(
+            data={},
+            index=[id for id, in student_ids],
+            columns=[p.id for p in exam.problems if p.gradable] + [0],
+            dtype=int,
+        )
         ungraded = full_scores.copy()
         data = []
 
@@ -88,16 +90,20 @@ class Statistics(MethodView):
             max_score = p.max_score
 
             problem_data = {
-                'id': p.id,
-                'name': p.name,
-                'max_score': max_score,
-                'feedback': [{
-                    'id': fb.id,
-                    'name': fb.text,
-                    'description': fb.description,
-                    'score': fb.score,
-                    'used': len(fb.solutions)
-                } for fb in p.feedback_options if fb.parent_id is not None]  # Sorted by fb.id
+                "id": p.id,
+                "name": p.name,
+                "max_score": max_score,
+                "feedback": [
+                    {
+                        "id": fb.id,
+                        "name": fb.text,
+                        "description": fb.description,
+                        "score": fb.score,
+                        "used": len(fb.solutions),
+                    }
+                    for fb in p.feedback_options
+                    if fb.parent_id is not None
+                ],  # Sorted by fb.id
             }
 
             # add the problem score to the total
@@ -118,26 +124,22 @@ class Statistics(MethodView):
                         in_revision += 1
                         ungraded.loc[student_id, p.id] = 1
 
-                    results.append({
-                        'studentId': student_id,
-                        'score': mark,
-                        'graded': is_graded
-                    })
+                    results.append({"studentId": student_id, "score": mark, "graded": is_graded})
 
                     full_scores.loc[student_id, p.id] = mark
                 else:
                     ungraded.loc[student_id, p.id] = 1
 
-            problem_data['results'] = sorted(results, key=lambda x: x['score'])
-            problem_data['inRevision'] = in_revision
+            problem_data["results"] = sorted(results, key=lambda x: x["score"])
+            problem_data["inRevision"] = in_revision
 
             graders, autograded = grader_data(p.id)
-            problem_data['graders'] = graders
-            problem_data['autograded'] = autograded
+            problem_data["graders"] = graders
+            problem_data["autograded"] = autograded
 
-            problem_data['mean'] = {
-                'value': full_scores.loc[:, p.id].mean() if len(results) >= 1 else 0,
-                'error': full_scores.loc[:, p.id].std() if len(results) > 1 else 0
+            problem_data["mean"] = {
+                "value": full_scores.loc[:, p.id].mean() if len(results) >= 1 else 0,
+                "error": full_scores.loc[:, p.id].std() if len(results) > 1 else 0,
             }
 
             data.append(problem_data)
@@ -148,44 +150,42 @@ class Statistics(MethodView):
         problems_ungraded = ungraded.sum(axis=1)
 
         # list with total score and number of ungraded problems by student
-        total_results = sorted([{
-            'studentId': id,
-            'score': full_scores.loc[id, 0],
-            'ungraded': int(problems_ungraded.loc[id])
-        } for id, in student_ids], key=lambda item: item['score'])
+        total_results = sorted(
+            [
+                {"studentId": id, "score": full_scores.loc[id, 0], "ungraded": int(problems_ungraded.loc[id])}
+                for id, in student_ids
+            ],
+            key=lambda item: item["score"],
+        )
 
         total_mean = {
-            'value': full_scores.loc[:, 0].mean() if len(total_results) >= 1 else 0,
-            'error': full_scores.loc[:, 0].std() if len(total_results) > 1 else 0
+            "value": full_scores.loc[:, 0].mean() if len(total_results) >= 1 else 0,
+            "error": full_scores.loc[:, 0].std() if len(total_results) > 1 else 0,
         }
 
         for j in range(len(data)):
-            id = data[j]['id']
-            corr = (full_scores[id]
-                    .astype(float)
-                    .corr(full_scores[0]
-                          .subtract(full_scores[id])
-                          .astype(float))
-                    ) if len(student_ids) > 2 else nan
-            data[j]['correlation'] = corr if not isnan(corr) else None
+            id = data[j]["id"]
+            corr = (
+                (full_scores[id].astype(float).corr(full_scores[0].subtract(full_scores[id]).astype(float)))
+                if len(student_ids) > 2
+                else nan
+            )
+            data[j]["correlation"] = corr if not isnan(corr) else None
 
         if len(total_results) > 2 and full_scores[0].var():
-            alpha = ((len(full_scores) - 1) / (len(full_scores) - 2)
-                     * (1 - full_scores.var().iloc[:-1].sum()
-                        / full_scores[0].var()))
+            alpha = (
+                (len(full_scores) - 1)
+                / (len(full_scores) - 2)
+                * (1 - full_scores.var().iloc[:-1].sum() / full_scores[0].var())
+            )
         else:
             alpha = None
 
         return {
-            'id': exam.id,
-            'name': exam.name,
-            'students': len(student_ids),
-            'copies': len(exam.copies) if exam.layout == ExamLayout.templated else len(student_ids),
-            'problems': data,
-            'total': {
-                'alpha': alpha,
-                'max_score': total_max_score,
-                'results': total_results,
-                'mean': total_mean
-            }
+            "id": exam.id,
+            "name": exam.name,
+            "students": len(student_ids),
+            "copies": len(exam.copies) if exam.layout == ExamLayout.templated else len(student_ids),
+            "problems": data,
+            "total": {"alpha": alpha, "max_score": total_max_score, "results": total_results, "mean": total_mean},
         }

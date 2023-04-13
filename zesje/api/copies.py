@@ -12,19 +12,16 @@ from ..pdf_generation import exam_pdf_path
 def copy_to_data(copy):
     sub = copy.submission
     return {
-        'number': copy.number,
-        'student': student_to_data(sub.student) if sub.student else None,
-        'validated': copy.validated
+        "number": copy.number,
+        "student": student_to_data(sub.student) if sub.student else None,
+        "validated": copy.validated,
     }
 
 
 class Copies(MethodView):
     """Getting a list of copies, and assigning students to them."""
 
-    @use_kwargs({
-        'exam': DBModel(Exam, required=True),
-        'copy_number': fields.Int(required=False, load_default=None)
-    })
+    @use_kwargs({"exam": DBModel(Exam, required=True), "copy_number": fields.Int(required=False, load_default=None)})
     def get(self, exam, copy_number):
         """get all copies for the given exam
 
@@ -45,23 +42,33 @@ class Copies(MethodView):
                 True if the assigned student has been validated by a human.
         """
         if copy_number:
-            if (copy := Copy.query.filter(Copy.exam == exam,
-                                          Copy.number == copy_number).one_or_none()) is None:
-                return dict(status=404, message='Copy does not exist.'), 404
+            if (copy := Copy.query.filter(Copy.exam == exam, Copy.number == copy_number).one_or_none()) is None:
+                return dict(status=404, message="Copy does not exist."), 404
 
             return copy_to_data(copy)
 
         return [copy_to_data(copy) for copy in exam.copies]  # Ordered by copy number
 
-    @use_kwargs({
-        'exam': DBModel(Exam, required=True, validate_model=[lambda exam: exam.layout == ExamLayout.templated or
-                ApiError('Signatures cannot be validated for unstructured exams.', 422)]),
-        'copy_number': fields.Int(required=True)
-    })
-    @use_kwargs({
-        'student': DBModel(Student, required=True, data_key='studentID'),
-        'allow_merge': fields.Bool(required=True, data_key='allowMerge')
-    }, location='json')
+    @use_kwargs(
+        {
+            "exam": DBModel(
+                Exam,
+                required=True,
+                validate_model=[
+                    lambda exam: exam.layout == ExamLayout.templated
+                    or ApiError("Signatures cannot be validated for unstructured exams.", 422)
+                ],
+            ),
+            "copy_number": fields.Int(required=True),
+        }
+    )
+    @use_kwargs(
+        {
+            "student": DBModel(Student, required=True, data_key="studentID"),
+            "allow_merge": fields.Bool(required=True, data_key="allowMerge"),
+        },
+        location="json",
+    )
     def put(self, exam, copy_number, student, allow_merge):
         """Assign a student to the given copy.
 
@@ -78,25 +85,27 @@ class Copies(MethodView):
             the copy *within a given exam*.
 
         """
-        if (copy := Copy.query.filter(Copy.number == copy_number,
-                                      Copy.exam == exam).one_or_none()) is None:
-            return dict(status=404, message='Copy does not exist.'), 404
+        if (copy := Copy.query.filter(Copy.number == copy_number, Copy.exam == exam).one_or_none()) is None:
+            return dict(status=404, message="Copy does not exist."), 404
 
         old_student = copy.submission.student
         old_submission = copy.submission
 
         # Does this student have other validated copies?
         new_submission = Submission.query.filter(
-            Submission.exam == exam,
-            Submission.student == student,
-            Submission.validated
+            Submission.exam == exam, Submission.student == student, Submission.validated
         ).one_or_none()
 
         # Check if we are going to merge feedback
         if (new_submission is not None) and new_submission != old_submission and not allow_merge:
-            return dict(status=409,
-                        message='Submissions will be merged, but this was not allowed by the request',
-                        other_copies=[copy.number for copy in new_submission.copies]), 409
+            return (
+                dict(
+                    status=409,
+                    message="Submissions will be merged, but this was not allowed by the request",
+                    other_copies=[copy.number for copy in new_submission.copies],
+                ),
+                409,
+            )
 
         # If not, find the submission we are going to assign the copy to
         if new_submission is None:
@@ -123,18 +132,23 @@ class Copies(MethodView):
                 unapprove_grading(old_submission)
 
         db.session.commit()
-        return dict(status=200,
-                    message=f'Student {student.id} matched to copy {copy.number}',
-                    new_submission_id=new_submission.id), 200
+        return (
+            dict(
+                status=200,
+                message=f"Student {student.id} matched to copy {copy.number}",
+                new_submission_id=new_submission.id,
+            ),
+            200,
+        )
 
 
 def is_exactly_blank(solution):
-    BLANK_FEEDBACK_NAME = current_app.config['BLANK_FEEDBACK_NAME']
+    BLANK_FEEDBACK_NAME = current_app.config["BLANK_FEEDBACK_NAME"]
     return all(fb.text == BLANK_FEEDBACK_NAME for fb in solution.feedback) and len(solution.feedback)
 
 
 def merge_feedback(sub, sub_to_merge):
-    BLANK_FEEDBACK_NAME = current_app.config['BLANK_FEEDBACK_NAME']
+    BLANK_FEEDBACK_NAME = current_app.config["BLANK_FEEDBACK_NAME"]
 
     # Ordering is the same since Submission.solutions is ordered by problem_id
     for sol, sol_to_merge in zip(sub.solutions, sub_to_merge.solutions):
@@ -148,7 +162,7 @@ def merge_feedback(sub, sub_to_merge):
             feedback = [fb for fb in feedback if fb.text != BLANK_FEEDBACK_NAME]
 
         sol.feedback = feedback
-        sol.remarks = '\n'.join(remarks for remarks in [sol.remarks, sol_to_merge.remarks] if remarks)
+        sol.remarks = "\n".join(remarks for remarks in [sol.remarks, sol_to_merge.remarks] if remarks)
 
 
 def unapprove_grading(sub):
@@ -158,8 +172,7 @@ def unapprove_grading(sub):
 
 
 class MissingPages(MethodView):
-
-    @use_kwargs({'exam': DBModel(Exam, required=True)})
+    @use_kwargs({"exam": DBModel(Exam, required=True)})
     def get(self, exam):
         """Compute which copies are missing which pages.
 
@@ -181,10 +194,8 @@ class MissingPages(MethodView):
 
         return [
             {
-                'number': copy.number,
-                'missing_pages': sorted(
-                    all_pages - set(page.number for page in copy.pages)
-                ),
+                "number": copy.number,
+                "missing_pages": sorted(all_pages - set(page.number for page in copy.pages)),
             }
             for copy in exam.copies
         ]

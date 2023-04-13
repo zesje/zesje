@@ -16,29 +16,27 @@ def load_image(datadir, *args):
 @pytest.fixture
 def checkbox_images(datadir):
     return {
-        dpi: [load_image(datadir, 'checkboxes', f'{image}_{dpi}dpi.jpg')
-              for image in ('student', 'reference')]
+        dpi: [load_image(datadir, "checkboxes", f"{image}_{dpi}dpi.jpg") for image in ("student", "reference")]
         for dpi in (100, 300)
     }
 
 
 @pytest.fixture
 def student_aligned(datadir):
-    return load_image(datadir, 'blanks', 'student_aligned.jpg')
+    return load_image(datadir, "blanks", "student_aligned.jpg")
 
 
 @pytest.fixture
 def student_misaligned(datadir):
-    return load_image(datadir, 'blanks', 'student_misaligned.jpg')
+    return load_image(datadir, "blanks", "student_misaligned.jpg")
 
 
 @pytest.fixture
 def reference(datadir):
-    return load_image(datadir, 'blanks', 'reference.jpg')
+    return load_image(datadir, "blanks", "reference.jpg")
 
 
-@pytest.mark.parametrize('dpi', [100, 300],
-                         ids=["100 dpi", "300 dpi"])
+@pytest.mark.parametrize("dpi", [100, 300], ids=["100 dpi", "300 dpi"])
 def test_is_checkbox_filled(dpi, checkbox_images, app):
     student, reference = checkbox_images[dpi]
     amounts = [2, 3, 4, 5]
@@ -92,38 +90,41 @@ problems_with_result = [
     ((58, 459, 483, 121), False),
     ((46, 448, 504, 141), False),
     ((59, 616, 482, 119), False),
-    ((27, 585, 544, 184), False)]
+    ((27, 585, 544, 184), False),
+]
 
 
 @pytest.mark.parametrize(
-    'coords, result', problems_with_result,
-    ids=['blank', 'blank padding', 'not blank 1', 'not blank 1 padding', 'not blank 2', 'not blank 2 padding'])
+    "coords, result",
+    problems_with_result,
+    ids=["blank", "blank padding", "not blank 1", "not blank 1 padding", "not blank 2", "not blank 2 padding"],
+)
 def test_is_blank(config_app, coords, result, student_aligned, reference):
-    problem = Problem(name='Problem')
-    problem.widget = ProblemWidget(x=coords[0], y=coords[1],
-                                   width=coords[2], height=coords[3])
+    problem = Problem(name="Problem")
+    problem.widget = ProblemWidget(x=coords[0], y=coords[1], width=coords[2], height=coords[3])
 
     assert not pregrader.is_problem_misaligned(problem, student_aligned, reference)
     assert pregrader.is_solution_blank(problem, student_aligned, reference) == result
 
 
 @pytest.mark.parametrize(
-    'coords', map(lambda tup: tup[0], problems_with_result),
-    ids=['blank', 'blank padding', 'not blank 1', 'not blank 1 padding', 'not blank 2', 'not blank 2 padding'])
+    "coords",
+    map(lambda tup: tup[0], problems_with_result),
+    ids=["blank", "blank padding", "not blank 1", "not blank 1 padding", "not blank 2", "not blank 2 padding"],
+)
 def test_is_misaligned(config_app, coords, student_misaligned, reference):
-    problem = Problem(name='Problem')
-    problem.widget = ProblemWidget(x=coords[0], y=coords[1],
-                                   width=coords[2], height=coords[2])
+    problem = Problem(name="Problem")
+    problem.widget = ProblemWidget(x=coords[0], y=coords[1], width=coords[2], height=coords[2])
 
     assert pregrader.is_problem_misaligned(problem, student_misaligned, reference)
 
 
 def test_threshold(config_app, datadir):
-    dir = os.path.join(datadir, 'thresholds')
+    dir = os.path.join(datadir, "thresholds")
     files = os.listdir(dir)
     for filename in files:
         img = Image.open(os.path.join(dir, filename))
-        problem = Problem(name='Problem')
+        problem = Problem(name="Problem")
         problem.widget = ProblemWidget(x=0, y=0, width=img.size[0], height=img.size[1])
 
         data = np.array(img)

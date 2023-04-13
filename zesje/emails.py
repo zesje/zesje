@@ -24,13 +24,10 @@ from .api.images import _grey_out_student_widget
 from .scans import exam_student_id_widget
 
 
-FailStatus = Enum(
-    'FailStatus',
-    'build attach send'
-)
+FailStatus = Enum("FailStatus", "build attach send")
 
 
-class _EmailManager():
+class _EmailManager:
     """Context email manager for sending emails logged in.
 
     This takes care of reconnecting to the server in case it disconnects which can happen
@@ -90,35 +87,24 @@ class _EmailManager():
 
     def send(self, from_address, message):
         """sends an email from `from_address` with content `message` but reconnects and tries again if disconnected."""
-        recipients = [
-            *message['To'].split(','),
-            *(message['Cc'].split(',') if 'Cc' in message else [])
-        ]
+        recipients = [*message["To"].split(","), *(message["Cc"].split(",") if "Cc" in message else [])]
 
         try:
-            self.server.sendmail(
-                from_address,
-                recipients,
-                message.as_string()
-            )
+            self.server.sendmail(from_address, recipients, message.as_string())
         except smtplib.SMTPServerDisconnected:
             # server has disconnected, try to reconnect and send the message again
-            print('email server disconnected, trying to connect again.')
+            print("email server disconnected, trying to connect again.")
             self.reconnect()
-            self.server.sendmail(
-                from_address,
-                recipients,
-                message.as_string()
-            )
+            self.server.sendmail(from_address, recipients, message.as_string())
 
 
 def current_email_manager():
     return _EmailManager(
-        hostname=current_app.config.get('SMTP_SERVER'),
-        port=current_app.config.get('SMTP_PORT'),
-        use_ssl=current_app.config.get('USE_SSL'),
-        user=current_app.config.get('SMTP_USERNAME'),
-        password=current_app.config.get('SMTP_PASSWORD')
+        hostname=current_app.config.get("SMTP_SERVER"),
+        port=current_app.config.get("SMTP_PORT"),
+        use_ssl=current_app.config.get("USE_SSL"),
+        user=current_app.config.get("SMTP_USERNAME"),
+        password=current_app.config.get("SMTP_PASSWORD"),
     )
 
 
@@ -137,15 +123,15 @@ def solution_pdf(exam_id, student_id, anonymous=False):
     result : BytesIO
         the student's solution in pdf format.
     """
-    sub = Submission.query.filter(Submission.exam_id == exam_id,
-                                  Submission.student_id == student_id,
-                                  Submission.validated).one_or_none()
+    sub = Submission.query.filter(
+        Submission.exam_id == exam_id, Submission.student_id == student_id, Submission.validated
+    ).one_or_none()
     if sub is None:
-        raise RuntimeError('Student did not make a submission for this exam')
+        raise RuntimeError("Student did not make a submission for this exam")
 
     pages = sorted((page for copy in sub.copies for page in copy.pages), key=(lambda p: (p.copy.number, p.number)))
 
-    page_size = current_app.config['PAGE_FORMATS'][current_app.config['PAGE_FORMAT']]
+    page_size = current_app.config["PAGE_FORMATS"][current_app.config["PAGE_FORMAT"]]
 
     result = BytesIO()
     pdf = canvas.Canvas(result, pagesize=page_size)
@@ -184,7 +170,7 @@ def render(exam_id, student_id, template):
 
 def build_solution_attachment(exam_id, student_id, file_name=None):
     solution = solution_pdf(exam_id, student_id)
-    maintype, subtype = 'application', 'pdf'
+    maintype, subtype = "application", "pdf"
     pdf = MIMEBase(maintype, subtype)
     pdf.set_payload(solution.read())
     encoders.encode_base64(pdf)
@@ -194,22 +180,19 @@ def build_solution_attachment(exam_id, student_id, file_name=None):
         file_name = f"{student_id}.pdf"
 
     # Set the filename parameter
-    pdf.add_header('Content-Disposition', 'attachment', filename=file_name)
+    pdf.add_header("Content-Disposition", "attachment", filename=file_name)
     return pdf
 
 
-def build(email_to, content, attachment=None, copy_to=None,
-          subject='Your results',
-          email_from='no-reply@tudelft.nl'):
-
+def build(email_to, content, attachment=None, copy_to=None, subject="Your results", email_from="no-reply@tudelft.nl"):
     msg = MIMEMultipart()
-    msg['Subject'] = subject
-    msg['From'] = email_from
-    msg['To'] = email_to
+    msg["Subject"] = subject
+    msg["From"] = email_from
+    msg["To"] = email_to
     if copy_to:
-        msg['Cc'] = copy_to
-    msg['Reply-to'] = email_from
-    msg.attach(MIMEText(content, 'plain'))
+        msg["Cc"] = copy_to
+    msg["Reply-to"] = email_from
+    msg.attach(MIMEText(content, "plain"))
 
     if attachment:
         msg.attach(attachment)
@@ -217,9 +200,7 @@ def build(email_to, content, attachment=None, copy_to=None,
     return msg
 
 
-def build_and_send(
-    students, from_address, exam, template, attach=False, copy_to=None, _email_manager=None
-):
+def build_and_send(students, from_address, exam, template, attach=False, copy_to=None, _email_manager=None):
     """Build and send the student solution emails.
 
     Parameters
@@ -255,17 +236,21 @@ def build_and_send(
         try:
             student_messages.append((student, render(exam.id, student.id, template)))
         except TemplateSyntaxError as error:
-            failed.append({
-                'studentID': student.id,
-                'status': FailStatus.build.name,
-                'message': f"Syntax error in the template: {error.message}"
-            })
+            failed.append(
+                {
+                    "studentID": student.id,
+                    "status": FailStatus.build.name,
+                    "message": f"Syntax error in the template: {error.message}",
+                }
+            )
         except UndefinedError as error:
-            failed.append({
-                'studentID': student.id,
-                'status': FailStatus.build.name,
-                'message': f"Undefined variables in the template: {error.message}"
-            })
+            failed.append(
+                {
+                    "studentID": student.id,
+                    "status": FailStatus.build.name,
+                    "message": f"Undefined variables in the template: {error.message}",
+                }
+            )
 
     if not student_messages:
         return sent, failed
@@ -274,8 +259,9 @@ def build_and_send(
         for student, content in student_messages:
             try:
                 attachment = (
-                    build_solution_attachment(exam.id, student.id, file_name=f'{student.id}_{exam.name}.pdf')
-                    if attach else None
+                    build_solution_attachment(exam.id, student.id, file_name=f"{student.id}_{exam.name}.pdf")
+                    if attach
+                    else None
                 )
                 message = build(
                     student.email,
@@ -287,32 +273,34 @@ def build_and_send(
                 server.send(from_address, message)
             except werkzeug.exceptions.Conflict as e:
                 # No email address provided.
-                failed.append({
-                    'studentID': student.id,
-                    'status': FailStatus.build.name,
-                    'message': f"No email address provided: {e.description}"
-                })
+                failed.append(
+                    {
+                        "studentID": student.id,
+                        "status": FailStatus.build.name,
+                        "message": f"No email address provided: {e.description}",
+                    }
+                )
             except smtplib.SMTPResponseException as e:
                 # see https://docs.python.org/3/library/smtplib.html?highlight=smtplib#smtplib.SMTP.sendmail
-                failed.append({
-                    'studentID': student.id,
-                    'status': FailStatus.send.name,
-                    'message': f'{e.smtp_error.decode("ascii")} ({e.smtp_code})'
-                })
+                failed.append(
+                    {
+                        "studentID": student.id,
+                        "status": FailStatus.send.name,
+                        "message": f'{e.smtp_error.decode("ascii")} ({e.smtp_code})',
+                    }
+                )
             except smtplib.SMTPRecipientsRefused as e:
                 recipients, *_ = e.args
                 code, msg = recipients[student.email]
-                failed.append({
-                    'studentID': student.id,
-                    'status': FailStatus.send.name,
-                    'message': f'{msg.decode("ascii")} ({code})'
-                })
+                failed.append(
+                    {
+                        "studentID": student.id,
+                        "status": FailStatus.send.name,
+                        "message": f'{msg.decode("ascii")} ({code})',
+                    }
+                )
             except Exception as e:
-                failed.append({
-                    'studentID': student.id,
-                    'status': FailStatus.attach.name,
-                    'message': str(e)
-                })
+                failed.append({"studentID": student.id, "status": FailStatus.attach.name, "message": str(e)})
             else:
                 sent.append(student.id)
 

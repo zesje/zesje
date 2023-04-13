@@ -13,12 +13,14 @@ from ..database import Exam, Submission, Problem, Page, Solution, Copy, ExamLayo
 from ..scans import exam_student_id_widget
 
 
-@use_kwargs({
-    'exam': DBModel(Exam, required=True),
-    'problem': DBModel(Problem, required=True),
-    'submission': DBModel(Submission, required=True),
-    'full_page': fields.Bool(required=False, load_default=False)
-})
+@use_kwargs(
+    {
+        "exam": DBModel(Exam, required=True),
+        "problem": DBModel(Problem, required=True),
+        "submission": DBModel(Submission, required=True),
+        "full_page": fields.Bool(required=False, load_default=False),
+    }
+)
 def get(exam, problem, submission, full_page):
     """get image for the given problem.
 
@@ -44,35 +46,35 @@ def get(exam, problem, submission, full_page):
 
         if max(problem.widget.page for problem in exam.problems) == 0:
             # single paged exam, show all pages from all copies
-            pages = Page.query.filter(Page.copy_id == Copy.id,
-                                      Copy.submission == submission)\
-                              .order_by(Page.number, Copy.number)\
-                              .all()
+            pages = (
+                Page.query.filter(Page.copy_id == Copy.id, Copy.submission == submission)
+                .order_by(Page.number, Copy.number)
+                .all()
+            )
 
     if not pages:
         page_number = problem.widget.page
 
         #  get the pages
-        pages = Page.query.filter(Page.copy_id == Copy.id,
-                                  Copy.submission == submission,
-                                  Page.number == page_number)\
-                          .order_by(Copy.number)\
-                          .all()
+        pages = (
+            Page.query.filter(Page.copy_id == Copy.id, Copy.submission == submission, Page.number == page_number)
+            .order_by(Copy.number)
+            .all()
+        )
 
     if len(pages) == 0:
-        raise ApiError(f'Page #{page_number} is missing for all copies of submission #{submission.id}.', 404)
+        raise ApiError(f"Page #{page_number} is missing for all copies of submission #{submission.id}.", 404)
 
     # Convert to int to match the time resolution of HTTP headers (seconds)
     last_modified = int(max(Path(page.abs_path).stat().st_mtime for page in pages))
 
-    if modified_since := request.headers.get('If-Modified-Since'):
+    if modified_since := request.headers.get("If-Modified-Since"):
         modified_since = parse_date(modified_since).timestamp()
         if last_modified == modified_since:
             # Send 304 Not Modified with empty body
-            return '', 304
+            return "", 304
 
-    solution = Solution.query.filter(Solution.submission_id == submission.id,
-                                     Solution.problem_id == problem.id).one()
+    solution = Solution.query.filter(Solution.submission_id == submission.id, Solution.problem_id == problem.id).one()
 
     if exam.layout == ExamLayout.templated and exam.grade_anonymous and page_number == 0:
         student_id_widget, coords = exam_student_id_widget(exam.id)
@@ -99,7 +101,7 @@ def get(exam, problem, submission, full_page):
             if option.feedback_id in fb:
                 x = int(option.x / 72 * dpi)
                 y = int(option.y / 72 * dpi)
-                box_length = int(current_app.config['CHECKBOX_SIZE'] / 72 * dpi)
+                box_length = int(current_app.config["CHECKBOX_SIZE"] / 72 * dpi)
                 x1 = x + box_length
                 y1 = y + box_length
                 page_im = cv2.rectangle(page_im, (x, y), (x1, y1), (0, 255, 0), 3)
@@ -115,9 +117,9 @@ def get(exam, problem, submission, full_page):
         stitched_image = raw_images[0]
     else:
         heights, widths = np.array([img.shape[:2] for img in raw_images]).T
-        max_width = min(np.max(widths), current_app.config['MAX_WIDTH'])
+        max_width = min(np.max(widths), current_app.config["MAX_WIDTH"])
         factors = max_width / widths
-        height_factor = current_app.config['MAX_HEIGHT'] / np.sum(heights * factors)
+        height_factor = current_app.config["MAX_HEIGHT"] / np.sum(heights * factors)
         height_factor = min(height_factor, 1)
         max_width = int(max_width * height_factor)
         factors *= height_factor
@@ -135,11 +137,8 @@ def get(exam, problem, submission, full_page):
 
     image_encoded = cv2.imencode(".jpg", stitched_image)[1].tostring()
 
-    headers = {
-        'Last-Modified': http_date(datetime.fromtimestamp(last_modified)),
-        'Cache-Control': 'no-cache'
-    }
-    return Response(image_encoded, 200, headers=headers, mimetype='image/jpeg')
+    headers = {"Last-Modified": http_date(datetime.fromtimestamp(last_modified)), "Cache-Control": "no-cache"}
+    return Response(image_encoded, 200, headers=headers, mimetype="image/jpeg")
 
 
 def _grey_out_student_widget(page_im, coords, dpi):

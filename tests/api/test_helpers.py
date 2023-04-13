@@ -15,8 +15,7 @@ def test_shuffle_same_grader():
     # Assert that shuffled is the same when called twice with the same ID
     assert _shuffle(submissions, 0) == _shuffle(submissions, 0)
     # Assert that shuffled is not the same order as unshuffled, but has the same elements
-    assert _shuffle(submissions, 0) != submissions and \
-        set(submissions) == set(_shuffle(submissions, 0))
+    assert _shuffle(submissions, 0) != submissions and set(submissions) == set(_shuffle(submissions, 0))
 
 
 def test_shuffle_different_grader():

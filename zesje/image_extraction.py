@@ -27,17 +27,11 @@ EXIF_METHODS = {
 }
 
 RE_STUDENT_AT_LEAST = re.compile(
-    fr'(?P<student_id>\d{{{ID_GRID_DIGITS}}})(\D)*?(-(?P<page>\d{{1,2}}))?(-(?P<copy>\d{{1,2}}))?(\.(?P<ext>\w+))?$'
+    rf"(?P<student_id>\d{{{ID_GRID_DIGITS}}})(\D)*?(-(?P<page>\d{{1,2}}))?(-(?P<copy>\d{{1,2}}))?(\.(?P<ext>\w+))?$"
 )
-RE_PAGE_AT_LEAST = re.compile(
-    r'(^|.*?\D+)(?P<page>\d{1,2})(\D+?|$)((?P<copy>\d{1,2}))?(\.(?P<ext>\w+))?$'
-)
-RE_COPY = re.compile(
-    r'^(\D*(?P<copy>\d{1,2})\D*?)(\.(?P<ext>\w+))?$'
-)
-RE_ANY_NUMBER = re.compile(
-    r'(^|\D+)\d{1,2}($|\D+)'
-)
+RE_PAGE_AT_LEAST = re.compile(r"(^|.*?\D+)(?P<page>\d{1,2})(\D+?|$)((?P<copy>\d{1,2}))?(\.(?P<ext>\w+))?$")
+RE_COPY = re.compile(r"^(\D*(?P<copy>\d{1,2})\D*?)(\.(?P<ext>\w+))?$")
+RE_ANY_NUMBER = re.compile(r"(^|\D+)\d{1,2}($|\D+)")
 
 
 def extract_pages_from_file(file_path_or_buffer, file_info, dpi=300):
@@ -77,10 +71,10 @@ def extract_pages_from_file(file_path_or_buffer, file_info, dpi=300):
 
     page_infos = guess_missing_page_info(page_infos)
 
-    for number, (page_info, (image, file_info)) in enumerate(zip(
-        page_infos,
-        extract_images_or_infos_from_file(file_path_or_buffer, file_info, dpi, only_info=False)
-    ), start=1):
+    for number, (page_info, (image, file_info)) in enumerate(
+        zip(page_infos, extract_images_or_infos_from_file(file_path_or_buffer, file_info, dpi, only_info=False)),
+        start=1,
+    ):
         yield image, page_info, file_info, number, final_total
 
 
@@ -116,20 +110,21 @@ def extract_images_or_infos_from_file(file_path_or_buffer, file_info, dpi=300, o
 
     if mime_type is None:
         yield from _extract_from_unknown(file_path_or_buffer, file_info, only_info)
-    elif mime_type in current_app.config['ZIP_MIME_TYPES']:
-        with zipfile.ZipFile(file_path_or_buffer, mode='r') as zip_file:
+    elif mime_type in current_app.config["ZIP_MIME_TYPES"]:
+        with zipfile.ZipFile(file_path_or_buffer, mode="r") as zip_file:
             infolist_files = (zip_info for zip_info in zip_file.infolist() if not zip_info.is_dir())
 
             for zip_info in infolist_files:
-                with zip_file.open(zip_info, 'r') as zip_info_content:
+                with zip_file.open(zip_info, "r") as zip_info_content:
                     combined_file_info = _combine_file_info(file_info, zip_info.filename)
                     yield from extract_images_or_infos_from_file(
-                        zip_info_content, combined_file_info, dpi, only_info=only_info)
+                        zip_info_content, combined_file_info, dpi, only_info=only_info
+                    )
 
-    elif mime_type == 'application/pdf':
+    elif mime_type == "application/pdf":
         yield from extract_images_from_pdf(file_path_or_buffer, file_info, dpi, only_info=only_info)
 
-    elif mime_type.startswith('image/'):
+    elif mime_type.startswith("image/"):
         yield from extract_image_from_image(file_path_or_buffer, file_info, only_info=only_info)
     else:
         yield from _extract_from_unknown(file_path_or_buffer, file_info, only_info)
@@ -276,7 +271,7 @@ def extract_image_pikepdf(page):
 
     # Check whether only one image is embedded within the page.
     if len(images) != 1:
-        raise ValueError('Not exactly 1 image present on the page.')
+        raise ValueError("Not exactly 1 image present on the page.")
     else:
         pdf_image = PdfImage(images[list(images.keys())[0]])
         pdf_width = float(page.MediaBox[2] - page.MediaBox[0])
@@ -287,7 +282,7 @@ def extract_image_pikepdf(page):
 
         # Check if the aspect ratio of the image is the same as the aspect ratio of the page up to a 3% relative error.
         if abs(pdf_ratio - image_ratio) > 0.03 * pdf_ratio:
-            raise ValueError('Image has incorrect dimensions')
+            raise ValueError("Image has incorrect dimensions")
         return pdf_image.as_pil_image()
 
 
@@ -315,14 +310,13 @@ def extract_image_wand(page, dpi):
     dpi = limit_dpi(dpi, page.MediaBox)
 
     with SpooledTemporaryFile() as page_file:
-
         page_pdf.save(page_file)
 
-        with WandImage(blob=page_file._file.getvalue(), format='pdf', resolution=dpi) as page_image:
-            with Color('white') as white:
+        with WandImage(blob=page_file._file.getvalue(), format="pdf", resolution=dpi) as page_image:
+            with Color("white") as white:
                 page_image.background_color = white
-                page_image.alpha_channel = 'remove'
-                page_image.format = 'jpg'
+                page_image.alpha_channel = "remove"
+                page_image.format = "jpg"
                 img_array = np.asarray(bytearray(page_image.make_blob(format="jpg")), dtype=np.uint8)
                 img = Image.open(BytesIO(img_array))
                 img.load()  # Load the data into the PIL image from the Wand image
@@ -438,24 +432,23 @@ def guess_page_info(file_info, students):
         Copy number, 1-indexed
     """
     student_id, page, copy = None, None, None
-    file_info_folders = sum((str(info).split('/') for info in file_info), [])
+    file_info_folders = sum((str(info).split("/") for info in file_info), [])
     for current_info in file_info_folders:
         # Check each time if we find a student number
         # This is to ensure the second student number in the path
         # is not misinterpreted as page or copy number.
-        if (match := RE_STUDENT_AT_LEAST.match(current_info)):
-            if student_id is not None and int(match.group('student_id')) != student_id:
+        if match := RE_STUDENT_AT_LEAST.match(current_info):
+            if student_id is not None and int(match.group("student_id")) != student_id:
                 student_id, page, copy = None, None, None
                 break
             else:
-                student_id = int(match.group('student_id'))
-                page = int(match.group('page')) - 1 if match.group('page') else None
-                copy = int(match.group('copy')) if match.group('copy') else None
+                student_id = int(match.group("student_id"))
+                page = int(match.group("page")) - 1 if match.group("page") else None
+                copy = int(match.group("copy")) if match.group("copy") else None
 
         elif student_id is None:
             matched_students_names = [
-                student for student in students
-                if ((student.first_name + ' ' + student.last_name) in current_info)
+                student for student in students if ((student.first_name + " " + student.last_name) in current_info)
             ]
             if len(matched_students_names) > 1:
                 break
@@ -463,12 +456,12 @@ def guess_page_info(file_info, students):
                 student_id = matched_students_names[0].id
 
         elif page is None:
-            if (match := RE_PAGE_AT_LEAST.match(current_info)):
-                page = int(match.group('page')) - 1
-                copy = int(match.group('copy')) if match.group('copy') else None
+            if match := RE_PAGE_AT_LEAST.match(current_info):
+                page = int(match.group("page")) - 1
+                copy = int(match.group("copy")) if match.group("copy") else None
         elif copy is None:
-            if (match := RE_COPY.match(current_info)):
-                copy = int(match.group('copy'))
+            if match := RE_COPY.match(current_info):
+                copy = int(match.group("copy"))
         else:
             if RE_ANY_NUMBER.search(current_info):
                 # Return the student number to trigger a page/copy ambiguity
@@ -479,12 +472,12 @@ def guess_page_info(file_info, students):
 
 
 def convert_to_rgb(img):
-    if img.mode in ['L', 'P', 'CMYK', 'HSV']:
-        img = img.convert('RGB')
-    elif img.mode == 'RGBA':
+    if img.mode in ["L", "P", "CMYK", "HSV"]:
+        img = img.convert("RGB")
+    elif img.mode == "RGBA":
         # Create a white background, and paste the RGBA image
         # on top of it with the alpha channel as the mask
-        background = Image.new('RGB', img.size, (255, 255, 255))
+        background = Image.new("RGB", img.size, (255, 255, 255))
         background.paste(img, mask=img.split()[-1])
         img = background
 
@@ -521,7 +514,7 @@ def guess_mimetype(file_info):
         None otherwise.
     """
     last_filename = _last_filename(file_info)
-    if (mimetype := mimetypes.guess_type(last_filename)):
+    if mimetype := mimetypes.guess_type(last_filename):
         return mimetype[0]
 
 
@@ -530,7 +523,7 @@ def readable_filename(file_info):
 
     See `extract_images_from_file` for more information on `file_info`.
     """
-    return ', '.join(f'page {info}' if type(info) == int else info for info in file_info)
+    return ", ".join(f"page {info}" if type(info) == int else info for info in file_info)
 
 
 def _combine_file_info(file_info, file_info_to_append):

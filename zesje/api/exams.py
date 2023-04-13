@@ -9,8 +9,7 @@ from webargs import fields, validate
 from sqlalchemy import func
 from sqlalchemy.orm import selectinload
 
-from ._helpers import _shuffle, DBModel, ApiError, non_empty_string,\
-    use_args, use_kwargs, ExamNotFinalizedError
+from ._helpers import _shuffle, DBModel, ApiError, non_empty_string, use_args, use_kwargs, ExamNotFinalizedError
 from .problems import problem_to_data
 from ..pdf_generation import exam_dir, exam_pdf_path, _exam_generate_data
 from ..pdf_generation import generate_pdfs, generate_single_pdf, generate_zipped_pdfs
@@ -25,14 +24,11 @@ def add_blank_feedback(problems):
     """
     Add the blank feedback option to each problem.
     """
-    BLANK_FEEDBACK_NAME = current_app.config['BLANK_FEEDBACK_NAME']
+    BLANK_FEEDBACK_NAME = current_app.config["BLANK_FEEDBACK_NAME"]
 
     for p in problems:
         # Make blank FO child of the root FO
-        db.session.add(FeedbackOption(problem_id=p.id,
-                                      text=BLANK_FEEDBACK_NAME,
-                                      score=0,
-                                      parent=p.root_feedback))
+        db.session.add(FeedbackOption(problem_id=p.id, text=BLANK_FEEDBACK_NAME, score=0, parent=p.root_feedback))
 
     db.session.commit()
 
@@ -41,14 +37,13 @@ def generate_exam_token(exam_id, exam_name, exam_pdf):
     hasher = hashlib.sha1()
     if exam_pdf:
         hasher.update(exam_pdf)
-    hasher.update(f'{exam_id},{exam_name}'.encode('utf-8'))
+    hasher.update(f"{exam_id},{exam_name}".encode("utf-8"))
     return hasher.hexdigest()[0:12]
 
 
 class Exams(MethodView):
-
-    @use_kwargs({'exam': DBModel(Exam, required=False, load_default=None)})
-    @use_kwargs({'only_metadata': fields.Bool(load_default=False)}, location='query')
+    @use_kwargs({"exam": DBModel(Exam, required=False, load_default=None)})
+    @use_kwargs({"only_metadata": fields.Bool(load_default=False)}, location="query")
     def get(self, exam, only_metadata):
         if exam:
             if only_metadata:
@@ -57,12 +52,18 @@ class Exams(MethodView):
         else:
             return self._get_all()
 
-    @use_kwargs({'exam': DBModel(Exam, required=True, validate_model=[
-        lambda exam: not exam.finalized or ApiError('Finalized exams cannot be deleted', 409)
-    ])})
+    @use_kwargs(
+        {
+            "exam": DBModel(
+                Exam,
+                required=True,
+                validate_model=[lambda exam: not exam.finalized or ApiError("Finalized exams cannot be deleted", 409)],
+            )
+        }
+    )
     def delete(self, exam):
         if Submission.query.filter(Submission.exam_id == exam.id).count():
-            return dict(status=409, message='Exam is not finalized but already has submissions.'), 409
+            return dict(status=409, message="Exam is not finalized but already has submissions."), 409
 
         # All corresponding solutions, scans and problems are automatically deleted
         db.session.delete(exam)
@@ -84,17 +85,18 @@ class Exams(MethodView):
                 Number of submissions
         """
         sub_count = {
-            result.exam_id: result.sub_count for result in
-            db.session.query(Submission.exam_id, func.count(Submission.id).label('sub_count'))
-            .group_by(Submission.exam_id).all()
+            result.exam_id: result.sub_count
+            for result in db.session.query(Submission.exam_id, func.count(Submission.id).label("sub_count"))
+            .group_by(Submission.exam_id)
+            .all()
         }
         return [
             {
-                'id': ex.id,
-                'name': ex.name,
-                'layout': ex.layout.name,
-                'submissions': sub_count[ex.id] if ex.id in sub_count else 0,
-                'finalized': ex.finalized
+                "id": ex.id,
+                "name": ex.name,
+                "layout": ex.layout.name,
+                "submissions": sub_count[ex.id] if ex.id in sub_count else 0,
+                "finalized": ex.finalized,
             }
             for ex in db.session.query(Exam).order_by(Exam.id).all()
         ]
@@ -120,32 +122,29 @@ class Exams(MethodView):
         widgets
             list of widgets in this exam
         """
-        submission_query = Submission.query.options(selectinload(Submission.solutions))\
-            .filter(Submission.exam == exam)\
+        submission_query = (
+            Submission.query.options(selectinload(Submission.solutions))
+            .filter(Submission.exam == exam)
             .order_by(Submission.student_id, Submission.id)
+        )
         submissions = [sub_to_data(sub) for sub in submission_query.all()]
 
         return {
-            'id': exam.id,
-            'name': exam.name,
-            'submissions': submissions,
-            'problems': [problem_to_data(prob) for prob in exam.problems],  # Sorted by prob.id
-            'widgets': [
-                {
-                    'id': widget.id,
-                    'name': widget.name,
-                    'x': widget.x,
-                    'y': widget.y,
-                    'type': widget.type
-                } for widget in exam.widgets  # Sorted by widget.id
+            "id": exam.id,
+            "name": exam.name,
+            "submissions": submissions,
+            "problems": [problem_to_data(prob) for prob in exam.problems],  # Sorted by prob.id
+            "widgets": [
+                {"id": widget.id, "name": widget.name, "x": widget.x, "y": widget.y, "type": widget.type}
+                for widget in exam.widgets  # Sorted by widget.id
             ],
-            'finalized': exam.finalized,
-            'gradeAnonymous': exam.grade_anonymous,
-            'layout': exam.layout.name
+            "finalized": exam.finalized,
+            "gradeAnonymous": exam.grade_anonymous,
+            "layout": exam.layout.name,
         }
 
     def _get_single_metadata(self, exam):
-        """ Serves metadata for an exam.
+        """Serves metadata for an exam.
         Shuffles submissions based on the grader ID.
 
         Parameters
@@ -159,30 +158,35 @@ class Exams(MethodView):
 
         """
         return {
-            'exam_id': exam.id,
-            'layout': exam.layout.name,
-            'submissions': [
+            "exam_id": exam.id,
+            "layout": exam.layout.name,
+            "submissions": [
                 {
-                    'id': sub.id,
-                    'student': (
-                        {'id': sub.student_id} if exam.grade_anonymous else student_to_data(sub.student)
-                        ) if sub.student_id else None
-                } for sub in _shuffle(exam.submissions, current_user.id, key_extractor=lambda s: s.id)
+                    "id": sub.id,
+                    "student": ({"id": sub.student_id} if exam.grade_anonymous else student_to_data(sub.student))
+                    if sub.student_id
+                    else None,
+                }
+                for sub in _shuffle(exam.submissions, current_user.id, key_extractor=lambda s: s.id)
             ],
-            'problems': [
+            "problems": [
                 {
-                    'id': problem.id,
-                    'name': problem.name,
-                } for problem in exam.problems],
-            'gradeAnonymous': exam.grade_anonymous,
-
+                    "id": problem.id,
+                    "name": problem.name,
+                }
+                for problem in exam.problems
+            ],
+            "gradeAnonymous": exam.grade_anonymous,
         }
 
-    @use_kwargs({'pdf': fields.Field(required=False, load_default=None)}, location='files')
-    @use_kwargs({
-        'exam_name': fields.Str(required=True, validate=non_empty_string),
-        'layout': fields.Enum(ExamLayout, required=True)
-    }, location='form')
+    @use_kwargs({"pdf": fields.Field(required=False, load_default=None)}, location="files")
+    @use_kwargs(
+        {
+            "exam_name": fields.Str(required=True, validate=non_empty_string),
+            "layout": fields.Enum(ExamLayout, required=True),
+        },
+        location="form",
+    )
     def post(self, exam_name, layout, pdf):
         """Add a new exam.
 
@@ -211,31 +215,28 @@ class Exams(MethodView):
 
         print(f"Added exam {exam.id} (name: {exam_name}, token: {exam.token}) to database")
 
-        return {'id': exam.id}
+        return {"id": exam.id}
 
     def _add_templated_exam(self, exam_name, pdf_data):
         if not pdf_data:
-            raise ApiError('Upload a PDF to add a templated exam.', 409)
+            raise ApiError("Upload a PDF to add a templated exam.", 409)
 
-        format = current_app.config['PAGE_FORMAT']
+        format = current_app.config["PAGE_FORMAT"]
 
-        if not page_is_size(pdf_data, current_app.config['PAGE_FORMATS'][format], tolerance=0.01):
-            raise ApiError(f'PDF page size is not {format}.', 409)
+        if not page_is_size(pdf_data, current_app.config["PAGE_FORMATS"][format], tolerance=0.01):
+            raise ApiError(f"PDF page size is not {format}.", 409)
 
-        exam = Exam(
-            name=exam_name,
-            layout=ExamLayout.templated
-        )
+        exam = Exam(name=exam_name, layout=ExamLayout.templated)
 
         exam.widgets = [
             ExamWidget(
-                name='student_id_widget',
+                name="student_id_widget",
                 x=50,
                 y=50,
                 exam=exam,
             ),
             ExamWidget(
-                name='barcode_widget',
+                name="barcode_widget",
                 x=500,
                 y=40,
                 exam=exam,
@@ -253,10 +254,7 @@ class Exams(MethodView):
         return exam
 
     def _add_unstructured_exam(self, exam_name):
-        exam = Exam(
-            name=exam_name,
-            layout=ExamLayout.unstructured
-        )
+        exam = Exam(name=exam_name, layout=ExamLayout.unstructured)
 
         db.session.add(exam)
         db.session.commit()  # so exam gets an id
@@ -267,15 +265,18 @@ class Exams(MethodView):
 
         return exam
 
-    @use_kwargs({'exam': DBModel(Exam, required=True)})
-    @use_kwargs({
-        'finalized': fields.Bool(required=False, load_default=None),
-        'grade_anonymous': fields.Bool(required=False, load_default=None)
-    }, location='json')
+    @use_kwargs({"exam": DBModel(Exam, required=True)})
+    @use_kwargs(
+        {
+            "finalized": fields.Bool(required=False, load_default=None),
+            "grade_anonymous": fields.Bool(required=False, load_default=None),
+        },
+        location="json",
+    )
     def put(self, exam, finalized, grade_anonymous):
         if finalized is not None:
             if not finalized:
-                return dict(status=409, message='Exam can not be unfinalized'), 409
+                return dict(status=409, message="Exam can not be unfinalized"), 409
 
             add_blank_feedback(exam.problems)
 
@@ -292,10 +293,10 @@ class Exams(MethodView):
             db.session.commit()
             return dict(status=200, message="ok", changed=changed), 200
 
-        return dict(status=400, message='One of finalized or anonymous must be present'), 400
+        return dict(status=400, message="One of finalized or anonymous must be present"), 400
 
-    @use_kwargs({'exam': DBModel(Exam, required=True)})
-    @use_kwargs({'name': fields.Str(required=True, validate=non_empty_string)}, location='json')
+    @use_kwargs({"exam": DBModel(Exam, required=True)})
+    @use_kwargs({"name": fields.Str(required=True, validate=non_empty_string)}, location="json")
     def patch(self, exam, name):
         """Update the name of an existing exam.
 
@@ -307,33 +308,45 @@ class Exams(MethodView):
         exam.name = name.strip()
         db.session.commit()
 
-        return dict(status=200, message='ok'), 200
+        return dict(status=200, message="ok"), 200
 
 
-PDFNeededError = ApiError('PDF is only available in templated exams.', 404)
+PDFNeededError = ApiError("PDF is only available in templated exams.", 404)
 
 
 class ExamSource(MethodView):
-
-    @use_kwargs({'exam': DBModel(Exam, required=True, validate_model=[
-        lambda exam: exam.layout == ExamLayout.templated or PDFNeededError])})
+    @use_kwargs(
+        {
+            "exam": DBModel(
+                Exam, required=True, validate_model=[lambda exam: exam.layout == ExamLayout.templated or PDFNeededError]
+            )
+        }
+    )
     def get(self, exam):
-        return send_file(
-            exam_pdf_path(exam.id),
-            max_age=0,
-            mimetype='application/pdf')
+        return send_file(exam_pdf_path(exam.id), max_age=0, mimetype="application/pdf")
 
 
 class ExamGeneratedPdfs(MethodView):
-
-    @use_kwargs({'exam': DBModel(Exam, required=True, validate_model=[
-        lambda exam: exam.finalized or ExamNotFinalizedError,
-        lambda exam: exam.layout == ExamLayout.templated or PDFNeededError])})
-    @use_args({
-        'copies_start': fields.Int(required=False, load_default=1, validate=lambda x: x > 0),
-        'copies_end': fields.Int(required=True),
-        'type': fields.Str(required=True, validate=validate.OneOf(['pdf', 'zip']))
-    }, location='query')
+    @use_kwargs(
+        {
+            "exam": DBModel(
+                Exam,
+                required=True,
+                validate_model=[
+                    lambda exam: exam.finalized or ExamNotFinalizedError,
+                    lambda exam: exam.layout == ExamLayout.templated or PDFNeededError,
+                ],
+            )
+        }
+    )
+    @use_args(
+        {
+            "copies_start": fields.Int(required=False, load_default=1, validate=lambda x: x > 0),
+            "copies_end": fields.Int(required=True),
+            "type": fields.Str(required=True, validate=validate.OneOf(["pdf", "zip"])),
+        },
+        location="query",
+    )
     def get(self, args, exam):
         """Generates the exams with datamatrices and copy numbers.
 
@@ -355,62 +368,63 @@ class ExamGeneratedPdfs(MethodView):
         the file : File
             The requested file (zip or pdf)
         """
-        copies_start = args['copies_start']
-        copies_end = args['copies_end']
+        copies_start = args["copies_start"]
+        copies_end = args["copies_end"]
 
         if copies_end < copies_start:
-            msg = 'copies_end should be larger than copies_start'
+            msg = "copies_end should be larger than copies_start"
             return dict(status=422, message=msg), 422
 
         attachment_filename = f'{exam.name}_{copies_start}-{copies_end}.{args["type"]}'
         mimetype = f'application/{args["type"]}'
 
-        if args['type'] == 'pdf':
+        if args["type"] == "pdf":
             output_file = BytesIO()
             generate_single_pdf(exam, copies_start, copies_end, output_file)
             output_file.seek(0)
             return send_file(
-                output_file,
-                max_age=0,
-                download_name=attachment_filename,
-                as_attachment=True,
-                mimetype=mimetype)
-        elif args['type'] == 'zip':
+                output_file, max_age=0, download_name=attachment_filename, as_attachment=True, mimetype=mimetype
+            )
+        elif args["type"] == "zip":
             generator = generate_zipped_pdfs(exam, copies_start, copies_end)
             response = Response(stream_with_context(generator), mimetype=mimetype)
-            response.headers['Content-Disposition'] = f'attachment; filename="{attachment_filename}"'
+            response.headers["Content-Disposition"] = f'attachment; filename="{attachment_filename}"'
             return response
 
         return dict(status=400, message='type must be one of ["pdf", "zip"]'), 400
 
 
 class ExamPreview(MethodView):
-
-    @use_kwargs({'exam': DBModel(Exam, required=True, validate_model=[
-        lambda exam: exam.layout == ExamLayout.templated or PDFNeededError])
-    })
+    @use_kwargs(
+        {
+            "exam": DBModel(
+                Exam, required=True, validate_model=[lambda exam: exam.layout == ExamLayout.templated or PDFNeededError]
+            )
+        }
+    )
     def get(self, exam):
         exam_dir, student_id_widget, barcode_widget, exam_path, cb_data = _exam_generate_data(exam)
 
         # Generate generic overlay
-        _, intermediate_file = next(generate_pdfs(
-            exam_pdf_file=exam_path,
-            copy_nums=[None],
-            id_grid_x=student_id_widget.x,
-            id_grid_y=student_id_widget.y,
-            cb_data=cb_data
-        ))
+        _, intermediate_file = next(
+            generate_pdfs(
+                exam_pdf_file=exam_path,
+                copy_nums=[None],
+                id_grid_x=student_id_widget.x,
+                id_grid_y=student_id_widget.y,
+                cb_data=cb_data,
+            )
+        )
 
         # Generate copy overlay
-        _, output_file = next(generate_pdfs(
-            exam_pdf_file=intermediate_file,
-            copy_nums=[1559],
-            exam_token="A" * token_length,
-            datamatrix_x=barcode_widget.x,
-            datamatrix_y=barcode_widget.y,
-        ))
+        _, output_file = next(
+            generate_pdfs(
+                exam_pdf_file=intermediate_file,
+                copy_nums=[1559],
+                exam_token="A" * token_length,
+                datamatrix_x=barcode_widget.x,
+                datamatrix_y=barcode_widget.y,
+            )
+        )
 
-        return send_file(
-            output_file,
-            max_age=0,
-            mimetype='application/pdf')
+        return send_file(output_file, max_age=0, mimetype="application/pdf")

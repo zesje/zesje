@@ -12,20 +12,18 @@ ERROR_CODE_BAD_REQUEST = 400
 
 
 class ApiParser(FlaskParser):
-
     DEFAULT_VALIDATION_STATUS = ERROR_CODE_MALFORMED
-    DEFAULT_LOCATION = 'view_args'
+    DEFAULT_LOCATION = "view_args"
 
 
 class ApiError(HTTPException):
-
     def __init__(self, msg, status_code=ApiParser.DEFAULT_VALIDATION_STATUS):
         super().__init__(status_code)
         self.description = msg
         self.code = status_code
 
 
-ExamNotFinalizedError = ApiError('Exam must be finalized', ERROR_CODE_CONFLICT)
+ExamNotFinalizedError = ApiError("Exam must be finalized", ERROR_CODE_CONFLICT)
 
 
 def non_empty_string(text):
@@ -120,4 +118,4 @@ def _shuffle(to_shuffle, shuffle_seed, key_extractor=lambda v: v):
     -------
     a copy of to_shuffle, sorted uniquely based on it's own key and shuffle_seed.
     """
-    return sorted(to_shuffle, key=lambda s: md5(f'{key_extractor(s)}, {shuffle_seed}'.encode('utf-8')).digest())
+    return sorted(to_shuffle, key=lambda s: md5(f"{key_extractor(s)}, {shuffle_seed}".encode("utf-8")).digest())

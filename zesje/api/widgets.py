@@ -12,24 +12,24 @@ def widget_to_data(widget):
         width, height = widget.width, widget.height
 
     return {
-        'id': widget.id,
-        'name': widget.name,
-        'x': widget.x,
-        'y': widget.y,
-        'width': width,
-        'height': height,
-        'type': widget.type
+        "id": widget.id,
+        "name": widget.name,
+        "x": widget.x,
+        "y": widget.y,
+        "width": width,
+        "height": height,
+        "type": widget.type,
     }
 
 
 def force_boundaries(widget):
-    """ Moves the exam widget if it overlaps with the corner marker margins. """
+    """Moves the exam widget if it overlaps with the corner marker margins."""
     if not isinstance(widget, ExamWidget):
         return False
 
     size = widget.size
-    page_size = current_app.config['PAGE_FORMATS'][current_app.config['PAGE_FORMAT']]
-    margin = int(current_app.config['MARKER_MARGIN'] + current_app.config['MARKER_LINE_WIDTH'])
+    page_size = current_app.config["PAGE_FORMATS"][current_app.config["PAGE_FORMAT"]]
+    margin = int(current_app.config["MARKER_MARGIN"] + current_app.config["MARKER_LINE_WIDTH"])
 
     x = min(max(widget.x, margin), page_size[0] - size[0] - margin)
     y = min(max(widget.y, margin), page_size[1] - size[1] - margin)
@@ -50,7 +50,7 @@ def normalise_pages(widgets):
     for widget in sorted_by_page:
         if prev_page < widget.page:
             # page changed, increment the number of pages to substact if the difference is bigger than one
-            pages_to_substract += (widget.page - prev_page - 1)
+            pages_to_substract += widget.page - prev_page - 1
             prev_page = widget.page
 
         widget.page -= pages_to_substract
@@ -59,13 +59,12 @@ def normalise_pages(widgets):
 
 
 class Widgets(MethodView):
-
-    @use_kwargs({'widget': DBModel(Widget, required=True)})
+    @use_kwargs({"widget": DBModel(Widget, required=True)})
     def patch(self, widget):
         if isinstance(widget, ExamWidget) and widget.exam.finalized:
-            return dict(status=409, message='Exam is finalized'), 409
+            return dict(status=409, message="Exam is finalized"), 409
         elif isinstance(widget, MultipleChoiceOption) and widget.feedback.problem.exam.finalized:
-            return dict(status=409, message='Exam is finalized'), 409
+            return dict(status=409, message="Exam is finalized"), 409
 
         # will 400 on malformed json
         body = request.get_json()
@@ -82,7 +81,7 @@ class Widgets(MethodView):
         exam = widget.exam
 
         if exam.layout == ExamLayout.templated:
-            name = 'Student ID' if widget.name == 'student_id_widget' else 'Barcode'
+            name = "Student ID" if widget.name == "student_id_widget" else "Barcode"
             message = f'The "{name}" widget has to lay between the corner markers region.'
             changed = force_boundaries(widget)
         elif exam.layout == ExamLayout.unstructured:
@@ -96,8 +95,6 @@ class Widgets(MethodView):
 
         if changed:
             # this response forces the client to update the widget to the new state
-            return dict(status=409,
-                        message=message,
-                        data=widget_to_data(widget)), 409
+            return dict(status=409, message=message, data=widget_to_data(widget)), 409
 
         return dict(status=200, message="ok"), 200

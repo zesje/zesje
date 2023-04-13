@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-'''
+"""
 Script to generate a complete database of mock data for testing.
 For each exam it generates a pdf with 3 problems per page, where
 the number of pages is specified in the arguments.
@@ -26,7 +26,7 @@ Usage:
                                 As a drawback, blanks will not be detected.
       --multiple-copies (float) how much of the students submit multiple copies (between 0 and 100)
 
-'''
+"""
 
 import random
 import os
@@ -58,31 +58,31 @@ from zesje.factory import create_app
 import zesje.mysql as mysql
 
 
-if 'ZESJE_SETTINGS' not in os.environ:
-    os.environ['ZESJE_SETTINGS'] = '../zesje_dev_cfg.py'
+if "ZESJE_SETTINGS" not in os.environ:
+    os.environ["ZESJE_SETTINGS"] = "../zesje_dev_cfg.py"
 
 
 lorem_name = TextLorem(srange=(1, 3))
 lorem_prob = TextLorem(srange=(2, 5))
 
-pil_font = ImageFont.truetype('tests/data/fonts/Hugohandwriting-Regular.ttf', size=28)
+pil_font = ImageFont.truetype("tests/data/fonts/Hugohandwriting-Regular.ttf", size=28)
 
 
 def init_app(delete):
     app = create_app()
-    app.config['LOGIN_DISABLED'] = True
+    app.config["LOGIN_DISABLED"] = True
 
     mysql_was_running_before_delete = False
-    if os.path.exists(app.config['DATA_DIRECTORY']) and delete:
+    if os.path.exists(app.config["DATA_DIRECTORY"]) and delete:
         mysql_was_running_before_delete = mysql.is_running(app.config)
         if mysql_was_running_before_delete:
             mysql.stop(app.config)
             time.sleep(5)
-        shutil.rmtree(app.config['DATA_DIRECTORY'])
+        shutil.rmtree(app.config["DATA_DIRECTORY"])
 
     # ensure directories exists
-    os.makedirs(app.config['DATA_DIRECTORY'], exist_ok=True)
-    os.makedirs(app.config['SCAN_DIRECTORY'], exist_ok=True)
+    os.makedirs(app.config["DATA_DIRECTORY"], exist_ok=True)
+    os.makedirs(app.config["SCAN_DIRECTORY"], exist_ok=True)
 
     mysql_is_created = mysql.create(app.config, allow_exists=True)
     if mysql_is_created:
@@ -95,7 +95,7 @@ def init_app(delete):
     # by this script, otherwise the user should migrate manually
     if delete or mysql_is_created:
         with app.app_context():
-            flask_migrate.upgrade(directory='migrations')
+            flask_migrate.upgrade(directory="migrations")
 
     return app, mysql_was_running or mysql_was_running_before_delete
 
@@ -124,22 +124,22 @@ def generate_exam_page(pdf, exam_name, page_num, problems, mc_problems):
 def generate_problem(pdf, problem):
     margin = 5
 
-    pdf.drawString(problem['x'], problem['y'], problem['question'])
-    pdf.rect(problem['x'], problem['y'] - problem['h'] - margin, problem['w'], problem['h'])
+    pdf.drawString(problem["x"], problem["y"], problem["question"])
+    pdf.rect(problem["x"], problem["y"] - problem["h"] - margin, problem["w"], problem["h"])
 
 
 def generate_students(students):
     for i in range(students):
         yield {
-            'studentID': str(i + 1000000),
-            'firstName': names.get_first_name(),
-            'lastName': names.get_last_name(),
-            'email': str(i + 1000000) + '@fakestudent.tudelft.nl'
+            "studentID": str(i + 1000000),
+            "firstName": names.get_first_name(),
+            "lastName": names.get_last_name(),
+            "email": str(i + 1000000) + "@fakestudent.tudelft.nl",
         }
 
 
 def generate_random_page_image(file_path_or_buffer, size):
-    img = PILImage.new('RGB', (int(size[0]), int(size[1])), (255, 255, 255))
+    img = PILImage.new("RGB", (int(size[0]), int(size[1])), (255, 255, 255))
     draw = ImageDraw.Draw(img)
 
     margin = 40
@@ -152,7 +152,7 @@ def generate_random_page_image(file_path_or_buffer, size):
         for line in range(random.randint(1, 7 - groups)):
             draw.text((x, y + line * line_height), lorem.sentence(), (0, 25, 102), font=pil_font)
 
-    img.save(file_path_or_buffer, format='JPEG')
+    img.save(file_path_or_buffer, format="JPEG")
 
 
 def _fake_process_pdf(app, exam, scan, pages, student_ids, copies_per_student):
@@ -163,11 +163,12 @@ def _fake_process_pdf(app, exam, scan, pages, student_ids, copies_per_student):
             copy_number += 1
             copy = Copy(number=copy_number)
 
-            base_copy_path = os.path.join(app.config['DATA_DIRECTORY'],
-                                          f'{exam.id}_data', 'submissions', f'{copy_number}')
+            base_copy_path = os.path.join(
+                app.config["DATA_DIRECTORY"], f"{exam.id}_data", "submissions", f"{copy_number}"
+            )
             os.makedirs(base_copy_path)
             for page in range(pages + 1):
-                path = os.path.join(base_copy_path, f'page{page:02d}.jpeg')
+                path = os.path.join(base_copy_path, f"page{page:02d}.jpeg")
                 generate_random_page_image(path, A4)
                 db.session.add(Page(path=path, copy=copy, number=page))
 
@@ -177,27 +178,24 @@ def _fake_process_pdf(app, exam, scan, pages, student_ids, copies_per_student):
             for problem in scan.exam.problems:
                 db.session.add(Solution(problem=problem, submission=sub))
 
-    scan.status = 'success'
-    scan.message = 'Successfully skipped processing.'
+    scan.status = "success"
+    scan.message = "Successfully skipped processing."
     db.session.commit()
 
 
 def handle_pdf_processing(app, exam_id, scan_file, pages, student_ids, copies_per_student, skip_processing=False):
     exam = Exam.query.get(exam_id)
-    ext = 'pdf' if exam.layout == ExamLayout.templated else 'zip'
-    scan = Scan(exam=exam,
-                name=f'{exam_id}.{ext}',
-                status='processing',
-                message='Waiting...')
+    ext = "pdf" if exam.layout == ExamLayout.templated else "zip"
+    scan = Scan(exam=exam, name=f"{exam_id}.{ext}", status="processing", message="Waiting...")
 
     db.session.add(scan)
     db.session.commit()
 
-    scan.name = f'{scan.id}.{ext}'
+    scan.name = f"{scan.id}.{ext}"
     db.session.commit()
 
-    path = os.path.join(app.config['SCAN_DIRECTORY'], scan.name)
-    with open(path, 'wb') as outfile:
+    path = os.path.join(app.config["SCAN_DIRECTORY"], scan.name)
+    with open(path, "wb") as outfile:
         outfile.write(scan_file.read())
         scan_file.seek(0)
 
@@ -206,16 +204,10 @@ def handle_pdf_processing(app, exam_id, scan_file, pages, student_ids, copies_pe
     else:
         _process_scan(scan_id=scan.id, exam_layout=exam.layout)
 
-    return {
-        'id': scan.id,
-        'name': scan.name,
-        'status': scan.status,
-        'message': scan.message
-    }
+    return {"id": scan.id, "name": scan.name, "status": scan.status, "message": scan.message}
 
 
 def generate_solution(pdf, pages, student_id, problems):
-
     pdf.setFillColorRGB(0, 0.1, 0.4)
 
     sID = str(student_id)
@@ -224,16 +216,16 @@ def generate_solution(pdf, pages, student_id, problems):
         pdf.rect(66 + k * 16, int(A4[1]) - 82 - d * 16, 9, 9, fill=1, stroke=0)
 
     for page in range(pages):
-        pdf.setFont('HugoHandwriting', 19)
+        pdf.setFont("HugoHandwriting", 19)
         pdf.setFillColorRGB(0, 0.1, 0.4)
 
-        for problem in (p for p in problems if p['page'] == page):
-            if 'mc_options' in problem:
-                o = random.choice(problem['mc_options'])
-                pdf.rect(o['x'], o['y'] - 8, 9, 8, fill=1, stroke=0)
+        for problem in (p for p in problems if p["page"] == page):
+            if "mc_options" in problem:
+                o = random.choice(problem["mc_options"])
+                pdf.rect(o["x"], o["y"] - 8, 9, 8, fill=1, stroke=0)
             else:
                 for i in range(random.randint(1, 3)):
-                    pdf.drawString(problem['x'] + 20, problem['y'] - 30 - (20 * i), lorem.sentence())
+                    pdf.drawString(problem["x"] + 20, problem["y"] - 30 - (20 * i), lorem.sentence())
 
         pdf.showPage()
 
@@ -269,94 +261,106 @@ def solve_problems(pdf_file, pages, student_ids, problems, solve, copies_per_stu
 
 def validate_signatures(client, exam_id, copies, validate):
     for copy in copies:
-        number = copy['number']
-        student = copy['student']
+        number = copy["number"]
+        student = copy["student"]
         if not student:
-            print(f'\tNo student detected for copy {number} of exam {exam_id}')
+            print(f"\tNo student detected for copy {number} of exam {exam_id}")
         elif random.random() < validate:
-            student_id = student['id']
-            client.put(f'/api/copies/{exam_id}/{number}', json={'studentID': student_id, 'allowMerge': True})
+            student_id = student["id"]
+            client.put(f"/api/copies/{exam_id}/{number}", json={"studentID": student_id, "allowMerge": True})
 
 
 def grade_problems(client, exam_id, graders, problems, submissions, grade):
     date = datetime.now(timezone.utc)
 
     for sub in submissions:
-        submission_id = sub['id']
+        submission_id = sub["id"]
 
-        for prob in sub['problems']:
+        for prob in sub["problems"]:
             # randomly select the problem if it is not blanck
-            if random.random() <= grade and len(prob['feedback']) == 0:
-                fb_data = next(filter(lambda p: p['id'] == prob['problemId'], problems))
-                fo, root_id = fb_data['feedback'], fb_data['root_feedback_id']
+            if random.random() <= grade and len(prob["feedback"]) == 0:
+                fb_data = next(filter(lambda p: p["id"] == prob["problemId"], problems))
+                fo, root_id = fb_data["feedback"], fb_data["root_feedback_id"]
                 fo = [id for id in fo if int(id) != root_id]
                 opt = fo[random.randint(0, len(fo) - 1)]
-                client.put(f"/api/solution/{exam_id}/{submission_id}/{prob['problemId']}",
-                           json={'id': opt})
+                client.put(f"/api/solution/{exam_id}/{submission_id}/{prob['problemId']}", json={"id": opt})
 
-                solution = Solution.query.filter(Solution.submission_id == submission_id,
-                                                 Solution.problem_id == prob['problemId']).one_or_none()
+                solution = Solution.query.filter(
+                    Solution.submission_id == submission_id, Solution.problem_id == prob["problemId"]
+                ).one_or_none()
 
                 grader = random.choice(graders)
-                solution.grader_id = grader['id']
+                solution.grader_id = grader["id"]
                 solution.graded_at = date
 
                 dt = timedelta(
                     seconds=int(random.lognormvariate(mu=0.5, sigma=0.4) * 60),
-                    hours=random.randint(1, 24) if random.random() < 0.05 else 0
+                    hours=random.randint(1, 24) if random.random() < 0.05 else 0,
                 )
                 date = date - dt
     db.session.commit()
 
 
 def add_templated_exam(client, pages):
-    exam_name = lorem_name.sentence().replace('.', '')
-    problems = [{
-        'question': f'{i + 1}. ' + lorem_prob.sentence().replace('.', '?'),
-        'page': (i // 3),
-        'x': 75, 'y': int(A4[1]) - 300 - (170 * (i % 3)),
-        'w': 450, 'h': 120
-    } for i in range(pages * 3)]
+    exam_name = lorem_name.sentence().replace(".", "")
+    problems = [
+        {
+            "question": f"{i + 1}. " + lorem_prob.sentence().replace(".", "?"),
+            "page": (i // 3),
+            "x": 75,
+            "y": int(A4[1]) - 300 - (170 * (i % 3)),
+            "w": 450,
+            "h": 120,
+        }
+        for i in range(pages * 3)
+    ]
 
-    mc_problems = [{
-        'question': f'MC{i}. ' + lorem_prob.sentence().replace('.', '?'),
-        'x': 75, 'y': int(A4[1]) - 150,
-        'w': 300, 'h': 75,
-        'page': i,
-        'mc_options': [{
-            'name': chr(65 + k),
-            'x': 75 + 20 * (k + 1),
-            'y': int(A4[1]) - 200
-            } for k in range(random.randint(2, 5))]
-    } for i in range(1, pages)]
+    mc_problems = [
+        {
+            "question": f"MC{i}. " + lorem_prob.sentence().replace(".", "?"),
+            "x": 75,
+            "y": int(A4[1]) - 150,
+            "w": 300,
+            "h": 75,
+            "page": i,
+            "mc_options": [
+                {"name": chr(65 + k), "x": 75 + 20 * (k + 1), "y": int(A4[1]) - 200}
+                for k in range(random.randint(2, 5))
+            ],
+        }
+        for i in range(1, pages)
+    ]
 
     with NamedTemporaryFile() as pdf_file:
         generate_exam_pdf(pdf_file, exam_name, pages, problems, mc_problems)
-        exam_id = client.post('/api/exams',
-                              content_type='multipart/form-data',
-                              data={
-                                  'exam_name': exam_name,
-                                  'layout': ExamLayout.templated.name,
-                                  'pdf': pdf_file}).get_json()['id']
+        exam_id = client.post(
+            "/api/exams",
+            content_type="multipart/form-data",
+            data={"exam_name": exam_name, "layout": ExamLayout.templated.name, "pdf": pdf_file},
+        ).get_json()["id"]
 
     return exam_id, problems + mc_problems
 
 
 def add_unstructured_exam(client, pages):
-    exam_name = lorem_name.sentence().replace('.', '')
-    problems = [{
-        'question': f'{i + 1}. ' + lorem_prob.sentence().replace('.', '?'),
-        'page': (i // 3),
-        'x': 0, 'y': 0,
-        'w': 0, 'h': 0
-    } for i in range(pages * 3)]
+    exam_name = lorem_name.sentence().replace(".", "")
+    problems = [
+        {
+            "question": f"{i + 1}. " + lorem_prob.sentence().replace(".", "?"),
+            "page": (i // 3),
+            "x": 0,
+            "y": 0,
+            "w": 0,
+            "h": 0,
+        }
+        for i in range(pages * 3)
+    ]
 
-    exam_id = client.post('/api/exams',
-                          content_type='multipart/form-data',
-                          json={
-                              'exam_name': exam_name,
-                              'layout': ExamLayout.unstructured.name}
-                          ).get_json()['id']
+    exam_id = client.post(
+        "/api/exams",
+        content_type="multipart/form-data",
+        json={"exam_name": exam_name, "layout": ExamLayout.unstructured.name},
+    ).get_json()["id"]
 
     return exam_id, problems
 
@@ -371,78 +375,93 @@ def design_exam(app, client, layout, pages, students, grade, solve, validate, mu
     else:
         return None
 
-    print('\tDesigning a hard exam.')
+    print("\tDesigning a hard exam.")
     # Create problems
     for problem in problems:
-        problem_id = client.post('api/problems', json={
-            'exam_id': exam_id,
-            'name': problem['question'],
-            'page': problem['page'],
-            # add some padding to x, y, w, h
-            'x': problem['x'] - 20,
-            'y': int(A4[1]) - problem['y'] - 20,
-            'width': problem['w'] + 40,
-            'height': problem['h'] + 40,
-        }).get_json()['id']
+        problem_id = client.post(
+            "api/problems",
+            json={
+                "exam_id": exam_id,
+                "name": problem["question"],
+                "page": problem["page"],
+                # add some padding to x, y, w, h
+                "x": problem["x"] - 20,
+                "y": int(A4[1]) - problem["y"] - 20,
+                "width": problem["w"] + 40,
+                "height": problem["h"] + 40,
+            },
+        ).get_json()["id"]
 
-        is_mcq = 'mc_options' in problem
+        is_mcq = "mc_options" in problem
         # Have to put name again, because the endpoint first guesses a name.
-        client.put(f'api/problems/{problem_id}',
-                   json={'name': problem['question'], 'grading_policy': 'set_single' if is_mcq else 'set_blank'})
+        client.put(
+            f"api/problems/{problem_id}",
+            json={"name": problem["question"], "grading_policy": "set_single" if is_mcq else "set_blank"},
+        )
 
         if is_mcq:
-            result = client.get(f'api/problems/{problem_id}')
-            parent = json.loads(result.data)['root_feedback_id']
+            result = client.get(f"api/problems/{problem_id}")
+            parent = json.loads(result.data)["root_feedback_id"]
             fops = []
-            for option in problem['mc_options']:
-                resp = client.put('api/mult-choice/', json={
-                    'problem_id': problem_id,
-                    'name': option['name'], 'label': option['name'],
-                    'x': option['x'],
-                    'y': int(A4[1]) - option['y']
-                })
-                fops.append((resp.get_json()['feedback_id'], option['name']))
+            for option in problem["mc_options"]:
+                resp = client.put(
+                    "api/mult-choice/",
+                    json={
+                        "problem_id": problem_id,
+                        "name": option["name"],
+                        "label": option["name"],
+                        "x": option["x"],
+                        "y": int(A4[1]) - option["y"],
+                    },
+                )
+                fops.append((resp.get_json()["feedback_id"], option["name"]))
 
             correct = random.choice(fops)
-            client.patch(f'api/feedback/{problem_id}/{correct[0]}', json={'score': 1})
-            client.patch(f'api/feedback/{problem_id}/{parent}', json={'exclusive': True})
+            client.patch(f"api/feedback/{problem_id}/{correct[0]}", json={"score": 1})
+            client.patch(f"api/feedback/{problem_id}/{parent}", json={"exclusive": True})
         else:
-            result = client.get(f'api/problems/{problem_id}')
-            root_id = json.loads(result.data)['root_feedback_id']
+            result = client.get(f"api/problems/{problem_id}")
+            root_id = json.loads(result.data)["root_feedback_id"]
             fb_ids = []
             # Add random top-level FOs
             for _ in range(random.randint(2, 10)):
-                result = client.post(f'api/feedback/{problem_id}', json={
-                    'name': lorem_name.sentence(),
-                    'description': (lorem.sentence() if random.choice([True, False]) else ''),
-                    'score': random.randint(0, 10),
-                    'parentId': root_id
-                })
+                result = client.post(
+                    f"api/feedback/{problem_id}",
+                    json={
+                        "name": lorem_name.sentence(),
+                        "description": (lorem.sentence() if random.choice([True, False]) else ""),
+                        "score": random.randint(0, 10),
+                        "parentId": root_id,
+                    },
+                )
                 # use return from post to get ids
                 data = json.loads(result.data)
-                fb_ids.append(data['id'])
+                fb_ids.append(data["id"])
 
             parent_ids_with_children = random.sample(fb_ids, random.randint(2, len(fb_ids)))
             # Add random children to top-level FOs
             for parent_id in parent_ids_with_children:
                 for _ in range(random.randint(2, 5)):
                     # get random id from list
-                    client.post(f'api/feedback/{problem_id}', json={
-                        'name': lorem_name.sentence(),
-                        'description': (lorem.sentence() if random.choice([True, False]) else ''),
-                        'score': random.randint(0, 10),
-                        'parentId': parent_id
-                    })
+                    client.post(
+                        f"api/feedback/{problem_id}",
+                        json={
+                            "name": lorem_name.sentence(),
+                            "description": (lorem.sentence() if random.choice([True, False]) else ""),
+                            "score": random.randint(0, 10),
+                            "parentId": parent_id,
+                        },
+                    )
                     data = json.loads(result.data)
-                    fb_ids.append(data['id'])
+                    fb_ids.append(data["id"])
 
             exclusive_parent_ids = random.sample(parent_ids_with_children + [root_id], random.randint(0, 3))
             for id in exclusive_parent_ids:
-                client.patch(f'api/feedback/{problem_id}/{id}', json={'exclusive': True})
+                client.patch(f"api/feedback/{problem_id}/{id}", json={"exclusive": True})
 
-    client.put(f'api/exams/{exam_id}', json={'finalized': True})
+    client.put(f"api/exams/{exam_id}", json={"finalized": True})
 
-    student_ids = [s['id'] for s in client.get('/api/students').get_json()]
+    student_ids = [s["id"] for s in client.get("/api/students").get_json()]
     random.shuffle(student_ids)
     student_ids = student_ids[:students]
     copies_per_student = [2 if random.random() < multiple_copies else 1 for _ in range(students)]
@@ -450,82 +469,78 @@ def design_exam(app, client, layout, pages, students, grade, solve, validate, mu
     if layout == ExamLayout.templated.name:
         # Download PDFs
         generated = client.get(
-            f'api/exams/{exam_id}/generated_pdfs?copies_start=1&copies_end={sum(copies_per_student)}&type=pdf')
+            f"api/exams/{exam_id}/generated_pdfs?copies_start=1&copies_end={sum(copies_per_student)}&type=pdf"
+        )
 
         # Upload submissions
-        with NamedTemporaryFile(mode='w+b') as submission_pdf:
+        with NamedTemporaryFile(mode="w+b") as submission_pdf:
             submission_pdf.write(generated.data)
             submission_pdf.seek(0)
 
-            print('\tWaiting for students to solve it.')
+            print("\tWaiting for students to solve it.")
             solve_problems(submission_pdf, pages, student_ids, problems, solve, copies_per_student)
             submission_pdf.seek(0)
 
-            print('\tProcessing scans (this may take a while).',)
+            print(
+                "\tProcessing scans (this may take a while).",
+            )
             handle_pdf_processing(app, exam_id, submission_pdf, pages, student_ids, copies_per_student, skip_processing)
     elif layout == ExamLayout.unstructured.name:
-        with NamedTemporaryFile(mode='w+b') as submission_zip:
-            with ZipFile(submission_zip, 'w') as zip:
+        with NamedTemporaryFile(mode="w+b") as submission_zip:
+            with ZipFile(submission_zip, "w") as zip:
                 for id in student_ids:
                     for page in range(pages):
                         # for now, igonre multiple copies per student
                         buf = BytesIO()
                         generate_random_page_image(buf, A4)
-                        zip.writestr(f'{id}-{page}.jpeg', buf.getvalue())
+                        zip.writestr(f"{id}-{page}.jpeg", buf.getvalue())
                 zip.close()
             submission_zip.seek(0)
             handle_pdf_processing(app, exam_id, submission_zip, pages, student_ids, copies_per_student, skip_processing)
 
     # Validate signatures
-    copies = client.get(f'api/copies/{exam_id}').get_json()
+    copies = client.get(f"api/copies/{exam_id}").get_json()
     validate_signatures(client, exam_id, copies, validate)
 
-    submissions = client.get(f'api/submissions/{exam_id}').get_json()
-    problems = client.get('/api/exams/' + str(exam_id)).get_json()['problems']
+    submissions = client.get(f"api/submissions/{exam_id}").get_json()
+    problems = client.get("/api/exams/" + str(exam_id)).get_json()["problems"]
 
-    graders = client.get('/api/graders').get_json()
+    graders = client.get("/api/graders").get_json()
 
-    print('\tIt\'s grading time.')
+    print("\tIt's grading time.")
     grade_problems(client, exam_id, graders, problems, submissions, grade)
 
-    print('\tAll done!')
-    return client.get('/api/exams/' + str(exam_id)).get_json()
+    print("\tAll done!")
+    return client.get("/api/exams/" + str(exam_id)).get_json()
 
 
-def create_exams(app,
-                 client,
-                 exams,
-                 layout,
-                 pages,
-                 students,
-                 graders,
-                 solve,
-                 grade,
-                 validate,
-                 multiple_copies,
-                 skip_processing=False):
-
-    client.get('/api/oauth/start')
+def create_exams(
+    app, client, exams, layout, pages, students, graders, solve, grade, validate, multiple_copies, skip_processing=False
+):
+    client.get("/api/oauth/start")
     # create graders
     for _ in range(max(1, graders)):
         name = names.get_full_name()
-        email = '.'.join(name.split(' ')).lower() + '@fake.tudelft.nl'
+        email = ".".join(name.split(" ")).lower() + "@fake.tudelft.nl"
         grader = Grader(name=name, oauth_id=email)
         db.session.add(grader)
     db.session.commit()
 
-    client.get('/api/oauth/callback')
+    client.get("/api/oauth/callback")
 
     # create students
     for student in generate_students(students):
-        client.put('api/students', json=student)
+        client.put("api/students", json=student)
 
     generated_exams = []
     for _ in range(exams):
-        generated_exams.append(design_exam(app, client, layout, max(1, pages), students, grade,
-                                           solve, validate, multiple_copies, skip_processing))
+        generated_exams.append(
+            design_exam(
+                app, client, layout, max(1, pages), students, grade, solve, validate, multiple_copies, skip_processing
+            )
+        )
 
-    client.get('/api/oauth/logout')
+    client.get("/api/oauth/logout")
 
     return generated_exams
 
@@ -533,58 +548,76 @@ def create_exams(app,
 def register_fonts():
     # Font name : file name
     # File name should be the same as internal font name
-    fonts = {
-        'HugoHandwriting': 'Hugohandwriting-Regular'
-    }
+    fonts = {"HugoHandwriting": "Hugohandwriting-Regular"}
 
-    font_dir = Path.cwd() / 'tests' / 'data' / 'fonts'
+    font_dir = Path.cwd() / "tests" / "data" / "fonts"
     for font_name, font_file in fonts.items():
-        font_path_afm = font_dir / (font_file + '.afm')
-        font_path_pfb = font_dir / (font_file + '.pfb')
+        font_path_afm = font_dir / (font_file + ".afm")
+        font_path_pfb = font_dir / (font_file + ".pfb")
 
         face = pdfmetrics.EmbeddedType1Face(font_path_afm, font_path_pfb)
         pdfmetrics.registerTypeFace(face)
 
-        font = pdfmetrics.Font(font_name, font_file, 'WinAnsiEncoding')
+        font = pdfmetrics.Font(font_name, font_file, "WinAnsiEncoding")
         pdfmetrics.registerFont(font)
 
 
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Create example exam data in the database.')
-    parser.add_argument('-d', '--delete', action='store_true', help='delete previous data')
-    parser.add_argument('-sp', '--skip-processing', action='store_true',
-                        help='fakes the pdf processing to reduce time. As a drawback, blanks will not be detected.')
-    parser.add_argument('--exams', type=int, default=1, help='number of exams to add')
-    parser.add_argument('--layout', type=str, default=ExamLayout.templated.name,
-                        choices=[layout.name for layout in ExamLayout],
-                        help='the layout of the exams, any of: '
-                             + ', '.join(layout.name for layout in ExamLayout))
-    parser.add_argument('--pages', type=int, default=3, help='number of pages per exam (min is 1)')
-    parser.add_argument('--students', type=int, default=30, help='number of students per exam')
-    parser.add_argument('--graders', type=int, default=4, help='number of graders (min is 1)')
-    parser.add_argument('--solve', type=int, default=90, help='how much of the solutions to solve (between 0 and 100)')
-    parser.add_argument('--validate', type=int, default=90,
-                        help='how much of the solutions to validate (between 0 and 100)')
-    parser.add_argument('--grade', type=int, default=60, help='how much of the exam to grade (between 0 and 100). \
-                        Notice that only non-blank solutions will be considered for grading.')
-    parser.add_argument('--multiple-copies', type=int, default=5,
-                        help='how much of the students submit multiple copies (between 0 and 100)')
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Create example exam data in the database.")
+    parser.add_argument("-d", "--delete", action="store_true", help="delete previous data")
+    parser.add_argument(
+        "-sp",
+        "--skip-processing",
+        action="store_true",
+        help="fakes the pdf processing to reduce time. As a drawback, blanks will not be detected.",
+    )
+    parser.add_argument("--exams", type=int, default=1, help="number of exams to add")
+    parser.add_argument(
+        "--layout",
+        type=str,
+        default=ExamLayout.templated.name,
+        choices=[layout.name for layout in ExamLayout],
+        help="the layout of the exams, any of: " + ", ".join(layout.name for layout in ExamLayout),
+    )
+    parser.add_argument("--pages", type=int, default=3, help="number of pages per exam (min is 1)")
+    parser.add_argument("--students", type=int, default=30, help="number of students per exam")
+    parser.add_argument("--graders", type=int, default=4, help="number of graders (min is 1)")
+    parser.add_argument("--solve", type=int, default=90, help="how much of the solutions to solve (between 0 and 100)")
+    parser.add_argument(
+        "--validate", type=int, default=90, help="how much of the solutions to validate (between 0 and 100)"
+    )
+    parser.add_argument(
+        "--grade",
+        type=int,
+        default=60,
+        help="how much of the exam to grade (between 0 and 100). \
+                        Notice that only non-blank solutions will be considered for grading.",
+    )
+    parser.add_argument(
+        "--multiple-copies",
+        type=int,
+        default=5,
+        help="how much of the students submit multiple copies (between 0 and 100)",
+    )
 
     args = parser.parse_args(sys.argv[1:])
 
     app, mysql_was_running = init_app(args.delete)
 
     with app.test_client() as client, app.app_context():
-        create_exams(app, client,
-                     args.exams,
-                     args.layout,
-                     args.pages,
-                     args.students,
-                     args.graders,
-                     args.solve / 100,
-                     args.grade / 100,
-                     args.validate / 100,
-                     args.multiple_copies / 100,
-                     args.skip_processing)
+        create_exams(
+            app,
+            client,
+            args.exams,
+            args.layout,
+            args.pages,
+            args.students,
+            args.graders,
+            args.solve / 100,
+            args.grade / 100,
+            args.validate / 100,
+            args.multiple_copies / 100,
+            args.skip_processing,
+        )
     if not mysql_was_running:
         mysql.stop(app.config)

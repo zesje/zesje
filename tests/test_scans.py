@@ -25,23 +25,24 @@ from zesje.constants import PAGE_FORMATS
 def mock_get_box_return_original(monkeypatch):
     def mock_return(image, widget, padding):
         return image
-    monkeypatch.setattr(scans, 'get_box', mock_return)
+
+    monkeypatch.setattr(scans, "get_box", mock_return)
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def full_app(module_app):
     """
     Default code for generating a database entry and writing
     a finalized exam pdf.
     This needs to be ran at the start of every pipeline test
     """
-    exam = Exam(name='Exam')
+    exam = Exam(name="Exam")
     db.session.add(exam)
     db.session.commit()
 
-    exam.token = generate_exam_token(exam.id, exam.name, b'EXAM PDF DATA')
-    ExamWidget(exam=exam, name='student_id_widget', x=50, y=50)
-    ExamWidget(exam=exam, name='barcode_widget', x=40, y=510)
+    exam.token = generate_exam_token(exam.id, exam.name, b"EXAM PDF DATA")
+    ExamWidget(exam=exam, name="student_id_widget", x=50, y=50)
+    ExamWidget(exam=exam, name="barcode_widget", x=40, y=510)
 
     db.session.commit()
 
@@ -74,25 +75,23 @@ def generate_flat_scan_data(copy_number=145):
 
 
 def original_page_size(format, dpi):
-    h = (PAGE_FORMATS[format][1])/72 * dpi
-    w = (PAGE_FORMATS[format][0])/72 * dpi
+    h = (PAGE_FORMATS[format][1]) / 72 * dpi
+    w = (PAGE_FORMATS[format][0]) / 72 * dpi
 
     return np.rint([h, w]).astype(int)
 
 
-@pytest.mark.parametrize('image_filename, token, expected', [
-    ('COOLTOKEN_0005_01.png', 'COOLTOKEN',
-        ExtractedBarcode('COOLTOKEN',   5,   1)),
-    ('COOLTOKEN_0050_10.png', 'COOLTOKEN',
-        ExtractedBarcode('COOLTOKEN',   50, 10)),
-    ('TOKENCOOL_9999_99.png', 'TOKENCOOL',
-        ExtractedBarcode('TOKENCOOL', 9999, 99))],
-    ids=['Simple test 1', 'Simple test 2', 'High numbers'])
-def test_decode_barcode(
-        datadir, image_filename, token,
-        expected, mock_get_box_return_original):
-
-    image_path = os.path.join(datadir, 'datamatrices', image_filename)
+@pytest.mark.parametrize(
+    "image_filename, token, expected",
+    [
+        ("COOLTOKEN_0005_01.png", "COOLTOKEN", ExtractedBarcode("COOLTOKEN", 5, 1)),
+        ("COOLTOKEN_0050_10.png", "COOLTOKEN", ExtractedBarcode("COOLTOKEN", 50, 10)),
+        ("TOKENCOOL_9999_99.png", "TOKENCOOL", ExtractedBarcode("TOKENCOOL", 9999, 99)),
+    ],
+    ids=["Simple test 1", "Simple test 2", "High numbers"],
+)
+def test_decode_barcode(datadir, image_filename, token, expected, mock_get_box_return_original):
+    image_path = os.path.join(datadir, "datamatrices", image_filename)
 
     exam_config = ExamMetadata(
         token=token,
@@ -150,11 +149,9 @@ def test_pipeline(full_app):
         assert success is True, reason
 
 
-@pytest.mark.parametrize('threshold, expected', [
-    (0.02, True),
-    (0.12, True),
-    (0.28, True)],
-    ids=['Low noise', 'Medium noise', 'High noise'])
+@pytest.mark.parametrize(
+    "threshold, expected", [(0.02, True), (0.12, True), (0.28, True)], ids=["Low noise", "Medium noise", "High noise"]
+)
 def test_noise(full_app, threshold, expected):
     for image, exam_config, _ in generate_flat_scan_data():
         image = apply_whitenoise(image, threshold)
@@ -162,12 +159,11 @@ def test_noise(full_app, threshold, expected):
         assert success is expected, reason
 
 
-@pytest.mark.parametrize('rotation, expected', [
-    (-2, True),
-    (0.5, True),
-    (0.8, True),
-    (2, True)],
-    ids=['Large rot', 'Small rot', 'Medium rot', 'Large counterclockwise rot'])
+@pytest.mark.parametrize(
+    "rotation, expected",
+    [(-2, True), (0.5, True), (0.8, True), (2, True)],
+    ids=["Large rot", "Small rot", "Medium rot", "Large counterclockwise rot"],
+)
 def test_rotate(full_app, rotation, expected):
     for image, exam_config, _ in generate_flat_scan_data():
         image = apply_scan(img=image, rotation=rotation)
@@ -175,10 +171,7 @@ def test_rotate(full_app, rotation, expected):
         assert success is expected, reason
 
 
-@pytest.mark.parametrize('scale, expected', [
-    (0.99, True),
-    (1.1, True)],
-    ids=['smaller scale', 'larger scale'])
+@pytest.mark.parametrize("scale, expected", [(0.99, True), (1.1, True)], ids=["smaller scale", "larger scale"])
 def test_scale(full_app, scale, expected):
     for image, exam_config, _ in generate_flat_scan_data():
         image = apply_scan(img=image, scale=scale)
@@ -186,10 +179,7 @@ def test_scale(full_app, scale, expected):
         assert success is expected, reason
 
 
-@pytest.mark.parametrize('skew, expected', [
-    ((10, 10), True),
-    ((-10, -5), True)],
-    ids=['small skew', 'larger skew'])
+@pytest.mark.parametrize("skew, expected", [((10, 10), True), ((-10, -5), True)], ids=["small skew", "larger skew"])
 def test_skew(full_app, skew, expected):
     for image, exam_config, _ in generate_flat_scan_data():
         image = apply_scan(img=image, skew=skew)
@@ -197,24 +187,28 @@ def test_skew(full_app, skew, expected):
         assert success is expected, reason
 
 
-@pytest.mark.parametrize('rotation, scale, skew, expected', [
-    (0.5, 0.99, (10, 10), True),
-    (0.5, 1.01, (-10, -5), True)],
-    ids=['1st full test', 'second full test'])
+@pytest.mark.parametrize(
+    "rotation, scale, skew, expected",
+    [(0.5, 0.99, (10, 10), True), (0.5, 1.01, (-10, -5), True)],
+    ids=["1st full test", "second full test"],
+)
 def test_all_effects(full_app, rotation, scale, skew, expected):
     for image, exam_config, _ in generate_flat_scan_data():
-        image = apply_scan(
-            img=image, rotation=rotation, scale=scale, skew=skew)
+        image = apply_scan(img=image, rotation=rotation, scale=scale, skew=skew)
         success, reason = scans.process_page(image, [], [], exam_config)
         assert success is expected, reason
 
 
-@pytest.mark.parametrize('filename,expected', [
-    ['blank-a4-2pages.pdf', ValueError],
-    ['single-image-a4.pdf', ValueError],
-    ['two-images-a4.pdf', ValueError],
-    ['flattened-a4-2pages.pdf', None]],
-    ids=['blank pdf', 'single image', 'two images', 'flattened pdf'])
+@pytest.mark.parametrize(
+    "filename,expected",
+    [
+        ["blank-a4-2pages.pdf", ValueError],
+        ["single-image-a4.pdf", ValueError],
+        ["two-images-a4.pdf", ValueError],
+        ["flattened-a4-2pages.pdf", None],
+    ],
+    ids=["blank pdf", "single image", "two images", "flattened pdf"],
+)
 def test_image_extraction_pike(datadir, filename, expected):
     file = os.path.join(datadir, filename)
     with Pdf.open(file) as pdf_reader:
@@ -227,10 +221,9 @@ def test_image_extraction_pike(datadir, filename, expected):
                 assert img is not None
 
 
-@pytest.mark.parametrize('filename', [
-    'blank-a4-2pages.pdf',
-    'flattened-a4-2pages.pdf'],
-    ids=['blank pdf', 'flattened pdf'])
+@pytest.mark.parametrize(
+    "filename", ["blank-a4-2pages.pdf", "flattened-a4-2pages.pdf"], ids=["blank pdf", "flattened pdf"]
+)
 def test_image_extraction(datadir, filename):
     file = os.path.join(datadir, filename)
     page = 0
@@ -241,13 +234,17 @@ def test_image_extraction(datadir, filename):
     assert page == 2
 
 
-@pytest.mark.parametrize('file_name, markers', [("a4-rotated.png", [(59, 59), (1181, 59), (59, 1695), (1181, 1695)]),
-                                                ("a4-3-markers.png", [(1181, 59), (59, 1695), (1181, 1695)]),
-                                                ("a4-rotated-3-markers.png", [(1181, 59), (59, 1695), (1181, 1695)]),
-                                                ("a4-rotated-2-markers.png", [(1181, 59), (59, 1695)]),
-                                                ("a4-rotated-2-bottom-markers.png", [(59, 1695), (1181, 1695)]),
-                                                ("a4-shifted-1-marker.png", [(59, 1695)])
-                                                ])
+@pytest.mark.parametrize(
+    "file_name, markers",
+    [
+        ("a4-rotated.png", [(59, 59), (1181, 59), (59, 1695), (1181, 1695)]),
+        ("a4-3-markers.png", [(1181, 59), (59, 1695), (1181, 1695)]),
+        ("a4-rotated-3-markers.png", [(1181, 59), (59, 1695), (1181, 1695)]),
+        ("a4-rotated-2-markers.png", [(1181, 59), (59, 1695)]),
+        ("a4-rotated-2-bottom-markers.png", [(59, 1695), (1181, 1695)]),
+        ("a4-shifted-1-marker.png", [(59, 1695)]),
+    ],
+)
 def test_realign_image(module_app, datadir, file_name, markers):
     dir_name = "cornermarkers"
     epsilon = 1
@@ -256,7 +253,7 @@ def test_realign_image(module_app, datadir, file_name, markers):
     test_image = np.array(PIL.Image.open(test_file))
 
     dpi = guess_dpi(test_image)
-    page_shape = np.array(original_page_size('A4', dpi))
+    page_shape = np.array(original_page_size("A4", dpi))
 
     result_image = scans.realign_image(test_image, page_shape)
 
@@ -278,7 +275,7 @@ def test_incomplete_reference_realign_image(module_app, datadir):
     correct_corner_markers = [(59, 59), (1181, 59), (59, 1695), (1181, 1695)]
 
     dpi = guess_dpi(test_image)
-    page_shape = np.array(original_page_size('A4', dpi))
+    page_shape = np.array(original_page_size("A4", dpi))
 
     result_image = scans.realign_image(test_image, page_shape)
     result_corner_markers = scans.find_corner_marker_keypoints(result_image)
@@ -292,11 +289,11 @@ def test_incomplete_reference_realign_image(module_app, datadir):
         assert diff[1] <= epsilon
 
 
-@pytest.mark.parametrize('model', [(Copy), (Page)], ids=['Copy', 'Page'])
+@pytest.mark.parametrize("model", [(Copy), (Page)], ids=["Copy", "Page"])
 def test_add_to_correct_copy_integrity(module_app, model):
     app = module_app
-    exam = Exam(name='', token=generate_exam_token(model, 0, 0))
-    exam.problems = [Problem(name='')]
+    exam = Exam(name="", token=generate_exam_token(model, 0, 0))
+    exam.problems = [Problem(name="")]
     db.session.add(exam)
     db.session.commit()
 
@@ -307,26 +304,20 @@ def test_add_to_correct_copy_integrity(module_app, model):
 
     def insert_model(model):
         if model == Copy:
-            query = insert(Submission.__table__).values(
-                exam_id=exam_id, validated=False
-            )
+            query = insert(Submission.__table__).values(exam_id=exam_id, validated=False)
             result = db.session.execute(query)
-            query = insert(Copy.__table__).values(
-                submission_id=result.lastrowid, _exam_id=exam_id, number=barcode.copy
-            )
+            query = insert(Copy.__table__).values(submission_id=result.lastrowid, _exam_id=exam_id, number=barcode.copy)
             db.session.execute(query)
         elif model == Page:
             with db.session.no_autoflush:
                 copy_id = exam.copies[0].id
-            query = insert(Page.__table__).values(
-                copy_id=copy_id, number=barcode.page, path='test'
-            )
+            query = insert(Page.__table__).values(copy_id=copy_id, number=barcode.page, path="test")
             db.session.execute(query)
 
     def before_commit(session):
         # Only trigger at the right commit when the entry is inserted
-        on_commit_count = app.config.get('ON_COMMIT_COUNT', 1)
-        app.config['ON_COMMIT_COUNT'] = on_commit_count + 1
+        on_commit_count = app.config.get("ON_COMMIT_COUNT", 1)
+        app.config["ON_COMMIT_COUNT"] = on_commit_count + 1
         if on_commit_count != commit_count[model]:
             return
 
@@ -336,15 +327,12 @@ def test_add_to_correct_copy_integrity(module_app, model):
         if not session.is_active:
             return
 
-        app.config['INTEGRITY_ERROR_COUNT'] = app.config.get('INTEGRITY_ERROR_COUNT', 0) + 1
+        app.config["INTEGRITY_ERROR_COUNT"] = app.config.get("INTEGRITY_ERROR_COUNT", 0) + 1
 
         insert_model(model)
         db.session.commit()
 
-    listeners = [
-        ("before_commit", before_commit),
-        ("after_soft_rollback", after_rollback)
-    ]
+    listeners = [("before_commit", before_commit), ("after_soft_rollback", after_rollback)]
 
     for listener in listeners:
         event.listen(db.session, *listener)
@@ -354,10 +342,10 @@ def test_add_to_correct_copy_integrity(module_app, model):
     for listener in listeners:
         event.remove(db.session, *listener)
 
-    assert app.config['INTEGRITY_ERROR_COUNT'] == 1
+    assert app.config["INTEGRITY_ERROR_COUNT"] == 1
 
-    del app.config['INTEGRITY_ERROR_COUNT']
-    del app.config['ON_COMMIT_COUNT']
+    del app.config["INTEGRITY_ERROR_COUNT"]
+    del app.config["ON_COMMIT_COUNT"]
 
     copies = exam.copies
     assert len(copies) == 1
@@ -375,7 +363,7 @@ def test_add_to_correct_copy_integrity(module_app, model):
     assert pages[0].number == barcode.page
 
     # Make sure the page was added by the test in case of the Page test
-    assert pages[0].path == 'test' if model == Page else 'func'
+    assert pages[0].path == "test" if model == Page else "func"
 
     # Make sure the submission + copy were added by the test in case of the Copy test
     solutions = submissions[0].solutions

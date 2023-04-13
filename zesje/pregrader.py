@@ -29,7 +29,7 @@ def grade_page(copy, page, page_img):
     page_img : np.array
         image of the page
     """
-    AUTOGRADER_NAME = current_app.config['AUTOGRADER_NAME']
+    AUTOGRADER_NAME = current_app.config["AUTOGRADER_NAME"]
     sub = copy.submission
 
     # TODO Support pregrading for submissions with multiple copies.
@@ -120,13 +120,15 @@ def grade_as_blank(sol):
     if sol.problem.grading_policy == GradingPolicy.set_blank:
         set_auto_grader(sol)
 
-    BLANK_FEEDBACK_NAME = current_app.config['BLANK_FEEDBACK_NAME']
-    feedback = FeedbackOption.query.filter(FeedbackOption.problem_id == sol.problem.id,
-                                           FeedbackOption.text == BLANK_FEEDBACK_NAME).first()
+    BLANK_FEEDBACK_NAME = current_app.config["BLANK_FEEDBACK_NAME"]
+    feedback = FeedbackOption.query.filter(
+        FeedbackOption.problem_id == sol.problem.id, FeedbackOption.text == BLANK_FEEDBACK_NAME
+    ).first()
 
     if not feedback:
-        feedback = FeedbackOption(problem_id=sol.problem.id, text=BLANK_FEEDBACK_NAME, score=0,
-                                  parent=sol.problem.root_feedback)
+        feedback = FeedbackOption(
+            problem_id=sol.problem.id, text=BLANK_FEEDBACK_NAME, score=0, parent=sol.problem.root_feedback
+        )
         db.session.add(feedback)
 
     sol.feedback.append(feedback)
@@ -148,9 +150,10 @@ def set_auto_grader(solution):
     solution : Solution
         The solution
     """
-    AUTOGRADER_NAME = current_app.config['AUTOGRADER_NAME']
-    zesje_grader = Grader.query.filter(Grader.oauth_id == AUTOGRADER_NAME).one_or_none() or \
-        Grader(oauth_id=AUTOGRADER_NAME, name=AUTOGRADER_NAME, internal=True)
+    AUTOGRADER_NAME = current_app.config["AUTOGRADER_NAME"]
+    zesje_grader = Grader.query.filter(Grader.oauth_id == AUTOGRADER_NAME).one_or_none() or Grader(
+        oauth_id=AUTOGRADER_NAME, name=AUTOGRADER_NAME, internal=True
+    )
 
     solution.graded_by = zesje_grader
     solution.graded_at = datetime.now(timezone.utc)
@@ -207,7 +210,7 @@ def _is_blank(area_inch, page_img, reference_img, padding_inch, binary_threshold
 
     # The diameter of the kernel to thicken the lines with. This allows
     # misalignment up to the max alignment error in any direction.
-    alignment_error_pixel = current_app.config['MAX_ALIGNMENT_ERROR_MM'] * dpi / mm_per_inch
+    alignment_error_pixel = current_app.config["MAX_ALIGNMENT_ERROR_MM"] * dpi / mm_per_inch
     kernel_size = 2 * int(alignment_error_pixel) + 1
 
     min_answer_area_pixels = int(min_area_inch2 * dpi**2)
@@ -215,11 +218,14 @@ def _is_blank(area_inch, page_img, reference_img, padding_inch, binary_threshold
     student = get_box(page_img, area_inch, padding=padding_inch)
     reference = get_box(reference_img, area_inch, padding=padding_inch)
 
-    return covers(reference, student,
-                  padding_pixels=padding_pixels,
-                  kernel_size=kernel_size,
-                  threshold=min_answer_area_pixels,
-                  binary_threshold=binary_threshold)
+    return covers(
+        reference,
+        student,
+        padding_pixels=padding_pixels,
+        kernel_size=kernel_size,
+        threshold=min_answer_area_pixels,
+        binary_threshold=binary_threshold,
+    )
 
 
 def is_solution_blank(problem, page_img, reference_img):
@@ -241,8 +247,8 @@ def is_solution_blank(problem, page_img, reference_img):
     widget_area_in = widget_area(problem)
 
     padding_inch = 0.2
-    min_area_inch2 = current_app.config['MIN_ANSWER_SIZE_MM2'] / (mm_per_inch)**2
-    binary_threshold = current_app.config['THRESHOLD_BLANK']
+    min_area_inch2 = current_app.config["MIN_ANSWER_SIZE_MM2"] / (mm_per_inch) ** 2
+    binary_threshold = current_app.config["THRESHOLD_BLANK"]
 
     return _is_blank(
         area_inch=widget_area_in,
@@ -250,13 +256,11 @@ def is_solution_blank(problem, page_img, reference_img):
         reference_img=reference_img,
         padding_inch=padding_inch,
         binary_threshold=binary_threshold,
-        min_area_inch2=min_area_inch2
+        min_area_inch2=min_area_inch2,
     )
 
 
-def is_checkbox_filled(box_coords,
-                       page_img,
-                       reference_img):
+def is_checkbox_filled(box_coords, page_img, reference_img):
     """
     Checks whether a checkbox at a specific location is filled
 
@@ -279,18 +283,17 @@ def is_checkbox_filled(box_coords,
     True if the box is marked, else False.
     """
     dpi = guess_dpi(page_img)
-    box_size = current_app.config['CHECKBOX_SIZE']
+    box_size = current_app.config["CHECKBOX_SIZE"]
 
     # create an array with y top, y bottom, x left and x right. And divide by 72 to get dimensions in inches.
-    coords = np.asarray([box_coords[1], box_coords[1] + box_size,
-                        box_coords[0], box_coords[0] + box_size])/72
+    coords = np.asarray([box_coords[1], box_coords[1] + box_size, box_coords[0], box_coords[0] + box_size]) / 72
 
-    min_area_inch2 = current_app.config['MIN_CHECKBOX_SIZE_MM2'] / (mm_per_inch)**2
-    binary_threshold = current_app.config['THRESHOLD_MCQ']
+    min_area_inch2 = current_app.config["MIN_CHECKBOX_SIZE_MM2"] / (mm_per_inch) ** 2
+    binary_threshold = current_app.config["THRESHOLD_MCQ"]
     min_answer_area_pixels = int(min_area_inch2 * dpi**2)
 
     # Extra padding to ensure any content is not cut off due to misalignment
-    padding_inch = current_app.config['MAX_ALIGNMENT_ERROR_MM'] / mm_per_inch
+    padding_inch = current_app.config["MAX_ALIGNMENT_ERROR_MM"] / mm_per_inch
 
     student = get_box(page_img, coords, padding=padding_inch)
 
@@ -303,16 +306,12 @@ def is_checkbox_filled(box_coords,
 
     # A representation of a blank checkbox at this DPI
     reference_bin = np.full((reference_size, reference_size), 255, dtype=np.uint8)
-    cv2.rectangle(reference_bin, (0, 0),
-                  (reference_bin.shape[0] - 1, reference_bin.shape[1] - 1),
-                  0, line_width * 2)
+    cv2.rectangle(reference_bin, (0, 0), (reference_bin.shape[0] - 1, reference_bin.shape[1] - 1), 0, line_width * 2)
 
     # The template used for template matching. The same as `reference_bin`, but with the internal area
     # of the checkbox replaced with gray, as we should find marked as well as blank checkboxes.
     template_bin = np.full((reference_size, reference_size), 127, dtype=np.uint8)
-    cv2.rectangle(template_bin, (0, 0),
-                  (template_bin.shape[0] - 1, template_bin.shape[1] - 1),
-                  0, line_width * 2 + 1)
+    cv2.rectangle(template_bin, (0, 0), (template_bin.shape[0] - 1, template_bin.shape[1] - 1), 0, line_width * 2 + 1)
 
     # Match the template checkbox to the student image. The TM_CCORR method is most
     # sensitive to white areas of the image, so we invert everything to focus on black.
@@ -324,10 +323,7 @@ def is_checkbox_filled(box_coords,
     # Crop 1 line width + 1 pixel for small alignment errors.
     x, y = max_loc
     crop = 2 * line_width + 1
-    inside_box = student_bin[
-        (crop + y):(y + reference_size - crop),
-        (crop + x):(x + reference_size - crop)
-    ]
+    inside_box = student_bin[(crop + y) : (y + reference_size - crop), (crop + x) : (x + reference_size - crop)]
 
     non_covered_pixels = np.count_nonzero(inside_box == 0)
 

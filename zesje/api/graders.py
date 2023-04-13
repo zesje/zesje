@@ -11,7 +11,7 @@ from ..database import db, Grader
 # TODO: when making new database structure, have only a single
 #       'name' field: it is just an identifier
 class Graders(MethodView):
-    """ Graders that are able to use the software, also logged during grading """
+    """Graders that are able to use the software, also logged during grading"""
 
     def get(self):
         """get all graders.
@@ -23,15 +23,11 @@ class Graders(MethodView):
             oauth_id: str
         """
         return [
-            {
-                'id': g.id,
-                'oauth_id': g.oauth_id,
-                'name': g.name
-            }
-            for g in Grader.query.filter(Grader.oauth_id != current_app.config['AUTOGRADER_NAME']).all()
+            {"id": g.id, "oauth_id": g.oauth_id, "name": g.name}
+            for g in Grader.query.filter(Grader.oauth_id != current_app.config["AUTOGRADER_NAME"]).all()
         ]
 
-    @use_kwargs({"oauth_id": fields.Email(required=True, validate=non_empty_string)}, location='json')
+    @use_kwargs({"oauth_id": fields.Email(required=True, validate=non_empty_string)}, location="json")
     def post(self, oauth_id):
         """add a grader.
 
@@ -47,7 +43,7 @@ class Graders(MethodView):
         """
         oauth_id = oauth_id.strip()
         if Grader.query.filter(Grader.oauth_id == oauth_id).one_or_none():
-            return dict(status=409, message=f'Grader with id {oauth_id} already exists.'), 409
+            return dict(status=409, message=f"Grader with id {oauth_id} already exists."), 409
 
         try:
             db.session.add(Grader(oauth_id=oauth_id))

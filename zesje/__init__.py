@@ -3,7 +3,7 @@ from celery import Celery
 
 from ._version import __version__
 
-__all__ = ['__version__', 'celery']
+__all__ = ["__version__", "celery"]
 
 
 def make_celery(app_name=__name__):
@@ -12,4 +12,4 @@ def make_celery(app_name=__name__):
     return celery
 
 
-celery = make_celery(app_name='zesje')
+celery = make_celery(app_name="zesje")

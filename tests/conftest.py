@@ -20,22 +20,23 @@ from zesje.factory import create_config  # noqa: E402
 # Adapted from https://stackoverflow.com/a/46062148/1062698
 @pytest.fixture
 def datadir():
-    return os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
+    return os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
 
 
 # Returns a Flask app with only the config initialized
 # Runs only once per session
-@pytest.fixture(scope='session')
+@pytest.fixture(scope="session")
 def base_config_app():
     app = Flask(__name__, static_folder=None)
     create_config(app.config, None)
     os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
     login_manager.init_app(app)
 
-    @app.route('/')
+    @app.route("/")
     def index():
         """OAuth callback redirects to index. Required to build url for endpoint index"""
-        return 'success'
+        return "success"
+
     return app
 
 
@@ -61,11 +62,11 @@ def base_app(base_config_app):
 
     close_all_sessions()
 
-    engine = create_engine(app.config['SQLALCHEMY_DATABASE_URI'])
+    engine = create_engine(app.config["SQLALCHEMY_DATABASE_URI"])
     connection = engine.connect()
-    app.config['TESTING_CONNECTION'] = connection
+    app.config["TESTING_CONNECTION"] = connection
 
-    app.register_blueprint(api_bp, url_prefix='/api')
+    app.register_blueprint(api_bp, url_prefix="/api")
     return app
 
 
@@ -73,20 +74,17 @@ def app_fixture(base_app, monkeypatch):
     app = base_app
 
     with TemporaryDirectory() as temp_dir:
-        app.config.update(
-            DATA_DIRECTORY=str(temp_dir),
-            SCAN_DIRECTORY=str(temp_dir)
-        )
+        app.config.update(DATA_DIRECTORY=str(temp_dir), SCAN_DIRECTORY=str(temp_dir))
 
         with app.app_context():
-            connection = app.config['TESTING_CONNECTION']
+            connection = app.config["TESTING_CONNECTION"]
             transaction = connection.begin()
 
             options = dict(bind=connection, binds={})
             session = db.create_scoped_session(options=options)
             session.begin_nested()
 
-            @event.listens_for(session, 'after_transaction_end')
+            @event.listens_for(session, "after_transaction_end")
             def restart_savepoint(session2, transaction):
                 # Detecting whether this is indeed the nested transaction of the test
                 if transaction.nested and not transaction._parent.nested:
@@ -95,7 +93,7 @@ def app_fixture(base_app, monkeypatch):
                     session2.expire_all()
                     session.begin_nested()
 
-            monkeypatch.setattr(db, 'session', session)
+            monkeypatch.setattr(db, "session", session)
 
             yield app
 
@@ -111,7 +109,7 @@ def app(base_app, monkeypatch):
 # Warning: Do not use the module_app in combination with the regular
 # app fixture in the same module. This will cause the database
 # savepoints to be overriden, causing a test failure on teardown.
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def module_app(base_app, module_monkeypatch):
     yield from app_fixture(base_app, module_monkeypatch)
 
@@ -122,7 +120,7 @@ def test_client(app):
         yield client
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def module_monkeypatch():
     monkeypatch = MonkeyPatch()
     yield monkeypatch
@@ -132,7 +130,8 @@ def module_monkeypatch():
 @pytest.fixture
 def monkeypatch_current_user(monkeypatch):
     """Patch to mock the logged in user in flask, returns the first grader ordered by the id."""
+
     def mock_current_user():
         return Grader.query.get(1)
 
-    monkeypatch.setattr(flask_login.utils, '_get_user', mock_current_user)
+    monkeypatch.setattr(flask_login.utils, "_get_user", mock_current_user)

@@ -27,7 +27,7 @@ def get_problem_page(problem, pdf_path):
     page : PDFPage
         PDFPage object with information about the current page
     """
-    fp = open(pdf_path, 'rb')
+    fp = open(pdf_path, "rb")
 
     parser = PDFParser(fp)
     document = PDFDocument(parser)
@@ -96,9 +96,9 @@ def guess_problem_title(problem, pdf_page):
     filtered_words = read_lines(layout_objects._objs, y_above, y_current, page_height)
 
     if not filtered_words:
-        return ''
+        return ""
 
-    lines = filtered_words.split('\n')
+    lines = filtered_words.split("\n")
     return lines[0].strip()
 
 
@@ -142,6 +142,6 @@ def read_lines(layout_objs, y_top, y_bottom, page_height):
             words += read_lines(obj._objs, y_top, y_bottom, page_height)
 
     if not words:
-        return ''
+        return ""
 
     return words[0]

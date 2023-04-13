@@ -14,8 +14,19 @@ from pylibdmtx import pylibdmtx
 from sqlalchemy.exc import InternalError, IntegrityError
 from reportlab.lib.units import inch
 
-from .database import db, Scan, Exam, Page, Student, Submission, Copy, Solution, ExamWidget, ExamLayout, \
-    rollback_transaction_if_pending
+from .database import (
+    db,
+    Scan,
+    Exam,
+    Page,
+    Student,
+    Submission,
+    Copy,
+    Solution,
+    ExamWidget,
+    ExamLayout,
+    rollback_transaction_if_pending,
+)
 from .images import guess_dpi, get_box, is_misaligned
 from .pregrader import grade_page
 from .image_extraction import extract_pages_from_file, readable_filename
@@ -23,9 +34,9 @@ from .blanks import reference_image
 from .raw_scans import process_page as process_page_raw
 from . import celery
 
-ExtractedBarcode = namedtuple('ExtractedBarcode', ['token', 'copy', 'page'])
+ExtractedBarcode = namedtuple("ExtractedBarcode", ["token", "copy", "page"])
 
-ExamMetadata = namedtuple('ExamMetadata', ['token', 'barcode_coords'])
+ExamMetadata = namedtuple("ExamMetadata", ["token", "barcode_coords"])
 
 
 @celery.task()
@@ -39,7 +50,7 @@ def process_scan(scan_id, scan_type):
     """
 
     def raise_exit(signo, frame):
-        raise SystemExit('PDF processing was killed by an external signal')
+        raise SystemExit("PDF processing was killed by an external signal")
 
     # We want to trigger an exit from within Python when a signal is received.
     # The default behaviour for SIGTERM is to terminate the process without
@@ -53,27 +64,27 @@ def process_scan(scan_id, scan_type):
         # TODO: When #182 is implemented, properly separate user-facing
         #       messages (written to DB) from developer-facing messages,
         #       which should be written into the log.
-        write_scan_status(scan_id, 'error', "Unexpected error: " + str(error))
+        write_scan_status(scan_id, "error", "Unexpected error: " + str(error))
 
 
 def _process_scan(scan_id, exam_layout):
-    data_directory = current_app.config['DATA_DIRECTORY']
+    data_directory = current_app.config["DATA_DIRECTORY"]
 
-    report_error = functools.partial(write_scan_status, scan_id, 'error')
-    report_progress = functools.partial(write_scan_status, scan_id, 'processing')
-    report_success = functools.partial(write_scan_status, scan_id, 'success')
+    report_error = functools.partial(write_scan_status, scan_id, "error")
+    report_progress = functools.partial(write_scan_status, scan_id, "processing")
+    report_success = functools.partial(write_scan_status, scan_id, "success")
 
     # Raises exception if zero or more than one scans found
     scan = Scan.query.filter(Scan.id == scan_id).one()
 
-    report_progress(f'Importing file {scan.name}')
+    report_progress(f"Importing file {scan.name}")
 
-    output_directory = os.path.join(data_directory, f'{scan.exam.id}_data')
+    output_directory = os.path.join(data_directory, f"{scan.exam.id}_data")
 
     try:
         exam_config = exam_metadata(scan.exam)
     except Exception as e:
-        report_error(f'Error while reading Exam metadata: {e}')
+        report_error(f"Error while reading Exam metadata: {e}")
         raise
 
     if exam_layout == ExamLayout.templated:
@@ -81,16 +92,16 @@ def _process_scan(scan_id, exam_layout):
     elif exam_layout == ExamLayout.unstructured:
         process_page_function = process_page_raw
     else:
-        raise ValueError(f'Exam layout {exam_layout} is not defined.')
+        raise ValueError(f"Exam layout {exam_layout} is not defined.")
 
     failures = []
     try:
         for image, page_info, file_info, number, total in extract_pages_from_file(scan.path, scan.name):
-            report_progress(f'Processing page {number} / {total}')
+            report_progress(f"Processing page {number} / {total}")
             if isinstance(image, Exception):
                 failures.append((file_info, str(image)))
             elif not isinstance(image, Image.Image):
-                failures.append((file_info, 'File is not an image.'))
+                failures.append((file_info, "File is not an image."))
             else:
                 try:
                     success, description = process_page_function(
@@ -110,16 +121,16 @@ def _process_scan(scan_id, exam_layout):
         processed = total - len(failures)
         if processed:
             report_error(
-                f'Processed {processed} / {total} pages.\n' +
-                '\n'.join(f'{readable_filename(file_info)}: {description}' for file_info, description in failures)
+                f"Processed {processed} / {total} pages.\n"
+                + "\n".join(f"{readable_filename(file_info)}: {description}" for file_info, description in failures)
             )
         else:
             report_error(
-                f'Failed on all {total} pages.\n' +
-                '\n'.join(f'{readable_filename(file_info)}: {description}' for file_info, description in failures)
+                f"Failed on all {total} pages.\n"
+                + "\n".join(f"{readable_filename(file_info)}: {description}" for file_info, description in failures)
             )
     else:
-        report_success(f'Processed {total} pages.')
+        report_success(f"Processed {total} pages.")
 
 
 def exam_metadata(exam):
@@ -127,21 +138,24 @@ def exam_metadata(exam):
 
     if exam.layout == ExamLayout.templated:
         # Raises exception if zero or more than one barcode widgets found
-        barcode_widget = ExamWidget.query.filter(ExamWidget.exam_id == exam.id,
-                                                 ExamWidget.name == "barcode_widget").one()
+        barcode_widget = ExamWidget.query.filter(
+            ExamWidget.exam_id == exam.id, ExamWidget.name == "barcode_widget"
+        ).one()
     else:
         # unstructured exams have no barcode
         barcode_widget = None
 
     return ExamMetadata(
-            token=exam.token,
-            barcode_coords=[
-                max(0, barcode_widget.y),
-                max(0, barcode_widget.y + 50),
-                max(0, barcode_widget.x),
-                max(0, barcode_widget.x + 50),
-            ] if barcode_widget else None,
-        )
+        token=exam.token,
+        barcode_coords=[
+            max(0, barcode_widget.y),
+            max(0, barcode_widget.y + 50),
+            max(0, barcode_widget.x),
+            max(0, barcode_widget.x + 50),
+        ]
+        if barcode_widget
+        else None,
+    )
 
 
 def exam_student_id_widget(exam_id):
@@ -151,14 +165,15 @@ def exam_student_id_widget(exam_id):
     :return: the student id widget, and an array of coordinates [ymin, ymax, xmin, xmax]
     """
 
-    fontsize = current_app.config['ID_GRID_FONT_SIZE']
-    margin = current_app.config['ID_GRID_MARGIN']
-    digits = current_app.config['ID_GRID_DIGITS']
+    fontsize = current_app.config["ID_GRID_FONT_SIZE"]
+    margin = current_app.config["ID_GRID_MARGIN"]
+    digits = current_app.config["ID_GRID_DIGITS"]
     id_grid_height = 12 * margin + 11 * fontsize
     id_grid_width = 5 * margin + 16 * fontsize + digits * (fontsize + margin)
 
-    student_id_widget = ExamWidget.query.filter(ExamWidget.exam_id == exam_id,
-                                                ExamWidget.name == "student_id_widget").one()
+    student_id_widget = ExamWidget.query.filter(
+        ExamWidget.exam_id == exam_id, ExamWidget.name == "student_id_widget"
+    ).one()
     student_id_widget_coords = [
         student_id_widget.y,  # top
         student_id_widget.y + id_grid_height,  # bottom
@@ -270,11 +285,9 @@ def process_page(image_data, page_info, file_info, exam_config, output_dir=None,
 
     if barcode.page == 0:
         if not copy.validated:
-            description = guess_student(
-                exam_token=barcode.token, copy_number=barcode.copy
-            )
+            description = guess_student(exam_token=barcode.token, copy_number=barcode.copy)
         else:
-            description = 'Student signature already validated.'
+            description = "Student signature already validated."
     else:
         description = "Scanned page doesn't contain student number."
 
@@ -298,9 +311,9 @@ def save_image(image, barcode, base_path):
     image_path : string
         Location of the image.
     """
-    submission_path = os.path.join(base_path, 'submissions', f'{barcode.copy}')
+    submission_path = os.path.join(base_path, "submissions", f"{barcode.copy}")
     os.makedirs(submission_path, exist_ok=True)
-    image_path = os.path.join(submission_path, f'page{barcode.page:02d}.jpg')
+    image_path = os.path.join(submission_path, f"page{barcode.page:02d}.jpg")
     Image.fromarray(image).save(image_path)
     return image_path
 
@@ -322,9 +335,9 @@ def add_to_correct_copy(image_path, barcode):
     """
     exam = Exam.query.filter(Exam.token == barcode.token).first()
     if exam is None:
-        raise RuntimeError('Invalid exam token.')
+        raise RuntimeError("Invalid exam token.")
 
-    image_path = os.path.relpath(image_path, start=current_app.config['DATA_DIRECTORY'])
+    image_path = os.path.relpath(image_path, start=current_app.config["DATA_DIRECTORY"])
 
     copy = None
     while copy is None:
@@ -388,18 +401,17 @@ def decode_barcode(image, exam_config):
         (lambda img: Image.fromarray(img)),
         (lambda img: Image.fromarray(img).point(lambda p: p > 100 and 255)),
         (lambda img: Image.fromarray(cv2.blur(img, (3, 3)))),
-        (lambda img: (Image.fromarray(cv2.blur(img, (3, 3)))
-                           .point(lambda p: p > 100 and 255))),
+        (lambda img: (Image.fromarray(cv2.blur(img, (3, 3))).point(lambda p: p > 100 and 255))),
     ]
 
     for (image, upside_down), method in itertools.product(images, methods):
         results = pylibdmtx.decode(method(image))
         if len(results) == 1:
             data = results[0].data
-            data = data.decode('utf-8')
+            data = data.decode("utf-8")
 
             try:
-                token, copy, page = data.split('/')
+                token, copy, page = data.split("/")
                 copy = int(copy)
                 page = int(page)
                 return ExtractedBarcode(token, copy, page), upside_down
@@ -427,21 +439,20 @@ def guess_student(exam_token, copy_number):
 
     # Throws exception if zero or more than one of Exam, Submission or Page found
     exam = Exam.query.filter(Exam.token == exam_token).one()
-    copy = Copy.query.filter(Copy.number == copy_number,
-                             Copy.exam == exam).one()
+    copy = Copy.query.filter(Copy.number == copy_number, Copy.exam == exam).one()
     sub = copy.submission
 
     # We expect only a single copy, raise an error if we find more
     if len(sub.copies) > 1:
         raise RuntimeError(
-            'Cannot guess student number for a copy that is not the only copy of a submission. ' +
-            'This means the copy has already been validated.')
+            "Cannot guess student number for a copy that is not the only copy of a submission. "
+            + "This means the copy has already been validated."
+        )
 
     if copy.validated:
         return "Signature of this copy is already validated"
 
-    image_path = Page.query.filter(Page.copy == copy,
-                                   Page.number == 0).one().abs_path
+    image_path = Page.query.filter(Page.copy == copy, Page.number == 0).one().abs_path
 
     student_id_widget, student_id_widget_coords = exam_student_id_widget(exam.id)
     student_id_widget_coords_inch = np.array(student_id_widget_coords) / 72
@@ -478,31 +489,31 @@ def get_student_number(image, student_id_widget_coords):
 
     widget_image = get_box(image, student_id_widget_coords_inch, padding=0.0)
 
-    threshold = current_app.config['THRESHOLD_STUDENT_ID']
+    threshold = current_app.config["THRESHOLD_STUDENT_ID"]
     _, thresholded = cv2.threshold(widget_image, threshold, 255, cv2.THRESH_BINARY)
 
-    box_size = current_app.config['ID_GRID_BOX_SIZE'] / inch * dpi
-    margin = current_app.config['ID_GRID_MARGIN'] / inch * dpi
-    font_size = current_app.config['ID_GRID_FONT_SIZE'] / inch * dpi
-    digits = current_app.config['ID_GRID_DIGITS']
+    box_size = current_app.config["ID_GRID_BOX_SIZE"] / inch * dpi
+    margin = current_app.config["ID_GRID_MARGIN"] / inch * dpi
+    font_size = current_app.config["ID_GRID_FONT_SIZE"] / inch * dpi
+    digits = current_app.config["ID_GRID_DIGITS"]
 
-    line_width = dpi/inch
-    left = int(margin + font_size + box_size/2 + line_width/2)
+    line_width = dpi / inch
+    left = int(margin + font_size + box_size / 2 + line_width / 2)
     right = int(left + (digits - 1) * (font_size + margin))
     top = int(2 * (margin + box_size) + line_width)
     bottom = int(top + (10 - 1) * (font_size + margin))
 
-    r = int(box_size / 2 - 1.5*line_width)
+    r = int(box_size / 2 - 1.5 * line_width)
 
-    centers = np.mgrid[left:right:digits*1j, top:bottom:10j].astype(int)
+    centers = np.mgrid[left : right : digits * 1j, top:bottom:10j].astype(int)
     weights = []
     for center in centers.reshape(2, -1).T:
         x, y = center
-        weights.append(np.sum(255 - thresholded[y-r:y+r, x-r:x+r]))
-        thresholded[y-r:y+r, x-r:x+r] = np.array([255, 0, 0])
+        weights.append(np.sum(255 - thresholded[y - r : y + r, x - r : x + r]))
+        thresholded[y - r : y + r, x - r : x + r] = np.array([255, 0, 0])
 
-    weights = np.array(weights).reshape(10, digits, order='F')
-    return sum(((np.argmax(weights, axis=0)) % 10)[::-1] * 10**np.arange(digits))
+    weights = np.array(weights).reshape(10, digits, order="F")
+    return sum(((np.argmax(weights, axis=0)) % 10)[::-1] * 10 ** np.arange(digits))
 
 
 def calc_angle(keyp1, keyp2):
@@ -558,12 +569,12 @@ def find_corner_marker_keypoints(image_array, corner_sizes=[0.125, 0.25, 0.5]):
         The found corner markers, can contain 0-4 corner markers.
     """
     h, w, *_ = image_array.shape
-    marker_length = current_app.config['MARKER_LINE_LENGTH'] * guess_dpi(image_array) / 72
-    marker_width = current_app.config['MARKER_LINE_WIDTH'] * guess_dpi(image_array) / 72
+    marker_length = current_app.config["MARKER_LINE_LENGTH"] * guess_dpi(image_array) / 72
+    marker_width = current_app.config["MARKER_LINE_WIDTH"] * guess_dpi(image_array) / 72
     marker_area = marker_length * marker_width * 2
     marker_area_min = max(marker_length * (marker_width - 1) * 2, 0)  # One pixel thinner due to possible aliasing
 
-    binary_threshold = current_app.config['THRESHOLD_CORNER_MARKER']
+    binary_threshold = current_app.config["THRESHOLD_CORNER_MARKER"]
 
     corner_points = []
 
@@ -575,14 +586,14 @@ def find_corner_marker_keypoints(image_array, corner_sizes=[0.125, 0.25, 0.5]):
 
         for corner_size in corner_sizes:
             # Filter out everything in the center of the image
-            h_slice = slice(0, int(h*corner_size)) if is_top else slice(int(h*(1-corner_size)), None)
-            w_slice = slice(0, int(w*corner_size)) if is_left else slice(int(w*(1-corner_size)), None)
+            h_slice = slice(0, int(h * corner_size)) if is_top else slice(int(h * (1 - corner_size)), None)
+            w_slice = slice(0, int(w * corner_size)) if is_left else slice(int(w * (1 - corner_size)), None)
 
             gray_im = cv2.cvtColor(image_array[h_slice, w_slice], cv2.COLOR_BGR2GRAY)
             _, inv_im = cv2.threshold(gray_im, binary_threshold, 255, cv2.THRESH_BINARY_INV)
             ret, labels = cv2.connectedComponents(inv_im)
             for label in range(1, ret):
-                new_img = (labels == label)
+                new_img = labels == label
 
                 # Relative error determined to work well empirically
                 max_error = 1.19
@@ -593,37 +604,52 @@ def find_corner_marker_keypoints(image_array, corner_sizes=[0.125, 0.25, 0.5]):
 
                 new_img_uint8 = new_img.astype(np.uint8)
 
-                angle_resolution = 0.25 * np.pi/180
+                angle_resolution = 0.25 * np.pi / 180
                 spatial_resolution = 1
-                max_angle = 10 * np.pi/180
-                max_angle_error = 3 * np.pi/180
-                threshold = int(marker_length * .9)
+                max_angle = 10 * np.pi / 180
+                max_angle_error = 3 * np.pi / 180
+                threshold = int(marker_length * 0.9)
 
-                lines_vertical_1 = cv2.HoughLines(new_img_uint8, rho=spatial_resolution, theta=angle_resolution,
-                                                  threshold=threshold, min_theta=0, max_theta=max_angle)
-                lines_vertical_2 = cv2.HoughLines(new_img_uint8, rho=spatial_resolution, theta=angle_resolution,
-                                                  threshold=threshold, min_theta=np.pi-max_angle, max_theta=np.pi)
+                lines_vertical_1 = cv2.HoughLines(
+                    new_img_uint8,
+                    rho=spatial_resolution,
+                    theta=angle_resolution,
+                    threshold=threshold,
+                    min_theta=0,
+                    max_theta=max_angle,
+                )
+                lines_vertical_2 = cv2.HoughLines(
+                    new_img_uint8,
+                    rho=spatial_resolution,
+                    theta=angle_resolution,
+                    threshold=threshold,
+                    min_theta=np.pi - max_angle,
+                    max_theta=np.pi,
+                )
                 lines_vertical = (lines_vertical_1, lines_vertical_2)
                 if all(lines is None for lines in lines_vertical):
                     continue  # Didn't find any vertical lines
-                lines_vertical = np.vstack(
-                        [lines for lines in (lines_vertical) if lines is not None]
-                    )
+                lines_vertical = np.vstack([lines for lines in (lines_vertical) if lines is not None])
                 lines_vertical = lines_vertical.reshape(-1, 2).T
 
                 # The vertical lines can have both theta ≈ 0 or theta ≈ π, here we flip those
                 # points to ensure that we end up with two reasonably contiguous regions.
-                to_flip = lines_vertical[1] > 3*np.pi/4
+                to_flip = lines_vertical[1] > 3 * np.pi / 4
                 lines_vertical[1, to_flip] -= np.pi
                 lines_vertical[0, to_flip] *= -1
 
                 rho_v, theta_v = np.average(lines_vertical, axis=1)
 
                 # Search for horizontal lines that are nearly perpendicular
-                horizontal_angle = theta_v + np.pi/2
-                lines_horizontal = cv2.HoughLines(new_img_uint8, spatial_resolution, angle_resolution, threshold,
-                                                  min_theta=horizontal_angle - max_angle_error,
-                                                  max_theta=horizontal_angle + max_angle_error)
+                horizontal_angle = theta_v + np.pi / 2
+                lines_horizontal = cv2.HoughLines(
+                    new_img_uint8,
+                    spatial_resolution,
+                    angle_resolution,
+                    threshold,
+                    min_theta=horizontal_angle - max_angle_error,
+                    max_theta=horizontal_angle + max_angle_error,
+                )
                 if lines_horizontal is None:
                     continue  # Didn't find any horizontal lines
 
@@ -641,8 +667,9 @@ def find_corner_marker_keypoints(image_array, corner_sizes=[0.125, 0.25, 0.5]):
                 if invalid_dimensions:
                     continue
 
-                y, x = np.linalg.solve([[np.cos(theta_h), np.sin(theta_h)], [np.cos(theta_v), np.sin(theta_v)]],
-                                       [rho_h, rho_v])
+                y, x = np.linalg.solve(
+                    [[np.cos(theta_h), np.sin(theta_h)], [np.cos(theta_v), np.sin(theta_v)]], [rho_h, rho_v]
+                )
                 # TODO: add failsafes
                 if np.isnan(x) or np.isnan(y):
                     continue
@@ -703,8 +730,7 @@ def realign_image(image_array, page_shape, keypoints=None):
     if len(adjusted_markers) == 1:
         # Transformation matrix is just shifting
         x_shift, y_shift = np.subtract(adjusted_markers[0], keypoints[0])
-        M = np.float32([[1, 0, x_shift],
-                        [0, 1, y_shift]])
+        M = np.float32([[1, 0, x_shift], [0, 1, y_shift]])
     else:
         # Let opencv estimate the transformation matrix
         M = cv2.estimateAffinePartial2D(keypoints, adjusted_markers, method=cv2.LMEDS)[0]
@@ -712,8 +738,7 @@ def realign_image(image_array, page_shape, keypoints=None):
     rows, cols = page_shape
 
     # apply the transformation matrix and fill in the new empty spaces with white
-    return_image = cv2.warpAffine(image_array, M, (cols, rows),
-                                  borderValue=(255, 255, 255, 255))
+    return_image = cv2.warpAffine(image_array, M, (cols, rows), borderValue=(255, 255, 255, 255))
 
     return return_image
 
@@ -755,17 +780,17 @@ def resize_image(image_array, page_shape):
         interp = cv2.INTER_CUBIC
 
     # aspect ratio of image
-    aspect = float(w)/h
-    saspect = float(sw)/sh
+    aspect = float(w) / h
+    saspect = float(sw) / sh
 
-    if (saspect > aspect):  # padding left and right
+    if saspect > aspect:  # padding left and right
         new_h = sh
         new_w = np.round(new_h * aspect).astype(int)
         pad_horz = float(sw - new_w) / 2
         pad_left, pad_right = np.floor(pad_horz).astype(int), np.ceil(pad_horz).astype(int)
         pad_top, pad_bot = 0, 0
 
-    elif (saspect < aspect):  # padding top and bottom
+    elif saspect < aspect:  # padding top and bottom
         new_w = sw
         new_h = np.round(new_w / aspect).astype(int)
         pad_vert = float(sh - new_h) / 2
@@ -778,25 +803,23 @@ def resize_image(image_array, page_shape):
 
     # resize and and add border
     resized_img = cv2.resize(image_array, (new_w, new_h), interpolation=interp)
-    resized_img = cv2.copyMakeBorder(resized_img, pad_top, pad_bot, pad_left, pad_right,
-                                     borderType=cv2.BORDER_CONSTANT, value=(255, 255, 255))
+    resized_img = cv2.copyMakeBorder(
+        resized_img, pad_top, pad_bot, pad_left, pad_right, borderType=cv2.BORDER_CONSTANT, value=(255, 255, 255)
+    )
 
     return resized_img
 
 
 def original_corner_markers(dpi):
-    page_size = current_app.config['PAGE_FORMATS'][current_app.config['PAGE_FORMAT']]
+    page_size = current_app.config["PAGE_FORMATS"][current_app.config["PAGE_FORMAT"]]
 
-    margin = current_app.config['MARKER_MARGIN']
-    left_x = margin/72 * dpi
-    top_y = margin/72 * dpi
+    margin = current_app.config["MARKER_MARGIN"]
+    left_x = margin / 72 * dpi
+    top_y = margin / 72 * dpi
     right_x = (page_size[0] - margin) / 72 * dpi
     bottom_y = (page_size[1] - margin) / 72 * dpi
 
-    return np.round([(left_x, top_y),
-                     (right_x, top_y),
-                     (left_x, bottom_y),
-                     (right_x, bottom_y)])
+    return np.round([(left_x, top_y), (right_x, top_y), (left_x, bottom_y), (right_x, bottom_y)])
 
 
 def bounding_box_corner_markers(marker_length, theta1, theta2, top, left):
@@ -839,14 +862,14 @@ def bounding_box_corner_markers(marker_length, theta1, theta2, top, left):
     if right and bottom and theta2 > 0:
         bounding_x += np.sin(theta2) * marker_length
 
-    if left and top and theta1 < np.pi/2:
+    if left and top and theta1 < np.pi / 2:
         bounding_y += np.cos(theta1) * marker_length
-    if left and bottom and theta1 > np.pi/2:
+    if left and bottom and theta1 > np.pi / 2:
         bounding_y -= np.cos(theta1) * marker_length
 
-    if right and top and theta1 > np.pi/2:
+    if right and top and theta1 > np.pi / 2:
         bounding_y -= np.cos(theta1) * marker_length
-    if right and bottom and theta1 < np.pi/2:
+    if right and bottom and theta1 < np.pi / 2:
         bounding_y += np.cos(theta1) * marker_length
 
     return bounding_x, bounding_y

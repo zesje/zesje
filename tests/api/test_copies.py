@@ -9,8 +9,8 @@ copy_count = 0
 
 @pytest.fixture
 def app_with_data(app):
-    exam = Exam(name='')
-    students = [Student(id=i+1, first_name='', last_name='') for i in range(2)]
+    exam = Exam(name="")
+    students = [Student(id=i + 1, first_name="", last_name="") for i in range(2)]
     db.session.add(exam)
     for student in students:
         db.session.add(student)
@@ -18,14 +18,16 @@ def app_with_data(app):
     yield app, exam, students
 
 
-types = ['unvalidated',
-         'unvalidated_multiple',
-         'validated',
-         'validated_multiple',
-         'mixed',
-         'mixed_inverse',
-         'mixed_multiple',
-         'mixed_multiple_inverse']
+types = [
+    "unvalidated",
+    "unvalidated_multiple",
+    "validated",
+    "validated_multiple",
+    "mixed",
+    "mixed_inverse",
+    "mixed_multiple",
+    "mixed_multiple_inverse",
+]
 
 
 def next_copy():
@@ -37,26 +39,26 @@ def next_copy():
 def add_submissions(exam, student, type, with_student=True):
     subs = []
     student_none = student if with_student else None
-    if type == 'unvalidated':
+    if type == "unvalidated":
         subs.append(Submission(exam=exam, student=student_none, copies=[next_copy()]))
-    elif type == 'unvalidated_multiple':
-        subs.append(Submission(exam=exam, student=student_none, copies=[next_copy()]))
-        subs.append(Submission(exam=exam, student=student, copies=[next_copy()]))
-    elif type == 'validated':
-        subs.append(Submission(exam=exam, student=student, validated=True, copies=[next_copy()]))
-    elif type == 'validated_multiple':
-        subs.append(Submission(exam=exam, student=student, validated=True, copies=[next_copy(), next_copy()]))
-    elif type == 'mixed':
-        subs.append(Submission(exam=exam, student=student_none, copies=[next_copy()]))
-        subs.append(Submission(exam=exam, student=student, validated=True, copies=[next_copy()]))
-    elif type == 'mixed_inverse':
-        subs.append(Submission(exam=exam, student=student, validated=True, copies=[next_copy()]))
-        subs.append(Submission(exam=exam, student=student_none, copies=[next_copy()]))
-    elif type == 'mixed_multiple':
+    elif type == "unvalidated_multiple":
         subs.append(Submission(exam=exam, student=student_none, copies=[next_copy()]))
         subs.append(Submission(exam=exam, student=student, copies=[next_copy()]))
+    elif type == "validated":
+        subs.append(Submission(exam=exam, student=student, validated=True, copies=[next_copy()]))
+    elif type == "validated_multiple":
         subs.append(Submission(exam=exam, student=student, validated=True, copies=[next_copy(), next_copy()]))
-    elif type == 'mixed_multiple_inverse':
+    elif type == "mixed":
+        subs.append(Submission(exam=exam, student=student_none, copies=[next_copy()]))
+        subs.append(Submission(exam=exam, student=student, validated=True, copies=[next_copy()]))
+    elif type == "mixed_inverse":
+        subs.append(Submission(exam=exam, student=student, validated=True, copies=[next_copy()]))
+        subs.append(Submission(exam=exam, student=student_none, copies=[next_copy()]))
+    elif type == "mixed_multiple":
+        subs.append(Submission(exam=exam, student=student_none, copies=[next_copy()]))
+        subs.append(Submission(exam=exam, student=student, copies=[next_copy()]))
+        subs.append(Submission(exam=exam, student=student, validated=True, copies=[next_copy(), next_copy()]))
+    elif type == "mixed_multiple_inverse":
         subs.append(Submission(exam=exam, student=student, validated=True, copies=[next_copy(), next_copy()]))
         subs.append(Submission(exam=exam, student=student_none, copies=[next_copy()]))
         subs.append(Submission(exam=exam, student=student, copies=[next_copy()]))
@@ -90,9 +92,7 @@ def assert_exactly(sub, copies, student, validated=True):
 
 def validate_with_warn_check(copy, student, exam, test_client):
     sub = Submission.query.filter(
-        Submission.exam == exam,
-        Submission.student == student,
-        Submission.validated
+        Submission.exam == exam, Submission.student == student, Submission.validated
     ).one_or_none()
     should_warn = copy not in sub.copies if sub else False
     if should_warn:
@@ -101,18 +101,19 @@ def validate_with_warn_check(copy, student, exam, test_client):
 
 
 def validate(copy, student, exam, test_client, return_code=200, allow_merge=False):
-    response = test_client.put(f'/api/copies/{exam.id}/{copy.number}',
-                               json={'studentID': student.id, 'allowMerge': allow_merge})
+    response = test_client.put(
+        f"/api/copies/{exam.id}/{copy.number}", json={"studentID": student.id, "allowMerge": allow_merge}
+    )
     assert response.status_code == return_code
 
     assert_valid_state()
 
 
-@pytest.mark.parametrize('with_student', [True, False], ids=['same_student', 'no_student'])
+@pytest.mark.parametrize("with_student", [True, False], ids=["same_student", "no_student"])
 def test_unvalidated(test_client, app_with_data, with_student):
     app, exam, students = app_with_data
     student = students[0]
-    sub, copies = add_submissions(exam, student, 'unvalidated', with_student)[0]
+    sub, copies = add_submissions(exam, student, "unvalidated", with_student)[0]
     validate_with_warn_check(copies[0], student, exam, test_client)
 
     assert_exactly(sub, copies, student)
@@ -121,17 +122,17 @@ def test_unvalidated(test_client, app_with_data, with_student):
 def test_validated(test_client, app_with_data):
     app, exam, students = app_with_data
     student = students[0]
-    sub, copies = add_submissions(exam, student, 'validated')[0]
+    sub, copies = add_submissions(exam, student, "validated")[0]
     validate_with_warn_check(copies[0], student, exam, test_client)
 
     assert_exactly(sub, copies, student)
 
 
-@pytest.mark.parametrize('with_student', [True, False], ids=['same_student', 'no_student'])
+@pytest.mark.parametrize("with_student", [True, False], ids=["same_student", "no_student"])
 def test_unvalidated_multiple(test_client, app_with_data, with_student):
     app, exam, students = app_with_data
     student = students[0]
-    unvalidated1, unvalidated2 = add_submissions(exam, student, 'unvalidated_multiple', with_student)
+    unvalidated1, unvalidated2 = add_submissions(exam, student, "unvalidated_multiple", with_student)
     sub, copies = unvalidated1
     validate_with_warn_check(copies[0], student, exam, test_client)
 
@@ -142,7 +143,7 @@ def test_unvalidated_multiple(test_client, app_with_data, with_student):
 def test_validated_multiple(test_client, app_with_data):
     app, exam, students = app_with_data
     student = students[0]
-    sub_copies = add_submissions(exam, student, 'validated_multiple')
+    sub_copies = add_submissions(exam, student, "validated_multiple")
     sub, copies = sub_copies[0]
 
     validate_with_warn_check(copies[0], student, exam, test_client)
@@ -150,11 +151,11 @@ def test_validated_multiple(test_client, app_with_data):
     assert_exactly(sub, copies, student)
 
 
-@pytest.mark.parametrize('with_student', [True, False], ids=['same_student', 'no_student'])
+@pytest.mark.parametrize("with_student", [True, False], ids=["same_student", "no_student"])
 def test_mixed_unvalidated(test_client, app_with_data, with_student):
     app, exam, students = app_with_data
     student = students[0]
-    to_validate, validated = add_submissions(exam, student, 'mixed', with_student)
+    to_validate, validated = add_submissions(exam, student, "mixed", with_student)
     sub, copies = to_validate
     sub2, copies2 = validated
 
@@ -170,7 +171,7 @@ def test_mixed_unvalidated(test_client, app_with_data, with_student):
 def test_mixed_validated(test_client, app_with_data):
     app, exam, students = app_with_data
     student = students[0]
-    unvalidated, to_validate = add_submissions(exam, student, 'mixed')
+    unvalidated, to_validate = add_submissions(exam, student, "mixed")
     sub, copies = to_validate
     sub2, copies2 = unvalidated
 
@@ -180,11 +181,11 @@ def test_mixed_validated(test_client, app_with_data):
     assert_exactly(sub2, copies2, student, validated=False)
 
 
-@pytest.mark.parametrize('with_student', [True, False], ids=['same_student', 'no_student'])
+@pytest.mark.parametrize("with_student", [True, False], ids=["same_student", "no_student"])
 def test_mixed_multiple_unvalidated(test_client, app_with_data, with_student):
     app, exam, students = app_with_data
     student = students[0]
-    unvalidated1, unvalidated2, validated = add_submissions(exam, student, 'mixed_multiple', with_student)
+    unvalidated1, unvalidated2, validated = add_submissions(exam, student, "mixed_multiple", with_student)
     sub, copies = unvalidated1
     subv, copiesv = validated
 
@@ -201,7 +202,7 @@ def test_mixed_multiple_unvalidated(test_client, app_with_data, with_student):
 def test_mixed_multiple_validated(test_client, app_with_data):
     app, exam, students = app_with_data
     student = students[0]
-    unvalidated1, unvalidated2, validated = add_submissions(exam, student, 'mixed_multiple')
+    unvalidated1, unvalidated2, validated = add_submissions(exam, student, "mixed_multiple")
     sub, copies = validated
 
     validate_with_warn_check(copies[0], student, exam, test_client)
@@ -214,8 +215,11 @@ def test_mixed_multiple_validated(test_client, app_with_data):
 types_product = list(product(types, types))
 
 
-@pytest.mark.parametrize(['old_student_type', 'new_student_type'], types_product,
-                         ids=['_'.join(student_type) for student_type in types_product])
+@pytest.mark.parametrize(
+    ["old_student_type", "new_student_type"],
+    types_product,
+    ids=["_".join(student_type) for student_type in types_product],
+)
 def test_switch_all(test_client, app_with_data, old_student_type, new_student_type):
     app, exam, students = app_with_data
     student_old = students[0]
@@ -264,8 +268,7 @@ def test_switch_all(test_client, app_with_data, old_student_type, new_student_ty
 
     # A new submission was added by the endpoint, let's find it
     if sub_copies_added is None:
-        sub_added = Submission.query.filter(Submission.validated,
-                                            Submission.student == student_new).one()
+        sub_added = Submission.query.filter(Submission.validated, Submission.student == student_new).one()
         # Assert it was indeed a new submission
         assert sub_added not in [sub for sub, copies in sub_copies_old]
         assert sub_added not in [sub for sub, copies in sub_copies_new]

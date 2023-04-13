@@ -63,13 +63,13 @@ manually for now (we are working to bring this dependency into the
 Conda ecosystem). You can install this dependency in the following way
 on different platforms:
 
-| OS                            | Command                   |
-|-------------------------------|---------------------------|
-| macOS                         | `brew install libdmtx`    |
-| Debian, Ubuntu                | `apt install libdmtx-dev` |
-| Arch                          | `pacman -S libdmtx`       |
-| Fedora                        | `dnf install libdmtx`     |
-| openSUSE                      | `zypper install libdmtx0` |
+| OS             | Command                   |
+| -------------- | ------------------------- |
+| macOS          | `brew install libdmtx`    |
+| Debian, Ubuntu | `apt install libdmtx-dev` |
+| Arch           | `pacman -S libdmtx`       |
+| Fedora         | `dnf install libdmtx`     |
+| openSUSE       | `zypper install libdmtx0` |
 
 
 #### Setting up MySQL server
@@ -181,13 +181,18 @@ This uses Flask-Migrate to make a new migration script in `migrations/versions` 
 #### Python
 Adhere to [PEP8](https://www.python.org/dev/peps/pep-0008/), but use a column width of 120 characters (instead of 79).
 
-If you followed the instructions above, the linter `flake8` is installed in your virtual environment. If you use Visual Studio Code, install the [Python](https://marketplace.visualstudio.com/items?itemName=ms-python.python) extension and add the following lines to your workspace settings:
+If you followed the instructions above, the linter `flake8` and the formatter `black` are installed in your virtual environment. If you use Visual Studio Code, install the [Python](https://marketplace.visualstudio.com/items?itemName=ms-python.python) extension and add the following lines to your workspace settings:
 
     "python.linting.pylintEnabled": false,
     "python.linting.flake8Enabled": true,
     "[python]": {
-        "editor.rulers": [120]
+        "editor.rulers": [120],
+        "editor.defaultFormatter": "ms-python.black-formatter",
+        "editor.formatOnSave": true
     },
+    "black-formatter.args": [
+        "--line-length=120"
+    ]
 
 If you use Atom, install the [linter-flake8](https://atom.io/packages/linter-flake8) plugin and add the following lines to your config:
 

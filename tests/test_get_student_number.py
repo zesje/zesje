@@ -8,9 +8,9 @@ from zesje import scans
 # More test data should be added. If done, maybe also consider increasing
 # the threshold in the assert.
 def test_get_studentnumber_precision(config_app, datadir):
-    im_names = os.listdir(os.path.join(datadir, 'studentnumbers'))
+    im_names = os.listdir(os.path.join(datadir, "studentnumbers"))
     for filename_full in im_names:
-        im_path = os.path.join(datadir, 'studentnumbers', f'{filename_full}')
+        im_path = os.path.join(datadir, "studentnumbers", f"{filename_full}")
         image = cv2.imread(im_path)
         filename_short, _ = os.path.splitext(filename_full)
         expected_number = int(filename_short)

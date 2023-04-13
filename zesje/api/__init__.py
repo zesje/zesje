@@ -43,7 +43,7 @@ def check_user_login():
     `flask_login.login_required
     https://flask-login.readthedocs.io/en/latest/_modules/flask_login/utils.html#login_required`_
     """
-    if current_app.config.get('LOGIN_DISABLED'):
+    if current_app.config.get("LOGIN_DISABLED"):
         return None
     elif request.endpoint in EXEMPT_ROUTES or request.method in EXEMPT_METHODS:
         return None
@@ -60,79 +60,75 @@ def add_url_rules(bp, view_class, *rules, name=None):
 def handle_exception(e):
     # pass through HTTP errors
     if isinstance(e, HTTPException):
-        return {
-            'status': e.code,
-            'name': e.name,
-            'message': e.description,
-            'description': None
-        }, e.code
+        return {"status": e.code, "name": e.name, "message": e.description, "description": None}, e.code
 
     # now you're handling non-HTTP exceptions only
     exp = sys.exc_info()
     print_exception(*exp)
     return {
-        'status': 500,
-        'name': 'Internal Python Exception',
-        'message': str(e),
-        'description': format_exception(*exp)
+        "status": 500,
+        "name": "Internal Python Exception",
+        "message": str(e),
+        "description": format_exception(*exp),
     }, 500
 
 
-api_bp = Blueprint('zesje', __name__)
+api_bp = Blueprint("zesje", __name__)
 api_bp.before_request(check_user_login)
 api_bp.register_error_handler(Exception, handle_exception)
 
-add_url_rules(api_bp, Graders, '/graders')
-add_url_rules(api_bp, Exams, '/exams', '/exams/<int:exam>', '/exams/<int:exam>/<string:attr>')
-add_url_rules(api_bp, ExamSource, '/exams/<int:exam>/source_pdf', name='exam_source')
-add_url_rules(api_bp, ExamGeneratedPdfs, '/exams/<int:exam>/generated_pdfs', name='exam_generated_pdfs')
-add_url_rules(api_bp, ExamPreview, '/exams/<int:exam>/preview', name='exam_preview')
-add_url_rules(api_bp, Scans, '/scans/<int:exam>')
-add_url_rules(api_bp, Students, '/students', '/students/<int:student>')
-add_url_rules(api_bp, Copies, '/copies/<int:exam>', '/copies/<int:exam>/<int:copy_number>')
-add_url_rules(api_bp, MissingPages, '/copies/missing_pages/<int:exam>', name='missing_pages')
-add_url_rules(api_bp, Submissions, '/submissions/<int:exam>', '/submissions/<int:exam>/<int:submission>')
-add_url_rules(api_bp, Problems, '/problems', '/problems/<int:problem>')
-add_url_rules(api_bp, Feedback, '/feedback/<int:problem>', '/feedback/<int:problem>/<int:feedback>')
-add_url_rules(api_bp, Solutions, '/solution/<int:exam>/<int:submission>/<int:problem>')
-add_url_rules(api_bp, Widgets, '/widgets', '/widgets/<int:widget>')
-add_url_rules(api_bp, EmailTemplate, '/templates/<int:exam>', name='exam_template')
-add_url_rules(api_bp, RenderedEmailTemplate, '/templates/rendered/<int:exam>/<int:student>',
-              name='rendered_exam_template')
-add_url_rules(api_bp, Email, '/email/<int:exam>', '/email/<int:exam>/<int:student>')
-add_url_rules(api_bp, Approve, '/solution/approve/<int:exam>/<int:submission>/<int:problem>')
-add_url_rules(api_bp, MultipleChoice, '/mult-choice/<int:mc_option>', '/mult-choice/', name='multiple_choice')
-add_url_rules(api_bp, Statistics, '/stats/<int:exam>')
-add_url_rules(api_bp, OAuthStatus, '/oauth/status', name='oauth_status')
-add_url_rules(api_bp, OAuthStart, '/oauth/start', name='oauth_start')
-add_url_rules(api_bp, OAuthCallback, '/oauth/callback', name='oauth_callback')
-add_url_rules(api_bp, OAuthLogout, '/oauth/logout', name='oauth_logout')
+add_url_rules(api_bp, Graders, "/graders")
+add_url_rules(api_bp, Exams, "/exams", "/exams/<int:exam>", "/exams/<int:exam>/<string:attr>")
+add_url_rules(api_bp, ExamSource, "/exams/<int:exam>/source_pdf", name="exam_source")
+add_url_rules(api_bp, ExamGeneratedPdfs, "/exams/<int:exam>/generated_pdfs", name="exam_generated_pdfs")
+add_url_rules(api_bp, ExamPreview, "/exams/<int:exam>/preview", name="exam_preview")
+add_url_rules(api_bp, Scans, "/scans/<int:exam>")
+add_url_rules(api_bp, Students, "/students", "/students/<int:student>")
+add_url_rules(api_bp, Copies, "/copies/<int:exam>", "/copies/<int:exam>/<int:copy_number>")
+add_url_rules(api_bp, MissingPages, "/copies/missing_pages/<int:exam>", name="missing_pages")
+add_url_rules(api_bp, Submissions, "/submissions/<int:exam>", "/submissions/<int:exam>/<int:submission>")
+add_url_rules(api_bp, Problems, "/problems", "/problems/<int:problem>")
+add_url_rules(api_bp, Feedback, "/feedback/<int:problem>", "/feedback/<int:problem>/<int:feedback>")
+add_url_rules(api_bp, Solutions, "/solution/<int:exam>/<int:submission>/<int:problem>")
+add_url_rules(api_bp, Widgets, "/widgets", "/widgets/<int:widget>")
+add_url_rules(api_bp, EmailTemplate, "/templates/<int:exam>", name="exam_template")
+add_url_rules(
+    api_bp, RenderedEmailTemplate, "/templates/rendered/<int:exam>/<int:student>", name="rendered_exam_template"
+)
+add_url_rules(api_bp, Email, "/email/<int:exam>", "/email/<int:exam>/<int:student>")
+add_url_rules(api_bp, Approve, "/solution/approve/<int:exam>/<int:submission>/<int:problem>")
+add_url_rules(api_bp, MultipleChoice, "/mult-choice/<int:mc_option>", "/mult-choice/", name="multiple_choice")
+add_url_rules(api_bp, Statistics, "/stats/<int:exam>")
+add_url_rules(api_bp, OAuthStatus, "/oauth/status", name="oauth_status")
+add_url_rules(api_bp, OAuthStart, "/oauth/start", name="oauth_start")
+add_url_rules(api_bp, OAuthCallback, "/oauth/callback", name="oauth_callback")
+add_url_rules(api_bp, OAuthLogout, "/oauth/logout", name="oauth_logout")
 
 # Images
 api_bp.add_url_rule(
-    '/images/signature/<int:exam>/<int:copy_number>',
-    'signature',
+    "/images/signature/<int:exam>/<int:copy_number>",
+    "signature",
     signature.get,
 )
 api_bp.add_url_rule(
-    '/images/solutions/<int:exam>/<int:problem>/<int:submission>/<int:full_page>',
-    'solution_image',
+    "/images/solutions/<int:exam>/<int:problem>/<int:submission>/<int:full_page>",
+    "solution_image",
     images.get,
 )
 
 # Exports
 api_bp.add_url_rule(
-    '/export/full',
-    'full_export',
+    "/export/full",
+    "full_export",
     export.full,
 )
 api_bp.add_url_rule(
-    '/export/<string:file_format>/<int:exam_id>',
-    'dataframe_export',
+    "/export/<string:file_format>/<int:exam_id>",
+    "dataframe_export",
     export.exam,
 )
 api_bp.add_url_rule(
-    '/export/graders/<int:exam_id>',
-    'grader_statistics_export',
+    "/export/graders/<int:exam_id>",
+    "grader_statistics_export",
     export.grader_statistics,
 )

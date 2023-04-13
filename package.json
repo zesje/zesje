@@ -87,7 +87,6 @@
     "mathjs": "^11.8.0",
     "mini-css-extract-plugin": "^2.7.5",
     "mousetrap": "^1.6.5",
-    "npm-check-updates": "^16.10.7",
     "object-hash": "^3.0.0",
     "path": "^0.12.7",
     "plotly.js-cartesian-dist-min": "^2.20.0",

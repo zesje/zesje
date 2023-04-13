@@ -36,6 +36,7 @@ dependencies:
 
     # Linting
     - flake8
+    - black
 
     - git  # not provided by micromamba image
 

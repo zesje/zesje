@@ -6,7 +6,6 @@ Revises: 2cbf733ba928
 """
 from alembic import op
 import sqlalchemy as sa
-from sqlalchemy.dialects import mysql
 
 # revision identifiers, used by Alembic.
 revision = 'e21e51ace137'

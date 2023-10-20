@@ -180,6 +180,20 @@ class Copy(db.Model):
     def exam(self):
         return self._exam
 
+    @property
+    def scan_names(self):
+        return [
+            r.name
+            for r in
+            (
+                object_session(self)
+                .query(Scan.name)
+                .join(scan_copy, Scan.id == scan_copy.c.scan_id)
+                .filter(scan_copy.c.copy_id == self.id)
+                .all()
+            )
+        ]
+
     student = association_proxy("submission", "student")
     student_id = association_proxy("submission", "student_id")
     validated = association_proxy("submission", "validated")
@@ -379,12 +393,14 @@ class Solution(db.Model):
         # which is not JSON serializable
         return int(score) if score is not None else nan
 
+
 # Table for many to many relationship of FeedbackOption and Solution
 scan_copy = db.Table(
     "scan_copy",
     Column("scan_id", Integer, ForeignKey("scan.id"), primary_key=True),
     Column("copy_id", Integer, ForeignKey("copy.id"), primary_key=True),
 )
+
 
 class Scan(db.Model):
     """Metadata on uploaded PDFs"""
@@ -402,16 +418,6 @@ class Scan(db.Model):
         suffix = Path(self.name).suffix
         scan_dir = Path(current_app.config["SCAN_DIRECTORY"])
         return scan_dir / f"{self.id}{suffix}"
-
-    @property
-    def copy_numbers(self):
-        return (
-            object_session(self)
-            .query(Copy.number)
-            .join(scan_copy, Copy.id == scan_copy.c.copy_id)
-            .filter(scan_copy.c.scan_id == self.id)
-            .all()
-        )
 
 
 class Widget(db.Model):

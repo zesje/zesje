@@ -105,7 +105,7 @@ def _process_scan(scan_id, exam_layout):
             else:
                 try:
                     success, description = process_page_function(
-                        image, page_info, file_info, exam_config, output_directory
+                        image, page_info, file_info, exam_config, output_directory, scan
                     )
                     if not success:
                         failures.append((file_info, description))
@@ -190,7 +190,7 @@ def write_scan_status(scan_id, status, message):
     db.session.commit()
 
 
-def process_page(image_data, page_info, file_info, exam_config, output_dir=None, strict=False):
+def process_page(image_data, page_info, file_info, exam_config, output_dir=None, scan=None, strict=False):
     """Incorporate a scanned image in the data structure.
 
     For each page perform the following steps:
@@ -216,6 +216,8 @@ def process_page(image_data, page_info, file_info, exam_config, output_dir=None,
     output_dir : string, optional
         Path where the processed image must be stored. If not provided, don't
         save the result and don't modify the database.
+    scan : Scan instance, optional
+        The scan to link the copy to
     strict : bool
         Whether to stop trying if we did not find corner markers.
         This spoils page positioning, but may increase the success rate.
@@ -275,6 +277,10 @@ def process_page(image_data, page_info, file_info, exam_config, output_dir=None,
 
     # This copy belongs to a submission that may or may not have other copies
     copy = add_to_correct_copy(image_path, barcode)
+
+    # Link the copy to the scan
+    if scan is not None:
+        link_copy_to_scan(copy, scan)
 
     try:
         # If the corresponding submission has multiple copies, this doesn't grade anything
@@ -873,3 +879,19 @@ def bounding_box_corner_markers(marker_length, theta1, theta2, top, left):
         bounding_y += np.cos(theta1) * marker_length
 
     return bounding_x, bounding_y
+
+
+def link_copy_to_scan(copy, scan):
+    """Link a copy to a scan.
+
+    Parameters
+    ----------
+    copy : Copy instance
+        Copy to link
+    scan : Scan instance
+        Scan to link
+    """
+
+    scan.copies.append(copy)
+    db.session.add(scan)
+    db.session.commit()

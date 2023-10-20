@@ -4,7 +4,7 @@ from pathlib import Path
 from .database import db, Exam, Submission, Solution, Student, Copy, Page
 
 
-def process_page(image, page_info, file_info, exam_config, output_directory):
+def process_page(image, page_info, file_info, exam_config, output_directory, scan=None):
     student_id, page, copy = page_info
 
     if not student_id:
@@ -20,6 +20,9 @@ def process_page(image, page_info, file_info, exam_config, output_directory):
     exam = Exam.query.filter(Exam.token == exam_config.token).one()
 
     copy = retrieve_copy(exam, student_id, copy)
+
+    if scan is not None:
+        link_copy_to_scan(copy, scan)
 
     image_dir = Path(output_directory) / "submissions" / f"{copy.number}"
     image_dir.mkdir(exist_ok=True, parents=True)
@@ -78,3 +81,19 @@ def create_copy(sub):
     db.session.commit()
 
     return copy
+
+
+def link_copy_to_scan(copy, scan):
+    """Link a copy to a scan.
+
+    Parameters
+    ----------
+    copy : Copy instance
+        Copy to link
+    scan : Scan instance
+        Scan to link
+    """
+
+    scan.copies.append(copy)
+    db.session.add(scan)
+    db.session.commit()

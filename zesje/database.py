@@ -379,6 +379,12 @@ class Solution(db.Model):
         # which is not JSON serializable
         return int(score) if score is not None else nan
 
+# Table for many to many relationship of FeedbackOption and Solution
+scan_copy = db.Table(
+    "scan_copy",
+    Column("scan_id", Integer, ForeignKey("scan.id"), primary_key=True),
+    Column("copy_id", Integer, ForeignKey("copy.id"), primary_key=True),
+)
 
 class Scan(db.Model):
     """Metadata on uploaded PDFs"""
@@ -389,12 +395,23 @@ class Scan(db.Model):
     name = Column(Text, nullable=False)
     status = Column(Text, nullable=False)
     message = Column(Text)
+    copies = db.relationship("Copy", secondary=scan_copy, backref="scans", lazy=True)
 
     @property
     def path(self):
         suffix = Path(self.name).suffix
         scan_dir = Path(current_app.config["SCAN_DIRECTORY"])
         return scan_dir / f"{self.id}{suffix}"
+
+    @property
+    def copy_numbers(self):
+        return (
+            object_session(self)
+            .query(Copy.number)
+            .join(scan_copy, Copy.id == scan_copy.c.copy_id)
+            .filter(scan_copy.c.scan_id == self.id)
+            .all()
+        )
 
 
 class Widget(db.Model):

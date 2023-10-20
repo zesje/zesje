@@ -87,3 +87,6 @@ dependencies:
         # Tests
         - pyssim>=0.6
         - smtpdfix  # mock email server
+
+        # Version fixing
+        - pillow>=8.2.0,<10.0.0

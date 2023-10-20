@@ -20,7 +20,7 @@ dependencies:
     - numpy
 
     # PDF generation
-    - pillow>=8.2.0  # also scan processing
+    - pillow>=8.2.0,<10.0.0  # also scan processing
 
     #
     # Development dependencies

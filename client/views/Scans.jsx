@@ -140,7 +140,7 @@ class Scans extends React.Component {
             <ul className='menu-list'>
               {missingPages.map(copy =>
                 <li key={copy.number}>
-                  Copy {copy.number} is missing pages {copy.missing_pages.join(', ')}
+                  Copy {copy.number} is missing pages {copy.missing_pages.join(', ')} (found other pages in: {copy.scan_sources.join(', ')})
                 </li>
               )}
             </ul>

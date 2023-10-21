@@ -1,6 +1,6 @@
 # A Dockerfile containing the production deployment for Zesje
 
-FROM mambaorg/micromamba:1.4-kinetic
+FROM mambaorg/micromamba:1.5-jammy
 
 USER root
 

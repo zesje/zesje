@@ -523,7 +523,7 @@ def readable_filename(file_info):
 
     See `extract_images_from_file` for more information on `file_info`.
     """
-    return ", ".join(f"page {info}" if type(info) == int else info for info in file_info)
+    return ", ".join(f"page {info}" if isinstance(info, int) else info for info in file_info)
 
 
 def _combine_file_info(file_info, file_info_to_append):

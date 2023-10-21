@@ -13,7 +13,7 @@ build-image:
   stage: build-env
   when: manual
   image:
-    name: gcr.io/kaniko-project/executor:debug-v0.19.0
+    name: gcr.io/kaniko-project/executor:v1.17.0-debug
     entrypoint: [""]
   before_script:
     - mkdir -p /kaniko/.docker

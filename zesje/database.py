@@ -394,7 +394,6 @@ class Solution(db.Model):
         return int(score) if score is not None else nan
 
 
-# Table for many to many relationship of FeedbackOption and Solution
 scan_copy = db.Table(
     "scan_copy",
     Column("scan_id", Integer, ForeignKey("scan.id"), primary_key=True),

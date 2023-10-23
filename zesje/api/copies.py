@@ -196,8 +196,8 @@ class MissingPages(MethodView):
         return [
             {
                 "number": copy.number,
-                "missing_pages": sorted(all_pages - set(page.number for page in copy.pages)),
-                "scan_sources": copy.scan_names,
+                "missing_pages": (missing := sorted(all_pages - set(page.number for page in copy.pages))),
+                "scan_sources": copy.scan_names if missing else [],
             }
             for copy in exam.copies
         ]

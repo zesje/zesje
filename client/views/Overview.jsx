@@ -668,6 +668,7 @@ class Overview extends React.Component {
               <tbody>
                 {
                   problem.feedback.map((option, i) => {
+                    const percentUsed = problem.results.length > 0 ? Math.round(option.used / problem.results.length * 100) : 0
                     return (
                       <tr key={i}>
                         <td>
@@ -675,7 +676,7 @@ class Overview extends React.Component {
                           <Tooltip text={option.description} />
                         </td>
                         <td> {option.score} </td>
-                        <td> {option.used} </td>
+                        <td> {option.used} ({percentUsed}%) </td>
                       </tr>
                     )
                   })

@@ -34,8 +34,7 @@ def create_app(celery=None, app_config=None):
 
     app.register_blueprint(api_bp, url_prefix="/api")
 
-    @app.before_first_request
-    def setup():
+    with app.app_context():
         os.makedirs(app.config["DATA_DIRECTORY"], exist_ok=True)
         os.makedirs(app.config["SCAN_DIRECTORY"], exist_ok=True)
 

@@ -31,7 +31,7 @@ from .images import guess_dpi, get_box, is_misaligned
 from .pregrader import grade_page
 from .image_extraction import extract_pages_from_file, readable_filename
 from .blanks import reference_image
-from .raw_scans import process_page as process_page_raw
+from .raw_scans import process_page as process_page_raw, link_copy_to_scan
 from . import celery
 
 ExtractedBarcode = namedtuple("ExtractedBarcode", ["token", "copy", "page"])
@@ -879,19 +879,3 @@ def bounding_box_corner_markers(marker_length, theta1, theta2, top, left):
         bounding_y += np.cos(theta1) * marker_length
 
     return bounding_x, bounding_y
-
-
-def link_copy_to_scan(copy, scan):
-    """Link a copy to a scan.
-
-    Parameters
-    ----------
-    copy : Copy instance
-        Copy to link
-    scan : Scan instance
-        Scan to link
-    """
-
-    scan.copies.append(copy)
-    db.session.add(scan)
-    db.session.commit()

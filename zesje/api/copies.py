@@ -186,6 +186,7 @@ class MissingPages(MethodView):
         Provides a list of:
             copyID: int
             missing_pages: list of ints
+            scan_sources: list of strings
         """
         if exam.layout == ExamLayout.templated:
             all_pages = set(range(len(PdfReader(exam_pdf_path(exam.id)).pages)))
@@ -195,7 +196,8 @@ class MissingPages(MethodView):
         return [
             {
                 "number": copy.number,
-                "missing_pages": sorted(all_pages - set(page.number for page in copy.pages)),
+                "missing_pages": (missing := sorted(all_pages - set(page.number for page in copy.pages))),
+                "scan_sources": copy.scan_names if missing else [],
             }
             for copy in exam.copies
         ]

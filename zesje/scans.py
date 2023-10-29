@@ -31,7 +31,7 @@ from .images import guess_dpi, get_box, is_misaligned
 from .pregrader import grade_page
 from .image_extraction import extract_pages_from_file, readable_filename
 from .blanks import reference_image
-from .raw_scans import process_page as process_page_raw
+from .raw_scans import process_page as process_page_raw, link_copy_to_scan
 from . import celery
 
 ExtractedBarcode = namedtuple("ExtractedBarcode", ["token", "copy", "page"])
@@ -105,7 +105,7 @@ def _process_scan(scan_id, exam_layout):
             else:
                 try:
                     success, description = process_page_function(
-                        image, page_info, file_info, exam_config, output_directory
+                        image, page_info, file_info, exam_config, output_directory, scan
                     )
                     if not success:
                         failures.append((file_info, description))
@@ -190,7 +190,7 @@ def write_scan_status(scan_id, status, message):
     db.session.commit()
 
 
-def process_page(image_data, page_info, file_info, exam_config, output_dir=None, strict=False):
+def process_page(image_data, page_info, file_info, exam_config, output_dir=None, scan=None, strict=False):
     """Incorporate a scanned image in the data structure.
 
     For each page perform the following steps:
@@ -216,6 +216,8 @@ def process_page(image_data, page_info, file_info, exam_config, output_dir=None,
     output_dir : string, optional
         Path where the processed image must be stored. If not provided, don't
         save the result and don't modify the database.
+    scan : Scan instance, optional
+        The scan to link the copy to
     strict : bool
         Whether to stop trying if we did not find corner markers.
         This spoils page positioning, but may increase the success rate.
@@ -275,6 +277,10 @@ def process_page(image_data, page_info, file_info, exam_config, output_dir=None,
 
     # This copy belongs to a submission that may or may not have other copies
     copy = add_to_correct_copy(image_path, barcode)
+
+    # Link the copy to the scan
+    if scan is not None:
+        link_copy_to_scan(copy, scan)
 
     try:
         # If the corresponding submission has multiple copies, this doesn't grade anything

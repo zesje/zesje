@@ -162,6 +162,7 @@ def _fake_process_pdf(app, exam, scan, pages, student_ids, copies_per_student):
         for _ in range(number_of_copies):
             copy_number += 1
             copy = Copy(number=copy_number)
+            scan.copies.append(copy)
 
             base_copy_path = os.path.join(
                 app.config["DATA_DIRECTORY"], f"{exam.id}_data", "submissions", f"{copy_number}"
@@ -180,6 +181,7 @@ def _fake_process_pdf(app, exam, scan, pages, student_ids, copies_per_student):
 
     scan.status = "success"
     scan.message = "Successfully skipped processing."
+    db.session.add(scan)
     db.session.commit()
 
 

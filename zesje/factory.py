@@ -71,6 +71,10 @@ def attach_celery(app, celery):
 
         def __call__(self, *args, **kwargs):
             with app.app_context():
+                # Force the task to use a new connection.
+                # See: https://docs.sqlalchemy.org/en/14/core/pooling.html#pooling-multiprocessing
+                db.engine.dispose(close=False)
+
                 return TaskBase.__call__(self, *args, **kwargs)
 
     celery.Task = ContextTask

@@ -45,7 +45,7 @@ dependencies:
         - flask>=2.2.2,<3.0.0
         - flask-sqlalchemy>=2.5.1,<3.0.0
         - flask-migrate>=3.0.0,<4.0.0
-        - sqlalchemy>=1.4.13,<2.0.0
+        - sqlalchemy>=1.4.33,<2.0.0
         - alembic>=1.6.4,<2.0.0
         - pyyaml
         - celery>=5.1.0,<6.0.0

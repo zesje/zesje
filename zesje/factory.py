@@ -12,9 +12,29 @@ from .api import api_bp
 STATIC_FOLDER_PATH = os.path.join(abspath(dirname(__file__)), "static")
 
 
-def create_app(celery=None, app_config=None):
+def create_base_app(celery=None, app_config=None):
+    """ Creates an app instance with only the config initialized """
     app = Flask(__name__, static_folder=STATIC_FOLDER_PATH)
     create_config(app.config, app_config)
+    return app
+
+
+def create_migrations_app():
+    """ App instance only used to run migrations
+
+    It is not possible to use the main app instance as it executes database queries during initialization.
+    """
+    app = create_base_app()
+
+    db.init_app(app)
+    Migrate(app, db)
+
+    return app
+
+
+def create_app(celery=None, app_config=None):
+    """ App instance used to run the api using wsgi """
+    app = create_base_app(celery, app_config)
 
     if app.config["OAUTH_INSECURE_TRANSPORT"]:
         os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
@@ -30,7 +50,6 @@ def create_app(celery=None, app_config=None):
         attach_celery(app, celery)
 
     db.init_app(app)
-    Migrate(app, db)
 
     app.register_blueprint(api_bp, url_prefix="/api")
 
